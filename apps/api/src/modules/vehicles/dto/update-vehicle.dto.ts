@@ -11,38 +11,45 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateVehicleDto {
+export class UpdateVehicleDto {
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(20)
-  registrationNumber!: string;
+  registrationNumber?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  make!: string;
+  make?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  model!: string;
+  model?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  variant!: string;
+  variant?: string;
 
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1900)
   @Max(2100)
-  year!: number;
+  year?: number;
 
-  @IsEnum(VehicleType)
-  vehicleType!: VehicleType;
-
+  @IsOptional()
   @IsEnum(FuelType)
-  fuelType!: FuelType;
+  fuelType?: FuelType;
+
+  @IsOptional()
+  @IsEnum(VehicleType)
+  vehicleType?: VehicleType;
 
   @IsOptional()
   @IsString()
@@ -54,5 +61,5 @@ export class CreateVehicleDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  odometer!: number;
+  odometer?: number;
 }

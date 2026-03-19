@@ -1,39 +1,17 @@
 import { Link } from '@tanstack/react-router';
-import { FuelType } from '@vehicle-vault/shared';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+import { useVehicles } from '../hooks/use-vehicles';
 import { VehicleList } from '../components/vehicle-list';
 
-const vehicles = [
-  {
-    id: 'vehicle-1',
-    registrationNumber: 'MH12AB1234',
-    make: 'Hyundai',
-    model: 'Creta',
-    variant: 'SX',
-    year: 2022,
-    fuelType: FuelType.Petrol,
-    odometer: 18240,
-    lastServiceDate: '2026-02-14',
-  },
-  {
-    id: 'vehicle-2',
-    registrationNumber: 'KA03CD4567',
-    make: 'Tata',
-    model: 'Nexon EV',
-    variant: 'Empowered',
-    year: 2024,
-    fuelType: FuelType.Electric,
-    odometer: 6240,
-    lastServiceDate: '2026-01-20',
-  },
-];
-
 export function VehiclesListPage() {
+  const vehiclesQuery = useVehicles();
+
   return (
     <PageContainer>
       <PageTitle
@@ -46,8 +24,28 @@ export function VehiclesListPage() {
         title="Vehicles"
       />
 
-      {vehicles.length ? (
-        <VehicleList vehicles={vehicles} />
+      {vehiclesQuery.isPending ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading vehicles</CardTitle>
+            <CardDescription>Fetching vehicle records from the API.</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-slate-600">
+            Please wait while the current vehicle list loads.
+          </CardContent>
+        </Card>
+      ) : vehiclesQuery.isError ? (
+        <EmptyState
+          action={
+            <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles/new">
+              Add vehicle anyway
+            </Link>
+          }
+          description="The vehicle list could not be loaded. Make sure the API is running and reachable from the frontend."
+          title="Unable to load vehicles"
+        />
+      ) : vehiclesQuery.data.length ? (
+        <VehicleList vehicles={vehiclesQuery.data} />
       ) : (
         <EmptyState
           action={
@@ -55,7 +53,7 @@ export function VehiclesListPage() {
               Add your first vehicle
             </Link>
           }
-          description="Vehicles will appear here once records are connected to the backend."
+          description="No vehicles exist yet. Create the first one to start the maintenance workflow."
           title="No vehicles yet"
         />
       )}

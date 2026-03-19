@@ -1,46 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  FuelType,
   VehicleCreateSchema,
-  VehicleType,
+  VehicleUpdateSchema,
   type CreateVehicleInput,
+  type UpdateVehicleInput,
 } from '@vehicle-vault/shared';
+import { randomUUID } from 'node:crypto';
 
-import { createResourceId } from '../../common/utils/create-resource-id.util';
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import type { CreateVehicleDto } from './dto/create-vehicle.dto';
+import type { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import type { VehicleRecord } from './types/vehicle-record.type';
 
 @Injectable()
 export class VehiclesService {
-  private readonly vehicles: VehicleRecord[] = [
-    {
-      id: 'vehicle_1',
-      registrationNumber: 'MH12AB1234',
-      make: 'Hyundai',
-      model: 'Creta',
-      variant: 'SX',
-      year: 2022,
-      vehicleType: VehicleType.SUV,
-      fuelType: FuelType.Petrol,
-      odometer: 18240,
-      createdAt: '2026-01-10T10:00:00.000Z',
-      updatedAt: '2026-03-01T09:30:00.000Z',
-    },
-    {
-      id: 'vehicle_2',
-      registrationNumber: 'KA03CD4567',
-      make: 'Tata',
-      model: 'Nexon EV',
-      variant: 'Empowered',
-      year: 2024,
-      vehicleType: VehicleType.SUV,
-      fuelType: FuelType.Electric,
-      odometer: 6240,
-      createdAt: '2026-02-04T08:15:00.000Z',
-      updatedAt: '2026-02-21T12:45:00.000Z',
-    },
-  ];
+  private readonly vehicles: VehicleRecord[] = [];
 
   listVehicles(query: PaginationQueryDto) {
     const page = query.page ?? 1;
@@ -76,7 +50,7 @@ export class VehiclesService {
     const input = this.validateCreateVehicleInput(payload);
     const now = new Date().toISOString();
     const record: VehicleRecord = {
-      id: createResourceId('vehicle'),
+      id: randomUUID(),
       ...input,
       createdAt: now,
       updatedAt: now,
@@ -87,12 +61,57 @@ export class VehiclesService {
     return record;
   }
 
+  updateVehicle(vehicleId: string, payload: UpdateVehicleDto) {
+    const vehicle = this.getVehicleById(vehicleId);
+    const input = this.validateUpdateVehicleInput(payload);
+
+    Object.assign(vehicle, input, {
+      updatedAt: new Date().toISOString(),
+    });
+
+    return vehicle;
+  }
+
+  deleteVehicle(vehicleId: string) {
+    const index = this.vehicles.findIndex((item) => item.id === vehicleId);
+
+    if (index === -1) {
+      throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
+    }
+
+    const deletedVehicle = this.vehicles[index];
+
+    if (!deletedVehicle) {
+      throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
+    }
+
+    this.vehicles.splice(index, 1);
+
+    return {
+      id: deletedVehicle.id,
+      deleted: true,
+    };
+  }
+
   private validateCreateVehicleInput(payload: CreateVehicleDto): CreateVehicleInput {
     const result = VehicleCreateSchema.safeParse(payload);
 
     if (!result.success) {
       throw new BadRequestException({
         message: 'Vehicle payload failed schema validation',
+        details: result.error.flatten(),
+      });
+    }
+
+    return result.data;
+  }
+
+  private validateUpdateVehicleInput(payload: UpdateVehicleDto): UpdateVehicleInput {
+    const result = VehicleUpdateSchema.safeParse(payload);
+
+    if (!result.success) {
+      throw new BadRequestException({
+        message: 'Vehicle update payload failed schema validation',
         details: result.error.flatten(),
       });
     }

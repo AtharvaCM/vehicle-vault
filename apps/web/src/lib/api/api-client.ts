@@ -1,6 +1,25 @@
 import { ApiError } from './api-error';
 import { getEnv } from '@/lib/env/env';
 
+export type ApiSuccessResponse<TData, TMeta = unknown> = {
+  success: true;
+  data: TData;
+  meta?: TMeta;
+};
+
+export type ApiErrorResponse = {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+  meta: {
+    path: string;
+    timestamp: string;
+  };
+};
+
 type QueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, QueryValue>;
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';

@@ -10,7 +10,9 @@ export function getEnv(): AppEnv {
   }
 
   cachedEnv = {
-    apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, ''),
+    apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api')
+      .trim()
+      .replace(/\/$/, ''),
   };
 
   return cachedEnv;

@@ -1,13 +1,16 @@
 import { queryOptions } from '@tanstack/react-query';
 
+import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
 import { endpoints } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/query/query-keys';
 
-import type { VehicleSummary } from '../types/vehicle';
+import type { Vehicle } from '../types/vehicle';
 
 export async function getVehicles() {
-  return apiClient.get<VehicleSummary[]>(endpoints.vehicles.list);
+  const response = await apiClient.get<ApiSuccessResponse<Vehicle[]>>(endpoints.vehicles.list);
+
+  return response.data;
 }
 
 export function vehiclesListQueryOptions() {

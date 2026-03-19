@@ -1,10 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { VehicleCreateSchema } from '@vehicle-vault/shared';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { ZodSchemaValidationPipe } from '../../common/pipes/zod-schema-validation.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleIdParamDto } from './dto/vehicle-id-param.dto';
 
 import { VehiclesService } from './vehicles.service';
@@ -26,10 +25,17 @@ export class VehiclesController {
   }
 
   @Post()
-  createVehicle(
-    @Body(new ZodSchemaValidationPipe(VehicleCreateSchema))
-    body: CreateVehicleDto,
-  ) {
+  createVehicle(@Body() body: CreateVehicleDto) {
     return this.vehiclesService.createVehicle(body);
+  }
+
+  @Patch(':vehicleId')
+  updateVehicle(@Param() params: VehicleIdParamDto, @Body() body: UpdateVehicleDto) {
+    return this.vehiclesService.updateVehicle(params.vehicleId, body);
+  }
+
+  @Delete(':vehicleId')
+  deleteVehicle(@Param() params: VehicleIdParamDto) {
+    return successResponse(this.vehiclesService.deleteVehicle(params.vehicleId));
   }
 }

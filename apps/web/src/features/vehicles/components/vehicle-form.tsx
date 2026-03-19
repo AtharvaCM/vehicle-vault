@@ -1,7 +1,8 @@
-import { FuelType } from '@vehicle-vault/shared';
+import { FuelType, VehicleType } from '@vehicle-vault/shared';
+import { useEffect, useState } from 'react';
 import { type Path, useForm } from 'react-hook-form';
-import { useState } from 'react';
 
+import { ApiError } from '@/lib/api/api-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,8 +10,15 @@ import { Input } from '@/components/ui/input';
 import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-form.schema';
 
 const fuelOptions = Object.values(FuelType);
+const vehicleTypeOptions = Object.values(VehicleType);
 
-export function VehicleForm() {
+type VehicleFormProps = {
+  isSubmitting?: boolean;
+  onSubmit: (values: VehicleFormValues) => Promise<void> | void;
+  submitError?: string | null;
+};
+
+export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: VehicleFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
 
   const form = useForm<VehicleFormValues>({
@@ -20,13 +28,24 @@ export function VehicleForm() {
       model: '',
       variant: '',
       year: new Date().getFullYear(),
+      vehicleType: VehicleType.Car,
       fuelType: FuelType.Petrol,
       odometer: 0,
+      nickname: '',
     },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
-    const result = vehicleFormSchema.safeParse(values);
+  useEffect(() => {
+    if (submitError) {
+      setSubmissionState(null);
+    }
+  }, [submitError]);
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    const result = vehicleFormSchema.safeParse({
+      ...values,
+      nickname: values.nickname?.trim() ? values.nickname.trim() : undefined,
+    });
 
     if (!result.success) {
       result.error.issues.forEach((issue) => {
@@ -43,9 +62,17 @@ export function VehicleForm() {
       return;
     }
 
-    setSubmissionState(
-      'Vehicle submission is scaffolded. Wire this form to a mutation when the API is ready.',
-    );
+    try {
+      await onSubmit(result.data);
+      setSubmissionState('Vehicle created successfully.');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSubmissionState(null);
+        return;
+      }
+
+      setSubmissionState(null);
+    }
   });
 
   return (
@@ -53,12 +80,12 @@ export function VehicleForm() {
       <CardHeader>
         <CardTitle>Vehicle details</CardTitle>
         <CardDescription>
-          Keep form state local to the feature. Replace the placeholder submit branch with a
-          feature-local mutation later.
+          Create a real vehicle record through the API using the shared contract consumed by both
+          the backend and frontend.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-6" onSubmit={onSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
             <Field
               label="Registration number"
@@ -83,6 +110,19 @@ export function VehicleForm() {
               <Input {...form.register('year', { valueAsNumber: true })} min={1900} type="number" />
             </Field>
 
+            <Field label="Vehicle type" error={form.formState.errors.vehicleType?.message}>
+              <select
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
+                {...form.register('vehicleType')}
+              >
+                {vehicleTypeOptions.map((vehicleType) => (
+                  <option key={vehicleType} value={vehicleType}>
+                    {vehicleType}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field label="Fuel type" error={form.formState.errors.fuelType?.message}>
               <select
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
@@ -103,7 +143,17 @@ export function VehicleForm() {
                 type="number"
               />
             </Field>
+
+            <Field label="Nickname" error={form.formState.errors.nickname?.message}>
+              <Input {...form.register('nickname')} placeholder="Family car" />
+            </Field>
           </div>
+
+          {submitError ? (
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {submitError}
+            </p>
+          ) : null}
 
           {submissionState ? (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
@@ -112,10 +162,14 @@ export function VehicleForm() {
           ) : null}
 
           <div className="flex items-center gap-3">
-            <Button disabled={form.formState.isSubmitting} type="submit">
+            <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
               Save Vehicle
             </Button>
-            <p className="text-sm text-slate-500">No API call is wired yet.</p>
+            <p className="text-sm text-slate-500">
+              {isSubmitting
+                ? 'Submitting vehicle to the API...'
+                : 'The vehicle is stored immediately after submit.'}
+            </p>
           </div>
         </form>
       </CardContent>

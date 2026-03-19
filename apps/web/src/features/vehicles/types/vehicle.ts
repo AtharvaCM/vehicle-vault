@@ -1,13 +1,1 @@
-import { FuelType } from '@vehicle-vault/shared';
-
-export type VehicleSummary = {
-  id: string;
-  registrationNumber: string;
-  make: string;
-  model: string;
-  variant: string;
-  year: number;
-  fuelType: FuelType;
-  odometer: number;
-  lastServiceDate?: string;
-};
+export type { CreateVehicleInput, UpdateVehicleInput, Vehicle } from '@vehicle-vault/shared';
