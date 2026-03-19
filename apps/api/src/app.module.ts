@@ -1,20 +1,26 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 
-import appConfig from './config/app.config';
+import { AppConfigModule } from './config/app-config.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
+import { ExportsModule } from './modules/exports/exports.module';
 import { HealthModule } from './modules/health/health.module';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { RemindersModule } from './modules/reminders/reminders.module';
+import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [appConfig],
-    }),
+    AppConfigModule,
     HealthModule,
     AuthModule,
+    UsersModule,
     VehiclesModule,
+    MaintenanceModule,
+    RemindersModule,
+    AttachmentsModule,
+    ExportsModule,
   ],
 })
 export class AppModule {}
