@@ -1,0 +1,22 @@
+{
+  "name": "vehicle-vault",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.23.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @vehicle-vault/shared --filter @vehicle-vault/api --filter @vehicle-vault/web run dev",
+    "dev:web": "pnpm --filter @vehicle-vault/web run dev",
+    "dev:api": "pnpm --filter @vehicle-vault/api run dev",
+    "build": "pnpm -r --if-present run build",
+    "lint": "pnpm -r --if-present run lint",
+    "test": "pnpm -r --if-present run test",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "clean": "pnpm -r --if-present run clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1"
+  }
+}

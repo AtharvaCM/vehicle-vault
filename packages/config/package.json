@@ -1,0 +1,14 @@
+{
+  "name": "@vehicle-vault/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/react": "./typescript/react.json",
+    "./typescript/nest": "./typescript/nest.json",
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/react": "./eslint/react.js",
+    "./eslint/nest": "./eslint/nest.js",
+    "./prettier": "./prettier/index.cjs"
+  }
+}
