@@ -1,10 +1,3 @@
-import { ReminderType } from '@vehicle-vault/shared';
+import type { Reminder } from '@vehicle-vault/shared';
 
-export type ReminderRecord = {
-  id: string;
-  vehicleId: string;
-  title: string;
-  dueDate: string;
-  reminderType: ReminderType;
-  status: 'due-soon' | 'overdue';
-};
+export type ReminderRecord = Reminder;

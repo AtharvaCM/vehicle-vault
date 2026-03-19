@@ -5,12 +5,15 @@ import {
   dashboardRoute,
   indexRoute,
   maintenanceRecordDetailRoute,
+  reminderDetailRoute,
   remindersRoute,
   rootRoute,
   settingsRoute,
   vehicleDetailRoute,
   vehicleMaintenanceNewRoute,
   vehicleMaintenanceRoute,
+  vehicleRemindersNewRoute,
+  vehicleRemindersRoute,
   vehiclesNewRoute,
   vehiclesRoute,
 } from '@/routes';
@@ -24,7 +27,10 @@ const routeTree = rootRoute.addChildren([
   vehicleMaintenanceRoute,
   vehicleMaintenanceNewRoute,
   maintenanceRecordDetailRoute,
+  vehicleRemindersRoute,
+  vehicleRemindersNewRoute,
   remindersRoute,
+  reminderDetailRoute,
   settingsRoute,
 ]);
 

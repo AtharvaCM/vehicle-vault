@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
@@ -10,6 +11,6 @@ export class ListRemindersQueryDto extends PaginationQueryDto {
 
   @IsOptional()
   @Type(() => String)
-  @IsIn(['due-soon', 'overdue'])
-  status?: 'due-soon' | 'overdue';
+  @IsEnum(ReminderStatus)
+  status?: ReminderStatus;
 }

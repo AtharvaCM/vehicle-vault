@@ -1,7 +1,8 @@
 export enum ReminderType {
-  Mileage = 'mileage',
-  Date = 'date',
-  Inspection = 'inspection',
+  Service = 'service',
   Insurance = 'insurance',
-  Registration = 'registration',
+  Puc = 'puc',
+  TyreRotation = 'tyre_rotation',
+  Battery = 'battery',
+  Custom = 'custom',
 }

@@ -9,6 +9,9 @@ import { ApiError } from '@/lib/api/api-error';
 
 import { MaintenanceRecordCard } from '@/features/maintenance/components/maintenance-record-card';
 import { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
+import { ReminderCard } from '@/features/reminders/components/reminder-card';
+import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-reminders';
+import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { useVehicle } from '../hooks/use-vehicle';
@@ -20,6 +23,7 @@ type VehicleDetailPageProps = {
 export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
+  const remindersQuery = useVehicleReminders(vehicleId);
 
   if (vehicleQuery.isPending) {
     return (
@@ -139,15 +143,53 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Reminders overview</CardTitle>
+            <CardTitle>Upcoming reminders</CardTitle>
             <CardDescription>
-              Reminder summaries will be connected here once reminder queries are implemented.
+              Review the next reminder items linked to this vehicle.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-600">
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              No reminder integration is wired in this slice yet.
-            </p>
+          <CardContent className="space-y-4">
+            {remindersQuery.isPending ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Loading reminder summary.
+              </p>
+            ) : remindersQuery.isError ? (
+              <EmptyState
+                description="Upcoming reminders could not be loaded right now."
+                title="Unable to load reminders"
+              />
+            ) : remindersQuery.data.length ? (
+              <div className="space-y-3">
+                {remindersQuery.data
+                  .filter((reminder) => reminder.status !== ReminderStatus.Completed)
+                  .slice(0, 3)
+                  .map((reminder) => (
+                    <ReminderCard key={reminder.id} reminder={reminder} />
+                  ))}
+              </div>
+            ) : (
+              <EmptyState
+                description="No reminders exist for this vehicle yet."
+                title="No reminders yet"
+              />
+            )}
+
+            <div className="flex gap-3">
+              <Link
+                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/reminders"
+              >
+                View All Reminders
+              </Link>
+              <Link
+                className={buttonVariants({ size: 'sm' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/reminders/new"
+              >
+                Add Reminder
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>

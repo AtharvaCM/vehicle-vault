@@ -7,15 +7,17 @@ import { queryKeys } from '@/lib/query/query-keys';
 
 import type { Reminder } from '../types/reminder';
 
-export async function getReminders() {
-  const response = await apiClient.get<ApiSuccessResponse<Reminder[]>>(endpoints.reminders.list);
+export async function getReminderById(reminderId: string) {
+  const response = await apiClient.get<ApiSuccessResponse<Reminder>>(
+    endpoints.reminders.detail(reminderId),
+  );
 
   return response.data;
 }
 
-export function remindersQueryOptions() {
+export function reminderDetailQueryOptions(reminderId: string) {
   return queryOptions({
-    queryKey: queryKeys.reminders.list(),
-    queryFn: getReminders,
+    queryKey: queryKeys.reminders.detail(reminderId),
+    queryFn: () => getReminderById(reminderId),
   });
 }
