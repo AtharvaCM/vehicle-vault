@@ -28,6 +28,12 @@ export class RemindersService {
 
   constructor(private readonly vehiclesService: VehiclesService) {}
 
+  getAllReminders() {
+    return [...this.reminders]
+      .map((record) => this.withComputedStatus(record))
+      .sort((left, right) => this.compareReminders(left, right));
+  }
+
   listVehicleReminders(vehicleId: string, query: ListRemindersQueryDto) {
     this.vehiclesService.ensureVehicleExists(vehicleId);
 

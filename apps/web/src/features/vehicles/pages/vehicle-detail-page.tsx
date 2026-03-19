@@ -2,6 +2,8 @@ import { Link } from '@tanstack/react-router';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,14 +34,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           description="Loading the latest vehicle detail from the API."
           title="Vehicle Detail"
         />
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading vehicle</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Please wait while the vehicle record is fetched.
-          </CardContent>
-        </Card>
+        <LoadingState
+          description="Fetching the vehicle record from the API."
+          title="Loading vehicle"
+        />
       </PageContainer>
     );
   }
@@ -53,7 +51,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           description="Vehicle detail pages are driven by backend state."
           title={isNotFound ? 'Vehicle not found' : 'Unable to load vehicle'}
         />
-        <EmptyState
+        <ErrorState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
               Back to Vehicles
@@ -72,20 +70,46 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
 
   const vehicle = vehicleQuery.data;
   const title = vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
+  const activeReminders = (remindersQuery.data ?? []).filter(
+    (reminder) => reminder.status !== ReminderStatus.Completed,
+  );
 
   return (
     <PageContainer>
       <PageTitle
         actions={
-          <Link
-            className={buttonVariants({ variant: 'secondary' })}
-            params={{ vehicleId }}
-            to="/vehicles/$vehicleId/maintenance"
-          >
-            View Maintenance
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId/maintenance"
+            >
+              View Maintenance
+            </Link>
+            <Link
+              className={buttonVariants()}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId/maintenance/new"
+            >
+              Add Maintenance
+            </Link>
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId/reminders"
+            >
+              View Reminders
+            </Link>
+            <Link
+              className={buttonVariants()}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId/reminders/new"
+            >
+              Add Reminder
+            </Link>
+          </div>
         }
-        description="Vehicle detail pages should become the entry point for documents, maintenance, reminders, and timeline activity tied to one vehicle."
+        description="Use this page as the operational summary for one vehicle, with service history, reminders, and linked records in one place."
         title={title}
       />
 
@@ -117,6 +141,15 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
               </div>
             ) : (
               <EmptyState
+                action={
+                  <Link
+                    className={buttonVariants()}
+                    params={{ vehicleId }}
+                    to="/vehicles/$vehicleId/maintenance/new"
+                  >
+                    Add first maintenance record
+                  </Link>
+                }
                 description="No maintenance records exist for this vehicle yet."
                 title="No maintenance records yet"
               />
@@ -158,17 +191,23 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                 description="Upcoming reminders could not be loaded right now."
                 title="Unable to load reminders"
               />
-            ) : remindersQuery.data.length ? (
+            ) : activeReminders.length ? (
               <div className="space-y-3">
-                {remindersQuery.data
-                  .filter((reminder) => reminder.status !== ReminderStatus.Completed)
-                  .slice(0, 3)
-                  .map((reminder) => (
-                    <ReminderCard key={reminder.id} reminder={reminder} />
-                  ))}
+                {activeReminders.slice(0, 3).map((reminder) => (
+                  <ReminderCard key={reminder.id} reminder={reminder} />
+                ))}
               </div>
             ) : (
               <EmptyState
+                action={
+                  <Link
+                    className={buttonVariants()}
+                    params={{ vehicleId }}
+                    to="/vehicles/$vehicleId/reminders/new"
+                  >
+                    Add first reminder
+                  </Link>
+                }
                 description="No reminders exist for this vehicle yet."
                 title="No reminders yet"
               />

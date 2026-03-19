@@ -3,9 +3,10 @@ import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
-import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 
 import { ReminderList } from '../components/reminder-list';
@@ -15,6 +16,7 @@ import { groupRemindersByStatus } from '../utils/group-reminders-by-status';
 export function RemindersPage() {
   const remindersQuery = useReminders();
   const vehiclesQuery = useVehicles();
+  const groupedReminders = remindersQuery.data ? groupRemindersByStatus(remindersQuery.data) : null;
 
   const vehicleLabelById = Object.fromEntries(
     (vehiclesQuery.data ?? []).map((vehicle) => [
@@ -31,22 +33,22 @@ export function RemindersPage() {
             Add Reminder From Vehicle
           </Link>
         }
-        description="Review reminders across vehicles, grouped by status so overdue and due-today items stay obvious."
+        description="Review reminders across vehicles with overdue and due-today items separated from the rest."
         title="Reminders"
       />
 
       {remindersQuery.isPending ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading reminders</CardTitle>
-            <CardDescription>Fetching reminder records from the API.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Please wait while the reminder list loads.
-          </CardContent>
-        </Card>
+        <LoadingState
+          description="Fetching reminder records from the API."
+          title="Loading reminders"
+        />
       ) : remindersQuery.isError ? (
-        <EmptyState
+        <ErrorState
+          action={
+            <Button onClick={() => remindersQuery.refetch()} variant="secondary">
+              Retry
+            </Button>
+          }
           description="The reminder list could not be loaded. Make sure the API is running and reachable from the frontend."
           title="Unable to load reminders"
         />
@@ -55,28 +57,28 @@ export function RemindersPage() {
           <ReminderList
             description="Items that need attention immediately."
             emptyMessage="No overdue reminders."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.Overdue]}
+            reminders={groupedReminders?.[ReminderStatus.Overdue] ?? []}
             title="Overdue"
             vehicleLabelById={vehicleLabelById}
           />
           <ReminderList
             description="Items that become due today."
             emptyMessage="No reminders are due today."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.DueToday]}
+            reminders={groupedReminders?.[ReminderStatus.DueToday] ?? []}
             title="Due Today"
             vehicleLabelById={vehicleLabelById}
           />
           <ReminderList
             description="Upcoming reminders that should stay visible."
             emptyMessage="No upcoming reminders."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.Upcoming]}
+            reminders={groupedReminders?.[ReminderStatus.Upcoming] ?? []}
             title="Upcoming"
             vehicleLabelById={vehicleLabelById}
           />
           <ReminderList
             description="Completed reminders kept for reference."
             emptyMessage="No completed reminders yet."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.Completed]}
+            reminders={groupedReminders?.[ReminderStatus.Completed] ?? []}
             title="Completed"
             vehicleLabelById={vehicleLabelById}
           />

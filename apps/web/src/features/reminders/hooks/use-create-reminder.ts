@@ -14,6 +14,9 @@ export function useCreateReminder(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.reminders.all(),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all(),
+      });
       queryClient.setQueryData(queryKeys.reminders.detail(reminder.id), reminder);
     },
   });

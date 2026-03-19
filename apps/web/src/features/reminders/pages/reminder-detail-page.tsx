@@ -3,10 +3,11 @@ import { ReminderStatus } from '@vehicle-vault/shared';
 import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
-import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { InlineError } from '@/components/shared/inline-error';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 
 import { useCompleteReminder } from '../hooks/use-complete-reminder';
@@ -53,14 +54,10 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
     return (
       <PageContainer>
         <PageTitle description="Loading the latest reminder from the API." title="Reminder" />
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading reminder</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Please wait while the reminder is fetched.
-          </CardContent>
-        </Card>
+        <LoadingState
+          description="Fetching the latest reminder from the API."
+          title="Loading reminder"
+        />
       </PageContainer>
     );
   }
@@ -75,7 +72,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
           description="Reminder detail pages are driven by backend state."
           title={isNotFound ? 'Reminder not found' : 'Unable to load reminder'}
         />
-        <EmptyState
+        <ErrorState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/reminders">
               Back to Reminders
@@ -129,11 +126,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
         title={reminder.title}
       />
 
-      {actionError ? (
-        <p className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {actionError}
-        </p>
-      ) : null}
+      {actionError ? <InlineError message={actionError} /> : null}
 
       <ReminderSummaryCard reminder={reminder} />
     </PageContainer>

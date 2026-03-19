@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 
+import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
 import { endpoints } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/query/query-keys';
@@ -7,7 +8,11 @@ import { queryKeys } from '@/lib/query/query-keys';
 import type { DashboardSummary } from '../types/dashboard';
 
 export async function getDashboardSummary() {
-  return apiClient.get<DashboardSummary>(endpoints.dashboard.summary);
+  const response = await apiClient.get<ApiSuccessResponse<DashboardSummary>>(
+    endpoints.dashboard.summary,
+  );
+
+  return response.data;
 }
 
 export function dashboardSummaryQueryOptions() {

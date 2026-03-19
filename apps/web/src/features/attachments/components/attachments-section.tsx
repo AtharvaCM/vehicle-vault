@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { InlineError } from '@/components/shared/inline-error';
+import { LoadingState } from '@/components/shared/loading-state';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 
@@ -55,17 +59,25 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
       </CardHeader>
       <CardContent className="space-y-5">
         <AttachmentUploadForm
-          error={actionError}
+          error={null}
           isUploading={uploadAttachmentsMutation.isPending}
           onUpload={handleUpload}
         />
 
+        {actionError ? <InlineError message={actionError} /> : null}
+
         {attachmentsQuery.isPending ? (
-          <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Loading linked attachments.
-          </p>
+          <LoadingState
+            description="Fetching files linked to this maintenance record."
+            title="Loading attachments"
+          />
         ) : attachmentsQuery.isError ? (
-          <EmptyState
+          <ErrorState
+            action={
+              <Button onClick={() => attachmentsQuery.refetch()} variant="secondary">
+                Retry
+              </Button>
+            }
             description="Attachments could not be loaded right now. Check that the API is running and try again."
             title="Unable to load attachments"
           />
@@ -77,7 +89,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
           />
         ) : (
           <EmptyState
-            description="No receipts or documents are linked to this maintenance record yet."
+            description="No receipts or documents are linked to this maintenance record yet. Use the upload control above to add the first file."
             title="No attachments yet"
           />
         )}

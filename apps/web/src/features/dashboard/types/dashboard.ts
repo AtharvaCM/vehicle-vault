@@ -1,5 +1,7 @@
-export type DashboardSummary = {
-  totalVehicles: number;
-  upcomingReminders: number;
-  overdueTasks: number;
-};
+export type {
+  DashboardMaintenanceSummary,
+  DashboardReminderCounts,
+  DashboardReminderSummary,
+  DashboardSummary,
+  DashboardVehicleSummary,
+} from '@vehicle-vault/shared';

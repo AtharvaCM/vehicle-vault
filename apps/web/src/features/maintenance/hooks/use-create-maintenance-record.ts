@@ -14,6 +14,9 @@ export function useCreateMaintenanceRecord(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.maintenance.list(vehicleId),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all(),
+      });
       queryClient.setQueryData(queryKeys.maintenance.detail(record.id), record);
     },
   });

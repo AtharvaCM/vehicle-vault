@@ -13,6 +13,9 @@ export function useDeleteReminder() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.reminders.all(),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all(),
+      });
     },
   });
 }

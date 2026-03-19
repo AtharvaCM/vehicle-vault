@@ -16,11 +16,17 @@ import type { VehicleRecord } from './types/vehicle-record.type';
 export class VehiclesService {
   private readonly vehicles: VehicleRecord[] = [];
 
+  getAllVehicles() {
+    return [...this.vehicles].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    );
+  }
+
   listVehicles(query: PaginationQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const start = (page - 1) * limit;
-    const data = this.vehicles.slice(start, start + limit);
+    const data = this.getAllVehicles().slice(start, start + limit);
 
     return {
       data,

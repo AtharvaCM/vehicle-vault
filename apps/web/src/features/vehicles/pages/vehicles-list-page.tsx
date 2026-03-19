@@ -2,9 +2,10 @@ import { Link } from '@tanstack/react-router';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
-import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 import { useVehicles } from '../hooks/use-vehicles';
 import { VehicleList } from '../components/vehicle-list';
@@ -20,26 +21,26 @@ export function VehiclesListPage() {
             Add Vehicle
           </Link>
         }
-        description="Use the vehicles feature to keep list, detail, and maintenance concerns grouped around the vehicle domain."
+        description="Manage the vehicles that anchor maintenance history, reminders, and receipts across the product."
         title="Vehicles"
       />
 
       {vehiclesQuery.isPending ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading vehicles</CardTitle>
-            <CardDescription>Fetching vehicle records from the API.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Please wait while the current vehicle list loads.
-          </CardContent>
-        </Card>
+        <LoadingState
+          description="Fetching vehicle records from the API."
+          title="Loading vehicles"
+        />
       ) : vehiclesQuery.isError ? (
-        <EmptyState
+        <ErrorState
           action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles/new">
-              Add vehicle anyway
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => vehiclesQuery.refetch()} variant="secondary">
+                Retry
+              </Button>
+              <Link className={buttonVariants()} to="/vehicles/new">
+                Add Vehicle
+              </Link>
+            </div>
           }
           description="The vehicle list could not be loaded. Make sure the API is running and reachable from the frontend."
           title="Unable to load vehicles"

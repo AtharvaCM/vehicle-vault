@@ -19,23 +19,25 @@ export class MaintenanceService {
 
   constructor(private readonly vehiclesService: VehiclesService) {}
 
+  getAllRecords() {
+    return [...this.records].sort((left, right) => {
+      const serviceDateDifference =
+        new Date(right.serviceDate).getTime() - new Date(left.serviceDate).getTime();
+
+      if (serviceDateDifference !== 0) {
+        return serviceDateDifference;
+      }
+
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    });
+  }
+
   listForVehicle(vehicleId: string, query: PaginationQueryDto) {
     this.vehiclesService.ensureVehicleExists(vehicleId);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    const items = this.records
-      .filter((record) => record.vehicleId === vehicleId)
-      .sort((left, right) => {
-        const serviceDateDifference =
-          new Date(right.serviceDate).getTime() - new Date(left.serviceDate).getTime();
-
-        if (serviceDateDifference !== 0) {
-          return serviceDateDifference;
-        }
-
-        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
-      });
+    const items = this.getAllRecords().filter((record) => record.vehicleId === vehicleId);
     const start = (page - 1) * limit;
 
     return {

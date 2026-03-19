@@ -21,15 +21,18 @@ export class AttachmentsService {
     ensureUploadsDirectory();
   }
 
-  listByMaintenanceRecord(recordId: string) {
-    this.maintenanceService.getRecordById(recordId);
-
-    return this.attachments
-      .filter((item) => item.maintenanceRecordId === recordId)
+  listAllAttachments() {
+    return [...this.attachments]
       .sort(
         (left, right) => new Date(right.uploadedAt).getTime() - new Date(left.uploadedAt).getTime(),
       )
       .map((item) => this.toPublicAttachment(item));
+  }
+
+  listByMaintenanceRecord(recordId: string) {
+    this.maintenanceService.getRecordById(recordId);
+
+    return this.listAllAttachments().filter((item) => item.maintenanceRecordId === recordId);
   }
 
   getAttachmentById(attachmentId: string) {

@@ -13,6 +13,9 @@ export function useUploadAttachments(recordId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.attachments.byRecord(recordId),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all(),
+      });
     },
   });
 }

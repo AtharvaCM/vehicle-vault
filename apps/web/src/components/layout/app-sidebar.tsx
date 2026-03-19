@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
 
+import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils/cn';
 
 import { appNavigation } from './app-navigation';
@@ -35,6 +37,26 @@ export function AppSidebar() {
           </Link>
         ))}
       </nav>
+
+      <div className="border-t border-slate-200 p-4">
+        <Card className="bg-slate-50">
+          <CardHeader>
+            <CardTitle>Quick actions</CardTitle>
+            <CardDescription>Jump into the next common workflow.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            <Link className={buttonVariants({ size: 'sm' })} to="/vehicles/new">
+              Add Vehicle
+            </Link>
+            <Link className={buttonVariants({ size: 'sm', variant: 'secondary' })} to="/vehicles">
+              Log Maintenance
+            </Link>
+            <Link className={buttonVariants({ size: 'sm', variant: 'secondary' })} to="/vehicles">
+              Add Reminder
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </aside>
   );
 }

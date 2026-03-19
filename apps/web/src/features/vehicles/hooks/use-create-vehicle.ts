@@ -13,6 +13,9 @@ export function useCreateVehicle() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.vehicles.all(),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all(),
+      });
       queryClient.setQueryData(queryKeys.vehicles.detail(vehicle.id), vehicle);
     },
   });

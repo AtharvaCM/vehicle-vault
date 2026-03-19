@@ -8,6 +8,7 @@ import { appNavigation } from './app-navigation';
 
 const sectionTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/maintenance-records': 'Maintenance',
   '/vehicles': 'Vehicles',
   '/reminders': 'Reminders',
   '/settings': 'Settings',

@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router';
 
 import { PageContainer } from '@/components/layout/page-container';
-import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 
@@ -26,14 +26,10 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
           description="Loading the latest maintenance record from the API."
           title="Maintenance Record"
         />
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading maintenance record</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Please wait while the maintenance record is fetched.
-          </CardContent>
-        </Card>
+        <LoadingState
+          description="Fetching the latest maintenance record from the API."
+          title="Loading maintenance record"
+        />
       </PageContainer>
     );
   }
@@ -47,7 +43,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
           description="Maintenance detail pages are driven by backend state."
           title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
         />
-        <EmptyState
+        <ErrorState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
               Back to Vehicles

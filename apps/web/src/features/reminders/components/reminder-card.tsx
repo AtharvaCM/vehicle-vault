@@ -1,7 +1,9 @@
 import { Link } from '@tanstack/react-router';
+import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils/cn';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { Reminder } from '../types/reminder';
@@ -14,9 +16,18 @@ type ReminderCardProps = {
 };
 
 export function ReminderCard({ reminder, vehicleLabel }: ReminderCardProps) {
+  const urgencyStyles =
+    reminder.status === ReminderStatus.Overdue
+      ? 'border-rose-200 bg-rose-50/40'
+      : reminder.status === ReminderStatus.DueToday
+        ? 'border-amber-200 bg-amber-50/40'
+        : reminder.status === ReminderStatus.Completed
+          ? 'border-slate-200 bg-slate-50/70'
+          : 'border-slate-200 bg-white';
+
   return (
     <Link params={{ reminderId: reminder.id }} to="/reminders/$reminderId">
-      <Card className="transition-colors hover:border-slate-300">
+      <Card className={cn('transition-colors hover:border-slate-300', urgencyStyles)}>
         <CardContent className="grid gap-4 p-4 md:grid-cols-[1.4fr_1fr_auto] md:items-center">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">

@@ -2,8 +2,10 @@ import { Link } from '@tanstack/react-router';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
@@ -74,17 +76,17 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         {maintenanceQuery.isPending ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Loading maintenance</CardTitle>
-              <CardDescription>Fetching maintenance records for this vehicle.</CardDescription>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-600">
-              Please wait while the maintenance history loads.
-            </CardContent>
-          </Card>
+          <LoadingState
+            description="Fetching maintenance records for this vehicle."
+            title="Loading maintenance"
+          />
         ) : maintenanceQuery.isError ? (
-          <EmptyState
+          <ErrorState
+            action={
+              <Button onClick={() => maintenanceQuery.refetch()} variant="secondary">
+                Retry
+              </Button>
+            }
             description="The maintenance history could not be loaded. Check that the API is running and try again."
             title="Unable to load maintenance records"
           />
@@ -108,20 +110,19 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
 
         <Card>
           <CardHeader>
-            <CardTitle>What belongs here</CardTitle>
-            <CardDescription>Scope this page to actual service history only.</CardDescription>
+            <CardTitle>Keep service history complete</CardTitle>
+            <CardDescription>
+              Use this view as the long-form history for one vehicle.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
             <p>
-              Use each record to capture one service event tied to a vehicle and odometer reading.
+              Capture each completed service event with the odometer, cost, and workshop details.
             </p>
             <p>
-              Keep receipts and attachments for a later slice so the form and list stay focused.
+              Open a record to manage receipts and documents for that specific maintenance event.
             </p>
-            <p>
-              Reminder logic can layer on later from recorded next-due fields without changing this
-              history model.
-            </p>
+            <p>Next-due fields stay useful here because they can inform reminder creation later.</p>
           </CardContent>
         </Card>
       </div>
