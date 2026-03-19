@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # Vite
 apps/web/.vite
+
+# Temporary local uploads
+apps/api/uploads

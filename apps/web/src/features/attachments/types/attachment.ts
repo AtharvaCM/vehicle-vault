@@ -1,6 +1,3 @@
-export type AttachmentSummary = {
-  id: string;
-  fileName: string;
-  uploadedAt: string;
-  contentType: string;
-};
+import type { Attachment, AttachmentKind, CreateAttachmentResponse } from '@vehicle-vault/shared';
+
+export type { Attachment, AttachmentKind, CreateAttachmentResponse };

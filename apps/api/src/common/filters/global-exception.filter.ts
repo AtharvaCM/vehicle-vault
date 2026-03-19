@@ -80,6 +80,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       };
     }
 
+    if (exception instanceof Error && exception.name === 'MulterError') {
+      const multerException = exception as Error & { code?: string };
+      const message =
+        multerException.code === 'LIMIT_FILE_SIZE'
+          ? 'Each file must be 5 MB or smaller.'
+          : exception.message;
+
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        error: {
+          code: 'BAD_REQUEST',
+          message,
+        },
+        stack: exception.stack,
+      };
+    }
+
     const fallbackMessage =
       exception instanceof Error ? exception.message : 'An unexpected error occurred';
 

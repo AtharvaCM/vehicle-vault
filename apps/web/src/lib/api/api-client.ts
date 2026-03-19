@@ -33,6 +33,10 @@ type ApiRequestOptions<TBody = unknown> = {
   signal?: AbortSignal;
 };
 
+function isFormData(value: unknown): value is FormData {
+  return typeof FormData !== 'undefined' && value instanceof FormData;
+}
+
 function buildUrl(path: string, query?: QueryParams) {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const { apiBaseUrl } = getEnv();
@@ -78,10 +82,10 @@ async function request<TResponse, TBody = unknown>({
     signal,
     headers: {
       Accept: 'application/json',
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(body && !isFormData(body) ? { 'Content-Type': 'application/json' } : {}),
       ...headers,
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? (isFormData(body) ? body : JSON.stringify(body)) : undefined,
   });
 
   const payload = await parseResponse<unknown>(response);
@@ -99,6 +103,7 @@ async function request<TResponse, TBody = unknown>({
 
 export const apiClient = {
   request,
+  buildUrl,
   get: <TResponse>(path: string, options?: Omit<ApiRequestOptions, 'method' | 'path'>) =>
     request<TResponse>({ ...options, method: 'GET', path }),
   post: <TResponse, TBody>(

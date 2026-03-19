@@ -1,3 +1,4 @@
+export * from './attachment-kind.enum';
 export * from './fuel-type.enum';
 export * from './maintenance-category.enum';
 export * from './reminder-status.enum';

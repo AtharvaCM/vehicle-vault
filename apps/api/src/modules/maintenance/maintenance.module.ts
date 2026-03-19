@@ -8,5 +8,6 @@ import { MaintenanceService } from './maintenance.service';
   imports: [VehiclesModule],
   controllers: [MaintenanceController],
   providers: [MaintenanceService],
+  exports: [MaintenanceService],
 })
 export class MaintenanceModule {}

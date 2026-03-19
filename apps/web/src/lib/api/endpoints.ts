@@ -14,6 +14,13 @@ export const endpoints = {
     update: (recordId: string) => `/maintenance-records/${recordId}`,
     delete: (recordId: string) => `/maintenance-records/${recordId}`,
   },
+  attachments: {
+    byRecord: (recordId: string) => `/maintenance-records/${recordId}/attachments`,
+    upload: (recordId: string) => `/maintenance-records/${recordId}/attachments`,
+    detail: (attachmentId: string) => `/attachments/${attachmentId}`,
+    file: (attachmentId: string) => `/attachments/${attachmentId}/file`,
+    delete: (attachmentId: string) => `/attachments/${attachmentId}`,
+  },
   reminders: {
     list: '/reminders',
     byVehicle: (vehicleId: string) => `/vehicles/${vehicleId}/reminders`,

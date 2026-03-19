@@ -13,6 +13,12 @@ export const queryKeys = {
     list: (vehicleId: string) => [...queryKeys.maintenance.all(), 'list', vehicleId] as const,
     detail: (recordId: string) => [...queryKeys.maintenance.all(), 'detail', recordId] as const,
   },
+  attachments: {
+    all: () => ['attachments'] as const,
+    byRecord: (recordId: string) => [...queryKeys.attachments.all(), 'record', recordId] as const,
+    detail: (attachmentId: string) =>
+      [...queryKeys.attachments.all(), 'detail', attachmentId] as const,
+  },
   reminders: {
     all: () => ['reminders'] as const,
     list: () => [...queryKeys.reminders.all(), 'list'] as const,

@@ -6,6 +6,7 @@ import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
+import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 
 import { MaintenanceSummaryCard } from '../components/maintenance-summary-card';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
@@ -81,7 +82,10 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         title={formatMaintenanceCategory(record.category)}
       />
 
-      <MaintenanceSummaryCard record={record} />
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <MaintenanceSummaryCard record={record} />
+        <AttachmentsSection recordId={record.id} />
+      </div>
     </PageContainer>
   );
 }
