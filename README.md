@@ -69,7 +69,7 @@ pnpm db:studio
 The public backend base URL for the frontend should be:
 
 ```bash
-https://api.vehiclevault.middle-earth.in/api
+https://vehiclevault.middle-earth.in/api
 ```
 
 For your Portainer-based home server deployment:
@@ -87,6 +87,28 @@ Recommended production env file reference:
 The API container runs `prisma migrate deploy` on startup before launching Nest, so checked-in schema changes are applied automatically.
 
 If you use the GHCR path, make sure the published package `ghcr.io/atharvacm/vehicle-vault-api` is readable by your Portainer host. If GHCR marks it private initially, switch the package visibility to public in GitHub Packages before deploying the stack.
+
+## Frontend deploy (Vercel)
+
+For production, the web app should use:
+
+```bash
+VITE_API_BASE_URL=https://vehiclevault.middle-earth.in/api
+```
+
+Useful frontend env files:
+
+- `apps/web/.env.example` for local development
+- `apps/web/.env.production.example` for production/Vercel
+
+Recommended Vercel project settings for this pnpm workspace:
+
+- Root directory: repository root
+- Install command: `pnpm install --frozen-lockfile`
+- Build command: `pnpm --filter @vehicle-vault/web build`
+- Output directory: `apps/web/dist`
+
+If you later attach a custom frontend domain, set `FRONTEND_ORIGIN` in the API deployment to that browser origin so authenticated requests pass CORS cleanly.
 
 ## Scripts
 

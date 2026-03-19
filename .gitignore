@@ -10,6 +10,7 @@ coverage
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # Logs
 *.log
@@ -25,3 +26,8 @@ apps/web/.vite
 
 # Temporary local uploads
 apps/api/uploads
+.vercel
+
+# Local Supabase CLI state
+apps/api/supabase/.temp
+apps/api/supabase/migrations/*_remote_schema.sql

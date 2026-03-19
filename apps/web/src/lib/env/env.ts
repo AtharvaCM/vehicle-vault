@@ -9,10 +9,12 @@ export function getEnv(): AppEnv {
     return cachedEnv;
   }
 
+  const defaultApiBaseUrl = import.meta.env.PROD
+    ? 'https://vehiclevault.middle-earth.in/api'
+    : 'http://localhost:3001/api';
+
   cachedEnv = {
-    apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api')
-      .trim()
-      .replace(/\/$/, ''),
+    apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl).trim().replace(/\/$/, ''),
   };
 
   return cachedEnv;

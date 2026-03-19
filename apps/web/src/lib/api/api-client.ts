@@ -46,9 +46,10 @@ function isFormData(value: unknown): value is FormData {
 }
 
 function buildUrl(path: string, query?: QueryParams) {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const normalizedPath = path.replace(/^\/+/, '');
   const { apiBaseUrl } = getEnv();
-  const url = new URL(normalizedPath, apiBaseUrl || window.location.origin);
+  const baseUrl = `${apiBaseUrl || window.location.origin}/`;
+  const url = new URL(normalizedPath, baseUrl);
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
