@@ -33,6 +33,14 @@ type ApiRequestOptions<TBody = unknown> = {
   signal?: AbortSignal;
 };
 
+type ApiClientConfiguration = {
+  getAccessToken?: () => string | null;
+  onUnauthorized?: () => void;
+};
+
+let accessTokenResolver: (() => string | null) | null = null;
+let unauthorizedHandler: (() => void) | null = null;
+
 function isFormData(value: unknown): value is FormData {
   return typeof FormData !== 'undefined' && value instanceof FormData;
 }
@@ -77,12 +85,14 @@ async function request<TResponse, TBody = unknown>({
   query,
   signal,
 }: ApiRequestOptions<TBody>): Promise<TResponse> {
+  const accessToken = accessTokenResolver?.();
   const response = await fetch(buildUrl(path, query), {
     method,
     signal,
     headers: {
       Accept: 'application/json',
       ...(body && !isFormData(body) ? { 'Content-Type': 'application/json' } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...headers,
     },
     body: body ? (isFormData(body) ? body : JSON.stringify(body)) : undefined,
@@ -91,6 +101,10 @@ async function request<TResponse, TBody = unknown>({
   const payload = await parseResponse<unknown>(response);
 
   if (!response.ok) {
+    if (response.status === 401) {
+      unauthorizedHandler?.();
+    }
+
     throw new ApiError(
       `Request to ${path} failed with status ${response.status}`,
       response.status,
@@ -99,6 +113,14 @@ async function request<TResponse, TBody = unknown>({
   }
 
   return payload as TResponse;
+}
+
+export function configureApiClient({
+  getAccessToken,
+  onUnauthorized,
+}: ApiClientConfiguration = {}) {
+  accessTokenResolver = getAccessToken ?? null;
+  unauthorizedHandler = onUnauthorized ?? null;
 }
 
 export const apiClient = {

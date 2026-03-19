@@ -114,6 +114,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     switch (status) {
       case HttpStatus.BAD_REQUEST:
         return 'BAD_REQUEST';
+      case HttpStatus.CONFLICT:
+        return 'CONFLICT';
       case HttpStatus.NOT_FOUND:
         return 'NOT_FOUND';
       case HttpStatus.UNAUTHORIZED:

@@ -1,5 +1,5 @@
-export type AuthStatus = {
-  status: 'placeholder';
-  message: string;
-  strategies: string[];
+export type JwtPayload = {
+  sub: string;
+  email: string;
+  name: string;
 };

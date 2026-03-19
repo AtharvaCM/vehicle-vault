@@ -1,12 +1,15 @@
 import { PageContainer } from '@/components/layout/page-container';
 import { PageTitle } from '@/components/shared/page-title';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 
 export function SettingsPage() {
+  const auth = useAuth();
+
   return (
     <PageContainer>
       <PageTitle
-        description="Keep settings lightweight for now and add grouped preference sections only when concrete user workflows need them."
+        description="Keep account details visible and leave deeper preferences lightweight until concrete workflows demand them."
         title="Settings"
       />
 
@@ -14,11 +17,17 @@ export function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
-            <CardDescription>Reserved for profile and organization settings.</CardDescription>
+            <CardDescription>Your current authenticated workspace identity.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Primary user details and ownership preferences will live here.</p>
-            <p>Authentication is intentionally not connected yet.</p>
+            <div>
+              <p className="font-semibold text-slate-900">{auth.user?.name}</p>
+              <p>{auth.user?.email}</p>
+            </div>
+            <p>
+              Vehicles, maintenance records, reminders, and attachments are now scoped to this
+              account.
+            </p>
           </CardContent>
         </Card>
 

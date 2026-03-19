@@ -10,8 +10,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import type { AuthUser } from '@vehicle-vault/shared';
 import { createReadStream } from 'node:fs';
 
+import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
 import {
   ATTACHMENTS_MAX_FILES,
@@ -28,8 +30,13 @@ export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}
 
   @Get('maintenance-records/:recordId/attachments')
-  async listAttachments(@Param() params: MaintenanceRecordIdParamDto) {
-    return successResponse(await this.attachmentsService.listByMaintenanceRecord(params.recordId));
+  async listAttachments(
+    @Param() params: MaintenanceRecordIdParamDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.listByMaintenanceRecord(user.id, params.recordId),
+    );
   }
 
   @Post('maintenance-records/:recordId/attachments')
@@ -44,24 +51,31 @@ export class AttachmentsController {
   async uploadAttachments(
     @Param() params: MaintenanceRecordIdParamDto,
     @UploadedFiles() files: AttachmentUploadFile[],
+    @CurrentUser() user: AuthUser,
   ) {
     return successResponse(
-      await this.attachmentsService.uploadAttachments(params.recordId, files ?? []),
+      await this.attachmentsService.uploadAttachments(user.id, params.recordId, files ?? []),
     );
   }
 
   @Get('attachments/:attachmentId')
-  async getAttachment(@Param() params: AttachmentIdParamDto) {
-    return successResponse(await this.attachmentsService.getAttachmentById(params.attachmentId));
+  async getAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
+    return successResponse(
+      await this.attachmentsService.getAttachmentById(user.id, params.attachmentId),
+    );
   }
 
   @Get('attachments/:attachmentId/file')
   async getAttachmentFile(
     @Param() params: AttachmentIdParamDto,
+    @CurrentUser() user: AuthUser,
     @Res({ passthrough: true })
     response: { setHeader: (name: string, value: string) => void },
   ) {
-    const attachment = await this.attachmentsService.getAttachmentFile(params.attachmentId);
+    const attachment = await this.attachmentsService.getAttachmentFile(
+      user.id,
+      params.attachmentId,
+    );
 
     response.setHeader('Content-Type', attachment.mimeType);
     response.setHeader(
@@ -73,7 +87,9 @@ export class AttachmentsController {
   }
 
   @Delete('attachments/:attachmentId')
-  async deleteAttachment(@Param() params: AttachmentIdParamDto) {
-    return successResponse(await this.attachmentsService.deleteAttachment(params.attachmentId));
+  async deleteAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
+    return successResponse(
+      await this.attachmentsService.deleteAttachment(user.id, params.attachmentId),
+    );
   }
 }

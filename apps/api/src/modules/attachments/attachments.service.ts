@@ -27,8 +27,15 @@ export class AttachmentsService {
     ensureUploadsDirectory();
   }
 
-  async listAllAttachments() {
+  async listAllAttachments(userId: string) {
     const attachments = await this.prisma.attachment.findMany({
+      where: {
+        maintenanceRecord: {
+          vehicle: {
+            userId,
+          },
+        },
+      },
       orderBy: {
         uploadedAt: 'desc',
       },
@@ -37,8 +44,8 @@ export class AttachmentsService {
     return attachments.map((attachment) => this.toAttachment(attachment));
   }
 
-  async listByMaintenanceRecord(recordId: string) {
-    await this.maintenanceService.getRecordById(recordId);
+  async listByMaintenanceRecord(userId: string, recordId: string) {
+    await this.maintenanceService.getRecordById(userId, recordId);
     const attachments = await this.prisma.attachment.findMany({
       where: {
         maintenanceRecordId: recordId,
@@ -51,14 +58,14 @@ export class AttachmentsService {
     return attachments.map((attachment) => this.toAttachment(attachment));
   }
 
-  async getAttachmentById(attachmentId: string) {
-    const attachment = await this.getStoredAttachmentById(attachmentId);
+  async getAttachmentById(userId: string, attachmentId: string) {
+    const attachment = await this.getStoredAttachmentById(userId, attachmentId);
 
     return this.toAttachment(attachment);
   }
 
-  async getAttachmentFile(attachmentId: string) {
-    const attachment = await this.getStoredAttachmentById(attachmentId);
+  async getAttachmentFile(userId: string, attachmentId: string) {
+    const attachment = await this.getStoredAttachmentById(userId, attachmentId);
     const filePath = getAttachmentAbsolutePath(attachment.fileName);
 
     try {
@@ -73,8 +80,8 @@ export class AttachmentsService {
     };
   }
 
-  async uploadAttachments(recordId: string, files: AttachmentUploadFile[]) {
-    await this.maintenanceService.getRecordById(recordId);
+  async uploadAttachments(userId: string, recordId: string, files: AttachmentUploadFile[]) {
+    await this.maintenanceService.getRecordById(userId, recordId);
 
     if (!files.length) {
       throw new BadRequestException('Add at least one attachment to upload.');
@@ -139,8 +146,8 @@ export class AttachmentsService {
     }
   }
 
-  async deleteAttachment(attachmentId: string) {
-    const attachment = await this.getStoredAttachmentById(attachmentId);
+  async deleteAttachment(userId: string, attachmentId: string) {
+    const attachment = await this.getStoredAttachmentById(userId, attachmentId);
 
     await this.prisma.attachment.delete({
       where: {
@@ -155,10 +162,15 @@ export class AttachmentsService {
     };
   }
 
-  private async getStoredAttachmentById(attachmentId: string) {
-    const attachment = await this.prisma.attachment.findUnique({
+  private async getStoredAttachmentById(userId: string, attachmentId: string) {
+    const attachment = await this.prisma.attachment.findFirst({
       where: {
         id: attachmentId,
+        maintenanceRecord: {
+          vehicle: {
+            userId,
+          },
+        },
       },
     });
 

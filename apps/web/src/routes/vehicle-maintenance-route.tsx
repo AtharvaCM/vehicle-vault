@@ -2,7 +2,7 @@ import { createRoute } from '@tanstack/react-router';
 
 import { VehicleMaintenanceListPage } from '@/features/maintenance/pages/vehicle-maintenance-list-page';
 
-import { rootRoute } from './root-route';
+import { appRoute } from './app-route';
 
 function VehicleMaintenanceRouteComponent() {
   const { vehicleId } = vehicleMaintenanceRoute.useParams();
@@ -11,7 +11,7 @@ function VehicleMaintenanceRouteComponent() {
 }
 
 export const vehicleMaintenanceRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'vehicles/$vehicleId/maintenance',
   component: VehicleMaintenanceRouteComponent,
 });

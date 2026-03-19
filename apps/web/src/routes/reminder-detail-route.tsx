@@ -2,7 +2,7 @@ import { createRoute } from '@tanstack/react-router';
 
 import { ReminderDetailPage } from '@/features/reminders/pages/reminder-detail-page';
 
-import { rootRoute } from './root-route';
+import { appRoute } from './app-route';
 
 function ReminderDetailRouteComponent() {
   const { reminderId } = reminderDetailRoute.useParams();
@@ -11,7 +11,7 @@ function ReminderDetailRouteComponent() {
 }
 
 export const reminderDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'reminders/$reminderId',
   component: ReminderDetailRouteComponent,
 });

@@ -2,7 +2,7 @@ import { createRoute } from '@tanstack/react-router';
 
 import { MaintenanceRecordDetailPage } from '@/features/maintenance/pages/maintenance-record-detail-page';
 
-import { rootRoute } from './root-route';
+import { appRoute } from './app-route';
 
 function MaintenanceRecordDetailRouteComponent() {
   const { recordId } = maintenanceRecordDetailRoute.useParams();
@@ -11,7 +11,7 @@ function MaintenanceRecordDetailRouteComponent() {
 }
 
 export const maintenanceRecordDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'maintenance-records/$recordId',
   component: MaintenanceRecordDetailRouteComponent,
 });

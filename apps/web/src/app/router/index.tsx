@@ -2,11 +2,14 @@ import { createRouter } from '@tanstack/react-router';
 
 import { queryClient } from '@/lib/query/query-client';
 import {
+  appRoute,
   dashboardRoute,
   indexRoute,
+  loginRoute,
   maintenanceRecordDetailRoute,
   reminderDetailRoute,
   remindersRoute,
+  registerRoute,
   rootRoute,
   settingsRoute,
   vehicleDetailRoute,
@@ -18,8 +21,7 @@ import {
   vehiclesRoute,
 } from '@/routes';
 
-const routeTree = rootRoute.addChildren([
-  indexRoute,
+const protectedRouteTree = appRoute.addChildren([
   dashboardRoute,
   vehiclesRoute,
   vehiclesNewRoute,
@@ -34,9 +36,17 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
 ]);
 
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  loginRoute,
+  registerRoute,
+  protectedRouteTree,
+]);
+
 export const router = createRouter({
   routeTree,
   context: {
+    auth: undefined!,
     queryClient,
   },
   defaultPreload: 'intent',

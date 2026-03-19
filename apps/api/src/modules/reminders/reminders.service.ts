@@ -39,8 +39,13 @@ export class RemindersService {
     private readonly vehiclesService: VehiclesService,
   ) {}
 
-  async getAllReminders() {
+  async getAllReminders(userId: string) {
     const reminders = await this.prisma.reminder.findMany({
+      where: {
+        vehicle: {
+          userId,
+        },
+      },
       include: {
         vehicle: {
           select: {
@@ -58,31 +63,47 @@ export class RemindersService {
       .sort((left, right) => this.compareReminders(left, right));
   }
 
-  async listVehicleReminders(vehicleId: string, query: ListRemindersQueryDto) {
-    await this.vehiclesService.ensureVehicleExists(vehicleId);
+  async listVehicleReminders(userId: string, vehicleId: string, query: ListRemindersQueryDto) {
+    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
-    return this.getPaginatedReminders({ vehicleId }, query, vehicleId);
+    return this.getPaginatedReminders(
+      {
+        vehicleId,
+        vehicle: {
+          userId,
+        },
+      },
+      query,
+      vehicleId,
+    );
   }
 
-  async listReminders(query: ListRemindersQueryDto) {
+  async listReminders(userId: string, query: ListRemindersQueryDto) {
     return this.getPaginatedReminders(
       query.vehicleId
         ? {
             vehicleId: query.vehicleId,
+            vehicle: {
+              userId,
+            },
           }
-        : undefined,
+        : {
+            vehicle: {
+              userId,
+            },
+          },
       query,
     );
   }
 
-  async getReminderById(reminderId: string) {
-    const reminder = await this.getStoredReminderById(reminderId);
+  async getReminderById(userId: string, reminderId: string) {
+    const reminder = await this.getStoredReminderById(userId, reminderId);
 
     return this.toReminder(reminder);
   }
 
-  async createReminder(vehicleId: string, payload: CreateReminderDto) {
-    const vehicle = await this.vehiclesService.ensureVehicleExists(vehicleId);
+  async createReminder(userId: string, vehicleId: string, payload: CreateReminderDto) {
+    const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
     const input = this.validateCreateReminderInput({
       ...payload,
       vehicleId,
@@ -105,11 +126,11 @@ export class RemindersService {
       },
     });
 
-    return this.getReminderById(reminder.id);
+    return this.getReminderById(userId, reminder.id);
   }
 
-  async updateReminder(reminderId: string, payload: UpdateReminderDto) {
-    const reminder = await this.getStoredReminderById(reminderId);
+  async updateReminder(userId: string, reminderId: string, payload: UpdateReminderDto) {
+    const reminder = await this.getStoredReminderById(userId, reminderId);
     const input = this.validateUpdateReminderInput(payload);
     const dueDate = input.dueDate !== undefined ? input.dueDate : reminder.dueDate?.toISOString();
     const dueOdometer =
@@ -137,10 +158,11 @@ export class RemindersService {
       },
     });
 
-    return this.getReminderById(reminderId);
+    return this.getReminderById(userId, reminderId);
   }
 
-  async completeReminder(reminderId: string) {
+  async completeReminder(userId: string, reminderId: string) {
+    await this.getStoredReminderById(userId, reminderId);
     const now = new Date();
 
     await this.prisma.reminder.update({
@@ -153,11 +175,11 @@ export class RemindersService {
       },
     });
 
-    return this.getReminderById(reminderId);
+    return this.getReminderById(userId, reminderId);
   }
 
-  async deleteReminder(reminderId: string) {
-    await this.getReminderById(reminderId);
+  async deleteReminder(userId: string, reminderId: string) {
+    await this.getReminderById(userId, reminderId);
     await this.prisma.reminder.delete({
       where: {
         id: reminderId,
@@ -208,10 +230,13 @@ export class RemindersService {
     };
   }
 
-  private async getStoredReminderById(reminderId: string) {
-    const reminder = await this.prisma.reminder.findUnique({
+  private async getStoredReminderById(userId: string, reminderId: string) {
+    const reminder = await this.prisma.reminder.findFirst({
       where: {
         id: reminderId,
+        vehicle: {
+          userId,
+        },
       },
       include: {
         vehicle: {

@@ -2,10 +2,10 @@ import { createRoute } from '@tanstack/react-router';
 
 import { VehicleCreatePage } from '@/features/vehicles/pages/vehicle-create-page';
 
-import { rootRoute } from './root-route';
+import { appRoute } from './app-route';
 
 export const vehiclesNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'vehicles/new',
   component: VehicleCreatePage,
 });

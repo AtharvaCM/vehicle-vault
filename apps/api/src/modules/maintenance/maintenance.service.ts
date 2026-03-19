@@ -23,16 +23,21 @@ export class MaintenanceService {
     private readonly vehiclesService: VehiclesService,
   ) {}
 
-  async getAllRecords() {
+  async getAllRecords(userId: string) {
     const records = await this.prisma.maintenanceRecord.findMany({
+      where: {
+        vehicle: {
+          userId,
+        },
+      },
       orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
     });
 
     return records.map((record) => this.toMaintenanceRecord(record));
   }
 
-  async listForVehicle(vehicleId: string, query: PaginationQueryDto) {
-    await this.vehiclesService.ensureVehicleExists(vehicleId);
+  async listForVehicle(userId: string, vehicleId: string, query: PaginationQueryDto) {
+    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -64,22 +69,12 @@ export class MaintenanceService {
     };
   }
 
-  async getRecordById(recordId: string) {
-    const record = await this.prisma.maintenanceRecord.findUnique({
-      where: {
-        id: recordId,
-      },
-    });
-
-    if (!record) {
-      throw new NotFoundException(`Maintenance record ${recordId} was not found`);
-    }
-
-    return this.toMaintenanceRecord(record);
+  async getRecordById(userId: string, recordId: string) {
+    return this.toMaintenanceRecord(await this.getOwnedMaintenanceRecord(userId, recordId));
   }
 
-  async createForVehicle(vehicleId: string, payload: CreateMaintenanceRecordDto) {
-    await this.vehiclesService.ensureVehicleExists(vehicleId);
+  async createForVehicle(userId: string, vehicleId: string, payload: CreateMaintenanceRecordDto) {
+    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
     const input = this.validateCreateMaintenanceInput({
       ...payload,
@@ -92,8 +87,8 @@ export class MaintenanceService {
     return this.toMaintenanceRecord(record);
   }
 
-  async updateRecord(recordId: string, payload: UpdateMaintenanceRecordDto) {
-    await this.getRecordById(recordId);
+  async updateRecord(userId: string, recordId: string, payload: UpdateMaintenanceRecordDto) {
+    await this.getOwnedMaintenanceRecord(userId, recordId);
     const input = this.validateUpdateMaintenanceInput(payload);
     const record = await this.prisma.maintenanceRecord.update({
       where: {
@@ -105,10 +100,13 @@ export class MaintenanceService {
     return this.toMaintenanceRecord(record);
   }
 
-  async deleteRecord(recordId: string) {
-    const record = await this.prisma.maintenanceRecord.findUnique({
+  async deleteRecord(userId: string, recordId: string) {
+    const record = await this.prisma.maintenanceRecord.findFirst({
       where: {
         id: recordId,
+        vehicle: {
+          userId,
+        },
       },
       include: {
         attachments: {
@@ -137,6 +135,23 @@ export class MaintenanceService {
       id: record.id,
       deleted: true,
     };
+  }
+
+  private async getOwnedMaintenanceRecord(userId: string, recordId: string) {
+    const record = await this.prisma.maintenanceRecord.findFirst({
+      where: {
+        id: recordId,
+        vehicle: {
+          userId,
+        },
+      },
+    });
+
+    if (!record) {
+      throw new NotFoundException(`Maintenance record ${recordId} was not found`);
+    }
+
+    return record;
   }
 
   private validateCreateMaintenanceInput(

@@ -5,7 +5,7 @@ import { rootRoute } from './root-route';
 export const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  beforeLoad: () => {
-    throw redirect({ to: '/dashboard' });
+  beforeLoad: ({ context }) => {
+    throw redirect({ to: context.auth.isAuthenticated ? '/dashboard' : '/login' });
   },
 });

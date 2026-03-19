@@ -17,12 +17,12 @@ export class DashboardService {
     private readonly attachmentsService: AttachmentsService,
   ) {}
 
-  async getSummary(): Promise<DashboardSummary> {
+  async getSummary(userId: string): Promise<DashboardSummary> {
     const [vehicles, maintenanceRecords, reminders, attachments] = await Promise.all([
-      this.vehiclesService.getAllVehicles(),
-      this.maintenanceService.getAllRecords(),
-      this.remindersService.getAllReminders(),
-      this.attachmentsService.listAllAttachments(),
+      this.vehiclesService.getAllVehicles(userId),
+      this.maintenanceService.getAllRecords(userId),
+      this.remindersService.getAllReminders(userId),
+      this.attachmentsService.listAllAttachments(userId),
     ]);
 
     const vehicleLabelById = Object.fromEntries(

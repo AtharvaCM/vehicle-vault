@@ -21,6 +21,7 @@ vehicle-vault/
 pnpm install
 cp apps/api/.env.example apps/api/.env
 pnpm db:generate
+pnpm db:migrate
 pnpm build
 pnpm dev
 ```
@@ -32,14 +33,16 @@ pnpm dev:web
 pnpm dev:api
 ```
 
-## PostgreSQL setup
+## PostgreSQL and auth setup
 
-The API now uses Prisma with PostgreSQL for vehicles, maintenance records, reminders, and attachment metadata.
+The API now uses Prisma with PostgreSQL for users, vehicles, maintenance records, reminders, and attachment metadata. Authentication uses JWT access tokens and bcrypt password hashing.
 
 Required backend environment variable:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public
+JWT_SECRET=vehicle-vault-dev-secret
+JWT_EXPIRES_IN=7d
 ```
 
 Common local database workflow:
@@ -49,6 +52,8 @@ pnpm db:generate
 pnpm db:migrate
 pnpm dev:api
 ```
+
+If you already have a local database from the pre-auth build, reset it or point `DATABASE_URL` at a fresh database before running the new migration. Vehicles now require a user owner, so older auth-less rows do not migrate cleanly without a reset.
 
 Useful Prisma commands:
 
@@ -78,4 +83,6 @@ pnpm db:studio
 - Frontend server state is prepared with TanStack Query.
 - Tailwind CSS is configured in the web app.
 - The API uses Prisma + PostgreSQL, while uploaded receipt files still stay on local disk for now.
-- Authentication, background jobs, cloud storage, and notification delivery are intentionally deferred.
+- Auth is email/password plus JWT access token only for MVP. There is no refresh-token, password-reset, email-verification, or OAuth flow yet.
+- Vehicles own the rest of the data model. Maintenance records, reminders, dashboard summary, and attachments are all scoped through the authenticated user's vehicles.
+- Background jobs, cloud storage, OCR, and notification delivery are intentionally deferred.

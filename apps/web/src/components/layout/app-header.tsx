@@ -1,8 +1,10 @@
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 
 import { APP_NAME } from '@vehicle-vault/shared';
 
+import { useAuth } from '@/features/auth/hooks/use-auth';
 import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { appNavigation } from './app-navigation';
 
@@ -15,6 +17,8 @@ const sectionTitles: Record<string, string> = {
 };
 
 export function AppHeader() {
+  const auth = useAuth();
+  const navigate = useNavigate();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -22,6 +26,11 @@ export function AppHeader() {
   const activeSection =
     Object.entries(sectionTitles).find(([routePath]) => pathname.startsWith(routePath))?.[1] ??
     'Workspace';
+
+  const handleLogout = async () => {
+    auth.logout();
+    await navigate({ to: '/login' });
+  };
 
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -34,9 +43,22 @@ export function AppHeader() {
             <p className="mt-1 text-sm text-slate-600">{activeSection}</p>
           </div>
 
-          <Link className={buttonVariants({ size: 'sm', variant: 'secondary' })} to="/vehicles/new">
-            Add Vehicle
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold text-slate-900">{auth.user?.name}</p>
+              <p className="text-xs text-slate-500">{auth.user?.email}</p>
+            </div>
+
+            <Link
+              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+              to="/vehicles/new"
+            >
+              Add Vehicle
+            </Link>
+            <Button onClick={handleLogout} size="sm" variant="ghost">
+              Logout
+            </Button>
+          </div>
         </div>
 
         <nav className="flex gap-2 overflow-x-auto lg:hidden">

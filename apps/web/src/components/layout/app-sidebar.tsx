@@ -1,12 +1,21 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 
-import { buttonVariants } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils/cn';
 
 import { appNavigation } from './app-navigation';
 
 export function AppSidebar() {
+  const auth = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    auth.logout();
+    await navigate({ to: '/login' });
+  };
+
   return (
     <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
       <div className="border-b border-slate-200 px-6 py-6">
@@ -39,6 +48,11 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t border-slate-200 p-4">
+        <div className="mb-4 rounded-2xl bg-slate-50 px-4 py-3">
+          <p className="text-sm font-semibold text-slate-900">{auth.user?.name}</p>
+          <p className="mt-1 text-xs text-slate-500">{auth.user?.email}</p>
+        </div>
+
         <Card className="bg-slate-50">
           <CardHeader>
             <CardTitle>Quick actions</CardTitle>
@@ -54,6 +68,9 @@ export function AppSidebar() {
             <Link className={buttonVariants({ size: 'sm', variant: 'secondary' })} to="/vehicles">
               Add Reminder
             </Link>
+            <Button onClick={handleLogout} size="sm" variant="ghost">
+              Logout
+            </Button>
           </CardContent>
         </Card>
       </div>

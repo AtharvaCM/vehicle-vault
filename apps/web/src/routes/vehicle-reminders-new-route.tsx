@@ -2,7 +2,7 @@ import { createRoute } from '@tanstack/react-router';
 
 import { VehicleReminderCreatePage } from '@/features/reminders/pages/vehicle-reminder-create-page';
 
-import { rootRoute } from './root-route';
+import { appRoute } from './app-route';
 
 function VehicleRemindersNewRouteComponent() {
   const { vehicleId } = vehicleRemindersNewRoute.useParams();
@@ -11,7 +11,7 @@ function VehicleRemindersNewRouteComponent() {
 }
 
 export const vehicleRemindersNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: 'vehicles/$vehicleId/reminders/new',
   component: VehicleRemindersNewRouteComponent,
 });

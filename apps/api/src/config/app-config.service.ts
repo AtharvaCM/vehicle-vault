@@ -23,6 +23,14 @@ export class AppConfigService {
     );
   }
 
+  get jwtSecret() {
+    return this.configService.get<string>('app.jwtSecret') ?? 'vehicle-vault-dev-secret';
+  }
+
+  get jwtExpiresIn() {
+    return this.configService.get<string>('app.jwtExpiresIn') ?? '7d';
+  }
+
   get nodeEnv(): NodeEnv {
     return this.configService.get<NodeEnv>('app.nodeEnv') ?? 'development';
   }
