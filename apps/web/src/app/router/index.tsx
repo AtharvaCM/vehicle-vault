@@ -4,6 +4,7 @@ import { queryClient } from '@/lib/query/query-client';
 import {
   dashboardRoute,
   indexRoute,
+  maintenanceRecordDetailRoute,
   remindersRoute,
   rootRoute,
   settingsRoute,
@@ -22,6 +23,7 @@ const routeTree = rootRoute.addChildren([
   vehicleDetailRoute,
   vehicleMaintenanceRoute,
   vehicleMaintenanceNewRoute,
+  maintenanceRecordDetailRoute,
   remindersRoute,
   settingsRoute,
 ]);

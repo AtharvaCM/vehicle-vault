@@ -10,27 +10,31 @@ import {
   Min,
 } from 'class-validator';
 
-export class CreateMaintenanceRecordDto {
+export class UpdateMaintenanceRecordDto {
+  @IsOptional()
   @IsDateString()
-  serviceDate!: string;
+  serviceDate?: string;
 
+  @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 0 })
   @Min(0)
-  odometer!: number;
+  odometer?: number;
 
+  @IsOptional()
   @IsEnum(MaintenanceCategory)
-  category!: MaintenanceCategory;
+  category?: MaintenanceCategory;
 
   @IsOptional()
   @IsString()
   @MaxLength(120)
   workshopName?: string;
 
+  @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  totalCost!: number;
+  totalCost?: number;
 
   @IsOptional()
   @IsString()

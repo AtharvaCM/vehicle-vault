@@ -1,5 +1,6 @@
 export * from './dashboard-route';
 export * from './index-route';
+export * from './maintenance-record-detail-route';
 export * from './reminders-route';
 export * from './root-route';
 export * from './settings-route';

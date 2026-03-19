@@ -1,46 +1,21 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  MaintenanceCategory,
   MaintenanceRecordCreateSchema,
-  ReminderType,
+  MaintenanceRecordUpdateSchema,
   type CreateMaintenanceRecordInput,
+  type UpdateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
+import { randomUUID } from 'node:crypto';
 
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { createResourceId } from '../../common/utils/create-resource-id.util';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
-import type { MaintenanceRecord } from './types/maintenance-record.type';
+import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
+import type { MaintenanceRecordRecord } from './types/maintenance-record.type';
 
 @Injectable()
 export class MaintenanceService {
-  private readonly records: MaintenanceRecord[] = [
-    {
-      id: 'maintenance_1',
-      vehicleId: 'vehicle_1',
-      category: MaintenanceCategory.OilChange,
-      serviceDate: '2026-02-14',
-      odometer: 17600,
-      workshopName: 'City Hyundai Service',
-      totalCost: 7800,
-      notes: 'Periodic service with oil and filters replaced.',
-      reminderType: ReminderType.Date,
-      createdAt: '2026-02-14T10:30:00.000Z',
-      updatedAt: '2026-02-14T10:30:00.000Z',
-    },
-    {
-      id: 'maintenance_2',
-      vehicleId: 'vehicle_1',
-      category: MaintenanceCategory.Brakes,
-      serviceDate: '2025-11-09',
-      odometer: 14800,
-      workshopName: 'Brake Point Garage',
-      totalCost: 5400,
-      notes: 'Front brake pads replaced.',
-      createdAt: '2025-11-09T09:00:00.000Z',
-      updatedAt: '2025-11-09T09:00:00.000Z',
-    },
-  ];
+  private readonly records: MaintenanceRecordRecord[] = [];
 
   constructor(private readonly vehiclesService: VehiclesService) {}
 
@@ -49,7 +24,18 @@ export class MaintenanceService {
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    const items = this.records.filter((record) => record.vehicleId === vehicleId);
+    const items = this.records
+      .filter((record) => record.vehicleId === vehicleId)
+      .sort((left, right) => {
+        const serviceDateDifference =
+          new Date(right.serviceDate).getTime() - new Date(left.serviceDate).getTime();
+
+        if (serviceDateDifference !== 0) {
+          return serviceDateDifference;
+        }
+
+        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+      });
     const start = (page - 1) * limit;
 
     return {
@@ -63,6 +49,16 @@ export class MaintenanceService {
     };
   }
 
+  getRecordById(recordId: string) {
+    const record = this.records.find((item) => item.id === recordId);
+
+    if (!record) {
+      throw new NotFoundException(`Maintenance record ${recordId} was not found`);
+    }
+
+    return record;
+  }
+
   createForVehicle(vehicleId: string, payload: CreateMaintenanceRecordDto) {
     this.vehiclesService.ensureVehicleExists(vehicleId);
 
@@ -71,8 +67,8 @@ export class MaintenanceService {
       vehicleId,
     });
     const now = new Date().toISOString();
-    const record: MaintenanceRecord = {
-      id: createResourceId('maintenance'),
+    const record: MaintenanceRecordRecord = {
+      id: randomUUID(),
       ...input,
       createdAt: now,
       updatedAt: now,
@@ -83,6 +79,38 @@ export class MaintenanceService {
     return record;
   }
 
+  updateRecord(recordId: string, payload: UpdateMaintenanceRecordDto) {
+    const record = this.getRecordById(recordId);
+    const input = this.validateUpdateMaintenanceInput(payload);
+
+    Object.assign(record, input, {
+      updatedAt: new Date().toISOString(),
+    });
+
+    return record;
+  }
+
+  deleteRecord(recordId: string) {
+    const index = this.records.findIndex((item) => item.id === recordId);
+
+    if (index === -1) {
+      throw new NotFoundException(`Maintenance record ${recordId} was not found`);
+    }
+
+    const deletedRecord = this.records[index];
+
+    if (!deletedRecord) {
+      throw new NotFoundException(`Maintenance record ${recordId} was not found`);
+    }
+
+    this.records.splice(index, 1);
+
+    return {
+      id: deletedRecord.id,
+      deleted: true,
+    };
+  }
+
   private validateCreateMaintenanceInput(
     payload: CreateMaintenanceRecordDto & { vehicleId: string },
   ): CreateMaintenanceRecordInput {
@@ -91,6 +119,21 @@ export class MaintenanceService {
     if (!result.success) {
       throw new BadRequestException({
         message: 'Maintenance payload failed schema validation',
+        details: result.error.flatten(),
+      });
+    }
+
+    return result.data;
+  }
+
+  private validateUpdateMaintenanceInput(
+    payload: UpdateMaintenanceRecordDto,
+  ): UpdateMaintenanceRecordInput {
+    const result = MaintenanceRecordUpdateSchema.safeParse(payload);
+
+    if (!result.success) {
+      throw new BadRequestException({
+        message: 'Maintenance update payload failed schema validation',
         details: result.error.flatten(),
       });
     }

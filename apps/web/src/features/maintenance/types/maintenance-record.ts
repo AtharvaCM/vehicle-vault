@@ -1,10 +1,9 @@
-import { MaintenanceCategory } from '@vehicle-vault/shared';
+import type {
+  CreateMaintenanceRecordInput,
+  MaintenanceRecord,
+  UpdateMaintenanceRecordInput,
+} from '@vehicle-vault/shared';
 
-export type MaintenanceRecord = {
-  id: string;
-  category: MaintenanceCategory;
-  serviceDate: string;
-  workshopName: string;
-  totalCost: number;
-  odometer: number;
-};
+export type { CreateMaintenanceRecordInput, MaintenanceRecord, UpdateMaintenanceRecordInput };
+
+export type CreateMaintenanceRecordBody = Omit<CreateMaintenanceRecordInput, 'vehicleId'>;

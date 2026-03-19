@@ -1,7 +1,12 @@
-import { MaintenanceCategory } from '@vehicle-vault/shared';
-import { useState } from 'react';
+import {
+  MaintenanceCategory,
+  MaintenanceRecordCreateSchema,
+  type CreateMaintenanceRecordInput,
+} from '@vehicle-vault/shared';
+import { type ReactNode, useEffect, useState } from 'react';
 import { type Path, useForm } from 'react-hook-form';
 
+import { ApiError } from '@/lib/api/api-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,32 +16,74 @@ import {
   maintenanceFormSchema,
   type MaintenanceFormValues,
 } from '../schemas/maintenance-form.schema';
-
-type MaintenanceFormProps = {
-  vehicleId: string;
-};
+import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
+import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 
 const categoryOptions = Object.values(MaintenanceCategory);
 
-export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
+type MaintenanceFormProps = {
+  isSubmitting?: boolean;
+  onSubmit: (values: CreateMaintenanceRecordBody) => Promise<void> | void;
+  submitError?: string | null;
+};
+
+function toIsoDateString(value: string | undefined) {
+  if (!value?.trim()) {
+    return undefined;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function toCreateMaintenanceRecordInput(
+  values: MaintenanceFormValues,
+): CreateMaintenanceRecordInput {
+  return {
+    vehicleId: 'vehicle-id-is-provided-by-route',
+    serviceDate: toIsoDateString(values.serviceDate) ?? '',
+    odometer: values.odometer,
+    category: values.category,
+    workshopName: values.workshopName?.trim() ? values.workshopName.trim() : undefined,
+    totalCost: values.totalCost,
+    notes: values.notes?.trim() ? values.notes.trim() : undefined,
+    nextDueDate: toIsoDateString(values.nextDueDate),
+    nextDueOdometer: values.nextDueOdometer,
+  };
+}
+
+export function MaintenanceForm({
+  isSubmitting = false,
+  onSubmit,
+  submitError,
+}: MaintenanceFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
 
   const form = useForm<MaintenanceFormValues>({
     defaultValues: {
       serviceDate: '',
       odometer: 0,
-      category: MaintenanceCategory.OilChange,
+      category: MaintenanceCategory.PeriodicService,
       workshopName: '',
       totalCost: 0,
       notes: '',
+      nextDueDate: '',
+      nextDueOdometer: undefined,
     },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
-    const result = maintenanceFormSchema.safeParse(values);
+  useEffect(() => {
+    if (submitError) {
+      setSubmissionState(null);
+    }
+  }, [submitError]);
 
-    if (!result.success) {
-      result.error.issues.forEach((issue) => {
+  const handleSubmit = form.handleSubmit(async (values) => {
+    const localResult = maintenanceFormSchema.safeParse(values);
+
+    if (!localResult.success) {
+      localResult.error.issues.forEach((issue) => {
         const field = issue.path[0];
 
         if (typeof field === 'string') {
@@ -50,9 +97,36 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
       return;
     }
 
-    setSubmissionState(
-      `Maintenance submission for ${vehicleId} is scaffolded. Replace this placeholder with a mutation when API endpoints are ready.`,
+    const contractResult = MaintenanceRecordCreateSchema.omit({ vehicleId: true }).safeParse(
+      toCreateMaintenanceRecordInput(localResult.data),
     );
+
+    if (!contractResult.success) {
+      contractResult.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+
+        if (typeof field === 'string') {
+          form.setError(field as Path<MaintenanceFormValues>, {
+            message: issue.message,
+          });
+        }
+      });
+
+      setSubmissionState(null);
+      return;
+    }
+
+    try {
+      await onSubmit(contractResult.data);
+      setSubmissionState('Maintenance record created successfully.');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSubmissionState(null);
+        return;
+      }
+
+      setSubmissionState(null);
+    }
   });
 
   return (
@@ -60,12 +134,12 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
       <CardHeader>
         <CardTitle>Maintenance record</CardTitle>
         <CardDescription>
-          Keep service-specific inputs inside the maintenance feature so list and create flows
-          evolve together.
+          Keep maintenance inputs scoped to this feature so list, detail, and create flows stay
+          aligned.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-6" onSubmit={onSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Service date" error={form.formState.errors.serviceDate?.message}>
               <Input {...form.register('serviceDate')} type="date" />
@@ -86,7 +160,7 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
               >
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>
-                    {category}
+                    {formatMaintenanceCategory(category)}
                   </option>
                 ))}
               </select>
@@ -100,6 +174,21 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
               <Input
                 {...form.register('totalCost', { valueAsNumber: true })}
                 min={0}
+                step="0.01"
+                type="number"
+              />
+            </Field>
+
+            <Field label="Next due date" error={form.formState.errors.nextDueDate?.message}>
+              <Input {...form.register('nextDueDate')} type="date" />
+            </Field>
+
+            <Field label="Next due odometer" error={form.formState.errors.nextDueOdometer?.message}>
+              <Input
+                {...form.register('nextDueOdometer', {
+                  setValueAs: (value) => (value === '' ? undefined : Number(value)),
+                })}
+                min={0}
                 type="number"
               />
             </Field>
@@ -112,6 +201,12 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
             />
           </Field>
 
+          {submitError ? (
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {submitError}
+            </p>
+          ) : null}
+
           {submissionState ? (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               {submissionState}
@@ -119,10 +214,14 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
           ) : null}
 
           <div className="flex items-center gap-3">
-            <Button disabled={form.formState.isSubmitting} type="submit">
+            <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
               Save Record
             </Button>
-            <p className="text-sm text-slate-500">No API call is wired yet.</p>
+            <p className="text-sm text-slate-500">
+              {isSubmitting
+                ? 'Submitting maintenance record to the API...'
+                : 'The record is stored immediately after submit.'}
+            </p>
           </div>
         </form>
       </CardContent>
@@ -131,7 +230,7 @@ export function MaintenanceForm({ vehicleId }: MaintenanceFormProps) {
 }
 
 type FieldProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   error?: string;
   label: string;
 };

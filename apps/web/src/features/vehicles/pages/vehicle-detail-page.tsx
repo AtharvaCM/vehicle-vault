@@ -7,6 +7,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 
+import { MaintenanceRecordCard } from '@/features/maintenance/components/maintenance-record-card';
+import { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
+
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { useVehicle } from '../hooks/use-vehicle';
 
@@ -16,6 +19,7 @@ type VehicleDetailPageProps = {
 
 export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
+  const maintenanceQuery = useMaintenanceRecords(vehicleId);
 
   if (vehicleQuery.isPending) {
     return (
@@ -86,23 +90,50 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Maintenance overview</CardTitle>
+            <CardTitle>Recent maintenance</CardTitle>
             <CardDescription>
-              Maintenance CRUD is intentionally outside this slice, but this section is ready for
-              that data.
+              Review the latest maintenance records linked to this vehicle.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              Add and review maintenance records for this vehicle from the next MVP slice.
-            </p>
-            <Link
-              className={buttonVariants({ size: 'sm', variant: 'secondary' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/maintenance/new"
-            >
-              Add Maintenance
-            </Link>
+            {maintenanceQuery.isPending ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Loading recent maintenance records.
+              </p>
+            ) : maintenanceQuery.isError ? (
+              <EmptyState
+                description="Recent maintenance could not be loaded right now."
+                title="Unable to load recent maintenance"
+              />
+            ) : maintenanceQuery.data.length ? (
+              <div className="space-y-3">
+                {maintenanceQuery.data.slice(0, 3).map((record) => (
+                  <MaintenanceRecordCard key={record.id} record={record} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                description="No maintenance records exist for this vehicle yet."
+                title="No maintenance records yet"
+              />
+            )}
+
+            <div className="flex gap-3">
+              <Link
+                className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/maintenance"
+              >
+                View All Maintenance
+              </Link>
+              <Link
+                className={buttonVariants({ size: 'sm' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/maintenance/new"
+              >
+                Add Maintenance
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
