@@ -64,6 +64,30 @@ pnpm db:deploy
 pnpm db:studio
 ```
 
+## Self-hosted API deploy
+
+The public backend base URL for the frontend should be:
+
+```bash
+https://api.vehiclevault.middle-earth.in/api
+```
+
+For your Portainer-based home server deployment:
+
+- preferred: publish the GHCR image via `.github/workflows/api-image.yml` and use `deploy/portainer/api-stack.ghcr.yml`
+- fallback: use `apps/api/Dockerfile` plus `deploy/portainer/api-stack.yml` for host-path builds
+- persist uploads with the `vehicle_vault_uploads` volume
+- keep `DATABASE_URL` and `DIRECT_URL` pointed at the Supabase pooler connection
+- set a strong production `JWT_SECRET`
+
+Recommended production env file reference:
+
+- `apps/api/.env.production.example`
+
+The API container runs `prisma migrate deploy` on startup before launching Nest, so checked-in schema changes are applied automatically.
+
+If you use the GHCR path, make sure the published package `ghcr.io/atharvacm/vehicle-vault-api` is readable by your Portainer host. If GHCR marks it private initially, switch the package visibility to public in GitHub Packages before deploying the stack.
+
 ## Scripts
 
 - `pnpm dev` runs shared package watch mode plus the web and api apps.

@@ -1,0 +1,17 @@
+node_modules
+.git
+.github
+dist
+coverage
+.turbo
+.pnpm-store
+apps/web/dist
+apps/web/.vite
+apps/api/dist
+apps/api/uploads
+**/.DS_Store
+**/.idea
+**/.vscode
+**/.env
+**/.env.local
+**/.env.production
