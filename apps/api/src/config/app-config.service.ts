@@ -16,6 +16,13 @@ export class AppConfigService {
     return this.configService.get<string>('app.frontendOrigin') ?? DEFAULT_FRONTEND_ORIGIN;
   }
 
+  get databaseUrl() {
+    return (
+      this.configService.get<string>('app.databaseUrl') ??
+      'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public'
+    );
+  }
+
   get nodeEnv(): NodeEnv {
     return this.configService.get<NodeEnv>('app.nodeEnv') ?? 'development';
   }

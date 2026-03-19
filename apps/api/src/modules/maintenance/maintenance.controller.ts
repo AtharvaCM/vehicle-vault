@@ -13,19 +13,22 @@ export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
   @Get('vehicles/:vehicleId/maintenance-records')
-  listVehicleMaintenance(@Param() params: VehicleIdParamDto, @Query() query: PaginationQueryDto) {
-    const result = this.maintenanceService.listForVehicle(params.vehicleId, query);
+  async listVehicleMaintenance(
+    @Param() params: VehicleIdParamDto,
+    @Query() query: PaginationQueryDto,
+  ) {
+    const result = await this.maintenanceService.listForVehicle(params.vehicleId, query);
 
     return successResponse(result.data, result.meta);
   }
 
   @Get('maintenance-records/:recordId')
-  getMaintenanceRecord(@Param() params: MaintenanceRecordIdParamDto) {
+  async getMaintenanceRecord(@Param() params: MaintenanceRecordIdParamDto) {
     return this.maintenanceService.getRecordById(params.recordId);
   }
 
   @Post('vehicles/:vehicleId/maintenance-records')
-  createMaintenanceRecord(
+  async createMaintenanceRecord(
     @Param() params: VehicleIdParamDto,
     @Body() body: CreateMaintenanceRecordDto,
   ) {
@@ -33,7 +36,7 @@ export class MaintenanceController {
   }
 
   @Patch('maintenance-records/:recordId')
-  updateMaintenanceRecord(
+  async updateMaintenanceRecord(
     @Param() params: MaintenanceRecordIdParamDto,
     @Body() body: UpdateMaintenanceRecordDto,
   ) {
@@ -41,7 +44,7 @@ export class MaintenanceController {
   }
 
   @Delete('maintenance-records/:recordId')
-  deleteMaintenanceRecord(@Param() params: MaintenanceRecordIdParamDto) {
-    return successResponse(this.maintenanceService.deleteRecord(params.recordId));
+  async deleteMaintenanceRecord(@Param() params: MaintenanceRecordIdParamDto) {
+    return successResponse(await this.maintenanceService.deleteRecord(params.recordId));
   }
 }

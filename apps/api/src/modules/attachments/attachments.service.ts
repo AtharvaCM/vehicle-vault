@@ -1,122 +1,153 @@
+import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AttachmentKind, type Attachment } from '@vehicle-vault/shared';
 import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { resolve } from 'node:path';
 
+import { PrismaService } from '../../common/prisma/prisma.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import {
   ATTACHMENTS_ALLOWED_MIME_TYPES,
   getUploadsDirectory,
 } from './constants/attachment.constants';
-import type { AttachmentRecord } from './types/attachment-record.type';
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
-import { buildStoredFileName, ensureUploadsDirectory } from './utils/attachment-upload.util';
+import {
+  buildStoredFileName,
+  deleteStoredAttachmentFile,
+  ensureUploadsDirectory,
+  getAttachmentAbsolutePath,
+} from './utils/attachment-upload.util';
 
 @Injectable()
 export class AttachmentsService {
-  private readonly attachments: AttachmentRecord[] = [];
-
-  constructor(private readonly maintenanceService: MaintenanceService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly maintenanceService: MaintenanceService,
+  ) {
     ensureUploadsDirectory();
   }
 
-  listAllAttachments() {
-    return [...this.attachments]
-      .sort(
-        (left, right) => new Date(right.uploadedAt).getTime() - new Date(left.uploadedAt).getTime(),
-      )
-      .map((item) => this.toPublicAttachment(item));
+  async listAllAttachments() {
+    const attachments = await this.prisma.attachment.findMany({
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+    });
+
+    return attachments.map((attachment) => this.toAttachment(attachment));
   }
 
-  listByMaintenanceRecord(recordId: string) {
-    this.maintenanceService.getRecordById(recordId);
+  async listByMaintenanceRecord(recordId: string) {
+    await this.maintenanceService.getRecordById(recordId);
+    const attachments = await this.prisma.attachment.findMany({
+      where: {
+        maintenanceRecordId: recordId,
+      },
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+    });
 
-    return this.listAllAttachments().filter((item) => item.maintenanceRecordId === recordId);
+    return attachments.map((attachment) => this.toAttachment(attachment));
   }
 
-  getAttachmentById(attachmentId: string) {
-    return this.toPublicAttachment(this.getStoredAttachmentById(attachmentId));
+  async getAttachmentById(attachmentId: string) {
+    const attachment = await this.getStoredAttachmentById(attachmentId);
+
+    return this.toAttachment(attachment);
   }
 
   async getAttachmentFile(attachmentId: string) {
-    const attachment = this.getStoredAttachmentById(attachmentId);
+    const attachment = await this.getStoredAttachmentById(attachmentId);
+    const filePath = getAttachmentAbsolutePath(attachment.fileName);
 
     try {
-      await access(attachment.filePath);
+      await access(filePath);
     } catch {
       throw new NotFoundException(`Attachment file for ${attachmentId} was not found on disk`);
     }
 
-    return attachment;
+    return {
+      ...this.toAttachment(attachment),
+      filePath,
+    };
   }
 
   async uploadAttachments(recordId: string, files: AttachmentUploadFile[]) {
-    this.maintenanceService.getRecordById(recordId);
+    await this.maintenanceService.getRecordById(recordId);
 
     if (!files.length) {
       throw new BadRequestException('Add at least one attachment to upload.');
     }
 
-    const uploadsDirectory = getUploadsDirectory();
-    await mkdir(uploadsDirectory, { recursive: true });
+    await mkdir(getUploadsDirectory(), { recursive: true });
 
-    const storedAttachments = await Promise.all(
-      files.map(async (file) => {
-        this.validateUploadedFile(file);
+    const preparedFiles = files.map((file) => {
+      this.validateUploadedFile(file);
 
-        const storedFileName = buildStoredFileName(file.originalname);
-        const absoluteFilePath = resolve(uploadsDirectory, storedFileName);
+      const id = randomUUID();
+      const fileName = buildStoredFileName(file.originalname);
+      const filePath = getAttachmentAbsolutePath(fileName);
 
-        await writeFile(absoluteFilePath, file.buffer);
+      return {
+        id,
+        maintenanceRecordId: recordId,
+        kind: this.getAttachmentKind(file.mimetype),
+        fileName,
+        originalFileName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        url: `/api/attachments/${id}/file`,
+        uploadedAt: new Date(),
+        filePath,
+        buffer: file.buffer,
+      };
+    });
 
-        const attachment: AttachmentRecord = {
-          id: randomUUID(),
-          maintenanceRecordId: recordId,
-          kind: this.getAttachmentKind(file.mimetype),
-          fileName: storedFileName,
-          originalFileName: file.originalname,
-          mimeType: file.mimetype,
-          size: file.size,
-          url: '',
-          uploadedAt: new Date().toISOString(),
-          filePath: absoluteFilePath,
-        };
+    try {
+      for (const file of preparedFiles) {
+        await writeFile(file.filePath, file.buffer);
+      }
+    } catch (error) {
+      await Promise.all(preparedFiles.map((file) => unlink(file.filePath).catch(() => undefined)));
+      throw error;
+    }
 
-        attachment.url = `/api/attachments/${attachment.id}/file`;
-        this.attachments.unshift(attachment);
+    try {
+      const attachments = await this.prisma.$transaction(
+        preparedFiles.map((file) =>
+          this.prisma.attachment.create({
+            data: {
+              id: file.id,
+              maintenanceRecordId: file.maintenanceRecordId,
+              kind: file.kind,
+              fileName: file.fileName,
+              originalFileName: file.originalFileName,
+              mimeType: file.mimeType,
+              size: file.size,
+              url: file.url,
+              uploadedAt: file.uploadedAt,
+            },
+          }),
+        ),
+      );
 
-        return this.toPublicAttachment(attachment);
-      }),
-    );
-
-    return storedAttachments;
+      return attachments.map((attachment) => this.toAttachment(attachment));
+    } catch (error) {
+      await Promise.all(preparedFiles.map((file) => unlink(file.filePath).catch(() => undefined)));
+      throw error;
+    }
   }
 
   async deleteAttachment(attachmentId: string) {
-    const index = this.attachments.findIndex((item) => item.id === attachmentId);
+    const attachment = await this.getStoredAttachmentById(attachmentId);
 
-    if (index === -1) {
-      throw new NotFoundException(`Attachment ${attachmentId} was not found`);
-    }
-
-    const attachment = this.attachments[index];
-
-    if (!attachment) {
-      throw new NotFoundException(`Attachment ${attachmentId} was not found`);
-    }
-
-    this.attachments.splice(index, 1);
-
-    try {
-      await unlink(attachment.filePath);
-    } catch (error) {
-      const fileDeletionError = error as NodeJS.ErrnoException;
-
-      if (fileDeletionError.code !== 'ENOENT') {
-        throw fileDeletionError;
-      }
-    }
+    await this.prisma.attachment.delete({
+      where: {
+        id: attachmentId,
+      },
+    });
+    await deleteStoredAttachmentFile(attachment.fileName);
 
     return {
       id: attachment.id,
@@ -124,8 +155,12 @@ export class AttachmentsService {
     };
   }
 
-  private getStoredAttachmentById(attachmentId: string) {
-    const attachment = this.attachments.find((item) => item.id === attachmentId);
+  private async getStoredAttachmentById(attachmentId: string) {
+    const attachment = await this.prisma.attachment.findUnique({
+      where: {
+        id: attachmentId,
+      },
+    });
 
     if (!attachment) {
       throw new NotFoundException(`Attachment ${attachmentId} was not found`);
@@ -156,17 +191,29 @@ export class AttachmentsService {
     return AttachmentKind.Other;
   }
 
-  private toPublicAttachment(attachment: AttachmentRecord): Attachment {
+  private toAttachment(
+    attachment: Prisma.AttachmentUncheckedCreateInput &
+      Prisma.AttachmentUncheckedUpdateInput & {
+        id: string;
+        maintenanceRecordId: string;
+        fileName: string;
+        originalFileName: string;
+        mimeType: string;
+        size: number;
+        url: string;
+        uploadedAt: Date;
+      },
+  ) {
     return {
       id: attachment.id,
       maintenanceRecordId: attachment.maintenanceRecordId,
-      kind: attachment.kind,
+      kind: attachment.kind as AttachmentKind,
       fileName: attachment.fileName,
       originalFileName: attachment.originalFileName,
       mimeType: attachment.mimeType,
       size: attachment.size,
       url: attachment.url,
-      uploadedAt: attachment.uploadedAt,
-    };
+      uploadedAt: attachment.uploadedAt.toISOString(),
+    } satisfies Attachment;
   }
 }

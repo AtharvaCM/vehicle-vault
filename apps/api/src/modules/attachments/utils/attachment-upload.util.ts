@@ -1,7 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { mkdirSync } from 'node:fs';
-import { extname } from 'node:path';
+import { unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { extname, resolve } from 'node:path';
 
 import {
   ATTACHMENTS_ALLOWED_MIME_TYPES,
@@ -27,6 +28,22 @@ export function attachmentFileFilter(
 
 export function ensureUploadsDirectory() {
   mkdirSync(getUploadsDirectory(), { recursive: true });
+}
+
+export function getAttachmentAbsolutePath(fileName: string) {
+  return resolve(getUploadsDirectory(), fileName);
+}
+
+export async function deleteStoredAttachmentFile(fileName: string) {
+  try {
+    await unlink(getAttachmentAbsolutePath(fileName));
+  } catch (error) {
+    const fileDeletionError = error as NodeJS.ErrnoException;
+
+    if (fileDeletionError.code !== 'ENOENT') {
+      throw fileDeletionError;
+    }
+  }
 }
 
 export function buildStoredFileName(originalFileName: string) {

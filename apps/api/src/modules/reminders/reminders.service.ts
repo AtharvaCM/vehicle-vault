@@ -1,19 +1,19 @@
+import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ReminderCreateSchema,
   ReminderStatus,
+  ReminderType,
   ReminderUpdateSchema,
   type Reminder,
   type UpdateReminderInput,
-  type Vehicle,
 } from '@vehicle-vault/shared';
-import { randomUUID } from 'node:crypto';
 
+import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import type { UpdateReminderDto } from './dto/update-reminder.dto';
-import type { ReminderRecord } from './types/reminder-record.type';
 
 const reminderStatusPriority: Record<ReminderStatus, number> = {
   [ReminderStatus.Upcoming]: 0,
@@ -22,126 +22,175 @@ const reminderStatusPriority: Record<ReminderStatus, number> = {
   [ReminderStatus.Completed]: 3,
 };
 
+type ReminderWithVehicle = Prisma.ReminderGetPayload<{
+  include: {
+    vehicle: {
+      select: {
+        odometer: true;
+      };
+    };
+  };
+}>;
+
 @Injectable()
 export class RemindersService {
-  private readonly reminders: ReminderRecord[] = [];
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly vehiclesService: VehiclesService,
+  ) {}
 
-  constructor(private readonly vehiclesService: VehiclesService) {}
+  async getAllReminders() {
+    const reminders = await this.prisma.reminder.findMany({
+      include: {
+        vehicle: {
+          select: {
+            odometer: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-  getAllReminders() {
-    return [...this.reminders]
-      .map((record) => this.withComputedStatus(record))
+    return reminders
+      .map((record) => this.toReminder(record))
       .sort((left, right) => this.compareReminders(left, right));
   }
 
-  listVehicleReminders(vehicleId: string, query: ListRemindersQueryDto) {
-    this.vehiclesService.ensureVehicleExists(vehicleId);
+  async listVehicleReminders(vehicleId: string, query: ListRemindersQueryDto) {
+    await this.vehiclesService.ensureVehicleExists(vehicleId);
 
-    const filtered = this.getPaginatedReminders(
-      this.reminders.filter((item) => item.vehicleId === vehicleId),
-      query,
-    );
-
-    return {
-      data: filtered.data,
-      meta: {
-        ...filtered.meta,
-        vehicleId,
-      },
-    };
+    return this.getPaginatedReminders({ vehicleId }, query, vehicleId);
   }
 
-  listReminders(query: ListRemindersQueryDto) {
+  async listReminders(query: ListRemindersQueryDto) {
     return this.getPaginatedReminders(
       query.vehicleId
-        ? this.reminders.filter((item) => item.vehicleId === query.vehicleId)
-        : this.reminders,
+        ? {
+            vehicleId: query.vehicleId,
+          }
+        : undefined,
       query,
     );
   }
 
-  getReminderById(reminderId: string) {
-    const reminder = this.reminders.find((item) => item.id === reminderId);
+  async getReminderById(reminderId: string) {
+    const reminder = await this.getStoredReminderById(reminderId);
 
-    if (!reminder) {
-      throw new NotFoundException(`Reminder ${reminderId} was not found`);
-    }
-
-    return this.withComputedStatus(reminder);
+    return this.toReminder(reminder);
   }
 
-  createReminder(vehicleId: string, payload: CreateReminderDto) {
-    this.vehiclesService.ensureVehicleExists(vehicleId);
-
+  async createReminder(vehicleId: string, payload: CreateReminderDto) {
+    const vehicle = await this.vehiclesService.ensureVehicleExists(vehicleId);
     const input = this.validateCreateReminderInput({
       ...payload,
       vehicleId,
     });
-    const now = new Date().toISOString();
-    const reminder = this.withComputedStatus({
-      id: randomUUID(),
-      ...input,
-      status: ReminderStatus.Upcoming,
-      completedAt: undefined,
-      createdAt: now,
-      updatedAt: now,
+    const reminder = await this.prisma.reminder.create({
+      data: {
+        vehicleId,
+        title: input.title,
+        type: input.type,
+        dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+        dueOdometer: input.dueOdometer,
+        notes: input.notes,
+        status: this.computeReminderStatus(
+          {
+            dueDate: input.dueDate,
+            dueOdometer: input.dueOdometer,
+          },
+          vehicle.odometer,
+        ),
+      },
     });
 
-    this.reminders.unshift(reminder);
-
-    return reminder;
+    return this.getReminderById(reminder.id);
   }
 
-  updateReminder(reminderId: string, payload: UpdateReminderDto) {
-    const reminder = this.getStoredReminderById(reminderId);
+  async updateReminder(reminderId: string, payload: UpdateReminderDto) {
+    const reminder = await this.getStoredReminderById(reminderId);
     const input = this.validateUpdateReminderInput(payload);
+    const dueDate = input.dueDate !== undefined ? input.dueDate : reminder.dueDate?.toISOString();
+    const dueOdometer =
+      input.dueOdometer !== undefined ? input.dueOdometer : (reminder.dueOdometer ?? undefined);
+    const reminderStatus = this.computeReminderStatus(
+      {
+        dueDate,
+        dueOdometer,
+        completedAt: reminder.completedAt?.toISOString(),
+      },
+      reminder.vehicle.odometer,
+    );
 
-    Object.assign(reminder, input, {
-      updatedAt: new Date().toISOString(),
+    await this.prisma.reminder.update({
+      where: {
+        id: reminderId,
+      },
+      data: {
+        title: input.title,
+        type: input.type,
+        dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+        dueOdometer: input.dueOdometer,
+        notes: input.notes,
+        status: reminderStatus,
+      },
     });
 
-    const computedReminder = this.withComputedStatus(reminder);
-    Object.assign(reminder, computedReminder);
-
-    return reminder;
+    return this.getReminderById(reminderId);
   }
 
-  completeReminder(reminderId: string) {
-    const reminder = this.getStoredReminderById(reminderId);
-    const now = new Date().toISOString();
+  async completeReminder(reminderId: string) {
+    const now = new Date();
 
-    reminder.completedAt = now;
-    reminder.updatedAt = now;
-    reminder.status = ReminderStatus.Completed;
+    await this.prisma.reminder.update({
+      where: {
+        id: reminderId,
+      },
+      data: {
+        completedAt: now,
+        status: ReminderStatus.Completed,
+      },
+    });
 
-    return reminder;
+    return this.getReminderById(reminderId);
   }
 
-  deleteReminder(reminderId: string) {
-    const index = this.reminders.findIndex((item) => item.id === reminderId);
-
-    if (index === -1) {
-      throw new NotFoundException(`Reminder ${reminderId} was not found`);
-    }
-
-    const deletedReminder = this.reminders[index];
-
-    if (!deletedReminder) {
-      throw new NotFoundException(`Reminder ${reminderId} was not found`);
-    }
-
-    this.reminders.splice(index, 1);
+  async deleteReminder(reminderId: string) {
+    await this.getReminderById(reminderId);
+    await this.prisma.reminder.delete({
+      where: {
+        id: reminderId,
+      },
+    });
 
     return {
-      id: deletedReminder.id,
+      id: reminderId,
       deleted: true,
     };
   }
 
-  private getPaginatedReminders(records: ReminderRecord[], query: ListRemindersQueryDto) {
+  private async getPaginatedReminders(
+    where: Prisma.ReminderWhereInput | undefined,
+    query: ListRemindersQueryDto,
+    vehicleId?: string,
+  ) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    const computed = records.map((record) => this.withComputedStatus(record));
+    const reminders = await this.prisma.reminder.findMany({
+      where,
+      include: {
+        vehicle: {
+          select: {
+            odometer: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    const computed = reminders.map((record) => this.toReminder(record));
     const filtered = query.status
       ? computed.filter((item) => item.status === query.status)
       : computed;
@@ -154,12 +203,24 @@ export class RemindersService {
         page,
         limit,
         total: sorted.length,
+        ...(vehicleId ? { vehicleId } : {}),
       },
     };
   }
 
-  private getStoredReminderById(reminderId: string) {
-    const reminder = this.reminders.find((item) => item.id === reminderId);
+  private async getStoredReminderById(reminderId: string) {
+    const reminder = await this.prisma.reminder.findUnique({
+      where: {
+        id: reminderId,
+      },
+      include: {
+        vehicle: {
+          select: {
+            odometer: true,
+          },
+        },
+      },
+    });
 
     if (!reminder) {
       throw new NotFoundException(`Reminder ${reminderId} was not found`);
@@ -168,51 +229,58 @@ export class RemindersService {
     return reminder;
   }
 
-  private withComputedStatus(reminder: ReminderRecord): Reminder {
-    const vehicle = this.getVehicleOrNull(reminder.vehicleId);
+  private toReminder(reminder: ReminderWithVehicle): Reminder {
+    const status = this.computeReminderStatus(
+      {
+        dueDate: reminder.dueDate?.toISOString(),
+        dueOdometer: reminder.dueOdometer ?? undefined,
+        completedAt: reminder.completedAt?.toISOString(),
+      },
+      reminder.vehicle.odometer,
+    );
 
+    return {
+      id: reminder.id,
+      vehicleId: reminder.vehicleId,
+      title: reminder.title,
+      type: reminder.type as ReminderType,
+      dueDate: reminder.dueDate?.toISOString(),
+      dueOdometer: reminder.dueOdometer ?? undefined,
+      status,
+      completedAt: reminder.completedAt?.toISOString(),
+      notes: reminder.notes ?? undefined,
+      createdAt: reminder.createdAt.toISOString(),
+      updatedAt: reminder.updatedAt.toISOString(),
+    };
+  }
+
+  private computeReminderStatus(
+    reminder: {
+      dueDate?: string;
+      dueOdometer?: number;
+      completedAt?: string;
+    },
+    currentOdometer?: number,
+  ) {
     if (reminder.completedAt) {
-      return {
-        ...reminder,
-        status: ReminderStatus.Completed,
-      };
+      return ReminderStatus.Completed;
     }
 
     const dueDateStatus = reminder.dueDate ? this.getDueDateStatus(reminder.dueDate) : null;
     const dueOdometerStatus =
-      reminder.dueOdometer !== undefined && vehicle
-        ? this.getDueOdometerStatus(reminder.dueOdometer, vehicle.odometer)
+      reminder.dueOdometer !== undefined && currentOdometer !== undefined
+        ? this.getDueOdometerStatus(reminder.dueOdometer, currentOdometer)
         : null;
 
-    /**
-     * If both dueDate and dueOdometer exist, the more urgent status wins.
-     * This keeps the reminder aligned to whichever threshold needs attention first.
-     */
-    const status = [dueDateStatus, dueOdometerStatus].reduce<ReminderStatus>(
-      (current, candidate) => {
-        if (!candidate) {
-          return current;
-        }
+    return [dueDateStatus, dueOdometerStatus].reduce<ReminderStatus>((current, candidate) => {
+      if (!candidate) {
+        return current;
+      }
 
-        return reminderStatusPriority[candidate] > reminderStatusPriority[current]
-          ? candidate
-          : current;
-      },
-      ReminderStatus.Upcoming,
-    );
-
-    return {
-      ...reminder,
-      status,
-    };
-  }
-
-  private getVehicleOrNull(vehicleId: string): Vehicle | null {
-    try {
-      return this.vehiclesService.getVehicleById(vehicleId);
-    } catch {
-      return null;
-    }
+      return reminderStatusPriority[candidate] > reminderStatusPriority[current]
+        ? candidate
+        : current;
+    }, ReminderStatus.Upcoming);
   }
 
   private getDueDateStatus(dueDate: string) {

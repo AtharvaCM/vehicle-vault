@@ -13,41 +13,44 @@ export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}
 
   @Get('vehicles/:vehicleId/reminders')
-  listVehicleReminders(@Param() params: VehicleIdParamDto, @Query() query: ListRemindersQueryDto) {
-    const result = this.remindersService.listVehicleReminders(params.vehicleId, query);
+  async listVehicleReminders(
+    @Param() params: VehicleIdParamDto,
+    @Query() query: ListRemindersQueryDto,
+  ) {
+    const result = await this.remindersService.listVehicleReminders(params.vehicleId, query);
 
     return successResponse(result.data, result.meta);
   }
 
   @Get('reminders')
-  listReminders(@Query() query: ListRemindersQueryDto) {
-    const result = this.remindersService.listReminders(query);
+  async listReminders(@Query() query: ListRemindersQueryDto) {
+    const result = await this.remindersService.listReminders(query);
 
     return successResponse(result.data, result.meta);
   }
 
   @Get('reminders/:reminderId')
-  getReminderById(@Param() params: ReminderIdParamDto) {
+  async getReminderById(@Param() params: ReminderIdParamDto) {
     return this.remindersService.getReminderById(params.reminderId);
   }
 
   @Post('vehicles/:vehicleId/reminders')
-  createReminder(@Param() params: VehicleIdParamDto, @Body() body: CreateReminderDto) {
+  async createReminder(@Param() params: VehicleIdParamDto, @Body() body: CreateReminderDto) {
     return this.remindersService.createReminder(params.vehicleId, body);
   }
 
   @Patch('reminders/:reminderId')
-  updateReminder(@Param() params: ReminderIdParamDto, @Body() body: UpdateReminderDto) {
+  async updateReminder(@Param() params: ReminderIdParamDto, @Body() body: UpdateReminderDto) {
     return this.remindersService.updateReminder(params.reminderId, body);
   }
 
   @Delete('reminders/:reminderId')
-  deleteReminder(@Param() params: ReminderIdParamDto) {
-    return successResponse(this.remindersService.deleteReminder(params.reminderId));
+  async deleteReminder(@Param() params: ReminderIdParamDto) {
+    return successResponse(await this.remindersService.deleteReminder(params.reminderId));
   }
 
   @Patch('reminders/:reminderId/complete')
-  completeReminder(@Param() params: ReminderIdParamDto) {
+  async completeReminder(@Param() params: ReminderIdParamDto) {
     return this.remindersService.completeReminder(params.reminderId);
   }
 }

@@ -28,8 +28,8 @@ export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}
 
   @Get('maintenance-records/:recordId/attachments')
-  listAttachments(@Param() params: MaintenanceRecordIdParamDto) {
-    return successResponse(this.attachmentsService.listByMaintenanceRecord(params.recordId));
+  async listAttachments(@Param() params: MaintenanceRecordIdParamDto) {
+    return successResponse(await this.attachmentsService.listByMaintenanceRecord(params.recordId));
   }
 
   @Post('maintenance-records/:recordId/attachments')
@@ -51,8 +51,8 @@ export class AttachmentsController {
   }
 
   @Get('attachments/:attachmentId')
-  getAttachment(@Param() params: AttachmentIdParamDto) {
-    return successResponse(this.attachmentsService.getAttachmentById(params.attachmentId));
+  async getAttachment(@Param() params: AttachmentIdParamDto) {
+    return successResponse(await this.attachmentsService.getAttachmentById(params.attachmentId));
   }
 
   @Get('attachments/:attachmentId/file')

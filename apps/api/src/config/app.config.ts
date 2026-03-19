@@ -23,4 +23,7 @@ export const appConfig = registerAs('app', () => ({
   nodeEnv: resolveNodeEnv(process.env.NODE_ENV),
   port: resolvePort(process.env.PORT),
   frontendOrigin: process.env.FRONTEND_ORIGIN ?? DEFAULT_FRONTEND_ORIGIN,
+  databaseUrl:
+    process.env.DATABASE_URL ??
+    'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
 }));

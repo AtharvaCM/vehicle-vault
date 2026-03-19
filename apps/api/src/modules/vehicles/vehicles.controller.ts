@@ -13,29 +13,29 @@ export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
   @Get()
-  listVehicles(@Query() query: PaginationQueryDto) {
-    const result = this.vehiclesService.listVehicles(query);
+  async listVehicles(@Query() query: PaginationQueryDto) {
+    const result = await this.vehiclesService.listVehicles(query);
 
     return successResponse(result.data, result.meta);
   }
 
   @Get(':vehicleId')
-  getVehicleById(@Param() params: VehicleIdParamDto) {
+  async getVehicleById(@Param() params: VehicleIdParamDto) {
     return this.vehiclesService.getVehicleById(params.vehicleId);
   }
 
   @Post()
-  createVehicle(@Body() body: CreateVehicleDto) {
+  async createVehicle(@Body() body: CreateVehicleDto) {
     return this.vehiclesService.createVehicle(body);
   }
 
   @Patch(':vehicleId')
-  updateVehicle(@Param() params: VehicleIdParamDto, @Body() body: UpdateVehicleDto) {
+  async updateVehicle(@Param() params: VehicleIdParamDto, @Body() body: UpdateVehicleDto) {
     return this.vehiclesService.updateVehicle(params.vehicleId, body);
   }
 
   @Delete(':vehicleId')
-  deleteVehicle(@Param() params: VehicleIdParamDto) {
-    return successResponse(this.vehiclesService.deleteVehicle(params.vehicleId));
+  async deleteVehicle(@Param() params: VehicleIdParamDto) {
+    return successResponse(await this.vehiclesService.deleteVehicle(params.vehicleId));
   }
 }

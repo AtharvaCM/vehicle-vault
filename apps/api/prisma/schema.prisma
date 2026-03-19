@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FuelType {
+  petrol
+  diesel
+  electric
+  hybrid
+  cng
+  lpg
+  other
+}
+
+enum VehicleType {
+  car
+  motorcycle
+  suv
+  truck
+  van
+  other
+}
+
+enum MaintenanceCategory {
+  periodic_service
+  engine_oil
+  oil_filter
+  air_filter
+  brake_pads
+  tyre_rotation
+  wheel_alignment
+  battery
+  coolant
+  clutch
+  chain_service
+  tyre_replacement
+  puncture
+  insurance
+  puc
+  other
+}
+
+enum ReminderType {
+  service
+  insurance
+  puc
+  tyre_rotation
+  battery
+  custom
+}
+
+enum ReminderStatus {
+  upcoming
+  due_today
+  overdue
+  completed
+}
+
+enum AttachmentKind {
+  receipt
+  document
+  image
+  other
+}
+
+model Vehicle {
+  id                 String              @id @default(uuid()) @db.Uuid
+  registrationNumber String              @unique @db.VarChar(20)
+  make               String              @db.VarChar(80)
+  model              String              @db.VarChar(80)
+  variant            String              @db.VarChar(80)
+  year               Int
+  fuelType           FuelType
+  odometer           Int
+  vehicleType        VehicleType
+  nickname           String?             @db.VarChar(80)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  maintenanceRecords MaintenanceRecord[]
+  reminders          Reminder[]
+
+  @@index([createdAt(sort: Desc)])
+}
+
+model MaintenanceRecord {
+  id              String              @id @default(uuid()) @db.Uuid
+  vehicleId       String              @db.Uuid
+  serviceDate     DateTime
+  odometer        Int
+  category        MaintenanceCategory
+  workshopName    String?             @db.VarChar(120)
+  totalCost       Decimal             @db.Decimal(12, 2)
+  notes           String?
+  nextDueDate     DateTime?
+  nextDueOdometer Int?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  vehicle         Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  attachments     Attachment[]
+
+  @@index([vehicleId, serviceDate(sort: Desc)])
+}
+
+model Reminder {
+  id          String         @id @default(uuid()) @db.Uuid
+  vehicleId   String         @db.Uuid
+  title       String         @db.VarChar(120)
+  type        ReminderType
+  dueDate     DateTime?
+  dueOdometer Int?
+  status      ReminderStatus
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  vehicle     Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, createdAt(sort: Desc)])
+  @@index([status, dueDate])
+}
+
+model Attachment {
+  id                  String            @id @default(uuid()) @db.Uuid
+  maintenanceRecordId String            @db.Uuid
+  kind                AttachmentKind
+  fileName            String
+  originalFileName    String
+  mimeType            String
+  size                Int
+  url                 String
+  uploadedAt          DateTime          @default(now())
+  maintenanceRecord   MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+
+  @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
+}

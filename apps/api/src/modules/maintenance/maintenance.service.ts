@@ -1,114 +1,140 @@
+import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  MaintenanceCategory,
   MaintenanceRecordCreateSchema,
   MaintenanceRecordUpdateSchema,
   type CreateMaintenanceRecordInput,
+  type MaintenanceRecord,
   type UpdateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
-import { randomUUID } from 'node:crypto';
 
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { deleteStoredAttachmentFile } from '../attachments/utils/attachment-upload.util';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
-import type { MaintenanceRecordRecord } from './types/maintenance-record.type';
 
 @Injectable()
 export class MaintenanceService {
-  private readonly records: MaintenanceRecordRecord[] = [];
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly vehiclesService: VehiclesService,
+  ) {}
 
-  constructor(private readonly vehiclesService: VehiclesService) {}
-
-  getAllRecords() {
-    return [...this.records].sort((left, right) => {
-      const serviceDateDifference =
-        new Date(right.serviceDate).getTime() - new Date(left.serviceDate).getTime();
-
-      if (serviceDateDifference !== 0) {
-        return serviceDateDifference;
-      }
-
-      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+  async getAllRecords() {
+    const records = await this.prisma.maintenanceRecord.findMany({
+      orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
     });
+
+    return records.map((record) => this.toMaintenanceRecord(record));
   }
 
-  listForVehicle(vehicleId: string, query: PaginationQueryDto) {
-    this.vehiclesService.ensureVehicleExists(vehicleId);
+  async listForVehicle(vehicleId: string, query: PaginationQueryDto) {
+    await this.vehiclesService.ensureVehicleExists(vehicleId);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    const items = this.getAllRecords().filter((record) => record.vehicleId === vehicleId);
     const start = (page - 1) * limit;
+    const [records, total] = await this.prisma.$transaction([
+      this.prisma.maintenanceRecord.findMany({
+        where: {
+          vehicleId,
+        },
+        skip: start,
+        take: limit,
+        orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
+      }),
+      this.prisma.maintenanceRecord.count({
+        where: {
+          vehicleId,
+        },
+      }),
+    ]);
 
     return {
-      data: items.slice(start, start + limit),
+      data: records.map((record) => this.toMaintenanceRecord(record)),
       meta: {
         page,
         limit,
-        total: items.length,
+        total,
         vehicleId,
       },
     };
   }
 
-  getRecordById(recordId: string) {
-    const record = this.records.find((item) => item.id === recordId);
+  async getRecordById(recordId: string) {
+    const record = await this.prisma.maintenanceRecord.findUnique({
+      where: {
+        id: recordId,
+      },
+    });
 
     if (!record) {
       throw new NotFoundException(`Maintenance record ${recordId} was not found`);
     }
 
-    return record;
+    return this.toMaintenanceRecord(record);
   }
 
-  createForVehicle(vehicleId: string, payload: CreateMaintenanceRecordDto) {
-    this.vehiclesService.ensureVehicleExists(vehicleId);
+  async createForVehicle(vehicleId: string, payload: CreateMaintenanceRecordDto) {
+    await this.vehiclesService.ensureVehicleExists(vehicleId);
 
     const input = this.validateCreateMaintenanceInput({
       ...payload,
       vehicleId,
     });
-    const now = new Date().toISOString();
-    const record: MaintenanceRecordRecord = {
-      id: randomUUID(),
-      ...input,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.records.unshift(record);
-
-    return record;
-  }
-
-  updateRecord(recordId: string, payload: UpdateMaintenanceRecordDto) {
-    const record = this.getRecordById(recordId);
-    const input = this.validateUpdateMaintenanceInput(payload);
-
-    Object.assign(record, input, {
-      updatedAt: new Date().toISOString(),
+    const record = await this.prisma.maintenanceRecord.create({
+      data: this.toCreateMaintenanceData(input),
     });
 
-    return record;
+    return this.toMaintenanceRecord(record);
   }
 
-  deleteRecord(recordId: string) {
-    const index = this.records.findIndex((item) => item.id === recordId);
+  async updateRecord(recordId: string, payload: UpdateMaintenanceRecordDto) {
+    await this.getRecordById(recordId);
+    const input = this.validateUpdateMaintenanceInput(payload);
+    const record = await this.prisma.maintenanceRecord.update({
+      where: {
+        id: recordId,
+      },
+      data: this.toUpdateMaintenanceData(input),
+    });
 
-    if (index === -1) {
+    return this.toMaintenanceRecord(record);
+  }
+
+  async deleteRecord(recordId: string) {
+    const record = await this.prisma.maintenanceRecord.findUnique({
+      where: {
+        id: recordId,
+      },
+      include: {
+        attachments: {
+          select: {
+            fileName: true,
+          },
+        },
+      },
+    });
+
+    if (!record) {
       throw new NotFoundException(`Maintenance record ${recordId} was not found`);
     }
 
-    const deletedRecord = this.records[index];
+    await this.prisma.maintenanceRecord.delete({
+      where: {
+        id: recordId,
+      },
+    });
 
-    if (!deletedRecord) {
-      throw new NotFoundException(`Maintenance record ${recordId} was not found`);
-    }
-
-    this.records.splice(index, 1);
+    await Promise.all(
+      record.attachments.map((attachment) => deleteStoredAttachmentFile(attachment.fileName)),
+    );
 
     return {
-      id: deletedRecord.id,
+      id: record.id,
       deleted: true,
     };
   }
@@ -141,5 +167,59 @@ export class MaintenanceService {
     }
 
     return result.data;
+  }
+
+  private toCreateMaintenanceData(input: CreateMaintenanceRecordInput) {
+    return {
+      vehicleId: input.vehicleId,
+      category: input.category,
+      serviceDate: new Date(input.serviceDate),
+      odometer: input.odometer,
+      workshopName: input.workshopName,
+      totalCost: input.totalCost,
+      notes: input.notes,
+      nextDueDate: input.nextDueDate ? new Date(input.nextDueDate) : undefined,
+      nextDueOdometer: input.nextDueOdometer,
+    };
+  }
+
+  private toUpdateMaintenanceData(input: UpdateMaintenanceRecordInput) {
+    return {
+      category: input.category,
+      serviceDate: input.serviceDate ? new Date(input.serviceDate) : undefined,
+      odometer: input.odometer,
+      workshopName: input.workshopName,
+      totalCost: input.totalCost,
+      notes: input.notes,
+      nextDueDate: input.nextDueDate ? new Date(input.nextDueDate) : undefined,
+      nextDueOdometer: input.nextDueOdometer,
+    };
+  }
+
+  private toMaintenanceRecord(
+    record: Prisma.MaintenanceRecordUncheckedCreateInput &
+      Prisma.MaintenanceRecordUncheckedUpdateInput & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        serviceDate: Date;
+        totalCost: Prisma.Decimal;
+        nextDueDate: Date | null;
+      },
+  ) {
+    return {
+      id: record.id,
+      vehicleId: record.vehicleId,
+      category: record.category as MaintenanceCategory,
+      serviceDate: record.serviceDate.toISOString(),
+      odometer: record.odometer,
+      workshopName: record.workshopName ?? undefined,
+      totalCost: Number(record.totalCost),
+      notes: record.notes ?? undefined,
+      nextDueDate: record.nextDueDate?.toISOString(),
+      nextDueOdometer: record.nextDueOdometer ?? undefined,
+      createdAt: record.createdAt.toISOString(),
+      updatedAt: record.updatedAt.toISOString(),
+    } satisfies MaintenanceRecord;
   }
 }

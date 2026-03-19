@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { PrismaModule } from './common/prisma/prisma.module';
 import { AppConfigModule } from './config/app-config.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
@@ -14,6 +15,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
 @Module({
   imports: [
     AppConfigModule,
+    PrismaModule,
     HealthModule,
     DashboardModule,
     AuthModule,
