@@ -1,11 +1,20 @@
 import { ReminderCreateSchema, ReminderType } from '@vehicle-vault/shared';
-import { type ReactNode, useEffect, useState } from 'react';
-import { type Path, useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { ApiError } from '@/lib/api/api-error';
+import { FormField } from '@/components/shared/form-field';
+import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 import { reminderFormSchema, type ReminderFormValues } from '../schemas/reminder-form.schema';
@@ -121,50 +130,72 @@ export function ReminderForm({ isSubmitting = false, onSubmit, submitError }: Re
       <CardContent>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Title" error={form.formState.errors.title?.message}>
-              <Input {...form.register('title')} placeholder="Insurance renewal" />
-            </Field>
-
-            <Field label="Type" error={form.formState.errors.type?.message}>
-              <select
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
-                {...form.register('type')}
-              >
-                {reminderTypeOptions.map((type) => (
-                  <option key={type} value={type}>
-                    {formatReminderType(type)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Due date" error={form.formState.errors.dueDate?.message}>
-              <Input {...form.register('dueDate')} type="date" />
-            </Field>
-
-            <Field label="Due odometer" error={form.formState.errors.dueOdometer?.message}>
+            <FormField htmlFor="reminder-title" label="Title" error={form.formState.errors.title?.message}>
               <Input
+                id="reminder-title"
+                {...form.register('title')}
+                aria-invalid={Boolean(form.formState.errors.title)}
+                placeholder="Insurance renewal"
+              />
+            </FormField>
+
+            <FormField htmlFor="reminder-type" label="Type" error={form.formState.errors.type?.message}>
+              <Controller
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="reminder-type" aria-invalid={Boolean(form.formState.errors.type)}>
+                      <SelectValue placeholder="Select a reminder type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reminderTypeOptions.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {formatReminderType(type)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+
+            <FormField htmlFor="reminder-due-date" label="Due date" error={form.formState.errors.dueDate?.message}>
+              <Input
+                id="reminder-due-date"
+                {...form.register('dueDate')}
+                aria-invalid={Boolean(form.formState.errors.dueDate)}
+                type="date"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="reminder-due-odometer"
+              label="Due odometer"
+              error={form.formState.errors.dueOdometer?.message}
+            >
+              <Input
+                id="reminder-due-odometer"
                 {...form.register('dueOdometer', {
                   setValueAs: (value) => (value === '' ? undefined : Number(value)),
                 })}
+                aria-invalid={Boolean(form.formState.errors.dueOdometer)}
                 min={0}
                 type="number"
               />
-            </Field>
+            </FormField>
           </div>
 
-          <Field label="Notes" error={form.formState.errors.notes?.message}>
+          <FormField htmlFor="reminder-notes" label="Notes" error={form.formState.errors.notes?.message}>
             <Textarea
+              id="reminder-notes"
               {...form.register('notes')}
+              aria-invalid={Boolean(form.formState.errors.notes)}
               placeholder="Add context about why this reminder matters"
             />
-          </Field>
+          </FormField>
 
-          {submitError ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {submitError}
-            </p>
-          ) : null}
+          {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
@@ -185,21 +216,5 @@ export function ReminderForm({ isSubmitting = false, onSubmit, submitError }: Re
         </form>
       </CardContent>
     </Card>
-  );
-}
-
-type FieldProps = {
-  children: ReactNode;
-  error?: string;
-  label: string;
-};
-
-function Field({ children, error, label }: FieldProps) {
-  return (
-    <label className="grid gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      {children}
-      {error ? <span className="text-xs text-rose-600">{error}</span> : null}
-    </label>
   );
 }

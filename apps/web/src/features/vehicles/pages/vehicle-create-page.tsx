@@ -59,7 +59,7 @@ export function VehicleCreatePage() {
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
             <p>Submission is wired to a real mutation against the Nest API.</p>
             <p>The vehicles query cache is invalidated automatically after a successful create.</p>
-            <p>Persistence is still in-memory, so records reset when the API process restarts.</p>
+            <p>Vehicle records are now persisted through Prisma into PostgreSQL.</p>
           </CardContent>
         </Card>
       </div>

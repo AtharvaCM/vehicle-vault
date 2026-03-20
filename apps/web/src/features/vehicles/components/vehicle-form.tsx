@@ -1,16 +1,35 @@
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
 import { useEffect, useState } from 'react';
-import { type Path, useForm } from 'react-hook-form';
+import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { ApiError } from '@/lib/api/api-error';
+import { FormField } from '@/components/shared/form-field';
+import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-form.schema';
 
 const fuelOptions = Object.values(FuelType);
 const vehicleTypeOptions = Object.values(VehicleType);
+
+function formatOptionLabel(value: string) {
+  if (value.length <= 3) {
+    return value.toUpperCase();
+  }
+
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
 
 type VehicleFormProps = {
   isSubmitting?: boolean;
@@ -87,73 +106,123 @@ export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: Veh
       <CardContent>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field
+            <FormField
+              htmlFor="vehicle-registration-number"
               label="Registration number"
               error={form.formState.errors.registrationNumber?.message}
             >
-              <Input {...form.register('registrationNumber')} placeholder="MH12AB1234" />
-            </Field>
-
-            <Field label="Make" error={form.formState.errors.make?.message}>
-              <Input {...form.register('make')} placeholder="Hyundai" />
-            </Field>
-
-            <Field label="Model" error={form.formState.errors.model?.message}>
-              <Input {...form.register('model')} placeholder="Creta" />
-            </Field>
-
-            <Field label="Variant" error={form.formState.errors.variant?.message}>
-              <Input {...form.register('variant')} placeholder="SX (O)" />
-            </Field>
-
-            <Field label="Year" error={form.formState.errors.year?.message}>
-              <Input {...form.register('year', { valueAsNumber: true })} min={1900} type="number" />
-            </Field>
-
-            <Field label="Vehicle type" error={form.formState.errors.vehicleType?.message}>
-              <select
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
-                {...form.register('vehicleType')}
-              >
-                {vehicleTypeOptions.map((vehicleType) => (
-                  <option key={vehicleType} value={vehicleType}>
-                    {vehicleType}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Fuel type" error={form.formState.errors.fuelType?.message}>
-              <select
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
-                {...form.register('fuelType')}
-              >
-                {fuelOptions.map((fuelType) => (
-                  <option key={fuelType} value={fuelType}>
-                    {fuelType}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Odometer" error={form.formState.errors.odometer?.message}>
               <Input
+                id="vehicle-registration-number"
+                {...form.register('registrationNumber')}
+                aria-invalid={Boolean(form.formState.errors.registrationNumber)}
+                placeholder="MH12AB1234"
+              />
+            </FormField>
+
+            <FormField htmlFor="vehicle-make" label="Make" error={form.formState.errors.make?.message}>
+              <Input
+                id="vehicle-make"
+                {...form.register('make')}
+                aria-invalid={Boolean(form.formState.errors.make)}
+                placeholder="Hyundai"
+              />
+            </FormField>
+
+            <FormField htmlFor="vehicle-model" label="Model" error={form.formState.errors.model?.message}>
+              <Input
+                id="vehicle-model"
+                {...form.register('model')}
+                aria-invalid={Boolean(form.formState.errors.model)}
+                placeholder="Creta"
+              />
+            </FormField>
+
+            <FormField htmlFor="vehicle-variant" label="Variant" error={form.formState.errors.variant?.message}>
+              <Input
+                id="vehicle-variant"
+                {...form.register('variant')}
+                aria-invalid={Boolean(form.formState.errors.variant)}
+                placeholder="SX (O)"
+              />
+            </FormField>
+
+            <FormField htmlFor="vehicle-year" label="Year" error={form.formState.errors.year?.message}>
+              <Input
+                id="vehicle-year"
+                {...form.register('year', { valueAsNumber: true })}
+                aria-invalid={Boolean(form.formState.errors.year)}
+                min={1900}
+                type="number"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="vehicle-type"
+              label="Vehicle type"
+              error={form.formState.errors.vehicleType?.message}
+            >
+              <Controller
+                control={form.control}
+                name="vehicleType"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="vehicle-type" aria-invalid={Boolean(form.formState.errors.vehicleType)}>
+                      <SelectValue placeholder="Select vehicle type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicleTypeOptions.map((vehicleType) => (
+                        <SelectItem key={vehicleType} value={vehicleType}>
+                          {formatOptionLabel(vehicleType)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+
+            <FormField htmlFor="fuel-type" label="Fuel type" error={form.formState.errors.fuelType?.message}>
+              <Controller
+                control={form.control}
+                name="fuelType"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="fuel-type" aria-invalid={Boolean(form.formState.errors.fuelType)}>
+                      <SelectValue placeholder="Select fuel type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fuelOptions.map((fuelType) => (
+                        <SelectItem key={fuelType} value={fuelType}>
+                          {formatOptionLabel(fuelType)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+
+            <FormField htmlFor="vehicle-odometer" label="Odometer" error={form.formState.errors.odometer?.message}>
+              <Input
+                id="vehicle-odometer"
                 {...form.register('odometer', { valueAsNumber: true })}
+                aria-invalid={Boolean(form.formState.errors.odometer)}
                 min={0}
                 type="number"
               />
-            </Field>
+            </FormField>
 
-            <Field label="Nickname" error={form.formState.errors.nickname?.message}>
-              <Input {...form.register('nickname')} placeholder="Family car" />
-            </Field>
+            <FormField htmlFor="vehicle-nickname" label="Nickname" error={form.formState.errors.nickname?.message}>
+              <Input
+                id="vehicle-nickname"
+                {...form.register('nickname')}
+                aria-invalid={Boolean(form.formState.errors.nickname)}
+                placeholder="Family car"
+              />
+            </FormField>
           </div>
 
-          {submitError ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {submitError}
-            </p>
-          ) : null}
+          {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
@@ -174,21 +243,5 @@ export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: Veh
         </form>
       </CardContent>
     </Card>
-  );
-}
-
-type FieldProps = {
-  children: React.ReactNode;
-  error?: string;
-  label: string;
-};
-
-function Field({ children, error, label }: FieldProps) {
-  return (
-    <label className="grid gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      {children}
-      {error ? <span className="text-xs text-rose-600">{error}</span> : null}
-    </label>
   );
 }

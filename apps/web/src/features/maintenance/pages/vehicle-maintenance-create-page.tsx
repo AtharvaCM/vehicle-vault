@@ -99,7 +99,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
             <p>
               Next due date and next due odometer are simple planning fields, not reminders yet.
             </p>
-            <p>Persistence is still in-memory, so records reset when the API process restarts.</p>
+            <p>Maintenance records are now persisted through Prisma into PostgreSQL.</p>
           </CardContent>
         </Card>
       </div>

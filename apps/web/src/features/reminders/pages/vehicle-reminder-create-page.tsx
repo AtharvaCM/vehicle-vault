@@ -101,7 +101,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
               Use a due date, a due odometer, or both. When both exist, the more urgent condition
               wins.
             </p>
-            <p>Persistence is still in-memory, so reminders reset when the API process restarts.</p>
+            <p>Reminder records are now persisted through Prisma into PostgreSQL.</p>
           </CardContent>
         </Card>
       </div>

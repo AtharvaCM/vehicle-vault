@@ -3,13 +3,22 @@ import {
   MaintenanceRecordCreateSchema,
   type CreateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
-import { type ReactNode, useEffect, useState } from 'react';
-import { type Path, useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { ApiError } from '@/lib/api/api-error';
+import { FormField } from '@/components/shared/form-field';
+import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 import {
@@ -141,71 +150,133 @@ export function MaintenanceForm({
       <CardContent>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Service date" error={form.formState.errors.serviceDate?.message}>
-              <Input {...form.register('serviceDate')} type="date" />
-            </Field>
-
-            <Field label="Odometer" error={form.formState.errors.odometer?.message}>
+            <FormField
+              htmlFor="maintenance-service-date"
+              label="Service date"
+              error={form.formState.errors.serviceDate?.message}
+            >
               <Input
+                id="maintenance-service-date"
+                {...form.register('serviceDate')}
+                aria-invalid={Boolean(form.formState.errors.serviceDate)}
+                type="date"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="maintenance-odometer"
+              label="Odometer"
+              error={form.formState.errors.odometer?.message}
+            >
+              <Input
+                id="maintenance-odometer"
                 {...form.register('odometer', { valueAsNumber: true })}
+                aria-invalid={Boolean(form.formState.errors.odometer)}
                 min={0}
                 type="number"
               />
-            </Field>
+            </FormField>
 
-            <Field label="Category" error={form.formState.errors.category?.message}>
-              <select
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
-                {...form.register('category')}
-              >
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {formatMaintenanceCategory(category)}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            <FormField
+              htmlFor="maintenance-category"
+              label="Category"
+              error={form.formState.errors.category?.message}
+            >
+              <Controller
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger
+                      id="maintenance-category"
+                      aria-invalid={Boolean(form.formState.errors.category)}
+                    >
+                      <SelectValue placeholder="Select a maintenance category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {formatMaintenanceCategory(category)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
 
-            <Field label="Workshop name" error={form.formState.errors.workshopName?.message}>
-              <Input {...form.register('workshopName')} placeholder="Authorized service centre" />
-            </Field>
-
-            <Field label="Total cost" error={form.formState.errors.totalCost?.message}>
+            <FormField
+              htmlFor="maintenance-workshop-name"
+              label="Workshop name"
+              error={form.formState.errors.workshopName?.message}
+            >
               <Input
+                id="maintenance-workshop-name"
+                {...form.register('workshopName')}
+                aria-invalid={Boolean(form.formState.errors.workshopName)}
+                placeholder="Authorized service centre"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="maintenance-total-cost"
+              label="Total cost"
+              error={form.formState.errors.totalCost?.message}
+            >
+              <Input
+                id="maintenance-total-cost"
                 {...form.register('totalCost', { valueAsNumber: true })}
+                aria-invalid={Boolean(form.formState.errors.totalCost)}
                 min={0}
                 step="0.01"
                 type="number"
               />
-            </Field>
+            </FormField>
 
-            <Field label="Next due date" error={form.formState.errors.nextDueDate?.message}>
-              <Input {...form.register('nextDueDate')} type="date" />
-            </Field>
-
-            <Field label="Next due odometer" error={form.formState.errors.nextDueOdometer?.message}>
+            <FormField
+              htmlFor="maintenance-next-due-date"
+              label="Next due date"
+              error={form.formState.errors.nextDueDate?.message}
+            >
               <Input
+                id="maintenance-next-due-date"
+                {...form.register('nextDueDate')}
+                aria-invalid={Boolean(form.formState.errors.nextDueDate)}
+                type="date"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="maintenance-next-due-odometer"
+              label="Next due odometer"
+              error={form.formState.errors.nextDueOdometer?.message}
+            >
+              <Input
+                id="maintenance-next-due-odometer"
                 {...form.register('nextDueOdometer', {
                   setValueAs: (value) => (value === '' ? undefined : Number(value)),
                 })}
+                aria-invalid={Boolean(form.formState.errors.nextDueOdometer)}
                 min={0}
                 type="number"
               />
-            </Field>
+            </FormField>
           </div>
 
-          <Field label="Notes" error={form.formState.errors.notes?.message}>
+          <FormField
+            htmlFor="maintenance-notes"
+            label="Notes"
+            error={form.formState.errors.notes?.message}
+          >
             <Textarea
+              id="maintenance-notes"
               {...form.register('notes')}
+              aria-invalid={Boolean(form.formState.errors.notes)}
               placeholder="Service details, parts replaced, or follow-up actions"
             />
-          </Field>
+          </FormField>
 
-          {submitError ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {submitError}
-            </p>
-          ) : null}
+          {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
@@ -226,21 +297,5 @@ export function MaintenanceForm({
         </form>
       </CardContent>
     </Card>
-  );
-}
-
-type FieldProps = {
-  children: ReactNode;
-  error?: string;
-  label: string;
-};
-
-function Field({ children, error, label }: FieldProps) {
-  return (
-    <label className="grid gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      {children}
-      {error ? <span className="text-xs text-rose-600">{error}</span> : null}
-    </label>
   );
 }

@@ -1,6 +1,7 @@
 import { RegisterSchema, type RegisterInput } from '@vehicle-vault/shared';
 import { useForm, type Path } from 'react-hook-form';
 
+import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,27 +47,37 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <Field label="Name" error={form.formState.errors.name?.message}>
-        <Input autoComplete="name" placeholder="Aarav" {...form.register('name')} />
-      </Field>
+      <FormField htmlFor="register-name" label="Name" error={form.formState.errors.name?.message}>
+        <Input
+          autoComplete="name"
+          id="register-name"
+          placeholder="Aarav"
+          {...form.register('name')}
+          aria-invalid={Boolean(form.formState.errors.name)}
+        />
+      </FormField>
 
-      <Field label="Email address" error={form.formState.errors.email?.message}>
+      <FormField htmlFor="register-email" label="Email address" error={form.formState.errors.email?.message}>
         <Input
           autoComplete="email"
+          id="register-email"
           placeholder="you@example.com"
           {...form.register('email')}
+          aria-invalid={Boolean(form.formState.errors.email)}
           type="email"
         />
-      </Field>
+      </FormField>
 
-      <Field label="Password" error={form.formState.errors.password?.message}>
+      <FormField htmlFor="register-password" label="Password" error={form.formState.errors.password?.message}>
         <Input
           autoComplete="new-password"
+          id="register-password"
           placeholder="Use at least 8 characters"
           {...form.register('password')}
+          aria-invalid={Boolean(form.formState.errors.password)}
           type="password"
         />
-      </Field>
+      </FormField>
 
       {submitError ? <InlineError message={submitError} /> : null}
 
@@ -78,21 +89,5 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
         {isSubmitting ? 'Creating account...' : 'Create account'}
       </Button>
     </form>
-  );
-}
-
-type FieldProps = {
-  children: React.ReactNode;
-  error?: string;
-  label: string;
-};
-
-function Field({ children, error, label }: FieldProps) {
-  return (
-    <label className="grid gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      {children}
-      {error ? <span className="text-xs text-rose-600">{error}</span> : null}
-    </label>
   );
 }
