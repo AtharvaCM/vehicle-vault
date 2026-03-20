@@ -1,4 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { SectionCard } from '@/components/shared/section-card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type LoadingStateProps = {
   title: string;
@@ -7,14 +8,12 @@ type LoadingStateProps = {
 
 export function LoadingState({ title, description }: LoadingStateProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="text-sm text-slate-600">
-        Please wait while the latest data is loaded.
-      </CardContent>
-    </Card>
+    <SectionCard description={description} title={title}>
+      <div className="space-y-3">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-full max-w-2xl" />
+        <Skeleton className="h-4 w-full max-w-xl" />
+      </div>
+    </SectionCard>
   );
 }

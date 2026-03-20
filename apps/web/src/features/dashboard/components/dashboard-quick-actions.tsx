@@ -1,3 +1,4 @@
+import { BellRing, CarFront, Wrench } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -14,13 +15,16 @@ export function DashboardQuickActions() {
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-3">
         <Link className={buttonVariants()} to="/vehicles/new">
+          <CarFront className="mr-2 h-4 w-4" />
           Add Vehicle
         </Link>
         <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-          Add Maintenance
+          <Wrench className="mr-2 h-4 w-4" />
+          Choose Vehicle for Maintenance
         </Link>
         <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-          Add Reminder
+          <BellRing className="mr-2 h-4 w-4" />
+          Choose Vehicle for Reminder
         </Link>
       </CardContent>
     </Card>

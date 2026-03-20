@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { login } from '../api/login';
 import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
@@ -22,9 +23,19 @@ export function LoginPage() {
       const authResponse = await login(values);
 
       auth.setSession(authResponse);
+      appToast.success({
+        title: 'Signed in',
+        description: 'Opening your garage dashboard.',
+      });
       await navigate({ to: '/dashboard' });
     } catch (error) {
-      setSubmitError(getApiErrorMessage(error, 'Unable to sign in with those credentials.'));
+      const message = getApiErrorMessage(error, 'Unable to sign in with those credentials.');
+
+      setSubmitError(message);
+      appToast.error({
+        title: 'Sign-in failed',
+        description: message,
+      });
     } finally {
       setIsSubmitting(false);
     }

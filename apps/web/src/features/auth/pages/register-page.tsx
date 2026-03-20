@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { register } from '../api/register';
 import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
@@ -22,9 +23,19 @@ export function RegisterPage() {
       const authResponse = await register(values);
 
       auth.setSession(authResponse);
+      appToast.success({
+        title: 'Account created',
+        description: 'Your dashboard is ready.',
+      });
       await navigate({ to: '/dashboard' });
     } catch (error) {
-      setSubmitError(getApiErrorMessage(error, 'Unable to create the account right now.'));
+      const message = getApiErrorMessage(error, 'Unable to create the account right now.');
+
+      setSubmitError(message);
+      appToast.error({
+        title: 'Registration failed',
+        description: message,
+      });
     } finally {
       setIsSubmitting(false);
     }

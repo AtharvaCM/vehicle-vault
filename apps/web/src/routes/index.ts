@@ -2,6 +2,7 @@ export * from './app-route';
 export * from './dashboard-route';
 export * from './index-route';
 export * from './login-route';
+export * from './maintenance-route';
 export * from './maintenance-record-detail-route';
 export * from './reminder-detail-route';
 export * from './reminders-route';

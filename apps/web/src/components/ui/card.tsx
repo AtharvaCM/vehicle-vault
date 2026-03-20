@@ -1,32 +1,92 @@
-import type { HTMLAttributes } from 'react';
+import * as React from 'react';
 
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+function Card({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
   return (
     <div
-      className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm', className)}
+      data-slot="card"
+      data-size={size}
+      className={cn(
+        'rounded-2xl border bg-card text-card-foreground shadow-sm',
+        size === 'sm' ? 'p-4' : 'p-6',
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('space-y-1.5 px-5 py-4', className)} {...props} />;
+function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn('flex flex-col gap-1.5', className)}
+      {...props}
+    />
+  );
 }
 
-export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn('text-base font-semibold text-slate-950', className)} {...props} />;
+function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn('text-lg font-semibold tracking-tight', className)}
+      {...props}
+    />
+  );
 }
 
-export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-sm leading-6 text-slate-600', className)} {...props} />;
+function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn('text-sm text-muted-foreground', className)}
+      {...props}
+    />
+  );
 }
 
-export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('px-5 py-4 pt-0', className)} {...props} />;
+function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn('ml-auto', className)}
+      {...props}
+    />
+  );
 }
 
-export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex items-center gap-3 px-5 py-4 pt-0', className)} {...props} />;
+function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn('', className)}
+      {...props}
+    />
+  );
 }
+
+function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn('mt-6 flex items-center border-t pt-4', className)}
+      {...props}
+    />
+  );
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+};
