@@ -29,11 +29,26 @@ import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 
 const categoryOptions = Object.values(MaintenanceCategory);
+const defaultMaintenanceValues: MaintenanceFormValues = {
+  serviceDate: '',
+  odometer: 0,
+  category: MaintenanceCategory.PeriodicService,
+  workshopName: '',
+  totalCost: 0,
+  notes: '',
+  nextDueDate: '',
+  nextDueOdometer: undefined,
+};
 
 type MaintenanceFormProps = {
   isSubmitting?: boolean;
   onSubmit: (values: CreateMaintenanceRecordBody) => Promise<void> | void;
   submitError?: string | null;
+  initialValues?: Partial<MaintenanceFormValues>;
+  submitLabel?: string;
+  submittingLabel?: string;
+  submitHint?: string;
+  successMessage?: string;
 };
 
 function toIsoDateString(value: string | undefined) {
@@ -66,20 +81,16 @@ export function MaintenanceForm({
   isSubmitting = false,
   onSubmit,
   submitError,
+  initialValues,
+  submitLabel = 'Save Record',
+  submittingLabel = 'Saving record...',
+  submitHint = 'The record is stored immediately after submit.',
+  successMessage = 'Maintenance record saved successfully.',
 }: MaintenanceFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
 
   const form = useForm<MaintenanceFormValues>({
-    defaultValues: {
-      serviceDate: '',
-      odometer: 0,
-      category: MaintenanceCategory.PeriodicService,
-      workshopName: '',
-      totalCost: 0,
-      notes: '',
-      nextDueDate: '',
-      nextDueOdometer: undefined,
-    },
+    defaultValues: defaultMaintenanceValues,
   });
 
   useEffect(() => {
@@ -87,6 +98,13 @@ export function MaintenanceForm({
       setSubmissionState(null);
     }
   }, [submitError]);
+
+  useEffect(() => {
+    form.reset({
+      ...defaultMaintenanceValues,
+      ...initialValues,
+    });
+  }, [form, initialValues]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const localResult = maintenanceFormSchema.safeParse(values);
@@ -127,7 +145,7 @@ export function MaintenanceForm({
 
     try {
       await onSubmit(contractResult.data);
-      setSubmissionState('Maintenance record created successfully.');
+      setSubmissionState(successMessage);
     } catch (error) {
       if (error instanceof ApiError) {
         setSubmissionState(null);
@@ -286,12 +304,10 @@ export function MaintenanceForm({
 
           <div className="flex items-center gap-3">
             <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
-              Save Record
+              {isSubmitting ? submittingLabel : submitLabel}
             </Button>
             <p className="text-sm text-slate-500">
-              {isSubmitting
-                ? 'Submitting maintenance record to the API...'
-                : 'The record is stored immediately after submit.'}
+              {isSubmitting ? 'Submitting maintenance record to the API...' : submitHint}
             </p>
           </div>
         </form>

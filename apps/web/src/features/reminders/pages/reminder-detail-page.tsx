@@ -103,6 +103,13 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
             >
               Back to Vehicle Reminders
             </Link>
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ reminderId: reminder.id }}
+              to="/reminders/$reminderId/edit"
+            >
+              Edit Reminder
+            </Link>
             {reminder.status !== ReminderStatus.Completed ? (
               <Button
                 disabled={completeReminderMutation.isPending}

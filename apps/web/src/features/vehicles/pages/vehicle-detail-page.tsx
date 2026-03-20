@@ -84,6 +84,13 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             <Link
               className={buttonVariants({ variant: 'secondary' })}
               params={{ vehicleId }}
+              to="/vehicles/$vehicleId/edit"
+            >
+              Edit Vehicle
+            </Link>
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
               to="/vehicles/$vehicleId/maintenance"
             >
               View Maintenance

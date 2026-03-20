@@ -35,23 +35,39 @@ type VehicleFormProps = {
   isSubmitting?: boolean;
   onSubmit: (values: VehicleFormValues) => Promise<void> | void;
   submitError?: string | null;
+  initialValues?: Partial<VehicleFormValues>;
+  submitLabel?: string;
+  submittingLabel?: string;
+  submitHint?: string;
+  successMessage?: string;
 };
 
-export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: VehicleFormProps) {
+const defaultVehicleValues: VehicleFormValues = {
+  registrationNumber: '',
+  make: '',
+  model: '',
+  variant: '',
+  year: new Date().getFullYear(),
+  vehicleType: VehicleType.Car,
+  fuelType: FuelType.Petrol,
+  odometer: 0,
+  nickname: '',
+};
+
+export function VehicleForm({
+  isSubmitting = false,
+  onSubmit,
+  submitError,
+  initialValues,
+  submitLabel = 'Save Vehicle',
+  submittingLabel = 'Saving vehicle...',
+  submitHint = 'The vehicle is stored immediately after submit.',
+  successMessage = 'Vehicle saved successfully.',
+}: VehicleFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
 
   const form = useForm<VehicleFormValues>({
-    defaultValues: {
-      registrationNumber: '',
-      make: '',
-      model: '',
-      variant: '',
-      year: new Date().getFullYear(),
-      vehicleType: VehicleType.Car,
-      fuelType: FuelType.Petrol,
-      odometer: 0,
-      nickname: '',
-    },
+    defaultValues: defaultVehicleValues,
   });
 
   useEffect(() => {
@@ -59,6 +75,13 @@ export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: Veh
       setSubmissionState(null);
     }
   }, [submitError]);
+
+  useEffect(() => {
+    form.reset({
+      ...defaultVehicleValues,
+      ...initialValues,
+    });
+  }, [form, initialValues]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = vehicleFormSchema.safeParse({
@@ -83,7 +106,7 @@ export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: Veh
 
     try {
       await onSubmit(result.data);
-      setSubmissionState('Vehicle created successfully.');
+      setSubmissionState(successMessage);
     } catch (error) {
       if (error instanceof ApiError) {
         setSubmissionState(null);
@@ -232,12 +255,10 @@ export function VehicleForm({ isSubmitting = false, onSubmit, submitError }: Veh
 
           <div className="flex items-center gap-3">
             <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
-              Save Vehicle
+              {isSubmitting ? submittingLabel : submitLabel}
             </Button>
             <p className="text-sm text-slate-500">
-              {isSubmitting
-                ? 'Submitting vehicle to the API...'
-                : 'The vehicle is stored immediately after submit.'}
+              {isSubmitting ? 'Submitting vehicle to the API...' : submitHint}
             </p>
           </div>
         </form>

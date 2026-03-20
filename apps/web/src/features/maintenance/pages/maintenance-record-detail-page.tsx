@@ -66,13 +66,22 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
     <PageContainer>
       <PageTitle
         actions={
-          <Link
-            className={buttonVariants({ variant: 'secondary' })}
-            params={{ vehicleId: record.vehicleId }}
-            to="/vehicles/$vehicleId/maintenance"
-          >
-            Back to Maintenance History
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId: record.vehicleId }}
+              to="/vehicles/$vehicleId/maintenance"
+            >
+              Back to Maintenance History
+            </Link>
+            <Link
+              className={buttonVariants()}
+              params={{ recordId: record.id }}
+              to="/maintenance-records/$recordId/edit"
+            >
+              Edit Record
+            </Link>
+          </div>
         }
         description="Review the details captured for this maintenance event."
         title={formatMaintenanceCategory(record.category)}

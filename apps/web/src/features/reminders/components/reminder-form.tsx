@@ -27,6 +27,11 @@ type ReminderFormProps = {
   isSubmitting?: boolean;
   onSubmit: (values: CreateReminderBody) => Promise<void> | void;
   submitError?: string | null;
+  initialValues?: Partial<ReminderFormValues>;
+  submitLabel?: string;
+  submittingLabel?: string;
+  submitHint?: string;
+  successMessage?: string;
 };
 
 function toIsoDateString(value: string | undefined) {
@@ -49,16 +54,27 @@ function toReminderPayload(values: ReminderFormValues): CreateReminderBody {
   };
 }
 
-export function ReminderForm({ isSubmitting = false, onSubmit, submitError }: ReminderFormProps) {
+const defaultReminderValues: ReminderFormValues = {
+  title: '',
+  type: ReminderType.Service,
+  dueDate: '',
+  dueOdometer: undefined,
+  notes: '',
+};
+
+export function ReminderForm({
+  isSubmitting = false,
+  onSubmit,
+  submitError,
+  initialValues,
+  submitLabel = 'Save Reminder',
+  submittingLabel = 'Saving reminder...',
+  submitHint = 'Add either a due date or due odometer to track this reminder.',
+  successMessage = 'Reminder saved successfully.',
+}: ReminderFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const form = useForm<ReminderFormValues>({
-    defaultValues: {
-      title: '',
-      type: ReminderType.Service,
-      dueDate: '',
-      dueOdometer: undefined,
-      notes: '',
-    },
+    defaultValues: defaultReminderValues,
   });
 
   useEffect(() => {
@@ -66,6 +82,13 @@ export function ReminderForm({ isSubmitting = false, onSubmit, submitError }: Re
       setSubmissionState(null);
     }
   }, [submitError]);
+
+  useEffect(() => {
+    form.reset({
+      ...defaultReminderValues,
+      ...initialValues,
+    });
+  }, [form, initialValues]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const localResult = reminderFormSchema.safeParse(values);
@@ -108,7 +131,7 @@ export function ReminderForm({ isSubmitting = false, onSubmit, submitError }: Re
 
     try {
       await onSubmit(payload);
-      setSubmissionState('Reminder created successfully.');
+      setSubmissionState(successMessage);
     } catch (error) {
       if (error instanceof ApiError) {
         setSubmissionState(null);
@@ -205,12 +228,10 @@ export function ReminderForm({ isSubmitting = false, onSubmit, submitError }: Re
 
           <div className="flex items-center gap-3">
             <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
-              Save Reminder
+              {isSubmitting ? submittingLabel : submitLabel}
             </Button>
             <p className="text-sm text-slate-500">
-              {isSubmitting
-                ? 'Submitting reminder to the API...'
-                : 'Add either a due date or due odometer to track this reminder.'}
+              {isSubmitting ? 'Submitting reminder to the API...' : submitHint}
             </p>
           </div>
         </form>
