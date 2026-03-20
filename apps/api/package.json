@@ -10,7 +10,7 @@
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "test": "node -e \"console.log('No tests configured for @vehicle-vault/api yet.')\"",
+    "test": "vitest run --config vitest.config.ts",
     "format": "prettier --check \"src/**/*.ts\"",
     "clean": "rimraf dist",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
