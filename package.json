@@ -14,6 +14,7 @@
     "build": "pnpm -r --if-present run build",
     "lint": "pnpm -r --if-present run lint",
     "test": "pnpm -r --if-present run test",
+    "test:e2e:web": "pnpm --filter @vehicle-vault/web run test:e2e",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "typecheck": "pnpm -r --if-present run typecheck",

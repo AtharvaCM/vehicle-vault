@@ -1,0 +1,125 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { expect, test } from '@playwright/test';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function uniqueSuffix() {
+  return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+}
+
+test('user can register, sign in, and manage the core garage flow', async ({ page }) => {
+  const suffix = uniqueSuffix();
+  const name = `E2E User ${suffix}`;
+  const email = `e2e+${suffix}@vehiclevault.dev`;
+  const password = 'VehicleVault!234';
+  const registrationNumber = `MH12VV${suffix.slice(-4)}`;
+  const initialNickname = `Garage ${suffix.slice(-4)}`;
+  const updatedNickname = `Garage ${suffix.slice(-4)} Prime`;
+  const workshopName = `Workshop ${suffix.slice(-4)}`;
+  const updatedWorkshopName = `Workshop ${suffix.slice(-4)} Prime`;
+  const reminderTitle = `Insurance renewal ${suffix.slice(-4)}`;
+  const updatedReminderTitle = `Insurance renewed ${suffix.slice(-4)}`;
+  const receiptPath = path.join(__dirname, 'fixtures', 'sample-receipt.pdf');
+
+  await page.goto('/register');
+
+  await page.getByLabel(/^name$/i).fill(name);
+  await page.getByLabel(/email address/i).fill(email);
+  await page.getByLabel(/^password$/i).fill(password);
+  await page.getByRole('button', { name: /create account/i }).click();
+
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+
+  await page.getByRole('button', { name: new RegExp(name) }).click();
+  await page.getByRole('menuitem', { name: /logout/i }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+
+  await page.getByLabel(/email address/i).fill(email);
+  await page.getByLabel(/^password$/i).fill(password);
+  await page.getByRole('button', { name: /sign in/i }).click();
+
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  await page.getByRole('link', { name: /add vehicle/i }).first().click();
+
+  await expect(page).toHaveURL(/\/vehicles\/new$/);
+  await page.getByLabel(/registration number/i).fill(registrationNumber);
+  await page.getByLabel(/^make$/i).fill('Hyundai');
+  await page.getByLabel(/^model$/i).fill('Creta');
+  await page.getByLabel(/variant/i).fill('SX');
+  await page.getByLabel(/^year$/i).fill('2024');
+  await page.getByLabel(/odometer/i).fill('15200');
+  await page.getByLabel(/nickname/i).fill(initialNickname);
+  await page.getByRole('button', { name: /save vehicle/i }).click();
+
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
+  await expect(page.getByRole('heading', { name: initialNickname })).toBeVisible();
+
+  const vehicleUrl = page.url();
+
+  await page.getByRole('link', { name: /edit vehicle/i }).click();
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+\/edit$/);
+  await page.getByLabel(/nickname/i).fill(updatedNickname);
+  await page.getByLabel(/odometer/i).fill('16250');
+  await page.getByRole('button', { name: /save changes/i }).click();
+
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
+  await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
+  await expect(page.getByText('Odometer: 16,250 km')).toBeVisible();
+
+  await page.getByRole('link', { name: /^add maintenance$/i }).first().click();
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
+  await page.getByLabel(/service date/i).fill('2026-03-20');
+  await page.getByLabel(/^odometer$/i).fill('16250');
+  await page.getByLabel(/workshop name/i).fill(workshopName);
+  await page.getByLabel(/total cost/i).fill('4500');
+  await page.getByLabel(/notes/i).fill('Oil change and general inspection');
+  await page.getByRole('button', { name: /save record/i }).click();
+
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance$/);
+  await page.getByRole('link', { name: new RegExp(workshopName) }).click();
+
+  await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
+  await expect(page.getByText(workshopName)).toBeVisible();
+
+  await page.getByRole('link', { name: /edit record/i }).click();
+  await expect(page).toHaveURL(/\/maintenance-records\/[^/]+\/edit$/);
+  await page.getByLabel(/workshop name/i).fill(updatedWorkshopName);
+  await page.getByLabel(/notes/i).fill('Updated record after reviewing invoice');
+  await page.getByRole('button', { name: /save changes/i }).click();
+
+  await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
+  await expect(page.getByText(updatedWorkshopName)).toBeVisible();
+
+  await page.locator('input[type="file"]').setInputFiles(receiptPath);
+  await expect(page.getByText('sample-receipt.pdf')).toBeVisible();
+
+  await page.goto(vehicleUrl);
+  await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
+
+  await page.getByRole('link', { name: /^add reminder$/i }).first().click();
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+\/reminders\/new$/);
+  await page.getByLabel(/^title$/i).fill(reminderTitle);
+  await page.getByLabel(/due date/i).fill('2026-04-20');
+  await page.getByLabel(/notes/i).fill('Renew before expiry');
+  await page.getByRole('button', { name: /save reminder/i }).click();
+
+  await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
+  await expect(page.getByRole('heading', { level: 1, name: reminderTitle })).toBeVisible();
+
+  await page.getByRole('link', { name: /edit reminder/i }).click();
+  await expect(page).toHaveURL(/\/reminders\/[^/]+\/edit$/);
+  await page.getByLabel(/^title$/i).fill(updatedReminderTitle);
+  await page.getByLabel(/notes/i).fill('Updated after confirming the policy renewal timeline');
+  await page.getByRole('button', { name: /save changes/i }).click();
+
+  await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: updatedReminderTitle }),
+  ).toBeVisible();
+});
