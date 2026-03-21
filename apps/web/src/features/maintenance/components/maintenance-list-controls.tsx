@@ -25,6 +25,7 @@ type MaintenanceListControlsProps = {
   sortBy: MaintenanceSortOption;
   resultCount: number;
   totalCount: number;
+  searchPlaceholder?: string;
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: MaintenanceCategory | 'all') => void;
   onSortChange: (value: MaintenanceSortOption) => void;
@@ -44,6 +45,7 @@ export function MaintenanceListControls({
   sortBy,
   resultCount,
   totalCount,
+  searchPlaceholder = 'Search by workshop, notes, or category',
   onSearchChange,
   onCategoryChange,
   onSortChange,
@@ -63,7 +65,7 @@ export function MaintenanceListControls({
             <Input
               className="pl-9"
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search by workshop, notes, or category"
+              placeholder={searchPlaceholder}
               value={searchValue}
             />
           </div>

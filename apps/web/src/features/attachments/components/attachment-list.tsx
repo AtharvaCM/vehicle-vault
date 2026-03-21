@@ -12,9 +12,13 @@ export function AttachmentList({
   deletingAttachmentId,
   onDelete,
 }: AttachmentListProps) {
+  const orderedAttachments = attachments
+    .slice()
+    .sort((left, right) => Date.parse(right.uploadedAt) - Date.parse(left.uploadedAt));
+
   return (
     <div className="space-y-3">
-      {attachments.map((attachment) => (
+      {orderedAttachments.map((attachment) => (
         <AttachmentItem
           attachment={attachment}
           isDeleting={deletingAttachmentId === attachment.id}

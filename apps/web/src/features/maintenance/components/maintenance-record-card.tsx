@@ -11,9 +11,10 @@ import { formatMaintenanceCategory } from '../utils/format-maintenance-category'
 
 type MaintenanceRecordCardProps = {
   record: MaintenanceRecord;
+  vehicleLabel?: string;
 };
 
-export function MaintenanceRecordCard({ record }: MaintenanceRecordCardProps) {
+export function MaintenanceRecordCard({ record, vehicleLabel }: MaintenanceRecordCardProps) {
   return (
     <Link params={{ recordId: record.id }} to="/maintenance-records/$recordId">
       <Card className="rounded-xl transition-colors hover:border-slate-300">
@@ -22,7 +23,10 @@ export function MaintenanceRecordCard({ record }: MaintenanceRecordCardProps) {
             <p className="font-medium text-slate-950">
               {record.workshopName?.trim() || 'Workshop not specified'}
             </p>
-            <p className="text-[13px] text-slate-600">{formatDate(record.serviceDate)}</p>
+            <div className="space-y-0.5 text-[13px] text-slate-600">
+              {vehicleLabel ? <p>{vehicleLabel}</p> : null}
+              <p>{formatDate(record.serviceDate)}</p>
+            </div>
           </div>
 
           <div>

@@ -10,6 +10,7 @@ export const queryKeys = {
   },
   maintenance: {
     all: () => ['maintenance'] as const,
+    global: () => [...queryKeys.maintenance.all(), 'global'] as const,
     list: (vehicleId: string) => [...queryKeys.maintenance.all(), 'list', vehicleId] as const,
     detail: (recordId: string) => [...queryKeys.maintenance.all(), 'detail', recordId] as const,
   },

@@ -1,19 +1,23 @@
 import { useState } from 'react';
+import { Paperclip, ReceiptText } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
-import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
+import { StatCard } from '@/components/shared/stat-card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { formatDate } from '@/lib/utils/format-date';
 
 import { useAttachments } from '../hooks/use-attachments';
 import { useDeleteAttachment } from '../hooks/use-delete-attachment';
 import { useUploadAttachments } from '../hooks/use-upload-attachments';
 import { AttachmentList } from './attachment-list';
 import { AttachmentUploadForm } from './attachment-upload-form';
+import { formatFileSize } from '../utils/format-file-size';
 
 type AttachmentsSectionProps = {
   recordId: string;
@@ -69,24 +73,54 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
   }
 
   const attachmentsCount = attachmentsQuery.data?.length ?? 0;
+  const totalSize = (attachmentsQuery.data ?? []).reduce((sum, attachment) => sum + attachment.size, 0);
+  const latestAttachment = (attachmentsQuery.data ?? [])
+    .slice()
+    .sort((left, right) => Date.parse(right.uploadedAt) - Date.parse(left.uploadedAt))[0];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Receipts & Documents</CardTitle>
-        <CardDescription>
-          Upload receipt images or PDFs linked to this maintenance record. {attachmentsCount} file
-          {attachmentsCount === 1 ? '' : 's'} attached.
-        </CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <CardTitle>Receipts & Documents</CardTitle>
+            <CardDescription>
+              Upload and manage the supporting files linked to this maintenance event.
+            </CardDescription>
+          </div>
+          <Badge tone="neutral">
+            {attachmentsCount} file{attachmentsCount === 1 ? '' : 's'}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <AttachmentUploadForm
-          error={null}
+          error={actionError}
           isUploading={uploadAttachmentsMutation.isPending}
           onUpload={handleUpload}
         />
 
-        {actionError ? <InlineError message={actionError} /> : null}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard
+            description="Files currently linked to this maintenance record."
+            icon={Paperclip}
+            label="Attachments"
+            value={String(attachmentsCount)}
+          />
+          <StatCard
+            accent={
+              latestAttachment ? (
+                <span className="text-xs font-medium text-slate-500">
+                  Latest {formatDate(latestAttachment.uploadedAt)}
+                </span>
+              ) : null
+            }
+            description="Combined file size of the linked receipts and documents."
+            icon={ReceiptText}
+            label="Stored size"
+            value={formatFileSize(totalSize)}
+          />
+        </div>
 
         {attachmentsQuery.isPending ? (
           <LoadingState
@@ -111,7 +145,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
           />
         ) : (
           <EmptyState
-            description="No receipts or documents are linked to this maintenance record yet. Use the upload control above to add the first file."
+            description="No receipts or documents are linked to this maintenance record yet. Upload the invoice, job card, or supporting photos so the record stays auditable later."
             title="No attachments yet"
           />
         )}

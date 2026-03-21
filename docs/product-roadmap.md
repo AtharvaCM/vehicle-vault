@@ -56,6 +56,7 @@ The product already supports the core ownership loop:
 
 - Create maintenance record for a vehicle
 - List maintenance records for a vehicle
+- Global maintenance overview with search, filter, and sort
 - View maintenance record detail
 - Edit maintenance record
 - Delete maintenance record with confirmation
@@ -79,6 +80,7 @@ The product already supports the core ownership loop:
 - Persist attachment metadata in PostgreSQL
 - Store uploaded files locally on disk for now
 - List attachments for a maintenance record
+- Maintenance-detail attachment summary, upload guidance, and clearer action feedback
 - Open / download an attachment
 - Delete attachment metadata and local file with confirmation
 
@@ -112,7 +114,6 @@ These are the main items that still prevent the product from being a more comple
 
 - Export feature is still not implemented in the product UI or API in a meaningful way
 - No bulk actions across vehicles, reminders, or maintenance history
-- No global maintenance overview filters beyond the per-vehicle history
 - No vehicle odometer history or trend view
 
 ### Production Hardening Gaps
@@ -134,14 +135,7 @@ These are the main items that still prevent the product from being a more comple
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Complete the CRUD and Flow Polish
-
-Goal: remove the remaining friction from day-to-day use.
-
-- Tighten attachment management UX on maintenance detail pages
-- Add a global maintenance overview route with search/filter/sort
-
-### Milestone 2: Finish the Missing MVP Capability
+### Milestone 1: Finish the Missing MVP Capability
 
 Goal: close the biggest stated MVP gap.
 
@@ -152,7 +146,7 @@ Goal: close the biggest stated MVP gap.
 - Surface export from settings and/or vehicle detail
 - Keep export user-scoped and authenticated
 
-### Milestone 3: Responsive and Accessibility Pass
+### Milestone 2: Responsive and Accessibility Pass
 
 Goal: make the app feel production-grade outside desktop demos.
 
@@ -162,7 +156,7 @@ Goal: make the app feel production-grade outside desktop demos.
 - Review contrast and hit targets
 - Ensure dialogs, sheets, and menus behave accessibly
 
-### Milestone 4: Session and Security Hardening
+### Milestone 3: Session and Security Hardening
 
 Goal: move auth from MVP-safe to more production-safe.
 
@@ -171,7 +165,7 @@ Goal: move auth from MVP-safe to more production-safe.
 - Improve token expiry handling in the frontend
 - Review file-upload validation and abuse protection
 
-### Milestone 5: Storage and Ops Hardening
+### Milestone 4: Storage and Ops Hardening
 
 Goal: remove the remaining temporary infrastructure choices.
 

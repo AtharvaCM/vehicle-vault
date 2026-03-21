@@ -18,7 +18,7 @@ import {
 } from '../components/maintenance-list-controls';
 import { useMaintenanceRecords } from '../hooks/use-maintenance-records';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
+import { filterAndSortMaintenanceRecords } from '../utils/filter-and-sort-maintenance-records';
 
 type VehicleMaintenanceListPageProps = {
   vehicleId: string;
@@ -40,41 +40,12 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
     maintenanceQuery.error instanceof ApiError && maintenanceQuery.error.status === 404;
 
   const filteredRecords = useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase();
-
-    return [...(maintenanceQuery.data ?? [])]
-      .filter((record) => {
-        if (category !== 'all' && record.category !== category) {
-          return false;
-        }
-
-        if (!normalizedSearch) {
-          return true;
-        }
-
-        const searchFields = [
-          record.workshopName ?? '',
-          record.notes ?? '',
-          record.serviceDate,
-          record.odometer.toString(),
-          formatMaintenanceCategory(record.category),
-        ];
-
-        return searchFields.some((value) => value.toLowerCase().includes(normalizedSearch));
-      })
-      .sort((left, right) => {
-        switch (sortBy) {
-          case 'service-date-asc':
-            return Date.parse(left.serviceDate) - Date.parse(right.serviceDate);
-          case 'cost-desc':
-            return right.totalCost - left.totalCost;
-          case 'odometer-desc':
-            return right.odometer - left.odometer;
-          case 'service-date-desc':
-          default:
-            return Date.parse(right.serviceDate) - Date.parse(left.serviceDate);
-        }
-      });
+    return filterAndSortMaintenanceRecords({
+      records: maintenanceQuery.data ?? [],
+      searchValue,
+      category,
+      sortBy,
+    });
   }, [category, maintenanceQuery.data, searchValue, sortBy]);
 
   function resetControls() {

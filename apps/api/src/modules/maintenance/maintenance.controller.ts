@@ -14,6 +14,11 @@ import { MaintenanceService } from './maintenance.service';
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
+  @Get('maintenance-records')
+  async listMaintenance(@CurrentUser() user: AuthUser) {
+    return successResponse(await this.maintenanceService.getAllRecords(user.id));
+  }
+
   @Get('vehicles/:vehicleId/maintenance-records')
   async listVehicleMaintenance(
     @Param() params: VehicleIdParamDto,

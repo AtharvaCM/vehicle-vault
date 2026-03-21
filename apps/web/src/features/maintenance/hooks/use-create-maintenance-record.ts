@@ -12,7 +12,7 @@ export function useCreateMaintenanceRecord(vehicleId: string) {
     mutationFn: (input: CreateMaintenanceRecordBody) => createMaintenanceRecord(vehicleId, input),
     onSuccess: (record) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.maintenance.list(vehicleId),
+        queryKey: queryKeys.maintenance.all(),
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.all(),
