@@ -3,7 +3,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { PageContainer } from '@/components/layout/page-container';
 import { PageTitle } from '@/components/shared/page-title';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { VehicleForm } from '../components/vehicle-form';
 import { useCreateVehicle } from '../hooks/use-create-vehicle';
@@ -15,27 +16,32 @@ export function VehicleCreatePage() {
   async function handleCreateVehicle(
     values: Parameters<typeof createVehicleMutation.mutateAsync>[0],
   ) {
-    const vehicle = await createVehicleMutation.mutateAsync(values);
+    try {
+      const vehicle = await createVehicleMutation.mutateAsync(values);
 
-    await navigate({
-      to: '/vehicles/$vehicleId',
-      params: {
-        vehicleId: vehicle.id,
-      },
-    });
+      appToast.success({
+        title: 'Vehicle created',
+        description: 'The vehicle is ready for maintenance, reminders, and receipts.',
+      });
+
+      await navigate({
+        to: '/vehicles/$vehicleId',
+        params: {
+          vehicleId: vehicle.id,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to create vehicle',
+        description: getApiErrorMessage(error, 'Unable to create the vehicle.'),
+      });
+      throw error;
+    }
   }
 
-  const submitError =
-    createVehicleMutation.error instanceof ApiError &&
-    createVehicleMutation.error.data &&
-    typeof createVehicleMutation.error.data === 'object' &&
-    'error' in createVehicleMutation.error.data &&
-    createVehicleMutation.error.data.error &&
-    typeof createVehicleMutation.error.data.error === 'object' &&
-    'message' in createVehicleMutation.error.data.error &&
-    typeof createVehicleMutation.error.data.error.message === 'string'
-      ? createVehicleMutation.error.data.error.message
-      : (createVehicleMutation.error?.message ?? null);
+  const submitError = createVehicleMutation.error
+    ? getApiErrorMessage(createVehicleMutation.error, 'Unable to create the vehicle.')
+    : null;
 
   return (
     <PageContainer>

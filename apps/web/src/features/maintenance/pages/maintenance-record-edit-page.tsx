@@ -8,6 +8,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { MaintenanceForm } from '../components/maintenance-form';
@@ -26,14 +27,26 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   async function handleUpdateRecord(
     values: Parameters<typeof updateRecordMutation.mutateAsync>[0],
   ) {
-    const record = await updateRecordMutation.mutateAsync(values);
+    try {
+      const record = await updateRecordMutation.mutateAsync(values);
+      appToast.success({
+        title: 'Maintenance record updated',
+        description: 'The service record changes were saved successfully.',
+      });
 
-    await navigate({
-      to: '/maintenance-records/$recordId',
-      params: {
-        recordId: record.id,
-      },
-    });
+      await navigate({
+        to: '/maintenance-records/$recordId',
+        params: {
+          recordId: record.id,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to update maintenance record',
+        description: getApiErrorMessage(error, 'Unable to update the maintenance record.'),
+      });
+      throw error;
+    }
   }
 
   if (recordQuery.isPending) {

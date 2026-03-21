@@ -38,6 +38,10 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
         description: 'The reminder status was updated successfully.',
       });
     } catch (error) {
+      appToast.error({
+        title: 'Unable to complete reminder',
+        description: getApiErrorMessage(error, 'Unable to complete the reminder.'),
+      });
       setActionError(getApiErrorMessage(error, 'Unable to complete the reminder.'));
     }
   }
@@ -57,6 +61,10 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
         },
       });
     } catch (error) {
+      appToast.error({
+        title: 'Unable to delete reminder',
+        description: getApiErrorMessage(error, 'Unable to delete the reminder.'),
+      });
       setActionError(getApiErrorMessage(error));
     }
   }

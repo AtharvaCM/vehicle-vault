@@ -6,6 +6,8 @@ import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { ReminderForm } from '../components/reminder-form';
@@ -23,27 +25,31 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
   async function handleCreateReminder(
     values: Parameters<typeof createReminderMutation.mutateAsync>[0],
   ) {
-    const reminder = await createReminderMutation.mutateAsync(values);
+    try {
+      const reminder = await createReminderMutation.mutateAsync(values);
+      appToast.success({
+        title: 'Reminder created',
+        description: 'The reminder is now active for this vehicle.',
+      });
 
-    await navigate({
-      to: '/reminders/$reminderId',
-      params: {
-        reminderId: reminder.id,
-      },
-    });
+      await navigate({
+        to: '/reminders/$reminderId',
+        params: {
+          reminderId: reminder.id,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to create reminder',
+        description: getApiErrorMessage(error, 'Unable to create the reminder.'),
+      });
+      throw error;
+    }
   }
 
-  const submitError =
-    createReminderMutation.error instanceof ApiError &&
-    createReminderMutation.error.data &&
-    typeof createReminderMutation.error.data === 'object' &&
-    'error' in createReminderMutation.error.data &&
-    createReminderMutation.error.data.error &&
-    typeof createReminderMutation.error.data.error === 'object' &&
-    'message' in createReminderMutation.error.data.error &&
-    typeof createReminderMutation.error.data.error.message === 'string'
-      ? createReminderMutation.error.data.error.message
-      : (createReminderMutation.error?.message ?? null);
+  const submitError = createReminderMutation.error
+    ? getApiErrorMessage(createReminderMutation.error, 'Unable to create the reminder.')
+    : null;
 
   if (
     vehicleQuery.isError &&

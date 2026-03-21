@@ -38,7 +38,12 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
             : 'The file was linked to this maintenance record.',
       });
     } catch (error) {
-      setActionError(getApiErrorMessage(error, 'The attachment upload failed.'));
+      const message = getApiErrorMessage(error, 'The attachment upload failed.');
+      appToast.error({
+        title: 'Unable to upload attachment',
+        description: message,
+      });
+      setActionError(message);
     }
   }
 
@@ -52,7 +57,12 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
         description: 'The file was removed from this maintenance record.',
       });
     } catch (error) {
-      setActionError(getApiErrorMessage(error, 'The attachment delete failed.'));
+      const message = getApiErrorMessage(error, 'The attachment delete failed.');
+      appToast.error({
+        title: 'Unable to delete attachment',
+        description: message,
+      });
+      setActionError(message);
     } finally {
       setDeletingAttachmentId(null);
     }

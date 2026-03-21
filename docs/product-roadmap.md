@@ -99,6 +99,10 @@ The product already supports the core ownership loop:
 - GHCR-based API image publishing
 - Self-hosted API deployment path for Portainer + nginx proxy
 
+### Interaction Quality
+
+- Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
+
 ## MVP Gaps Still Open
 
 These are the main items that still prevent the product from being a more complete and stable MVP.
@@ -134,7 +138,6 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: remove the remaining friction from day-to-day use.
 
-- Add success/error toast coverage across remaining mutations
 - Add unsaved-changes protection to create/edit forms
 - Tighten attachment management UX on maintenance detail pages
 - Add a global maintenance overview route with search/filter/sort

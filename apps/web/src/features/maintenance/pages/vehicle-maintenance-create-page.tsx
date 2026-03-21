@@ -6,6 +6,8 @@ import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { MaintenanceForm } from '../components/maintenance-form';
@@ -23,27 +25,34 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
   async function handleCreateMaintenanceRecord(
     values: Parameters<typeof createMaintenanceMutation.mutateAsync>[0],
   ) {
-    await createMaintenanceMutation.mutateAsync(values);
+    try {
+      await createMaintenanceMutation.mutateAsync(values);
+      appToast.success({
+        title: 'Maintenance record created',
+        description: 'The service event was added to this vehicle.',
+      });
 
-    await navigate({
-      to: '/vehicles/$vehicleId/maintenance',
-      params: {
-        vehicleId,
-      },
-    });
+      await navigate({
+        to: '/vehicles/$vehicleId/maintenance',
+        params: {
+          vehicleId,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to create maintenance record',
+        description: getApiErrorMessage(error, 'Unable to create the maintenance record.'),
+      });
+      throw error;
+    }
   }
 
-  const submitError =
-    createMaintenanceMutation.error instanceof ApiError &&
-    createMaintenanceMutation.error.data &&
-    typeof createMaintenanceMutation.error.data === 'object' &&
-    'error' in createMaintenanceMutation.error.data &&
-    createMaintenanceMutation.error.data.error &&
-    typeof createMaintenanceMutation.error.data.error === 'object' &&
-    'message' in createMaintenanceMutation.error.data.error &&
-    typeof createMaintenanceMutation.error.data.error.message === 'string'
-      ? createMaintenanceMutation.error.data.error.message
-      : (createMaintenanceMutation.error?.message ?? null);
+  const submitError = createMaintenanceMutation.error
+    ? getApiErrorMessage(
+        createMaintenanceMutation.error,
+        'Unable to create the maintenance record.',
+      )
+    : null;
 
   if (
     vehicleQuery.isError &&

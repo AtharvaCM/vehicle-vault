@@ -49,6 +49,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
       });
       await navigate({ to: '/vehicles' });
     } catch (error) {
+      appToast.error({
+        title: 'Unable to delete vehicle',
+        description: getApiErrorMessage(error, 'Unable to delete the vehicle.'),
+      });
       setActionError(getApiErrorMessage(error, 'Unable to delete the vehicle.'));
     }
   }

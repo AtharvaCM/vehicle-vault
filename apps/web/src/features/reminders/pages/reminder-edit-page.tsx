@@ -8,6 +8,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { ReminderForm } from '../components/reminder-form';
@@ -26,14 +27,26 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
   async function handleUpdateReminder(
     values: Parameters<typeof updateReminderMutation.mutateAsync>[0],
   ) {
-    const reminder = await updateReminderMutation.mutateAsync(values);
+    try {
+      const reminder = await updateReminderMutation.mutateAsync(values);
+      appToast.success({
+        title: 'Reminder updated',
+        description: 'Reminder changes were saved successfully.',
+      });
 
-    await navigate({
-      to: '/reminders/$reminderId',
-      params: {
-        reminderId: reminder.id,
-      },
-    });
+      await navigate({
+        to: '/reminders/$reminderId',
+        params: {
+          reminderId: reminder.id,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to update reminder',
+        description: getApiErrorMessage(error, 'Unable to update the reminder.'),
+      });
+      throw error;
+    }
   }
 
   if (reminderQuery.isPending) {

@@ -41,6 +41,10 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         params: { vehicleId },
       });
     } catch (error) {
+      appToast.error({
+        title: 'Unable to delete maintenance record',
+        description: getApiErrorMessage(error, 'Unable to delete the maintenance record.'),
+      });
       setActionError(getApiErrorMessage(error, 'Unable to delete the maintenance record.'));
     }
   }

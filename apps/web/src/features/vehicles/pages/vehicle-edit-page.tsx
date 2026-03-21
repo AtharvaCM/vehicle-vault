@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { VehicleForm } from '../components/vehicle-form';
 import { useUpdateVehicle } from '../hooks/use-update-vehicle';
@@ -26,14 +27,26 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   async function handleUpdateVehicle(
     values: Parameters<typeof updateVehicleMutation.mutateAsync>[0],
   ) {
-    await updateVehicleMutation.mutateAsync(values);
+    try {
+      await updateVehicleMutation.mutateAsync(values);
+      appToast.success({
+        title: 'Vehicle updated',
+        description: 'Vehicle details were saved successfully.',
+      });
 
-    await navigate({
-      to: '/vehicles/$vehicleId',
-      params: {
-        vehicleId,
-      },
-    });
+      await navigate({
+        to: '/vehicles/$vehicleId',
+        params: {
+          vehicleId,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to update vehicle',
+        description: getApiErrorMessage(error, 'Unable to update the vehicle.'),
+      });
+      throw error;
+    }
   }
 
   if (vehicleQuery.isPending) {
