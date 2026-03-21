@@ -106,13 +106,17 @@ The product already supports the core ownership loop:
 - Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
 - Unsaved-changes protection across core vehicle, maintenance, and reminder create/edit forms
 
+### Export and Portability
+
+- User-scoped JSON account export from settings
+- Export includes account details, vehicles, maintenance records, reminders, and attachments
+
 ## MVP Gaps Still Open
 
 These are the main items that still prevent the product from being a more complete and stable MVP.
 
 ### Functional Gaps
 
-- Export feature is still not implemented in the product UI or API in a meaningful way
 - No bulk actions across vehicles, reminders, or maintenance history
 - No vehicle odometer history or trend view
 
@@ -135,18 +139,7 @@ These are the main items that still prevent the product from being a more comple
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Finish the Missing MVP Capability
-
-Goal: close the biggest stated MVP gap.
-
-- Implement export for user-owned data
-- Decide on the first export shape:
-  - CSV for vehicles + maintenance
-  - JSON full export for user-owned records
-- Surface export from settings and/or vehicle detail
-- Keep export user-scoped and authenticated
-
-### Milestone 2: Responsive and Accessibility Pass
+### Milestone 1: Responsive and Accessibility Pass
 
 Goal: make the app feel production-grade outside desktop demos.
 
@@ -156,7 +149,7 @@ Goal: make the app feel production-grade outside desktop demos.
 - Review contrast and hit targets
 - Ensure dialogs, sheets, and menus behave accessibly
 
-### Milestone 3: Session and Security Hardening
+### Milestone 2: Session and Security Hardening
 
 Goal: move auth from MVP-safe to more production-safe.
 
@@ -165,7 +158,7 @@ Goal: move auth from MVP-safe to more production-safe.
 - Improve token expiry handling in the frontend
 - Review file-upload validation and abuse protection
 
-### Milestone 4: Storage and Ops Hardening
+### Milestone 3: Storage and Ops Hardening
 
 Goal: remove the remaining temporary infrastructure choices.
 

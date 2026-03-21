@@ -7,6 +7,9 @@ export const endpoints = {
   dashboard: {
     summary: '/dashboard/summary',
   },
+  exports: {
+    account: '/exports/account',
+  },
   vehicles: {
     list: '/vehicles',
     create: '/vehicles',
