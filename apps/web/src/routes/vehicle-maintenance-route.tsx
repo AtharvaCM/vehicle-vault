@@ -1,7 +1,11 @@
-import { createRoute } from '@tanstack/react-router';
+import { createRoute, useNavigate } from '@tanstack/react-router';
 
 import { appRoute } from './app-route';
 import { createLazyPage } from './lazy-page';
+import {
+  normalizeMaintenanceListSearch,
+  type MaintenanceListSearch,
+} from '@/features/maintenance/types/maintenance-list-search';
 
 const VehicleMaintenanceListPage = createLazyPage(
   () =>
@@ -16,12 +20,30 @@ const VehicleMaintenanceListPage = createLazyPage(
 
 function VehicleMaintenanceRouteComponent() {
   const { vehicleId } = vehicleMaintenanceRoute.useParams();
+  const search = vehicleMaintenanceRoute.useSearch();
+  const navigate = useNavigate();
 
-  return <VehicleMaintenanceListPage vehicleId={vehicleId} />;
+  function updateSearch(next: Partial<MaintenanceListSearch>) {
+    void navigate({
+      to: '/vehicles/$vehicleId/maintenance',
+      params: { vehicleId },
+      search: (previous) => normalizeMaintenanceListSearch({ ...previous, ...next }),
+      replace: true,
+    });
+  }
+
+  return (
+    <VehicleMaintenanceListPage
+      onSearchStateChange={updateSearch}
+      searchState={search}
+      vehicleId={vehicleId}
+    />
+  );
 }
 
 export const vehicleMaintenanceRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'vehicles/$vehicleId/maintenance',
+  validateSearch: normalizeMaintenanceListSearch,
   component: VehicleMaintenanceRouteComponent,
 });

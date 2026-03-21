@@ -13,12 +13,7 @@ import {
 
 import { formatReminderStatus } from '../utils/format-reminder-status';
 import { formatReminderType } from '../utils/format-reminder-type';
-
-export type ReminderSortOption =
-  | 'urgency'
-  | 'due-date-asc'
-  | 'due-date-desc'
-  | 'updated-desc';
+import { reminderSortOptions, type ReminderSortOption } from '../types/reminder-list-search';
 
 type ReminderListControlsProps = {
   searchValue: string;
@@ -122,9 +117,9 @@ export function ReminderListControls({
               <SelectValue placeholder="Sort reminders" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(sortLabels).map(([value, label]) => (
+              {reminderSortOptions.map((value) => (
                 <SelectItem key={value} value={value}>
-                  {label}
+                  {sortLabels[value]}
                 </SelectItem>
               ))}
             </SelectContent>

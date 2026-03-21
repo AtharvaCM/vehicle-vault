@@ -106,11 +106,14 @@ The product already supports the core ownership loop:
 - Vercel frontend deployment
 - GHCR-based API image publishing
 - Self-hosted API deployment path for Portainer + nginx proxy
+- Fresh-environment deployment checklist for database, storage, auth secrets, and build steps
+- Preview-deployment friendly CORS support via optional frontend-origin regex matching
 
 ### Interaction Quality
 
 - Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
 - Unsaved-changes protection across core vehicle, maintenance, and reminder create/edit forms
+- URL-backed search, filter, and sort state across vehicles, maintenance, and reminder list views
 
 ### Responsive and Accessibility
 
@@ -141,26 +144,14 @@ These are the main items that still prevent the product from being a more comple
 - No background jobs or reminder delivery
 - No audit logging or admin tooling
 
-### UX Gaps
-
-- Search/filter state is local to pages and not persisted in the URL
-
 ## Recommended Next Milestones
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Storage and Ops Hardening
-
-Goal: remove the remaining temporary infrastructure choices.
-
-- Improve deployment docs for fresh environments
-- Add preview-environment friendliness where needed
-
-### Milestone 2: Workflow Depth
+### Milestone 1: Workflow Depth
 
 Goal: improve day-to-day productivity without diluting the ownership model.
 
-- Persist search and filter state in the URL where it helps
 - Add bulk actions where they are operationally useful
 - Add odometer history and service-trend visibility
 

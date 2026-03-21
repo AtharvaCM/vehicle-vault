@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -8,14 +8,27 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
 
-import { VehicleListControls, type VehicleSortOption } from '../components/vehicle-list-controls';
+import { VehicleListControls } from '../components/vehicle-list-controls';
 import { VehicleList } from '../components/vehicle-list';
 import { useVehicles } from '../hooks/use-vehicles';
+import {
+  defaultVehicleSort,
+  type VehicleListSearch,
+  type VehicleSortOption,
+} from '../types/vehicle-list-search';
 
-export function VehiclesListPage() {
+type VehiclesListPageProps = {
+  searchState: VehicleListSearch;
+  onSearchStateChange: (next: Partial<VehicleListSearch>) => void;
+};
+
+export function VehiclesListPage({
+  searchState,
+  onSearchStateChange,
+}: VehiclesListPageProps) {
   const vehiclesQuery = useVehicles();
-  const [searchValue, setSearchValue] = useState('');
-  const [sortBy, setSortBy] = useState<VehicleSortOption>('updated-desc');
+  const searchValue = searchState.search ?? '';
+  const sortBy: VehicleSortOption = searchState.sort ?? defaultVehicleSort;
 
   const filteredVehicles = useMemo(() => {
     const normalizedSearch = searchValue.trim().toLowerCase();
@@ -56,8 +69,7 @@ export function VehiclesListPage() {
   }, [searchValue, sortBy, vehiclesQuery.data]);
 
   function resetControls() {
-    setSearchValue('');
-    setSortBy('updated-desc');
+    onSearchStateChange({});
   }
 
   return (
@@ -96,8 +108,8 @@ export function VehiclesListPage() {
         <div className="space-y-4">
           <VehicleListControls
             onReset={resetControls}
-            onSearchChange={setSearchValue}
-            onSortChange={setSortBy}
+            onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+            onSortChange={(value) => onSearchStateChange({ sort: value })}
             resultCount={filteredVehicles.length}
             searchValue={searchValue}
             sortBy={sortBy}

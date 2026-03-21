@@ -9,12 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-export type VehicleSortOption =
-  | 'updated-desc'
-  | 'registration-asc'
-  | 'odometer-desc'
-  | 'year-desc';
+import { vehicleSortOptions, type VehicleSortOption } from '../types/vehicle-list-search';
 
 type VehicleListControlsProps = {
   searchValue: string;
@@ -72,9 +67,9 @@ export function VehicleListControls({
                 <SelectValue placeholder="Sort vehicles" />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(sortLabels).map(([value, label]) => (
+                {vehicleSortOptions.map((value) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {sortLabels[value]}
                   </SelectItem>
                 ))}
               </SelectContent>

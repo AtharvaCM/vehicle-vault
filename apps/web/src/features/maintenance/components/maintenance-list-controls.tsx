@@ -12,12 +12,10 @@ import {
 } from '@/components/ui/select';
 
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
-
-export type MaintenanceSortOption =
-  | 'service-date-desc'
-  | 'service-date-asc'
-  | 'cost-desc'
-  | 'odometer-desc';
+import {
+  maintenanceSortOptions,
+  type MaintenanceSortOption,
+} from '../types/maintenance-list-search';
 
 type MaintenanceListControlsProps = {
   searchValue: string;
@@ -102,9 +100,9 @@ export function MaintenanceListControls({
               <SelectValue placeholder="Sort records" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(sortLabels).map(([value, label]) => (
+              {maintenanceSortOptions.map((value) => (
                 <SelectItem key={value} value={value}>
-                  {label}
+                  {sortLabels[value]}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ClipboardList, ReceiptText, TrendingUp, Wrench } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { MaintenanceCategory } from '@vehicle-vault/shared';
+import { useMemo } from 'react';
 
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
@@ -18,22 +17,34 @@ import type { Vehicle } from '@/features/vehicles/types/vehicle';
 
 import {
   MaintenanceListControls,
-  type MaintenanceSortOption,
 } from '../components/maintenance-list-controls';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
 import { useAllMaintenanceRecords } from '../hooks/use-all-maintenance-records';
 import type { MaintenanceRecord } from '../types/maintenance-record';
 import { filterAndSortMaintenanceRecords } from '../utils/filter-and-sort-maintenance-records';
+import {
+  defaultMaintenanceSort,
+  type MaintenanceListSearch,
+  type MaintenanceSortOption,
+} from '../types/maintenance-list-search';
 
 const EMPTY_MAINTENANCE_RECORDS: MaintenanceRecord[] = [];
 const EMPTY_VEHICLES: Vehicle[] = [];
 
-export function MaintenanceOverviewPage() {
+type MaintenanceOverviewPageProps = {
+  searchState: MaintenanceListSearch;
+  onSearchStateChange: (next: Partial<MaintenanceListSearch>) => void;
+};
+
+export function MaintenanceOverviewPage({
+  searchState,
+  onSearchStateChange,
+}: MaintenanceOverviewPageProps) {
   const maintenanceQuery = useAllMaintenanceRecords();
   const vehiclesQuery = useVehicles();
-  const [searchValue, setSearchValue] = useState('');
-  const [category, setCategory] = useState<MaintenanceCategory | 'all'>('all');
-  const [sortBy, setSortBy] = useState<MaintenanceSortOption>('service-date-desc');
+  const searchValue = searchState.search ?? '';
+  const category = searchState.category ?? 'all';
+  const sortBy: MaintenanceSortOption = searchState.sort ?? defaultMaintenanceSort;
   const records = maintenanceQuery.data ?? EMPTY_MAINTENANCE_RECORDS;
   const vehicles = vehiclesQuery.data ?? EMPTY_VEHICLES;
 
@@ -109,9 +120,7 @@ export function MaintenanceOverviewPage() {
   const latestServiceDate = latestRecord?.serviceDate ?? null;
 
   function resetControls() {
-    setSearchValue('');
-    setCategory('all');
-    setSortBy('service-date-desc');
+    onSearchStateChange({});
   }
 
   return (
@@ -163,10 +172,10 @@ export function MaintenanceOverviewPage() {
 
           <MaintenanceListControls
             category={category}
-            onCategoryChange={setCategory}
+            onCategoryChange={(value) => onSearchStateChange({ category: value })}
             onReset={resetControls}
-            onSearchChange={setSearchValue}
-            onSortChange={setSortBy}
+            onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+            onSortChange={(value) => onSearchStateChange({ sort: value })}
             resultCount={filteredRecords.length}
             searchPlaceholder="Search by vehicle, workshop, notes, or category"
             searchValue={searchValue}

@@ -1,7 +1,7 @@
 import { ReminderStatus, type ReminderType } from '@vehicle-vault/shared';
 
-import type { ReminderSortOption } from '../components/reminder-list-controls';
 import type { Reminder } from '../types/reminder';
+import type { ReminderSortOption } from '../types/reminder-list-search';
 import { formatReminderStatus } from './format-reminder-status';
 import { formatReminderType } from './format-reminder-type';
 

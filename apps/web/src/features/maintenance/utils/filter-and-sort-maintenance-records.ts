@@ -1,7 +1,7 @@
 import { type MaintenanceCategory } from '@vehicle-vault/shared';
 
-import type { MaintenanceSortOption } from '../components/maintenance-list-controls';
 import type { MaintenanceRecord } from '../types/maintenance-record';
+import type { MaintenanceSortOption } from '../types/maintenance-list-search';
 import { formatMaintenanceCategory } from './format-maintenance-category';
 
 type FilterAndSortMaintenanceRecordsArgs = {

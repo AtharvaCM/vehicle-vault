@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { MaintenanceCategory } from '@vehicle-vault/shared';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -14,22 +13,32 @@ import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import {
   MaintenanceListControls,
-  type MaintenanceSortOption,
 } from '../components/maintenance-list-controls';
 import { useMaintenanceRecords } from '../hooks/use-maintenance-records';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
 import { filterAndSortMaintenanceRecords } from '../utils/filter-and-sort-maintenance-records';
+import {
+  defaultMaintenanceSort,
+  type MaintenanceListSearch,
+  type MaintenanceSortOption,
+} from '../types/maintenance-list-search';
 
 type VehicleMaintenanceListPageProps = {
   vehicleId: string;
+  searchState: MaintenanceListSearch;
+  onSearchStateChange: (next: Partial<MaintenanceListSearch>) => void;
 };
 
-export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceListPageProps) {
+export function VehicleMaintenanceListPage({
+  vehicleId,
+  searchState,
+  onSearchStateChange,
+}: VehicleMaintenanceListPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
-  const [searchValue, setSearchValue] = useState('');
-  const [category, setCategory] = useState<MaintenanceCategory | 'all'>('all');
-  const [sortBy, setSortBy] = useState<MaintenanceSortOption>('service-date-desc');
+  const searchValue = searchState.search ?? '';
+  const category = searchState.category ?? 'all';
+  const sortBy: MaintenanceSortOption = searchState.sort ?? defaultMaintenanceSort;
 
   const vehicleTitle = vehicleQuery.data
     ? vehicleQuery.data.nickname?.trim() || `${vehicleQuery.data.make} ${vehicleQuery.data.model}`
@@ -49,9 +58,7 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
   }, [category, maintenanceQuery.data, searchValue, sortBy]);
 
   function resetControls() {
-    setSearchValue('');
-    setCategory('all');
-    setSortBy('service-date-desc');
+    onSearchStateChange({});
   }
 
   if (isVehicleNotFound || isMaintenanceVehicleNotFound) {
@@ -119,10 +126,10 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
           {maintenanceQuery.data.length ? (
             <MaintenanceListControls
               category={category}
-              onCategoryChange={setCategory}
+              onCategoryChange={(value) => onSearchStateChange({ category: value })}
               onReset={resetControls}
-              onSearchChange={setSearchValue}
-              onSortChange={setSortBy}
+              onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+              onSortChange={(value) => onSearchStateChange({ sort: value })}
               resultCount={filteredRecords.length}
               searchValue={searchValue}
               sortBy={sortBy}

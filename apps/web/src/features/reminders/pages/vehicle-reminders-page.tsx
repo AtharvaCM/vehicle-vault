@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { ReminderStatus, ReminderType } from '@vehicle-vault/shared';
-import { useMemo, useState } from 'react';
+import { ReminderStatus } from '@vehicle-vault/shared';
+import { useMemo } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -13,24 +13,34 @@ import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import {
   ReminderListControls,
-  type ReminderSortOption,
 } from '../components/reminder-list-controls';
 import { ReminderList } from '../components/reminder-list';
 import { useVehicleReminders } from '../hooks/use-vehicle-reminders';
 import { filterAndSortReminders } from '../utils/filter-and-sort-reminders';
 import { groupRemindersByStatus } from '../utils/group-reminders-by-status';
+import {
+  defaultReminderSort,
+  type ReminderListSearch,
+  type ReminderSortOption,
+} from '../types/reminder-list-search';
 
 type VehicleRemindersPageProps = {
   vehicleId: string;
+  searchState: ReminderListSearch;
+  onSearchStateChange: (next: Partial<ReminderListSearch>) => void;
 };
 
-export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
+export function VehicleRemindersPage({
+  vehicleId,
+  searchState,
+  onSearchStateChange,
+}: VehicleRemindersPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
-  const [searchValue, setSearchValue] = useState('');
-  const [status, setStatus] = useState<ReminderStatus | 'all'>('all');
-  const [type, setType] = useState<ReminderType | 'all'>('all');
-  const [sortBy, setSortBy] = useState<ReminderSortOption>('urgency');
+  const searchValue = searchState.search ?? '';
+  const status = searchState.status ?? 'all';
+  const type = searchState.type ?? 'all';
+  const sortBy: ReminderSortOption = searchState.sort ?? defaultReminderSort;
 
   const vehicleTitle = vehicleQuery.data
     ? vehicleQuery.data.nickname?.trim() || `${vehicleQuery.data.make} ${vehicleQuery.data.model}`
@@ -56,10 +66,7 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
   );
 
   function resetControls() {
-    setSearchValue('');
-    setStatus('all');
-    setType('all');
-    setSortBy('urgency');
+    onSearchStateChange({});
   }
 
   if (isVehicleNotFound || isReminderVehicleNotFound) {
@@ -131,10 +138,10 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
         <div className="grid gap-4">
           <ReminderListControls
             onReset={resetControls}
-            onSearchChange={setSearchValue}
-            onSortChange={setSortBy}
-            onStatusChange={setStatus}
-            onTypeChange={setType}
+            onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+            onSortChange={(value) => onSearchStateChange({ sort: value })}
+            onStatusChange={(value) => onSearchStateChange({ status: value })}
+            onTypeChange={(value) => onSearchStateChange({ type: value })}
             resultCount={filteredReminders.length}
             searchValue={searchValue}
             sortBy={sortBy}

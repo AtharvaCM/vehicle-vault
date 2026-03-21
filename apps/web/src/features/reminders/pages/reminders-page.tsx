@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { ReminderStatus, ReminderType } from '@vehicle-vault/shared';
-import { useMemo, useState } from 'react';
+import { ReminderStatus } from '@vehicle-vault/shared';
+import { useMemo } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -12,20 +12,32 @@ import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 
 import {
   ReminderListControls,
-  type ReminderSortOption,
 } from '../components/reminder-list-controls';
 import { ReminderList } from '../components/reminder-list';
 import { useReminders } from '../hooks/use-reminders';
 import { filterAndSortReminders } from '../utils/filter-and-sort-reminders';
 import { groupRemindersByStatus } from '../utils/group-reminders-by-status';
+import {
+  defaultReminderSort,
+  type ReminderListSearch,
+  type ReminderSortOption,
+} from '../types/reminder-list-search';
 
-export function RemindersPage() {
+type RemindersPageProps = {
+  searchState: ReminderListSearch;
+  onSearchStateChange: (next: Partial<ReminderListSearch>) => void;
+};
+
+export function RemindersPage({
+  searchState,
+  onSearchStateChange,
+}: RemindersPageProps) {
   const remindersQuery = useReminders();
   const vehiclesQuery = useVehicles();
-  const [searchValue, setSearchValue] = useState('');
-  const [status, setStatus] = useState<ReminderStatus | 'all'>('all');
-  const [type, setType] = useState<ReminderType | 'all'>('all');
-  const [sortBy, setSortBy] = useState<ReminderSortOption>('urgency');
+  const searchValue = searchState.search ?? '';
+  const status = searchState.status ?? 'all';
+  const type = searchState.type ?? 'all';
+  const sortBy: ReminderSortOption = searchState.sort ?? defaultReminderSort;
 
   const vehicleLabelById = Object.fromEntries(
     (vehiclesQuery.data ?? []).map((vehicle) => [
@@ -51,10 +63,7 @@ export function RemindersPage() {
   );
 
   function resetControls() {
-    setSearchValue('');
-    setStatus('all');
-    setType('all');
-    setSortBy('urgency');
+    onSearchStateChange({});
   }
 
   return (
@@ -88,10 +97,10 @@ export function RemindersPage() {
         <div className="grid gap-4">
           <ReminderListControls
             onReset={resetControls}
-            onSearchChange={setSearchValue}
-            onSortChange={setSortBy}
-            onStatusChange={setStatus}
-            onTypeChange={setType}
+            onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+            onSortChange={(value) => onSearchStateChange({ sort: value })}
+            onStatusChange={(value) => onSearchStateChange({ status: value })}
+            onTypeChange={(value) => onSearchStateChange({ type: value })}
             resultCount={filteredReminders.length}
             searchValue={searchValue}
             sortBy={sortBy}
