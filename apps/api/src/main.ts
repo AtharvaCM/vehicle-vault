@@ -14,12 +14,17 @@ async function bootstrap() {
   const appConfig = app.get(AppConfigService);
   const port = appConfig.port;
   const allowedOrigins = new Set(appConfig.frontendOrigins);
+  const allowedOriginPattern = appConfig.frontendOriginPattern;
   const corsOrigin:
     | true
     | ((origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => void) =
     appConfig.isProduction
     ? (origin, callback) => {
-        if (!origin || allowedOrigins.has(origin)) {
+        if (
+          !origin ||
+          allowedOrigins.has(origin) ||
+          (allowedOriginPattern ? allowedOriginPattern.test(origin) : false)
+        ) {
           callback(null, true);
           return;
         }

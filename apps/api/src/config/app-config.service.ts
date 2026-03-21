@@ -20,6 +20,10 @@ export class AppConfigService {
     return this.frontendOrigins[0] ?? DEFAULT_FRONTEND_ORIGIN;
   }
 
+  get frontendOriginPattern() {
+    return this.configService.get<RegExp | null>('app.frontendOriginPattern') ?? null;
+  }
+
   get databaseUrl() {
     return (
       this.configService.get<string>('app.databaseUrl') ??

@@ -20,6 +20,7 @@ vehicle-vault/
 ```bash
 pnpm install
 cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
 pnpm db:generate
 pnpm db:migrate
 pnpm build
@@ -50,6 +51,8 @@ JWT_REFRESH_SECRET=vehicle-vault-dev-refresh-secret
 JWT_REFRESH_EXPIRES_IN=30d
 ```
 
+`FRONTEND_ORIGIN_PATTERN` is optional. Use it only when you need preview browser origins, such as dynamic Vercel preview URLs, alongside the stable allowlist in `FRONTEND_ORIGIN`.
+
 Password reset is available through the public auth routes. In non-production environments, reset requests return a preview token directly because email delivery is not wired yet.
 
 Common local database workflow:
@@ -59,6 +62,25 @@ pnpm db:generate
 pnpm db:migrate
 pnpm dev:api
 ```
+
+## Fresh environment checklist
+
+For a new local or hosted environment:
+
+1. Create a Postgres database and set `DATABASE_URL` and `DIRECT_URL`.
+2. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET`.
+3. Set `JWT_SECRET`, `JWT_REFRESH_SECRET`, and the corresponding expiry values.
+4. Set `FRONTEND_ORIGIN` to the stable browser origin.
+5. Optionally set `FRONTEND_ORIGIN_PATTERN` if you need preview browser URLs.
+6. Run:
+
+```bash
+pnpm db:generate
+pnpm db:deploy
+pnpm build
+```
+
+The API creates the Supabase Storage bucket on startup if it does not already exist.
 
 If you already have a local database from the pre-auth build, reset it or point `DATABASE_URL` at a fresh database before running the new migration. Vehicles now require a user owner, so older auth-less rows do not migrate cleanly without a reset.
 
@@ -87,6 +109,7 @@ For your Portainer-based home server deployment:
 - set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` for attachment binaries
 - set a strong production `JWT_SECRET`
 - set a separate strong production `JWT_REFRESH_SECRET`
+- optionally set `FRONTEND_ORIGIN_PATTERN` for preview browser URLs such as Vercel preview deployments
 
 Recommended production env file reference:
 
@@ -123,6 +146,12 @@ https://vehicle-vault-eight.vercel.app
 ```
 
 Set `FRONTEND_ORIGIN` in the API deployment to that browser origin. If you later attach a custom frontend domain, `FRONTEND_ORIGIN` also accepts a comma-separated allowlist so you can keep the Vercel URL and new custom domain live during the transition.
+
+If you want preview deployments to work without editing CORS each time, set `FRONTEND_ORIGIN_PATTERN` in the API deployment to a regex that matches only your preview hostnames. A practical Vercel example is:
+
+```bash
+^https://vehicle-vault.*\.vercel\.app$
+```
 
 ## Scripts
 

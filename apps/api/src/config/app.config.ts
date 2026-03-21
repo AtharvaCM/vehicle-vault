@@ -28,10 +28,25 @@ function resolveFrontendOrigins(value: string | undefined) {
   return origins.length > 0 ? origins : [DEFAULT_FRONTEND_ORIGIN];
 }
 
+function resolveFrontendOriginPattern(value: string | undefined) {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  try {
+    return new RegExp(normalized);
+  } catch {
+    return null;
+  }
+}
+
 export const appConfig = registerAs('app', () => ({
   nodeEnv: resolveNodeEnv(process.env.NODE_ENV),
   port: resolvePort(process.env.PORT),
   frontendOrigins: resolveFrontendOrigins(process.env.FRONTEND_ORIGIN),
+  frontendOriginPattern: resolveFrontendOriginPattern(process.env.FRONTEND_ORIGIN_PATTERN),
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
