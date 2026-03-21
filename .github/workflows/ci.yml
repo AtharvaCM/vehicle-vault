@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint workspace
+        run: pnpm lint
+
+      - name: Typecheck workspace
+        run: pnpm typecheck
+
+      - name: Build workspace
+        run: pnpm build
+
+      - name: Run unit and service tests
+        run: pnpm test
+
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: quality
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: vehicle_vault
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vehicle_vault"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/vehicle_vault?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/vehicle_vault?schema=public
+      FRONTEND_ORIGIN: http://127.0.0.1:4307
+      JWT_EXPIRES_IN: 1h
+      JWT_SECRET: vehicle-vault-ci-secret
+      NODE_ENV: test
+      PORT: 3001
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Apply Prisma migrations
+        run: pnpm db:deploy
+
+      - name: Build API
+        run: pnpm --filter @vehicle-vault/api build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @vehicle-vault/web exec playwright install --with-deps chromium
+
+      - name: Start API
+        run: |
+          pnpm --filter @vehicle-vault/api start > /tmp/vehicle-vault-api.log 2>&1 &
+          echo $! > /tmp/vehicle-vault-api.pid
+
+      - name: Wait for API health
+        run: |
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:3001/api/health > /dev/null; then
+              exit 0
+            fi
+
+            sleep 1
+          done
+
+          cat /tmp/vehicle-vault-api.log
+          exit 1
+
+      - name: Run Playwright smoke flow
+        env:
+          E2E_API_PROXY_TARGET: http://127.0.0.1:3001
+        run: pnpm --filter @vehicle-vault/web run test:e2e
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+            /tmp/vehicle-vault-api.log
+          if-no-files-found: ignore
