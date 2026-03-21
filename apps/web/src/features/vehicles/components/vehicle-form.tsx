@@ -36,6 +36,7 @@ type VehicleFormProps = {
   onSubmit: (values: VehicleFormValues) => Promise<void> | void;
   submitError?: string | null;
   initialValues?: Partial<VehicleFormValues>;
+  onDirtyChange?: (isDirty: boolean) => void;
   submitLabel?: string;
   submittingLabel?: string;
   submitHint?: string;
@@ -59,6 +60,7 @@ export function VehicleForm({
   onSubmit,
   submitError,
   initialValues,
+  onDirtyChange,
   submitLabel = 'Save Vehicle',
   submittingLabel = 'Saving vehicle...',
   submitHint = 'The vehicle is stored immediately after submit.',
@@ -82,6 +84,10 @@ export function VehicleForm({
       ...initialValues,
     });
   }, [form, initialValues]);
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = vehicleFormSchema.safeParse({

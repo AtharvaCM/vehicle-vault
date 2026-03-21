@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { ReminderForm } from '../components/reminder-form';
@@ -19,25 +21,36 @@ type VehicleReminderCreatePageProps = {
 
 export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePageProps) {
   const navigate = useNavigate();
+  const [isDirty, setIsDirty] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
   const createReminderMutation = useCreateReminder(vehicleId);
+  const { allowNextNavigation } = useUnsavedChangesGuard({
+    when: isDirty,
+    message: 'You have unsaved reminder details. Leave without saving?',
+  });
 
   async function handleCreateReminder(
     values: Parameters<typeof createReminderMutation.mutateAsync>[0],
   ) {
     try {
       const reminder = await createReminderMutation.mutateAsync(values);
+      const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Reminder created',
         description: 'The reminder is now active for this vehicle.',
       });
 
-      await navigate({
-        to: '/reminders/$reminderId',
-        params: {
-          reminderId: reminder.id,
-        },
-      });
+      try {
+        await navigate({
+          to: '/reminders/$reminderId',
+          params: {
+            reminderId: reminder.id,
+          },
+        });
+      } catch (error) {
+        restoreNavigationGuard();
+        throw error;
+      }
     } catch (error) {
       appToast.error({
         title: 'Unable to create reminder',
@@ -89,6 +102,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <ReminderForm
           isSubmitting={createReminderMutation.isPending}
+          onDirtyChange={setIsDirty}
           onSubmit={handleCreateReminder}
           submitError={submitError}
         />

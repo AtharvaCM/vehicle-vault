@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { MaintenanceForm } from '../components/maintenance-form';
@@ -19,25 +21,36 @@ type VehicleMaintenanceCreatePageProps = {
 
 export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCreatePageProps) {
   const navigate = useNavigate();
+  const [isDirty, setIsDirty] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
   const createMaintenanceMutation = useCreateMaintenanceRecord(vehicleId);
+  const { allowNextNavigation } = useUnsavedChangesGuard({
+    when: isDirty,
+    message: 'You have unsaved maintenance details. Leave without saving?',
+  });
 
   async function handleCreateMaintenanceRecord(
     values: Parameters<typeof createMaintenanceMutation.mutateAsync>[0],
   ) {
     try {
       await createMaintenanceMutation.mutateAsync(values);
+      const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Maintenance record created',
         description: 'The service event was added to this vehicle.',
       });
 
-      await navigate({
-        to: '/vehicles/$vehicleId/maintenance',
-        params: {
-          vehicleId,
-        },
-      });
+      try {
+        await navigate({
+          to: '/vehicles/$vehicleId/maintenance',
+          params: {
+            vehicleId,
+          },
+        });
+      } catch (error) {
+        restoreNavigationGuard();
+        throw error;
+      }
     } catch (error) {
       appToast.error({
         title: 'Unable to create maintenance record',
@@ -92,6 +105,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <MaintenanceForm
           isSubmitting={createMaintenanceMutation.isPending}
+          onDirtyChange={setIsDirty}
           onSubmit={handleCreateMaintenanceRecord}
           submitError={submitError}
         />

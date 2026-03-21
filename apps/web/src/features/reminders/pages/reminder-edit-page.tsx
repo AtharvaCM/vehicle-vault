@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { ErrorState } from '@/components/shared/error-state';
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { ReminderForm } from '../components/reminder-form';
@@ -21,25 +23,49 @@ type ReminderEditPageProps = {
 
 export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
   const navigate = useNavigate();
+  const [isDirty, setIsDirty] = useState(false);
   const reminderQuery = useReminder(reminderId);
   const updateReminderMutation = useUpdateReminder(reminderId);
+  const { allowNextNavigation } = useUnsavedChangesGuard({
+    when: isDirty,
+    message: 'You have unsaved reminder edits. Leave without saving?',
+  });
+  const initialValues = useMemo(
+    () =>
+      reminderQuery.data
+        ? {
+            title: reminderQuery.data.title,
+            type: reminderQuery.data.type,
+            dueDate: toDateInputValue(reminderQuery.data.dueDate),
+            dueOdometer: reminderQuery.data.dueOdometer,
+            notes: reminderQuery.data.notes ?? '',
+          }
+        : undefined,
+    [reminderQuery.data],
+  );
 
   async function handleUpdateReminder(
     values: Parameters<typeof updateReminderMutation.mutateAsync>[0],
   ) {
     try {
       const reminder = await updateReminderMutation.mutateAsync(values);
+      const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Reminder updated',
         description: 'Reminder changes were saved successfully.',
       });
 
-      await navigate({
-        to: '/reminders/$reminderId',
-        params: {
-          reminderId: reminder.id,
-        },
-      });
+      try {
+        await navigate({
+          to: '/reminders/$reminderId',
+          params: {
+            reminderId: reminder.id,
+          },
+        });
+      } catch (error) {
+        restoreNavigationGuard();
+        throw error;
+      }
     } catch (error) {
       appToast.error({
         title: 'Unable to update reminder',
@@ -87,9 +113,6 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
       </PageContainer>
     );
   }
-
-  const reminder = reminderQuery.data;
-
   return (
     <PageContainer>
       <PageTitle
@@ -108,14 +131,9 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <ReminderForm
-          initialValues={{
-            title: reminder.title,
-            type: reminder.type,
-            dueDate: toDateInputValue(reminder.dueDate),
-            dueOdometer: reminder.dueOdometer,
-            notes: reminder.notes ?? '',
-          }}
+          initialValues={initialValues}
           isSubmitting={updateReminderMutation.isPending}
+          onDirtyChange={setIsDirty}
           onSubmit={handleUpdateReminder}
           submitError={
             updateReminderMutation.error

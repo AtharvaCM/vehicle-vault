@@ -102,6 +102,7 @@ The product already supports the core ownership loop:
 ### Interaction Quality
 
 - Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
+- Unsaved-changes protection across core vehicle, maintenance, and reminder create/edit forms
 
 ## MVP Gaps Still Open
 
@@ -126,7 +127,6 @@ These are the main items that still prevent the product from being a more comple
 
 ### UX Gaps
 
-- No unsaved-changes guard on forms
 - Mobile/tablet polish is still behind desktop polish
 - Search/filter state is local to pages and not persisted in the URL
 
@@ -138,7 +138,6 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: remove the remaining friction from day-to-day use.
 
-- Add unsaved-changes protection to create/edit forms
 - Tighten attachment management UX on maintenance detail pages
 - Add a global maintenance overview route with search/filter/sort
 

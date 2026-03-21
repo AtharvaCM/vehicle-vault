@@ -45,6 +45,7 @@ type MaintenanceFormProps = {
   onSubmit: (values: CreateMaintenanceRecordBody) => Promise<void> | void;
   submitError?: string | null;
   initialValues?: Partial<MaintenanceFormValues>;
+  onDirtyChange?: (isDirty: boolean) => void;
   submitLabel?: string;
   submittingLabel?: string;
   submitHint?: string;
@@ -82,6 +83,7 @@ export function MaintenanceForm({
   onSubmit,
   submitError,
   initialValues,
+  onDirtyChange,
   submitLabel = 'Save Record',
   submittingLabel = 'Saving record...',
   submitHint = 'The record is stored immediately after submit.',
@@ -105,6 +107,10 @@ export function MaintenanceForm({
       ...initialValues,
     });
   }, [form, initialValues]);
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const localResult = maintenanceFormSchema.safeParse(values);

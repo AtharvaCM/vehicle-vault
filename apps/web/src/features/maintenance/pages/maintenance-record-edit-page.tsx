@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { ErrorState } from '@/components/shared/error-state';
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { MaintenanceForm } from '../components/maintenance-form';
@@ -21,25 +23,52 @@ type MaintenanceRecordEditPageProps = {
 
 export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPageProps) {
   const navigate = useNavigate();
+  const [isDirty, setIsDirty] = useState(false);
   const recordQuery = useMaintenanceRecord(recordId);
   const updateRecordMutation = useUpdateMaintenanceRecord(recordId);
+  const { allowNextNavigation } = useUnsavedChangesGuard({
+    when: isDirty,
+    message: 'You have unsaved maintenance edits. Leave without saving?',
+  });
+  const initialValues = useMemo(
+    () =>
+      recordQuery.data
+        ? {
+            serviceDate: toDateInputValue(recordQuery.data.serviceDate),
+            odometer: recordQuery.data.odometer,
+            category: recordQuery.data.category,
+            workshopName: recordQuery.data.workshopName ?? '',
+            totalCost: recordQuery.data.totalCost,
+            notes: recordQuery.data.notes ?? '',
+            nextDueDate: toDateInputValue(recordQuery.data.nextDueDate),
+            nextDueOdometer: recordQuery.data.nextDueOdometer,
+          }
+        : undefined,
+    [recordQuery.data],
+  );
 
   async function handleUpdateRecord(
     values: Parameters<typeof updateRecordMutation.mutateAsync>[0],
   ) {
     try {
       const record = await updateRecordMutation.mutateAsync(values);
+      const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Maintenance record updated',
         description: 'The service record changes were saved successfully.',
       });
 
-      await navigate({
-        to: '/maintenance-records/$recordId',
-        params: {
-          recordId: record.id,
-        },
-      });
+      try {
+        await navigate({
+          to: '/maintenance-records/$recordId',
+          params: {
+            recordId: record.id,
+          },
+        });
+      } catch (error) {
+        restoreNavigationGuard();
+        throw error;
+      }
     } catch (error) {
       appToast.error({
         title: 'Unable to update maintenance record',
@@ -89,9 +118,6 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
       </PageContainer>
     );
   }
-
-  const record = recordQuery.data;
-
   return (
     <PageContainer>
       <PageTitle
@@ -110,17 +136,9 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <MaintenanceForm
-          initialValues={{
-            serviceDate: toDateInputValue(record.serviceDate),
-            odometer: record.odometer,
-            category: record.category,
-            workshopName: record.workshopName ?? '',
-            totalCost: record.totalCost,
-            notes: record.notes ?? '',
-            nextDueDate: toDateInputValue(record.nextDueDate),
-            nextDueOdometer: record.nextDueOdometer,
-          }}
+          initialValues={initialValues}
           isSubmitting={updateRecordMutation.isPending}
+          onDirtyChange={setIsDirty}
           onSubmit={handleUpdateRecord}
           submitError={
             updateRecordMutation.error

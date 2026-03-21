@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 import { VehicleForm } from '../components/vehicle-form';
 import { useUpdateVehicle } from '../hooks/use-update-vehicle';
@@ -21,25 +23,53 @@ type VehicleEditPageProps = {
 
 export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   const navigate = useNavigate();
+  const [isDirty, setIsDirty] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
   const updateVehicleMutation = useUpdateVehicle(vehicleId);
+  const { allowNextNavigation } = useUnsavedChangesGuard({
+    when: isDirty,
+    message: 'You have unsaved vehicle edits. Leave without saving?',
+  });
+  const initialValues = useMemo(
+    () =>
+      vehicleQuery.data
+        ? {
+            registrationNumber: vehicleQuery.data.registrationNumber,
+            make: vehicleQuery.data.make,
+            model: vehicleQuery.data.model,
+            variant: vehicleQuery.data.variant,
+            year: vehicleQuery.data.year,
+            vehicleType: vehicleQuery.data.vehicleType,
+            fuelType: vehicleQuery.data.fuelType,
+            odometer: vehicleQuery.data.odometer,
+            nickname: vehicleQuery.data.nickname ?? '',
+          }
+        : undefined,
+    [vehicleQuery.data],
+  );
 
   async function handleUpdateVehicle(
     values: Parameters<typeof updateVehicleMutation.mutateAsync>[0],
   ) {
     try {
       await updateVehicleMutation.mutateAsync(values);
+      const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Vehicle updated',
         description: 'Vehicle details were saved successfully.',
       });
 
-      await navigate({
-        to: '/vehicles/$vehicleId',
-        params: {
-          vehicleId,
-        },
-      });
+      try {
+        await navigate({
+          to: '/vehicles/$vehicleId',
+          params: {
+            vehicleId,
+          },
+        });
+      } catch (error) {
+        restoreNavigationGuard();
+        throw error;
+      }
     } catch (error) {
       appToast.error({
         title: 'Unable to update vehicle',
@@ -94,9 +124,6 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
       </PageContainer>
     );
   }
-
-  const vehicle = vehicleQuery.data;
-
   return (
     <PageContainer>
       <PageTitle
@@ -115,18 +142,9 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <VehicleForm
-          initialValues={{
-            registrationNumber: vehicle.registrationNumber,
-            make: vehicle.make,
-            model: vehicle.model,
-            variant: vehicle.variant,
-            year: vehicle.year,
-            vehicleType: vehicle.vehicleType,
-            fuelType: vehicle.fuelType,
-            odometer: vehicle.odometer,
-            nickname: vehicle.nickname ?? '',
-          }}
+          initialValues={initialValues}
           isSubmitting={updateVehicleMutation.isPending}
+          onDirtyChange={setIsDirty}
           onSubmit={handleUpdateVehicle}
           submitError={
             updateVehicleMutation.error

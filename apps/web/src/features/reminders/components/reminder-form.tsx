@@ -28,6 +28,7 @@ type ReminderFormProps = {
   onSubmit: (values: CreateReminderBody) => Promise<void> | void;
   submitError?: string | null;
   initialValues?: Partial<ReminderFormValues>;
+  onDirtyChange?: (isDirty: boolean) => void;
   submitLabel?: string;
   submittingLabel?: string;
   submitHint?: string;
@@ -67,6 +68,7 @@ export function ReminderForm({
   onSubmit,
   submitError,
   initialValues,
+  onDirtyChange,
   submitLabel = 'Save Reminder',
   submittingLabel = 'Saving reminder...',
   submitHint = 'Add either a due date or due odometer to track this reminder.',
@@ -89,6 +91,10 @@ export function ReminderForm({
       ...initialValues,
     });
   }, [form, initialValues]);
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const localResult = reminderFormSchema.safeParse(values);
