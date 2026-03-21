@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { BellRing, ClipboardList, LayoutGrid } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
@@ -23,9 +23,12 @@ import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-remi
 import { ReminderStatus } from '@vehicle-vault/shared';
 import { useNavigate } from '@tanstack/react-router';
 
+import { OdometerHistoryCard } from '../components/odometer-history-card';
+import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
+import { getVehicleServiceInsights } from '../utils/get-vehicle-service-insights';
 
 type VehicleDetailPageProps = {
   vehicleId: string;
@@ -38,6 +41,17 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
   const deleteVehicleMutation = useDeleteVehicle();
+  const vehicle = vehicleQuery.data ?? null;
+  const serviceInsights = useMemo(
+    () =>
+      vehicle
+        ? getVehicleServiceInsights({
+            vehicle,
+            records: maintenanceQuery.data ?? [],
+          })
+        : null,
+    [maintenanceQuery.data, vehicle],
+  );
 
   async function handleDeleteVehicle() {
     try {
@@ -98,7 +112,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
     );
   }
 
-  const vehicle = vehicleQuery.data;
+  if (!vehicle || !serviceInsights) {
+    return null;
+  }
+
   const title = vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
   const activeReminders = (remindersQuery.data ?? []).filter(
     (reminder) => reminder.status !== ReminderStatus.Completed,
@@ -208,6 +225,11 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                 <SnapshotMetric label="Vehicle type" value={vehicle.vehicleType} />
               </CardContent>
             </Card>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <OdometerHistoryCard insights={serviceInsights} />
+            <ServiceTrendCard insights={serviceInsights} />
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

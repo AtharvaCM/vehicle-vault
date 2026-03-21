@@ -52,6 +52,7 @@ The product already supports the core ownership loop:
 - Create vehicle
 - List vehicles
 - View vehicle detail
+- Odometer history and service-trend visibility on vehicle detail pages
 - Edit vehicle
 - Delete vehicle with confirmation
 - Bulk delete actions for vehicles list views
@@ -136,7 +137,7 @@ These are the main items that still prevent the product from being a more comple
 
 ### Functional Gaps
 
-- No vehicle odometer history or trend view
+- No major functional gaps remain inside the current MVP scope
 
 ### Production Hardening Gaps
 
@@ -150,11 +151,13 @@ These are the main items that still prevent the product from being a more comple
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Workflow Depth
+### Milestone 1: Production Hardening
 
-Goal: improve day-to-day productivity without diluting the ownership model.
+Goal: close the highest-value operational gaps without expanding product scope too early.
 
-- Add odometer history and service-trend visibility
+- Add real email delivery for password reset requests
+- Add email verification for new accounts
+- Decide on reminder delivery architecture before adding background jobs or notifications
 
 ## Later Roadmap
 
@@ -164,7 +167,6 @@ These are intentionally deferred so the product does not sprawl too early.
 
 - Service presets and templates
 - Reminder presets for common India-specific ownership tasks
-- Odometer history and better service insights
 - Shared vehicle access for families or teams
 
 ### Smart Features
