@@ -39,6 +39,7 @@ The product already supports the core ownership loop:
 - User registration
 - User login
 - JWT access-token authentication
+- Refresh-token rotation and session renewal
 - Authenticated session bootstrap in the frontend
 - Proactive frontend handling for expired or malformed JWT sessions
 - Route protection in the frontend and backend
@@ -131,7 +132,6 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No refresh-token flow
 - No password reset flow
 - No email verification flow
 - No OAuth/social auth
@@ -151,7 +151,6 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: move auth from MVP-safe to more production-safe.
 
-- Add refresh-token strategy or other session renewal approach
 - Add password reset request + reset flow
 
 ### Milestone 2: Storage and Ops Hardening

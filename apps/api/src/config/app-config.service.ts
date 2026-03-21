@@ -35,6 +35,14 @@ export class AppConfigService {
     return this.configService.get<string>('app.jwtExpiresIn') ?? '7d';
   }
 
+  get jwtRefreshSecret() {
+    return this.configService.get<string>('app.jwtRefreshSecret') ?? 'vehicle-vault-dev-refresh-secret';
+  }
+
+  get jwtRefreshExpiresIn() {
+    return this.configService.get<string>('app.jwtRefreshExpiresIn') ?? '30d';
+  }
+
   get nodeEnv(): NodeEnv {
     return this.configService.get<NodeEnv>('app.nodeEnv') ?? 'development';
   }

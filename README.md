@@ -43,6 +43,8 @@ Required backend environment variable:
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public
 JWT_SECRET=vehicle-vault-dev-secret
 JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=vehicle-vault-dev-refresh-secret
+JWT_REFRESH_EXPIRES_IN=30d
 ```
 
 Common local database workflow:
@@ -79,6 +81,7 @@ For your Portainer-based home server deployment:
 - persist uploads with the `vehicle_vault_uploads` volume
 - keep `DATABASE_URL` and `DIRECT_URL` pointed at the Supabase pooler connection
 - set a strong production `JWT_SECRET`
+- set a separate strong production `JWT_REFRESH_SECRET`
 
 Recommended production env file reference:
 

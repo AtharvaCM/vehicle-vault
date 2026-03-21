@@ -21,9 +21,11 @@ describe('authSessionStorage', () => {
 
   it('stores and retrieves the auth session', () => {
     const accessToken = createToken(Math.floor((Date.now() + 60 * 60_000) / 1000));
+    const refreshToken = createToken(Math.floor((Date.now() + 24 * 60 * 60_000) / 1000));
 
     setStoredAuthSession({
       accessToken,
+      refreshToken,
       user: {
         id: 'user-1',
         name: 'Atharva',
@@ -33,6 +35,7 @@ describe('authSessionStorage', () => {
 
     expect(getStoredAuthSession()).toEqual({
       accessToken,
+      refreshToken,
       user: {
         id: 'user-1',
         name: 'Atharva',
@@ -52,7 +55,8 @@ describe('authSessionStorage', () => {
     window.localStorage.setItem(
       'vehicle-vault.auth-session',
       JSON.stringify({
-        accessToken: createToken(Math.floor((Date.now() - 60_000) / 1000)),
+        accessToken: createToken(Math.floor((Date.now() + 60_000) / 1000)),
+        refreshToken: createToken(Math.floor((Date.now() - 60_000) / 1000)),
         user: {
           id: 'user-1',
           name: 'Atharva',
@@ -69,7 +73,8 @@ describe('authSessionStorage', () => {
     window.localStorage.setItem(
       'vehicle-vault.auth-session',
       JSON.stringify({
-        accessToken: 'not-a-jwt',
+        accessToken: createToken(Math.floor((Date.now() + 60_000) / 1000)),
+        refreshToken: 'not-a-jwt',
         user: {
           id: 'user-1',
           name: 'Atharva',
@@ -82,9 +87,37 @@ describe('authSessionStorage', () => {
     expect(window.localStorage.getItem('vehicle-vault.auth-session')).toBeNull();
   });
 
+  it('keeps sessions that can still be renewed with a valid refresh token', () => {
+    const refreshToken = createToken(Math.floor((Date.now() + 24 * 60 * 60_000) / 1000));
+
+    window.localStorage.setItem(
+      'vehicle-vault.auth-session',
+      JSON.stringify({
+        accessToken: createToken(Math.floor((Date.now() - 60_000) / 1000)),
+        refreshToken,
+        user: {
+          id: 'user-1',
+          name: 'Atharva',
+          email: 'atharva@example.com',
+        },
+      }),
+    );
+
+    expect(getStoredAuthSession()).toEqual({
+      accessToken: expect.any(String),
+      refreshToken,
+      user: {
+        id: 'user-1',
+        name: 'Atharva',
+        email: 'atharva@example.com',
+      },
+    });
+  });
+
   it('removes the stored session on logout', () => {
     setStoredAuthSession({
-      accessToken: 'jwt-token',
+      accessToken: createToken(Math.floor((Date.now() + 60 * 60_000) / 1000)),
+      refreshToken: createToken(Math.floor((Date.now() + 24 * 60 * 60_000) / 1000)),
       user: {
         id: 'user-1',
         name: 'Atharva',

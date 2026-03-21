@@ -37,4 +37,6 @@ export const appConfig = registerAs('app', () => ({
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
   jwtSecret: process.env.JWT_SECRET ?? 'vehicle-vault-dev-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',
+  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
 }));

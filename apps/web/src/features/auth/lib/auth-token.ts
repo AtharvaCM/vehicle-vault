@@ -15,7 +15,7 @@ function decodeBase64Url(value: string) {
   throw new Error('Base64 decoding is not available in this runtime.');
 }
 
-export function getAccessTokenPayload(token: string): JwtPayload | null {
+export function getTokenPayload(token: string): JwtPayload | null {
   const segments = token.split('.');
   const payloadSegment = segments[1];
 
@@ -30,8 +30,8 @@ export function getAccessTokenPayload(token: string): JwtPayload | null {
   }
 }
 
-export function getAccessTokenExpiryEpochMs(token: string) {
-  const payload = getAccessTokenPayload(token);
+export function getTokenExpiryEpochMs(token: string) {
+  const payload = getTokenPayload(token);
 
   if (typeof payload?.exp !== 'number') {
     return null;
@@ -40,12 +40,12 @@ export function getAccessTokenExpiryEpochMs(token: string) {
   return payload.exp * 1000;
 }
 
-export function hasAccessTokenExpiry(token: string) {
-  return getAccessTokenExpiryEpochMs(token) !== null;
+export function hasTokenExpiry(token: string) {
+  return getTokenExpiryEpochMs(token) !== null;
 }
 
-export function isAccessTokenExpired(token: string, now = Date.now()) {
-  const expiryEpochMs = getAccessTokenExpiryEpochMs(token);
+export function isTokenExpired(token: string, now = Date.now()) {
+  const expiryEpochMs = getTokenExpiryEpochMs(token);
 
   if (!expiryEpochMs) {
     return false;
@@ -53,3 +53,8 @@ export function isAccessTokenExpired(token: string, now = Date.now()) {
 
   return expiryEpochMs - JWT_EXPIRY_SKEW_MS <= now;
 }
+
+export const getAccessTokenPayload = getTokenPayload;
+export const getAccessTokenExpiryEpochMs = getTokenExpiryEpochMs;
+export const hasAccessTokenExpiry = hasTokenExpiry;
+export const isAccessTokenExpired = isTokenExpired;

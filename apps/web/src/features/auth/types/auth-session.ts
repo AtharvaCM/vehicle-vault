@@ -4,6 +4,7 @@ export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
 export type AuthSession = {
   accessToken: string;
+  refreshToken: string;
   user: AuthUser;
 };
 

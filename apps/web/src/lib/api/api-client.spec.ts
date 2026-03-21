@@ -59,6 +59,56 @@ describe('apiClient', () => {
     );
   });
 
+  it('refreshes the session and retries once after a 401 response', async () => {
+    const fetchMock = vi.mocked(fetch);
+    const refreshAccessToken = vi.fn().mockResolvedValue('next-access-token');
+    const onUnauthorized = vi.fn();
+
+    configureApiClient({
+      getAccessToken: vi
+        .fn()
+        .mockReturnValueOnce('expired-access-token')
+        .mockReturnValueOnce('next-access-token'),
+      refreshAccessToken,
+      onUnauthorized,
+    });
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: false }), {
+          status: 401,
+          headers: {
+            'content-type': 'application/json',
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: { ok: true } }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+          },
+        }),
+      );
+
+    await expect(apiClient.get('/vehicles')).resolves.toEqual({
+      success: true,
+      data: { ok: true },
+    });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        href: 'https://vehiclevault.middle-earth.in/api/vehicles',
+      }),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer next-access-token',
+        }),
+      }),
+    );
+  });
+
   it('triggers the unauthorized handler on 401 responses', async () => {
     const fetchMock = vi.mocked(fetch);
     const onUnauthorized = vi.fn();

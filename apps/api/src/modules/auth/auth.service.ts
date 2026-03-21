@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -6,25 +8,43 @@ import {
   AuthResponseSchema,
   AuthUserSchema,
   LoginSchema,
+  RefreshTokenSchema,
   RegisterSchema,
   UserSchema,
   type AuthResponse,
   type AuthUser,
   type LoginInput,
+  type RefreshTokenInput,
   type RegisterInput,
   type User,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AppConfigService } from '../../config/app-config.service';
 import type { LoginDto } from './dto/login.dto';
+import type { RefreshTokenDto } from './dto/refresh-token.dto';
 import type { RegisterDto } from './dto/register.dto';
-import type { JwtPayload } from './auth.types';
+import type { JwtPayload, RefreshTokenPayload } from './auth.types';
+
+type UserRecord = {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash?: string;
+  refreshTokenHash?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
+const INVALID_REFRESH_TOKEN_MESSAGE = 'Invalid refresh token.';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly appConfigService: AppConfigService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -59,16 +79,68 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password.');
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     const isPasswordValid = await compare(input.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password.');
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     return this.buildAuthResponse(this.toUser(user));
+  }
+
+  async refresh(payload: RefreshTokenDto) {
+    const input = this.validateRefreshTokenInput(payload);
+    const refreshTokenPayload = await this.verifyRefreshToken(input.refreshToken);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: refreshTokenPayload.sub,
+      },
+    });
+
+    if (!user || !user.refreshTokenHash) {
+      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
+    }
+
+    if (user.refreshTokenHash !== this.hashRefreshToken(input.refreshToken)) {
+      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
+    }
+
+    return this.buildAuthResponse(this.toUser(user));
+  }
+
+  async logout(payload: RefreshTokenDto) {
+    const input = this.validateRefreshTokenInput(payload);
+    const refreshTokenPayload = await this.tryVerifyRefreshToken(input.refreshToken);
+
+    if (!refreshTokenPayload) {
+      return;
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: refreshTokenPayload.sub,
+      },
+    });
+
+    if (!user?.refreshTokenHash) {
+      return;
+    }
+
+    if (user.refreshTokenHash !== this.hashRefreshToken(input.refreshToken)) {
+      return;
+    }
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        refreshTokenHash: null,
+      },
+    });
   }
 
   async getMe(userId: string) {
@@ -103,17 +175,79 @@ export class AuthService {
 
   private async buildAuthResponse(user: User): Promise<AuthResponse> {
     const authUser = this.toAuthUser(user);
+    const accessToken = await this.signAccessToken(authUser);
+    const refreshToken = await this.signRefreshToken(authUser);
+
+    await this.persistRefreshToken(user.id, refreshToken);
+
+    return AuthResponseSchema.parse({
+      user: authUser,
+      accessToken,
+      refreshToken,
+    });
+  }
+
+  private async signAccessToken(authUser: AuthUser) {
     const payload: JwtPayload = {
       sub: authUser.id,
       email: authUser.email,
       name: authUser.name,
     };
-    const accessToken = await this.jwtService.signAsync(payload);
 
-    return AuthResponseSchema.parse({
-      user: authUser,
-      accessToken,
+    return this.jwtService.signAsync(payload);
+  }
+
+  private async signRefreshToken(authUser: AuthUser) {
+    const payload: RefreshTokenPayload = {
+      sub: authUser.id,
+      type: 'refresh',
+    };
+
+    return this.jwtService.signAsync(payload, {
+      secret: this.appConfigService.jwtRefreshSecret,
+      expiresIn: this.appConfigService.jwtRefreshExpiresIn as never,
     });
+  }
+
+  private async verifyRefreshToken(refreshToken: string) {
+    const payload = await this.tryVerifyRefreshToken(refreshToken);
+
+    if (!payload) {
+      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
+    }
+
+    return payload;
+  }
+
+  private async tryVerifyRefreshToken(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(refreshToken, {
+        secret: this.appConfigService.jwtRefreshSecret,
+      });
+
+      if (payload.type !== 'refresh' || !payload.sub) {
+        return null;
+      }
+
+      return payload;
+    } catch {
+      return null;
+    }
+  }
+
+  private async persistRefreshToken(userId: string, refreshToken: string) {
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshTokenHash: this.hashRefreshToken(refreshToken),
+      },
+    });
+  }
+
+  private hashRefreshToken(refreshToken: string) {
+    return createHash('sha256').update(refreshToken).digest('hex');
   }
 
   private validateRegisterInput(payload: RegisterDto): RegisterInput {
@@ -131,13 +265,11 @@ export class AuthService {
     });
   }
 
-  private toUser(user: {
-    id: string;
-    name: string;
-    email: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }): User {
+  private validateRefreshTokenInput(payload: RefreshTokenDto): RefreshTokenInput {
+    return RefreshTokenSchema.parse(payload);
+  }
+
+  private toUser(user: UserRecord): User {
     return UserSchema.parse({
       id: user.id,
       name: user.name,

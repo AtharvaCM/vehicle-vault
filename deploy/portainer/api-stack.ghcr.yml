@@ -12,6 +12,8 @@ services:
       DIRECT_URL: postgresql://postgres.xxohjnsxkcicowcyzmwa:REPLACE_WITH_DB_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
       JWT_SECRET: REPLACE_WITH_STRONG_JWT_SECRET
       JWT_EXPIRES_IN: 7d
+      JWT_REFRESH_SECRET: REPLACE_WITH_STRONG_REFRESH_JWT_SECRET
+      JWT_REFRESH_EXPIRES_IN: 30d
     ports:
       - '3001:3001'
     volumes:

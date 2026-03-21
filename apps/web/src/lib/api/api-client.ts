@@ -30,16 +30,22 @@ type ApiRequestOptions<TBody = unknown> = {
   method?: HttpMethod;
   path: string;
   query?: QueryParams;
+  retryOnUnauthorized?: boolean;
   signal?: AbortSignal;
+  skipAuthRefresh?: boolean;
+  skipUnauthorizedHandler?: boolean;
 };
 
 type ApiClientConfiguration = {
   getAccessToken?: () => string | null;
   onUnauthorized?: () => void;
+  refreshAccessToken?: () => Promise<string | null>;
 };
 
 let accessTokenResolver: (() => string | null) | null = null;
+let refreshAccessTokenHandler: (() => Promise<string | null>) | null = null;
 let unauthorizedHandler: (() => void) | null = null;
+let refreshRequestPromise: Promise<string | null> | null = null;
 
 function isFormData(value: unknown): value is FormData {
   return typeof FormData !== 'undefined' && value instanceof FormData;
@@ -83,13 +89,30 @@ async function parseResponse<TResponse>(response: Response) {
   return (await response.text()) as TResponse;
 }
 
+async function resolveRefreshedAccessToken() {
+  if (!refreshAccessTokenHandler) {
+    return null;
+  }
+
+  if (!refreshRequestPromise) {
+    refreshRequestPromise = refreshAccessTokenHandler().finally(() => {
+      refreshRequestPromise = null;
+    });
+  }
+
+  return refreshRequestPromise;
+}
+
 async function request<TResponse, TBody = unknown>({
   body,
   headers,
   method = 'GET',
   path,
   query,
+  retryOnUnauthorized = true,
   signal,
+  skipAuthRefresh = false,
+  skipUnauthorizedHandler = false,
 }: ApiRequestOptions<TBody>): Promise<TResponse> {
   const accessToken = accessTokenResolver?.();
   const response = await fetch(buildUrl(path, query), {
@@ -108,7 +131,27 @@ async function request<TResponse, TBody = unknown>({
 
   if (!response.ok) {
     if (response.status === 401) {
-      unauthorizedHandler?.();
+      if (retryOnUnauthorized && !skipAuthRefresh) {
+        const refreshedAccessToken = await resolveRefreshedAccessToken();
+
+        if (refreshedAccessToken) {
+          return request<TResponse, TBody>({
+            body,
+            headers,
+            method,
+            path,
+            query,
+            retryOnUnauthorized: false,
+            signal,
+            skipAuthRefresh,
+            skipUnauthorizedHandler,
+          });
+        }
+      }
+
+      if (!skipUnauthorizedHandler) {
+        unauthorizedHandler?.();
+      }
     }
 
     throw new ApiError(
@@ -124,9 +167,12 @@ async function request<TResponse, TBody = unknown>({
 export function configureApiClient({
   getAccessToken,
   onUnauthorized,
+  refreshAccessToken,
 }: ApiClientConfiguration = {}) {
   accessTokenResolver = getAccessToken ?? null;
+  refreshAccessTokenHandler = refreshAccessToken ?? null;
   unauthorizedHandler = onUnauthorized ?? null;
+  refreshRequestPromise = null;
 }
 
 export const apiClient = {
