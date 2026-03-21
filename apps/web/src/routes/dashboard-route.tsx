@@ -10,7 +10,7 @@ const DashboardPage = createLazyPage(
     })),
   {
     title: 'Loading dashboard',
-    description: 'Preparing the latest garage summary.',
+    description: 'Loading your garage summary.',
   },
 );
 

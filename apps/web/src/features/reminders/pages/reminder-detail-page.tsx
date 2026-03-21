@@ -12,6 +12,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 
 import { useCompleteReminder } from '../hooks/use-complete-reminder';
 import { useDeleteReminder } from '../hooks/use-delete-reminder';
@@ -26,6 +27,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const reminderQuery = useReminder(reminderId);
+  const vehiclesQuery = useVehicles();
   const completeReminderMutation = useCompleteReminder();
   const deleteReminderMutation = useDeleteReminder();
 
@@ -35,7 +37,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
       await completeReminderMutation.mutateAsync(reminderId);
       appToast.success({
         title: 'Reminder completed',
-        description: 'The reminder status was updated successfully.',
+        description: 'This reminder is now marked complete.',
       });
     } catch (error) {
       appToast.error({
@@ -52,7 +54,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
       await deleteReminderMutation.mutateAsync(reminderId);
       appToast.success({
         title: 'Reminder deleted',
-        description: 'The reminder was removed successfully.',
+        description: 'This reminder was removed.',
       });
       await navigate({
         to: '/vehicles/$vehicleId/reminders',
@@ -72,9 +74,9 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   if (reminderQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle description="Loading the latest reminder from the API." title="Reminder" />
+        <PageTitle description="Loading this reminder." title="Reminder" />
         <LoadingState
-          description="Fetching the latest reminder from the API."
+          description="Getting the latest reminder details."
           title="Loading reminder"
         />
       </PageContainer>
@@ -88,7 +90,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
     return (
       <PageContainer>
         <PageTitle
-          description="Reminder detail pages are driven by backend state."
+          description="Review when this item is due and what it is for."
           title={isNotFound ? 'Reminder not found' : 'Unable to load reminder'}
         />
         <ErrorState
@@ -100,7 +102,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
           description={
             isNotFound
               ? 'The requested reminder does not exist or may have been removed.'
-              : 'The reminder could not be loaded. Check that the API is running and try again.'
+              : "We couldn't load this reminder. Try again in a moment."
           }
           title={isNotFound ? 'Reminder not found' : 'Reminder request failed'}
         />
@@ -109,6 +111,10 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   }
 
   const reminder = reminderQuery.data;
+  const linkedVehicle = (vehiclesQuery.data ?? []).find((vehicle) => vehicle.id === reminder.vehicleId);
+  const vehicleLabel = linkedVehicle
+    ? `${linkedVehicle.nickname?.trim() || `${linkedVehicle.make} ${linkedVehicle.model}`} • ${linkedVehicle.registrationNumber}`
+    : 'Vehicle details unavailable';
 
   return (
     <PageContainer>
@@ -141,7 +147,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
             ) : null}
             <ConfirmActionDialog
               confirmLabel="Delete reminder"
-              description="This removes the reminder from the vehicle and dashboard views. This action cannot be undone."
+              description="This removes the reminder from this vehicle. This can't be undone."
               isPending={deleteReminderMutation.isPending}
               onConfirm={() => handleDeleteReminder(reminder.vehicleId)}
               title="Delete this reminder?"
@@ -150,13 +156,13 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
             />
           </div>
         }
-        description="Review and manage a single reminder record."
+        description="Review when this item is due and what it is for."
         title={reminder.title}
       />
 
       {actionError ? <InlineError message={actionError} /> : null}
 
-      <ReminderSummaryCard reminder={reminder} />
+      <ReminderSummaryCard reminder={reminder} vehicleLabel={vehicleLabel} />
     </PageContainer>
   );
 }

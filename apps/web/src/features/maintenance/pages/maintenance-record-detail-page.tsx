@@ -34,7 +34,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
       await deleteRecordMutation.mutateAsync(recordId);
       appToast.success({
         title: 'Maintenance record deleted',
-        description: 'The service record and its linked attachment metadata were removed.',
+        description: 'The service entry and its linked files were removed.',
       });
       await navigate({
         to: '/vehicles/$vehicleId/maintenance',
@@ -53,11 +53,11 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
     return (
       <PageContainer>
         <PageTitle
-          description="Loading the latest maintenance record from the API."
+          description="Loading this service entry."
           title="Maintenance Record"
         />
         <LoadingState
-          description="Fetching the latest maintenance record from the API."
+          description="Getting the latest service details."
           title="Loading maintenance record"
         />
       </PageContainer>
@@ -70,7 +70,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
     return (
       <PageContainer>
         <PageTitle
-          description="Maintenance detail pages are driven by backend state."
+          description="Review the full details for one logged service entry."
           title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
         />
         <ErrorState
@@ -82,7 +82,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
           description={
             isNotFound
               ? 'The requested maintenance record does not exist or may have been removed.'
-              : 'The maintenance record could not be loaded. Check that the API is running and try again.'
+              : "We couldn't load this maintenance record. Try again in a moment."
           }
           title={isNotFound ? 'Maintenance record not found' : 'Maintenance request failed'}
         />
@@ -113,7 +113,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
             </Link>
             <ConfirmActionDialog
               confirmLabel="Delete record"
-              description="This removes the maintenance record and its linked attachment metadata. Local uploaded files are also removed when available."
+              description="This removes the service entry and any linked receipts or documents. This can't be undone."
               isPending={deleteRecordMutation.isPending}
               onConfirm={() => handleDeleteRecord(record.vehicleId)}
               title="Delete this maintenance record?"
@@ -122,7 +122,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
             />
           </div>
         }
-        description="Review the details captured for this maintenance event."
+        description="Review what was done, when it happened, and what it cost."
         title={formatMaintenanceCategory(record.category)}
       />
 

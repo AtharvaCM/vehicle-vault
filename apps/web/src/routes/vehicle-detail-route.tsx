@@ -10,7 +10,7 @@ const VehicleDetailPage = createLazyPage(
     })),
   {
     title: 'Loading vehicle',
-    description: 'Preparing this vehicle snapshot.',
+    description: 'Loading this vehicle.',
   },
 );
 

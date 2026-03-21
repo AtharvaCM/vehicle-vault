@@ -44,7 +44,7 @@ export function RegisterPage() {
   return (
     <AuthPageShell
       alternateAction={<AuthPageLink label="Sign in" text="Already have an account?" to="/login" />}
-      description="Create your account to keep vehicles, maintenance, reminders, and receipts under your ownership."
+      description="Create an account to keep your vehicles, maintenance history, reminders, and receipts in one place."
       title="Create your account"
     >
       <RegisterForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />

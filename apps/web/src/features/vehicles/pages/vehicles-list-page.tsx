@@ -68,13 +68,13 @@ export function VehiclesListPage() {
             Add Vehicle
           </Link>
         }
-        description="Manage the vehicles that anchor maintenance history, reminders, and receipts across the product."
+        description="Keep every vehicle in one place so service history, reminders, and receipts stay connected."
         title="Vehicles"
       />
 
       {vehiclesQuery.isPending ? (
         <LoadingState
-          description="Fetching vehicle records from the API."
+          description="Loading the vehicles in your garage."
           title="Loading vehicles"
         />
       ) : vehiclesQuery.isError ? (
@@ -89,7 +89,7 @@ export function VehiclesListPage() {
               </Link>
             </div>
           }
-          description="The vehicle list could not be loaded. Make sure the API is running and reachable from the frontend."
+          description="We couldn't load your vehicles. Try again in a moment."
           title="Unable to load vehicles"
         />
       ) : vehiclesQuery.data.length ? (
@@ -117,7 +117,7 @@ export function VehiclesListPage() {
                   </Link>
                 </div>
               }
-              description="Adjust the current search or sorting choices to reveal more vehicles."
+              description="Try a different search or sort to bring more vehicles into view."
               title="No vehicles match these filters"
             />
           )}
@@ -129,7 +129,7 @@ export function VehiclesListPage() {
               Add your first vehicle
             </Link>
           }
-          description="No vehicles exist yet. Create the first one to start the maintenance workflow."
+          description="Add your first car or bike to start tracking maintenance, reminders, and receipts."
           title="No vehicles yet"
         />
       )}

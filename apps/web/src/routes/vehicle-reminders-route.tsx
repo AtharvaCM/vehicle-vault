@@ -10,7 +10,7 @@ const VehicleRemindersPage = createLazyPage(
     })),
   {
     title: 'Loading reminders',
-    description: 'Preparing the reminder list for this vehicle.',
+    description: 'Loading reminders for this vehicle.',
   },
 );
 

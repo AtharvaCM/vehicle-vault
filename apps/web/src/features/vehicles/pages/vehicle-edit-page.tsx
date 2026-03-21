@@ -56,7 +56,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Vehicle updated',
-        description: 'Vehicle details were saved successfully.',
+        description: 'Vehicle details were saved.',
       });
 
       try {
@@ -82,9 +82,9 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   if (vehicleQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle description="Loading the current vehicle before editing." title="Edit Vehicle" />
+        <PageTitle description="Loading this vehicle before you edit it." title="Edit Vehicle" />
         <LoadingState
-          description="Fetching the latest vehicle values from the API."
+          description="Getting the latest vehicle details."
           title="Loading vehicle"
         />
       </PageContainer>
@@ -97,7 +97,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
     return (
       <PageContainer>
         <PageTitle
-          description="Vehicle edits require an existing vehicle record."
+          description="You can only edit a vehicle that still exists."
           title={isNotFound ? 'Vehicle not found' : 'Unable to load vehicle'}
         />
         {isNotFound ? (
@@ -117,7 +117,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
                 Back to Vehicles
               </Link>
             }
-            description="The vehicle record could not be loaded. Check the API and try again."
+            description="We couldn't load this vehicle. Try again in a moment."
             title="Unable to load vehicle"
           />
         )}
@@ -136,7 +136,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
             Back to Vehicle
           </Link>
         }
-        description="Update the vehicle record without leaving the shared data contract used across the app."
+        description="Update the details that identify this vehicle across your garage."
         title="Edit Vehicle"
       />
 
@@ -151,21 +151,21 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
               ? getApiErrorMessage(updateVehicleMutation.error, 'Unable to update the vehicle.')
               : null
           }
-          submitHint="Vehicle edits are persisted immediately and refresh downstream reminder calculations."
+          submitHint="Keep the odometer and key details current so reminders stay accurate."
           submitLabel="Save Changes"
           submittingLabel="Saving changes..."
-          successMessage="Vehicle updated successfully."
+          successMessage="Vehicle details updated."
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>Edit guidance</CardTitle>
-            <CardDescription>Keep vehicle data clean because other features depend on it.</CardDescription>
+            <CardTitle>Keep details accurate</CardTitle>
+            <CardDescription>Small changes here keep the rest of your records clear.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Odometer updates affect reminder urgency when reminders depend on due odometer.</p>
-            <p>Registration, make, and model stay visible across lists, dashboard summaries, and records.</p>
-            <p>Changes are stored in PostgreSQL through the same API contract used on create.</p>
+            <p>Update the odometer when you want kilometre-based reminders to stay trustworthy.</p>
+            <p>Registration, make, model, and nickname help you recognise the right vehicle everywhere in the app.</p>
+            <p>Use this page whenever ownership details or naming need cleanup.</p>
           </CardContent>
         </Card>
       </div>

@@ -42,12 +42,12 @@ import { cn } from '@/lib/utils/cn';
 import { appNavigation } from './sidebar';
 
 const sectionTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard overview',
+  '/dashboard': 'Dashboard',
   '/maintenance-records': 'Maintenance record',
-  '/maintenance': 'Maintenance history',
-  '/vehicles': 'Vehicle workspace',
-  '/reminders': 'Reminder center',
-  '/settings': 'Workspace settings',
+  '/maintenance': 'Maintenance',
+  '/vehicles': 'Garage',
+  '/reminders': 'Reminders',
+  '/settings': 'Settings',
 };
 
 const mobileIcons = {
@@ -68,7 +68,7 @@ export function Topbar() {
 
   const activeSection =
     Object.entries(sectionTitles).find(([routePath]) => pathname.startsWith(routePath))?.[1] ??
-    'Workspace';
+    'Garage';
 
   const handleLogout = async () => {
     auth.logout();
@@ -94,7 +94,7 @@ export function Topbar() {
               <SheetHeader className="border-b border-border/70 px-6 py-5">
                 <SheetTitle>{APP_NAME}</SheetTitle>
                 <SheetDescription>
-                  Move through your dashboard, vehicles, reminders, and service records.
+                  Jump between your garage, maintenance history, reminders, and settings.
                 </SheetDescription>
               </SheetHeader>
 
@@ -189,8 +189,9 @@ export function Topbar() {
               <Button
                 onClick={() =>
                   appToast.info({
-                    title: 'Notifications are not wired yet',
-                    description: 'Reminders are visible in the dashboard and reminders pages today.',
+                    title: 'Alerts are coming soon',
+                    description:
+                      'For now, keep track of due items from the dashboard and reminders pages.',
                   })
                 }
                 size="icon-sm"
@@ -200,7 +201,7 @@ export function Topbar() {
                 <span className="sr-only">Notifications</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Notification delivery will land in a later slice.</TooltipContent>
+            <TooltipContent>Reminder alerts are not available yet.</TooltipContent>
           </Tooltip>
 
           <DropdownMenu>

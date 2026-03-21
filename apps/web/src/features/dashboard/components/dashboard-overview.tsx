@@ -65,7 +65,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
         />
         <StatCard
           accent={<Badge tone="accent">History</Badge>}
-          description="Maintenance events logged across all vehicles."
+          description="Service entries logged across all vehicles."
           label="Maintenance records"
           value={String(summary.totalMaintenanceRecords)}
         />
@@ -81,7 +81,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
           title="Overdue reminders"
         />
         <DashboardReminderSection
-          description="The next reminders coming due across your vehicles."
+          description="The next reminders coming up across your vehicles."
           emptyMessage="No upcoming reminders exist yet."
           reminders={summary.upcomingReminders}
           title="Upcoming reminders"
@@ -94,7 +94,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
             <div className="space-y-1.5">
               <CardTitle>Recent maintenance</CardTitle>
               <CardDescription>
-                The latest logged service work, including receipt coverage.
+                Your latest logged services and repairs, with receipt coverage.
               </CardDescription>
             </div>
             <Badge tone="neutral">{summary.totalAttachments} attachments</Badge>
@@ -142,7 +142,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
           <CardHeader>
             <CardTitle>Garage overview</CardTitle>
             <CardDescription>
-              Recently added vehicles ready for service history and reminders.
+              Vehicles you recently added or updated.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

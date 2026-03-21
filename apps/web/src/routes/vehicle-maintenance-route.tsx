@@ -10,7 +10,7 @@ const VehicleMaintenanceListPage = createLazyPage(
     })),
   {
     title: 'Loading maintenance history',
-    description: 'Preparing the service records for this vehicle.',
+    description: 'Loading service history for this vehicle.',
   },
 );
 

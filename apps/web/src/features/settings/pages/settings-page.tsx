@@ -20,15 +20,14 @@ export function SettingsPage() {
       await exportMutation.mutateAsync();
       appToast.success({
         title: 'Export downloaded',
-        description:
-          'Your account snapshot was downloaded as a JSON file for backup or migration use.',
+        description: 'Your garage data was downloaded as a JSON backup.',
       });
     } catch (error) {
       appToast.error({
         title: 'Unable to export account data',
         description: getApiErrorMessage(
           error,
-          'The export request failed. Please try again after the API is reachable.',
+          "We couldn't prepare your export. Try again in a moment.",
         ),
       });
     }
@@ -37,7 +36,7 @@ export function SettingsPage() {
   return (
     <PageContainer>
       <PageTitle
-        description="Review the current account, export owned data, and keep deeper preferences lightweight until concrete workflows demand them."
+        description="View your account and download a backup of your garage data."
         title="Settings"
       />
 
@@ -45,17 +44,14 @@ export function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
-            <CardDescription>Your current authenticated workspace identity.</CardDescription>
+            <CardDescription>The account currently signed in to Vehicle Vault.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
             <div>
               <p className="font-semibold text-slate-900">{auth.user?.name}</p>
               <p>{auth.user?.email}</p>
             </div>
-            <p>
-              Vehicles, maintenance records, reminders, and attachments are now scoped to this
-              account.
-            </p>
+            <p>Everything in your garage is tied to this account.</p>
           </CardContent>
         </Card>
 
@@ -63,20 +59,17 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle>Data export</CardTitle>
             <CardDescription>
-              Download a user-scoped backup of vehicles, maintenance, reminders, attachments, and
-              account details.
+              Download a JSON backup of your vehicles, maintenance history, reminders, receipts,
+              and account details.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
             <div className="space-y-2">
-              <p>
-                The export is delivered as a JSON snapshot so you can retain an ownership history
-                outside the app.
-              </p>
+              <p>Use this export as a backup of your ownership history outside the app.</p>
               <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 text-slate-500" />
                 <p>
-                  Only data owned by <span className="font-medium text-slate-900">{auth.user?.email}</span>{' '}
+                  Only data saved under <span className="font-medium text-slate-900">{auth.user?.email}</span>{' '}
                   is included in this export.
                 </p>
               </div>
@@ -85,7 +78,7 @@ export function SettingsPage() {
               <InlineError
                 message={getApiErrorMessage(
                   exportMutation.error,
-                  'The export request failed. Please try again after the API is reachable.',
+                  "We couldn't prepare your export. Try again in a moment.",
                 )}
               />
             ) : null}
@@ -98,7 +91,7 @@ export function SettingsPage() {
               type="button"
             >
               <Download className="mr-2 h-4 w-4" />
-              {exportMutation.isPending ? 'Preparing export...' : 'Download JSON export'}
+              {exportMutation.isPending ? 'Preparing export...' : 'Download JSON backup'}
             </Button>
           </CardContent>
         </Card>
@@ -106,13 +99,11 @@ export function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Preferences</CardTitle>
-            <CardDescription>
-              Workspace-level defaults for reminders and formatting.
-            </CardDescription>
+            <CardDescription>More personal settings will appear here over time.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Reminder cadence and notification defaults.</p>
-            <p>Locale, currency, and date presentation.</p>
+            <p>Reminder defaults, currency, and date formatting are planned for a future update.</p>
+            <p>For now, this page focuses on account details and data backup.</p>
           </CardContent>
         </Card>
       </div>

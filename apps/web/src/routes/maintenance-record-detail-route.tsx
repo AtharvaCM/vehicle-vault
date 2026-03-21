@@ -10,7 +10,7 @@ const MaintenanceRecordDetailPage = createLazyPage(
     })),
   {
     title: 'Loading maintenance record',
-    description: 'Preparing this service record detail.',
+    description: 'Loading this service entry.',
   },
 );
 

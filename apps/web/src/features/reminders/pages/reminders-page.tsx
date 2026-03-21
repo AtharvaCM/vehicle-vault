@@ -62,16 +62,16 @@ export function RemindersPage() {
       <PageTitle
         actions={
           <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-            Add Reminder From Vehicle
+            Create reminder from vehicle
           </Link>
         }
-        description="Review reminders across vehicles with overdue and due-today items separated from the rest."
+        description="Track overdue, due today, upcoming, and completed reminders across your garage."
         title="Reminders"
       />
 
       {remindersQuery.isPending ? (
         <LoadingState
-          description="Fetching reminder records from the API."
+          description="Loading the reminders in your garage."
           title="Loading reminders"
         />
       ) : remindersQuery.isError ? (
@@ -81,7 +81,7 @@ export function RemindersPage() {
               Retry
             </Button>
           }
-          description="The reminder list could not be loaded. Make sure the API is running and reachable from the frontend."
+          description="We couldn't load your reminders. Try again in a moment."
           title="Unable to load reminders"
         />
       ) : remindersQuery.data.length ? (
@@ -138,7 +138,7 @@ export function RemindersPage() {
                     Clear filters
                   </Button>
                   <Link className={buttonVariants()} to="/vehicles">
-                    Add a reminder from a vehicle
+                    Create reminder from vehicle
                   </Link>
                 </div>
               }
@@ -151,10 +151,10 @@ export function RemindersPage() {
         <EmptyState
           action={
             <Link className={buttonVariants()} to="/vehicles">
-              Add a reminder from a vehicle
+              Create reminder from vehicle
             </Link>
           }
-          description="No reminders exist yet. Create one from a vehicle page to start tracking due items."
+          description="Create a reminder from a vehicle to start tracking due items."
           title="No reminders yet"
         />
       )}

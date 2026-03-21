@@ -26,8 +26,8 @@ export function VehicleSummaryCard({ vehicle }: VehicleSummaryCardProps) {
       <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
         <p>Year: {vehicle.year}</p>
         <p>Odometer: {vehicle.odometer.toLocaleString('en-IN')} km</p>
-        <p>Created: {formatDate(vehicle.createdAt)}</p>
-        <p>Updated: {formatDate(vehicle.updatedAt)}</p>
+        <p>Added: {formatDate(vehicle.createdAt)}</p>
+        <p>Last updated: {formatDate(vehicle.updatedAt)}</p>
       </CardContent>
     </Card>
   );

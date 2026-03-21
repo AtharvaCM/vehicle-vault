@@ -19,7 +19,7 @@ export function createLazyPage<P extends Record<string, unknown>>(
 ): (props: P) => JSX.Element {
   const LazyComponent = lazy(importer);
   const title = options?.title ?? 'Loading page';
-  const description = options?.description ?? 'Preparing the next view.';
+  const description = options?.description ?? 'Loading the next screen.';
 
   function LazyPageComponent(props: P): JSX.Element {
     return (

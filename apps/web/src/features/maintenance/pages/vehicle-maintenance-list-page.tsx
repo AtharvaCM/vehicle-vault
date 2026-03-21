@@ -95,13 +95,13 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
             </Link>
           </div>
         }
-        description="Maintenance records stay attached to a vehicle so its service history remains easy to review."
+        description="See every service entry tied to this vehicle."
         title={`${vehicleTitle} Maintenance`}
       />
 
       {maintenanceQuery.isPending ? (
         <LoadingState
-          description="Fetching maintenance records for this vehicle."
+          description="Loading maintenance history for this vehicle."
           title="Loading maintenance"
         />
       ) : maintenanceQuery.isError ? (
@@ -111,7 +111,7 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
               Retry
             </Button>
           }
-          description="The maintenance history could not be loaded. Check that the API is running and try again."
+          description="We couldn't load this vehicle's maintenance history. Try again in a moment."
           title="Unable to load maintenance records"
         />
       ) : (
@@ -156,7 +156,7 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
                     Add the first maintenance record
                   </Link>
                 }
-                description="No maintenance records exist for this vehicle yet."
+                description="No service entries have been logged for this vehicle yet."
                 title="No maintenance records yet"
               />
             )}
@@ -165,21 +165,13 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
               <CardHeader>
                 <CardTitle>Keep service history complete</CardTitle>
                 <CardDescription>
-                  Use this view as the long-form history for one vehicle.
+                  Use this page as the full service log for one vehicle.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-                <p>
-                  Capture each completed service event with the odometer, cost, and workshop
-                  details.
-                </p>
-                <p>
-                  Open a record to manage receipts and documents for that specific maintenance
-                  event.
-                </p>
-                <p>
-                  Next-due fields stay useful here because they can inform reminder creation later.
-                </p>
+                <p>Capture each completed job with the date, odometer, and total cost.</p>
+                <p>Open any entry to review notes and manage receipts.</p>
+                <p>Use next due fields so future work is easier to plan.</p>
               </CardContent>
             </Card>
           </div>

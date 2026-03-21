@@ -55,7 +55,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Maintenance record updated',
-        description: 'The service record changes were saved successfully.',
+        description: 'Changes to this service entry were saved.',
       });
 
       try {
@@ -82,11 +82,11 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     return (
       <PageContainer>
         <PageTitle
-          description="Loading the maintenance record before editing."
+          description="Loading this service entry before you edit it."
           title="Edit Maintenance Record"
         />
         <LoadingState
-          description="Fetching the current maintenance values from the API."
+          description="Getting the latest maintenance details."
           title="Loading maintenance record"
         />
       </PageContainer>
@@ -99,7 +99,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     return (
       <PageContainer>
         <PageTitle
-          description="Maintenance edits require an existing maintenance record."
+          description="You can only edit a maintenance record that still exists."
           title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
         />
         <ErrorState
@@ -111,7 +111,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           description={
             isNotFound
               ? 'The requested maintenance record could not be found, so it cannot be edited.'
-              : 'The maintenance record could not be loaded. Check the API and try again.'
+              : "We couldn't load this maintenance record. Try again in a moment."
           }
           title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
         />
@@ -130,7 +130,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
             Back to Record
           </Link>
         }
-        description="Adjust recorded service details while keeping receipts and linked history intact."
+        description="Correct service details without losing the linked receipts or history."
         title="Edit Maintenance Record"
       />
 
@@ -148,21 +148,21 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
                 )
               : null
           }
-          submitHint="Updating a record keeps its linked attachments and history intact."
+          submitHint="Edits keep the same receipts linked to this service entry."
           submitLabel="Save Changes"
           submittingLabel="Saving changes..."
-          successMessage="Maintenance record updated successfully."
+          successMessage="Maintenance record updated."
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>Edit guidance</CardTitle>
-            <CardDescription>Keep maintenance records specific and traceable.</CardDescription>
+            <CardTitle>Keep the record clear</CardTitle>
+            <CardDescription>Small corrections now make the history easier to trust later.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Update service dates, odometer, and cost when the original entry needs correction.</p>
-            <p>Receipt and attachment links stay attached to the maintenance record after edits.</p>
-            <p>Use next-due fields to keep follow-up service planning clean and accurate.</p>
+            <p>Update the date, odometer, and cost whenever the original entry needs correction.</p>
+            <p>Receipts and documents stay attached to the same service entry after edits.</p>
+            <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
           </CardContent>
         </Card>
       </div>

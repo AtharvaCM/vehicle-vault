@@ -52,7 +52,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Reminder updated',
-        description: 'Reminder changes were saved successfully.',
+        description: 'Reminder changes were saved.',
       });
 
       try {
@@ -78,9 +78,9 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
   if (reminderQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle description="Loading the reminder before editing." title="Edit Reminder" />
+        <PageTitle description="Loading this reminder before you edit it." title="Edit Reminder" />
         <LoadingState
-          description="Fetching the current reminder values from the API."
+          description="Getting the latest reminder details."
           title="Loading reminder"
         />
       </PageContainer>
@@ -94,7 +94,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
     return (
       <PageContainer>
         <PageTitle
-          description="Reminder edits require an existing reminder record."
+          description="You can only edit a reminder that still exists."
           title={isNotFound ? 'Reminder not found' : 'Unable to load reminder'}
         />
         <ErrorState
@@ -106,7 +106,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
           description={
             isNotFound
               ? 'The requested reminder could not be found, so it cannot be edited.'
-              : 'The reminder could not be loaded. Check the API and try again.'
+              : "We couldn't load this reminder. Try again in a moment."
           }
           title={isNotFound ? 'Reminder not found' : 'Unable to load reminder'}
         />
@@ -125,7 +125,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
             Back to Reminder
           </Link>
         }
-        description="Update the reminder details while preserving ownership and status behavior."
+        description="Update timing, kilometre targets, or notes for this reminder."
         title="Edit Reminder"
       />
 
@@ -140,21 +140,21 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
               ? getApiErrorMessage(updateReminderMutation.error, 'Unable to update the reminder.')
               : null
           }
-          submitHint="Reminder edits update status calculations the next time reminder data is queried."
+          submitHint="Use edits when the title, due date, or due kilometre changes."
           submitLabel="Save Changes"
           submittingLabel="Saving changes..."
-          successMessage="Reminder updated successfully."
+          successMessage="Reminder updated."
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>Edit guidance</CardTitle>
-            <CardDescription>Keep due dates and due odometer thresholds trustworthy.</CardDescription>
+            <CardTitle>Keep reminders actionable</CardTitle>
+            <CardDescription>Clear reminder details are easier to trust later.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Use edits when a reminder’s title, timing, or threshold was logged incorrectly.</p>
-            <p>Completed reminders can still be edited if their reference details need cleanup.</p>
-            <p>Reminder visibility across the dashboard and vehicle pages updates after save.</p>
+            <p>Use edits when a reminder&apos;s title, timing, or kilometre target was logged incorrectly.</p>
+            <p>Completed reminders can still be cleaned up if their reference details need correction.</p>
+            <p>Keep notes clear so the reminder still makes sense when it resurfaces later.</p>
           </CardContent>
         </Card>
       </div>

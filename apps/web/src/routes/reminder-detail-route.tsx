@@ -10,7 +10,7 @@ const ReminderDetailPage = createLazyPage(
     })),
   {
     title: 'Loading reminder',
-    description: 'Preparing this reminder detail.',
+    description: 'Loading this reminder.',
   },
 );
 

@@ -10,9 +10,10 @@ import { ReminderStatusBadge } from './reminder-status-badge';
 
 type ReminderSummaryCardProps = {
   reminder: Reminder;
+  vehicleLabel?: string;
 };
 
-export function ReminderSummaryCard({ reminder }: ReminderSummaryCardProps) {
+export function ReminderSummaryCard({ reminder, vehicleLabel }: ReminderSummaryCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -22,11 +23,11 @@ export function ReminderSummaryCard({ reminder }: ReminderSummaryCardProps) {
           <ReminderStatusBadge status={reminder.status} />
         </div>
         <CardDescription>
-          Review the reminder details, completion state, and linked vehicle context.
+          Review what this reminder is for, when it is due, and which vehicle it belongs to.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
-        <Detail label="Vehicle" value={reminder.vehicleId} />
+        <Detail label="Vehicle" value={vehicleLabel ?? 'Vehicle details unavailable'} />
         <Detail
           label="Due date"
           value={reminder.dueDate ? formatDate(reminder.dueDate) : 'Not specified'}
@@ -53,11 +54,11 @@ export function ReminderSummaryCard({ reminder }: ReminderSummaryCardProps) {
           value={reminder.notes?.trim() || 'No additional notes were recorded.'}
         />
         <Detail
-          label="Created"
+          label="Added"
           value={formatDate(reminder.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}
         />
         <Detail
-          label="Updated"
+          label="Last updated"
           value={formatDate(reminder.updatedAt, { dateStyle: 'medium', timeStyle: 'short' })}
         />
       </CardContent>

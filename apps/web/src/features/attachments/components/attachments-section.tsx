@@ -38,11 +38,11 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
         title: files.length > 1 ? 'Attachments uploaded' : 'Attachment uploaded',
         description:
           files.length > 1
-            ? 'The files were linked to this maintenance record.'
-            : 'The file was linked to this maintenance record.',
+            ? 'The files were added to this service entry.'
+            : 'The file was added to this service entry.',
       });
     } catch (error) {
-      const message = getApiErrorMessage(error, 'The attachment upload failed.');
+      const message = getApiErrorMessage(error, "We couldn't upload this file.");
       appToast.error({
         title: 'Unable to upload attachment',
         description: message,
@@ -58,10 +58,10 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
       await deleteAttachmentMutation.mutateAsync(attachmentId);
       appToast.success({
         title: 'Attachment deleted',
-        description: 'The file was removed from this maintenance record.',
+        description: 'The file was removed from this service entry.',
       });
     } catch (error) {
-      const message = getApiErrorMessage(error, 'The attachment delete failed.');
+      const message = getApiErrorMessage(error, "We couldn't delete this file.");
       appToast.error({
         title: 'Unable to delete attachment',
         description: message,
@@ -85,7 +85,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
           <div className="space-y-1">
             <CardTitle>Receipts & Documents</CardTitle>
             <CardDescription>
-              Upload and manage the supporting files linked to this maintenance event.
+              Upload and manage the supporting files linked to this service entry.
             </CardDescription>
           </div>
           <Badge tone="neutral">
@@ -102,7 +102,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard
-            description="Files currently linked to this maintenance record."
+            description="Files currently linked to this service entry."
             icon={Paperclip}
             label="Attachments"
             value={String(attachmentsCount)}
@@ -124,7 +124,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
 
         {attachmentsQuery.isPending ? (
           <LoadingState
-            description="Fetching files linked to this maintenance record."
+            description="Loading files linked to this service entry."
             title="Loading attachments"
           />
         ) : attachmentsQuery.isError ? (
@@ -134,7 +134,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
                 Retry
               </Button>
             }
-            description="Attachments could not be loaded right now. Check that the API is running and try again."
+            description="We couldn't load the receipts and documents for this entry. Try again in a moment."
             title="Unable to load attachments"
           />
         ) : attachmentsQuery.data.length ? (
@@ -145,7 +145,7 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
           />
         ) : (
           <EmptyState
-            description="No receipts or documents are linked to this maintenance record yet. Upload the invoice, job card, or supporting photos so the record stays auditable later."
+            description="No receipts or documents are linked to this service entry yet. Upload an invoice, job card, or supporting photos so you can find them later."
             title="No attachments yet"
           />
         )}

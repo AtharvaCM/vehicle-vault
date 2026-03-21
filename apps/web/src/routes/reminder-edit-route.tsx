@@ -10,7 +10,7 @@ const ReminderEditPage = createLazyPage(
     })),
   {
     title: 'Loading reminder form',
-    description: 'Preparing the reminder edit workflow.',
+    description: 'Loading this reminder for editing.',
   },
 );
 

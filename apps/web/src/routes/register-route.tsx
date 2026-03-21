@@ -10,7 +10,7 @@ const RegisterPage = createLazyPage(
     })),
   {
     title: 'Loading registration',
-    description: 'Preparing your Vehicle Vault workspace.',
+    description: 'Loading your account setup.',
   },
 );
 

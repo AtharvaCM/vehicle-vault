@@ -37,7 +37,7 @@ export const appNavigation: NavigationItem[] = [
   },
   {
     label: 'Vehicles',
-    subtitle: 'Garage records',
+    subtitle: 'Your garage',
     to: '/vehicles',
     icon: CarFront,
   },
@@ -50,7 +50,7 @@ export const appNavigation: NavigationItem[] = [
   },
   {
     label: 'Reminders',
-    subtitle: 'Upcoming work',
+    subtitle: 'Due items',
     to: '/reminders',
     icon: Siren,
     exact: true,
@@ -86,7 +86,7 @@ export function Sidebar() {
           </div>
           <div className="space-y-0.5">
             <p className="text-[15px] font-semibold text-foreground">{APP_NAME}</p>
-            <p className="text-xs text-muted-foreground">Operations workspace</p>
+            <p className="text-xs text-muted-foreground">Vehicle care, organised</p>
           </div>
         </div>
       </div>
@@ -129,7 +129,7 @@ export function Sidebar() {
                 <p className="text-sm font-medium text-foreground">{auth.user?.name}</p>
                 <p className="text-xs text-muted-foreground">{auth.user?.email}</p>
               </div>
-              <Badge tone="neutral">Live</Badge>
+              <Badge tone="neutral">Active</Badge>
             </div>
             <div className="mt-3 flex items-center gap-2">
               <Link className="flex-1" to="/vehicles/new">

@@ -44,7 +44,7 @@ export function LoginPage() {
   return (
     <AuthPageShell
       alternateAction={<AuthPageLink label="Create one" text="Need an account?" to="/register" />}
-      description="Sign in to access your vehicles, maintenance history, reminders, and receipts."
+      description="Sign in to see your garage, service history, reminders, and receipts."
       title="Welcome back"
     >
       <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />

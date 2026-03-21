@@ -103,7 +103,7 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
             </Link>
           </div>
         }
-        description="Keep due items attached to a vehicle so service, insurance, and custom reminders stay contextual."
+        description="Keep service, insurance, PUC, and custom reminders tied to this vehicle."
         title={`${vehicleTitle} Reminders`}
       />
 
@@ -111,10 +111,10 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
         <Card>
           <CardHeader>
             <CardTitle>Loading reminders</CardTitle>
-            <CardDescription>Fetching reminders for this vehicle.</CardDescription>
+            <CardDescription>Getting reminders for this vehicle.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-slate-600">
-            Please wait while the reminders load.
+            Please wait while we load the due items.
           </CardContent>
         </Card>
       ) : remindersQuery.isError ? (
@@ -124,7 +124,7 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
               Retry
             </Button>
           }
-          description="The reminder list could not be loaded. Check that the API is running and try again."
+          description="We couldn't load this vehicle's reminders. Try again in a moment."
           title="Unable to load reminders"
         />
       ) : remindersQuery.data.length ? (
@@ -192,7 +192,7 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
               Add the first reminder
             </Link>
           }
-          description="No reminders exist for this vehicle yet."
+          description="No reminders have been created for this vehicle yet."
           title="No reminders yet"
         />
       )}

@@ -6,6 +6,8 @@ import { successResponse } from '../../common/utils/api-response.util';
 import type { AuthUser } from '@vehicle-vault/shared';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
+import { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -29,6 +31,18 @@ export class AuthController {
   @Post('refresh')
   async refresh(@Body() body: RefreshTokenDto) {
     return successResponse(await this.authService.refresh(body));
+  }
+
+  @Public()
+  @Post('password-reset/request')
+  async requestPasswordReset(@Body() body: PasswordResetRequestDto) {
+    return successResponse(await this.authService.requestPasswordReset(body));
+  }
+
+  @Public()
+  @Post('password-reset/confirm')
+  async resetPassword(@Body() body: PasswordResetConfirmDto) {
+    return successResponse(await this.authService.resetPassword(body));
   }
 
   @Public()

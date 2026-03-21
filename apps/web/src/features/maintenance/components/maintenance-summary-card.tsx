@@ -18,7 +18,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
       <CardHeader>
         <CardTitle>Maintenance summary</CardTitle>
         <CardDescription>
-          Review the recorded service details for this maintenance event.
+          Review the recorded details for this service entry.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
@@ -30,7 +30,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
         <Detail label="Odometer" value={`${record.odometer.toLocaleString('en-IN')} km`} />
         <Detail label="Total cost" value={formatCurrency(record.totalCost)} />
         <Detail
-          label="Workshop name"
+          label="Workshop or garage"
           value={record.workshopName?.trim() || 'Workshop not specified'}
         />
         <Detail
@@ -46,11 +46,11 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
           }
         />
         <Detail
-          label="Created"
+          label="Added"
           value={formatDate(record.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}
         />
         <Detail
-          label="Updated"
+          label="Last updated"
           value={formatDate(record.updatedAt, { dateStyle: 'medium', timeStyle: 'short' })}
         />
         <Detail

@@ -29,7 +29,7 @@ export function VehicleCreatePage() {
 
       appToast.success({
         title: 'Vehicle created',
-        description: 'The vehicle is ready for maintenance, reminders, and receipts.',
+        description: 'You can now add maintenance history, reminders, and receipts.',
       });
 
       try {
@@ -59,7 +59,7 @@ export function VehicleCreatePage() {
   return (
     <PageContainer>
       <PageTitle
-        description="Create a real vehicle record through the API, then continue directly into the vehicle detail flow."
+        description="Add a car or bike so you can track its maintenance, reminders, and documents."
         title="Add Vehicle"
       />
 
@@ -73,13 +73,13 @@ export function VehicleCreatePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Implementation notes</CardTitle>
-            <CardDescription>Recommended next steps for this form.</CardDescription>
+            <CardTitle>What to add first</CardTitle>
+            <CardDescription>A few accurate basics make every later record easier to trust.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Submission is wired to a real mutation against the Nest API.</p>
-            <p>The vehicles query cache is invalidated automatically after a successful create.</p>
-            <p>Vehicle records are now persisted through Prisma into PostgreSQL.</p>
+            <p>Start with the current odometer so future due dates and due kilometres stay realistic.</p>
+            <p>Use a nickname if you manage similar vehicles or a family garage.</p>
+            <p>Once saved, you can begin logging services, reminders, and receipts.</p>
           </CardContent>
         </Card>
       </div>

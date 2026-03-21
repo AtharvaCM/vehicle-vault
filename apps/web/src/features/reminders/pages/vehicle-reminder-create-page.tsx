@@ -95,7 +95,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
   return (
     <PageContainer>
       <PageTitle
-        description={`Create a real reminder for ${vehicleTitle} and persist it through the API.`}
+        description={`Create a reminder for ${vehicleTitle} so important due dates and kilometre targets stay visible.`}
         title="Add Reminder"
       />
 
@@ -109,19 +109,13 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
 
         <Card>
           <CardHeader>
-            <CardTitle>Reminder notes</CardTitle>
-            <CardDescription>Keep this slice focused on reminder data only.</CardDescription>
+            <CardTitle>Good reminder habits</CardTitle>
+            <CardDescription>Clear reminders are easier to act on later.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>
-              No delivery or scheduling logic is wired yet. This is only the reminder record and
-              status flow.
-            </p>
-            <p>
-              Use a due date, a due odometer, or both. When both exist, the more urgent condition
-              wins.
-            </p>
-            <p>Reminder records are now persisted through Prisma into PostgreSQL.</p>
+            <p>Use a due date for calendar items like insurance, PUC, or time-based servicing.</p>
+            <p>Use a due odometer when the work depends on kilometres travelled.</p>
+            <p>Add notes if you want the reminder to include parts, documents, or other context.</p>
           </CardContent>
         </Card>
       </div>

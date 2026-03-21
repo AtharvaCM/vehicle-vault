@@ -10,7 +10,7 @@ export function DashboardQuickActions() {
       <CardHeader className="pb-3">
         <CardTitle>Quick actions</CardTitle>
         <CardDescription>
-          Jump into the most common actions without hunting through feature pages.
+          Start the tasks you are most likely to do next.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2.5 sm:grid-cols-3">

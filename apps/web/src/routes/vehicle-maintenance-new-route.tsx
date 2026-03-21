@@ -10,7 +10,7 @@ const VehicleMaintenanceCreatePage = createLazyPage(
     })),
   {
     title: 'Loading maintenance form',
-    description: 'Preparing the service entry workflow.',
+    description: 'Loading the new service entry form.',
   },
 );
 

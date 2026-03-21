@@ -37,7 +37,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
         title: 'Maintenance record created',
-        description: 'The service event was added to this vehicle.',
+        description: 'The service entry was added to this vehicle.',
       });
 
       try {
@@ -98,7 +98,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
   return (
     <PageContainer>
       <PageTitle
-        description={`Record a real maintenance event for ${vehicleTitle} and persist it through the API.`}
+        description={`Log a service, repair, or inspection for ${vehicleTitle}.`}
         title="Add Maintenance Record"
       />
 
@@ -112,17 +112,13 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
 
         <Card>
           <CardHeader>
-            <CardTitle>Data model notes</CardTitle>
-            <CardDescription>Keep this form focused on one service event.</CardDescription>
+            <CardTitle>What to capture</CardTitle>
+            <CardDescription>One entry should represent one completed visit, repair, or service job.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>
-              Workshop name is optional so roadside or self-performed work can still be recorded.
-            </p>
-            <p>
-              Next due date and next due odometer are simple planning fields, not reminders yet.
-            </p>
-            <p>Maintenance records are now persisted through Prisma into PostgreSQL.</p>
+            <p>Workshop is optional, so self-done work and roadside fixes can still be logged.</p>
+            <p>Use notes for parts replaced, symptoms, or anything worth remembering later.</p>
+            <p>After saving, you can attach invoices, job cards, or photos to this entry.</p>
           </CardContent>
         </Card>
       </div>

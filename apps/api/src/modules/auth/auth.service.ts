@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -8,12 +8,20 @@ import {
   AuthResponseSchema,
   AuthUserSchema,
   LoginSchema,
+  PasswordResetConfirmResponseSchema,
+  PasswordResetConfirmSchema,
+  PasswordResetRequestResponseSchema,
+  PasswordResetRequestSchema,
   RefreshTokenSchema,
   RegisterSchema,
   UserSchema,
   type AuthResponse,
   type AuthUser,
   type LoginInput,
+  type PasswordResetConfirmInput,
+  type PasswordResetConfirmResponse,
+  type PasswordResetRequestInput,
+  type PasswordResetRequestResponse,
   type RefreshTokenInput,
   type RegisterInput,
   type User,
@@ -22,6 +30,8 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppConfigService } from '../../config/app-config.service';
 import type { LoginDto } from './dto/login.dto';
+import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
+import type { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import type { RefreshTokenDto } from './dto/refresh-token.dto';
 import type { RegisterDto } from './dto/register.dto';
 import type { JwtPayload, RefreshTokenPayload } from './auth.types';
@@ -31,6 +41,8 @@ type UserRecord = {
   name: string;
   email: string;
   passwordHash?: string;
+  passwordResetTokenExpiresAt?: Date | null;
+  passwordResetTokenHash?: string | null;
   refreshTokenHash?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +50,8 @@ type UserRecord = {
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
 const INVALID_REFRESH_TOKEN_MESSAGE = 'Invalid refresh token.';
+const INVALID_PASSWORD_RESET_TOKEN_MESSAGE = 'Invalid or expired password reset token.';
+const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -109,6 +123,79 @@ export class AuthService {
     }
 
     return this.buildAuthResponse(this.toUser(user));
+  }
+
+  async requestPasswordReset(payload: PasswordResetRequestDto): Promise<PasswordResetRequestResponse> {
+    const input = this.validatePasswordResetRequestInput(payload);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: input.email.trim().toLowerCase(),
+      },
+    });
+
+    if (!user) {
+      return PasswordResetRequestResponseSchema.parse({
+        accepted: true,
+      });
+    }
+
+    const resetToken = randomBytes(32).toString('hex');
+    const passwordResetTokenExpiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS);
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        passwordResetTokenExpiresAt,
+        passwordResetTokenHash: this.hashPasswordResetToken(resetToken),
+      },
+    });
+
+    return PasswordResetRequestResponseSchema.parse({
+      accepted: true,
+      ...(this.appConfigService.isProduction
+        ? {}
+        : {
+            expiresAt: passwordResetTokenExpiresAt.toISOString(),
+            previewToken: resetToken,
+          }),
+    });
+  }
+
+  async resetPassword(payload: PasswordResetConfirmDto): Promise<PasswordResetConfirmResponse> {
+    const input = this.validatePasswordResetConfirmInput(payload);
+    const passwordResetTokenHash = this.hashPasswordResetToken(input.token);
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetTokenExpiresAt: {
+          gt: new Date(),
+        },
+        passwordResetTokenHash,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(INVALID_PASSWORD_RESET_TOKEN_MESSAGE);
+    }
+
+    const passwordHash = await hash(input.password, 12);
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        passwordHash,
+        passwordResetTokenExpiresAt: null,
+        passwordResetTokenHash: null,
+        refreshTokenHash: null,
+      },
+    });
+
+    return PasswordResetConfirmResponseSchema.parse({
+      reset: true,
+    });
   }
 
   async logout(payload: RefreshTokenDto) {
@@ -250,6 +337,10 @@ export class AuthService {
     return createHash('sha256').update(refreshToken).digest('hex');
   }
 
+  private hashPasswordResetToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
   private validateRegisterInput(payload: RegisterDto): RegisterInput {
     return RegisterSchema.parse({
       ...payload,
@@ -263,6 +354,21 @@ export class AuthService {
       ...payload,
       email: payload.email?.trim().toLowerCase(),
     });
+  }
+
+  private validatePasswordResetRequestInput(
+    payload: PasswordResetRequestDto,
+  ): PasswordResetRequestInput {
+    return PasswordResetRequestSchema.parse({
+      ...payload,
+      email: payload.email?.trim().toLowerCase(),
+    });
+  }
+
+  private validatePasswordResetConfirmInput(
+    payload: PasswordResetConfirmDto,
+  ): PasswordResetConfirmInput {
+    return PasswordResetConfirmSchema.parse(payload);
   }
 
   private validateRefreshTokenInput(payload: RefreshTokenDto): RefreshTokenInput {

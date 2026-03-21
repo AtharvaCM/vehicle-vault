@@ -71,8 +71,8 @@ export function ReminderForm({
   onDirtyChange,
   submitLabel = 'Save Reminder',
   submittingLabel = 'Saving reminder...',
-  submitHint = 'Add either a due date or due odometer to track this reminder.',
-  successMessage = 'Reminder saved successfully.',
+  submitHint = 'Use a due date, a due odometer, or both to track this reminder.',
+  successMessage = 'Reminder saved.',
 }: ReminderFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const form = useForm<ReminderFormValues>({
@@ -152,9 +152,7 @@ export function ReminderForm({
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Reminder details</CardTitle>
-        <CardDescription>
-          Create a reminder tied to a vehicle without coupling this slice to delivery or scheduling.
-        </CardDescription>
+        <CardDescription>Give the reminder a clear title and at least one due trigger.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -220,7 +218,7 @@ export function ReminderForm({
               id="reminder-notes"
               {...form.register('notes')}
               aria-invalid={Boolean(form.formState.errors.notes)}
-              placeholder="Add context about why this reminder matters"
+              placeholder="Add context, documents to carry, or what to check"
             />
           </FormField>
 
@@ -237,7 +235,7 @@ export function ReminderForm({
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
             <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
-              {isSubmitting ? 'Submitting reminder to the API...' : submitHint}
+              {isSubmitting ? 'Saving reminder...' : submitHint}
             </p>
           </div>
         </form>

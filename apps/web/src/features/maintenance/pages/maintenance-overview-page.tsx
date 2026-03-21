@@ -64,11 +64,11 @@ export function MaintenanceOverviewPage() {
     return (
       <PageContainer>
         <PageHeader
-          description="Review logged service work across every tracked vehicle."
+          description="Review service history across every vehicle in your garage."
           title="Maintenance"
         />
         <LoadingState
-          description="Fetching maintenance history from the backend."
+          description="Loading maintenance history across your garage."
           title="Loading maintenance history"
         />
       </PageContainer>
@@ -79,7 +79,7 @@ export function MaintenanceOverviewPage() {
     return (
       <PageContainer>
         <PageHeader
-          description="Review logged service work across every tracked vehicle."
+          description="Review service history across every vehicle in your garage."
           title="Maintenance"
         />
         <ErrorState
@@ -94,7 +94,7 @@ export function MaintenanceOverviewPage() {
               Retry
             </Button>
           }
-          description="Maintenance history could not be loaded right now. Try again after the API is reachable."
+          description="We couldn't load your maintenance history. Try again in a moment."
           title="Unable to load maintenance"
         />
       </PageContainer>
@@ -123,11 +123,11 @@ export function MaintenanceOverviewPage() {
               Choose a vehicle
             </Link>
             <Link className={buttonVariants()} to="/vehicles">
-              Log maintenance from vehicle
+              Log maintenance
             </Link>
           </div>
         }
-        description="Track service history across the whole garage, then drill into a specific maintenance record when you need the full detail and attachments."
+        description="Review service history across your garage, then open any entry for full details and receipts."
         title="Maintenance"
       />
 
@@ -135,13 +135,13 @@ export function MaintenanceOverviewPage() {
         <>
           <div className="grid gap-4 lg:grid-cols-3">
             <StatCard
-              description="Total maintenance records currently stored for your garage."
+              description="Service entries logged across your garage."
               icon={ClipboardList}
               label="Records"
               value={String(records.length)}
             />
             <StatCard
-              description="Vehicles that already have at least one logged service event."
+              description="Vehicles that already have at least one service entry."
               icon={Wrench}
               label="Vehicles with history"
               value={String(vehiclesWithHistory)}
@@ -154,7 +154,7 @@ export function MaintenanceOverviewPage() {
                   </span>
                 ) : null
               }
-              description="Combined spend across all maintenance records in your account."
+              description="Total recorded maintenance spend across all vehicles."
               icon={ReceiptText}
               label="Recorded spend"
               value={formatCurrency(totalSpend)}
@@ -175,7 +175,7 @@ export function MaintenanceOverviewPage() {
           />
 
           <SectionCard
-            description="Review and open any service record across your tracked vehicles."
+            description="Browse every logged service entry across your vehicles."
             title="All maintenance records"
             action={
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -215,7 +215,7 @@ export function MaintenanceOverviewPage() {
                 Log maintenance from a vehicle
               </Link>
             }
-            description="Maintenance records will appear here as soon as you log your first service event."
+            description="Your service entries will appear here once you log the first visit or repair."
             icon={ClipboardList}
             title="No maintenance records yet"
           />

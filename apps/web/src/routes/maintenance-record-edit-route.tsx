@@ -10,7 +10,7 @@ const MaintenanceRecordEditPage = createLazyPage(
     })),
   {
     title: 'Loading maintenance form',
-    description: 'Preparing the maintenance edit workflow.',
+    description: 'Loading this service entry for editing.',
   },
 );
 

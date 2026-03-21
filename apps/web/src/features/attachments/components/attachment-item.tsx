@@ -39,11 +39,11 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
           rel="noreferrer"
           target="_blank"
         >
-          Open
+          View file
         </a>
         <ConfirmActionDialog
           confirmLabel="Delete attachment"
-          description={`This removes ${attachment.originalFileName} from the maintenance record and deletes the local uploaded file when available.`}
+          description={`This removes ${attachment.originalFileName} from this service entry. If available, the stored file is deleted too.`}
           isPending={isDeleting}
           onConfirm={() => onDelete(attachment.id)}
           title="Delete this attachment?"

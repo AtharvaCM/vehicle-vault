@@ -14,11 +14,11 @@ export function DashboardPage() {
     return (
       <PageContainer>
         <PageTitle
-          description="Get an immediate view of urgent reminders, recent service activity, and the current state of your garage."
+          description="See urgent reminders, recent services, and garage activity at a glance."
           title="Dashboard"
         />
         <LoadingState
-          description="Fetching the latest dashboard summary from the API."
+          description="Pulling together the latest activity from your garage."
           title="Loading dashboard summary"
         />
       </PageContainer>
@@ -29,7 +29,7 @@ export function DashboardPage() {
     return (
       <PageContainer>
         <PageTitle
-          description="Get an immediate view of urgent reminders, recent service activity, and the current state of your garage."
+          description="See urgent reminders, recent services, and garage activity at a glance."
           title="Dashboard"
         />
         <ErrorState
@@ -38,7 +38,7 @@ export function DashboardPage() {
               Retry
             </Button>
           }
-          description="The dashboard summary could not be loaded. Check that the API is running and try again."
+          description="We couldn't load your dashboard. Try again in a moment."
           title="Unable to load dashboard"
         />
       </PageContainer>
@@ -48,7 +48,7 @@ export function DashboardPage() {
   return (
     <PageContainer>
       <PageTitle
-        description="Track urgent reminders, recent maintenance, receipts, and vehicle activity from one place."
+        description="See urgent reminders, recent services, receipts, and vehicle activity at a glance."
         title="Dashboard"
       />
 

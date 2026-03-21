@@ -45,7 +45,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
       await deleteVehicleMutation.mutateAsync(vehicleId);
       appToast.success({
         title: 'Vehicle deleted',
-        description: 'The vehicle and its related records were removed.',
+        description: 'The vehicle and its linked history were removed.',
       });
       await navigate({ to: '/vehicles' });
     } catch (error) {
@@ -61,11 +61,11 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
     return (
       <PageContainer>
         <PageTitle
-          description="Loading the latest vehicle detail from the API."
+          description="Loading this vehicle and its latest activity."
           title="Vehicle Detail"
         />
         <LoadingState
-          description="Fetching the vehicle record from the API."
+          description="Getting this vehicle ready."
           title="Loading vehicle"
         />
       </PageContainer>
@@ -78,7 +78,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
     return (
       <PageContainer>
         <PageTitle
-          description="Vehicle detail pages are driven by backend state."
+          description="Review one vehicle's details, service history, reminders, and receipts in one place."
           title={isNotFound ? 'Vehicle not found' : 'Unable to load vehicle'}
         />
         <ErrorState
@@ -90,7 +90,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           description={
             isNotFound
               ? 'The requested vehicle does not exist or may have been removed.'
-              : 'The vehicle record could not be loaded. Check that the API is running and try again.'
+              : "We couldn't load this vehicle. Try again in a moment."
           }
           title={isNotFound ? 'Vehicle not found' : 'Vehicle request failed'}
         />
@@ -146,7 +146,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             </Link>
             <ConfirmActionDialog
               confirmLabel="Delete vehicle"
-              description="This removes the vehicle together with its maintenance records, reminders, and attachment metadata. This cannot be undone."
+              description="This removes the vehicle, its maintenance history, reminders, and attachment details. This can't be undone."
               isPending={deleteVehicleMutation.isPending}
               onConfirm={handleDeleteVehicle}
               title="Delete this vehicle?"
@@ -155,7 +155,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             />
           </div>
         }
-        description="Use this page as the operational summary for one vehicle, with service history, reminders, and linked records in one place."
+        description="See this vehicle's details, service history, reminders, and receipts in one place."
         title={title}
       />
 
@@ -185,9 +185,9 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             <VehicleSummaryCard vehicle={vehicle} />
             <Card>
               <CardHeader>
-                <CardTitle>Operational snapshot</CardTitle>
+                <CardTitle>At a glance</CardTitle>
                 <CardDescription>
-                  Use this as the fast read before diving into detailed maintenance or reminders.
+                  Start here for the quickest view of this vehicle today.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -230,18 +230,15 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             />
             <Card>
               <CardHeader>
-                <CardTitle>Service workflow</CardTitle>
+                <CardTitle>Keep service history useful</CardTitle>
                 <CardDescription>
-                  Keep each maintenance event specific, documented, and easy to revisit later.
+                  Good service notes are easier to trust later.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-                <p>Log each service event against the odometer so history stays trustworthy.</p>
-                <p>Open any maintenance record to manage receipts and uploaded documents.</p>
-                <p>
-                  Use next-due fields to keep future service planning visible in the reminders
-                  workspace.
-                </p>
+                <p>Log each visit or repair with the odometer so the timeline stays accurate.</p>
+                <p>Open a service entry to attach receipts, invoices, or photos.</p>
+                <p>Use next due fields to capture what should happen next.</p>
               </CardContent>
             </Card>
           </div>
@@ -258,15 +255,15 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             />
             <Card>
               <CardHeader>
-                <CardTitle>Reminder workflow</CardTitle>
+                <CardTitle>Stay ahead of upcoming work</CardTitle>
                 <CardDescription>
-                  Keep upcoming due items visible before they become missed tasks.
+                  Use reminders to keep important dates and kilometre targets visible.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-                <p>Create reminders with either a due date, due odometer, or both.</p>
-                <p>Overdue and due-today items surface across the dashboard and reminders center.</p>
-                <p>Completed reminders remain available for reference without cluttering action lists.</p>
+                <p>Set a due date, a due odometer, or both depending on the job.</p>
+                <p>Overdue and due today reminders show up on the dashboard and reminder lists.</p>
+                <p>Completed reminders stay in history for reference.</p>
               </CardContent>
             </Card>
           </div>
@@ -312,18 +309,16 @@ function MaintenancePanel({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>
-          Review the latest maintenance records linked to this vehicle.
-        </CardDescription>
+        <CardDescription>Recent service entries for this vehicle.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {maintenanceQuery.isPending ? (
           <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Loading maintenance records.
+            Loading service history.
           </p>
         ) : maintenanceQuery.isError ? (
           <EmptyState
-            description="Maintenance history could not be loaded right now."
+            description="Service history couldn't be loaded right now."
             title="Unable to load maintenance"
           />
         ) : records.length ? (
@@ -343,7 +338,7 @@ function MaintenancePanel({
                 Add first maintenance record
               </Link>
             }
-            description="No maintenance records exist for this vehicle yet."
+            description="No service entries have been logged for this vehicle yet."
             title="No maintenance records yet"
           />
         )}
@@ -393,16 +388,16 @@ function ReminderPanel({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Review the next reminder items linked to this vehicle.</CardDescription>
+        <CardDescription>Active reminders linked to this vehicle.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {remindersQuery.isPending ? (
           <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Loading reminder summary.
+            Loading reminders.
           </p>
         ) : remindersQuery.isError ? (
           <EmptyState
-            description="Upcoming reminders could not be loaded right now."
+            description="Reminders couldn't be loaded right now."
             title="Unable to load reminders"
           />
         ) : reminders.length ? (
@@ -422,7 +417,7 @@ function ReminderPanel({
                 Add first reminder
               </Link>
             }
-            description="No reminders exist for this vehicle yet."
+            description="No reminders have been created for this vehicle yet."
             title="No reminders yet"
           />
         )}

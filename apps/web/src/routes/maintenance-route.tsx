@@ -10,7 +10,7 @@ const MaintenanceOverviewPage = createLazyPage(
     })),
   {
     title: 'Loading maintenance',
-    description: 'Preparing the service history overview.',
+    description: 'Loading your service history.',
   },
 );
 

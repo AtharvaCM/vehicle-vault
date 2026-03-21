@@ -10,7 +10,7 @@ const VehicleEditPage = createLazyPage(
     })),
   {
     title: 'Loading vehicle form',
-    description: 'Preparing the vehicle edit workflow.',
+    description: 'Loading this vehicle for editing.',
   },
 );
 

@@ -10,7 +10,7 @@ const VehiclesListPage = createLazyPage(
     })),
   {
     title: 'Loading vehicles',
-    description: 'Preparing your garage overview.',
+    description: 'Loading your garage.',
   },
 );
 

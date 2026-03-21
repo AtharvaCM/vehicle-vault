@@ -71,7 +71,7 @@ export function AttachmentUploadForm({
         />
         <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
           <ShieldCheck className="h-3.5 w-3.5" />
-          <span>Unsupported file types and oversized uploads are rejected by the API.</span>
+          <span>Unsupported file types and files over 5 MB each can&apos;t be uploaded.</span>
         </div>
       </div>
 

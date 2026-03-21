@@ -10,7 +10,7 @@ const LoginPage = createLazyPage(
     })),
   {
     title: 'Loading sign in',
-    description: 'Preparing your account access screen.',
+    description: 'Loading your sign-in screen.',
   },
 );
 

@@ -86,8 +86,8 @@ export function MaintenanceForm({
   onDirtyChange,
   submitLabel = 'Save Record',
   submittingLabel = 'Saving record...',
-  submitHint = 'The record is stored immediately after submit.',
-  successMessage = 'Maintenance record saved successfully.',
+  submitHint = 'Use this record for one completed service, repair, or inspection.',
+  successMessage = 'Maintenance record saved.',
 }: MaintenanceFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
 
@@ -166,10 +166,7 @@ export function MaintenanceForm({
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Maintenance record</CardTitle>
-        <CardDescription>
-          Keep maintenance inputs scoped to this feature so list, detail, and create flows stay
-          aligned.
-        </CardDescription>
+        <CardDescription>Capture the details of one completed service visit, repair, or inspection.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -231,7 +228,7 @@ export function MaintenanceForm({
 
             <FormField
               htmlFor="maintenance-workshop-name"
-              label="Workshop name"
+              label="Workshop or garage"
               error={form.formState.errors.workshopName?.message}
             >
               <Input
@@ -313,7 +310,7 @@ export function MaintenanceForm({
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
             <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
-              {isSubmitting ? 'Submitting maintenance record to the API...' : submitHint}
+              {isSubmitting ? 'Saving maintenance record...' : submitHint}
             </p>
           </div>
         </form>

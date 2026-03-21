@@ -34,11 +34,11 @@ export function AuthPageShell({
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6">
-              <h2 className="text-sm font-semibold text-slate-900">What this unlocks</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Why this matters</h2>
               <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
-                <li>See only your vehicles, reminders, maintenance history, and attachments.</li>
-                <li>Keep dashboard counts and urgent actions scoped to your own garage.</li>
-                <li>Use one persistent account across refreshes with JWT-backed API access.</li>
+                <li>Keep every vehicle, service entry, reminder, and receipt in one place.</li>
+                <li>See dashboard counts and urgent items for your own garage only.</li>
+                <li>Pick up where you left off whenever you come back.</li>
               </ul>
             </div>
           </div>

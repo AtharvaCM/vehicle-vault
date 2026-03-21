@@ -10,7 +10,7 @@ const VehicleReminderCreatePage = createLazyPage(
     })),
   {
     title: 'Loading reminder form',
-    description: 'Preparing the reminder creation workflow.',
+    description: 'Loading the new reminder form.',
   },
 );
 

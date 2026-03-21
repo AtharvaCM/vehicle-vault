@@ -10,7 +10,7 @@ const SettingsPage = createLazyPage(
     })),
   {
     title: 'Loading settings',
-    description: 'Preparing your workspace preferences.',
+    description: 'Loading your account and backup tools.',
   },
 );
 

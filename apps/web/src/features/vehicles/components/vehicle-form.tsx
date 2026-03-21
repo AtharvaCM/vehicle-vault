@@ -63,8 +63,8 @@ export function VehicleForm({
   onDirtyChange,
   submitLabel = 'Save Vehicle',
   submittingLabel = 'Saving vehicle...',
-  submitHint = 'The vehicle is stored immediately after submit.',
-  successMessage = 'Vehicle saved successfully.',
+  submitHint = 'You can add service history and reminders as soon as this vehicle is saved.',
+  successMessage = 'Vehicle details saved.',
 }: VehicleFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
 
@@ -127,10 +127,7 @@ export function VehicleForm({
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Vehicle details</CardTitle>
-        <CardDescription>
-          Create a real vehicle record through the API using the shared contract consumed by both
-          the backend and frontend.
-        </CardDescription>
+        <CardDescription>Add the basics so this vehicle is easy to recognise everywhere in the app.</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -246,7 +243,7 @@ export function VehicleForm({
                 id="vehicle-nickname"
                 {...form.register('nickname')}
                 aria-invalid={Boolean(form.formState.errors.nickname)}
-                placeholder="Family car"
+                placeholder="Family SUV"
               />
             </FormField>
           </div>
@@ -264,7 +261,7 @@ export function VehicleForm({
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
             <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
-              {isSubmitting ? 'Submitting vehicle to the API...' : submitHint}
+              {isSubmitting ? 'Saving vehicle details...' : submitHint}
             </p>
           </div>
         </form>
