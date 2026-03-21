@@ -308,11 +308,11 @@ export function MaintenanceForm({
             </p>
           ) : null}
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm leading-5 text-slate-500">
+            <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
               {isSubmitting ? 'Submitting maintenance record to the API...' : submitHint}
             </p>
           </div>

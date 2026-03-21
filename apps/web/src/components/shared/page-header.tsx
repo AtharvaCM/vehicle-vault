@@ -28,7 +28,7 @@ export function PageHeader({
         'flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-end sm:justify-between',
         className,
       )}
-    >
+      >
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
           {eyebrow}
@@ -41,7 +41,11 @@ export function PageHeader({
         </div>
       </div>
 
-      {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

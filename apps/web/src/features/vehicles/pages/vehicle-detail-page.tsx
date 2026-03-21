@@ -162,16 +162,19 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
       {actionError ? <InlineError message={actionError} /> : null}
 
       <Tabs className="space-y-6" defaultValue="overview">
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-white p-1 shadow-sm sm:max-w-xl">
-          <TabsTrigger className="gap-2 py-2.5" value="overview">
+        <TabsList className="flex h-auto w-full flex-wrap rounded-2xl bg-white p-1 shadow-sm sm:w-auto">
+          <TabsTrigger className="min-w-[120px] flex-1 gap-2 py-2.5 sm:flex-none" value="overview">
             <LayoutGrid className="h-4 w-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger className="gap-2 py-2.5" value="maintenance">
+          <TabsTrigger
+            className="min-w-[120px] flex-1 gap-2 py-2.5 sm:flex-none"
+            value="maintenance"
+          >
             <ClipboardList className="h-4 w-4" />
             Maintenance
           </TabsTrigger>
-          <TabsTrigger className="gap-2 py-2.5" value="reminders">
+          <TabsTrigger className="min-w-[120px] flex-1 gap-2 py-2.5 sm:flex-none" value="reminders">
             <BellRing className="h-4 w-4" />
             Reminders
           </TabsTrigger>

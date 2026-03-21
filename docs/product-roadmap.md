@@ -106,6 +106,13 @@ The product already supports the core ownership loop:
 - Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
 - Unsaved-changes protection across core vehicle, maintenance, and reminder create/edit forms
 
+### Responsive and Accessibility
+
+- Skip link for keyboard users and stronger focus treatment across shell navigation
+- Mobile sheet navigation with account quick actions and close-on-select behavior
+- More resilient dialog, sheet, select, and dropdown sizing on smaller screens
+- Better small-screen action layout for forms and vehicle-detail tabs
+
 ### Export and Portability
 
 - User-scoped JSON account export from settings
@@ -132,24 +139,13 @@ These are the main items that still prevent the product from being a more comple
 
 ### UX Gaps
 
-- Mobile/tablet polish is still behind desktop polish
 - Search/filter state is local to pages and not persisted in the URL
 
 ## Recommended Next Milestones
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Responsive and Accessibility Pass
-
-Goal: make the app feel production-grade outside desktop demos.
-
-- Improve mobile sidebar and topbar behavior
-- Tighten form layouts on smaller screens
-- Improve keyboard navigation and focus states
-- Review contrast and hit targets
-- Ensure dialogs, sheets, and menus behave accessibly
-
-### Milestone 2: Session and Security Hardening
+### Milestone 1: Session and Security Hardening
 
 Goal: move auth from MVP-safe to more production-safe.
 
@@ -158,7 +154,7 @@ Goal: move auth from MVP-safe to more production-safe.
 - Improve token expiry handling in the frontend
 - Review file-upload validation and abuse protection
 
-### Milestone 3: Storage and Ops Hardening
+### Milestone 2: Storage and Ops Hardening
 
 Goal: remove the remaining temporary infrastructure choices.
 
@@ -166,6 +162,14 @@ Goal: remove the remaining temporary infrastructure choices.
 - Add safer attachment cleanup and reconciliation behavior
 - Improve deployment docs for fresh environments
 - Add preview-environment friendliness where needed
+
+### Milestone 3: Workflow Depth
+
+Goal: improve day-to-day productivity without diluting the ownership model.
+
+- Persist search and filter state in the URL where it helps
+- Add bulk actions where they are operationally useful
+- Add odometer history and service-trend visibility
 
 ## Later Roadmap
 

@@ -5,12 +5,14 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Plus,
   Settings,
   Siren,
   UserCircle2,
   Wrench,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import { useState } from 'react';
 
 import { APP_NAME } from '@vehicle-vault/shared';
 
@@ -26,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -58,6 +61,7 @@ const mobileIcons = {
 export function Topbar() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -79,42 +83,81 @@ export function Topbar() {
     <header className="sticky top-0 z-30 border-b border-border/70 bg-white/85 backdrop-blur-xl">
       <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <Sheet>
+          <Sheet onOpenChange={setIsMobileNavOpen} open={isMobileNavOpen}>
             <SheetTrigger asChild>
               <Button className="xl:hidden" size="icon-sm" variant="outline">
                 <Menu className="h-4 w-4" />
                 <span className="sr-only">Open navigation</span>
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-[320px] p-0" side="left">
+            <SheetContent className="w-[88vw] max-w-sm p-0" side="left">
               <SheetHeader className="border-b border-border/70 px-6 py-5">
                 <SheetTitle>{APP_NAME}</SheetTitle>
-                <SheetDescription>Move through your dashboard, vehicles, reminders, and service records.</SheetDescription>
+                <SheetDescription>
+                  Move through your dashboard, vehicles, reminders, and service records.
+                </SheetDescription>
               </SheetHeader>
 
-              <nav className="grid gap-2 p-4">
-                {appNavigation.map((item) => {
-                  const Icon = item.icon;
+              <div className="flex h-full flex-col">
+                <nav className="grid gap-2 p-4">
+                  {appNavigation.map((item) => {
+                    const Icon = item.icon;
 
-                  return (
-                    <Link
-                      key={item.to}
-                      activeOptions={{ exact: item.exact ?? false }}
-                      activeProps={{
-                        className: 'border-slate-950/10 bg-slate-950 text-white hover:bg-slate-900',
-                      }}
-                      className="flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition-colors hover:bg-accent"
-                      to={item.to}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <div className="space-y-0.5">
-                        <p className="font-medium">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">{item.subtitle}</p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </nav>
+                    return (
+                      <SheetClose asChild key={item.to}>
+                        <Link
+                          activeOptions={{ exact: item.exact ?? false }}
+                          activeProps={{
+                            className:
+                              'border-slate-950/10 bg-slate-950 text-white hover:bg-slate-900',
+                          }}
+                          className="flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          to={item.to}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <div className="space-y-0.5">
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                          </div>
+                        </Link>
+                      </SheetClose>
+                    );
+                  })}
+                </nav>
+
+                <div className="mt-auto border-t border-border/70 px-4 py-4">
+                  <div className="space-y-3 rounded-2xl border border-border/70 bg-slate-50/80 p-4">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium text-foreground">{auth.user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{auth.user?.email}</p>
+                    </div>
+                    <div className="grid gap-2">
+                      <SheetClose asChild>
+                        <Link
+                          className={buttonVariants({ size: 'sm' }) + ' w-full justify-center'}
+                          to="/vehicles/new"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Vehicle
+                        </Link>
+                      </SheetClose>
+                      <Button
+                        className="w-full justify-center"
+                        onClick={() => {
+                          void handleLogout();
+                          setIsMobileNavOpen(false);
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </SheetContent>
           </Sheet>
 
@@ -127,8 +170,18 @@ export function Topbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link className={buttonVariants({ variant: 'outline', size: 'sm' })} to="/vehicles/new">
+          <Link
+            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' hidden sm:inline-flex'}
+            to="/vehicles/new"
+          >
             Add Vehicle
+          </Link>
+          <Link
+            className={buttonVariants({ variant: 'outline', size: 'icon-sm' }) + ' sm:hidden'}
+            to="/vehicles/new"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="sr-only">Add vehicle</span>
           </Link>
 
           <Tooltip>
@@ -204,7 +257,7 @@ export function Topbar() {
                 className: 'bg-slate-950 text-white border-slate-950',
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent',
+                'inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               )}
               to={item.to}
             >
