@@ -6,7 +6,8 @@ import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { useAttachments } from '../hooks/use-attachments';
 import { useDeleteAttachment } from '../hooks/use-delete-attachment';
@@ -29,8 +30,15 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
     try {
       setActionError(null);
       await uploadAttachmentsMutation.mutateAsync(files);
+      appToast.success({
+        title: files.length > 1 ? 'Attachments uploaded' : 'Attachment uploaded',
+        description:
+          files.length > 1
+            ? 'The files were linked to this maintenance record.'
+            : 'The file was linked to this maintenance record.',
+      });
     } catch (error) {
-      setActionError(getApiErrorMessage(error));
+      setActionError(getApiErrorMessage(error, 'The attachment upload failed.'));
     }
   }
 
@@ -39,8 +47,12 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
       setActionError(null);
       setDeletingAttachmentId(attachmentId);
       await deleteAttachmentMutation.mutateAsync(attachmentId);
+      appToast.success({
+        title: 'Attachment deleted',
+        description: 'The file was removed from this maintenance record.',
+      });
     } catch (error) {
-      setActionError(getApiErrorMessage(error));
+      setActionError(getApiErrorMessage(error, 'The attachment delete failed.'));
     } finally {
       setDeletingAttachmentId(null);
     }
@@ -96,21 +108,4 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
       </CardContent>
     </Card>
   );
-}
-
-function getApiErrorMessage(error: unknown) {
-  if (
-    error instanceof ApiError &&
-    error.data &&
-    typeof error.data === 'object' &&
-    'error' in error.data &&
-    error.data.error &&
-    typeof error.data.error === 'object' &&
-    'message' in error.data.error &&
-    typeof error.data.error.message === 'string'
-  ) {
-    return error.data.error.message;
-  }
-
-  return error instanceof Error ? error.message : 'The attachment action failed.';
 }

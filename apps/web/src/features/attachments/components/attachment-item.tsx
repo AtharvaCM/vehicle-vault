@@ -1,5 +1,5 @@
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { Attachment } from '../types/attachment';
@@ -41,14 +41,15 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
         >
           Open
         </a>
-        <Button
-          disabled={isDeleting}
-          onClick={() => onDelete(attachment.id)}
-          type="button"
-          variant="secondary"
-        >
-          {isDeleting ? 'Deleting...' : 'Delete'}
-        </Button>
+        <ConfirmActionDialog
+          confirmLabel="Delete attachment"
+          description={`This removes ${attachment.originalFileName} from the maintenance record and deletes the local uploaded file when available.`}
+          isPending={isDeleting}
+          onConfirm={() => onDelete(attachment.id)}
+          title="Delete this attachment?"
+          triggerLabel="Delete"
+          triggerVariant="secondary"
+        />
       </div>
     </div>
   );
