@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from './common/prisma/prisma.module';
+import { SupabaseStorageModule } from './common/storage/supabase-storage.module';
 import { AppConfigModule } from './config/app-config.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
@@ -16,6 +17,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
   imports: [
     AppConfigModule,
     PrismaModule,
+    SupabaseStorageModule,
     HealthModule,
     DashboardModule,
     AuthModule,

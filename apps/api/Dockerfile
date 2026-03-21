@@ -37,8 +37,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 
 COPY --from=build /prod/api ./
 
-RUN mkdir -p /app/uploads
-
 EXPOSE 3001
 
 CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma && node dist/main.js"]

@@ -10,8 +10,8 @@ import {
 } from '@vehicle-vault/shared';
 
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { deleteStoredAttachmentFile } from '../attachments/utils/attachment-upload.util';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
@@ -21,6 +21,7 @@ export class MaintenanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
+    private readonly storageService: SupabaseStorageService,
   ) {}
 
   async getAllRecords(userId: string) {
@@ -128,7 +129,9 @@ export class MaintenanceService {
     });
 
     await Promise.all(
-      record.attachments.map((attachment) => deleteStoredAttachmentFile(attachment.fileName)),
+      record.attachments.map((attachment) =>
+        this.storageService.deleteObject(attachment.fileName).catch(() => undefined),
+      ),
     );
 
     return {

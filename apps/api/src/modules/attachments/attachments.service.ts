@@ -1,18 +1,14 @@
 import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AttachmentKind, type Attachment } from '@vehicle-vault/shared';
-import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 
+import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
-import { getUploadsDirectory } from './constants/attachment.constants';
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
 import {
-  buildStoredFileName,
-  deleteStoredAttachmentFile,
-  ensureUploadsDirectory,
-  getAttachmentAbsolutePath,
+  buildStoredAttachmentPath,
   validateAttachmentUploadFile,
 } from './utils/attachment-upload.util';
 
@@ -21,9 +17,8 @@ export class AttachmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly maintenanceService: MaintenanceService,
-  ) {
-    ensureUploadsDirectory();
-  }
+    private readonly storageService: SupabaseStorageService,
+  ) {}
 
   async listAllAttachments(userId: string) {
     const attachments = await this.prisma.attachment.findMany({
@@ -64,17 +59,11 @@ export class AttachmentsService {
 
   async getAttachmentFile(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
-    const filePath = getAttachmentAbsolutePath(attachment.fileName);
-
-    try {
-      await access(filePath);
-    } catch {
-      throw new NotFoundException(`Attachment file for ${attachmentId} was not found on disk`);
-    }
+    const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
 
     return {
       ...this.toAttachment(attachment),
-      filePath,
+      fileBuffer,
     };
   }
 
@@ -85,14 +74,10 @@ export class AttachmentsService {
       throw new BadRequestException('Add at least one attachment to upload.');
     }
 
-    await mkdir(getUploadsDirectory(), { recursive: true });
-
     const preparedFiles = files.map((file) => {
       const originalFileName = validateAttachmentUploadFile(file);
-
       const id = randomUUID();
-      const fileName = buildStoredFileName(originalFileName);
-      const filePath = getAttachmentAbsolutePath(fileName);
+      const fileName = buildStoredAttachmentPath(userId, recordId, originalFileName);
 
       return {
         id,
@@ -104,17 +89,19 @@ export class AttachmentsService {
         size: file.size,
         url: `/api/attachments/${id}/file`,
         uploadedAt: new Date(),
-        filePath,
         buffer: file.buffer,
       };
     });
 
+    const uploadedPaths: string[] = [];
+
     try {
       for (const file of preparedFiles) {
-        await writeFile(file.filePath, file.buffer);
+        await this.storageService.uploadObject(file.fileName, file.buffer, file.mimeType);
+        uploadedPaths.push(file.fileName);
       }
     } catch (error) {
-      await Promise.all(preparedFiles.map((file) => unlink(file.filePath).catch(() => undefined)));
+      await this.cleanupUploadedObjects(uploadedPaths);
       throw error;
     }
 
@@ -139,7 +126,7 @@ export class AttachmentsService {
 
       return attachments.map((attachment) => this.toAttachment(attachment));
     } catch (error) {
-      await Promise.all(preparedFiles.map((file) => unlink(file.filePath).catch(() => undefined)));
+      await this.cleanupUploadedObjects(uploadedPaths);
       throw error;
     }
   }
@@ -152,12 +139,21 @@ export class AttachmentsService {
         id: attachmentId,
       },
     });
-    await deleteStoredAttachmentFile(attachment.fileName);
+
+    try {
+      await this.storageService.deleteObject(attachment.fileName);
+    } catch (error) {
+      console.warn(`Failed to delete attachment object ${attachment.fileName} after metadata removal`, error);
+    }
 
     return {
       id: attachment.id,
       deleted: true,
     };
+  }
+
+  private async cleanupUploadedObjects(paths: string[]) {
+    await Promise.all(paths.map((path) => this.storageService.deleteObject(path).catch(() => undefined)));
   }
 
   private async getStoredAttachmentById(userId: string, attachmentId: string) {

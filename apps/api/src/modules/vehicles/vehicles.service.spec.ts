@@ -3,14 +3,6 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { deleteStoredAttachmentFileMock } = vi.hoisted(() => ({
-  deleteStoredAttachmentFileMock: vi.fn(),
-}));
-
-vi.mock('../attachments/utils/attachment-upload.util', () => ({
-  deleteStoredAttachmentFile: deleteStoredAttachmentFileMock,
-}));
-
 import { VehiclesService } from './vehicles.service';
 
 describe('VehiclesService', () => {
@@ -57,11 +49,16 @@ describe('VehiclesService', () => {
     },
   };
 
+  const storageService = {
+    deleteObject: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: VehiclesService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new VehiclesService(prisma);
+    storageService.deleteObject.mockResolvedValue(undefined);
+    service = new VehiclesService(prisma as never, storageService as never);
   });
 
   it('lists only the current user vehicles with pagination metadata', async () => {
@@ -150,7 +147,7 @@ describe('VehiclesService', () => {
     );
   });
 
-  it('deletes related attachment files when a vehicle is deleted', async () => {
+  it('deletes related attachment objects when a vehicle is deleted', async () => {
     prisma.vehicle.findFirst = vi.fn().mockResolvedValue({
       ...vehicleRecord,
       maintenanceRecords: [
@@ -168,7 +165,9 @@ describe('VehiclesService', () => {
         id: 'vehicle-1',
       },
     });
-    expect(deleteStoredAttachmentFileMock).toHaveBeenCalledTimes(2);
+    expect(storageService.deleteObject).toHaveBeenCalledTimes(2);
+    expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-1.pdf');
+    expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-2.jpg');
     expect(result).toEqual({
       id: 'vehicle-1',
       deleted: true,

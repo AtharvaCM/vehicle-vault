@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import type { AuthUser } from '@vehicle-vault/shared';
-import { createReadStream } from 'node:fs';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
@@ -83,7 +82,7 @@ export class AttachmentsController {
       `inline; filename="${encodeURIComponent(attachment.originalFileName)}"`,
     );
 
-    return new StreamableFile(createReadStream(attachment.filePath));
+    return new StreamableFile(attachment.fileBuffer);
   }
 
   @Delete('attachments/:attachmentId')

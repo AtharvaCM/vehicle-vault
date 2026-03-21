@@ -27,6 +27,18 @@ export class AppConfigService {
     );
   }
 
+  get supabaseUrl() {
+    return this.configService.get<string>('app.supabaseUrl') ?? null;
+  }
+
+  get supabaseServiceRoleKey() {
+    return this.configService.get<string>('app.supabaseServiceRoleKey') ?? null;
+  }
+
+  get supabaseStorageBucket() {
+    return this.configService.get<string>('app.supabaseStorageBucket') ?? 'vehicle-vault-attachments';
+  }
+
   get jwtSecret() {
     return this.configService.get<string>('app.jwtSecret') ?? 'vehicle-vault-dev-secret';
   }

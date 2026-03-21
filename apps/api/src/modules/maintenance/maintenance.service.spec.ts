@@ -3,14 +3,6 @@ import { Prisma } from '@prisma/client';
 import { MaintenanceCategory } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { deleteStoredAttachmentFileMock } = vi.hoisted(() => ({
-  deleteStoredAttachmentFileMock: vi.fn(),
-}));
-
-vi.mock('../attachments/utils/attachment-upload.util', () => ({
-  deleteStoredAttachmentFile: deleteStoredAttachmentFileMock,
-}));
-
 import { MaintenanceService } from './maintenance.service';
 
 describe('MaintenanceService', () => {
@@ -65,11 +57,20 @@ describe('MaintenanceService', () => {
     }),
   };
 
+  const storageService = {
+    deleteObject: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: MaintenanceService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new MaintenanceService(prisma, vehiclesService as never);
+    storageService.deleteObject.mockResolvedValue(undefined);
+    service = new MaintenanceService(
+      prisma as never,
+      vehiclesService as never,
+      storageService as never,
+    );
   });
 
   it('lists maintenance records for a vehicle with ownership check and pagination', async () => {
@@ -133,7 +134,7 @@ describe('MaintenanceService', () => {
     );
   });
 
-  it('deletes linked attachment files when a maintenance record is removed', async () => {
+  it('deletes linked attachment objects when a maintenance record is removed', async () => {
     prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue({
       ...record,
       attachments: [{ fileName: 'receipt-1.pdf' }],
@@ -142,7 +143,7 @@ describe('MaintenanceService', () => {
 
     const result = await service.deleteRecord('user-1', 'record-1');
 
-    expect(deleteStoredAttachmentFileMock).toHaveBeenCalledWith('receipt-1.pdf');
+    expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-1.pdf');
     expect(result).toEqual({
       id: 'record-1',
       deleted: true,

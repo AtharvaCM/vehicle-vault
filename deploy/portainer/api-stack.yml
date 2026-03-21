@@ -11,14 +11,15 @@ services:
       FRONTEND_ORIGIN: https://vehicle-vault-eight.vercel.app
       DATABASE_URL: postgresql://postgres.xxohjnsxkcicowcyzmwa:REPLACE_WITH_DB_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
       DIRECT_URL: postgresql://postgres.xxohjnsxkcicowcyzmwa:REPLACE_WITH_DB_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
+      SUPABASE_URL: https://xxohjnsxkcicowcyzmwa.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: REPLACE_WITH_SUPABASE_SERVICE_ROLE_KEY
+      SUPABASE_STORAGE_BUCKET: vehicle-vault-attachments
       JWT_SECRET: REPLACE_WITH_STRONG_JWT_SECRET
       JWT_EXPIRES_IN: 7d
       JWT_REFRESH_SECRET: REPLACE_WITH_STRONG_REFRESH_JWT_SECRET
       JWT_REFRESH_EXPIRES_IN: 30d
     ports:
       - '3001:3001'
-    volumes:
-      - vehicle_vault_uploads:/app/uploads
     healthcheck:
       test:
         [
@@ -31,6 +32,3 @@ services:
       timeout: 10s
       retries: 5
       start_period: 20s
-
-volumes:
-  vehicle_vault_uploads:

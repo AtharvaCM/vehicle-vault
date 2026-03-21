@@ -35,6 +35,9 @@ export const appConfig = registerAs('app', () => ({
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? 'vehicle-vault-attachments',
+  supabaseUrl: process.env.SUPABASE_URL,
   jwtSecret: process.env.JWT_SECRET ?? 'vehicle-vault-dev-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',

@@ -41,6 +41,9 @@ Required backend environment variable:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SUPABASE_STORAGE_BUCKET=vehicle-vault-attachments
 JWT_SECRET=vehicle-vault-dev-secret
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=vehicle-vault-dev-refresh-secret
@@ -80,8 +83,8 @@ For your Portainer-based home server deployment:
 
 - preferred: publish the GHCR image via `.github/workflows/api-image.yml` and use `deploy/portainer/api-stack.ghcr.yml`
 - fallback: use `apps/api/Dockerfile` plus `deploy/portainer/api-stack.yml` for host-path builds
-- persist uploads with the `vehicle_vault_uploads` volume
 - keep `DATABASE_URL` and `DIRECT_URL` pointed at the Supabase pooler connection
+- set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` for attachment binaries
 - set a strong production `JWT_SECRET`
 - set a separate strong production `JWT_REFRESH_SECRET`
 
@@ -139,7 +142,7 @@ Set `FRONTEND_ORIGIN` in the API deployment to that browser origin. If you later
 - Frontend routing is set up with TanStack Router.
 - Frontend server state is prepared with TanStack Query.
 - Tailwind CSS is configured in the web app.
-- The API uses Prisma + PostgreSQL, while uploaded receipt files still stay on local disk for now.
-- Auth is email/password plus JWT access token only for MVP. There is no refresh-token, password-reset, email-verification, or OAuth flow yet.
+- The API uses Prisma + PostgreSQL, while uploaded receipt files now use Supabase Storage with metadata kept in Postgres.
+- Auth supports email/password sign-in, refresh-token rotation, and password reset request/confirm flows. Email verification and OAuth are still deferred.
 - Vehicles own the rest of the data model. Maintenance records, reminders, dashboard summary, and attachments are all scoped through the authenticated user's vehicles.
-- Background jobs, cloud storage, OCR, and notification delivery are intentionally deferred.
+- Background jobs, OCR, and notification delivery are intentionally deferred.

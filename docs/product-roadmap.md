@@ -11,8 +11,9 @@ Vehicle Vault is now a working authenticated MVP with:
 - email/password authentication
 - user-scoped vehicles, maintenance records, reminders, and attachments
 - Prisma + PostgreSQL persistence
+- cloud-backed attachment binaries via Supabase Storage
 - dashboard summary aggregation
-- local receipt/document upload support
+- receipt/document upload support
 - regression coverage across unit, integration, and Playwright smoke flows
 
 The product already supports the core ownership loop:
@@ -81,7 +82,7 @@ The product already supports the core ownership loop:
 
 - Upload one or more files to a maintenance record
 - Persist attachment metadata in PostgreSQL
-- Store uploaded files locally on disk for now
+- Store uploaded files in Supabase Storage
 - Attachment validation for size, extension, and binary file signature
 - List attachments for a maintenance record
 - Maintenance-detail attachment summary, upload guidance, and clearer action feedback
@@ -136,7 +137,6 @@ These are the main items that still prevent the product from being a more comple
 - No email delivery for password reset requests yet
 - No email verification flow
 - No OAuth/social auth
-- No cloud object storage for uploaded files
 - No background jobs or reminder delivery
 - No audit logging or admin tooling
 
@@ -152,7 +152,6 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: remove the remaining temporary infrastructure choices.
 
-- Move uploaded files from local disk to cloud storage
 - Add safer attachment cleanup and reconciliation behavior
 - Improve deployment docs for fresh environments
 - Add preview-environment friendliness where needed

@@ -18,13 +18,16 @@ import {
 
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { deleteStoredAttachmentFile } from '../attachments/utils/attachment-upload.util';
+import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import type { CreateVehicleDto } from './dto/create-vehicle.dto';
 import type { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
 @Injectable()
 export class VehiclesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: SupabaseStorageService,
+  ) {}
 
   async getAllVehicles(userId: string) {
     const vehicles = await this.prisma.vehicle.findMany({
@@ -149,7 +152,11 @@ export class VehiclesService {
       record.attachments.map((attachment) => attachment.fileName),
     );
 
-    await Promise.all(attachmentFileNames.map((fileName) => deleteStoredAttachmentFile(fileName)));
+    await Promise.all(
+      attachmentFileNames.map((fileName) =>
+        this.storageService.deleteObject(fileName).catch(() => undefined),
+      ),
+    );
 
     return {
       id: vehicle.id,

@@ -1,5 +1,3 @@
-import { resolve } from 'node:path';
-
 export const ATTACHMENTS_MAX_FILES = 10;
 export const ATTACHMENTS_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 export const ATTACHMENTS_MAX_ORIGINAL_FILE_NAME_LENGTH = 180;
@@ -15,11 +13,3 @@ export const ATTACHMENTS_ALLOWED_EXTENSIONS_BY_MIME_TYPE = {
   'image/webp': ['.webp'],
   'application/pdf': ['.pdf'],
 } as const;
-
-/**
- * Temporary local upload storage for MVP development.
- * File binaries live on disk here, while metadata remains in memory.
- */
-export function getUploadsDirectory() {
-  return resolve(process.cwd(), 'uploads');
-}

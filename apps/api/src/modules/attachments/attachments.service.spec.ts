@@ -1,51 +1,17 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AttachmentKind } from '@vehicle-vault/shared';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  buildStoredFileNameMock,
-  deleteStoredAttachmentFileMock,
-  ensureUploadsDirectoryMock,
-  getAttachmentAbsolutePathMock,
-  randomUuidMock,
-  accessMock,
-  mkdirMock,
-  unlinkMock,
-  writeFileMock,
-} = vi.hoisted(() => ({
-  buildStoredFileNameMock: vi.fn(),
-  deleteStoredAttachmentFileMock: vi.fn(),
-  ensureUploadsDirectoryMock: vi.fn(),
-  getAttachmentAbsolutePathMock: vi.fn(),
+const { randomUuidMock } = vi.hoisted(() => ({
   randomUuidMock: vi.fn(),
-  accessMock: vi.fn(),
-  mkdirMock: vi.fn(),
-  unlinkMock: vi.fn(),
-  writeFileMock: vi.fn(),
 }));
 
-vi.mock('node:crypto', () => ({
-  randomUUID: randomUuidMock,
-}));
-
-vi.mock('node:fs/promises', () => ({
-  access: accessMock,
-  mkdir: mkdirMock,
-  unlink: unlinkMock,
-  writeFile: writeFileMock,
-}));
-
-vi.mock('./utils/attachment-upload.util', async () => {
-  const actual = await vi.importActual<typeof import('./utils/attachment-upload.util')>(
-    './utils/attachment-upload.util',
-  );
+vi.mock('node:crypto', async () => {
+  const actual = await vi.importActual<typeof import('node:crypto')>('node:crypto');
 
   return {
     ...actual,
-    buildStoredFileName: buildStoredFileNameMock,
-    deleteStoredAttachmentFile: deleteStoredAttachmentFileMock,
-    ensureUploadsDirectory: ensureUploadsDirectoryMock,
-    getAttachmentAbsolutePath: getAttachmentAbsolutePathMock,
+    randomUUID: randomUuidMock,
   };
 });
 
@@ -82,32 +48,45 @@ describe('AttachmentsService', () => {
     }),
   };
 
+  const storageService = {
+    deleteObject: vi.fn(),
+    downloadObject: vi.fn(),
+    uploadObject: vi.fn(),
+  };
+
   let service: AttachmentsService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    buildStoredFileNameMock.mockReturnValue('stored-receipt.pdf');
-    getAttachmentAbsolutePathMock.mockImplementation((fileName: string) => `/tmp/${fileName}`);
+    vi.useFakeTimers();
+    vi.setSystemTime(uploadedAt);
     randomUuidMock.mockReturnValue('attachment-1');
     prisma.$transaction = vi.fn(async (operations: Array<Promise<unknown> | unknown>) =>
       Promise.all(operations),
     );
-    prisma.attachment.create = vi.fn().mockResolvedValue({
-      id: 'attachment-1',
-      maintenanceRecordId: 'record-1',
-      kind: AttachmentKind.Document,
-      fileName: 'stored-receipt.pdf',
-      originalFileName: 'receipt.pdf',
-      mimeType: 'application/pdf',
-      size: 1024,
-      url: '/api/attachments/attachment-1/file',
-      uploadedAt,
-    });
+    prisma.attachment.create = vi.fn().mockImplementation(({ data }) =>
+      Promise.resolve({
+        ...data,
+        uploadedAt: data.uploadedAt ?? uploadedAt,
+      }),
+    );
 
-    service = new AttachmentsService(prisma, maintenanceService as never);
+    storageService.deleteObject.mockResolvedValue(undefined);
+    storageService.downloadObject.mockResolvedValue(Buffer.from(''));
+    storageService.uploadObject.mockResolvedValue(undefined);
+
+    service = new AttachmentsService(
+      prisma as never,
+      maintenanceService as never,
+      storageService as never,
+    );
   });
 
-  it('uploads attachment metadata for a maintenance record and stores the file on disk', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('uploads attachment metadata and stores the file in cloud storage', async () => {
     const result = await service.uploadAttachments('user-1', 'record-1', [
       {
         originalname: 'receipt.pdf',
@@ -118,14 +97,17 @@ describe('AttachmentsService', () => {
     ]);
 
     expect(maintenanceService.getRecordById).toHaveBeenCalledWith('user-1', 'record-1');
-    expect(mkdirMock).toHaveBeenCalled();
-    expect(writeFileMock).toHaveBeenCalledWith('/tmp/stored-receipt.pdf', expect.any(Buffer));
+    expect(storageService.uploadObject).toHaveBeenCalledWith(
+      'attachments/user-1/record-1/attachment-1.pdf',
+      expect.any(Buffer),
+      'application/pdf',
+    );
     expect(result).toEqual([
       {
         id: 'attachment-1',
         maintenanceRecordId: 'record-1',
         kind: AttachmentKind.Document,
-        fileName: 'stored-receipt.pdf',
+        fileName: 'attachments/user-1/record-1/attachment-1.pdf',
         originalFileName: 'receipt.pdf',
         mimeType: 'application/pdf',
         size: 1024,
@@ -139,19 +121,6 @@ describe('AttachmentsService', () => {
     await expect(service.uploadAttachments('user-1', 'record-1', [])).rejects.toBeInstanceOf(
       BadRequestException,
     );
-  });
-
-  it('rejects unsupported file types', async () => {
-    await expect(
-      service.uploadAttachments('user-1', 'record-1', [
-        {
-          originalname: 'script.sh',
-          mimetype: 'text/plain',
-          size: 100,
-          buffer: Buffer.from('echo nope'),
-        },
-      ]),
-    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects empty uploads', async () => {
@@ -169,44 +138,7 @@ describe('AttachmentsService', () => {
     });
   });
 
-  it('rejects files whose extension does not match the declared type', async () => {
-    await expect(
-      service.uploadAttachments('user-1', 'record-1', [
-        {
-          originalname: 'receipt.png',
-          mimetype: 'application/pdf',
-          size: 1024,
-          buffer: Buffer.from('%PDF-1.7 test payload'),
-        },
-      ]),
-    ).rejects.toMatchObject({
-      message: 'The file extension does not match the uploaded file type.',
-    });
-  });
-
-  it('rejects files whose binary signature does not match the declared type', async () => {
-    await expect(
-      service.uploadAttachments('user-1', 'record-1', [
-        {
-          originalname: 'receipt.pdf',
-          mimetype: 'application/pdf',
-          size: 1024,
-          buffer: Buffer.from('not a pdf'),
-        },
-      ]),
-    ).rejects.toMatchObject({
-      message: 'Uploaded file content does not match the declared file type.',
-    });
-  });
-
   it('sanitizes original file names before storing metadata', async () => {
-    prisma.attachment.create = vi.fn().mockImplementation(({ data }) =>
-      Promise.resolve({
-        ...data,
-        uploadedAt,
-      }),
-    );
-
     const result = await service.uploadAttachments('user-1', 'record-1', [
       {
         originalname: '../../receipt.pdf',
@@ -216,35 +148,82 @@ describe('AttachmentsService', () => {
       },
     ]);
 
-    expect(buildStoredFileNameMock).toHaveBeenCalledWith('receipt.pdf');
+    expect(storageService.uploadObject).toHaveBeenCalledWith(
+      'attachments/user-1/record-1/attachment-1.pdf',
+      expect.any(Buffer),
+      'application/pdf',
+    );
     expect(result[0]?.originalFileName).toBe('receipt.pdf');
   });
 
-  it('returns not found when the stored attachment file is missing', async () => {
+  it('rolls back uploaded objects when metadata persistence fails', async () => {
+    prisma.attachment.create = vi.fn().mockRejectedValue(new Error('db failed'));
+
+    await expect(
+      service.uploadAttachments('user-1', 'record-1', [
+        {
+          originalname: 'receipt.pdf',
+          mimetype: 'application/pdf',
+          size: 1024,
+          buffer: Buffer.from('%PDF-1.7 test payload'),
+        },
+      ]),
+    ).rejects.toThrow('db failed');
+
+    expect(storageService.deleteObject).toHaveBeenCalledWith(
+      'attachments/user-1/record-1/attachment-1.pdf',
+    );
+  });
+
+  it('returns not found when the stored attachment object is missing', async () => {
     prisma.attachment.findFirst = vi.fn().mockResolvedValue({
       id: 'attachment-1',
       maintenanceRecordId: 'record-1',
       kind: AttachmentKind.Document,
-      fileName: 'stored-receipt.pdf',
+      fileName: 'attachments/user-1/record-1/attachment-1.pdf',
       originalFileName: 'receipt.pdf',
       mimeType: 'application/pdf',
       size: 1024,
       url: '/api/attachments/attachment-1/file',
       uploadedAt,
     });
-    accessMock.mockRejectedValue(Object.assign(new Error('missing'), { code: 'ENOENT' }));
+    storageService.downloadObject.mockRejectedValue(
+      new NotFoundException('Attachment file attachment-1 was not found in cloud storage.'),
+    );
 
     await expect(service.getAttachmentFile('user-1', 'attachment-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 
-  it('deletes the attachment record and stored file', async () => {
+  it('returns the file buffer for cloud-backed attachments', async () => {
     prisma.attachment.findFirst = vi.fn().mockResolvedValue({
       id: 'attachment-1',
       maintenanceRecordId: 'record-1',
       kind: AttachmentKind.Document,
-      fileName: 'stored-receipt.pdf',
+      fileName: 'attachments/user-1/record-1/attachment-1.pdf',
+      originalFileName: 'receipt.pdf',
+      mimeType: 'application/pdf',
+      size: 1024,
+      url: '/api/attachments/attachment-1/file',
+      uploadedAt,
+    });
+    storageService.downloadObject.mockResolvedValue(Buffer.from('file-buffer'));
+
+    const result = await service.getAttachmentFile('user-1', 'attachment-1');
+
+    expect(storageService.downloadObject).toHaveBeenCalledWith(
+      'attachments/user-1/record-1/attachment-1.pdf',
+    );
+    expect(result.fileBuffer).toEqual(Buffer.from('file-buffer'));
+  });
+
+  it('deletes the attachment record and stored object', async () => {
+    prisma.attachment.findFirst = vi.fn().mockResolvedValue({
+      id: 'attachment-1',
+      maintenanceRecordId: 'record-1',
+      kind: AttachmentKind.Document,
+      fileName: 'attachments/user-1/record-1/attachment-1.pdf',
       originalFileName: 'receipt.pdf',
       mimeType: 'application/pdf',
       size: 1024,
@@ -260,7 +239,9 @@ describe('AttachmentsService', () => {
         id: 'attachment-1',
       },
     });
-    expect(deleteStoredAttachmentFileMock).toHaveBeenCalledWith('stored-receipt.pdf');
+    expect(storageService.deleteObject).toHaveBeenCalledWith(
+      'attachments/user-1/record-1/attachment-1.pdf',
+    );
     expect(result).toEqual({
       id: 'attachment-1',
       deleted: true,

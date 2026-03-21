@@ -1,15 +1,13 @@
-import { BadRequestException } from '@nestjs/common';
-import { mkdirSync } from 'node:fs';
-import { unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { basename, extname, resolve } from 'node:path';
+import { basename, extname } from 'node:path';
+
+import { BadRequestException } from '@nestjs/common';
 
 import {
   ATTACHMENTS_ALLOWED_EXTENSIONS_BY_MIME_TYPE,
   ATTACHMENTS_ALLOWED_MIME_TYPES,
   ATTACHMENTS_MAX_FILE_SIZE_BYTES,
   ATTACHMENTS_MAX_ORIGINAL_FILE_NAME_LENGTH,
-  getUploadsDirectory,
 } from '../constants/attachment.constants';
 import type { AttachmentUploadFile } from '../types/attachment-upload-file.type';
 
@@ -33,26 +31,6 @@ export function isSupportedAttachmentMimeType(
   mimeType: string,
 ): mimeType is (typeof ATTACHMENTS_ALLOWED_MIME_TYPES)[number] {
   return ATTACHMENTS_ALLOWED_MIME_TYPES.some((allowedMimeType) => allowedMimeType === mimeType);
-}
-
-export function ensureUploadsDirectory() {
-  mkdirSync(getUploadsDirectory(), { recursive: true });
-}
-
-export function getAttachmentAbsolutePath(fileName: string) {
-  return resolve(getUploadsDirectory(), fileName);
-}
-
-export async function deleteStoredAttachmentFile(fileName: string) {
-  try {
-    await unlink(getAttachmentAbsolutePath(fileName));
-  } catch (error) {
-    const fileDeletionError = error as NodeJS.ErrnoException;
-
-    if (fileDeletionError.code !== 'ENOENT') {
-      throw fileDeletionError;
-    }
-  }
 }
 
 export function sanitizeOriginalFileName(originalFileName: string) {
@@ -102,6 +80,14 @@ export function validateAttachmentUploadFile(file: AttachmentUploadFile) {
 
 export function buildStoredFileName(originalFileName: string) {
   return `${randomUUID()}${extname(originalFileName)}`;
+}
+
+export function buildStoredAttachmentPath(
+  userId: string,
+  maintenanceRecordId: string,
+  originalFileName: string,
+) {
+  return `attachments/${userId}/${maintenanceRecordId}/${buildStoredFileName(originalFileName)}`;
 }
 
 function matchesAttachmentFileSignature(buffer: Buffer, mimeType: string) {
