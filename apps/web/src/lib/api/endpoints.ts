@@ -3,6 +3,8 @@ export const endpoints = {
     login: '/auth/login',
     me: '/auth/me',
     logout: '/auth/logout',
+    passwordResetConfirm: '/auth/password-reset/confirm',
+    passwordResetRequest: '/auth/password-reset/request',
     refresh: '/auth/refresh',
     register: '/auth/register',
   },

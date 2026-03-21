@@ -40,6 +40,7 @@ The product already supports the core ownership loop:
 - User login
 - JWT access-token authentication
 - Refresh-token rotation and session renewal
+- Password reset request + reset flow with non-production token preview
 - Authenticated session bootstrap in the frontend
 - Proactive frontend handling for expired or malformed JWT sessions
 - Route protection in the frontend and backend
@@ -132,7 +133,7 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No password reset flow
+- No email delivery for password reset requests yet
 - No email verification flow
 - No OAuth/social auth
 - No cloud object storage for uploaded files
@@ -147,13 +148,7 @@ These are the main items that still prevent the product from being a more comple
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Session and Security Hardening
-
-Goal: move auth from MVP-safe to more production-safe.
-
-- Add password reset request + reset flow
-
-### Milestone 2: Storage and Ops Hardening
+### Milestone 1: Storage and Ops Hardening
 
 Goal: remove the remaining temporary infrastructure choices.
 
@@ -162,7 +157,7 @@ Goal: remove the remaining temporary infrastructure choices.
 - Improve deployment docs for fresh environments
 - Add preview-environment friendliness where needed
 
-### Milestone 3: Workflow Depth
+### Milestone 2: Workflow Depth
 
 Goal: improve day-to-day productivity without diluting the ownership model.
 

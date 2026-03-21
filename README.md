@@ -35,7 +35,7 @@ pnpm dev:api
 
 ## PostgreSQL and auth setup
 
-The API now uses Prisma with PostgreSQL for users, vehicles, maintenance records, reminders, and attachment metadata. Authentication uses JWT access tokens and bcrypt password hashing.
+The API now uses Prisma with PostgreSQL for users, vehicles, maintenance records, reminders, and attachment metadata. Authentication uses JWT access tokens, refresh-token rotation, and bcrypt password hashing.
 
 Required backend environment variable:
 
@@ -46,6 +46,8 @@ JWT_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=vehicle-vault-dev-refresh-secret
 JWT_REFRESH_EXPIRES_IN=30d
 ```
+
+Password reset is available through the public auth routes. In non-production environments, reset requests return a preview token directly because email delivery is not wired yet.
 
 Common local database workflow:
 

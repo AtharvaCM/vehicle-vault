@@ -4,6 +4,7 @@ import { queryClient } from '@/lib/query/query-client';
 import {
   appRoute,
   dashboardRoute,
+  forgotPasswordRoute,
   indexRoute,
   loginRoute,
   maintenanceRoute,
@@ -13,6 +14,7 @@ import {
   reminderEditRoute,
   remindersRoute,
   registerRoute,
+  resetPasswordRoute,
   rootRoute,
   settingsRoute,
   vehicleDetailRoute,
@@ -46,8 +48,10 @@ const protectedRouteTree = appRoute.addChildren([
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  forgotPasswordRoute,
   loginRoute,
   registerRoute,
+  resetPasswordRoute,
   protectedRouteTree,
 ]);
 

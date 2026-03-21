@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { LoginForm } from './login-form';
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props}>{children}</a>
+  ),
+}));
 
 describe('LoginForm', () => {
   it('submits trimmed values when the form is valid', async () => {

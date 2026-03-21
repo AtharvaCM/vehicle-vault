@@ -1,5 +1,6 @@
 export * from './app-route';
 export * from './dashboard-route';
+export * from './forgot-password-route';
 export * from './index-route';
 export * from './login-route';
 export * from './maintenance-route';
@@ -9,6 +10,7 @@ export * from './reminder-detail-route';
 export * from './reminder-edit-route';
 export * from './reminders-route';
 export * from './register-route';
+export * from './reset-password-route';
 export * from './root-route';
 export * from './settings-route';
 export * from './vehicle-detail-route';

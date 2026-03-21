@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { LoginSchema, type LoginInput } from '@vehicle-vault/shared';
 import { type Path, useForm } from 'react-hook-form';
 
@@ -66,6 +67,12 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
           type="password"
         />
       </FormField>
+
+      <div className="flex justify-end">
+        <Link className="text-sm font-medium text-slate-700 hover:text-slate-950" to="/forgot-password">
+          Forgot password?
+        </Link>
+      </div>
 
       {submitError ? <InlineError message={submitError} /> : null}
 

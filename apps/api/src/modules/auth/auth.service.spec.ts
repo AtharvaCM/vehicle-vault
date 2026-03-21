@@ -10,9 +10,14 @@ function hashRefreshToken(refreshToken: string) {
   return createHash('sha256').update(refreshToken).digest('hex');
 }
 
+function hashPasswordResetToken(token: string) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
 describe('AuthService', () => {
   type UserDelegateMock = {
     create: ReturnType<typeof vi.fn>;
+    findFirst: ReturnType<typeof vi.fn>;
     findUnique: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
@@ -27,6 +32,7 @@ describe('AuthService', () => {
   };
 
   type AppConfigServiceMock = {
+    isProduction: boolean;
     jwtRefreshExpiresIn: string;
     jwtRefreshSecret: string;
   };
@@ -36,6 +42,7 @@ describe('AuthService', () => {
   const prisma: PrismaMock = {
     user: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
     },
@@ -47,6 +54,7 @@ describe('AuthService', () => {
   };
 
   const appConfigService: AppConfigServiceMock = {
+    isProduction: false,
     jwtRefreshExpiresIn: '30d',
     jwtRefreshSecret: 'refresh-secret',
   };
@@ -265,6 +273,105 @@ describe('AuthService', () => {
         refreshTokenHash: null,
       },
     });
+  });
+
+  it('creates a password reset token preview for existing users outside production', async () => {
+    prisma.user.findUnique = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      createdAt,
+      updatedAt: createdAt,
+    });
+    prisma.user.update = vi.fn().mockResolvedValue(undefined);
+
+    const result = await service.requestPasswordReset({
+      email: ' ATHARVA@example.com ',
+    });
+
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: {
+        email: 'atharva@example.com',
+      },
+    });
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: {
+        id: 'user-1',
+      },
+      data: expect.objectContaining({
+        passwordResetTokenExpiresAt: expect.any(Date),
+        passwordResetTokenHash: expect.any(String),
+      }),
+    });
+    expect(result.accepted).toBe(true);
+    expect(result.previewToken).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.expiresAt).toBeDefined();
+  });
+
+  it('returns a generic password reset acceptance when the email does not exist', async () => {
+    prisma.user.findUnique = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      service.requestPasswordReset({
+        email: 'missing@example.com',
+      }),
+    ).resolves.toEqual({
+      accepted: true,
+    });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('resets the password with a valid reset token and revokes refresh sessions', async () => {
+    prisma.user.findFirst = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      passwordResetTokenHash: hashPasswordResetToken('valid-reset-token'),
+      passwordResetTokenExpiresAt: new Date('2026-03-22T00:00:00.000Z'),
+      refreshTokenHash: hashRefreshToken('current-refresh-token'),
+      createdAt,
+      updatedAt: createdAt,
+    });
+    prisma.user.update = vi.fn().mockResolvedValue(undefined);
+
+    const result = await service.resetPassword({
+      token: 'valid-reset-token',
+      password: 'updated-password123',
+    });
+
+    expect(prisma.user.findFirst).toHaveBeenCalledWith({
+      where: {
+        passwordResetTokenExpiresAt: {
+          gt: expect.any(Date),
+        },
+        passwordResetTokenHash: hashPasswordResetToken('valid-reset-token'),
+      },
+    });
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: {
+        id: 'user-1',
+      },
+      data: expect.objectContaining({
+        passwordHash: expect.any(String),
+        passwordResetTokenExpiresAt: null,
+        passwordResetTokenHash: null,
+        refreshTokenHash: null,
+      }),
+    });
+    expect(result).toEqual({
+      reset: true,
+    });
+  });
+
+  it('rejects password reset when the reset token is invalid or expired', async () => {
+    prisma.user.findFirst = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      service.resetPassword({
+        token: 'invalid-token',
+        password: 'updated-password123',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('returns the authenticated user from getMe', async () => {
