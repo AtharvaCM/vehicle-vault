@@ -78,21 +78,21 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-border/70 bg-white/90 xl:flex xl:flex-col">
-      <div className="border-b border-border/70 px-6 py-6">
+    <aside className="hidden w-64 shrink-0 border-r border-border/70 bg-white/90 xl:flex xl:flex-col">
+      <div className="border-b border-border/70 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-sm font-semibold text-white shadow-sm">
             VV
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">{APP_NAME}</p>
+          <div className="space-y-0.5">
+            <p className="text-[15px] font-semibold text-foreground">{APP_NAME}</p>
             <p className="text-xs text-muted-foreground">Operations workspace</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col justify-between px-4 py-6">
-        <nav className="space-y-2">
+      <div className="flex flex-1 flex-col justify-between px-3 py-5">
+        <nav className="space-y-1.5">
           {appNavigation.map((item) => {
             const Icon = item.icon;
 
@@ -105,11 +105,11 @@ export function Sidebar() {
                     'border-slate-950/10 bg-slate-950 text-white shadow-sm hover:bg-slate-900',
                 }}
                 className={cn(
-                  'group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition-colors hover:bg-slate-100',
+                  'group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm transition-colors hover:bg-slate-100',
                 )}
                 to={item.to}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100/90 text-slate-700 transition-colors group-hover:bg-slate-200">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100/90 text-slate-700 transition-colors group-hover:bg-slate-200">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -122,41 +122,24 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-border/70 bg-slate-50 p-4">
+        <div className="space-y-3">
+          <div className="rounded-xl border border-border/70 bg-slate-50/90 p-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <p className="text-sm font-medium text-foreground">{auth.user?.name}</p>
                 <p className="text-xs text-muted-foreground">{auth.user?.email}</p>
               </div>
               <Badge tone="neutral">Live</Badge>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-background p-4">
-            <p className="text-sm font-medium text-foreground">Quick actions</p>
-            <div className="mt-3 grid gap-2">
-              <Link
-                className="rounded-xl border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                to="/vehicles/new"
-              >
-                Add Vehicle
+            <div className="mt-3 flex items-center gap-2">
+              <Link className="flex-1" to="/vehicles/new">
+                <Button className="w-full justify-center" size="sm" variant="outline">
+                  Add Vehicle
+                </Button>
               </Link>
-              <Link
-                className="rounded-xl border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                to="/maintenance"
-              >
-                Review Maintenance
-              </Link>
-              <Link
-                className="rounded-xl border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                to="/reminders"
-              >
-                Check Reminders
-              </Link>
-              <Button className="justify-start rounded-xl" onClick={handleLogout} variant="ghost">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
+              <Button className="justify-center" onClick={handleLogout} size="icon-sm" variant="ghost">
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Logout</span>
               </Button>
             </div>
           </div>

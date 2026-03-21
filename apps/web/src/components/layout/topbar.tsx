@@ -77,7 +77,7 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-white/85 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Sheet>
             <SheetTrigger asChild>
@@ -118,11 +118,11 @@ export function Topbar() {
             </SheetContent>
           </Sheet>
 
-          <div className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          <div className="space-y-0.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {APP_NAME}
             </p>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">{activeSection}</h2>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">{activeSection}</h2>
           </div>
         </div>
 
@@ -152,7 +152,7 @@ export function Topbar() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="rounded-full px-3" variant="outline">
+              <Button className="rounded-full px-3" size="sm" variant="outline">
                 <UserCircle2 className="mr-2 h-4 w-4" />
                 <span className="hidden max-w-[140px] truncate sm:inline-block">
                   {auth.user?.name}
@@ -192,7 +192,7 @@ export function Topbar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto border-t border-border/60 px-4 py-3 xl:hidden">
+      <div className="flex items-center gap-2 overflow-x-auto border-t border-border/60 px-4 py-2.5 xl:hidden">
         {appNavigation.map((item) => {
           const Icon = mobileIcons[item.to] ?? LayoutDashboard;
 
@@ -204,7 +204,7 @@ export function Topbar() {
                 className: 'bg-slate-950 text-white border-slate-950',
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent',
+                'inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent',
               )}
               to={item.to}
             >

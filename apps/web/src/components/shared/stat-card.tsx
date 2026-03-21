@@ -20,21 +20,23 @@ export function StatCard({
   icon: Icon = ArrowUpRight,
 }: StatCardProps) {
   return (
-    <Card className="rounded-2xl border-border/70 shadow-sm">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-border/60 pb-4">
+    <Card className="rounded-xl border-border/70 shadow-sm">
+      <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-border/60 pb-3.5">
         <div className="space-y-1">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-          <p className="text-3xl font-semibold tracking-tight text-foreground">{value}</p>
+          <CardTitle className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {label}
+          </CardTitle>
+          <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
         </div>
         <div className="flex items-center gap-2">
           {accent ? <div>{accent}</div> : null}
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
             <Icon className="h-4 w-4" />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-5">
-        <p className="text-sm leading-6 text-muted-foreground">{description}</p>
+      <CardContent className="pt-4">
+        <p className="text-sm leading-5 text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );

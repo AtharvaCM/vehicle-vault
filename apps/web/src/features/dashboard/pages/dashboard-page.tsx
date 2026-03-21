@@ -2,8 +2,7 @@ import { PageContainer } from '@/components/layout/page-container';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Link } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
 
 import { DashboardOverview } from '../components/dashboard-overview';
 import { useDashboardSummary } from '../hooks/use-dashboard-summary';
@@ -30,11 +29,6 @@ export function DashboardPage() {
     return (
       <PageContainer>
         <PageTitle
-          actions={
-            <Link className={buttonVariants()} to="/vehicles/new">
-              Add Vehicle
-            </Link>
-          }
           description="Get an immediate view of urgent reminders, recent service activity, and the current state of your garage."
           title="Dashboard"
         />
@@ -54,11 +48,6 @@ export function DashboardPage() {
   return (
     <PageContainer>
       <PageTitle
-        actions={
-          <Link className={buttonVariants()} to="/vehicles/new">
-            Add Vehicle
-          </Link>
-        }
         description="Track urgent reminders, recent maintenance, receipts, and vehicle activity from one place."
         title="Dashboard"
       />
