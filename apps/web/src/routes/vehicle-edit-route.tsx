@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { VehicleEditPage } from '@/features/vehicles/pages/vehicle-edit-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const VehicleEditPage = createLazyPage(
+  () =>
+    import('@/features/vehicles/pages/vehicle-edit-page').then((module) => ({
+      default: module.VehicleEditPage,
+    })),
+  {
+    title: 'Loading vehicle form',
+    description: 'Preparing the vehicle edit workflow.',
+  },
+);
 
 function VehicleEditRouteComponent() {
   const { vehicleId } = vehicleEditRoute.useParams();

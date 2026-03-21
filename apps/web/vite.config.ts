@@ -5,6 +5,31 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          if (id.includes('@tanstack')) {
+            return 'tanstack';
+          }
+
+          if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('sonner')) {
+            return 'ui';
+          }
+
+          if (id.includes('react-hook-form') || id.includes('zod')) {
+            return 'forms';
+          }
+
+          return 'vendor';
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

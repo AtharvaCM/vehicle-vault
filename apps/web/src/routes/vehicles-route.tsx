@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { VehiclesListPage } from '@/features/vehicles/pages/vehicles-list-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const VehiclesListPage = createLazyPage(
+  () =>
+    import('@/features/vehicles/pages/vehicles-list-page').then((module) => ({
+      default: module.VehiclesListPage,
+    })),
+  {
+    title: 'Loading vehicles',
+    description: 'Preparing your garage overview.',
+  },
+);
 
 export const vehiclesRoute = createRoute({
   getParentRoute: () => appRoute,

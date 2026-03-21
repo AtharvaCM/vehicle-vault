@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { VehicleDetailPage } from '@/features/vehicles/pages/vehicle-detail-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const VehicleDetailPage = createLazyPage(
+  () =>
+    import('@/features/vehicles/pages/vehicle-detail-page').then((module) => ({
+      default: module.VehicleDetailPage,
+    })),
+  {
+    title: 'Loading vehicle',
+    description: 'Preparing this vehicle snapshot.',
+  },
+);
 
 function VehicleDetailRouteComponent() {
   const { vehicleId } = vehicleDetailRoute.useParams();

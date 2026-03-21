@@ -108,7 +108,13 @@ Recommended Vercel project settings for this pnpm workspace:
 - Build command: `pnpm --filter @vehicle-vault/web build`
 - Output directory: `apps/web/dist`
 
-If you later attach a custom frontend domain, set `FRONTEND_ORIGIN` in the API deployment to that browser origin so authenticated requests pass CORS cleanly.
+The current deployed frontend origin is:
+
+```bash
+https://vehicle-vault-eight.vercel.app
+```
+
+Set `FRONTEND_ORIGIN` in the API deployment to that browser origin. If you later attach a custom frontend domain, `FRONTEND_ORIGIN` also accepts a comma-separated allowlist so you can keep the Vercel URL and new custom domain live during the transition.
 
 ## Scripts
 

@@ -7,7 +7,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      FRONTEND_ORIGIN: https://your-frontend-domain.example
+      FRONTEND_ORIGIN: https://vehicle-vault-eight.vercel.app
       DATABASE_URL: postgresql://postgres.xxohjnsxkcicowcyzmwa:REPLACE_WITH_DB_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
       DIRECT_URL: postgresql://postgres.xxohjnsxkcicowcyzmwa:REPLACE_WITH_DB_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
       JWT_SECRET: REPLACE_WITH_STRONG_JWT_SECRET

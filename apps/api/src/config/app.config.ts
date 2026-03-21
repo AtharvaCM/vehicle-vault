@@ -19,10 +19,19 @@ function resolvePort(value: string | undefined) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_APP_PORT;
 }
 
+function resolveFrontendOrigins(value: string | undefined) {
+  const origins = (value ?? DEFAULT_FRONTEND_ORIGIN)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins.length > 0 ? origins : [DEFAULT_FRONTEND_ORIGIN];
+}
+
 export const appConfig = registerAs('app', () => ({
   nodeEnv: resolveNodeEnv(process.env.NODE_ENV),
   port: resolvePort(process.env.PORT),
-  frontendOrigin: process.env.FRONTEND_ORIGIN ?? DEFAULT_FRONTEND_ORIGIN,
+  frontendOrigins: resolveFrontendOrigins(process.env.FRONTEND_ORIGIN),
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',

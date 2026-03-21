@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { VehicleMaintenanceCreatePage } from '@/features/maintenance/pages/vehicle-maintenance-create-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const VehicleMaintenanceCreatePage = createLazyPage(
+  () =>
+    import('@/features/maintenance/pages/vehicle-maintenance-create-page').then((module) => ({
+      default: module.VehicleMaintenanceCreatePage,
+    })),
+  {
+    title: 'Loading maintenance form',
+    description: 'Preparing the service entry workflow.',
+  },
+);
 
 function VehicleMaintenanceNewRouteComponent() {
   const { vehicleId } = vehicleMaintenanceNewRoute.useParams();

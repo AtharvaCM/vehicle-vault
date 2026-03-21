@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { VehicleMaintenanceListPage } from '@/features/maintenance/pages/vehicle-maintenance-list-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const VehicleMaintenanceListPage = createLazyPage(
+  () =>
+    import('@/features/maintenance/pages/vehicle-maintenance-list-page').then((module) => ({
+      default: module.VehicleMaintenanceListPage,
+    })),
+  {
+    title: 'Loading maintenance history',
+    description: 'Preparing the service records for this vehicle.',
+  },
+);
 
 function VehicleMaintenanceRouteComponent() {
   const { vehicleId } = vehicleMaintenanceRoute.useParams();

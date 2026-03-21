@@ -12,8 +12,12 @@ export class AppConfigService {
     return this.configService.get<number>('app.port') ?? DEFAULT_APP_PORT;
   }
 
+  get frontendOrigins() {
+    return this.configService.get<string[]>('app.frontendOrigins') ?? [DEFAULT_FRONTEND_ORIGIN];
+  }
+
   get frontendOrigin() {
-    return this.configService.get<string>('app.frontendOrigin') ?? DEFAULT_FRONTEND_ORIGIN;
+    return this.frontendOrigins[0] ?? DEFAULT_FRONTEND_ORIGIN;
   }
 
   get databaseUrl() {

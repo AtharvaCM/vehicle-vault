@@ -1,8 +1,18 @@
 import { createRoute, redirect } from '@tanstack/react-router';
 
-import { LoginPage } from '@/features/auth/pages/login-page';
-
+import { createLazyPage } from './lazy-page';
 import { rootRoute } from './root-route';
+
+const LoginPage = createLazyPage(
+  () =>
+    import('@/features/auth/pages/login-page').then((module) => ({
+      default: module.LoginPage,
+    })),
+  {
+    title: 'Loading sign in',
+    description: 'Preparing your account access screen.',
+  },
+);
 
 export const loginRoute = createRoute({
   getParentRoute: () => rootRoute,

@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { VehicleReminderCreatePage } from '@/features/reminders/pages/vehicle-reminder-create-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const VehicleReminderCreatePage = createLazyPage(
+  () =>
+    import('@/features/reminders/pages/vehicle-reminder-create-page').then((module) => ({
+      default: module.VehicleReminderCreatePage,
+    })),
+  {
+    title: 'Loading reminder form',
+    description: 'Preparing the reminder creation workflow.',
+  },
+);
 
 function VehicleRemindersNewRouteComponent() {
   const { vehicleId } = vehicleRemindersNewRoute.useParams();

@@ -1,8 +1,18 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { ReminderEditPage } from '@/features/reminders/pages/reminder-edit-page';
-
 import { appRoute } from './app-route';
+import { createLazyPage } from './lazy-page';
+
+const ReminderEditPage = createLazyPage(
+  () =>
+    import('@/features/reminders/pages/reminder-edit-page').then((module) => ({
+      default: module.ReminderEditPage,
+    })),
+  {
+    title: 'Loading reminder form',
+    description: 'Preparing the reminder edit workflow.',
+  },
+);
 
 function ReminderEditRouteComponent() {
   const { reminderId } = reminderEditRoute.useParams();
