@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ClipboardList, ReceiptText, TrendingUp, Wrench } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
@@ -10,15 +10,19 @@ import { SectionCard } from '@/components/shared/section-card';
 import { StatCard } from '@/components/shared/stat-card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { PageContainer } from '@/components/layout/page-container';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import type { Vehicle } from '@/features/vehicles/types/vehicle';
 
+import { BulkMaintenanceActions } from '../components/bulk-maintenance-actions';
 import {
   MaintenanceListControls,
 } from '../components/maintenance-list-controls';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
+import { useBulkDeleteMaintenanceRecords } from '../hooks/use-bulk-delete-maintenance-records';
 import { useAllMaintenanceRecords } from '../hooks/use-all-maintenance-records';
 import type { MaintenanceRecord } from '../types/maintenance-record';
 import { filterAndSortMaintenanceRecords } from '../utils/filter-and-sort-maintenance-records';
@@ -42,6 +46,8 @@ export function MaintenanceOverviewPage({
 }: MaintenanceOverviewPageProps) {
   const maintenanceQuery = useAllMaintenanceRecords();
   const vehiclesQuery = useVehicles();
+  const bulkDeleteMutation = useBulkDeleteMaintenanceRecords();
+  const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
   const searchValue = searchState.search ?? '';
   const category = searchState.category ?? 'all';
   const sortBy: MaintenanceSortOption = searchState.sort ?? defaultMaintenanceSort;
@@ -70,6 +76,14 @@ export function MaintenanceOverviewPage({
       }),
     [category, records, searchValue, sortBy, vehicleLabelById],
   );
+  const visibleRecordIds = useMemo(
+    () => filteredRecords.map((record) => record.id),
+    [filteredRecords],
+  );
+
+  useEffect(() => {
+    setSelectedRecordIds((current) => current.filter((recordId) => visibleRecordIds.includes(recordId)));
+  }, [visibleRecordIds]);
 
   if (maintenanceQuery.isPending || vehiclesQuery.isPending) {
     return (
@@ -121,6 +135,41 @@ export function MaintenanceOverviewPage({
 
   function resetControls() {
     onSearchStateChange({});
+  }
+
+  function handleSelectionChange(recordId: string, checked: boolean) {
+    setSelectedRecordIds((current) => {
+      if (checked) {
+        return current.includes(recordId) ? current : [...current, recordId];
+      }
+
+      return current.filter((currentId) => currentId !== recordId);
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (!selectedRecordIds.length) {
+      return;
+    }
+
+    const idsToDelete = [...selectedRecordIds];
+
+    try {
+      await bulkDeleteMutation.mutateAsync(idsToDelete);
+      appToast.success({
+        title: 'Maintenance records deleted',
+        description: `Deleted ${idsToDelete.length} maintenance record${idsToDelete.length === 1 ? '' : 's'}.`,
+      });
+      setSelectedRecordIds([]);
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to delete maintenance records',
+        description: getApiErrorMessage(
+          error,
+          "We couldn't delete the selected maintenance records right now.",
+        ),
+      });
+    }
   }
 
   return (
@@ -183,6 +232,15 @@ export function MaintenanceOverviewPage({
             totalCount={records.length}
           />
 
+          <BulkMaintenanceActions
+            isDeleting={bulkDeleteMutation.isPending}
+            onClearSelection={() => setSelectedRecordIds([])}
+            onDeleteSelected={handleBulkDelete}
+            onSelectAllVisible={() => setSelectedRecordIds(visibleRecordIds)}
+            selectedCount={selectedRecordIds.length}
+            visibleCount={visibleRecordIds.length}
+          />
+
           <SectionCard
             description="Browse every logged service entry across your vehicles."
             title="All maintenance records"
@@ -195,7 +253,9 @@ export function MaintenanceOverviewPage({
           >
             {filteredRecords.length ? (
               <MaintenanceRecordList
+                onSelectionChange={handleSelectionChange}
                 records={filteredRecords}
+                selectedRecordIds={selectedRecordIds}
                 title="Maintenance history"
                 vehicleLabelById={vehicleLabelById}
               />

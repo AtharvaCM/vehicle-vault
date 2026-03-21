@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -7,9 +7,13 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
+import { BulkVehicleActions } from '../components/bulk-vehicle-actions';
 import { VehicleListControls } from '../components/vehicle-list-controls';
 import { VehicleList } from '../components/vehicle-list';
+import { useBulkDeleteVehicles } from '../hooks/use-bulk-delete-vehicles';
 import { useVehicles } from '../hooks/use-vehicles';
 import {
   defaultVehicleSort,
@@ -27,6 +31,8 @@ export function VehiclesListPage({
   onSearchStateChange,
 }: VehiclesListPageProps) {
   const vehiclesQuery = useVehicles();
+  const bulkDeleteMutation = useBulkDeleteVehicles();
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const searchValue = searchState.search ?? '';
   const sortBy: VehicleSortOption = searchState.sort ?? defaultVehicleSort;
 
@@ -67,9 +73,54 @@ export function VehiclesListPage({
         }
       });
   }, [searchValue, sortBy, vehiclesQuery.data]);
+  const visibleVehicleIds = useMemo(
+    () => filteredVehicles.map((vehicle) => vehicle.id),
+    [filteredVehicles],
+  );
+
+  useEffect(() => {
+    setSelectedVehicleIds((current) =>
+      current.filter((vehicleId) => visibleVehicleIds.includes(vehicleId)),
+    );
+  }, [visibleVehicleIds]);
 
   function resetControls() {
     onSearchStateChange({});
+  }
+
+  function handleSelectionChange(vehicleId: string, checked: boolean) {
+    setSelectedVehicleIds((current) => {
+      if (checked) {
+        return current.includes(vehicleId) ? current : [...current, vehicleId];
+      }
+
+      return current.filter((currentId) => currentId !== vehicleId);
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (!selectedVehicleIds.length) {
+      return;
+    }
+
+    const idsToDelete = [...selectedVehicleIds];
+
+    try {
+      await bulkDeleteMutation.mutateAsync(idsToDelete);
+      appToast.success({
+        title: 'Vehicles deleted',
+        description: `Deleted ${idsToDelete.length} vehicle${idsToDelete.length === 1 ? '' : 's'}.`,
+      });
+      setSelectedVehicleIds([]);
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to delete vehicles',
+        description: getApiErrorMessage(
+          error,
+          "We couldn't delete the selected vehicles right now.",
+        ),
+      });
+    }
   }
 
   return (
@@ -115,8 +166,20 @@ export function VehiclesListPage({
             sortBy={sortBy}
             totalCount={vehiclesQuery.data.length}
           />
+          <BulkVehicleActions
+            isDeleting={bulkDeleteMutation.isPending}
+            onClearSelection={() => setSelectedVehicleIds([])}
+            onDeleteSelected={handleBulkDelete}
+            onSelectAllVisible={() => setSelectedVehicleIds(visibleVehicleIds)}
+            selectedCount={selectedVehicleIds.length}
+            visibleCount={visibleVehicleIds.length}
+          />
           {filteredVehicles.length ? (
-            <VehicleList vehicles={filteredVehicles} />
+            <VehicleList
+              onSelectionChange={handleSelectionChange}
+              selectedVehicleIds={selectedVehicleIds}
+              vehicles={filteredVehicles}
+            />
           ) : (
             <EmptyState
               action={

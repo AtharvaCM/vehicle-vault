@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -9,13 +9,17 @@ import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
+import { BulkMaintenanceActions } from '../components/bulk-maintenance-actions';
 import {
   MaintenanceListControls,
 } from '../components/maintenance-list-controls';
 import { useMaintenanceRecords } from '../hooks/use-maintenance-records';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
+import { useBulkDeleteMaintenanceRecords } from '../hooks/use-bulk-delete-maintenance-records';
 import { filterAndSortMaintenanceRecords } from '../utils/filter-and-sort-maintenance-records';
 import {
   defaultMaintenanceSort,
@@ -36,6 +40,8 @@ export function VehicleMaintenanceListPage({
 }: VehicleMaintenanceListPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
+  const bulkDeleteMutation = useBulkDeleteMaintenanceRecords();
+  const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
   const searchValue = searchState.search ?? '';
   const category = searchState.category ?? 'all';
   const sortBy: MaintenanceSortOption = searchState.sort ?? defaultMaintenanceSort;
@@ -56,9 +62,52 @@ export function VehicleMaintenanceListPage({
       sortBy,
     });
   }, [category, maintenanceQuery.data, searchValue, sortBy]);
+  const visibleRecordIds = useMemo(
+    () => filteredRecords.map((record) => record.id),
+    [filteredRecords],
+  );
+
+  useEffect(() => {
+    setSelectedRecordIds((current) => current.filter((recordId) => visibleRecordIds.includes(recordId)));
+  }, [visibleRecordIds]);
 
   function resetControls() {
     onSearchStateChange({});
+  }
+
+  function handleSelectionChange(recordId: string, checked: boolean) {
+    setSelectedRecordIds((current) => {
+      if (checked) {
+        return current.includes(recordId) ? current : [...current, recordId];
+      }
+
+      return current.filter((currentId) => currentId !== recordId);
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (!selectedRecordIds.length) {
+      return;
+    }
+
+    const idsToDelete = [...selectedRecordIds];
+
+    try {
+      await bulkDeleteMutation.mutateAsync(idsToDelete);
+      appToast.success({
+        title: 'Maintenance records deleted',
+        description: `Deleted ${idsToDelete.length} maintenance record${idsToDelete.length === 1 ? '' : 's'}.`,
+      });
+      setSelectedRecordIds([]);
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to delete maintenance records',
+        description: getApiErrorMessage(
+          error,
+          "We couldn't delete the selected maintenance records right now.",
+        ),
+      });
+    }
   }
 
   if (isVehicleNotFound || isMaintenanceVehicleNotFound) {
@@ -124,23 +173,37 @@ export function VehicleMaintenanceListPage({
       ) : (
         <div className="space-y-4">
           {maintenanceQuery.data.length ? (
-            <MaintenanceListControls
-              category={category}
-              onCategoryChange={(value) => onSearchStateChange({ category: value })}
-              onReset={resetControls}
-              onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
-              onSortChange={(value) => onSearchStateChange({ sort: value })}
-              resultCount={filteredRecords.length}
-              searchValue={searchValue}
-              sortBy={sortBy}
-              totalCount={maintenanceQuery.data.length}
-            />
+            <div className="space-y-4">
+              <MaintenanceListControls
+                category={category}
+                onCategoryChange={(value) => onSearchStateChange({ category: value })}
+                onReset={resetControls}
+                onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+                onSortChange={(value) => onSearchStateChange({ sort: value })}
+                resultCount={filteredRecords.length}
+                searchValue={searchValue}
+                sortBy={sortBy}
+                totalCount={maintenanceQuery.data.length}
+              />
+              <BulkMaintenanceActions
+                isDeleting={bulkDeleteMutation.isPending}
+                onClearSelection={() => setSelectedRecordIds([])}
+                onDeleteSelected={handleBulkDelete}
+                onSelectAllVisible={() => setSelectedRecordIds(visibleRecordIds)}
+                selectedCount={selectedRecordIds.length}
+                visibleCount={visibleRecordIds.length}
+              />
+            </div>
           ) : null}
 
           <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
             {maintenanceQuery.data.length ? (
               filteredRecords.length ? (
-                <MaintenanceRecordList records={filteredRecords} />
+                <MaintenanceRecordList
+                  onSelectionChange={handleSelectionChange}
+                  records={filteredRecords}
+                  selectedRecordIds={selectedRecordIds}
+                />
               ) : (
                 <EmptyState
                   action={

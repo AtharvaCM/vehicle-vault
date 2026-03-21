@@ -54,6 +54,7 @@ The product already supports the core ownership loop:
 - View vehicle detail
 - Edit vehicle
 - Delete vehicle with confirmation
+- Bulk delete actions for vehicles list views
 - Search and sort on the vehicles list
 
 ### Maintenance Records
@@ -64,6 +65,7 @@ The product already supports the core ownership loop:
 - View maintenance record detail
 - Edit maintenance record
 - Delete maintenance record with confirmation
+- Bulk delete actions for maintenance list views
 - Filter and sort vehicle maintenance history
 
 ### Reminders
@@ -134,7 +136,6 @@ These are the main items that still prevent the product from being a more comple
 
 ### Functional Gaps
 
-- No bulk actions across vehicles or maintenance history
 - No vehicle odometer history or trend view
 
 ### Production Hardening Gaps
@@ -153,7 +154,6 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: improve day-to-day productivity without diluting the ownership model.
 
-- Add bulk actions where they are operationally useful beyond reminders
 - Add odometer history and service-trend visibility
 
 ## Later Roadmap
