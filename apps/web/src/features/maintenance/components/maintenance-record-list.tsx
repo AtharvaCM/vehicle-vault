@@ -14,10 +14,10 @@ export function MaintenanceRecordList({
 }: MaintenanceRecordListProps) {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5">
         {records.map((record) => (
           <MaintenanceRecordCard key={record.id} record={record} />
         ))}

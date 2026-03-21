@@ -23,11 +23,13 @@ export function FormField({
   const message = error ?? description;
 
   return (
-    <div className={cn('grid gap-2', className)}>
-      <Label htmlFor={htmlFor}>{label}</Label>
+    <div className={cn('grid gap-1.5', className)}>
+      <Label className="text-[13px] font-medium text-foreground/90" htmlFor={htmlFor}>
+        {label}
+      </Label>
       {children}
       {message ? (
-        <p className={cn('text-xs', error ? 'text-rose-600' : 'text-muted-foreground')}>
+        <p className={cn('text-xs leading-5', error ? 'text-rose-600' : 'text-muted-foreground')}>
           {message}
         </p>
       ) : null}

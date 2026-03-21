@@ -143,16 +143,16 @@ export function ReminderForm({
   });
 
   return (
-    <Card>
-      <CardHeader>
+    <Card size="sm">
+      <CardHeader className="pb-3">
         <CardTitle>Reminder details</CardTitle>
         <CardDescription>
           Create a reminder tied to a vehicle without coupling this slice to delivery or scheduling.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="grid gap-3.5 md:grid-cols-2">
             <FormField htmlFor="reminder-title" label="Title" error={form.formState.errors.title?.message}>
               <Input
                 id="reminder-title"
@@ -221,16 +221,16 @@ export function ReminderForm({
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
               {submissionState}
             </p>
           ) : null}
 
           <div className="flex items-center gap-3">
-            <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
+            <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm leading-5 text-slate-500">
               {isSubmitting ? 'Submitting reminder to the API...' : submitHint}
             </p>
           </div>

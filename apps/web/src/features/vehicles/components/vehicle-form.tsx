@@ -118,8 +118,8 @@ export function VehicleForm({
   });
 
   return (
-    <Card>
-      <CardHeader>
+    <Card size="sm">
+      <CardHeader className="pb-3">
         <CardTitle>Vehicle details</CardTitle>
         <CardDescription>
           Create a real vehicle record through the API using the shared contract consumed by both
@@ -127,8 +127,8 @@ export function VehicleForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="grid gap-3.5 md:grid-cols-2">
             <FormField
               htmlFor="vehicle-registration-number"
               label="Registration number"
@@ -248,16 +248,16 @@ export function VehicleForm({
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
               {submissionState}
             </p>
           ) : null}
 
           <div className="flex items-center gap-3">
-            <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
+            <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm leading-5 text-slate-500">
               {isSubmitting ? 'Submitting vehicle to the API...' : submitHint}
             </p>
           </div>

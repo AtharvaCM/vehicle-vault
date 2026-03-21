@@ -157,8 +157,8 @@ export function MaintenanceForm({
   });
 
   return (
-    <Card>
-      <CardHeader>
+    <Card size="sm">
+      <CardHeader className="pb-3">
         <CardTitle>Maintenance record</CardTitle>
         <CardDescription>
           Keep maintenance inputs scoped to this feature so list, detail, and create flows stay
@@ -166,8 +166,8 @@ export function MaintenanceForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="grid gap-3.5 md:grid-cols-2">
             <FormField
               htmlFor="maintenance-service-date"
               label="Service date"
@@ -297,16 +297,16 @@ export function MaintenanceForm({
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
               {submissionState}
             </p>
           ) : null}
 
           <div className="flex items-center gap-3">
-            <Button disabled={form.formState.isSubmitting || isSubmitting} type="submit">
+            <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm leading-5 text-slate-500">
               {isSubmitting ? 'Submitting maintenance record to the API...' : submitHint}
             </p>
           </div>

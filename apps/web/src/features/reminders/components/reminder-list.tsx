@@ -20,11 +20,11 @@ export function ReminderList({
 }: ReminderListProps) {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle>{title}</CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5">
         {reminders.length ? (
           reminders.map((reminder) => (
             <ReminderCard
@@ -34,7 +34,7 @@ export function ReminderList({
             />
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-sm text-slate-500">
+          <p className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-500">
             {emptyMessage}
           </p>
         )}

@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { ChevronRight } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
@@ -15,8 +16,8 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
+      <CardHeader className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>{title}</CardTitle>
             <Badge tone="accent">{vehicle.vehicleType}</Badge>
@@ -27,19 +28,31 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
 
         <Link
-          className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+          className={buttonVariants({ size: 'xs', variant: 'outline' })}
           params={{ vehicleId: vehicle.id }}
           to="/vehicles/$vehicleId"
         >
-          View Vehicle
+          Open
         </Link>
       </CardHeader>
-      <CardContent className="grid gap-3 text-sm text-slate-600 sm:grid-cols-4">
-        <p>Fuel type: {vehicle.fuelType}</p>
-        <p>Vehicle type: {vehicle.vehicleType}</p>
-        <p>Year: {vehicle.year}</p>
-        <p>Odometer: {vehicle.odometer.toLocaleString('en-IN')} km</p>
+      <CardContent className="grid gap-x-4 gap-y-3 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-4">
+        <VehicleMeta label="Fuel" value={vehicle.fuelType} />
+        <VehicleMeta label="Type" value={vehicle.vehicleType} />
+        <VehicleMeta label="Year" value={String(vehicle.year)} />
+        <VehicleMeta label="Odometer" value={`${vehicle.odometer.toLocaleString('en-IN')} km`} />
       </CardContent>
     </Card>
+  );
+}
+
+function VehicleMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <div className="flex items-center gap-1 text-[13px] font-medium text-slate-900">
+        <span>{value}</span>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+      </div>
+    </div>
   );
 }

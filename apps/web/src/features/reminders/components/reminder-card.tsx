@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { ChevronRight } from 'lucide-react';
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
@@ -27,14 +28,14 @@ export function ReminderCard({ reminder, vehicleLabel }: ReminderCardProps) {
 
   return (
     <Link params={{ reminderId: reminder.id }} to="/reminders/$reminderId">
-      <Card className={cn('transition-colors hover:border-slate-300', urgencyStyles)}>
-        <CardContent className="grid gap-4 p-4 md:grid-cols-[1.4fr_1fr_auto] md:items-center">
-          <div className="space-y-2">
+      <Card className={cn('rounded-xl transition-colors hover:border-slate-300', urgencyStyles)}>
+        <CardContent className="grid gap-3.5 p-3.5 md:grid-cols-[1.4fr_0.9fr_auto] md:items-center">
+          <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-medium text-slate-950">{reminder.title}</p>
               <Badge>{formatReminderType(reminder.type)}</Badge>
             </div>
-            <div className="space-y-1 text-sm text-slate-600">
+            <div className="space-y-0.5 text-[13px] text-slate-600">
               {vehicleLabel ? <p>{vehicleLabel}</p> : null}
               {reminder.dueDate ? <p>Due date: {formatDate(reminder.dueDate)}</p> : null}
               {reminder.dueOdometer !== undefined ? (
@@ -47,7 +48,10 @@ export function ReminderCard({ reminder, vehicleLabel }: ReminderCardProps) {
             <ReminderStatusBadge status={reminder.status} />
           </div>
 
-          <div className="text-sm font-medium text-slate-900">View reminder</div>
+          <div className="flex items-center justify-end gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Open
+            <ChevronRight className="h-3.5 w-3.5" />
+          </div>
         </CardContent>
       </Card>
     </Link>
