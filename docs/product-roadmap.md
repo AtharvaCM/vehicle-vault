@@ -1,6 +1,6 @@
 # Product Roadmap
 
-Last updated: 2026-03-21
+Last updated: 2026-03-22
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
@@ -77,6 +77,7 @@ The product already supports the core ownership loop:
 - Mark reminder as completed
 - Reminder status handling for `upcoming`, `due_today`, `overdue`, and `completed`
 - Search, filter, and sort for reminder views
+- Bulk complete and bulk delete actions for reminder list views
 
 ### Attachments / Receipts
 
@@ -133,7 +134,7 @@ These are the main items that still prevent the product from being a more comple
 
 ### Functional Gaps
 
-- No bulk actions across vehicles, reminders, or maintenance history
+- No bulk actions across vehicles or maintenance history
 - No vehicle odometer history or trend view
 
 ### Production Hardening Gaps
@@ -152,7 +153,7 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: improve day-to-day productivity without diluting the ownership model.
 
-- Add bulk actions where they are operationally useful
+- Add bulk actions where they are operationally useful beyond reminders
 - Add odometer history and service-trend visibility
 
 ## Later Roadmap
