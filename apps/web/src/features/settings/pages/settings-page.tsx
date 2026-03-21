@@ -1,4 +1,4 @@
-import { Download, ShieldCheck } from 'lucide-react';
+import { Download, ScanSearch, ShieldCheck } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { InlineError } from '@/components/shared/inline-error';
@@ -10,10 +10,12 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
+import { useReconcileAttachments } from '../hooks/use-reconcile-attachments';
 
 export function SettingsPage() {
   const auth = useAuth();
   const exportMutation = useDownloadAccountExport();
+  const reconcileMutation = useReconcileAttachments();
 
   async function handleExport() {
     try {
@@ -28,6 +30,29 @@ export function SettingsPage() {
         description: getApiErrorMessage(
           error,
           "We couldn't prepare your export. Try again in a moment.",
+        ),
+      });
+    }
+  }
+
+  async function handleReconcileAttachments() {
+    try {
+      const response = await reconcileMutation.mutateAsync();
+      const removedCount = response.data.removedMissingMetadataCount;
+
+      appToast.success({
+        title: 'Attachment check finished',
+        description:
+          removedCount > 0
+            ? `Removed ${removedCount} stale attachment entr${removedCount === 1 ? 'y' : 'ies'} that no longer exist in storage.`
+            : 'All attachment metadata already matched the stored files.',
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to reconcile attachments',
+        description: getApiErrorMessage(
+          error,
+          "We couldn't complete the attachment cleanup check right now.",
         ),
       });
     }
@@ -101,9 +126,39 @@ export function SettingsPage() {
             <CardTitle>Preferences</CardTitle>
             <CardDescription>More personal settings will appear here over time.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Reminder defaults, currency, and date formatting are planned for a future update.</p>
-            <p>For now, this page focuses on account details and data backup.</p>
+          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+            <div className="space-y-2">
+              <p>Reminder defaults, currency, and date formatting are planned for a future update.</p>
+              <p>For now, this page also includes a repair tool for attachment metadata.</p>
+            </div>
+            <div className="space-y-3 rounded-xl border border-border/70 bg-slate-50/80 p-4">
+              <div className="space-y-1">
+                <p className="font-semibold text-slate-900">Attachment reconciliation</p>
+                <p className="text-sm leading-6 text-slate-600">
+                  Scan your attachment records and remove stale metadata if a stored file is no longer available.
+                </p>
+              </div>
+              {reconcileMutation.isError ? (
+                <InlineError
+                  message={getApiErrorMessage(
+                    reconcileMutation.error,
+                    "We couldn't complete the attachment cleanup check right now.",
+                  )}
+                />
+              ) : null}
+              <Button
+                className="w-full justify-center sm:w-auto"
+                disabled={reconcileMutation.isPending}
+                onClick={() => {
+                  void handleReconcileAttachments();
+                }}
+                type="button"
+                variant="outline"
+              >
+                <ScanSearch className="mr-2 h-4 w-4" />
+                {reconcileMutation.isPending ? 'Checking attachments...' : 'Reconcile attachments'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

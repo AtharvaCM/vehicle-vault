@@ -21,6 +21,7 @@ describe('AttachmentsService', () => {
   type AttachmentDelegateMock = {
     create: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
+    deleteMany: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
   };
@@ -37,6 +38,7 @@ describe('AttachmentsService', () => {
     attachment: {
       create: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
     },
@@ -51,6 +53,7 @@ describe('AttachmentsService', () => {
   const storageService = {
     deleteObject: vi.fn(),
     downloadObject: vi.fn(),
+    objectExists: vi.fn(),
     uploadObject: vi.fn(),
   };
 
@@ -73,6 +76,7 @@ describe('AttachmentsService', () => {
 
     storageService.deleteObject.mockResolvedValue(undefined);
     storageService.downloadObject.mockResolvedValue(Buffer.from(''));
+    storageService.objectExists.mockResolvedValue(true);
     storageService.uploadObject.mockResolvedValue(undefined);
 
     service = new AttachmentsService(
@@ -230,6 +234,7 @@ describe('AttachmentsService', () => {
       url: '/api/attachments/attachment-1/file',
       uploadedAt,
     });
+    storageService.deleteObject.mockResolvedValue('deleted');
     prisma.attachment.delete = vi.fn().mockResolvedValue({ id: 'attachment-1' });
 
     const result = await service.deleteAttachment('user-1', 'attachment-1');
@@ -245,6 +250,58 @@ describe('AttachmentsService', () => {
     expect(result).toEqual({
       id: 'attachment-1',
       deleted: true,
+    });
+  });
+
+  it('does not delete metadata when cloud deletion fails', async () => {
+    prisma.attachment.findFirst = vi.fn().mockResolvedValue({
+      id: 'attachment-1',
+      maintenanceRecordId: 'record-1',
+      kind: AttachmentKind.Document,
+      fileName: 'attachments/user-1/record-1/attachment-1.pdf',
+      originalFileName: 'receipt.pdf',
+      mimeType: 'application/pdf',
+      size: 1024,
+      url: '/api/attachments/attachment-1/file',
+      uploadedAt,
+    });
+    storageService.deleteObject.mockRejectedValue(new Error('storage failed'));
+
+    await expect(service.deleteAttachment('user-1', 'attachment-1')).rejects.toThrow(
+      'storage failed',
+    );
+    expect(prisma.attachment.delete).not.toHaveBeenCalled();
+  });
+
+  it('reconciles missing attachment metadata for the current user', async () => {
+    prisma.attachment.findMany = vi.fn().mockResolvedValue([
+      { id: 'attachment-1', fileName: 'attachments/user-1/record-1/attachment-1.pdf' },
+      { id: 'attachment-2', fileName: 'attachments/user-1/record-1/attachment-2.pdf' },
+    ]);
+    prisma.attachment.deleteMany = vi.fn().mockResolvedValue({ count: 1 });
+    storageService.objectExists
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
+    const result = await service.reconcileAttachments('user-1');
+
+    expect(prisma.attachment.deleteMany).toHaveBeenCalledWith({
+      where: {
+        id: {
+          in: ['attachment-1'],
+        },
+        maintenanceRecord: {
+          vehicle: {
+            userId: 'user-1',
+          },
+        },
+      },
+    });
+    expect(result).toEqual({
+      checkedCount: 2,
+      healthyCount: 1,
+      removedMissingMetadataCount: 1,
+      removedAttachmentIds: ['attachment-1'],
     });
   });
 });

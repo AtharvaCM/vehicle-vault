@@ -84,10 +84,11 @@ The product already supports the core ownership loop:
 - Persist attachment metadata in PostgreSQL
 - Store uploaded files in Supabase Storage
 - Attachment validation for size, extension, and binary file signature
+- Attachment reconciliation to remove stale metadata when storage objects are missing
 - List attachments for a maintenance record
 - Maintenance-detail attachment summary, upload guidance, and clearer action feedback
 - Open / download an attachment
-- Delete attachment metadata and local file with confirmation
+- Delete attachment metadata and stored object with confirmation
 
 ### Dashboard and Product Cohesion
 
@@ -152,7 +153,6 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: remove the remaining temporary infrastructure choices.
 
-- Add safer attachment cleanup and reconciliation behavior
 - Improve deployment docs for fresh environments
 - Add preview-environment friendliness where needed
 

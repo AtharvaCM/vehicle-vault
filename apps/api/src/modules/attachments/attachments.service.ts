@@ -1,6 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AttachmentKind, type Attachment } from '@vehicle-vault/shared';
+import {
+  AttachmentKind,
+  type Attachment,
+  type AttachmentReconciliationSummary,
+} from '@vehicle-vault/shared';
 import { randomUUID } from 'node:crypto';
 
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
@@ -134,21 +138,65 @@ export class AttachmentsService {
   async deleteAttachment(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
 
+    await this.storageService.deleteObject(attachment.fileName);
+
     await this.prisma.attachment.delete({
       where: {
         id: attachmentId,
       },
     });
 
-    try {
-      await this.storageService.deleteObject(attachment.fileName);
-    } catch (error) {
-      console.warn(`Failed to delete attachment object ${attachment.fileName} after metadata removal`, error);
-    }
-
     return {
       id: attachment.id,
       deleted: true,
+    };
+  }
+
+  async reconcileAttachments(userId: string): Promise<AttachmentReconciliationSummary> {
+    const attachments = await this.prisma.attachment.findMany({
+      where: {
+        maintenanceRecord: {
+          vehicle: {
+            userId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        fileName: true,
+      },
+    });
+
+    const missingAttachmentIds: string[] = [];
+
+    for (const attachment of attachments) {
+      const exists = await this.storageService.objectExists(attachment.fileName);
+
+      if (!exists) {
+        missingAttachmentIds.push(attachment.id);
+      }
+    }
+
+    if (missingAttachmentIds.length > 0) {
+      await this.prisma.attachment.deleteMany({
+        where: {
+          id: {
+            in: missingAttachmentIds,
+          },
+          maintenanceRecord: {
+            vehicle: {
+              userId,
+            },
+          },
+        },
+      });
+    }
+
+    return {
+      checkedCount: attachments.length,
+      healthyCount: attachments.length - missingAttachmentIds.length,
+      removedMissingMetadataCount: missingAttachmentIds.length,
+      removedAttachmentIds: missingAttachmentIds,
     };
   }
 

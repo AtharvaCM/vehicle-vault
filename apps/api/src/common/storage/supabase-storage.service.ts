@@ -5,6 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { basename, dirname } from 'node:path/posix';
 
 import { AppConfigService } from '../../config/app-config.service';
 
@@ -57,6 +58,24 @@ export class SupabaseStorageService implements OnModuleInit {
     }
   }
 
+  async objectExists(path: string) {
+    const objectName = basename(path);
+    const directory = dirname(path);
+    const { data, error } = await this.client.storage.from(this.bucketName).list(
+      directory === '.' ? '' : directory,
+      {
+        limit: 100,
+        search: objectName,
+      },
+    );
+
+    if (error) {
+      throw new InternalServerErrorException('Unable to inspect attachment in cloud storage.');
+    }
+
+    return (data ?? []).some((object) => object.name === objectName);
+  }
+
   async downloadObject(path: string) {
     const { data, error } = await this.client.storage.from(this.bucketName).download(path);
 
@@ -72,10 +91,18 @@ export class SupabaseStorageService implements OnModuleInit {
   }
 
   async deleteObject(path: string) {
+    const exists = await this.objectExists(path);
+
+    if (!exists) {
+      return 'missing' as const;
+    }
+
     const { error } = await this.client.storage.from(this.bucketName).remove([path]);
 
     if (error) {
       throw new InternalServerErrorException('Unable to remove attachment from cloud storage.');
     }
+
+    return 'deleted' as const;
   }
 }

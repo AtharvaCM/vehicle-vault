@@ -15,3 +15,10 @@ export const AttachmentSchema = z.object({
   url: z.string().trim().min(1),
   uploadedAt: isoDateTimeString,
 });
+
+export const AttachmentReconciliationSummarySchema = z.object({
+  checkedCount: z.number().int().nonnegative(),
+  healthyCount: z.number().int().nonnegative(),
+  removedMissingMetadataCount: z.number().int().nonnegative(),
+  removedAttachmentIds: z.array(z.string().trim().min(1)),
+});

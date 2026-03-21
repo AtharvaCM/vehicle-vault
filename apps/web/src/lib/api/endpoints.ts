@@ -30,6 +30,7 @@ export const endpoints = {
   attachments: {
     byRecord: (recordId: string) => `/maintenance-records/${recordId}/attachments`,
     upload: (recordId: string) => `/maintenance-records/${recordId}/attachments`,
+    reconcile: '/attachments/reconciliation',
     detail: (attachmentId: string) => `/attachments/${attachmentId}`,
     file: (attachmentId: string) => `/attachments/${attachmentId}/file`,
     delete: (attachmentId: string) => `/attachments/${attachmentId}`,

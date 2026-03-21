@@ -129,9 +129,7 @@ export class MaintenanceService {
     });
 
     await Promise.all(
-      record.attachments.map((attachment) =>
-        this.storageService.deleteObject(attachment.fileName).catch(() => undefined),
-      ),
+      record.attachments.map((attachment) => this.storageService.deleteObject(attachment.fileName)),
     );
 
     return {

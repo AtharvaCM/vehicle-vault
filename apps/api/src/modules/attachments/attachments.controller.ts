@@ -38,6 +38,11 @@ export class AttachmentsController {
     );
   }
 
+  @Post('attachments/reconciliation')
+  async reconcileAttachments(@CurrentUser() user: AuthUser) {
+    return successResponse(await this.attachmentsService.reconcileAttachments(user.id));
+  }
+
   @Post('maintenance-records/:recordId/attachments')
   @UseInterceptors(
     FilesInterceptor('files', ATTACHMENTS_MAX_FILES, {

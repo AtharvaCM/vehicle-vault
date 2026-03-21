@@ -57,7 +57,7 @@ describe('VehiclesService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    storageService.deleteObject.mockResolvedValue(undefined);
+    storageService.deleteObject.mockResolvedValue('deleted');
     service = new VehiclesService(prisma as never, storageService as never);
   });
 
