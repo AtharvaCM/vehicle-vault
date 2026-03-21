@@ -1,23 +1,30 @@
 import { Link } from '@tanstack/react-router';
 import { BellRing, ClipboardList, LayoutGrid } from 'lucide-react';
+import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
+import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { MaintenanceRecordCard } from '@/features/maintenance/components/maintenance-record-card';
 import { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
 import { ReminderCard } from '@/features/reminders/components/reminder-card';
 import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-reminders';
 import { ReminderStatus } from '@vehicle-vault/shared';
+import { useNavigate } from '@tanstack/react-router';
 
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
+import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
 
 type VehicleDetailPageProps = {
@@ -25,9 +32,26 @@ type VehicleDetailPageProps = {
 };
 
 export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
+  const navigate = useNavigate();
+  const [actionError, setActionError] = useState<string | null>(null);
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
+  const deleteVehicleMutation = useDeleteVehicle();
+
+  async function handleDeleteVehicle() {
+    try {
+      setActionError(null);
+      await deleteVehicleMutation.mutateAsync(vehicleId);
+      appToast.success({
+        title: 'Vehicle deleted',
+        description: 'The vehicle and its related records were removed.',
+      });
+      await navigate({ to: '/vehicles' });
+    } catch (error) {
+      setActionError(getApiErrorMessage(error, 'Unable to delete the vehicle.'));
+    }
+  }
 
   if (vehicleQuery.isPending) {
     return (
@@ -116,11 +140,22 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             >
               Add Reminder
             </Link>
+            <ConfirmActionDialog
+              confirmLabel="Delete vehicle"
+              description="This removes the vehicle together with its maintenance records, reminders, and attachment metadata. This cannot be undone."
+              isPending={deleteVehicleMutation.isPending}
+              onConfirm={handleDeleteVehicle}
+              title="Delete this vehicle?"
+              triggerLabel="Delete Vehicle"
+              triggerVariant="secondary"
+            />
           </div>
         }
         description="Use this page as the operational summary for one vehicle, with service history, reminders, and linked records in one place."
         title={title}
       />
+
+      {actionError ? <InlineError message={actionError} /> : null}
 
       <Tabs className="space-y-6" defaultValue="overview">
         <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-white p-1 shadow-sm sm:max-w-xl">

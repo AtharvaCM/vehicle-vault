@@ -1,4 +1,6 @@
 import { Link } from '@tanstack/react-router';
+import { MaintenanceCategory } from '@vehicle-vault/shared';
+import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -10,8 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
+import {
+  MaintenanceListControls,
+  type MaintenanceSortOption,
+} from '../components/maintenance-list-controls';
 import { useMaintenanceRecords } from '../hooks/use-maintenance-records';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
+import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 
 type VehicleMaintenanceListPageProps = {
   vehicleId: string;
@@ -20,6 +27,9 @@ type VehicleMaintenanceListPageProps = {
 export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceListPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
+  const [searchValue, setSearchValue] = useState('');
+  const [category, setCategory] = useState<MaintenanceCategory | 'all'>('all');
+  const [sortBy, setSortBy] = useState<MaintenanceSortOption>('service-date-desc');
 
   const vehicleTitle = vehicleQuery.data
     ? vehicleQuery.data.nickname?.trim() || `${vehicleQuery.data.make} ${vehicleQuery.data.model}`
@@ -28,6 +38,50 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
     vehicleQuery.error instanceof ApiError && vehicleQuery.error.status === 404;
   const isMaintenanceVehicleNotFound =
     maintenanceQuery.error instanceof ApiError && maintenanceQuery.error.status === 404;
+
+  const filteredRecords = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase();
+
+    return [...(maintenanceQuery.data ?? [])]
+      .filter((record) => {
+        if (category !== 'all' && record.category !== category) {
+          return false;
+        }
+
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        const searchFields = [
+          record.workshopName ?? '',
+          record.notes ?? '',
+          record.serviceDate,
+          record.odometer.toString(),
+          formatMaintenanceCategory(record.category),
+        ];
+
+        return searchFields.some((value) => value.toLowerCase().includes(normalizedSearch));
+      })
+      .sort((left, right) => {
+        switch (sortBy) {
+          case 'service-date-asc':
+            return Date.parse(left.serviceDate) - Date.parse(right.serviceDate);
+          case 'cost-desc':
+            return right.totalCost - left.totalCost;
+          case 'odometer-desc':
+            return right.odometer - left.odometer;
+          case 'service-date-desc':
+          default:
+            return Date.parse(right.serviceDate) - Date.parse(left.serviceDate);
+        }
+      });
+  }, [category, maintenanceQuery.data, searchValue, sortBy]);
+
+  function resetControls() {
+    setSearchValue('');
+    setCategory('all');
+    setSortBy('service-date-desc');
+  }
 
   if (isVehicleNotFound || isMaintenanceVehicleNotFound) {
     return (
@@ -74,58 +128,92 @@ export function VehicleMaintenanceListPage({ vehicleId }: VehicleMaintenanceList
         title={`${vehicleTitle} Maintenance`}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-        {maintenanceQuery.isPending ? (
-          <LoadingState
-            description="Fetching maintenance records for this vehicle."
-            title="Loading maintenance"
-          />
-        ) : maintenanceQuery.isError ? (
-          <ErrorState
-            action={
-              <Button onClick={() => maintenanceQuery.refetch()} variant="secondary">
-                Retry
-              </Button>
-            }
-            description="The maintenance history could not be loaded. Check that the API is running and try again."
-            title="Unable to load maintenance records"
-          />
-        ) : maintenanceQuery.data.length ? (
-          <MaintenanceRecordList records={maintenanceQuery.data} />
-        ) : (
-          <EmptyState
-            action={
-              <Link
-                className={buttonVariants()}
-                params={{ vehicleId }}
-                to="/vehicles/$vehicleId/maintenance/new"
-              >
-                Add the first maintenance record
-              </Link>
-            }
-            description="No maintenance records exist for this vehicle yet."
-            title="No maintenance records yet"
-          />
-        )}
+      {maintenanceQuery.isPending ? (
+        <LoadingState
+          description="Fetching maintenance records for this vehicle."
+          title="Loading maintenance"
+        />
+      ) : maintenanceQuery.isError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => maintenanceQuery.refetch()} variant="secondary">
+              Retry
+            </Button>
+          }
+          description="The maintenance history could not be loaded. Check that the API is running and try again."
+          title="Unable to load maintenance records"
+        />
+      ) : (
+        <div className="space-y-4">
+          {maintenanceQuery.data.length ? (
+            <MaintenanceListControls
+              category={category}
+              onCategoryChange={setCategory}
+              onReset={resetControls}
+              onSearchChange={setSearchValue}
+              onSortChange={setSortBy}
+              resultCount={filteredRecords.length}
+              searchValue={searchValue}
+              sortBy={sortBy}
+              totalCount={maintenanceQuery.data.length}
+            />
+          ) : null}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Keep service history complete</CardTitle>
-            <CardDescription>
-              Use this view as the long-form history for one vehicle.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>
-              Capture each completed service event with the odometer, cost, and workshop details.
-            </p>
-            <p>
-              Open a record to manage receipts and documents for that specific maintenance event.
-            </p>
-            <p>Next-due fields stay useful here because they can inform reminder creation later.</p>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            {maintenanceQuery.data.length ? (
+              filteredRecords.length ? (
+                <MaintenanceRecordList records={filteredRecords} />
+              ) : (
+                <EmptyState
+                  action={
+                    <Button onClick={resetControls} variant="secondary">
+                      Clear filters
+                    </Button>
+                  }
+                  description="Try a broader search or remove the current category filter."
+                  title="No maintenance records match these filters"
+                />
+              )
+            ) : (
+              <EmptyState
+                action={
+                  <Link
+                    className={buttonVariants()}
+                    params={{ vehicleId }}
+                    to="/vehicles/$vehicleId/maintenance/new"
+                  >
+                    Add the first maintenance record
+                  </Link>
+                }
+                description="No maintenance records exist for this vehicle yet."
+                title="No maintenance records yet"
+              />
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Keep service history complete</CardTitle>
+                <CardDescription>
+                  Use this view as the long-form history for one vehicle.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+                <p>
+                  Capture each completed service event with the odometer, cost, and workshop
+                  details.
+                </p>
+                <p>
+                  Open a record to manage receipts and documents for that specific maintenance
+                  event.
+                </p>
+                <p>
+                  Next-due fields stay useful here because they can inform reminder creation later.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

@@ -1,16 +1,23 @@
 import { Link } from '@tanstack/react-router';
-import { ReminderStatus } from '@vehicle-vault/shared';
+import { ReminderStatus, ReminderType } from '@vehicle-vault/shared';
+import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
 import { PageTitle } from '@/components/shared/page-title';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
+import {
+  ReminderListControls,
+  type ReminderSortOption,
+} from '../components/reminder-list-controls';
 import { ReminderList } from '../components/reminder-list';
 import { useVehicleReminders } from '../hooks/use-vehicle-reminders';
+import { filterAndSortReminders } from '../utils/filter-and-sort-reminders';
 import { groupRemindersByStatus } from '../utils/group-reminders-by-status';
 
 type VehicleRemindersPageProps = {
@@ -20,6 +27,10 @@ type VehicleRemindersPageProps = {
 export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
+  const [searchValue, setSearchValue] = useState('');
+  const [status, setStatus] = useState<ReminderStatus | 'all'>('all');
+  const [type, setType] = useState<ReminderType | 'all'>('all');
+  const [sortBy, setSortBy] = useState<ReminderSortOption>('urgency');
 
   const vehicleTitle = vehicleQuery.data
     ? vehicleQuery.data.nickname?.trim() || `${vehicleQuery.data.make} ${vehicleQuery.data.model}`
@@ -28,6 +39,28 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
     vehicleQuery.error instanceof ApiError && vehicleQuery.error.status === 404;
   const isReminderVehicleNotFound =
     remindersQuery.error instanceof ApiError && remindersQuery.error.status === 404;
+  const filteredReminders = useMemo(
+    () =>
+      filterAndSortReminders({
+        reminders: remindersQuery.data ?? [],
+        searchValue,
+        status,
+        type,
+        sortBy,
+      }),
+    [remindersQuery.data, searchValue, sortBy, status, type],
+  );
+  const groupedReminders = useMemo(
+    () => groupRemindersByStatus(filteredReminders),
+    [filteredReminders],
+  );
+
+  function resetControls() {
+    setSearchValue('');
+    setStatus('all');
+    setType('all');
+    setSortBy('urgency');
+  }
 
   if (isVehicleNotFound || isReminderVehicleNotFound) {
     return (
@@ -85,36 +118,68 @@ export function VehicleRemindersPage({ vehicleId }: VehicleRemindersPageProps) {
           </CardContent>
         </Card>
       ) : remindersQuery.isError ? (
-        <EmptyState
+        <ErrorState
+          action={
+            <Button onClick={() => remindersQuery.refetch()} variant="secondary">
+              Retry
+            </Button>
+          }
           description="The reminder list could not be loaded. Check that the API is running and try again."
           title="Unable to load reminders"
         />
       ) : remindersQuery.data.length ? (
-        <div className="grid gap-6">
-          <ReminderList
-            description="Items that need attention immediately."
-            emptyMessage="No overdue reminders."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.Overdue]}
-            title="Overdue"
+        <div className="grid gap-4">
+          <ReminderListControls
+            onReset={resetControls}
+            onSearchChange={setSearchValue}
+            onSortChange={setSortBy}
+            onStatusChange={setStatus}
+            onTypeChange={setType}
+            resultCount={filteredReminders.length}
+            searchValue={searchValue}
+            sortBy={sortBy}
+            status={status}
+            totalCount={remindersQuery.data.length}
+            type={type}
           />
-          <ReminderList
-            description="Items due today."
-            emptyMessage="No reminders are due today."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.DueToday]}
-            title="Due Today"
-          />
-          <ReminderList
-            description="Upcoming reminders for this vehicle."
-            emptyMessage="No upcoming reminders."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.Upcoming]}
-            title="Upcoming"
-          />
-          <ReminderList
-            description="Completed reminders retained for history."
-            emptyMessage="No completed reminders yet."
-            reminders={groupRemindersByStatus(remindersQuery.data)[ReminderStatus.Completed]}
-            title="Completed"
-          />
+          {filteredReminders.length ? (
+            <div className="grid gap-6">
+              <ReminderList
+                description="Items that need attention immediately."
+                emptyMessage="No overdue reminders."
+                reminders={groupedReminders[ReminderStatus.Overdue]}
+                title="Overdue"
+              />
+              <ReminderList
+                description="Items due today."
+                emptyMessage="No reminders are due today."
+                reminders={groupedReminders[ReminderStatus.DueToday]}
+                title="Due Today"
+              />
+              <ReminderList
+                description="Upcoming reminders for this vehicle."
+                emptyMessage="No upcoming reminders."
+                reminders={groupedReminders[ReminderStatus.Upcoming]}
+                title="Upcoming"
+              />
+              <ReminderList
+                description="Completed reminders retained for history."
+                emptyMessage="No completed reminders yet."
+                reminders={groupedReminders[ReminderStatus.Completed]}
+                title="Completed"
+              />
+            </div>
+          ) : (
+            <EmptyState
+              action={
+                <Button onClick={resetControls} variant="secondary">
+                  Clear filters
+                </Button>
+              }
+              description="Try broadening the search or removing the active status and type filters."
+              title="No reminders match these filters"
+            />
+          )}
         </div>
       ) : (
         <EmptyState

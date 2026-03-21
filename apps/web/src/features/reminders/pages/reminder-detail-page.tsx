@@ -3,12 +3,15 @@ import { ReminderStatus } from '@vehicle-vault/shared';
 import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { ErrorState } from '@/components/shared/error-state';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/api-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 
 import { useCompleteReminder } from '../hooks/use-complete-reminder';
 import { useDeleteReminder } from '../hooks/use-delete-reminder';
@@ -30,8 +33,12 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
     try {
       setActionError(null);
       await completeReminderMutation.mutateAsync(reminderId);
+      appToast.success({
+        title: 'Reminder completed',
+        description: 'The reminder status was updated successfully.',
+      });
     } catch (error) {
-      setActionError(getApiErrorMessage(error));
+      setActionError(getApiErrorMessage(error, 'Unable to complete the reminder.'));
     }
   }
 
@@ -39,6 +46,10 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
     try {
       setActionError(null);
       await deleteReminderMutation.mutateAsync(reminderId);
+      appToast.success({
+        title: 'Reminder deleted',
+        description: 'The reminder was removed successfully.',
+      });
       await navigate({
         to: '/vehicles/$vehicleId/reminders',
         params: {
@@ -114,19 +125,21 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
               <Button
                 disabled={completeReminderMutation.isPending}
                 onClick={handleCompleteReminder}
+                size="sm"
                 type="button"
               >
                 {completeReminderMutation.isPending ? 'Completing...' : 'Mark Complete'}
               </Button>
             ) : null}
-            <Button
-              disabled={deleteReminderMutation.isPending}
-              onClick={() => handleDeleteReminder(reminder.vehicleId)}
-              type="button"
-              variant="secondary"
-            >
-              {deleteReminderMutation.isPending ? 'Deleting...' : 'Delete Reminder'}
-            </Button>
+            <ConfirmActionDialog
+              confirmLabel="Delete reminder"
+              description="This removes the reminder from the vehicle and dashboard views. This action cannot be undone."
+              isPending={deleteReminderMutation.isPending}
+              onConfirm={() => handleDeleteReminder(reminder.vehicleId)}
+              title="Delete this reminder?"
+              triggerLabel="Delete Reminder"
+              triggerVariant="secondary"
+            />
           </div>
         }
         description="Review and manage a single reminder record."
@@ -138,21 +151,4 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
       <ReminderSummaryCard reminder={reminder} />
     </PageContainer>
   );
-}
-
-function getApiErrorMessage(error: unknown) {
-  if (
-    error instanceof ApiError &&
-    error.data &&
-    typeof error.data === 'object' &&
-    'error' in error.data &&
-    error.data.error &&
-    typeof error.data.error === 'object' &&
-    'message' in error.data.error &&
-    typeof error.data.error.message === 'string'
-  ) {
-    return error.data.error.message;
-  }
-
-  return error instanceof Error ? error.message : 'The reminder action failed.';
 }
