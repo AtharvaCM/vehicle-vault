@@ -40,6 +40,7 @@ The product already supports the core ownership loop:
 - User login
 - JWT access-token authentication
 - Authenticated session bootstrap in the frontend
+- Proactive frontend handling for expired or malformed JWT sessions
 - Route protection in the frontend and backend
 - User ownership enforced through vehicles and inherited by maintenance, reminders, dashboard data, and attachments
 
@@ -79,6 +80,7 @@ The product already supports the core ownership loop:
 - Upload one or more files to a maintenance record
 - Persist attachment metadata in PostgreSQL
 - Store uploaded files locally on disk for now
+- Attachment validation for size, extension, and binary file signature
 - List attachments for a maintenance record
 - Maintenance-detail attachment summary, upload guidance, and clearer action feedback
 - Open / download an attachment
@@ -151,8 +153,6 @@ Goal: move auth from MVP-safe to more production-safe.
 
 - Add refresh-token strategy or other session renewal approach
 - Add password reset request + reset flow
-- Improve token expiry handling in the frontend
-- Review file-upload validation and abuse protection
 
 ### Milestone 2: Storage and Ops Hardening
 

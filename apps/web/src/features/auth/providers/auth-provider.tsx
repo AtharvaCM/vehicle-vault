@@ -11,7 +11,13 @@ import {
   getStoredAuthSession,
   setStoredAuthSession,
 } from '../lib/auth-session-storage';
+import {
+  getAccessTokenExpiryEpochMs,
+  hasAccessTokenExpiry,
+  isAccessTokenExpired,
+} from '../lib/auth-token';
 import type { AppAuthContextValue, AuthSession, AuthStatus } from '../types/auth-session';
+import { appToast } from '@/lib/toast';
 
 type AuthProviderProps = {
   children: React.ReactNode;
@@ -21,16 +27,35 @@ export const AuthContext = createContext<AppAuthContextValue | null>(null);
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const initialSessionRef = useRef<AuthSession | null>(getStoredAuthSession());
+  const expiryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [session, setSessionState] = useState<AuthSession | null>(initialSessionRef.current);
   const [status, setStatus] = useState<AuthStatus>(
     initialSessionRef.current?.accessToken ? 'loading' : 'anonymous',
   );
 
-  const clearSession = useCallback((shouldRedirectToLogin: boolean) => {
+  const clearExpiryTimeout = useCallback(() => {
+    if (expiryTimeoutRef.current) {
+      clearTimeout(expiryTimeoutRef.current);
+      expiryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearSession = useCallback((
+    shouldRedirectToLogin: boolean,
+    reason: 'manual' | 'expired' | 'unauthorized' | 'bootstrap' = 'manual',
+  ) => {
+    clearExpiryTimeout();
     clearStoredAuthSession();
     setSessionState(null);
     setStatus('anonymous');
     queryClient.clear();
+
+    if (reason === 'expired' || reason === 'unauthorized') {
+      appToast.info({
+        title: 'Session expired',
+        description: 'Sign in again to continue working in Vehicle Vault.',
+      });
+    }
 
     if (
       shouldRedirectToLogin &&
@@ -40,7 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ) {
       window.location.replace('/login');
     }
-  }, []);
+  }, [clearExpiryTimeout]);
 
   const setSession = useCallback((authResponse: AuthResponse) => {
     const nextSession = {
@@ -55,13 +80,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(() => {
-    clearSession(false);
+    clearSession(false, 'manual');
   }, [clearSession]);
 
   useEffect(() => {
     configureApiClient({
       getAccessToken: () => session?.accessToken ?? null,
-      onUnauthorized: () => clearSession(true),
+      onUnauthorized: () => clearSession(true, 'unauthorized'),
     });
   }, [clearSession, session?.accessToken]);
 
@@ -69,6 +94,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const storedSession = initialSessionRef.current;
 
     if (!storedSession?.accessToken) {
+      return;
+    }
+
+    if (
+      !hasAccessTokenExpiry(storedSession.accessToken) ||
+      isAccessTokenExpired(storedSession.accessToken)
+    ) {
+      clearSession(false, 'bootstrap');
       return;
     }
 
@@ -94,13 +127,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return;
         }
 
-        clearSession(false);
+        clearSession(false, 'bootstrap');
       });
 
     return () => {
       isActive = false;
     };
   }, [clearSession]);
+
+  useEffect(() => {
+    clearExpiryTimeout();
+
+    if (!session?.accessToken || status !== 'authenticated') {
+      return;
+    }
+
+    const expiryEpochMs = getAccessTokenExpiryEpochMs(session.accessToken);
+
+    if (!expiryEpochMs) {
+      clearSession(true, 'expired');
+      return;
+    }
+
+    const remainingMs = expiryEpochMs - Date.now();
+
+    if (remainingMs <= 0) {
+      clearSession(true, 'expired');
+      return;
+    }
+
+    expiryTimeoutRef.current = setTimeout(() => {
+      clearSession(true, 'expired');
+    }, remainingMs);
+
+    return clearExpiryTimeout;
+  }, [clearExpiryTimeout, clearSession, session?.accessToken, status]);
 
   const value = useMemo<AppAuthContextValue>(
     () => ({

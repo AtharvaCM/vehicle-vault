@@ -6,16 +6,14 @@ import { randomUUID } from 'node:crypto';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
-import {
-  ATTACHMENTS_ALLOWED_MIME_TYPES,
-  getUploadsDirectory,
-} from './constants/attachment.constants';
+import { getUploadsDirectory } from './constants/attachment.constants';
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
 import {
   buildStoredFileName,
   deleteStoredAttachmentFile,
   ensureUploadsDirectory,
   getAttachmentAbsolutePath,
+  validateAttachmentUploadFile,
 } from './utils/attachment-upload.util';
 
 @Injectable()
@@ -90,10 +88,10 @@ export class AttachmentsService {
     await mkdir(getUploadsDirectory(), { recursive: true });
 
     const preparedFiles = files.map((file) => {
-      this.validateUploadedFile(file);
+      const originalFileName = validateAttachmentUploadFile(file);
 
       const id = randomUUID();
-      const fileName = buildStoredFileName(file.originalname);
+      const fileName = buildStoredFileName(originalFileName);
       const filePath = getAttachmentAbsolutePath(fileName);
 
       return {
@@ -101,7 +99,7 @@ export class AttachmentsService {
         maintenanceRecordId: recordId,
         kind: this.getAttachmentKind(file.mimetype),
         fileName,
-        originalFileName: file.originalname,
+        originalFileName,
         mimeType: file.mimetype,
         size: file.size,
         url: `/api/attachments/${id}/file`,
@@ -179,16 +177,6 @@ export class AttachmentsService {
     }
 
     return attachment;
-  }
-
-  private validateUploadedFile(file: AttachmentUploadFile) {
-    if (
-      !ATTACHMENTS_ALLOWED_MIME_TYPES.some((allowedMimeType) => allowedMimeType === file.mimetype)
-    ) {
-      throw new BadRequestException(
-        'Unsupported file type. Allowed types: JPEG, PNG, WEBP, and PDF.',
-      );
-    }
   }
 
   private getAttachmentKind(mimeType: string) {

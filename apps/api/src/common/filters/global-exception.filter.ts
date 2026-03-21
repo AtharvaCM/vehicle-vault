@@ -85,6 +85,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const message =
         multerException.code === 'LIMIT_FILE_SIZE'
           ? 'Each file must be 5 MB or smaller.'
+          : multerException.code === 'LIMIT_FILE_COUNT'
+            ? 'You can upload up to 10 files at a time.'
+            : multerException.code === 'LIMIT_UNEXPECTED_FILE'
+              ? 'Attachment uploads must use the expected file field.'
           : exception.message;
 
       return {

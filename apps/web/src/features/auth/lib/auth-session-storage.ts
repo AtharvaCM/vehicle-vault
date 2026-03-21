@@ -1,4 +1,5 @@
 import type { AuthSession } from '../types/auth-session';
+import { hasAccessTokenExpiry, isAccessTokenExpired } from './auth-token';
 
 const AUTH_SESSION_STORAGE_KEY = 'vehicle-vault.auth-session';
 
@@ -14,7 +15,18 @@ export function getStoredAuthSession(): AuthSession | null {
   }
 
   try {
-    return JSON.parse(rawSession) as AuthSession;
+    const parsedSession = JSON.parse(rawSession) as AuthSession;
+
+    if (
+      !parsedSession?.accessToken ||
+      !hasAccessTokenExpiry(parsedSession.accessToken) ||
+      isAccessTokenExpired(parsedSession.accessToken)
+    ) {
+      window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      return null;
+    }
+
+    return parsedSession;
   } catch {
     window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
     return null;

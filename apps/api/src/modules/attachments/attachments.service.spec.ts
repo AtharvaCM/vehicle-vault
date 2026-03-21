@@ -35,12 +35,19 @@ vi.mock('node:fs/promises', () => ({
   writeFile: writeFileMock,
 }));
 
-vi.mock('./utils/attachment-upload.util', () => ({
-  buildStoredFileName: buildStoredFileNameMock,
-  deleteStoredAttachmentFile: deleteStoredAttachmentFileMock,
-  ensureUploadsDirectory: ensureUploadsDirectoryMock,
-  getAttachmentAbsolutePath: getAttachmentAbsolutePathMock,
-}));
+vi.mock('./utils/attachment-upload.util', async () => {
+  const actual = await vi.importActual<typeof import('./utils/attachment-upload.util')>(
+    './utils/attachment-upload.util',
+  );
+
+  return {
+    ...actual,
+    buildStoredFileName: buildStoredFileNameMock,
+    deleteStoredAttachmentFile: deleteStoredAttachmentFileMock,
+    ensureUploadsDirectory: ensureUploadsDirectoryMock,
+    getAttachmentAbsolutePath: getAttachmentAbsolutePathMock,
+  };
+});
 
 import { AttachmentsService } from './attachments.service';
 
@@ -106,7 +113,7 @@ describe('AttachmentsService', () => {
         originalname: 'receipt.pdf',
         mimetype: 'application/pdf',
         size: 1024,
-        buffer: Buffer.from('pdf-bytes'),
+        buffer: Buffer.from('%PDF-1.7 test payload'),
       },
     ]);
 
@@ -145,6 +152,72 @@ describe('AttachmentsService', () => {
         },
       ]),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects empty uploads', async () => {
+    await expect(
+      service.uploadAttachments('user-1', 'record-1', [
+        {
+          originalname: 'receipt.pdf',
+          mimetype: 'application/pdf',
+          size: 0,
+          buffer: Buffer.alloc(0),
+        },
+      ]),
+    ).rejects.toMatchObject({
+      message: 'Uploaded files cannot be empty.',
+    });
+  });
+
+  it('rejects files whose extension does not match the declared type', async () => {
+    await expect(
+      service.uploadAttachments('user-1', 'record-1', [
+        {
+          originalname: 'receipt.png',
+          mimetype: 'application/pdf',
+          size: 1024,
+          buffer: Buffer.from('%PDF-1.7 test payload'),
+        },
+      ]),
+    ).rejects.toMatchObject({
+      message: 'The file extension does not match the uploaded file type.',
+    });
+  });
+
+  it('rejects files whose binary signature does not match the declared type', async () => {
+    await expect(
+      service.uploadAttachments('user-1', 'record-1', [
+        {
+          originalname: 'receipt.pdf',
+          mimetype: 'application/pdf',
+          size: 1024,
+          buffer: Buffer.from('not a pdf'),
+        },
+      ]),
+    ).rejects.toMatchObject({
+      message: 'Uploaded file content does not match the declared file type.',
+    });
+  });
+
+  it('sanitizes original file names before storing metadata', async () => {
+    prisma.attachment.create = vi.fn().mockImplementation(({ data }) =>
+      Promise.resolve({
+        ...data,
+        uploadedAt,
+      }),
+    );
+
+    const result = await service.uploadAttachments('user-1', 'record-1', [
+      {
+        originalname: '../../receipt.pdf',
+        mimetype: 'application/pdf',
+        size: 1024,
+        buffer: Buffer.from('%PDF-1.7 test payload'),
+      },
+    ]);
+
+    expect(buildStoredFileNameMock).toHaveBeenCalledWith('receipt.pdf');
+    expect(result[0]?.originalFileName).toBe('receipt.pdf');
   });
 
   it('returns not found when the stored attachment file is missing', async () => {
