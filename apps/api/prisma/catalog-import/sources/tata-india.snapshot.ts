@@ -142,6 +142,43 @@ export const tataIndiaSnapshot: CatalogImportSource = {
                 },
               ],
             },
+            {
+              name: 'Nexon (2020 facelift)',
+              yearStart: 2020,
+              yearEnd: 2022,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'XM',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2020, yearEnd: 2022 }],
+                },
+                {
+                  name: 'XZ Plus',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2020, yearEnd: 2022 }],
+                },
+                {
+                  name: 'XZ Plus (O)',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2020, yearEnd: 2022 }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Harrier',
+          sourceUrl: 'https://cars.tatamotors.com/suv/harrier',
+          generations: [
+            {
+              name: 'Harrier (2023 refresh)',
+              yearStart: 2023,
+              isCurrent: true,
+              variants: [
+                { name: 'Smart', offerings: [{ fuelTypes: ['diesel'], yearStart: 2023, isCurrent: true }] },
+                { name: 'Pure', offerings: [{ fuelTypes: ['diesel'], yearStart: 2023, isCurrent: true }] },
+                { name: 'Adventure', offerings: [{ fuelTypes: ['diesel'], yearStart: 2023, isCurrent: true }] },
+                { name: 'Fearless', offerings: [{ fuelTypes: ['diesel'], yearStart: 2023, isCurrent: true }] },
+              ],
+            },
           ],
         },
       ],

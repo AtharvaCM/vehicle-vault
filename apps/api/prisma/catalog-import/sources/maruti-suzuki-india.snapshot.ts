@@ -39,6 +39,30 @@ export const marutiSuzukiIndiaSnapshot: CatalogImportSource = {
                 },
               ],
             },
+            {
+              name: 'Swift (2018 generation)',
+              yearStart: 2018,
+              yearEnd: 2023,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'LXi',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2023 }],
+                },
+                {
+                  name: 'VXi',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2023 }],
+                },
+                {
+                  name: 'ZXi',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2023 }],
+                },
+                {
+                  name: 'ZXi Plus',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2023 }],
+                },
+              ],
+            },
           ],
         },
         {
@@ -93,6 +117,31 @@ export const marutiSuzukiIndiaSnapshot: CatalogImportSource = {
                 },
                 {
                   name: 'Alpha',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'WagonR',
+          sourceUrl: 'https://www.marutisuzuki.com/wagonr',
+          generations: [
+            {
+              name: 'WagonR (2022 update)',
+              yearStart: 2022,
+              isCurrent: true,
+              variants: [
+                {
+                  name: 'LXi',
+                  offerings: [{ fuelTypes: ['petrol', 'cng'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'VXi',
+                  offerings: [{ fuelTypes: ['petrol', 'cng'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'ZXi',
                   offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
                 },
               ],
@@ -189,6 +238,35 @@ export const marutiSuzukiIndiaSnapshot: CatalogImportSource = {
                 {
                   name: 'Alpha',
                   offerings: [{ fuelTypes: ['petrol', 'hybrid'], yearStart: 2022, isCurrent: true }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Ertiga',
+          sourceUrl: 'https://www.marutisuzuki.com/ertiga',
+          generations: [
+            {
+              name: 'Ertiga (2022 update)',
+              yearStart: 2022,
+              isCurrent: true,
+              variants: [
+                {
+                  name: 'LXi',
+                  offerings: [{ fuelTypes: ['petrol', 'cng'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'VXi',
+                  offerings: [{ fuelTypes: ['petrol', 'cng'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'ZXi',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'ZXi Plus',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
                 },
               ],
             },

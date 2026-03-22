@@ -54,7 +54,8 @@ The product already supports the core ownership loop:
 - View vehicle detail
 - Backend-owned make/model/variant catalog for vehicle entry, seeded for India and keyed by market code for future expansion
 - Catalog internals now support model generations, year-aware variant offerings, and import-run tracking for future market expansion
-- Approved India catalog ingestion now includes Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, and Royal Enfield source snapshots through the shared import pipeline
+- Approved India catalog ingestion now includes Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Kia, Toyota, Royal Enfield, Bajaj, and TVS source snapshots through the shared import pipeline
+- The approved India catalog now includes a broader set of still-common legacy generations across high-volume models, instead of only current flagship lineups
 - Internal catalog review tooling now stages import snapshots, shows diffs against published source data, and requires an explicit publish step before trusted catalog rows are updated
 - Catalog reviewers can now archive source variants missing from the latest snapshot as historical, instead of deleting them or leaving them unresolved in the diff
 - Catalog reviewers can now attach provenance notes and manual year-range/current-status corrections to published source offerings, and those overrides persist across future imports
@@ -161,9 +162,7 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: turn the vehicle catalog from a curated seed into a maintainable regional data asset.
 
-- Expand India coverage so the seeded catalog covers the long-tail brands and legacy variants more comprehensively
-- Add catalog import tooling that can ingest and diff data from approved sources instead of relying only on handwritten seed updates
-- Expand approved India source coverage beyond Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, and Royal Enfield
+- Continue expanding India coverage toward long-tail brands, discontinued trims, and older generation depth
 - Add source-level operator ownership and tighter internal permissions around catalog review if this workflow expands beyond a small trusted team
 - Keep market onboarding data-driven so adding markets beyond India means seeding/importing new rows, not rewriting the vehicle-entry flow
 

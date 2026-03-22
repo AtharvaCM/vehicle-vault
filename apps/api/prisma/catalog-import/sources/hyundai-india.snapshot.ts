@@ -73,6 +73,42 @@ export const hyundaiIndiaSnapshot = {
                 },
               ],
             },
+            {
+              name: 'i20 (2020 launch)',
+              yearStart: 2020,
+              yearEnd: 2022,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'Magna',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2020, yearEnd: 2022 }],
+                },
+                {
+                  name: 'Sportz',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2020, yearEnd: 2022 }],
+                },
+                {
+                  name: 'Asta',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2020, yearEnd: 2022 }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Verna',
+          generations: [
+            {
+              name: 'Verna (2023 turbo update)',
+              yearStart: 2023,
+              isCurrent: true,
+              variants: [
+                { name: 'EX', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                { name: 'S', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                { name: 'SX', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                { name: 'SX (O)', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+              ],
+            },
           ],
         },
       ],
@@ -160,6 +196,26 @@ export const hyundaiIndiaSnapshot = {
                   offerings: [
                     { fuelTypes: ['petrol', 'diesel'], yearStart: 2023, isCurrent: true },
                   ],
+                },
+              ],
+            },
+            {
+              name: 'Venue (2019 launch)',
+              yearStart: 2019,
+              yearEnd: 2022,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'S',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2019, yearEnd: 2022 }],
+                },
+                {
+                  name: 'SX',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2019, yearEnd: 2022 }],
+                },
+                {
+                  name: 'SX Plus',
+                  offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2019, yearEnd: 2022 }],
                 },
               ],
             },
