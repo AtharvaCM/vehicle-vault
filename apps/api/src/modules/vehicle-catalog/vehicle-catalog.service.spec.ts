@@ -294,6 +294,92 @@ describe('VehicleCatalogService', () => {
     expect(upsertCatalogDataset).toHaveBeenCalled();
   });
 
+  it('archives missing published variants as historical before publish', async () => {
+    prisma.vehicleCatalogImportRun.findUnique
+      .mockResolvedValueOnce({
+        id: 'run-1',
+        sourceKey: 'hyundai-india',
+        marketCode: 'IN',
+        status: 'succeeded',
+        startedAt: new Date('2026-03-22T10:00:00.000Z'),
+        completedAt: new Date('2026-03-22T10:01:00.000Z'),
+        snapshotCount: 1,
+        recordsUpserted: 0,
+        notes: null,
+        publishedAt: null,
+        publishedByUserId: null,
+        snapshots: [
+          {
+            capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+            payload: snapshotPayload,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        id: 'run-1',
+        sourceKey: 'hyundai-india',
+        marketCode: 'IN',
+        status: 'succeeded',
+        startedAt: new Date('2026-03-22T10:00:00.000Z'),
+        completedAt: new Date('2026-03-22T10:01:00.000Z'),
+        snapshotCount: 1,
+        recordsUpserted: 0,
+        notes: null,
+        publishedAt: null,
+        publishedByUserId: null,
+        snapshots: [
+          {
+            capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+            payload: snapshotPayload,
+          },
+        ],
+      });
+    prisma.vehicleCatalogVariantOffering.findMany
+      .mockResolvedValueOnce([
+        {
+          id: 'offering-1',
+          fuelTypes: [FuelType.Petrol, FuelType.Diesel],
+          yearStart: 2024,
+          yearEnd: null,
+          isCurrent: true,
+          sourceUrl: 'https://example.com',
+          variant: {
+            name: 'Legacy Trim',
+            sourceUrl: 'https://example.com',
+            generation: {
+              name: 'Creta (2024 facelift)',
+              yearStart: 2024,
+              yearEnd: null,
+              isCurrent: true,
+              sourceUrl: 'https://example.com',
+              model: {
+                name: 'Creta',
+                sourceUrl: 'https://example.com',
+                make: {
+                  name: 'Hyundai',
+                  marketCode: 'IN',
+                  vehicleType: VehicleType.SUV,
+                  sourceUrl: 'https://example.com',
+                },
+              },
+            },
+          },
+        },
+      ])
+      .mockResolvedValueOnce([]);
+    prisma.vehicleCatalogVariantOffering.updateMany = vi.fn().mockResolvedValue({ count: 1 });
+
+    await expect(service.archiveMissingVariants('run-1')).resolves.toEqual(
+      expect.objectContaining({
+        id: 'run-1',
+        diff: expect.objectContaining({
+          missingVariants: [],
+        }),
+      }),
+    );
+    expect(prisma.vehicleCatalogVariantOffering.updateMany).toHaveBeenCalledTimes(2);
+  });
+
   it('rejects publishing a run when a newer successful import exists', async () => {
     prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue({
       id: 'run-1',
@@ -327,5 +413,31 @@ describe('VehicleCatalogService', () => {
     prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(null);
 
     await expect(service.getImportRunDetail('missing')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects archiving missing variants after a run has been published', async () => {
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue({
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 10,
+      notes: null,
+      publishedAt: new Date('2026-03-22T11:00:00.000Z'),
+      publishedByUserId: 'user-1',
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          payload: snapshotPayload,
+        },
+      ],
+    });
+
+    await expect(service.archiveMissingVariants('run-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });

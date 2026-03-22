@@ -21,12 +21,14 @@ import { appToast } from '@/lib/toast';
 
 import { useCatalogImportRunDetail } from '../hooks/use-catalog-import-run-detail';
 import { useCatalogImportRuns } from '../hooks/use-catalog-import-runs';
+import { useArchiveMissingCatalogImportRun } from '../hooks/use-archive-missing-catalog-import-run';
 import { usePublishCatalogImportRun } from '../hooks/use-publish-catalog-import-run';
 
 export function CatalogImportReviewCard() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const runsQuery = useCatalogImportRuns();
   const detailQuery = useCatalogImportRunDetail(selectedRunId);
+  const archiveMissingMutation = useArchiveMissingCatalogImportRun();
   const publishMutation = usePublishCatalogImportRun();
 
   const selectedRun = useMemo(
@@ -47,6 +49,27 @@ export function CatalogImportReviewCard() {
         description: getApiErrorMessage(
           error,
           "We couldn't publish that catalog import run right now.",
+        ),
+      });
+    }
+  }
+
+  async function handleArchiveMissing(runId: string) {
+    try {
+      const run = await archiveMissingMutation.mutateAsync(runId);
+      appToast.success({
+        title: 'Missing variants archived',
+        description:
+          run.diff.missingVariants.length === 0
+            ? 'Missing source variants were marked as historical and removed from the active diff.'
+            : 'Some source rows are still missing from the staged snapshot and need review.',
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to archive missing variants',
+        description: getApiErrorMessage(
+          error,
+          "We couldn't archive the missing source variants right now.",
         ),
       });
     }
@@ -133,7 +156,11 @@ export function CatalogImportReviewCard() {
             />
           ) : detailQuery.data ? (
             <CatalogImportDetail
+              isArchiving={archiveMissingMutation.isPending}
               detail={detailQuery.data}
+              onArchiveMissing={() => {
+                void handleArchiveMissing(detailQuery.data.id);
+              }}
               isPublishing={publishMutation.isPending}
               onPublish={() => {
                 void handlePublish(detailQuery.data.id);
@@ -194,14 +221,19 @@ function RunRow({
 
 function CatalogImportDetail({
   detail,
+  onArchiveMissing,
+  isArchiving,
   onPublish,
   isPublishing,
 }: {
   detail: VehicleCatalogImportRunDetail;
+  onArchiveMissing: () => void;
+  isArchiving: boolean;
   onPublish: () => void;
   isPublishing: boolean;
 }) {
   const canPublish = detail.status === 'succeeded' && !detail.publishedAt;
+  const canArchiveMissing = canPublish && detail.diff.missingVariants.length > 0;
 
   return (
     <>
@@ -279,10 +311,18 @@ function CatalogImportDetail({
 
       <DialogFooter>
         {canPublish ? (
-          <Button disabled={isPublishing} onClick={onPublish} type="button">
-            <CheckCheck className="mr-2 h-4 w-4" />
-            {isPublishing ? 'Publishing import...' : 'Approve and publish'}
-          </Button>
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
+            {canArchiveMissing ? (
+              <Button disabled={isArchiving} onClick={onArchiveMissing} type="button" variant="outline">
+                <ScanSearch className="mr-2 h-4 w-4" />
+                {isArchiving ? 'Archiving missing...' : 'Archive missing as historical'}
+              </Button>
+            ) : null}
+            <Button disabled={isPublishing} onClick={onPublish} type="button">
+              <CheckCheck className="mr-2 h-4 w-4" />
+              {isPublishing ? 'Publishing import...' : 'Approve and publish'}
+            </Button>
+          </div>
         ) : (
           <div className="rounded-xl border border-border/70 bg-slate-50 px-3 py-2 text-sm text-slate-600">
             {detail.publishedAt

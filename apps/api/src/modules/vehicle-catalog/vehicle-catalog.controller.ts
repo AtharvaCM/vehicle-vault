@@ -45,4 +45,9 @@ export class VehicleCatalogController {
   ) {
     return successResponse(await this.vehicleCatalogService.publishImportRun(user.id, params.runId));
   }
+
+  @Post('import-runs/:runId/archive-missing')
+  async archiveMissingVariants(@Param() params: CatalogImportRunIdParamDto) {
+    return successResponse(await this.vehicleCatalogService.archiveMissingVariants(params.runId));
+  }
 }

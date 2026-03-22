@@ -336,6 +336,109 @@ export class VehicleCatalogService {
     return this.mapImportRunReview(updatedRun, dataset);
   }
 
+  async archiveMissingVariants(runId: string): Promise<VehicleCatalogImportRunReview> {
+    const run = await this.prisma.vehicleCatalogImportRun.findUnique({
+      where: {
+        id: runId,
+      },
+      include: {
+        snapshots: {
+          orderBy: {
+            capturedAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!run) {
+      throw new NotFoundException(`Catalog import run ${runId} was not found`);
+    }
+
+    if (run.status !== 'succeeded') {
+      throw new BadRequestException('Only successful import runs can archive missing variants.');
+    }
+
+    if (run.publishedAt) {
+      throw new BadRequestException('Archive missing variants before publishing this import run.');
+    }
+
+    const snapshot = run.snapshots[0];
+
+    if (!snapshot) {
+      throw new BadRequestException('This import run has no stored snapshot to review.');
+    }
+
+    const dataset = parseImportDataset(snapshot.payload);
+    const incomingSummary = summarizeImportDataset(dataset);
+    const activeOfferings = await this.getActivePublishedSourceOfferings(run.marketCode, run.sourceKey);
+    const missingVariantOfferingIds = new Set<string>();
+
+    for (const offering of activeOfferings) {
+      const variantKey = buildPublishedVariantKey(offering);
+
+      if (!incomingSummary.variantKeys.has(variantKey)) {
+        missingVariantOfferingIds.add(offering.id);
+      }
+    }
+
+    if (missingVariantOfferingIds.size === 0) {
+      return this.mapImportRunReview(run, dataset);
+    }
+
+    const archiveYear = new Date().getFullYear();
+    const offeringIds = [...missingVariantOfferingIds];
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.vehicleCatalogVariantOffering.updateMany({
+        where: {
+          id: {
+            in: offeringIds,
+          },
+          yearEnd: null,
+        },
+        data: {
+          isCurrent: false,
+          yearEnd: archiveYear,
+        },
+      });
+
+      await tx.vehicleCatalogVariantOffering.updateMany({
+        where: {
+          id: {
+            in: offeringIds,
+          },
+          NOT: {
+            yearEnd: null,
+          },
+        },
+        data: {
+          isCurrent: false,
+        },
+      });
+    });
+
+    const refreshedRun = await this.prisma.vehicleCatalogImportRun.findUnique({
+      where: {
+        id: run.id,
+      },
+      include: {
+        snapshots: {
+          orderBy: {
+            capturedAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!refreshedRun) {
+      throw new NotFoundException(`Catalog import run ${runId} was not found after archiving.`);
+    }
+
+    return this.mapImportRunReview(refreshedRun, dataset);
+  }
+
   private async mapImportRunReview(
     run: ImportRunRecord,
     datasetOverride?: VehicleCatalogImportDataset,
@@ -376,48 +479,7 @@ export class VehicleCatalogService {
     marketCode: string,
     sourceKey: string,
   ): Promise<VehicleCatalogImportDataset> {
-    const offerings = await this.prisma.vehicleCatalogVariantOffering.findMany({
-      where: {
-        sourceName: sourceKey,
-        variant: {
-          generation: {
-            model: {
-              make: {
-                marketCode,
-              },
-            },
-          },
-        },
-      },
-      include: {
-        variant: {
-          include: {
-            generation: {
-              include: {
-                model: {
-                  include: {
-                    make: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: [
-        {
-          variant: {
-            generation: {
-              model: {
-                make: {
-                  name: 'asc',
-                },
-              },
-            },
-          },
-        },
-      ],
-    });
+    const offerings = await this.getActivePublishedSourceOfferings(marketCode, sourceKey);
 
     const makeMap = new Map<string, VehicleCatalogImportDataset[number]>();
 
@@ -477,13 +539,19 @@ export class VehicleCatalogService {
         generationRecord.variants.push(variantRecord);
       }
 
-      if (!variantRecord.offerings.some((entry) => buildOfferingSignature(entry) === buildOfferingSignature({
-        fuelTypes: offering.fuelTypes as FuelType[],
-        yearStart: offering.yearStart ?? undefined,
-        yearEnd: offering.yearEnd ?? undefined,
-        isCurrent: offering.isCurrent,
-        sourceUrl: offering.sourceUrl ?? undefined,
-      }))) {
+      if (
+        !variantRecord.offerings.some(
+          (entry) =>
+            buildOfferingSignature(entry) ===
+            buildOfferingSignature({
+              fuelTypes: offering.fuelTypes as FuelType[],
+              yearStart: offering.yearStart ?? undefined,
+              yearEnd: offering.yearEnd ?? undefined,
+              isCurrent: offering.isCurrent,
+              sourceUrl: offering.sourceUrl ?? undefined,
+            }),
+        )
+      ) {
         variantRecord.offerings.push({
           fuelTypes: offering.fuelTypes as FuelType[],
           yearStart: offering.yearStart ?? undefined,
@@ -497,6 +565,52 @@ export class VehicleCatalogService {
     }
 
     return [...makeMap.values()].sort(compareImportMakes);
+  }
+
+  private async getActivePublishedSourceOfferings(marketCode: string, sourceKey: string) {
+    return this.prisma.vehicleCatalogVariantOffering.findMany({
+      where: {
+        sourceName: sourceKey,
+        isCurrent: true,
+        variant: {
+          generation: {
+            model: {
+              make: {
+                marketCode,
+              },
+            },
+          },
+        },
+      },
+      include: {
+        variant: {
+          include: {
+            generation: {
+              include: {
+                model: {
+                  include: {
+                    make: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: [
+        {
+          variant: {
+            generation: {
+              model: {
+                make: {
+                  name: 'asc',
+                },
+              },
+            },
+          },
+        },
+      ],
+    });
   }
 }
 
@@ -595,6 +709,37 @@ function buildImportDiff(
       .map((key) => published.variantLabels.get(key) ?? key)
       .sort(),
   };
+}
+
+function buildPublishedVariantKey(offering: {
+  variant: {
+    name: string;
+    generation: {
+      name: string;
+      model: {
+        name: string;
+        make: {
+          name: string;
+          marketCode: string;
+          vehicleType: string;
+        };
+      };
+    };
+  };
+}) {
+  const make = offering.variant.generation.model.make;
+  const model = offering.variant.generation.model;
+  const generation = offering.variant.generation;
+  const variant = offering.variant;
+
+  return [
+    make.marketCode,
+    make.vehicleType,
+    normalizeKey(make.name),
+    normalizeKey(model.name),
+    normalizeKey(generation.name),
+    normalizeKey(variant.name),
+  ].join('|');
 }
 
 function summarizeImportDataset(dataset: VehicleCatalogImportDataset): NormalizedCatalogSummary {
