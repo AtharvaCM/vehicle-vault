@@ -103,6 +103,9 @@ jobs:
       - name: Apply Prisma migrations
         run: pnpm db:deploy
 
+      - name: Seed catalog data
+        run: pnpm db:seed
+
       - name: Build API
         run: pnpm --filter @vehicle-vault/api build
 
