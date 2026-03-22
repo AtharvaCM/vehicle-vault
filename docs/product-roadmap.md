@@ -55,6 +55,7 @@ The product already supports the core ownership loop:
 - Backend-owned make/model/variant catalog for vehicle entry, seeded for India and keyed by market code for future expansion
 - Catalog internals now support model generations, year-aware variant offerings, and import-run tracking for future market expansion
 - Approved India catalog ingestion now includes Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, and Royal Enfield source snapshots through the shared import pipeline
+- Internal catalog review tooling now stages import snapshots, shows diffs against published source data, and requires an explicit publish step before trusted catalog rows are updated
 - Odometer history and service-trend visibility on vehicle detail pages
 - Edit vehicle
 - Delete vehicle with confirmation
@@ -161,7 +162,7 @@ Goal: turn the vehicle catalog from a curated seed into a maintainable regional 
 - Expand India coverage so the seeded catalog covers the long-tail brands and legacy variants more comprehensively
 - Add catalog import tooling that can ingest and diff data from approved sources instead of relying only on handwritten seed updates
 - Expand approved India source coverage beyond Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, and Royal Enfield
-- Add an internal workflow for marking active year ranges, discontinued variants, and source provenance cleanly
+- Add a richer internal workflow for marking active year ranges, discontinued variants, and source provenance cleanly
 - Keep market onboarding data-driven so adding markets beyond India means seeding/importing new rows, not rewriting the vehicle-entry flow
 
 ### Milestone 2: Production Hardening

@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   FuelType,
+  VehicleCatalogImportDatasetSchema,
   VehicleCatalogMarket,
   VehicleType,
+  type VehicleCatalogImportDataset,
+  type VehicleCatalogImportRunDetail,
+  type VehicleCatalogImportRunReview,
   type VehicleCatalogMakeOption,
   type VehicleCatalogMakeQuery,
   type VehicleCatalogModelOption,
@@ -11,10 +15,46 @@ import {
   type VehicleCatalogVariantQuery,
 } from '@vehicle-vault/shared';
 
+import { upsertCatalogDataset } from '../../../prisma/catalog-import/upsert-catalog-dataset';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ListVehicleCatalogMakesDto } from './dto/list-vehicle-catalog-makes.dto';
 import { ListVehicleCatalogModelsDto } from './dto/list-vehicle-catalog-models.dto';
 import { ListVehicleCatalogVariantsDto } from './dto/list-vehicle-catalog-variants.dto';
+
+type ImportRunRecord = {
+  id: string;
+  sourceKey: string;
+  marketCode: string;
+  status: 'running' | 'succeeded' | 'failed';
+  startedAt: Date;
+  completedAt: Date | null;
+  snapshotCount: number;
+  recordsUpserted: number;
+  notes: string | null;
+  publishedAt: Date | null;
+  publishedByUserId: string | null;
+  snapshots: Array<{
+    capturedAt: Date;
+    payload: unknown;
+  }>;
+};
+
+type CatalogCounts = {
+  makes: number;
+  models: number;
+  generations: number;
+  variants: number;
+  offerings: number;
+};
+
+type NormalizedCatalogSummary = {
+  counts: CatalogCounts;
+  modelKeys: Set<string>;
+  modelLabels: Map<string, string>;
+  variantKeys: Set<string>;
+  variantLabels: Map<string, string>;
+  variantOfferingSignatures: Map<string, string[]>;
+};
 
 @Injectable()
 export class VehicleCatalogService {
@@ -168,6 +208,296 @@ export class VehicleCatalogService {
       })),
     );
   }
+
+  async listImportRuns(): Promise<VehicleCatalogImportRunReview[]> {
+    const runs = await this.prisma.vehicleCatalogImportRun.findMany({
+      include: {
+        snapshots: {
+          orderBy: {
+            capturedAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+      take: 10,
+    });
+
+    return Promise.all(runs.map((run) => this.mapImportRunReview(run)));
+  }
+
+  async getImportRunDetail(runId: string): Promise<VehicleCatalogImportRunDetail> {
+    const run = await this.prisma.vehicleCatalogImportRun.findUnique({
+      where: {
+        id: runId,
+      },
+      include: {
+        snapshots: {
+          orderBy: {
+            capturedAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!run) {
+      throw new NotFoundException(`Catalog import run ${runId} was not found`);
+    }
+
+    return this.mapImportRunDetail(run);
+  }
+
+  async publishImportRun(userId: string, runId: string): Promise<VehicleCatalogImportRunReview> {
+    const run = await this.prisma.vehicleCatalogImportRun.findUnique({
+      where: {
+        id: runId,
+      },
+      include: {
+        snapshots: {
+          orderBy: {
+            capturedAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!run) {
+      throw new NotFoundException(`Catalog import run ${runId} was not found`);
+    }
+
+    if (run.status !== 'succeeded') {
+      throw new BadRequestException('Only successful import runs can be published.');
+    }
+
+    if (run.publishedAt) {
+      throw new BadRequestException('This import run has already been published.');
+    }
+
+    const newerRun = await this.prisma.vehicleCatalogImportRun.findFirst({
+      where: {
+        sourceKey: run.sourceKey,
+        marketCode: run.marketCode,
+        status: 'succeeded',
+        startedAt: {
+          gt: run.startedAt,
+        },
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (newerRun) {
+      throw new BadRequestException(
+        'A newer successful import run exists for this source. Review the latest run before publishing.',
+      );
+    }
+
+    const snapshot = run.snapshots[0];
+
+    if (!snapshot) {
+      throw new BadRequestException('This import run has no stored snapshot to publish.');
+    }
+
+    const dataset = parseImportDataset(snapshot.payload);
+
+    const updatedRun = await this.prisma.$transaction(async (tx) => {
+      const recordsUpserted = await upsertCatalogDataset(tx, dataset, {
+        defaultSourceName: run.sourceKey,
+      });
+
+      return tx.vehicleCatalogImportRun.update({
+        where: {
+          id: run.id,
+        },
+        data: {
+          publishedAt: new Date(),
+          publishedByUserId: userId,
+          recordsUpserted,
+        },
+        include: {
+          snapshots: {
+            orderBy: {
+              capturedAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
+    });
+
+    return this.mapImportRunReview(updatedRun, dataset);
+  }
+
+  private async mapImportRunReview(
+    run: ImportRunRecord,
+    datasetOverride?: VehicleCatalogImportDataset,
+  ): Promise<VehicleCatalogImportRunReview> {
+    const snapshot = run.snapshots[0];
+    const dataset = datasetOverride ?? parseImportDataset(snapshot?.payload);
+    const currentPublishedDataset = await this.getPublishedSourceDataset(run.marketCode, run.sourceKey);
+
+    return {
+      id: run.id,
+      sourceKey: run.sourceKey,
+      marketCode: run.marketCode,
+      status: run.status,
+      startedAt: run.startedAt.toISOString(),
+      completedAt: run.completedAt?.toISOString(),
+      snapshotCapturedAt: snapshot?.capturedAt.toISOString(),
+      snapshotCount: run.snapshotCount,
+      publishedAt: run.publishedAt?.toISOString(),
+      publishedByUserId: run.publishedByUserId ?? undefined,
+      recordsUpserted: run.recordsUpserted,
+      notes: run.notes ?? undefined,
+      diff: buildImportDiff(dataset, currentPublishedDataset),
+    };
+  }
+
+  private async mapImportRunDetail(run: ImportRunRecord): Promise<VehicleCatalogImportRunDetail> {
+    const snapshot = run.snapshots[0];
+    const dataset = parseImportDataset(snapshot?.payload);
+    const review = await this.mapImportRunReview(run, dataset);
+
+    return {
+      ...review,
+      dataset,
+    };
+  }
+
+  private async getPublishedSourceDataset(
+    marketCode: string,
+    sourceKey: string,
+  ): Promise<VehicleCatalogImportDataset> {
+    const offerings = await this.prisma.vehicleCatalogVariantOffering.findMany({
+      where: {
+        sourceName: sourceKey,
+        variant: {
+          generation: {
+            model: {
+              make: {
+                marketCode,
+              },
+            },
+          },
+        },
+      },
+      include: {
+        variant: {
+          include: {
+            generation: {
+              include: {
+                model: {
+                  include: {
+                    make: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: [
+        {
+          variant: {
+            generation: {
+              model: {
+                make: {
+                  name: 'asc',
+                },
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    const makeMap = new Map<string, VehicleCatalogImportDataset[number]>();
+
+    for (const offering of offerings) {
+      const generation = offering.variant.generation;
+      const model = generation.model;
+      const make = model.make;
+      const makeKey = `${make.marketCode}|${make.vehicleType}|${normalizeKey(make.name)}`;
+
+      const makeRecord =
+        makeMap.get(makeKey) ??
+        {
+          marketCode: make.marketCode,
+          vehicleType: make.vehicleType as VehicleType,
+          name: make.name,
+          sourceUrl: make.sourceUrl ?? undefined,
+          models: [],
+        };
+
+      let modelRecord = makeRecord.models.find((entry) => normalizeKey(entry.name) === normalizeKey(model.name));
+
+      if (!modelRecord) {
+        modelRecord = {
+          name: model.name,
+          sourceUrl: model.sourceUrl ?? undefined,
+          generations: [],
+        };
+        makeRecord.models.push(modelRecord);
+      }
+
+      let generationRecord = modelRecord.generations.find(
+        (entry) => normalizeKey(entry.name) === normalizeKey(generation.name),
+      );
+
+      if (!generationRecord) {
+        generationRecord = {
+          name: generation.name,
+          yearStart: generation.yearStart ?? undefined,
+          yearEnd: generation.yearEnd ?? undefined,
+          isCurrent: generation.isCurrent,
+          sourceUrl: generation.sourceUrl ?? undefined,
+          variants: [],
+        };
+        modelRecord.generations.push(generationRecord);
+      }
+
+      let variantRecord = generationRecord.variants.find(
+        (entry) => normalizeKey(entry.name) === normalizeKey(offering.variant.name),
+      );
+
+      if (!variantRecord) {
+        variantRecord = {
+          name: offering.variant.name,
+          sourceUrl: offering.variant.sourceUrl ?? undefined,
+          offerings: [],
+        };
+        generationRecord.variants.push(variantRecord);
+      }
+
+      if (!variantRecord.offerings.some((entry) => buildOfferingSignature(entry) === buildOfferingSignature({
+        fuelTypes: offering.fuelTypes as FuelType[],
+        yearStart: offering.yearStart ?? undefined,
+        yearEnd: offering.yearEnd ?? undefined,
+        isCurrent: offering.isCurrent,
+        sourceUrl: offering.sourceUrl ?? undefined,
+      }))) {
+        variantRecord.offerings.push({
+          fuelTypes: offering.fuelTypes as FuelType[],
+          yearStart: offering.yearStart ?? undefined,
+          yearEnd: offering.yearEnd ?? undefined,
+          isCurrent: offering.isCurrent,
+          sourceUrl: offering.sourceUrl ?? undefined,
+        });
+      }
+
+      makeMap.set(makeKey, makeRecord);
+    }
+
+    return [...makeMap.values()].sort(compareImportMakes);
+  }
 }
 
 function collapseVariantOptions(
@@ -230,6 +560,126 @@ function collapseVariantOptions(
       isCurrent: variant.isCurrent,
     }))
     .sort(compareVariantOptions);
+}
+
+function buildImportDiff(
+  incomingDataset: VehicleCatalogImportDataset,
+  publishedDataset: VehicleCatalogImportDataset,
+) {
+  const incoming = summarizeImportDataset(incomingDataset);
+  const published = summarizeImportDataset(publishedDataset);
+
+  return {
+    incomingCounts: incoming.counts,
+    publishedCounts: published.counts,
+    newModels: [...incoming.modelKeys]
+      .filter((key) => !published.modelKeys.has(key))
+      .map((key) => incoming.modelLabels.get(key) ?? key)
+      .sort(),
+    newVariants: [...incoming.variantKeys]
+      .filter((key) => !published.variantKeys.has(key))
+      .map((key) => incoming.variantLabels.get(key) ?? key)
+      .sort(),
+    changedVariants: [...incoming.variantKeys]
+      .filter((key) => published.variantKeys.has(key))
+      .filter((key) => {
+        const incomingSignatures = [...(incoming.variantOfferingSignatures.get(key) ?? [])].sort();
+        const publishedSignatures = [...(published.variantOfferingSignatures.get(key) ?? [])].sort();
+
+        return incomingSignatures.join('|') !== publishedSignatures.join('|');
+      })
+      .map((key) => incoming.variantLabels.get(key) ?? key)
+      .sort(),
+    missingVariants: [...published.variantKeys]
+      .filter((key) => !incoming.variantKeys.has(key))
+      .map((key) => published.variantLabels.get(key) ?? key)
+      .sort(),
+  };
+}
+
+function summarizeImportDataset(dataset: VehicleCatalogImportDataset): NormalizedCatalogSummary {
+  const makeKeys = new Set<string>();
+  const modelKeys = new Set<string>();
+  const modelLabels = new Map<string, string>();
+  const generationKeys = new Set<string>();
+  const variantKeys = new Set<string>();
+  const variantLabels = new Map<string, string>();
+  const variantOfferingSignatures = new Map<string, string[]>();
+  let offeringCount = 0;
+
+  for (const make of dataset) {
+    const makeKey = `${make.marketCode}|${make.vehicleType}|${normalizeKey(make.name)}`;
+    makeKeys.add(makeKey);
+
+    for (const model of make.models) {
+      const modelKey = `${makeKey}|${normalizeKey(model.name)}`;
+      modelKeys.add(modelKey);
+      modelLabels.set(modelKey, `${make.name} / ${model.name}`);
+
+      for (const generation of model.generations) {
+        const generationKey = `${modelKey}|${normalizeKey(generation.name)}`;
+        generationKeys.add(generationKey);
+
+        for (const variant of generation.variants) {
+          const variantKey = `${generationKey}|${normalizeKey(variant.name)}`;
+          variantKeys.add(variantKey);
+          variantLabels.set(variantKey, `${make.name} / ${model.name} / ${generation.name} / ${variant.name}`);
+          variantOfferingSignatures.set(
+            variantKey,
+            variant.offerings.map((offering) => buildOfferingSignature(offering)).sort(),
+          );
+          offeringCount += variant.offerings.length;
+        }
+      }
+    }
+  }
+
+  return {
+    counts: {
+      makes: makeKeys.size,
+      models: modelKeys.size,
+      generations: generationKeys.size,
+      variants: variantKeys.size,
+      offerings: offeringCount,
+    },
+    modelKeys,
+    modelLabels,
+    variantKeys,
+    variantLabels,
+    variantOfferingSignatures,
+  };
+}
+
+function parseImportDataset(payload: unknown): VehicleCatalogImportDataset {
+  const dataset = (payload as { dataset?: unknown } | undefined)?.dataset ?? [];
+
+  return VehicleCatalogImportDatasetSchema.parse(dataset);
+}
+
+function buildOfferingSignature(offering: {
+  fuelTypes: FuelType[];
+  isCurrent?: boolean;
+  sourceUrl?: string;
+  yearEnd?: number;
+  yearStart?: number;
+}) {
+  return [
+    [...offering.fuelTypes].sort().join(','),
+    offering.yearStart ?? 'null',
+    offering.yearEnd ?? 'null',
+    offering.isCurrent ? 'current' : 'historical',
+  ].join('|');
+}
+
+function compareImportMakes(
+  left: VehicleCatalogImportDataset[number],
+  right: VehicleCatalogImportDataset[number],
+) {
+  if (left.vehicleType !== right.vehicleType) {
+    return left.vehicleType.localeCompare(right.vehicleType, 'en');
+  }
+
+  return left.name.localeCompare(right.name, 'en');
 }
 
 function compareVariantOptions(left: VehicleCatalogVariantOption, right: VehicleCatalogVariantOption) {
@@ -337,4 +787,8 @@ function normalizeSearch(value: string | undefined) {
   const normalized = value?.trim();
 
   return normalized ? normalized : undefined;
+}
+
+function normalizeKey(value: string) {
+  return value.trim().toLowerCase();
 }

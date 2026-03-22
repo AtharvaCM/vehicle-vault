@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { PrismaClient, CatalogImportRunStatus } from '@prisma/client';
 
 import { catalogImportSources, type CatalogImportSourceKey } from './catalog-import/source-registry';
-import { upsertCatalogDataset } from './catalog-import/upsert-catalog-dataset';
 
 const prisma = new PrismaClient();
 
@@ -37,19 +36,12 @@ async function main() {
         },
       });
 
-      const recordsUpserted = await prisma.$transaction((tx) =>
-        upsertCatalogDataset(tx, source.dataset, {
-          defaultSourceName: source.sourceKey,
-        }),
-      );
-
       await prisma.vehicleCatalogImportRun.update({
         where: {
           id: run.id,
         },
         data: {
           completedAt: new Date(),
-          recordsUpserted,
           snapshotCount: 1,
           status: CatalogImportRunStatus.succeeded,
         },

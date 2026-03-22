@@ -1,7 +1,48 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FuelType, VehicleCatalogMarket, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { upsertCatalogDataset } from '../../../prisma/catalog-import/upsert-catalog-dataset';
 import { VehicleCatalogService } from './vehicle-catalog.service';
+
+vi.mock('../../../prisma/catalog-import/upsert-catalog-dataset', () => ({
+  upsertCatalogDataset: vi.fn(),
+}));
+
+const snapshotPayload = {
+  dataset: [
+    {
+      marketCode: 'IN',
+      vehicleType: 'suv',
+      name: 'Hyundai',
+      sourceUrl: 'https://www.hyundai.com/in/en/find-a-car',
+      models: [
+        {
+          name: 'Creta',
+          generations: [
+            {
+              name: 'Creta (2024 facelift)',
+              yearStart: 2024,
+              isCurrent: true,
+              variants: [
+                {
+                  name: 'SX (O)',
+                  offerings: [
+                    {
+                      fuelTypes: ['petrol', 'diesel'],
+                      yearStart: 2024,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
 
 describe('VehicleCatalogService', () => {
   const prisma = {
@@ -14,12 +55,25 @@ describe('VehicleCatalogService', () => {
     vehicleCatalogVariant: {
       findMany: vi.fn(),
     },
+    vehicleCatalogVariantOffering: {
+      findMany: vi.fn(),
+    },
+    vehicleCatalogImportRun: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    $transaction: vi.fn(),
   };
 
   let service: VehicleCatalogService;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    prisma.$transaction.mockImplementation(async (callback: (client: typeof prisma) => unknown) =>
+      callback(prisma),
+    );
     service = new VehicleCatalogService(prisma as never);
   });
 
@@ -111,5 +165,167 @@ describe('VehicleCatalogService', () => {
         isCurrent: true,
       },
     ]);
+  });
+
+  it('lists staged import runs with diff summaries', async () => {
+    prisma.vehicleCatalogImportRun.findMany.mockResolvedValue([
+      {
+        id: 'run-1',
+        sourceKey: 'hyundai-india',
+        marketCode: 'IN',
+        status: 'succeeded',
+        startedAt: new Date('2026-03-22T10:00:00.000Z'),
+        completedAt: new Date('2026-03-22T10:01:00.000Z'),
+        snapshotCount: 1,
+        recordsUpserted: 0,
+        notes: null,
+        publishedAt: null,
+        publishedByUserId: null,
+        snapshots: [
+          {
+            capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+            payload: snapshotPayload,
+          },
+        ],
+      },
+    ]);
+    prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
+
+    await expect(service.listImportRuns()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'run-1',
+        sourceKey: 'hyundai-india',
+        publishedAt: undefined,
+        diff: expect.objectContaining({
+          incomingCounts: expect.objectContaining({
+            makes: 1,
+            models: 1,
+            generations: 1,
+            variants: 1,
+            offerings: 1,
+          }),
+          newModels: ['Hyundai / Creta'],
+          newVariants: ['Hyundai / Creta / Creta (2024 facelift) / SX (O)'],
+        }),
+      }),
+    ]);
+  });
+
+  it('returns detailed review data for a staged import run', async () => {
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue({
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 0,
+      notes: null,
+      publishedAt: null,
+      publishedByUserId: null,
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          payload: snapshotPayload,
+        },
+      ],
+    });
+    prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
+
+    await expect(service.getImportRunDetail('run-1')).resolves.toEqual(
+      expect.objectContaining({
+        id: 'run-1',
+        dataset: snapshotPayload.dataset,
+      }),
+    );
+  });
+
+  it('publishes a staged import run into the trusted catalog', async () => {
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue({
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 0,
+      notes: null,
+      publishedAt: null,
+      publishedByUserId: null,
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          payload: snapshotPayload,
+        },
+      ],
+    });
+    prisma.vehicleCatalogImportRun.findFirst.mockResolvedValue(null);
+    prisma.vehicleCatalogImportRun.update.mockResolvedValue({
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 14,
+      notes: null,
+      publishedAt: new Date('2026-03-22T11:00:00.000Z'),
+      publishedByUserId: 'user-1',
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          payload: snapshotPayload,
+        },
+      ],
+    });
+    prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
+    vi.mocked(upsertCatalogDataset).mockResolvedValue(14);
+
+    await expect(service.publishImportRun('user-1', 'run-1')).resolves.toEqual(
+      expect.objectContaining({
+        id: 'run-1',
+        publishedByUserId: 'user-1',
+        recordsUpserted: 14,
+      }),
+    );
+    expect(upsertCatalogDataset).toHaveBeenCalled();
+  });
+
+  it('rejects publishing a run when a newer successful import exists', async () => {
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue({
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 0,
+      notes: null,
+      publishedAt: null,
+      publishedByUserId: null,
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          payload: snapshotPayload,
+        },
+      ],
+    });
+    prisma.vehicleCatalogImportRun.findFirst.mockResolvedValue({
+      id: 'run-2',
+    });
+
+    await expect(service.publishImportRun('user-1', 'run-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('throws when an import run is missing', async () => {
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(null);
+
+    await expect(service.getImportRunDetail('missing')).rejects.toBeInstanceOf(NotFoundException);
   });
 });

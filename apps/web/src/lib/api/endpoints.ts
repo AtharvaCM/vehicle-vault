@@ -23,6 +23,9 @@ export const endpoints = {
     makes: '/vehicle-catalog/makes',
     models: '/vehicle-catalog/models',
     variants: '/vehicle-catalog/variants',
+    importRuns: '/vehicle-catalog/import-runs',
+    importRunDetail: (runId: string) => `/vehicle-catalog/import-runs/${runId}`,
+    publishImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/publish`,
   },
   maintenance: {
     all: '/maintenance-records',

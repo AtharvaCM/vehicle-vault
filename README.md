@@ -181,7 +181,7 @@ If you want preview deployments to work without editing CORS each time, set `FRO
 - Tailwind CSS is configured in the web app.
 - The API uses Prisma + PostgreSQL, while uploaded receipt files now use Supabase Storage with metadata kept in Postgres.
 - Vehicle make/model/variant search is now backed by a Prisma catalog. The app ships with a curated India-first seed, plus generation-aware and year-aware offering support so the catalog can expand to more markets later without changing the core vehicle form flow.
-- Approved India import sources now include Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, and Royal Enfield via `pnpm catalog:import:all`, and each import records source snapshots plus import-run history before upserting catalog rows.
+- Approved India import sources now include Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, and Royal Enfield via `pnpm catalog:import:all`. Imports now stage source snapshots and review diffs first; publishing into the trusted catalog happens from the in-app catalog review surface.
 - Auth supports email/password sign-in, refresh-token rotation, and password reset request/confirm flows. Email verification and OAuth are still deferred.
 - Vehicles own the rest of the data model. Maintenance records, reminders, dashboard summary, and attachments are all scoped through the authenticated user's vehicles.
 - Background jobs, OCR, and notification delivery are intentionally deferred.

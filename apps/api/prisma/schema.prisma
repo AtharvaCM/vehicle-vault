@@ -188,15 +188,19 @@ model VehicleCatalogImportRun {
   sourceKey       String                   @db.VarChar(80)
   marketCode      String                   @db.VarChar(2)
   status          CatalogImportRunStatus
+  publishedAt     DateTime?
+  publishedByUserId String?                @db.Uuid
   startedAt       DateTime                 @default(now())
   completedAt     DateTime?
   snapshotCount   Int                      @default(0)
   recordsUpserted Int                      @default(0)
   recordsArchived Int                      @default(0)
   notes           String?
+  publishedBy     User?                    @relation("CatalogImportPublishes", fields: [publishedByUserId], references: [id], onDelete: SetNull)
   snapshots       VehicleCatalogImportSnapshot[]
 
   @@index([marketCode, sourceKey, startedAt(sort: Desc)])
+  @@index([marketCode, sourceKey, publishedAt(sort: Desc)])
 }
 
 model VehicleCatalogImportSnapshot {
@@ -221,6 +225,7 @@ model User {
   refreshTokenHash String?   @db.Char(64)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  publishedCatalogImportRuns VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
   vehicles         Vehicle[]
 }
 

@@ -10,6 +10,9 @@ export const queryKeys = {
   },
   vehicleCatalog: {
     all: () => ['vehicleCatalog'] as const,
+    importRuns: () => [...queryKeys.vehicleCatalog.all(), 'importRuns'] as const,
+    importRunDetail: (runId: string) =>
+      [...queryKeys.vehicleCatalog.all(), 'importRunDetail', runId] as const,
     makes: (marketCode: string, vehicleType: string, year?: number) =>
       [...queryKeys.vehicleCatalog.all(), 'makes', marketCode, vehicleType, year ?? 'any'] as const,
     models: (marketCode: string, vehicleType: string, make: string, year?: number) =>

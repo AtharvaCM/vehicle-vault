@@ -11,6 +11,7 @@ import { appToast } from '@/lib/toast';
 
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
 import { useReconcileAttachments } from '../hooks/use-reconcile-attachments';
+import { CatalogImportReviewCard } from '../components/catalog-import-review-card';
 
 export function SettingsPage() {
   const auth = useAuth();
@@ -162,6 +163,8 @@ export function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CatalogImportReviewCard />
     </PageContainer>
   );
 }

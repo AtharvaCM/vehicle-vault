@@ -53,3 +53,81 @@ export const VehicleCatalogVariantQuerySchema = z.object({
   vehicleType: z.nativeEnum(VehicleType),
   year: z.number().int().min(1900).max(2100).optional(),
 });
+
+export const VehicleCatalogImportRunStatusSchema = z.enum(['running', 'succeeded', 'failed']);
+
+export const VehicleCatalogImportOfferingSchema = z.object({
+  fuelTypes: z.array(z.nativeEnum(FuelType)),
+  isCurrent: z.boolean().optional(),
+  sourceUrl: z.string().trim().url().optional(),
+  yearEnd: z.number().int().optional(),
+  yearStart: z.number().int().optional(),
+});
+
+export const VehicleCatalogImportVariantSchema = z.object({
+  name: z.string().trim().min(1),
+  offerings: z.array(VehicleCatalogImportOfferingSchema).min(1),
+  sourceUrl: z.string().trim().url().optional(),
+});
+
+export const VehicleCatalogImportGenerationSchema = z.object({
+  isCurrent: z.boolean().optional(),
+  name: z.string().trim().min(1),
+  sourceUrl: z.string().trim().url().optional(),
+  variants: z.array(VehicleCatalogImportVariantSchema).min(1),
+  yearEnd: z.number().int().optional(),
+  yearStart: z.number().int().optional(),
+});
+
+export const VehicleCatalogImportModelSchema = z.object({
+  generations: z.array(VehicleCatalogImportGenerationSchema).min(1),
+  name: z.string().trim().min(1),
+  sourceUrl: z.string().trim().url().optional(),
+});
+
+export const VehicleCatalogImportMakeSchema = z.object({
+  marketCode: z.string().trim().length(2),
+  models: z.array(VehicleCatalogImportModelSchema).min(1),
+  name: z.string().trim().min(1),
+  sourceUrl: z.string().trim().url().optional(),
+  vehicleType: z.nativeEnum(VehicleType),
+});
+
+export const VehicleCatalogImportDatasetSchema = z.array(VehicleCatalogImportMakeSchema);
+
+export const VehicleCatalogImportCountsSchema = z.object({
+  generations: z.number().int().nonnegative(),
+  makes: z.number().int().nonnegative(),
+  models: z.number().int().nonnegative(),
+  offerings: z.number().int().nonnegative(),
+  variants: z.number().int().nonnegative(),
+});
+
+export const VehicleCatalogImportDiffSchema = z.object({
+  changedVariants: z.array(z.string()),
+  incomingCounts: VehicleCatalogImportCountsSchema,
+  missingVariants: z.array(z.string()),
+  newModels: z.array(z.string()),
+  newVariants: z.array(z.string()),
+  publishedCounts: VehicleCatalogImportCountsSchema,
+});
+
+export const VehicleCatalogImportRunReviewSchema = z.object({
+  completedAt: z.string().datetime().optional(),
+  diff: VehicleCatalogImportDiffSchema,
+  id: z.string().trim().min(1),
+  marketCode: z.string().trim().length(2),
+  notes: z.string().optional(),
+  publishedAt: z.string().datetime().optional(),
+  publishedByUserId: z.string().trim().min(1).optional(),
+  recordsUpserted: z.number().int().nonnegative(),
+  snapshotCapturedAt: z.string().datetime().optional(),
+  snapshotCount: z.number().int().nonnegative(),
+  sourceKey: z.string().trim().min(1),
+  startedAt: z.string().datetime(),
+  status: VehicleCatalogImportRunStatusSchema,
+});
+
+export const VehicleCatalogImportRunDetailSchema = VehicleCatalogImportRunReviewSchema.extend({
+  dataset: VehicleCatalogImportDatasetSchema,
+});
