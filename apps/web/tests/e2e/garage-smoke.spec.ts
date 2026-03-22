@@ -1,13 +1,30 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+}
+
+async function selectSearchableOption(
+  page: Page,
+  fieldId: string,
+  searchPlaceholder: string,
+  searchValue: string,
+  optionLabel: string,
+) {
+  const trigger = page.locator(`#${fieldId}`);
+  await trigger.click();
+
+  const content = page.locator(`#${fieldId}-content`);
+  await expect(content).toBeVisible();
+  await content.getByPlaceholder(searchPlaceholder).fill(searchValue);
+  await content.getByText(optionLabel, { exact: true }).click();
+  await expect(trigger).toContainText(optionLabel);
 }
 
 test('user can register, sign in, and manage the core garage flow', async ({ page }) => {
@@ -49,10 +66,10 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await expect(page).toHaveURL(/\/vehicles\/new$/);
   await page.getByLabel(/registration number/i).fill(registrationNumber);
-  await page.getByLabel(/^make$/i).fill('Hyundai');
-  await page.getByLabel(/^model$/i).fill('Creta');
-  await page.getByLabel(/variant/i).fill('SX');
   await page.getByLabel(/^year$/i).fill('2024');
+  await selectSearchableOption(page, 'vehicle-make', 'Search makes...', 'Hyundai', 'Hyundai');
+  await selectSearchableOption(page, 'vehicle-model', 'Search models...', 'Creta', 'Creta');
+  await selectSearchableOption(page, 'vehicle-variant', 'Search variants...', 'SX', 'SX');
   await page.getByLabel(/odometer/i).fill('15200');
   await page.getByLabel(/nickname/i).fill(initialNickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
