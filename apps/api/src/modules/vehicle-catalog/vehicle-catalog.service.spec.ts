@@ -77,12 +77,18 @@ describe('VehicleCatalogService', () => {
     prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
       {
         id: 'variant-1',
-        modelId: 'model-1',
         name: 'SX (O)',
-        fuelTypes: [FuelType.Petrol, FuelType.Diesel],
-        yearStart: 2024,
-        yearEnd: null,
-        isCurrent: true,
+        generation: {
+          modelId: 'model-1',
+        },
+        offerings: [
+          {
+            fuelTypes: [FuelType.Petrol, FuelType.Diesel],
+            yearStart: 2024,
+            yearEnd: null,
+            isCurrent: true,
+          },
+        ],
       },
     ]);
 

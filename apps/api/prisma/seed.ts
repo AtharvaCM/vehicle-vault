@@ -1,65 +1,55 @@
 import { PrismaClient } from '@prisma/client';
 
+import { upsertCatalogDataset } from './catalog-import/upsert-catalog-dataset';
+import type { CatalogDataset } from './catalog-import/types';
 import { vehicleCatalogSeedData } from './vehicle-catalog.seed-data';
 
 const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction(async (tx) => {
+    await tx.vehicleCatalogVariantOffering.deleteMany();
     await tx.vehicleCatalogVariant.deleteMany();
+    await tx.vehicleCatalogGeneration.deleteMany();
     await tx.vehicleCatalogModel.deleteMany();
     await tx.vehicleCatalogMake.deleteMany();
-
-    for (const make of vehicleCatalogSeedData) {
-      const createdMake = await tx.vehicleCatalogMake.create({
-        data: {
-          marketCode: make.marketCode,
-          vehicleType: make.vehicleType,
-          name: make.name,
-          slug: slugify(make.name),
-          sourceName: 'curated_seed',
-          sourceUrl: make.sourceUrl,
-        },
-      });
-
-      for (const model of make.models) {
-        const createdModel = await tx.vehicleCatalogModel.create({
-          data: {
-            makeId: createdMake.id,
-            name: model.name,
-            slug: slugify(model.name),
-            sourceName: 'curated_seed',
-            sourceUrl: model.sourceUrl ?? make.sourceUrl,
-          },
-        });
-
-        for (const variant of model.variants) {
-          await tx.vehicleCatalogVariant.create({
-            data: {
-              modelId: createdModel.id,
-              name: variant.name,
-              slug: slugify(variant.name),
-              fuelTypes: variant.fuelTypes,
-              yearStart: variant.yearStart,
-              yearEnd: variant.yearEnd,
-              isCurrent: variant.isCurrent ?? false,
-              sourceName: 'curated_seed',
-              sourceUrl: variant.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
-            },
-          });
-        }
-      }
-    }
+    await upsertCatalogDataset(tx, toCatalogDataset(vehicleCatalogSeedData), {
+      defaultSourceName: 'curated_seed',
+    });
   });
 }
 
-function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+function toCatalogDataset(seedData: typeof vehicleCatalogSeedData): CatalogDataset {
+  return seedData.map((make) => ({
+    marketCode: make.marketCode,
+    vehicleType: make.vehicleType,
+    name: make.name,
+    sourceUrl: make.sourceUrl,
+    models: make.models.map((model) => ({
+      name: model.name,
+      sourceUrl: model.sourceUrl ?? make.sourceUrl,
+      generations: [
+        {
+          name: `${model.name} lineup`,
+          isCurrent: model.variants.some((variant) => variant.isCurrent ?? false),
+          sourceUrl: model.sourceUrl ?? make.sourceUrl,
+          variants: model.variants.map((variant) => ({
+            name: variant.name,
+            sourceUrl: variant.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+            offerings: [
+              {
+                fuelTypes: variant.fuelTypes,
+                yearStart: variant.yearStart,
+                yearEnd: variant.yearEnd,
+                isCurrent: variant.isCurrent ?? false,
+                sourceUrl: variant.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+              },
+            ],
+          })),
+        },
+      ],
+    })),
+  }));
 }
 
 main()

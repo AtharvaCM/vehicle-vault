@@ -19,7 +19,8 @@
     "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "prisma:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema prisma/schema.prisma",
-    "prisma:seed": "ts-node --project tsconfig.json --transpile-only prisma/seed.ts"
+    "prisma:seed": "ts-node --project tsconfig.json --transpile-only prisma/seed.ts",
+    "catalog:import:hyundai-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=hyundai-india"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.11",

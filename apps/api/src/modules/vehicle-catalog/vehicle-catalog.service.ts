@@ -38,32 +38,15 @@ export class VehicleCatalogService {
           ? {
               models: {
                 some: {
-                  variants: {
+                  generations: {
                     some: {
-                      OR: [
-                        {
-                          yearStart: null,
-                        },
-                        {
-                          yearStart: {
-                            lte: normalized.year,
+                      variants: {
+                        some: {
+                          offerings: {
+                            some: buildOfferingYearWhere(normalized.year),
                           },
                         },
-                      ],
-                      AND: [
-                        {
-                          OR: [
-                            {
-                              yearEnd: null,
-                            },
-                            {
-                              yearEnd: {
-                                gte: normalized.year,
-                              },
-                            },
-                          ],
-                        },
-                      ],
+                      },
                     },
                   },
                 },
@@ -103,32 +86,15 @@ export class VehicleCatalogService {
           : {}),
         ...(normalized.year !== undefined
           ? {
-              variants: {
+              generations: {
                 some: {
-                  OR: [
-                    {
-                      yearStart: null,
-                    },
-                    {
-                      yearStart: {
-                        lte: normalized.year,
+                  variants: {
+                    some: {
+                      offerings: {
+                        some: buildOfferingYearWhere(normalized.year),
                       },
                     },
-                  ],
-                  AND: [
-                    {
-                      OR: [
-                        {
-                          yearEnd: null,
-                        },
-                        {
-                          yearEnd: {
-                            gte: normalized.year,
-                          },
-                        },
-                      ],
-                    },
-                  ],
+                  },
                 },
               },
             }
@@ -150,12 +116,14 @@ export class VehicleCatalogService {
     const normalized = normalizeVariantQuery(query);
     const variants = await this.prisma.vehicleCatalogVariant.findMany({
       where: {
-        model: {
-          name: normalized.model,
-          make: {
-            marketCode: normalized.marketCode,
-            vehicleType: normalized.vehicleType,
-            name: normalized.make,
+        generation: {
+          model: {
+            name: normalized.model,
+            make: {
+              marketCode: normalized.marketCode,
+              vehicleType: normalized.vehicleType,
+              name: normalized.make,
+            },
           },
         },
         ...(normalized.query
@@ -168,46 +136,171 @@ export class VehicleCatalogService {
           : {}),
         ...(normalized.year !== undefined
           ? {
-              OR: [
-                {
-                  yearStart: null,
-                },
-                {
-                  yearStart: {
-                    lte: normalized.year,
-                  },
-                },
-              ],
-              AND: [
-                {
-                  OR: [
-                    {
-                      yearEnd: null,
-                    },
-                    {
-                      yearEnd: {
-                        gte: normalized.year,
-                      },
-                    },
-                  ],
-                },
-              ],
+              offerings: {
+                some: buildOfferingYearWhere(normalized.year),
+              },
             }
           : {}),
       },
-      orderBy: [{ isCurrent: 'desc' }, { yearEnd: 'desc' }, { yearStart: 'desc' }, { name: 'asc' }],
+      include: {
+        generation: true,
+        offerings: {
+          where: normalized.year !== undefined ? buildOfferingYearWhere(normalized.year) : undefined,
+          orderBy: [{ isCurrent: 'desc' }, { yearEnd: 'desc' }, { yearStart: 'desc' }],
+        },
+      },
+      orderBy: [{ name: 'asc' }],
     });
 
-    return variants.map((variant) => ({
+    return collapseVariantOptions(
+      variants.map((variant) => ({
+        id: variant.id,
+        name: variant.name,
+        generation: {
+          modelId: variant.generation.modelId,
+        },
+        offerings: variant.offerings.map((offering) => ({
+          fuelTypes: offering.fuelTypes as FuelType[],
+          yearStart: offering.yearStart,
+          yearEnd: offering.yearEnd,
+          isCurrent: offering.isCurrent,
+        })),
+      })),
+    );
+  }
+}
+
+function collapseVariantOptions(
+  variants: Array<{
+    id: string;
+    name: string;
+    generation: {
+      modelId: string;
+    };
+    offerings: Array<{
+      fuelTypes: FuelType[];
+      yearStart: number | null;
+      yearEnd: number | null;
+      isCurrent: boolean;
+    }>;
+  }>,
+): VehicleCatalogVariantOption[] {
+  const groupedByName = new Map<
+    string,
+    {
+      id: string;
+      modelId: string;
+      name: string;
+      fuelTypes: Set<FuelType>;
+      yearStart?: number;
+      yearEnd?: number;
+      isCurrent: boolean;
+    }
+  >();
+
+  for (const variant of variants) {
+    const existing = groupedByName.get(variant.name) ?? {
+      id: variant.id,
+      modelId: variant.generation.modelId,
+      name: variant.name,
+      fuelTypes: new Set<FuelType>(),
+      yearStart: undefined,
+      yearEnd: undefined,
+      isCurrent: false,
+    };
+
+    for (const offering of variant.offerings) {
+      offering.fuelTypes.forEach((fuelType) => existing.fuelTypes.add(fuelType));
+      existing.isCurrent ||= offering.isCurrent;
+      existing.yearStart = minDefined(existing.yearStart, offering.yearStart ?? undefined);
+      existing.yearEnd = maxDefined(existing.yearEnd, offering.yearEnd ?? undefined);
+    }
+
+    groupedByName.set(variant.name, existing);
+  }
+
+  return [...groupedByName.values()]
+    .map((variant) => ({
       id: variant.id,
       modelId: variant.modelId,
       name: variant.name,
-      fuelTypes: variant.fuelTypes as FuelType[],
-      yearStart: variant.yearStart ?? undefined,
-      yearEnd: variant.yearEnd ?? undefined,
+      fuelTypes: [...variant.fuelTypes],
+      yearStart: variant.yearStart,
+      yearEnd: variant.isCurrent ? undefined : variant.yearEnd,
       isCurrent: variant.isCurrent,
-    }));
+    }))
+    .sort(compareVariantOptions);
+}
+
+function compareVariantOptions(left: VehicleCatalogVariantOption, right: VehicleCatalogVariantOption) {
+  if (left.isCurrent !== right.isCurrent) {
+    return left.isCurrent ? -1 : 1;
   }
+
+  if ((left.yearEnd ?? Number.MAX_SAFE_INTEGER) !== (right.yearEnd ?? Number.MAX_SAFE_INTEGER)) {
+    return (right.yearEnd ?? Number.MAX_SAFE_INTEGER) - (left.yearEnd ?? Number.MAX_SAFE_INTEGER);
+  }
+
+  if ((left.yearStart ?? Number.MIN_SAFE_INTEGER) !== (right.yearStart ?? Number.MIN_SAFE_INTEGER)) {
+    return (right.yearStart ?? Number.MIN_SAFE_INTEGER) - (left.yearStart ?? Number.MIN_SAFE_INTEGER);
+  }
+
+  return left.name.localeCompare(right.name, 'en');
+}
+
+function buildOfferingYearWhere(year: number) {
+  return {
+    AND: [
+      {
+        OR: [
+          {
+            yearStart: null,
+          },
+          {
+            yearStart: {
+              lte: year,
+            },
+          },
+        ],
+      },
+      {
+        OR: [
+          {
+            yearEnd: null,
+          },
+          {
+            yearEnd: {
+              gte: year,
+            },
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function minDefined(current: number | undefined, next: number | undefined) {
+  if (current === undefined) {
+    return next;
+  }
+
+  if (next === undefined) {
+    return current;
+  }
+
+  return Math.min(current, next);
+}
+
+function maxDefined(current: number | undefined, next: number | undefined) {
+  if (current === undefined) {
+    return next;
+  }
+
+  if (next === undefined) {
+    return current;
+  }
+
+  return Math.max(current, next);
 }
 
 function normalizeMakeQuery(query: ListVehicleCatalogMakesDto): VehicleCatalogMakeQuery {

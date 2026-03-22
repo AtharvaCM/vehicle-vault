@@ -69,6 +69,12 @@ enum AttachmentKind {
   other
 }
 
+enum CatalogImportRunStatus {
+  running
+  succeeded
+  failed
+}
+
 model Vehicle {
   id                 String              @id @default(uuid()) @db.Uuid
   userId             String              @db.Uuid
@@ -93,15 +99,15 @@ model Vehicle {
 }
 
 model VehicleCatalogMake {
-  id          String                @id @default(uuid()) @db.Uuid
-  marketCode  String                @db.VarChar(2)
+  id          String                   @id @default(uuid()) @db.Uuid
+  marketCode  String                   @db.VarChar(2)
   vehicleType VehicleType
-  name        String                @db.VarChar(120)
-  slug        String                @db.VarChar(160)
-  sourceName  String?               @db.VarChar(80)
+  name        String                   @db.VarChar(120)
+  slug        String                   @db.VarChar(160)
+  sourceName  String?                  @db.VarChar(80)
   sourceUrl   String?
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
   models      VehicleCatalogModel[]
 
   @@unique([marketCode, vehicleType, slug])
@@ -109,38 +115,100 @@ model VehicleCatalogMake {
 }
 
 model VehicleCatalogModel {
-  id         String                 @id @default(uuid()) @db.Uuid
-  makeId     String                 @db.Uuid
-  name       String                 @db.VarChar(120)
-  slug       String                 @db.VarChar(160)
-  sourceName String?                @db.VarChar(80)
-  sourceUrl  String?
-  createdAt  DateTime               @default(now())
-  updatedAt  DateTime               @updatedAt
-  make       VehicleCatalogMake     @relation(fields: [makeId], references: [id], onDelete: Cascade)
-  variants   VehicleCatalogVariant[]
+  id          String                    @id @default(uuid()) @db.Uuid
+  makeId      String                    @db.Uuid
+  name        String                    @db.VarChar(120)
+  slug        String                    @db.VarChar(160)
+  sourceName  String?                   @db.VarChar(80)
+  sourceUrl   String?
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  make        VehicleCatalogMake        @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  generations VehicleCatalogGeneration[]
 
   @@unique([makeId, slug])
   @@index([makeId, name])
 }
 
-model VehicleCatalogVariant {
-  id         String              @id @default(uuid()) @db.Uuid
-  modelId    String              @db.Uuid
-  name       String              @db.VarChar(160)
-  slug       String              @db.VarChar(200)
-  fuelTypes  FuelType[]
-  yearStart  Int?
-  yearEnd    Int?
-  isCurrent  Boolean             @default(false)
-  sourceName String?             @db.VarChar(80)
-  sourceUrl  String?
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-  model      VehicleCatalogModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+model VehicleCatalogGeneration {
+  id         String                 @id @default(uuid()) @db.Uuid
+  modelId     String                 @db.Uuid
+  name        String                 @db.VarChar(160)
+  slug        String                 @db.VarChar(200)
+  yearStart   Int?
+  yearEnd     Int?
+  isCurrent   Boolean                @default(false)
+  sourceName  String?                @db.VarChar(80)
+  sourceUrl   String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  model       VehicleCatalogModel    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  variants    VehicleCatalogVariant[]
 
+  @@unique([modelId, slug])
   @@index([modelId, name])
   @@index([modelId, yearStart, yearEnd])
+}
+
+model VehicleCatalogVariant {
+  id          String                       @id @default(uuid()) @db.Uuid
+  generationId String                      @db.Uuid
+  name        String                       @db.VarChar(160)
+  slug        String                       @db.VarChar(200)
+  sourceName  String?                      @db.VarChar(80)
+  sourceUrl   String?
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+  generation  VehicleCatalogGeneration     @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  offerings   VehicleCatalogVariantOffering[]
+
+  @@unique([generationId, slug])
+  @@index([generationId, name])
+}
+
+model VehicleCatalogVariantOffering {
+  id          String               @id @default(uuid()) @db.Uuid
+  variantId   String               @db.Uuid
+  fuelTypes   FuelType[]
+  yearStart   Int?
+  yearEnd     Int?
+  isCurrent   Boolean              @default(false)
+  sourceName  String?              @db.VarChar(80)
+  sourceUrl   String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  variant     VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId, yearStart, yearEnd])
+  @@index([variantId, isCurrent])
+}
+
+model VehicleCatalogImportRun {
+  id              String                   @id @default(uuid()) @db.Uuid
+  sourceKey       String                   @db.VarChar(80)
+  marketCode      String                   @db.VarChar(2)
+  status          CatalogImportRunStatus
+  startedAt       DateTime                 @default(now())
+  completedAt     DateTime?
+  snapshotCount   Int                      @default(0)
+  recordsUpserted Int                      @default(0)
+  recordsArchived Int                      @default(0)
+  notes           String?
+  snapshots       VehicleCatalogImportSnapshot[]
+
+  @@index([marketCode, sourceKey, startedAt(sort: Desc)])
+}
+
+model VehicleCatalogImportSnapshot {
+  id         String                 @id @default(uuid()) @db.Uuid
+  importRunId String                @db.Uuid
+  sourceUrl  String
+  sourceHash String                 @db.Char(64)
+  payload    Json
+  capturedAt DateTime               @default(now())
+  importRun  VehicleCatalogImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+
+  @@index([importRunId, capturedAt(sort: Desc)])
 }
 
 model User {
