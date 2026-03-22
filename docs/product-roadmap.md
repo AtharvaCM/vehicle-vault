@@ -52,6 +52,7 @@ The product already supports the core ownership loop:
 - Create vehicle
 - List vehicles
 - View vehicle detail
+- Backend-owned make/model/variant catalog for vehicle entry, seeded for India and keyed by market code for future expansion
 - Odometer history and service-trend visibility on vehicle detail pages
 - Edit vehicle
 - Delete vehicle with confirmation
@@ -151,7 +152,16 @@ These are the main items that still prevent the product from being a more comple
 
 These are ordered by product leverage, not by technical novelty.
 
-### Milestone 1: Production Hardening
+### Milestone 1: Catalog Coverage and Ingestion
+
+Goal: turn the vehicle catalog from a curated seed into a maintainable regional data asset.
+
+- Expand India coverage so the seeded catalog covers the long-tail brands and legacy variants more comprehensively
+- Add catalog import tooling that can ingest and diff data from approved sources instead of relying only on handwritten seed updates
+- Add an internal workflow for marking active year ranges, discontinued variants, and source provenance cleanly
+- Keep market onboarding data-driven so adding markets beyond India means seeding/importing new rows, not rewriting the vehicle-entry flow
+
+### Milestone 2: Production Hardening
 
 Goal: close the highest-value operational gaps without expanding product scope too early.
 

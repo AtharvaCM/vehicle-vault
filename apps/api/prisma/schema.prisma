@@ -92,6 +92,57 @@ model Vehicle {
   @@index([userId, createdAt(sort: Desc)])
 }
 
+model VehicleCatalogMake {
+  id          String                @id @default(uuid()) @db.Uuid
+  marketCode  String                @db.VarChar(2)
+  vehicleType VehicleType
+  name        String                @db.VarChar(120)
+  slug        String                @db.VarChar(160)
+  sourceName  String?               @db.VarChar(80)
+  sourceUrl   String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  models      VehicleCatalogModel[]
+
+  @@unique([marketCode, vehicleType, slug])
+  @@index([marketCode, vehicleType, name])
+}
+
+model VehicleCatalogModel {
+  id         String                 @id @default(uuid()) @db.Uuid
+  makeId     String                 @db.Uuid
+  name       String                 @db.VarChar(120)
+  slug       String                 @db.VarChar(160)
+  sourceName String?                @db.VarChar(80)
+  sourceUrl  String?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  make       VehicleCatalogMake     @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  variants   VehicleCatalogVariant[]
+
+  @@unique([makeId, slug])
+  @@index([makeId, name])
+}
+
+model VehicleCatalogVariant {
+  id         String              @id @default(uuid()) @db.Uuid
+  modelId    String              @db.Uuid
+  name       String              @db.VarChar(160)
+  slug       String              @db.VarChar(200)
+  fuelTypes  FuelType[]
+  yearStart  Int?
+  yearEnd    Int?
+  isCurrent  Boolean             @default(false)
+  sourceName String?             @db.VarChar(80)
+  sourceUrl  String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  model      VehicleCatalogModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId, name])
+  @@index([modelId, yearStart, yearEnd])
+}
+
 model User {
   id               String    @id @default(uuid()) @db.Uuid
   name             String    @db.VarChar(120)

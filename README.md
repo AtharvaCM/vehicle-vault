@@ -23,6 +23,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 pnpm db:generate
 pnpm db:migrate
+pnpm db:seed
 pnpm build
 pnpm dev
 ```
@@ -60,6 +61,7 @@ Common local database workflow:
 ```bash
 pnpm db:generate
 pnpm db:migrate
+pnpm db:seed
 pnpm dev:api
 ```
 
@@ -77,6 +79,7 @@ For a new local or hosted environment:
 ```bash
 pnpm db:generate
 pnpm db:deploy
+pnpm db:seed
 pnpm build
 ```
 
@@ -90,6 +93,7 @@ Useful Prisma commands:
 pnpm db:generate
 pnpm db:migrate
 pnpm db:deploy
+pnpm db:seed
 pnpm db:studio
 ```
 
@@ -172,6 +176,7 @@ If you want preview deployments to work without editing CORS each time, set `FRO
 - Frontend server state is prepared with TanStack Query.
 - Tailwind CSS is configured in the web app.
 - The API uses Prisma + PostgreSQL, while uploaded receipt files now use Supabase Storage with metadata kept in Postgres.
+- Vehicle make/model/variant search is now backed by a Prisma catalog. The app ships with a curated India-first seed, keyed by market code and year-aware variant availability so the catalog can expand to more markets later without changing the core vehicle form flow.
 - Auth supports email/password sign-in, refresh-token rotation, and password reset request/confirm flows. Email verification and OAuth are still deferred.
 - Vehicles own the rest of the data model. Maintenance records, reminders, dashboard summary, and attachments are all scoped through the authenticated user's vehicles.
 - Background jobs, OCR, and notification delivery are intentionally deferred.

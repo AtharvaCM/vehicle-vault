@@ -8,6 +8,36 @@ export const queryKeys = {
     list: () => [...queryKeys.vehicles.all(), 'list'] as const,
     detail: (vehicleId: string) => [...queryKeys.vehicles.all(), 'detail', vehicleId] as const,
   },
+  vehicleCatalog: {
+    all: () => ['vehicleCatalog'] as const,
+    makes: (marketCode: string, vehicleType: string, year?: number) =>
+      [...queryKeys.vehicleCatalog.all(), 'makes', marketCode, vehicleType, year ?? 'any'] as const,
+    models: (marketCode: string, vehicleType: string, make: string, year?: number) =>
+      [
+        ...queryKeys.vehicleCatalog.all(),
+        'models',
+        marketCode,
+        vehicleType,
+        make,
+        year ?? 'any',
+      ] as const,
+    variants: (
+      marketCode: string,
+      vehicleType: string,
+      make: string,
+      model: string,
+      year?: number,
+    ) =>
+      [
+        ...queryKeys.vehicleCatalog.all(),
+        'variants',
+        marketCode,
+        vehicleType,
+        make,
+        model,
+        year ?? 'any',
+      ] as const,
+  },
   maintenance: {
     all: () => ['maintenance'] as const,
     global: () => [...queryKeys.maintenance.all(), 'global'] as const,

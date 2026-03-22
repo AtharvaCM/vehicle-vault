@@ -1,8 +1,12 @@
-import { FuelType, VehicleType } from '@vehicle-vault/shared';
+import {
+  DEFAULT_VEHICLE_CATALOG_MARKET,
+  FuelType,
+  type VehicleCatalogVariantOption,
+  VehicleType,
+} from '@vehicle-vault/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 
-import { ApiError } from '@/lib/api/api-error';
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { SearchableSelect, type SearchableSelectOption } from '@/components/shared/searchable-select';
@@ -16,13 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ApiError } from '@/lib/api/api-error';
 
-import {
-  getCatalogMakes,
-  getCatalogModels,
-  getCatalogVariants,
-  supportsVehicleCatalog,
-} from '../data/vehicle-catalog';
+import { supportsVehicleCatalog } from '../data/vehicle-catalog';
+import { useVehicleCatalogMakes } from '../hooks/use-vehicle-catalog-makes';
+import { useVehicleCatalogModels } from '../hooks/use-vehicle-catalog-models';
+import { useVehicleCatalogVariants } from '../hooks/use-vehicle-catalog-variants';
 import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-form.schema';
 
 const fuelOptions = Object.values(FuelType);
@@ -78,21 +81,73 @@ export function VehicleForm({
   const form = useForm<VehicleFormValues>({
     defaultValues: defaultVehicleValues,
   });
+
   const selectedVehicleType = form.watch('vehicleType');
+  const selectedYear = form.watch('year');
   const selectedMake = form.watch('make');
   const selectedModel = form.watch('model');
+  const selectedVariant = form.watch('variant');
+  const selectedFuelType = form.watch('fuelType');
   const usesCatalog = supportsVehicleCatalog(selectedVehicleType);
+  const catalogYear = Number.isFinite(selectedYear) ? selectedYear : undefined;
+
+  const makesQuery = useVehicleCatalogMakes(
+    {
+      marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+      vehicleType: selectedVehicleType,
+      year: catalogYear,
+    },
+    usesCatalog,
+  );
+  const modelsQuery = useVehicleCatalogModels(
+    {
+      make: selectedMake,
+      marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+      vehicleType: selectedVehicleType,
+      year: catalogYear,
+    },
+    usesCatalog && Boolean(selectedMake),
+  );
+  const variantsQuery = useVehicleCatalogVariants(
+    {
+      make: selectedMake,
+      marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+      model: selectedModel,
+      vehicleType: selectedVehicleType,
+      year: catalogYear,
+    },
+    usesCatalog && Boolean(selectedMake) && Boolean(selectedModel),
+  );
+
+  const catalogError = getCatalogError([
+    makesQuery.error,
+    modelsQuery.error,
+    variantsQuery.error,
+  ]);
+  const canUseCatalogSelectors = usesCatalog && !catalogError;
+
   const makeOptions = useMemo(
-    () => getCatalogMakes(selectedVehicleType).map(toOption),
-    [selectedVehicleType],
+    () => mergeSelectedOption((makesQuery.data ?? []).map(toMakeOption), selectedMake),
+    [makesQuery.data, selectedMake],
   );
   const modelOptions = useMemo(
-    () => getCatalogModels(selectedVehicleType, selectedMake).map(toOption),
-    [selectedMake, selectedVehicleType],
+    () => mergeSelectedOption((modelsQuery.data ?? []).map(toModelOption), selectedModel),
+    [modelsQuery.data, selectedModel],
   );
   const variantOptions = useMemo(
-    () => getCatalogVariants(selectedVehicleType, selectedMake, selectedModel).map(toOption),
-    [selectedMake, selectedModel, selectedVehicleType],
+    () => mergeSelectedOption((variantsQuery.data ?? []).map(toVariantOption), selectedVariant),
+    [selectedVariant, variantsQuery.data],
+  );
+  const selectedVariantOption = useMemo(
+    () => variantsQuery.data?.find((variant) => variant.name === selectedVariant),
+    [selectedVariant, variantsQuery.data],
+  );
+  const availableFuelOptions = useMemo(
+    () =>
+      selectedVariantOption?.fuelTypes.length
+        ? fuelOptions.filter((fuelType) => selectedVariantOption.fuelTypes.includes(fuelType))
+        : fuelOptions,
+    [selectedVariantOption],
   );
 
   useEffect(() => {
@@ -113,39 +168,22 @@ export function VehicleForm({
   }, [form.formState.isDirty, onDirtyChange]);
 
   useEffect(() => {
-    if (!usesCatalog) {
+    if (!selectedVariantOption) {
       return;
     }
 
-    if (selectedMake && !makeOptions.some((option) => option.value === selectedMake)) {
-      form.setValue('make', '', { shouldDirty: form.formState.isDirty });
-      form.setValue('model', '', { shouldDirty: form.formState.isDirty });
-      form.setValue('variant', '', { shouldDirty: form.formState.isDirty });
-    }
-  }, [form, form.formState.isDirty, makeOptions, selectedMake, usesCatalog]);
+    const [primaryFuelType] = selectedVariantOption.fuelTypes;
 
-  useEffect(() => {
-    if (!usesCatalog) {
+    if (!primaryFuelType) {
       return;
     }
 
-    if (selectedModel && !modelOptions.some((option) => option.value === selectedModel)) {
-      form.setValue('model', '', { shouldDirty: form.formState.isDirty });
-      form.setValue('variant', '', { shouldDirty: form.formState.isDirty });
+    if (!selectedVariantOption.fuelTypes.includes(selectedFuelType)) {
+      form.setValue('fuelType', primaryFuelType, {
+        shouldDirty: form.formState.isDirty,
+      });
     }
-  }, [form, form.formState.isDirty, modelOptions, selectedModel, usesCatalog]);
-
-  useEffect(() => {
-    if (!usesCatalog) {
-      return;
-    }
-
-    const selectedVariant = form.getValues('variant');
-
-    if (selectedVariant && !variantOptions.some((option) => option.value === selectedVariant)) {
-      form.setValue('variant', '', { shouldDirty: form.formState.isDirty });
-    }
-  }, [form, form.formState.isDirty, usesCatalog, variantOptions]);
+  }, [form, form.formState.isDirty, selectedFuelType, selectedVariantOption]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = vehicleFormSchema.safeParse({
@@ -185,7 +223,9 @@ export function VehicleForm({
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Vehicle details</CardTitle>
-        <CardDescription>Add the basics so this vehicle is easy to recognise everywhere in the app.</CardDescription>
+        <CardDescription>
+          Add the basics so this vehicle is easy to recognise everywhere in the app.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -212,8 +252,19 @@ export function VehicleForm({
                 control={form.control}
                 name="vehicleType"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger id="vehicle-type" aria-invalid={Boolean(form.formState.errors.vehicleType)}>
+                  <Select
+                    onValueChange={(nextVehicleType) => {
+                      field.onChange(nextVehicleType);
+                      form.setValue('make', '', { shouldDirty: true });
+                      form.setValue('model', '', { shouldDirty: true });
+                      form.setValue('variant', '', { shouldDirty: true });
+                    }}
+                    value={field.value}
+                  >
+                    <SelectTrigger
+                      id="vehicle-type"
+                      aria-invalid={Boolean(form.formState.errors.vehicleType)}
+                    >
                       <SelectValue placeholder="Select vehicle type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -228,8 +279,25 @@ export function VehicleForm({
               />
             </FormField>
 
+            <FormField htmlFor="vehicle-year" label="Year" error={form.formState.errors.year?.message}>
+              <Input
+                id="vehicle-year"
+                {...form.register('year', {
+                  valueAsNumber: true,
+                  onChange: () => {
+                    form.setValue('make', '', { shouldDirty: true });
+                    form.setValue('model', '', { shouldDirty: true });
+                    form.setValue('variant', '', { shouldDirty: true });
+                  },
+                })}
+                aria-invalid={Boolean(form.formState.errors.year)}
+                min={1900}
+                type="number"
+              />
+            </FormField>
+
             <FormField htmlFor="vehicle-make" label="Make" error={form.formState.errors.make?.message}>
-              {usesCatalog ? (
+              {canUseCatalogSelectors ? (
                 <Controller
                   control={form.control}
                   name="make"
@@ -242,7 +310,7 @@ export function VehicleForm({
                         form.setValue('variant', '', { shouldDirty: true });
                       }}
                       options={makeOptions}
-                      placeholder="Select make"
+                      placeholder={makesQuery.isLoading ? 'Loading makes...' : 'Select make'}
                       searchPlaceholder="Search makes..."
                       value={field.value}
                     />
@@ -259,23 +327,27 @@ export function VehicleForm({
             </FormField>
 
             <FormField htmlFor="vehicle-model" label="Model" error={form.formState.errors.model?.message}>
-              {usesCatalog ? (
+              {canUseCatalogSelectors ? (
                 <Controller
                   control={form.control}
                   name="model"
                   render={({ field }) => (
                     <SearchableSelect
                       disabled={!selectedMake}
-                      emptyMessage={
-                        selectedMake ? 'No models found for this make.' : 'Select a make first.'
-                      }
+                      emptyMessage={selectedMake ? 'No models found for this make.' : 'Select a make first.'}
                       id="vehicle-model"
                       onChange={(nextModel) => {
                         field.onChange(nextModel);
                         form.setValue('variant', '', { shouldDirty: true });
                       }}
                       options={modelOptions}
-                      placeholder={selectedMake ? 'Select model' : 'Select make first'}
+                      placeholder={
+                        !selectedMake
+                          ? 'Select make first'
+                          : modelsQuery.isLoading
+                            ? 'Loading models...'
+                            : 'Select model'
+                      }
                       searchPlaceholder="Search models..."
                       value={field.value}
                     />
@@ -292,7 +364,7 @@ export function VehicleForm({
             </FormField>
 
             <FormField htmlFor="vehicle-variant" label="Variant" error={form.formState.errors.variant?.message}>
-              {usesCatalog ? (
+              {canUseCatalogSelectors ? (
                 <Controller
                   control={form.control}
                   name="variant"
@@ -300,14 +372,18 @@ export function VehicleForm({
                     <SearchableSelect
                       disabled={!selectedModel}
                       emptyMessage={
-                        selectedModel
-                          ? 'No variants found for this model.'
-                          : 'Select a model first.'
+                        selectedModel ? 'No variants found for this model.' : 'Select a model first.'
                       }
                       id="vehicle-variant"
                       onChange={field.onChange}
                       options={variantOptions}
-                      placeholder={selectedModel ? 'Select variant' : 'Select model first'}
+                      placeholder={
+                        !selectedModel
+                          ? 'Select model first'
+                          : variantsQuery.isLoading
+                            ? 'Loading variants...'
+                            : 'Select variant'
+                      }
                       searchPlaceholder="Search variants..."
                       value={field.value}
                     />
@@ -323,16 +399,6 @@ export function VehicleForm({
               )}
             </FormField>
 
-            <FormField htmlFor="vehicle-year" label="Year" error={form.formState.errors.year?.message}>
-              <Input
-                id="vehicle-year"
-                {...form.register('year', { valueAsNumber: true })}
-                aria-invalid={Boolean(form.formState.errors.year)}
-                min={1900}
-                type="number"
-              />
-            </FormField>
-
             <FormField htmlFor="fuel-type" label="Fuel type" error={form.formState.errors.fuelType?.message}>
               <Controller
                 control={form.control}
@@ -343,7 +409,7 @@ export function VehicleForm({
                       <SelectValue placeholder="Select fuel type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {fuelOptions.map((fuelType) => (
+                      {availableFuelOptions.map((fuelType) => (
                         <SelectItem key={fuelType} value={fuelType}>
                           {formatOptionLabel(fuelType)}
                         </SelectItem>
@@ -374,13 +440,23 @@ export function VehicleForm({
             </FormField>
           </div>
 
-          {usesCatalog ? (
+          {canUseCatalogSelectors ? (
             <p className="text-sm leading-5 text-slate-500">
-              Start with vehicle type, then search the catalog for the correct make, model, and variant.
+              Start with vehicle type and year, then search the India catalog for the correct make,
+              model, and variant.
             </p>
+          ) : catalogError ? (
+            <div className="space-y-2">
+              <InlineError message={catalogError} />
+              <p className="text-sm leading-5 text-slate-500">
+                The catalog is temporarily unavailable, so you can enter make, model, and variant
+                manually.
+              </p>
+            </div>
           ) : (
             <p className="text-sm leading-5 text-slate-500">
-              Catalog search is available for cars, SUVs, and motorcycles. Other vehicle types can be entered manually for now.
+              Catalog search is available for cars, SUVs, and motorcycles. Other vehicle types can
+              be entered manually for now.
             </p>
           )}
 
@@ -406,10 +482,69 @@ export function VehicleForm({
   );
 }
 
-function toOption(value: string): SearchableSelectOption {
+function toMakeOption(option: { name: string }): SearchableSelectOption {
   return {
-    value,
-    label: value,
-    keywords: [value.toLowerCase()],
+    value: option.name,
+    label: option.name,
+    keywords: [option.name.toLowerCase()],
   };
+}
+
+function toModelOption(option: { name: string }): SearchableSelectOption {
+  return {
+    value: option.name,
+    label: option.name,
+    keywords: [option.name.toLowerCase()],
+  };
+}
+
+function toVariantOption(option: VehicleCatalogVariantOption): SearchableSelectOption {
+  const yearLabel = formatVariantYearRange(option.yearStart, option.yearEnd, option.isCurrent);
+
+  return {
+    value: option.name,
+    label: option.name,
+    keywords: [
+      option.name.toLowerCase(),
+      ...option.fuelTypes.map((fuelType) => fuelType.toLowerCase()),
+      ...(yearLabel ? [yearLabel] : []),
+    ],
+  };
+}
+
+function mergeSelectedOption(options: SearchableSelectOption[], selectedValue: string) {
+  if (!selectedValue || options.some((option) => option.value === selectedValue)) {
+    return options;
+  }
+
+  return [
+    {
+      value: selectedValue,
+      label: selectedValue,
+      keywords: [selectedValue.toLowerCase()],
+    },
+    ...options,
+  ];
+}
+
+function formatVariantYearRange(yearStart?: number, yearEnd?: number, isCurrent?: boolean) {
+  if (yearStart && yearEnd) {
+    return `${yearStart}-${yearEnd}`;
+  }
+
+  if (yearStart && isCurrent) {
+    return `${yearStart}+`;
+  }
+
+  if (yearStart) {
+    return String(yearStart);
+  }
+
+  return '';
+}
+
+function getCatalogError(errors: Array<unknown>) {
+  const apiError = errors.find((error): error is ApiError => error instanceof ApiError);
+
+  return apiError?.message ?? null;
 }

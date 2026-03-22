@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { UsersModule } from './modules/users/users.module';
+import { VehicleCatalogModule } from './modules/vehicle-catalog/vehicle-catalog.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
     DashboardModule,
     AuthModule,
     UsersModule,
+    VehicleCatalogModule,
     VehiclesModule,
     MaintenanceModule,
     RemindersModule,

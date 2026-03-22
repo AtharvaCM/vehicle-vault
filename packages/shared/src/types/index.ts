@@ -4,4 +4,5 @@ export * from './dashboard';
 export * from './export';
 export * from './maintenance';
 export * from './reminder';
+export * from './vehicle-catalog';
 export * from './vehicle';
