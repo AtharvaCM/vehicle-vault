@@ -23,7 +23,10 @@ async function selectSearchableOption(
   const content = page.locator(`#${fieldId}-content`);
   await expect(content).toBeVisible();
   await content.getByPlaceholder(searchPlaceholder).fill(searchValue);
-  await content.getByText(optionLabel, { exact: true }).click();
+  await expect(content.locator('[cmdk-item]').filter({ hasText: optionLabel }).first()).toBeVisible({
+    timeout: 15000,
+  });
+  await content.locator('[cmdk-item]').filter({ hasText: optionLabel }).first().click();
   await expect(trigger).toContainText(optionLabel);
 }
 
@@ -66,9 +69,32 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await expect(page).toHaveURL(/\/vehicles\/new$/);
   await page.getByLabel(/registration number/i).fill(registrationNumber);
+  const makeOptionsResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/vehicle-catalog/makes') &&
+      response.url().includes('year=2024') &&
+      response.ok(),
+  );
   await page.getByLabel(/^year$/i).fill('2024');
+  await page.getByLabel(/^year$/i).press('Tab');
+  await makeOptionsResponse;
+  const modelOptionsResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/vehicle-catalog/models') &&
+      response.url().includes('make=Hyundai') &&
+      response.ok(),
+  );
   await selectSearchableOption(page, 'vehicle-make', 'Search makes...', 'Hyundai', 'Hyundai');
+  await modelOptionsResponse;
+  const variantOptionsResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/vehicle-catalog/variants') &&
+      response.url().includes('make=Hyundai') &&
+      response.url().includes('model=Creta') &&
+      response.ok(),
+  );
   await selectSearchableOption(page, 'vehicle-model', 'Search models...', 'Creta', 'Creta');
+  await variantOptionsResponse;
   await selectSearchableOption(page, 'vehicle-variant', 'Search variants...', 'SX', 'SX');
   await page.getByLabel(/odometer/i).fill('15200');
   await page.getByLabel(/nickname/i).fill(initialNickname);
