@@ -42,6 +42,7 @@ The product already supports the core ownership loop:
 - JWT access-token authentication
 - Refresh-token rotation and session renewal
 - Password reset request + reset flow with non-production token preview
+- SMTP-backed password reset email delivery for configured environments
 - Authenticated session bootstrap in the frontend
 - Proactive frontend handling for expired or malformed JWT sessions
 - Route protection in the frontend and backend
@@ -149,7 +150,6 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No email delivery for password reset requests yet
 - No email verification flow
 - No OAuth/social auth
 - No background jobs or reminder delivery
@@ -172,7 +172,6 @@ Goal: turn the vehicle catalog from a curated seed into a maintainable regional 
 
 Goal: close the highest-value operational gaps without expanding product scope too early.
 
-- Add real email delivery for password reset requests
 - Add email verification for new accounts
 - Decide on reminder delivery architecture before adding background jobs or notifications
 

@@ -51,11 +51,19 @@ JWT_SECRET=vehicle-vault-dev-secret
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=vehicle-vault-dev-refresh-secret
 JWT_REFRESH_EXPIRES_IN=30d
+SMTP_URL=
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM=Vehicle Vault <no-reply@example.com>
+MAIL_REPLY_TO=
 ```
 
 `FRONTEND_ORIGIN_PATTERN` is optional. Use it only when you need preview browser origins, such as dynamic Vercel preview URLs, alongside the stable allowlist in `FRONTEND_ORIGIN`.
 
-Password reset is available through the public auth routes. In non-production environments, reset requests return a preview token directly because email delivery is not wired yet.
+Password reset is available through the public auth routes. In production, the API can send real reset emails over SMTP. In non-production environments, reset requests still return a preview token directly so the flow stays usable without mailbox delivery.
 
 Common local database workflow:
 
@@ -75,9 +83,10 @@ For a new local or hosted environment:
 1. Create a Postgres database and set `DATABASE_URL` and `DIRECT_URL`.
 2. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET`.
 3. Set `JWT_SECRET`, `JWT_REFRESH_SECRET`, and the corresponding expiry values.
-4. Set `FRONTEND_ORIGIN` to the stable browser origin.
-5. Optionally set `FRONTEND_ORIGIN_PATTERN` if you need preview browser URLs.
-6. Run:
+4. Set SMTP delivery with either `SMTP_URL` or the `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` fields, plus `MAIL_FROM`.
+5. Set `FRONTEND_ORIGIN` to the stable browser origin.
+6. Optionally set `FRONTEND_ORIGIN_PATTERN` if you need preview browser URLs.
+7. Run:
 
 ```bash
 pnpm db:generate
@@ -120,6 +129,7 @@ For your Portainer-based home server deployment:
 - set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` for attachment binaries
 - set a strong production `JWT_SECRET`
 - set a separate strong production `JWT_REFRESH_SECRET`
+- set SMTP delivery with `SMTP_URL` or the host/port/user/pass fields plus `MAIL_FROM`
 - optionally set `FRONTEND_ORIGIN_PATTERN` for preview browser URLs such as Vercel preview deployments
 
 Recommended production env file reference:
@@ -188,6 +198,6 @@ If you want preview deployments to work without editing CORS each time, set `FRO
 - Vehicle make/model/variant search is now backed by a Prisma catalog. The app ships with a curated India-first seed, plus generation-aware and year-aware offering support so the catalog can expand to more markets later without changing the core vehicle form flow.
 - The published vehicle catalog also stores curated aliases so messy real-world labels such as `i20 Sportz`, `Polo GT TSI`, `Old Swift ZXI`, and `FZ V3` can still resolve to the canonical catalog rows during vehicle entry.
 - Approved India import sources now include Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Kia, Toyota, Renault, Volkswagen, Skoda, Royal Enfield, Bajaj, Hero, TVS, and Yamaha via `pnpm catalog:import:all`. The dataset now also carries common older India-market generations for vehicles like Creta, Swift, Nexon, Seltos, Sonet, Fortuner, Innova Crysta, Duster, Polo, Rapid, Pulsar NS200, Apache RR 310, and R15. Imports stage source snapshots and review diffs first; publishing into the trusted catalog happens from the in-app catalog review surface.
-- Auth supports email/password sign-in, refresh-token rotation, and password reset request/confirm flows. Email verification and OAuth are still deferred.
+- Auth supports email/password sign-in, refresh-token rotation, SMTP-backed password reset emails, and password reset request/confirm flows. Email verification and OAuth are still deferred.
 - Vehicles own the rest of the data model. Maintenance records, reminders, dashboard summary, and attachments are all scoped through the authenticated user's vehicles.
 - Background jobs, OCR, and notification delivery are intentionally deferred.

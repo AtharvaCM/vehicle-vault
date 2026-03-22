@@ -42,7 +42,7 @@ export function ForgotPasswordPage() {
 
       appToast.success({
         title: 'Reset requested',
-        description: 'If the email matches an account, the reset request has been recorded.',
+        description: 'If the email matches an account, a password reset link has been sent.',
       });
     } catch (error) {
       const message = getApiErrorMessage(error, 'Unable to start the password reset flow right now.');
@@ -67,7 +67,7 @@ export function ForgotPasswordPage() {
           </Link>
         </p>
       }
-      description="Request a one-time reset token to recover access to your Vehicle Vault account."
+      description="Request a one-time link to recover access to your Vehicle Vault account."
       title="Reset your password"
     >
       <div className="space-y-4">
@@ -82,7 +82,8 @@ export function ForgotPasswordPage() {
             <div className="space-y-1">
               <p className="text-sm font-semibold text-slate-900">Development reset preview</p>
               <p className="text-xs leading-5 text-slate-600">
-                Email delivery is not configured yet, so this environment returns the token directly.
+                This environment returns the token directly so you can continue the reset flow without
+                relying on mailbox delivery.
               </p>
             </div>
 

@@ -12,7 +12,7 @@ describe('PasswordResetRequestForm', () => {
     render(<PasswordResetRequestForm onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText(/email address/i), '  user@example.com  ');
-    await user.click(screen.getByRole('button', { name: /request password reset/i }));
+    await user.click(screen.getByRole('button', { name: /send password reset email/i }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       email: 'user@example.com',

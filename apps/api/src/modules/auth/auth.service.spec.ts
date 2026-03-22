@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -32,9 +32,15 @@ describe('AuthService', () => {
   };
 
   type AppConfigServiceMock = {
+    frontendOrigin: string;
     isProduction: boolean;
     jwtRefreshExpiresIn: string;
     jwtRefreshSecret: string;
+  };
+
+  type MailServiceMock = {
+    isConfigured: boolean;
+    sendPasswordResetEmail: ReturnType<typeof vi.fn>;
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -54,16 +60,30 @@ describe('AuthService', () => {
   };
 
   const appConfigService: AppConfigServiceMock = {
+    frontendOrigin: 'https://vehicle-vault-eight.vercel.app',
     isProduction: false,
     jwtRefreshExpiresIn: '30d',
     jwtRefreshSecret: 'refresh-secret',
+  };
+
+  const mailService: MailServiceMock = {
+    isConfigured: false,
+    sendPasswordResetEmail: vi.fn(),
   };
 
   let service: AuthService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new AuthService(prisma as never, jwtService as never, appConfigService as never);
+    appConfigService.isProduction = false;
+    mailService.isConfigured = false;
+    mailService.sendPasswordResetEmail.mockResolvedValue(undefined);
+    service = new AuthService(
+      prisma as never,
+      jwtService as never,
+      appConfigService as never,
+      mailService as never,
+    );
   });
 
   it('registers a user with normalized data and returns access and refresh tokens', async () => {
@@ -306,6 +326,50 @@ describe('AuthService', () => {
     expect(result.accepted).toBe(true);
     expect(result.previewToken).toMatch(/^[a-f0-9]{64}$/);
     expect(result.expiresAt).toBeDefined();
+    expect(mailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+  });
+
+  it('sends a real password reset email in production when smtp is configured', async () => {
+    appConfigService.isProduction = true;
+    mailService.isConfigured = true;
+    prisma.user.findUnique = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      createdAt,
+      updatedAt: createdAt,
+    });
+    prisma.user.update = vi.fn().mockResolvedValue(undefined);
+
+    const result = await service.requestPasswordReset({
+      email: 'atharva@example.com',
+    });
+
+    expect(result).toEqual({
+      accepted: true,
+    });
+    expect(mailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'atharva@example.com',
+        name: 'Atharva',
+        resetUrl: expect.stringContaining(
+          'https://vehicle-vault-eight.vercel.app/reset-password?token=',
+        ),
+      }),
+    );
+  });
+
+  it('fails password reset requests in production when email delivery is not configured', async () => {
+    appConfigService.isProduction = true;
+    mailService.isConfigured = false;
+
+    await expect(
+      service.requestPasswordReset({
+        email: 'atharva@example.com',
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
   it('returns a generic password reset acceptance when the email does not exist', async () => {

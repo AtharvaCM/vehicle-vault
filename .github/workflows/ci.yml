@@ -69,6 +69,8 @@ jobs:
           --health-retries 5
 
     env:
+      ATTACHMENT_LOCAL_STORAGE_PATH: /tmp/vehicle-vault-attachments
+      ATTACHMENT_STORAGE_BACKEND: local
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/vehicle_vault?schema=public
       DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/vehicle_vault?schema=public
       FRONTEND_ORIGIN: http://127.0.0.1:4307

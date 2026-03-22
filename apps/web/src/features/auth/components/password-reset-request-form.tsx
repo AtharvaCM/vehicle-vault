@@ -65,7 +65,7 @@ export function PasswordResetRequestForm({
       {submitError ? <InlineError message={submitError} /> : null}
 
       <Button className="w-full" disabled={form.formState.isSubmitting || isSubmitting} type="submit">
-        {isSubmitting ? 'Generating reset link...' : 'Request password reset'}
+        {isSubmitting ? 'Sending reset email...' : 'Send password reset email'}
       </Button>
     </form>
   );

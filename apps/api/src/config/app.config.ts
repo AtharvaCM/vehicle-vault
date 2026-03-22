@@ -19,6 +19,46 @@ function resolvePort(value: string | undefined) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_APP_PORT;
 }
 
+function resolvePositiveInteger(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function resolveBoolean(value: string | undefined, fallback = false) {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (['true', '1', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+
+  if (['false', '0', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+
+  return fallback;
+}
+
+function resolveOptionalString(value: string | undefined) {
+  const normalized = value?.trim();
+
+  return normalized ? normalized : null;
+}
+
+function resolveAttachmentStorageBackend(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase();
+
+  if (normalized === 'local' || normalized === 'supabase') {
+    return normalized;
+  }
+
+  return null;
+}
+
 function resolveFrontendOrigins(value: string | undefined) {
   const origins = (value ?? DEFAULT_FRONTEND_ORIGIN)
     .split(',')
@@ -47,12 +87,29 @@ export const appConfig = registerAs('app', () => ({
   port: resolvePort(process.env.PORT),
   frontendOrigins: resolveFrontendOrigins(process.env.FRONTEND_ORIGIN),
   frontendOriginPattern: resolveFrontendOriginPattern(process.env.FRONTEND_ORIGIN_PATTERN),
+  attachmentStorageBackend:
+    resolveAttachmentStorageBackend(process.env.ATTACHMENT_STORAGE_BACKEND) ??
+    (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+      ? 'supabase'
+      : resolveNodeEnv(process.env.NODE_ENV) === 'production'
+        ? 'supabase'
+        : 'local'),
+  attachmentLocalStoragePath:
+    resolveOptionalString(process.env.ATTACHMENT_LOCAL_STORAGE_PATH) ?? 'uploads',
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
+  mailFrom: resolveOptionalString(process.env.MAIL_FROM),
+  mailReplyTo: resolveOptionalString(process.env.MAIL_REPLY_TO),
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? 'vehicle-vault-attachments',
   supabaseUrl: process.env.SUPABASE_URL,
+  smtpHost: resolveOptionalString(process.env.SMTP_HOST),
+  smtpPass: resolveOptionalString(process.env.SMTP_PASS),
+  smtpPort: resolvePositiveInteger(process.env.SMTP_PORT, 587),
+  smtpSecure: resolveBoolean(process.env.SMTP_SECURE, process.env.SMTP_PORT?.trim() === '465'),
+  smtpUrl: resolveOptionalString(process.env.SMTP_URL),
+  smtpUser: resolveOptionalString(process.env.SMTP_USER),
   jwtSecret: process.env.JWT_SECRET ?? 'vehicle-vault-dev-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',

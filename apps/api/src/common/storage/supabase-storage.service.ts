@@ -5,17 +5,26 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { basename, dirname } from 'node:path/posix';
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { basename as posixBasename, dirname as posixDirname } from 'node:path/posix';
 
 import { AppConfigService } from '../../config/app-config.service';
 
 @Injectable()
 export class SupabaseStorageService implements OnModuleInit {
-  private readonly client: SupabaseClient;
+  private readonly client: SupabaseClient | null;
+  private readonly storageBackend: 'local' | 'supabase';
 
   constructor(private readonly appConfigService: AppConfigService) {
+    this.storageBackend = this.appConfigService.attachmentStorageBackend;
     const supabaseUrl = this.appConfigService.supabaseUrl;
     const supabaseServiceRoleKey = this.appConfigService.supabaseServiceRoleKey;
+
+    if (this.storageBackend === 'local') {
+      this.client = null;
+      return;
+    }
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       throw new Error(
@@ -32,7 +41,12 @@ export class SupabaseStorageService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const { error } = await this.client.storage.createBucket(this.bucketName, {
+    if (this.storageBackend === 'local') {
+      await mkdir(this.localStorageRoot, { recursive: true });
+      return;
+    }
+
+    const { error } = await this.client!.storage.createBucket(this.bucketName, {
       public: false,
     });
 
@@ -47,8 +61,19 @@ export class SupabaseStorageService implements OnModuleInit {
     return this.appConfigService.supabaseStorageBucket;
   }
 
+  get localStorageRoot() {
+    return this.appConfigService.attachmentLocalStoragePath;
+  }
+
   async uploadObject(path: string, file: Buffer, contentType: string) {
-    const { error } = await this.client.storage.from(this.bucketName).upload(path, file, {
+    if (this.storageBackend === 'local') {
+      const targetPath = this.resolveLocalPath(path);
+      await mkdir(dirname(targetPath), { recursive: true });
+      await writeFile(targetPath, file);
+      return;
+    }
+
+    const { error } = await this.client!.storage.from(this.bucketName).upload(path, file, {
       contentType,
       upsert: false,
     });
@@ -59,9 +84,13 @@ export class SupabaseStorageService implements OnModuleInit {
   }
 
   async objectExists(path: string) {
-    const objectName = basename(path);
-    const directory = dirname(path);
-    const { data, error } = await this.client.storage.from(this.bucketName).list(
+    if (this.storageBackend === 'local') {
+      return this.localObjectExists(path);
+    }
+
+    const objectName = posixBasename(path);
+    const directory = posixDirname(path);
+    const { data, error } = await this.client!.storage.from(this.bucketName).list(
       directory === '.' ? '' : directory,
       {
         limit: 100,
@@ -77,7 +106,15 @@ export class SupabaseStorageService implements OnModuleInit {
   }
 
   async downloadObject(path: string) {
-    const { data, error } = await this.client.storage.from(this.bucketName).download(path);
+    if (this.storageBackend === 'local') {
+      try {
+        return await readFile(this.resolveLocalPath(path));
+      } catch {
+        throw new NotFoundException(`Attachment file ${path} was not found in cloud storage.`);
+      }
+    }
+
+    const { data, error } = await this.client!.storage.from(this.bucketName).download(path);
 
     if (error) {
       if (error.message.toLowerCase().includes('not found')) {
@@ -97,12 +134,30 @@ export class SupabaseStorageService implements OnModuleInit {
       return 'missing' as const;
     }
 
-    const { error } = await this.client.storage.from(this.bucketName).remove([path]);
+    if (this.storageBackend === 'local') {
+      await rm(this.resolveLocalPath(path), { force: true });
+      return 'deleted' as const;
+    }
+
+    const { error } = await this.client!.storage.from(this.bucketName).remove([path]);
 
     if (error) {
       throw new InternalServerErrorException('Unable to remove attachment from cloud storage.');
     }
 
     return 'deleted' as const;
+  }
+
+  private async localObjectExists(path: string) {
+    try {
+      await access(this.resolveLocalPath(path));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private resolveLocalPath(storagePath: string) {
+    return join(this.localStorageRoot, ...storagePath.split('/').filter(Boolean));
   }
 }

@@ -1,7 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare, hash } from 'bcryptjs';
 import {
@@ -28,6 +33,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { MailService } from '../../common/mail/mail.service';
 import { AppConfigService } from '../../config/app-config.service';
 import type { LoginDto } from './dto/login.dto';
 import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
@@ -51,6 +57,7 @@ type UserRecord = {
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
 const INVALID_REFRESH_TOKEN_MESSAGE = 'Invalid refresh token.';
 const INVALID_PASSWORD_RESET_TOKEN_MESSAGE = 'Invalid or expired password reset token.';
+const PASSWORD_RESET_UNAVAILABLE_MESSAGE = 'Password reset is unavailable right now.';
 const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
@@ -59,6 +66,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly appConfigService: AppConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -127,6 +135,11 @@ export class AuthService {
 
   async requestPasswordReset(payload: PasswordResetRequestDto): Promise<PasswordResetRequestResponse> {
     const input = this.validatePasswordResetRequestInput(payload);
+
+    if (this.appConfigService.isProduction && !this.mailService.isConfigured) {
+      throw new ServiceUnavailableException(PASSWORD_RESET_UNAVAILABLE_MESSAGE);
+    }
+
     const user = await this.prisma.user.findUnique({
       where: {
         email: input.email.trim().toLowerCase(),
@@ -151,6 +164,21 @@ export class AuthService {
         passwordResetTokenHash: this.hashPasswordResetToken(resetToken),
       },
     });
+
+    if (this.mailService.isConfigured) {
+      try {
+        await this.mailService.sendPasswordResetEmail({
+          email: user.email,
+          expiresAt: passwordResetTokenExpiresAt,
+          name: user.name,
+          resetUrl: this.buildPasswordResetUrl(resetToken),
+        });
+      } catch (error) {
+        if (this.appConfigService.isProduction) {
+          throw error;
+        }
+      }
+    }
 
     return PasswordResetRequestResponseSchema.parse({
       accepted: true,
@@ -258,6 +286,13 @@ export class AuthService {
     }
 
     return this.toUser(user);
+  }
+
+  private buildPasswordResetUrl(token: string) {
+    const resetUrl = new URL('/reset-password', this.appConfigService.frontendOrigin);
+    resetUrl.searchParams.set('token', token);
+
+    return resetUrl.toString();
   }
 
   private async buildAuthResponse(user: User): Promise<AuthResponse> {

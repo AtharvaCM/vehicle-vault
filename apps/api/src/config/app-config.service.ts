@@ -24,11 +24,27 @@ export class AppConfigService {
     return this.configService.get<RegExp | null>('app.frontendOriginPattern') ?? null;
   }
 
+  get attachmentStorageBackend() {
+    return this.configService.get<'local' | 'supabase'>('app.attachmentStorageBackend') ?? 'local';
+  }
+
+  get attachmentLocalStoragePath() {
+    return this.configService.get<string>('app.attachmentLocalStoragePath') ?? 'uploads';
+  }
+
   get databaseUrl() {
     return (
       this.configService.get<string>('app.databaseUrl') ??
       'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public'
     );
+  }
+
+  get mailFrom() {
+    return this.configService.get<string>('app.mailFrom') ?? null;
+  }
+
+  get mailReplyTo() {
+    return this.configService.get<string>('app.mailReplyTo') ?? null;
   }
 
   get supabaseUrl() {
@@ -41,6 +57,30 @@ export class AppConfigService {
 
   get supabaseStorageBucket() {
     return this.configService.get<string>('app.supabaseStorageBucket') ?? 'vehicle-vault-attachments';
+  }
+
+  get smtpHost() {
+    return this.configService.get<string>('app.smtpHost') ?? null;
+  }
+
+  get smtpPass() {
+    return this.configService.get<string>('app.smtpPass') ?? null;
+  }
+
+  get smtpPort() {
+    return this.configService.get<number>('app.smtpPort') ?? 587;
+  }
+
+  get smtpSecure() {
+    return this.configService.get<boolean>('app.smtpSecure') ?? false;
+  }
+
+  get smtpUrl() {
+    return this.configService.get<string>('app.smtpUrl') ?? null;
+  }
+
+  get smtpUser() {
+    return this.configService.get<string>('app.smtpUser') ?? null;
   }
 
   get jwtSecret() {
