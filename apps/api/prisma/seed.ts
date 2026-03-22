@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
+import { syncCatalogAliases } from './catalog-import/sync-catalog-aliases';
 import { upsertCatalogDataset } from './catalog-import/upsert-catalog-dataset';
 import type { CatalogDataset } from './catalog-import/types';
 import { vehicleCatalogSeedData } from './vehicle-catalog.seed-data';
@@ -16,6 +17,7 @@ async function main() {
     await upsertCatalogDataset(tx, toCatalogDataset(vehicleCatalogSeedData), {
       defaultSourceName: 'curated_seed',
     });
+    await syncCatalogAliases(tx);
   });
 }
 

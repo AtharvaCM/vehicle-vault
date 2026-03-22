@@ -18,6 +18,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { upsertCatalogDataset } from '../../../prisma/catalog-import/upsert-catalog-dataset';
+import { syncCatalogAliases } from '../../../prisma/catalog-import/sync-catalog-aliases';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ListVehicleCatalogMakesDto } from './dto/list-vehicle-catalog-makes.dto';
 import { ListVehicleCatalogModelsDto } from './dto/list-vehicle-catalog-models.dto';
@@ -112,17 +113,17 @@ export class VehicleCatalogService {
   async listMakes(query: ListVehicleCatalogMakesDto): Promise<VehicleCatalogMakeOption[]> {
     const normalized = normalizeMakeQuery(query);
     const makes = await this.prisma.vehicleCatalogMake.findMany({
+      include: {
+        aliases: {
+          select: {
+            alias: true,
+          },
+        },
+      },
       where: {
         marketCode: normalized.marketCode,
         vehicleType: normalized.vehicleType,
-        ...(normalized.query
-          ? {
-              name: {
-                contains: normalized.query,
-                mode: 'insensitive',
-              },
-            }
-          : {}),
+        ...buildMakeSearchWhere(normalized.query),
         ...(normalized.year !== undefined
           ? {
               models: {
@@ -150,6 +151,7 @@ export class VehicleCatalogService {
 
     return makes.map((make) => ({
       id: make.id,
+      keywords: uniqueKeywords(make.aliases.map((alias) => alias.alias)),
       marketCode: make.marketCode as VehicleCatalogMarket,
       vehicleType: make.vehicleType as VehicleType,
       name: make.name,
@@ -159,20 +161,38 @@ export class VehicleCatalogService {
   async listModels(query: ListVehicleCatalogModelsDto): Promise<VehicleCatalogModelOption[]> {
     const normalized = normalizeModelQuery(query);
     const models = await this.prisma.vehicleCatalogModel.findMany({
+      include: {
+        aliases: {
+          select: {
+            alias: true,
+          },
+        },
+        generations: {
+          include: {
+            aliases: {
+              select: {
+                alias: true,
+              },
+            },
+            variants: {
+              include: {
+                aliases: {
+                  select: {
+                    alias: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       where: {
         make: {
           marketCode: normalized.marketCode,
           vehicleType: normalized.vehicleType,
           name: normalized.make,
         },
-        ...(normalized.query
-          ? {
-              name: {
-                contains: normalized.query,
-                mode: 'insensitive',
-              },
-            }
-          : {}),
+        ...buildModelSearchWhere(normalized.query),
         ...(normalized.year !== undefined
           ? {
               generations: {
@@ -196,6 +216,7 @@ export class VehicleCatalogService {
 
     return models.map((model) => ({
       id: model.id,
+      keywords: buildModelKeywords(model),
       makeId: model.makeId,
       name: model.name,
     }));
@@ -215,14 +236,7 @@ export class VehicleCatalogService {
             },
           },
         },
-        ...(normalized.query
-          ? {
-              name: {
-                contains: normalized.query,
-                mode: 'insensitive',
-              },
-            }
-          : {}),
+        ...buildVariantSearchWhere(normalized.query),
         ...(normalized.year !== undefined
           ? {
               offerings: {
@@ -232,7 +246,25 @@ export class VehicleCatalogService {
           : {}),
       },
       include: {
-        generation: true,
+        aliases: {
+          select: {
+            alias: true,
+          },
+        },
+        generation: {
+          include: {
+            aliases: {
+              select: {
+                alias: true,
+              },
+            },
+            model: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
         offerings: {
           where: normalized.year !== undefined ? buildOfferingYearWhere(normalized.year) : undefined,
           orderBy: [{ isCurrent: 'desc' }, { yearEnd: 'desc' }, { yearStart: 'desc' }],
@@ -244,6 +276,7 @@ export class VehicleCatalogService {
     return collapseVariantOptions(
       variants.map((variant) => ({
         id: variant.id,
+        keywords: buildVariantKeywords(variant),
         name: variant.name,
         generation: {
           modelId: variant.generation.modelId,
@@ -472,6 +505,7 @@ export class VehicleCatalogService {
       const recordsUpserted = await upsertCatalogDataset(tx, dataset, {
         defaultSourceName: run.sourceKey,
       });
+      await syncCatalogAliases(tx);
 
       return tx.vehicleCatalogImportRun.update({
         where: {
@@ -842,9 +876,237 @@ export class VehicleCatalogService {
   }
 }
 
+function buildModelKeywords(model: {
+  aliases: Array<{ alias: string }>;
+  generations: Array<{
+    name: string;
+    aliases: Array<{ alias: string }>;
+    variants: Array<{
+      name: string;
+      aliases: Array<{ alias: string }>;
+    }>;
+  }>;
+}) {
+  return uniqueKeywords([
+    ...model.aliases.map((alias) => alias.alias),
+    ...model.generations.flatMap((generation) => [
+      generation.name,
+      ...generation.aliases.map((alias) => alias.alias),
+      ...generation.variants.flatMap((variant) => [
+        variant.name,
+        ...variant.aliases.map((alias) => alias.alias),
+      ]),
+    ]),
+  ]);
+}
+
+function buildMakeSearchWhere(query?: string) {
+  if (!query) {
+    return {};
+  }
+
+  return {
+    OR: [
+      {
+        name: {
+          contains: query,
+          mode: 'insensitive' as const,
+        },
+      },
+      {
+        aliases: {
+          some: {
+            alias: {
+              contains: query,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      },
+    ],
+  };
+}
+
+function buildModelSearchWhere(query?: string) {
+  if (!query) {
+    return {};
+  }
+
+  return {
+    OR: [
+      {
+        name: {
+          contains: query,
+          mode: 'insensitive' as const,
+        },
+      },
+      {
+        aliases: {
+          some: {
+            alias: {
+              contains: query,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      },
+      {
+        generations: {
+          some: {
+            name: {
+              contains: query,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      },
+      {
+        generations: {
+          some: {
+            aliases: {
+              some: {
+                alias: {
+                  contains: query,
+                  mode: 'insensitive' as const,
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        generations: {
+          some: {
+            variants: {
+              some: {
+                name: {
+                  contains: query,
+                  mode: 'insensitive' as const,
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        generations: {
+          some: {
+            variants: {
+              some: {
+                aliases: {
+                  some: {
+                    alias: {
+                      contains: query,
+                      mode: 'insensitive' as const,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+  };
+}
+
+function buildVariantSearchWhere(query?: string) {
+  if (!query) {
+    return {};
+  }
+
+  return {
+    OR: [
+      {
+        name: {
+          contains: query,
+          mode: 'insensitive' as const,
+        },
+      },
+      {
+        aliases: {
+          some: {
+            alias: {
+              contains: query,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      },
+      {
+        generation: {
+          name: {
+            contains: query,
+            mode: 'insensitive' as const,
+          },
+        },
+      },
+      {
+        generation: {
+          aliases: {
+            some: {
+              alias: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+          },
+        },
+      },
+    ],
+  };
+}
+
+function buildVariantKeywords(variant: {
+  aliases: Array<{ alias: string }>;
+  generation: {
+    name: string;
+    aliases: Array<{ alias: string }>;
+    model: {
+      name: string;
+    };
+  };
+}) {
+  return uniqueKeywords([
+    variant.generation.model.name,
+    variant.generation.name,
+    ...variant.aliases.map((alias) => alias.alias),
+    ...variant.generation.aliases.map((alias) => alias.alias),
+  ]);
+}
+
+function uniqueKeywords(values: string[]) {
+  const normalized = new Set<string>();
+  const keywords: string[] = [];
+
+  for (const value of values) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+
+    if (normalized.has(key)) {
+      continue;
+    }
+
+    normalized.add(key);
+    keywords.push(trimmed);
+  }
+
+  return keywords;
+}
+
 function collapseVariantOptions(
   variants: Array<{
     id: string;
+    keywords?: string[];
     name: string;
     generation: {
       modelId: string;
@@ -861,6 +1123,7 @@ function collapseVariantOptions(
     string,
     {
       id: string;
+      keywords: Set<string>;
       modelId: string;
       name: string;
       fuelTypes: Set<FuelType>;
@@ -873,6 +1136,7 @@ function collapseVariantOptions(
   for (const variant of variants) {
     const existing = groupedByName.get(variant.name) ?? {
       id: variant.id,
+      keywords: new Set<string>(variant.keywords ?? []),
       modelId: variant.generation.modelId,
       name: variant.name,
       fuelTypes: new Set<FuelType>(),
@@ -882,6 +1146,7 @@ function collapseVariantOptions(
     };
 
     for (const offering of variant.offerings) {
+      (variant.keywords ?? []).forEach((keyword) => existing.keywords.add(keyword));
       offering.fuelTypes.forEach((fuelType) => existing.fuelTypes.add(fuelType));
       existing.isCurrent ||= offering.isCurrent;
       existing.yearStart = minDefined(existing.yearStart, offering.yearStart ?? undefined);
@@ -894,6 +1159,7 @@ function collapseVariantOptions(
   return [...groupedByName.values()]
     .map((variant) => ({
       id: variant.id,
+      keywords: uniqueKeywords([...variant.keywords]),
       modelId: variant.modelId,
       name: variant.name,
       fuelTypes: [...variant.fuelTypes],

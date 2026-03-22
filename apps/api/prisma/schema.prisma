@@ -108,6 +108,7 @@ model VehicleCatalogMake {
   sourceUrl   String?
   createdAt   DateTime                 @default(now())
   updatedAt   DateTime                 @updatedAt
+  aliases     VehicleCatalogMakeAlias[]
   models      VehicleCatalogModel[]
 
   @@unique([marketCode, vehicleType, slug])
@@ -123,6 +124,7 @@ model VehicleCatalogModel {
   sourceUrl   String?
   createdAt   DateTime                  @default(now())
   updatedAt   DateTime                  @updatedAt
+  aliases     VehicleCatalogModelAlias[]
   make        VehicleCatalogMake        @relation(fields: [makeId], references: [id], onDelete: Cascade)
   generations VehicleCatalogGeneration[]
 
@@ -142,6 +144,7 @@ model VehicleCatalogGeneration {
   sourceUrl   String?
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
+  aliases     VehicleCatalogGenerationAlias[]
   model       VehicleCatalogModel    @relation(fields: [modelId], references: [id], onDelete: Cascade)
   variants    VehicleCatalogVariant[]
 
@@ -159,12 +162,65 @@ model VehicleCatalogVariant {
   sourceUrl         String?
   createdAt         DateTime                              @default(now())
   updatedAt         DateTime                              @updatedAt
+  aliases           VehicleCatalogVariantAlias[]
   generation        VehicleCatalogGeneration              @relation(fields: [generationId], references: [id], onDelete: Cascade)
   offerings         VehicleCatalogVariantOffering[]
   offeringOverrides VehicleCatalogVariantOfferingOverride[]
 
   @@unique([generationId, slug])
   @@index([generationId, name])
+}
+
+model VehicleCatalogMakeAlias {
+  id              String             @id @default(uuid()) @db.Uuid
+  makeId          String             @db.Uuid
+  alias           String             @db.VarChar(160)
+  normalizedAlias String             @db.VarChar(160)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  make            VehicleCatalogMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
+
+  @@unique([makeId, normalizedAlias])
+  @@index([normalizedAlias])
+}
+
+model VehicleCatalogModelAlias {
+  id              String              @id @default(uuid()) @db.Uuid
+  modelId         String              @db.Uuid
+  alias           String              @db.VarChar(160)
+  normalizedAlias String              @db.VarChar(160)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  model           VehicleCatalogModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, normalizedAlias])
+  @@index([normalizedAlias])
+}
+
+model VehicleCatalogGenerationAlias {
+  id              String                   @id @default(uuid()) @db.Uuid
+  generationId    String                   @db.Uuid
+  alias           String                   @db.VarChar(180)
+  normalizedAlias String                   @db.VarChar(180)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  generation      VehicleCatalogGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@unique([generationId, normalizedAlias])
+  @@index([normalizedAlias])
+}
+
+model VehicleCatalogVariantAlias {
+  id              String                @id @default(uuid()) @db.Uuid
+  variantId       String                @db.Uuid
+  alias           String                @db.VarChar(180)
+  normalizedAlias String                @db.VarChar(180)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  variant         VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, normalizedAlias])
+  @@index([normalizedAlias])
 }
 
 model VehicleCatalogVariantOffering {

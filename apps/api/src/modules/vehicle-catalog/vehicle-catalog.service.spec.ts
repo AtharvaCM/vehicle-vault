@@ -80,6 +80,7 @@ describe('VehicleCatalogService', () => {
     prisma.$transaction.mockImplementation(async (callback: (client: typeof prisma) => unknown) =>
       callback(prisma),
     );
+    prisma.vehicleCatalogMake.findMany.mockResolvedValue([]);
     prisma.vehicleCatalogVariantOfferingOverride.findMany.mockResolvedValue([]);
     service = new VehicleCatalogService(prisma as never);
   });
@@ -87,6 +88,7 @@ describe('VehicleCatalogService', () => {
   it('lists market-scoped makes for a vehicle type', async () => {
     prisma.vehicleCatalogMake.findMany.mockResolvedValue([
       {
+        aliases: [{ alias: 'Hyundai India' }],
         id: 'make-1',
         marketCode: 'IN',
         vehicleType: VehicleType.Car,
@@ -102,6 +104,7 @@ describe('VehicleCatalogService', () => {
     ).resolves.toEqual([
       {
         id: 'make-1',
+        keywords: ['Hyundai India'],
         marketCode: VehicleCatalogMarket.India,
         vehicleType: VehicleType.Car,
         name: 'Hyundai',
@@ -112,9 +115,22 @@ describe('VehicleCatalogService', () => {
   it('lists models scoped by make and year', async () => {
     prisma.vehicleCatalogModel.findMany.mockResolvedValue([
       {
+        aliases: [{ alias: 'i20 Sportz' }],
+        generations: [
+          {
+            aliases: [{ alias: 'New i20' }],
+            name: 'i20 (2023 lineup)',
+            variants: [
+              {
+                aliases: [{ alias: 'i20 Sportz' }],
+                name: 'Sportz',
+              },
+            ],
+          },
+        ],
         id: 'model-1',
         makeId: 'make-1',
-        name: 'Creta',
+        name: 'i20',
       },
     ]);
 
@@ -128,8 +144,9 @@ describe('VehicleCatalogService', () => {
     ).resolves.toEqual([
       {
         id: 'model-1',
+        keywords: ['i20 Sportz', 'i20 (2023 lineup)', 'New i20', 'Sportz'],
         makeId: 'make-1',
-        name: 'Creta',
+        name: 'i20',
       },
     ]);
   });
@@ -137,9 +154,15 @@ describe('VehicleCatalogService', () => {
   it('lists variants with year and fuel type metadata', async () => {
     prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
       {
+        aliases: [{ alias: 'Old Swift ZXI' }],
         id: 'variant-1',
-        name: 'SX (O)',
+        name: 'ZXi',
         generation: {
+          aliases: [{ alias: 'Old Swift' }],
+          name: 'Swift (2018 generation)',
+          model: {
+            name: 'Swift',
+          },
           modelId: 'model-1',
         },
         offerings: [
@@ -164,8 +187,9 @@ describe('VehicleCatalogService', () => {
     ).resolves.toEqual([
       {
         id: 'variant-1',
+        keywords: ['Swift', 'Swift (2018 generation)', 'Old Swift ZXI', 'Old Swift'],
         modelId: 'model-1',
-        name: 'SX (O)',
+        name: 'ZXi',
         fuelTypes: [FuelType.Petrol, FuelType.Diesel],
         yearStart: 2024,
         yearEnd: undefined,

@@ -9,6 +9,7 @@ import {
 
 export const VehicleCatalogMakeOptionSchema = z.object({
   id: z.string().trim().min(1),
+  keywords: z.array(z.string().trim().min(1)).optional(),
   marketCode: z.nativeEnum(VehicleCatalogMarket),
   vehicleType: z.nativeEnum(VehicleType),
   name: z.string().trim().min(1),
@@ -16,12 +17,14 @@ export const VehicleCatalogMakeOptionSchema = z.object({
 
 export const VehicleCatalogModelOptionSchema = z.object({
   id: z.string().trim().min(1),
+  keywords: z.array(z.string().trim().min(1)).optional(),
   makeId: z.string().trim().min(1),
   name: z.string().trim().min(1),
 });
 
 export const VehicleCatalogVariantOptionSchema = z.object({
   id: z.string().trim().min(1),
+  keywords: z.array(z.string().trim().min(1)).optional(),
   modelId: z.string().trim().min(1),
   name: z.string().trim().min(1),
   fuelTypes: z.array(z.nativeEnum(FuelType)),

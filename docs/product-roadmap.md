@@ -54,8 +54,9 @@ The product already supports the core ownership loop:
 - View vehicle detail
 - Backend-owned make/model/variant catalog for vehicle entry, seeded for India and keyed by market code for future expansion
 - Catalog internals now support model generations, year-aware variant offerings, and import-run tracking for future market expansion
-- Approved India catalog ingestion now includes Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Kia, Toyota, Royal Enfield, Bajaj, and TVS source snapshots through the shared import pipeline
-- The approved India catalog now includes a broader set of still-common legacy generations across high-volume models, instead of only current flagship lineups
+- Approved India catalog ingestion now includes Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Kia, Toyota, Renault, Volkswagen, Skoda, Royal Enfield, Bajaj, Hero, TVS, and Yamaha source snapshots through the shared import pipeline
+- The approved India catalog now includes a broader set of still-common legacy generations across high-volume models and motorcycles, instead of only current flagship lineups
+- Catalog aliases now map messy real-world labels like `i20 Sportz`, `Polo GT TSI`, `Old Swift ZXI`, and `FZ V3` back onto the canonical make/model/generation/variant rows used by the app
 - Internal catalog review tooling now stages import snapshots, shows diffs against published source data, and requires an explicit publish step before trusted catalog rows are updated
 - Catalog reviewers can now archive source variants missing from the latest snapshot as historical, instead of deleting them or leaving them unresolved in the diff
 - Catalog reviewers can now attach provenance notes and manual year-range/current-status corrections to published source offerings, and those overrides persist across future imports
@@ -162,7 +163,8 @@ These are ordered by product leverage, not by technical novelty.
 
 Goal: turn the vehicle catalog from a curated seed into a maintainable regional data asset.
 
-- Continue expanding India coverage toward long-tail brands, discontinued trims, and older generation depth
+- Continue expanding India coverage toward rarer long-tail brands, discontinued trims, and deeper pre-2018 generation coverage
+- Keep expanding alias coverage alongside canonical rows so common shorthand, legacy trim labels, and owner slang continue resolving cleanly during vehicle entry
 - Add source-level operator ownership and tighter internal permissions around catalog review if this workflow expands beyond a small trusted team
 - Keep market onboarding data-driven so adding markets beyond India means seeding/importing new rows, not rewriting the vehicle-entry flow
 

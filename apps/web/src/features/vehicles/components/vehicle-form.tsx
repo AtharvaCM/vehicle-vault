@@ -482,19 +482,19 @@ export function VehicleForm({
   );
 }
 
-function toMakeOption(option: { name: string }): SearchableSelectOption {
+function toMakeOption(option: { keywords?: string[]; name: string }): SearchableSelectOption {
   return {
     value: option.name,
     label: option.name,
-    keywords: [option.name.toLowerCase()],
+    keywords: uniqueSearchKeywords(option.name, option.keywords),
   };
 }
 
-function toModelOption(option: { name: string }): SearchableSelectOption {
+function toModelOption(option: { keywords?: string[]; name: string }): SearchableSelectOption {
   return {
     value: option.name,
     label: option.name,
-    keywords: [option.name.toLowerCase()],
+    keywords: uniqueSearchKeywords(option.name, option.keywords),
   };
 }
 
@@ -504,11 +504,11 @@ function toVariantOption(option: VehicleCatalogVariantOption): SearchableSelectO
   return {
     value: option.name,
     label: option.name,
-    keywords: [
-      option.name.toLowerCase(),
+    keywords: uniqueSearchKeywords(option.name, [
+      ...(option.keywords ?? []),
       ...option.fuelTypes.map((fuelType) => fuelType.toLowerCase()),
       ...(yearLabel ? [yearLabel] : []),
-    ],
+    ]),
   };
 }
 
@@ -547,4 +547,8 @@ function getCatalogError(errors: Array<unknown>) {
   const apiError = errors.find((error): error is ApiError => error instanceof ApiError);
 
   return apiError?.message ?? null;
+}
+
+function uniqueSearchKeywords(label: string, keywords?: string[]) {
+  return [...new Set([label.toLowerCase(), ...(keywords ?? []).map((keyword) => keyword.toLowerCase())])];
 }
