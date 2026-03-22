@@ -1,10 +1,11 @@
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { ApiError } from '@/lib/api/api-error';
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
+import { SearchableSelect, type SearchableSelectOption } from '@/components/shared/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import {
+  getCatalogMakes,
+  getCatalogModels,
+  getCatalogVariants,
+  supportsVehicleCatalog,
+} from '../data/vehicle-catalog';
 import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-form.schema';
 
 const fuelOptions = Object.values(FuelType);
@@ -71,6 +78,22 @@ export function VehicleForm({
   const form = useForm<VehicleFormValues>({
     defaultValues: defaultVehicleValues,
   });
+  const selectedVehicleType = form.watch('vehicleType');
+  const selectedMake = form.watch('make');
+  const selectedModel = form.watch('model');
+  const usesCatalog = supportsVehicleCatalog(selectedVehicleType);
+  const makeOptions = useMemo(
+    () => getCatalogMakes(selectedVehicleType).map(toOption),
+    [selectedVehicleType],
+  );
+  const modelOptions = useMemo(
+    () => getCatalogModels(selectedVehicleType, selectedMake).map(toOption),
+    [selectedMake, selectedVehicleType],
+  );
+  const variantOptions = useMemo(
+    () => getCatalogVariants(selectedVehicleType, selectedMake, selectedModel).map(toOption),
+    [selectedMake, selectedModel, selectedVehicleType],
+  );
 
   useEffect(() => {
     if (submitError) {
@@ -88,6 +111,41 @@ export function VehicleForm({
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
   }, [form.formState.isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (!usesCatalog) {
+      return;
+    }
+
+    if (selectedMake && !makeOptions.some((option) => option.value === selectedMake)) {
+      form.setValue('make', '', { shouldDirty: form.formState.isDirty });
+      form.setValue('model', '', { shouldDirty: form.formState.isDirty });
+      form.setValue('variant', '', { shouldDirty: form.formState.isDirty });
+    }
+  }, [form, form.formState.isDirty, makeOptions, selectedMake, usesCatalog]);
+
+  useEffect(() => {
+    if (!usesCatalog) {
+      return;
+    }
+
+    if (selectedModel && !modelOptions.some((option) => option.value === selectedModel)) {
+      form.setValue('model', '', { shouldDirty: form.formState.isDirty });
+      form.setValue('variant', '', { shouldDirty: form.formState.isDirty });
+    }
+  }, [form, form.formState.isDirty, modelOptions, selectedModel, usesCatalog]);
+
+  useEffect(() => {
+    if (!usesCatalog) {
+      return;
+    }
+
+    const selectedVariant = form.getValues('variant');
+
+    if (selectedVariant && !variantOptions.some((option) => option.value === selectedVariant)) {
+      form.setValue('variant', '', { shouldDirty: form.formState.isDirty });
+    }
+  }, [form, form.formState.isDirty, usesCatalog, variantOptions]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = vehicleFormSchema.safeParse({
@@ -145,43 +203,6 @@ export function VehicleForm({
               />
             </FormField>
 
-            <FormField htmlFor="vehicle-make" label="Make" error={form.formState.errors.make?.message}>
-              <Input
-                id="vehicle-make"
-                {...form.register('make')}
-                aria-invalid={Boolean(form.formState.errors.make)}
-                placeholder="Hyundai"
-              />
-            </FormField>
-
-            <FormField htmlFor="vehicle-model" label="Model" error={form.formState.errors.model?.message}>
-              <Input
-                id="vehicle-model"
-                {...form.register('model')}
-                aria-invalid={Boolean(form.formState.errors.model)}
-                placeholder="Creta"
-              />
-            </FormField>
-
-            <FormField htmlFor="vehicle-variant" label="Variant" error={form.formState.errors.variant?.message}>
-              <Input
-                id="vehicle-variant"
-                {...form.register('variant')}
-                aria-invalid={Boolean(form.formState.errors.variant)}
-                placeholder="SX (O)"
-              />
-            </FormField>
-
-            <FormField htmlFor="vehicle-year" label="Year" error={form.formState.errors.year?.message}>
-              <Input
-                id="vehicle-year"
-                {...form.register('year', { valueAsNumber: true })}
-                aria-invalid={Boolean(form.formState.errors.year)}
-                min={1900}
-                type="number"
-              />
-            </FormField>
-
             <FormField
               htmlFor="vehicle-type"
               label="Vehicle type"
@@ -204,6 +225,111 @@ export function VehicleForm({
                     </SelectContent>
                   </Select>
                 )}
+              />
+            </FormField>
+
+            <FormField htmlFor="vehicle-make" label="Make" error={form.formState.errors.make?.message}>
+              {usesCatalog ? (
+                <Controller
+                  control={form.control}
+                  name="make"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      id="vehicle-make"
+                      onChange={(nextMake) => {
+                        field.onChange(nextMake);
+                        form.setValue('model', '', { shouldDirty: true });
+                        form.setValue('variant', '', { shouldDirty: true });
+                      }}
+                      options={makeOptions}
+                      placeholder="Select make"
+                      searchPlaceholder="Search makes..."
+                      value={field.value}
+                    />
+                  )}
+                />
+              ) : (
+                <Input
+                  id="vehicle-make"
+                  {...form.register('make')}
+                  aria-invalid={Boolean(form.formState.errors.make)}
+                  placeholder="Hyundai"
+                />
+              )}
+            </FormField>
+
+            <FormField htmlFor="vehicle-model" label="Model" error={form.formState.errors.model?.message}>
+              {usesCatalog ? (
+                <Controller
+                  control={form.control}
+                  name="model"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      disabled={!selectedMake}
+                      emptyMessage={
+                        selectedMake ? 'No models found for this make.' : 'Select a make first.'
+                      }
+                      id="vehicle-model"
+                      onChange={(nextModel) => {
+                        field.onChange(nextModel);
+                        form.setValue('variant', '', { shouldDirty: true });
+                      }}
+                      options={modelOptions}
+                      placeholder={selectedMake ? 'Select model' : 'Select make first'}
+                      searchPlaceholder="Search models..."
+                      value={field.value}
+                    />
+                  )}
+                />
+              ) : (
+                <Input
+                  id="vehicle-model"
+                  {...form.register('model')}
+                  aria-invalid={Boolean(form.formState.errors.model)}
+                  placeholder="Creta"
+                />
+              )}
+            </FormField>
+
+            <FormField htmlFor="vehicle-variant" label="Variant" error={form.formState.errors.variant?.message}>
+              {usesCatalog ? (
+                <Controller
+                  control={form.control}
+                  name="variant"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      disabled={!selectedModel}
+                      emptyMessage={
+                        selectedModel
+                          ? 'No variants found for this model.'
+                          : 'Select a model first.'
+                      }
+                      id="vehicle-variant"
+                      onChange={field.onChange}
+                      options={variantOptions}
+                      placeholder={selectedModel ? 'Select variant' : 'Select model first'}
+                      searchPlaceholder="Search variants..."
+                      value={field.value}
+                    />
+                  )}
+                />
+              ) : (
+                <Input
+                  id="vehicle-variant"
+                  {...form.register('variant')}
+                  aria-invalid={Boolean(form.formState.errors.variant)}
+                  placeholder="SX (O)"
+                />
+              )}
+            </FormField>
+
+            <FormField htmlFor="vehicle-year" label="Year" error={form.formState.errors.year?.message}>
+              <Input
+                id="vehicle-year"
+                {...form.register('year', { valueAsNumber: true })}
+                aria-invalid={Boolean(form.formState.errors.year)}
+                min={1900}
+                type="number"
               />
             </FormField>
 
@@ -248,6 +374,16 @@ export function VehicleForm({
             </FormField>
           </div>
 
+          {usesCatalog ? (
+            <p className="text-sm leading-5 text-slate-500">
+              Start with vehicle type, then search the catalog for the correct make, model, and variant.
+            </p>
+          ) : (
+            <p className="text-sm leading-5 text-slate-500">
+              Catalog search is available for cars, SUVs, and motorcycles. Other vehicle types can be entered manually for now.
+            </p>
+          )}
+
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
@@ -268,4 +404,12 @@ export function VehicleForm({
       </CardContent>
     </Card>
   );
+}
+
+function toOption(value: string): SearchableSelectOption {
+  return {
+    value,
+    label: value,
+    keywords: [value.toLowerCase()],
+  };
 }

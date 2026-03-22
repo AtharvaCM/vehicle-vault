@@ -13,12 +13,12 @@ export default defineConfig({
             return undefined;
           }
 
-          if (id.includes('@tanstack')) {
-            return 'tanstack';
+          if (id.includes('/react/') || id.includes('/react-dom/')) {
+            return 'vendor';
           }
 
-          if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('sonner')) {
-            return 'ui';
+          if (id.includes('@tanstack')) {
+            return 'tanstack';
           }
 
           if (id.includes('react-hook-form') || id.includes('zod')) {
