@@ -128,6 +128,42 @@ export const VehicleCatalogImportRunReviewSchema = z.object({
   status: VehicleCatalogImportRunStatusSchema,
 });
 
+export const VehicleCatalogPublishedOfferingReviewSchema = z.object({
+  fuelTypes: z.array(z.nativeEnum(FuelType)),
+  generationName: z.string().trim().min(1),
+  id: z.string().trim().min(1),
+  isCurrent: z.boolean(),
+  makeName: z.string().trim().min(1),
+  manualOverrideApplied: z.boolean(),
+  modelName: z.string().trim().min(1),
+  reviewNote: z.string().optional(),
+  sourceUrl: z.string().trim().url().optional(),
+  variantName: z.string().trim().min(1),
+  yearEnd: z.number().int().optional(),
+  yearStart: z.number().int().optional(),
+});
+
+export const UpdateVehicleCatalogOfferingReviewInputSchema = z
+  .object({
+    isCurrent: z.boolean().optional(),
+    reviewNote: z.string().trim().max(500).nullable().optional(),
+    yearEnd: z.number().int().min(1900).max(2100).nullable().optional(),
+    yearStart: z.number().int().min(1900).max(2100).nullable().optional(),
+  })
+  .refine(
+    (value) =>
+      value.yearStart === undefined ||
+      value.yearEnd === undefined ||
+      value.yearStart === null ||
+      value.yearEnd === null ||
+      value.yearEnd >= value.yearStart,
+    {
+      message: 'End year cannot be earlier than start year.',
+      path: ['yearEnd'],
+    },
+  );
+
 export const VehicleCatalogImportRunDetailSchema = VehicleCatalogImportRunReviewSchema.extend({
   dataset: VehicleCatalogImportDatasetSchema,
+  publishedOfferings: z.array(VehicleCatalogPublishedOfferingReviewSchema),
 });

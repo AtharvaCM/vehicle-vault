@@ -1,6 +1,10 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import type { VehicleCatalogImportRunDetail, VehicleCatalogImportRunReview } from '@vehicle-vault/shared';
-import { CheckCheck, DatabaseZap, GitCompareArrows, ScanSearch } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import type {
+  VehicleCatalogImportRunDetail,
+  VehicleCatalogImportRunReview,
+  VehicleCatalogPublishedOfferingReview,
+} from '@vehicle-vault/shared';
+import { CheckCheck, DatabaseZap, GitCompareArrows, PencilLine, Save, ScanSearch, X } from 'lucide-react';
 
 import { InlineError } from '@/components/shared/inline-error';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { formatDate } from '@/lib/utils/format-date';
 import { appToast } from '@/lib/toast';
@@ -23,6 +29,7 @@ import { useCatalogImportRunDetail } from '../hooks/use-catalog-import-run-detai
 import { useCatalogImportRuns } from '../hooks/use-catalog-import-runs';
 import { useArchiveMissingCatalogImportRun } from '../hooks/use-archive-missing-catalog-import-run';
 import { usePublishCatalogImportRun } from '../hooks/use-publish-catalog-import-run';
+import { useUpdateVehicleCatalogOfferingReview } from '../hooks/use-update-vehicle-catalog-offering-review';
 
 export function CatalogImportReviewCard() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -30,6 +37,7 @@ export function CatalogImportReviewCard() {
   const detailQuery = useCatalogImportRunDetail(selectedRunId);
   const archiveMissingMutation = useArchiveMissingCatalogImportRun();
   const publishMutation = usePublishCatalogImportRun();
+  const updateOfferingReviewMutation = useUpdateVehicleCatalogOfferingReview();
 
   const selectedRun = useMemo(
     () => runsQuery.data?.find((run) => run.id === selectedRunId) ?? null,
@@ -165,6 +173,29 @@ export function CatalogImportReviewCard() {
               onPublish={() => {
                 void handlePublish(detailQuery.data.id);
               }}
+              onSaveOfferingReview={async (offeringId, input) => {
+                try {
+                  const updated = await updateOfferingReviewMutation.mutateAsync({
+                    offeringId,
+                    input,
+                    runId: detailQuery.data.id,
+                  });
+                  appToast.success({
+                    title: 'Catalog review saved',
+                    description: `${updated.variantName} now keeps its reviewed year range and source note.`,
+                  });
+                } catch (error) {
+                  appToast.error({
+                    title: 'Unable to save catalog review',
+                    description: getApiErrorMessage(
+                      error,
+                      "We couldn't save that catalog correction right now.",
+                    ),
+                  });
+                  throw error;
+                }
+              }}
+              savingOfferingId={updateOfferingReviewMutation.isPending ? updateOfferingReviewMutation.variables?.offeringId : undefined}
             />
           ) : null}
         </DialogContent>
@@ -225,12 +256,24 @@ function CatalogImportDetail({
   isArchiving,
   onPublish,
   isPublishing,
+  onSaveOfferingReview,
+  savingOfferingId,
 }: {
   detail: VehicleCatalogImportRunDetail;
   onArchiveMissing: () => void;
   isArchiving: boolean;
   onPublish: () => void;
   isPublishing: boolean;
+  onSaveOfferingReview: (
+    offeringId: string,
+    input: {
+      isCurrent?: boolean;
+      reviewNote?: string | null;
+      yearEnd?: number | null;
+      yearStart?: number | null;
+    },
+  ) => Promise<void>;
+  savingOfferingId?: string;
 }) {
   const canPublish = detail.status === 'succeeded' && !detail.publishedAt;
   const canArchiveMissing = canPublish && detail.diff.missingVariants.length > 0;
@@ -260,7 +303,7 @@ function CatalogImportDetail({
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
+      <div className="grid gap-4 xl:grid-cols-[1fr,1fr]">
         <div className="space-y-4 rounded-2xl border border-border/70 bg-slate-50/70 p-4">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-slate-900">Diff summary</p>
@@ -309,6 +352,33 @@ function CatalogImportDetail({
         </div>
       </div>
 
+      <div className="space-y-4 rounded-2xl border border-border/70 bg-white p-4">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-900">Published source reviews</p>
+          <p className="text-sm text-slate-600">
+            Add provenance notes or correct ambiguous year ranges on the currently published source rows.
+            Those corrections stay attached to future imports for the same source.
+          </p>
+        </div>
+        {detail.publishedOfferings.length ? (
+          <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
+            {detail.publishedOfferings.map((offering) => (
+              <PublishedOfferingReviewRow
+                key={offering.id}
+                offering={offering}
+                onSave={onSaveOfferingReview}
+                saving={savingOfferingId === offering.id}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">
+            No published source data exists for this importer yet. Publish the first trusted run before
+            manual provenance review is needed.
+          </p>
+        )}
+      </div>
+
       <DialogFooter>
         {canPublish ? (
           <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
@@ -332,6 +402,203 @@ function CatalogImportDetail({
         )}
       </DialogFooter>
     </>
+  );
+}
+
+function PublishedOfferingReviewRow({
+  offering,
+  onSave,
+  saving,
+}: {
+  offering: VehicleCatalogPublishedOfferingReview;
+  onSave: (
+    offeringId: string,
+    input: {
+      isCurrent?: boolean;
+      reviewNote?: string | null;
+      yearEnd?: number | null;
+      yearStart?: number | null;
+    },
+  ) => Promise<void>;
+  saving: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [yearStart, setYearStart] = useState(offering.yearStart?.toString() ?? '');
+  const [yearEnd, setYearEnd] = useState(offering.yearEnd?.toString() ?? '');
+  const [isCurrent, setIsCurrent] = useState(offering.isCurrent);
+  const [reviewNote, setReviewNote] = useState(offering.reviewNote ?? '');
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setYearStart(offering.yearStart?.toString() ?? '');
+    setYearEnd(offering.yearEnd?.toString() ?? '');
+    setIsCurrent(offering.isCurrent);
+    setReviewNote(offering.reviewNote ?? '');
+    setLocalError(null);
+    setEditing(false);
+  }, [offering]);
+
+  async function handleSave() {
+    let parsedYearStart: number | null;
+    let parsedYearEnd: number | null;
+
+    try {
+      parsedYearStart = parseOptionalYear(yearStart);
+      parsedYearEnd = parseOptionalYear(yearEnd);
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : 'Enter valid four-digit years.');
+      return;
+    }
+
+    if (parsedYearStart !== null && parsedYearEnd !== null && parsedYearEnd < parsedYearStart) {
+      setLocalError('End year cannot be earlier than start year.');
+      return;
+    }
+
+    setLocalError(null);
+
+    try {
+      await onSave(offering.id, {
+        yearStart: parsedYearStart,
+        yearEnd: parsedYearEnd,
+        isCurrent,
+        reviewNote: reviewNote.trim() ? reviewNote.trim() : null,
+      });
+      setEditing(false);
+    } catch {
+      // Toast is handled by the parent mutation wrapper.
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border/70 bg-slate-50/60 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium text-slate-900">{offering.variantName}</p>
+            <Badge tone="accent">{formatFuelTypes(offering.fuelTypes)}</Badge>
+            <Badge tone="neutral">{formatYearRange(offering.yearStart, offering.yearEnd, offering.isCurrent)}</Badge>
+            {offering.manualOverrideApplied ? <Badge tone="warning">Reviewed</Badge> : null}
+          </div>
+          <p className="text-sm text-slate-600">
+            {offering.makeName} / {offering.modelName} / {offering.generationName}
+          </p>
+          {offering.reviewNote ? (
+            <p className="text-sm leading-6 text-slate-600">
+              <span className="font-medium text-slate-900">Source note:</span> {offering.reviewNote}
+            </p>
+          ) : (
+            <p className="text-sm text-slate-500">No manual provenance note added yet.</p>
+          )}
+        </div>
+
+        <Button
+          onClick={() => {
+            setEditing((current) => !current);
+            setLocalError(null);
+          }}
+          type="button"
+          variant="outline"
+        >
+          {editing ? (
+            <>
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </>
+          ) : (
+            <>
+              <PencilLine className="mr-2 h-4 w-4" />
+              Review
+            </>
+          )}
+        </Button>
+      </div>
+
+      {editing ? (
+        <div className="mt-4 space-y-3 rounded-xl border border-border/60 bg-white p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Start year
+              </label>
+              <Input
+                inputMode="numeric"
+                maxLength={4}
+                onChange={(event) => {
+                  setYearStart(event.target.value);
+                }}
+                placeholder="e.g. 2022"
+                value={yearStart}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                End year
+              </label>
+              <Input
+                inputMode="numeric"
+                maxLength={4}
+                onChange={(event) => {
+                  setYearEnd(event.target.value);
+                }}
+                placeholder={isCurrent ? 'Leave empty for current' : 'e.g. 2025'}
+                value={yearEnd}
+              />
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              checked={isCurrent}
+              className="h-4 w-4 rounded border border-slate-300 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onChange={(event) => {
+                const nextChecked = event.target.checked;
+                setIsCurrent(nextChecked);
+                if (nextChecked) {
+                  setYearEnd('');
+                }
+              }}
+              type="checkbox"
+            />
+            Mark this offering as currently active
+          </label>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Provenance note
+            </label>
+            <Textarea
+              maxLength={500}
+              onChange={(event) => {
+                setReviewNote(event.target.value);
+              }}
+              placeholder="Add context such as brochure ambiguity, OEM rename history, or manual year correction rationale."
+              rows={3}
+              value={reviewNote}
+            />
+          </div>
+
+          {localError ? <InlineError message={localError} /> : null}
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              onClick={() => {
+                setEditing(false);
+                setLocalError(null);
+              }}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button disabled={saving} onClick={() => void handleSave()} type="button">
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? 'Saving review...' : 'Save review'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -403,4 +670,46 @@ function formatSourceLabel(sourceKey: string) {
     .split('-')
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
+}
+
+function formatFuelTypes(fuelTypes: string[]) {
+  return fuelTypes.map((fuelType) => fuelType.toUpperCase()).join(' / ');
+}
+
+function formatYearRange(
+  yearStart?: number,
+  yearEnd?: number,
+  isCurrent?: boolean,
+) {
+  if (yearStart && yearEnd) {
+    return `${yearStart} to ${yearEnd}`;
+  }
+
+  if (yearStart && isCurrent) {
+    return `${yearStart} to current`;
+  }
+
+  if (yearStart) {
+    return `From ${yearStart}`;
+  }
+
+  if (yearEnd) {
+    return `Until ${yearEnd}`;
+  }
+
+  return isCurrent ? 'Current' : 'Year not set';
+}
+
+function parseOptionalYear(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (!/^\d{4}$/.test(trimmed)) {
+    throw new Error('Year must be a four-digit number.');
+  }
+
+  return Number(trimmed);
 }

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   FuelType,
+  type UpdateVehicleCatalogOfferingReviewInput,
   VehicleCatalogImportDatasetSchema,
   VehicleCatalogMarket,
   VehicleType,
@@ -11,6 +12,7 @@ import {
   type VehicleCatalogMakeQuery,
   type VehicleCatalogModelOption,
   type VehicleCatalogModelQuery,
+  type VehicleCatalogPublishedOfferingReview,
   type VehicleCatalogVariantOption,
   type VehicleCatalogVariantQuery,
 } from '@vehicle-vault/shared';
@@ -38,6 +40,53 @@ type ImportRunRecord = {
     payload: unknown;
   }>;
 };
+
+type PublishedOfferingRecord = {
+  id: string;
+  fuelTypes: string[];
+  yearStart: number | null;
+  yearEnd: number | null;
+  isCurrent: boolean;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  variantId: string;
+  variant: {
+    name: string;
+    sourceUrl: string | null;
+    generation: {
+      name: string;
+      yearStart: number | null;
+      yearEnd: number | null;
+      isCurrent: boolean;
+      sourceUrl: string | null;
+      model: {
+        name: string;
+        sourceUrl: string | null;
+        make: {
+          name: string;
+          marketCode: string;
+          vehicleType: string;
+          sourceUrl: string | null;
+        };
+      };
+    };
+  };
+};
+
+type OfferingOverrideRecord = {
+  variantId: string;
+  sourceName: string;
+  fuelTypeSignature: string;
+  reviewNote: string | null;
+  manualYearStart: number | null;
+  manualYearEnd: number | null;
+  manualIsCurrent: boolean | null;
+};
+
+type CatalogMakeRecord = VehicleCatalogImportDataset[number];
+type CatalogModelRecord = CatalogMakeRecord['models'][number];
+type CatalogGenerationRecord = CatalogModelRecord['generations'][number];
+type CatalogVariantRecord = CatalogGenerationRecord['variants'][number];
 
 type CatalogCounts = {
   makes: number;
@@ -248,6 +297,117 @@ export class VehicleCatalogService {
     }
 
     return this.mapImportRunDetail(run);
+  }
+
+  async updateOfferingReview(
+    offeringId: string,
+    input: UpdateVehicleCatalogOfferingReviewInput,
+  ): Promise<VehicleCatalogPublishedOfferingReview> {
+    const offering = await this.prisma.vehicleCatalogVariantOffering.findUnique({
+      where: {
+        id: offeringId,
+      },
+      include: {
+        variant: {
+          include: {
+            generation: {
+              include: {
+                model: {
+                  include: {
+                    make: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!offering) {
+      throw new NotFoundException(`Catalog offering ${offeringId} was not found`);
+    }
+
+    if (!offering.sourceName) {
+      throw new BadRequestException('Only source-backed catalog offerings can be manually reviewed.');
+    }
+
+    const sourceName = offering.sourceName;
+
+    const nextYearStart = input.yearStart !== undefined ? input.yearStart ?? null : offering.yearStart;
+    const nextYearEnd = input.yearEnd !== undefined ? input.yearEnd ?? null : offering.yearEnd;
+    const nextIsCurrent = input.isCurrent !== undefined ? input.isCurrent : offering.isCurrent;
+    const fuelTypeSignature = buildFuelTypeSignature(offering.fuelTypes as FuelType[]);
+
+    if (
+      nextYearStart !== null &&
+      nextYearEnd !== null &&
+      nextYearEnd < nextYearStart
+    ) {
+      throw new BadRequestException('End year cannot be earlier than start year.');
+    }
+
+    const updatedOffering = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.vehicleCatalogVariantOffering.update({
+        where: {
+          id: offering.id,
+        },
+        data: {
+          yearStart: nextYearStart,
+          yearEnd: nextYearEnd,
+          isCurrent: nextIsCurrent,
+        },
+        include: {
+          variant: {
+            include: {
+              generation: {
+                include: {
+                  model: {
+                    include: {
+                      make: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      await tx.vehicleCatalogVariantOfferingOverride.upsert({
+        where: {
+          variantId_sourceName_fuelTypeSignature: {
+            variantId: offering.variantId,
+            sourceName,
+            fuelTypeSignature,
+          },
+        },
+        update: {
+          reviewNote: input.reviewNote !== undefined ? input.reviewNote ?? null : undefined,
+          manualYearStart: nextYearStart,
+          manualYearEnd: nextYearEnd,
+          manualIsCurrent: nextIsCurrent,
+        },
+        create: {
+          variantId: offering.variantId,
+          sourceName,
+          fuelTypeSignature,
+          reviewNote: input.reviewNote ?? null,
+          manualYearStart: nextYearStart,
+          manualYearEnd: nextYearEnd,
+          manualIsCurrent: nextIsCurrent,
+        },
+      });
+
+      return updated;
+    });
+
+    return this.mapPublishedOfferingReview(updatedOffering, {
+      reviewNote: input.reviewNote !== undefined ? input.reviewNote ?? null : null,
+      manualYearStart: nextYearStart,
+      manualYearEnd: nextYearEnd,
+      manualIsCurrent: nextIsCurrent,
+    });
   }
 
   async publishImportRun(userId: string, runId: string): Promise<VehicleCatalogImportRunReview> {
@@ -468,11 +628,51 @@ export class VehicleCatalogService {
     const snapshot = run.snapshots[0];
     const dataset = parseImportDataset(snapshot?.payload);
     const review = await this.mapImportRunReview(run, dataset);
+    const publishedOfferings = await this.getPublishedOfferingReviews(run.marketCode, run.sourceKey);
 
     return {
       ...review,
       dataset,
+      publishedOfferings,
     };
+  }
+
+  private async getPublishedOfferingReviews(
+    marketCode: string,
+    sourceKey: string,
+  ): Promise<VehicleCatalogPublishedOfferingReview[]> {
+    const offerings = await this.getActivePublishedSourceOfferings(marketCode, sourceKey);
+
+    if (!offerings.length) {
+      return [];
+    }
+
+    const overrideRows = await this.prisma.vehicleCatalogVariantOfferingOverride.findMany({
+      where: {
+        sourceName: sourceKey,
+        OR: offerings.map((offering) => ({
+          variantId: offering.variantId,
+          fuelTypeSignature: buildFuelTypeSignature(offering.fuelTypes),
+        })),
+      },
+    });
+
+    const overridesByKey = new Map(
+      overrideRows.map((override) => [buildOverrideKey(override), override]),
+    );
+
+    return offerings.map((offering) =>
+      this.mapPublishedOfferingReview(
+        offering,
+        overridesByKey.get(
+          buildOverrideKey({
+            variantId: offering.variantId,
+            sourceName: sourceKey,
+            fuelTypeSignature: buildFuelTypeSignature(offering.fuelTypes),
+          }),
+        ),
+      ),
+    );
   }
 
   private async getPublishedSourceDataset(
@@ -487,9 +687,9 @@ export class VehicleCatalogService {
       const generation = offering.variant.generation;
       const model = generation.model;
       const make = model.make;
-      const makeKey = `${make.marketCode}|${make.vehicleType}|${normalizeKey(make.name)}`;
+    const makeKey = `${make.marketCode}|${make.vehicleType}|${normalizeKey(make.name)}`;
 
-      const makeRecord =
+      const makeRecord: CatalogMakeRecord =
         makeMap.get(makeKey) ??
         {
           marketCode: make.marketCode,
@@ -499,7 +699,9 @@ export class VehicleCatalogService {
           models: [],
         };
 
-      let modelRecord = makeRecord.models.find((entry) => normalizeKey(entry.name) === normalizeKey(model.name));
+      let modelRecord: CatalogModelRecord | undefined = makeRecord.models.find(
+        (entry) => normalizeKey(entry.name) === normalizeKey(model.name),
+      );
 
       if (!modelRecord) {
         modelRecord = {
@@ -510,7 +712,7 @@ export class VehicleCatalogService {
         makeRecord.models.push(modelRecord);
       }
 
-      let generationRecord = modelRecord.generations.find(
+      let generationRecord: CatalogGenerationRecord | undefined = modelRecord.generations.find(
         (entry) => normalizeKey(entry.name) === normalizeKey(generation.name),
       );
 
@@ -526,7 +728,7 @@ export class VehicleCatalogService {
         modelRecord.generations.push(generationRecord);
       }
 
-      let variantRecord = generationRecord.variants.find(
+      let variantRecord: CatalogVariantRecord | undefined = generationRecord.variants.find(
         (entry) => normalizeKey(entry.name) === normalizeKey(offering.variant.name),
       );
 
@@ -567,7 +769,10 @@ export class VehicleCatalogService {
     return [...makeMap.values()].sort(compareImportMakes);
   }
 
-  private async getActivePublishedSourceOfferings(marketCode: string, sourceKey: string) {
+  private async getActivePublishedSourceOfferings(
+    marketCode: string,
+    sourceKey: string,
+  ): Promise<PublishedOfferingRecord[]> {
     return this.prisma.vehicleCatalogVariantOffering.findMany({
       where: {
         sourceName: sourceKey,
@@ -611,6 +816,29 @@ export class VehicleCatalogService {
         },
       ],
     });
+  }
+
+  private mapPublishedOfferingReview(
+    offering: PublishedOfferingRecord,
+    override?: Pick<
+      OfferingOverrideRecord,
+      'reviewNote' | 'manualYearStart' | 'manualYearEnd' | 'manualIsCurrent'
+    >,
+  ): VehicleCatalogPublishedOfferingReview {
+    return {
+      id: offering.id,
+      makeName: offering.variant.generation.model.make.name,
+      modelName: offering.variant.generation.model.name,
+      generationName: offering.variant.generation.name,
+      variantName: offering.variant.name,
+      fuelTypes: [...offering.fuelTypes].sort() as FuelType[],
+      yearStart: offering.yearStart ?? undefined,
+      yearEnd: offering.yearEnd ?? undefined,
+      isCurrent: offering.isCurrent,
+      sourceUrl: offering.sourceUrl ?? undefined,
+      reviewNote: override?.reviewNote ?? undefined,
+      manualOverrideApplied: Boolean(override),
+    };
   }
 }
 
@@ -740,6 +968,18 @@ function buildPublishedVariantKey(offering: {
     normalizeKey(generation.name),
     normalizeKey(variant.name),
   ].join('|');
+}
+
+function buildFuelTypeSignature(fuelTypes: readonly string[]) {
+  return [...fuelTypes].sort().join('|');
+}
+
+function buildOverrideKey(value: {
+  variantId: string;
+  sourceName: string;
+  fuelTypeSignature: string;
+}) {
+  return `${value.variantId}|${value.sourceName}|${value.fuelTypeSignature}`;
 }
 
 function summarizeImportDataset(dataset: VehicleCatalogImportDataset): NormalizedCatalogSummary {

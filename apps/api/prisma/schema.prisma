@@ -151,36 +151,54 @@ model VehicleCatalogGeneration {
 }
 
 model VehicleCatalogVariant {
-  id          String                       @id @default(uuid()) @db.Uuid
-  generationId String                      @db.Uuid
-  name        String                       @db.VarChar(160)
-  slug        String                       @db.VarChar(200)
-  sourceName  String?                      @db.VarChar(80)
-  sourceUrl   String?
-  createdAt   DateTime                     @default(now())
-  updatedAt   DateTime                     @updatedAt
-  generation  VehicleCatalogGeneration     @relation(fields: [generationId], references: [id], onDelete: Cascade)
-  offerings   VehicleCatalogVariantOffering[]
+  id                String                                @id @default(uuid()) @db.Uuid
+  generationId      String                                @db.Uuid
+  name              String                                @db.VarChar(160)
+  slug              String                                @db.VarChar(200)
+  sourceName        String?                               @db.VarChar(80)
+  sourceUrl         String?
+  createdAt         DateTime                              @default(now())
+  updatedAt         DateTime                              @updatedAt
+  generation        VehicleCatalogGeneration              @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  offerings         VehicleCatalogVariantOffering[]
+  offeringOverrides VehicleCatalogVariantOfferingOverride[]
 
   @@unique([generationId, slug])
   @@index([generationId, name])
 }
 
 model VehicleCatalogVariantOffering {
-  id          String               @id @default(uuid()) @db.Uuid
-  variantId   String               @db.Uuid
-  fuelTypes   FuelType[]
-  yearStart   Int?
-  yearEnd     Int?
-  isCurrent   Boolean              @default(false)
-  sourceName  String?              @db.VarChar(80)
-  sourceUrl   String?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  variant     VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  id         String                @id @default(uuid()) @db.Uuid
+  variantId  String                @db.Uuid
+  fuelTypes  FuelType[]
+  yearStart  Int?
+  yearEnd    Int?
+  isCurrent  Boolean               @default(false)
+  sourceName String?               @db.VarChar(80)
+  sourceUrl  String?
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+  variant    VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@index([variantId, yearStart, yearEnd])
   @@index([variantId, isCurrent])
+}
+
+model VehicleCatalogVariantOfferingOverride {
+  id                String                @id @default(uuid()) @db.Uuid
+  variantId         String                @db.Uuid
+  sourceName        String                @db.VarChar(80)
+  fuelTypeSignature String                @db.VarChar(80)
+  reviewNote        String?
+  manualYearStart   Int?
+  manualYearEnd     Int?
+  manualIsCurrent   Boolean?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  variant           VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, sourceName, fuelTypeSignature])
+  @@index([sourceName])
 }
 
 model VehicleCatalogImportRun {

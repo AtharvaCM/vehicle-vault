@@ -26,6 +26,7 @@ export const endpoints = {
     importRuns: '/vehicle-catalog/import-runs',
     importRunDetail: (runId: string) => `/vehicle-catalog/import-runs/${runId}`,
     archiveMissingImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/archive-missing`,
+    reviewOffering: (offeringId: string) => `/vehicle-catalog/offerings/${offeringId}/review`,
     publishImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/publish`,
   },
   maintenance: {

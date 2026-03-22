@@ -115,6 +115,16 @@ export async function upsertCatalogDataset(
           });
           recordsUpserted += 1;
 
+          const offeringOverrides = await prisma.vehicleCatalogVariantOfferingOverride.findMany({
+            where: {
+              variantId: variantRecord.id,
+              sourceName: defaultSourceName,
+            },
+          });
+          const overridesBySignature = new Map(
+            offeringOverrides.map((override) => [override.fuelTypeSignature, override]),
+          );
+
           await prisma.vehicleCatalogVariantOffering.deleteMany({
             where: {
               variantId: variantRecord.id,
@@ -123,13 +133,15 @@ export async function upsertCatalogDataset(
           });
 
           for (const offering of variant.offerings) {
+            const override = overridesBySignature.get(buildFuelTypeSignature(offering.fuelTypes));
+
             await prisma.vehicleCatalogVariantOffering.create({
               data: {
                 variantId: variantRecord.id,
                 fuelTypes: offering.fuelTypes,
-                yearStart: offering.yearStart,
-                yearEnd: offering.yearEnd,
-                isCurrent: offering.isCurrent ?? false,
+                yearStart: override ? override.manualYearStart : offering.yearStart,
+                yearEnd: override ? override.manualYearEnd : offering.yearEnd,
+                isCurrent: override ? (override.manualIsCurrent ?? false) : (offering.isCurrent ?? false),
                 sourceName: defaultSourceName,
                 sourceUrl:
                   offering.sourceUrl ??
@@ -156,4 +168,8 @@ export function slugify(value: string) {
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function buildFuelTypeSignature(fuelTypes: readonly string[]) {
+  return [...fuelTypes].sort().join('|');
 }

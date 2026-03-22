@@ -57,6 +57,12 @@ describe('VehicleCatalogService', () => {
     },
     vehicleCatalogVariantOffering: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    vehicleCatalogVariantOfferingOverride: {
+      findMany: vi.fn(),
+      upsert: vi.fn(),
     },
     vehicleCatalogImportRun: {
       findMany: vi.fn(),
@@ -74,6 +80,7 @@ describe('VehicleCatalogService', () => {
     prisma.$transaction.mockImplementation(async (callback: (client: typeof prisma) => unknown) =>
       callback(prisma),
     );
+    prisma.vehicleCatalogVariantOfferingOverride.findMany.mockResolvedValue([]);
     service = new VehicleCatalogService(prisma as never);
   });
 
@@ -232,11 +239,94 @@ describe('VehicleCatalogService', () => {
       ],
     });
     prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
+    prisma.vehicleCatalogVariantOfferingOverride.findMany.mockResolvedValue([]);
 
     await expect(service.getImportRunDetail('run-1')).resolves.toEqual(
       expect.objectContaining({
         id: 'run-1',
         dataset: snapshotPayload.dataset,
+        publishedOfferings: [],
+      }),
+    );
+  });
+
+  it('updates published offering review metadata and persists an override', async () => {
+    prisma.vehicleCatalogVariantOffering.findUnique.mockResolvedValue({
+      id: 'offering-1',
+      variantId: 'variant-1',
+      fuelTypes: [FuelType.Petrol, FuelType.Diesel],
+      yearStart: 2024,
+      yearEnd: null,
+      isCurrent: true,
+      sourceName: 'hyundai-india',
+      sourceUrl: 'https://example.com/creta',
+      variant: {
+        name: 'SX (O)',
+        generation: {
+          name: 'Creta (2024 facelift)',
+          model: {
+            name: 'Creta',
+            make: {
+              name: 'Hyundai',
+              marketCode: 'IN',
+              vehicleType: VehicleType.SUV,
+            },
+          },
+        },
+      },
+    });
+    prisma.vehicleCatalogVariantOffering.update.mockResolvedValue({
+      id: 'offering-1',
+      variantId: 'variant-1',
+      fuelTypes: [FuelType.Petrol, FuelType.Diesel],
+      yearStart: 2023,
+      yearEnd: 2025,
+      isCurrent: false,
+      sourceName: 'hyundai-india',
+      sourceUrl: 'https://example.com/creta',
+      variant: {
+        name: 'SX (O)',
+        generation: {
+          name: 'Creta (2024 facelift)',
+          model: {
+            name: 'Creta',
+            make: {
+              name: 'Hyundai',
+              marketCode: 'IN',
+              vehicleType: VehicleType.SUV,
+            },
+          },
+        },
+      },
+    });
+
+    await expect(
+      service.updateOfferingReview('offering-1', {
+        yearStart: 2023,
+        yearEnd: 2025,
+        isCurrent: false,
+        reviewNote: 'OEM brochure uses overlapping launch years.',
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        id: 'offering-1',
+        yearStart: 2023,
+        yearEnd: 2025,
+        isCurrent: false,
+        reviewNote: 'OEM brochure uses overlapping launch years.',
+        manualOverrideApplied: true,
+      }),
+    );
+
+    expect(prisma.vehicleCatalogVariantOfferingOverride.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          variantId_sourceName_fuelTypeSignature: {
+            variantId: 'variant-1',
+            sourceName: 'hyundai-india',
+            fuelTypeSignature: 'diesel|petrol',
+          },
+        },
       }),
     );
   });
