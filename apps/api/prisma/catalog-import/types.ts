@@ -38,3 +38,11 @@ export type CatalogMakeInput = {
 };
 
 export type CatalogDataset = CatalogMakeInput[];
+
+export type CatalogImportSource = {
+  marketCode: string;
+  sourceKey: string;
+  sourceUrl: string;
+  capturedAt: string;
+  dataset: CatalogDataset;
+};

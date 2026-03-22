@@ -2,86 +2,92 @@ import { createHash } from 'node:crypto';
 
 import { PrismaClient, CatalogImportRunStatus } from '@prisma/client';
 
+import { catalogImportSources, type CatalogImportSourceKey } from './catalog-import/source-registry';
 import { upsertCatalogDataset } from './catalog-import/upsert-catalog-dataset';
-import { hyundaiIndiaSnapshot } from './catalog-import/sources/hyundai-india.snapshot';
 
 const prisma = new PrismaClient();
 
-const sources = {
-  'hyundai-india': hyundaiIndiaSnapshot,
-} as const;
-
 async function main() {
-  const sourceKey = readSourceKeyArg();
-  const source = sources[sourceKey];
+  const sourceKeys = readSourceKeysArg();
 
-  const run = await prisma.vehicleCatalogImportRun.create({
-    data: {
-      sourceKey: source.sourceKey,
-      marketCode: source.marketCode,
-      status: CatalogImportRunStatus.running,
-    },
-  });
-
-  try {
-    const payload = {
-      capturedAt: source.capturedAt,
-      dataset: source.dataset,
-      sourceKey: source.sourceKey,
-      sourceUrl: source.sourceUrl,
-    };
-
-    await prisma.vehicleCatalogImportSnapshot.create({
+  for (const sourceKey of sourceKeys) {
+    const source = catalogImportSources[sourceKey];
+    const run = await prisma.vehicleCatalogImportRun.create({
       data: {
-        importRunId: run.id,
+        sourceKey: source.sourceKey,
+        marketCode: source.marketCode,
+        status: CatalogImportRunStatus.running,
+      },
+    });
+
+    try {
+      const payload = {
+        capturedAt: source.capturedAt,
+        dataset: source.dataset,
+        sourceKey: source.sourceKey,
         sourceUrl: source.sourceUrl,
-        sourceHash: createHash('sha256').update(JSON.stringify(payload)).digest('hex'),
-        payload,
-      },
-    });
+      };
 
-    const recordsUpserted = await prisma.$transaction((tx) =>
-      upsertCatalogDataset(tx, source.dataset, {
-        defaultSourceName: source.sourceKey,
-      }),
-    );
+      await prisma.vehicleCatalogImportSnapshot.create({
+        data: {
+          importRunId: run.id,
+          sourceUrl: source.sourceUrl,
+          sourceHash: createHash('sha256').update(JSON.stringify(payload)).digest('hex'),
+          payload,
+        },
+      });
 
-    await prisma.vehicleCatalogImportRun.update({
-      where: {
-        id: run.id,
-      },
-      data: {
-        completedAt: new Date(),
-        recordsUpserted,
-        snapshotCount: 1,
-        status: CatalogImportRunStatus.succeeded,
-      },
-    });
-  } catch (error) {
-    await prisma.vehicleCatalogImportRun.update({
-      where: {
-        id: run.id,
-      },
-      data: {
-        completedAt: new Date(),
-        notes: error instanceof Error ? error.message : 'Unknown catalog import failure',
-        status: CatalogImportRunStatus.failed,
-      },
-    });
+      const recordsUpserted = await prisma.$transaction((tx) =>
+        upsertCatalogDataset(tx, source.dataset, {
+          defaultSourceName: source.sourceKey,
+        }),
+      );
 
-    throw error;
+      await prisma.vehicleCatalogImportRun.update({
+        where: {
+          id: run.id,
+        },
+        data: {
+          completedAt: new Date(),
+          recordsUpserted,
+          snapshotCount: 1,
+          status: CatalogImportRunStatus.succeeded,
+        },
+      });
+    } catch (error) {
+      await prisma.vehicleCatalogImportRun.update({
+        where: {
+          id: run.id,
+        },
+        data: {
+          completedAt: new Date(),
+          notes: error instanceof Error ? error.message : 'Unknown catalog import failure',
+          status: CatalogImportRunStatus.failed,
+        },
+      });
+
+      throw error;
+    }
   }
 }
 
-function readSourceKeyArg() {
+function readSourceKeysArg() {
   const sourceArg = process.argv.find((argument) => argument.startsWith('--source='));
-  const sourceKey = sourceArg?.split('=')[1] as keyof typeof sources | undefined;
+  const rawSourceKey = sourceArg?.split('=')[1];
 
-  if (!sourceKey || !(sourceKey in sources)) {
-    throw new Error(`Unknown or missing source. Supported sources: ${Object.keys(sources).join(', ')}`);
+  if (rawSourceKey === 'all') {
+    return Object.keys(catalogImportSources) as CatalogImportSourceKey[];
   }
 
-  return sourceKey;
+  const sourceKey = rawSourceKey as CatalogImportSourceKey | undefined;
+
+  if (!sourceKey || !(sourceKey in catalogImportSources)) {
+    throw new Error(
+      `Unknown or missing source. Supported sources: ${Object.keys(catalogImportSources).join(', ')}, all`,
+    );
+  }
+
+  return [sourceKey];
 }
 
 main()

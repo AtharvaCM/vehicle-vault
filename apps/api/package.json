@@ -20,7 +20,13 @@
     "prisma:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema prisma/schema.prisma",
     "prisma:seed": "ts-node --project tsconfig.json --transpile-only prisma/seed.ts",
-    "catalog:import:hyundai-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=hyundai-india"
+    "catalog:import:all": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=all",
+    "catalog:import:honda-cars-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=honda-cars-india",
+    "catalog:import:hyundai-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=hyundai-india",
+    "catalog:import:mahindra-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=mahindra-india",
+    "catalog:import:maruti-suzuki-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=maruti-suzuki-india",
+    "catalog:import:royal-enfield-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=royal-enfield-india",
+    "catalog:import:tata-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=tata-india"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.11",
