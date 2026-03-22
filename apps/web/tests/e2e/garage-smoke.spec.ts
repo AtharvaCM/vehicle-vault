@@ -115,6 +115,10 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await page.getByRole('link', { name: /edit vehicle/i }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/edit$/);
+  await expect(page.locator('#vehicle-type')).toContainText('SUV');
+  await expect(page.locator('#vehicle-make')).toContainText('Hyundai');
+  await expect(page.locator('#vehicle-model')).toContainText('Creta');
+  await expect(page.locator('#vehicle-variant')).toContainText('SX');
   await page.getByLabel(/nickname/i).fill(updatedNickname);
   await page.getByLabel(/odometer/i).fill('16250');
   await page.getByRole('button', { name: /save changes/i }).click();
@@ -127,7 +131,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
   await page.getByLabel(/service date/i).fill('2026-03-20');
   await page.getByLabel(/^odometer$/i).fill('16250');
-  await page.getByLabel(/workshop name/i).fill(workshopName);
+  await page.getByLabel(/workshop or garage/i).fill(workshopName);
   await page.getByLabel(/total cost/i).fill('4500');
   await page.getByLabel(/notes/i).fill('Oil change and general inspection');
   await page.getByRole('button', { name: /save record/i }).click();
@@ -140,7 +144,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await page.getByRole('link', { name: /edit record/i }).click();
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+\/edit$/);
-  await page.getByLabel(/workshop name/i).fill(updatedWorkshopName);
+  await page.getByLabel(/workshop or garage/i).fill(updatedWorkshopName);
   await page.getByLabel(/notes/i).fill('Updated record after reviewing invoice');
   await page.getByRole('button', { name: /save changes/i }).click();
 

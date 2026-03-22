@@ -77,9 +77,16 @@ export function VehicleForm({
   successMessage = 'Vehicle details saved.',
 }: VehicleFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
+  const resolvedInitialValues = useMemo(
+    () => ({
+      ...defaultVehicleValues,
+      ...initialValues,
+    }),
+    [initialValues],
+  );
 
   const form = useForm<VehicleFormValues>({
-    defaultValues: defaultVehicleValues,
+    defaultValues: resolvedInitialValues,
   });
 
   const selectedVehicleType = form.watch('vehicleType');
@@ -155,13 +162,6 @@ export function VehicleForm({
       setSubmissionState(null);
     }
   }, [submitError]);
-
-  useEffect(() => {
-    form.reset({
-      ...defaultVehicleValues,
-      ...initialValues,
-    });
-  }, [form, initialValues]);
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
