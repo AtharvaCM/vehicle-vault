@@ -30,6 +30,12 @@ async function selectSearchableOption(
   await expect(trigger).toContainText(optionLabel);
 }
 
+async function selectDropdownOption(page: Page, fieldLabel: RegExp, optionLabel: string) {
+  await page.getByLabel(fieldLabel).click();
+  await page.getByRole('option', { name: optionLabel }).click();
+  await expect(page.getByLabel(fieldLabel)).toContainText(optionLabel);
+}
+
 test('user can register, sign in, and manage the core garage flow', async ({ page }) => {
   const suffix = uniqueSuffix();
   const name = `E2E User ${suffix}`;
@@ -69,9 +75,11 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await expect(page).toHaveURL(/\/vehicles\/new$/);
   await page.getByLabel(/registration number/i).fill(registrationNumber);
+  await selectDropdownOption(page, /^vehicle type$/i, 'SUV');
   const makeOptionsResponse = page.waitForResponse(
     (response) =>
       response.url().includes('/api/vehicle-catalog/makes') &&
+      response.url().includes('vehicleType=suv') &&
       response.url().includes('year=2024') &&
       response.ok(),
   );
