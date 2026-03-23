@@ -53,6 +53,41 @@ export const hondaCarsIndiaSnapshot: CatalogImportSource = {
                 { name: '4th Gen VX', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }] },
               ],
             },
+            {
+              name: 'City (Type 2)',
+              yearStart: 1999,
+              yearEnd: 2003,
+              isCurrent: false,
+              variants: [
+                { name: '1.3 LXI', offerings: [{ fuelTypes: ['petrol'], yearStart: 1999, yearEnd: 2003 }] },
+                { name: '1.5 EXI', offerings: [{ fuelTypes: ['petrol'], yearStart: 1999, yearEnd: 2003 }] },
+              ],
+            },
+            {
+              name: 'City (Dolphin)',
+              yearStart: 2003,
+              yearEnd: 2008,
+              isCurrent: false,
+              variants: [
+                { name: 'GXi', offerings: [{ fuelTypes: ['petrol'], yearStart: 2003, yearEnd: 2008 }] },
+                { name: 'ZX', offerings: [{ fuelTypes: ['petrol'], yearStart: 2005, yearEnd: 2008 }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Civic',
+          generations: [
+            {
+              name: 'Civic (8th Gen)',
+              yearStart: 2006,
+              yearEnd: 2013,
+              isCurrent: false,
+              variants: [
+                { name: '1.8 V MT', offerings: [{ fuelTypes: ['petrol'], yearStart: 2006, yearEnd: 2013 }] },
+                { name: '1.8 V AT', offerings: [{ fuelTypes: ['petrol'], yearStart: 2006, yearEnd: 2013 }] },
+              ],
+            },
           ],
         },
       ],

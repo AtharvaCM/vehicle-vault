@@ -13,6 +13,33 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
       sourceUrl: 'https://www.bajajauto.com/bikes',
       models: [
         {
+          name: 'Pulsar 150',
+          generations: [
+            {
+              name: 'Pulsar 150 (Twin Disc)',
+              yearStart: 2018,
+              isCurrent: true,
+              variants: [
+                { name: 'Single Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+                { name: 'Twin Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Pulsar 220F',
+          generations: [
+            {
+              name: 'Pulsar 220F (BS6)',
+              yearStart: 2020,
+              isCurrent: true,
+              variants: [
+                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
           name: 'Pulsar N160',
           sourceUrl: 'https://www.bajajauto.com/bikes/pulsar/pulsar-n160',
           generations: [
@@ -75,6 +102,19 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               isCurrent: true,
               variants: [
                 { name: 'Cruise 220', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Platina',
+          generations: [
+            {
+              name: 'Platina 100',
+              yearStart: 2020,
+              isCurrent: true,
+              variants: [
+                { name: 'ES Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
               ],
             },
           ],

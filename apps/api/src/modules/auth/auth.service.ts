@@ -50,6 +50,7 @@ type UserRecord = {
   passwordResetTokenExpiresAt?: Date | null;
   passwordResetTokenHash?: string | null;
   refreshTokenHash?: string | null;
+  allowedCatalogSources: string[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -415,6 +416,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      allowedCatalogSources: user.allowedCatalogSources,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     });
@@ -425,6 +427,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      allowedCatalogSources: user.allowedCatalogSources,
     });
   }
 }

@@ -29,6 +29,19 @@ export const toyotaIndiaSnapshot: CatalogImportSource = {
             },
           ],
         },
+        {
+          name: 'Camry',
+          generations: [
+            {
+              name: 'Camry (2019 launch)',
+              yearStart: 2019,
+              isCurrent: true,
+              variants: [
+                { name: 'Hybrid', offerings: [{ fuelTypes: ['hybrid'], yearStart: 2019, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
       ],
     },
     {

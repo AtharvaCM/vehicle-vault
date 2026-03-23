@@ -13,6 +13,21 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
       sourceUrl: 'https://www.royalenfield.com/in/en/motorcycles/',
       models: [
         {
+          name: 'Bullet 350',
+          generations: [
+            {
+              name: 'Bullet 350 (J-platform)',
+              yearStart: 2023,
+              isCurrent: true,
+              variants: [
+                { name: 'Base', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                { name: 'Mid', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                { name: 'Top', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
           name: 'Classic 350',
           sourceUrl: 'https://www.royalenfield.com/in/en/motorcycles/classic-350/',
           generations: [
@@ -77,6 +92,34 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
                 { name: 'Fireball', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
                 { name: 'Stellar', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
                 { name: 'Supernova', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Interceptor 650',
+          generations: [
+            {
+              name: 'Interceptor 650',
+              yearStart: 2018,
+              isCurrent: true,
+              variants: [
+                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+                { name: 'Custom', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Continental GT 650',
+          generations: [
+            {
+              name: 'Continental GT 650',
+              yearStart: 2018,
+              isCurrent: true,
+              variants: [
+                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+                { name: 'Custom', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
               ],
             },
           ],

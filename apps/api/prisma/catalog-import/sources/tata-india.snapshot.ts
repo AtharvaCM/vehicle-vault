@@ -78,6 +78,31 @@ export const tataIndiaSnapshot: CatalogImportSource = {
             },
           ],
         },
+        {
+          name: 'Indica',
+          generations: [
+            {
+              name: 'Indica (V2)',
+              yearStart: 2001,
+              yearEnd: 2018,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'DLS',
+                  offerings: [{ fuelTypes: ['diesel'], yearStart: 2001, yearEnd: 2018 }],
+                },
+                {
+                  name: 'DLE',
+                  offerings: [{ fuelTypes: ['diesel'], yearStart: 2001, yearEnd: 2018 }],
+                },
+                {
+                  name: 'LXi',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2001, yearEnd: 2018 }],
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
     {

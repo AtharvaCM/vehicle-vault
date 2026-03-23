@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   FuelType,
   type UpdateVehicleCatalogOfferingReviewInput,
   VehicleCatalogImportDatasetSchema,
   VehicleCatalogMarket,
   VehicleType,
+  type AuthUser,
   type VehicleCatalogImportDataset,
   type VehicleCatalogImportRunDetail,
   type VehicleCatalogImportRunReview,
@@ -333,6 +334,7 @@ export class VehicleCatalogService {
   }
 
   async updateOfferingReview(
+    user: AuthUser,
     offeringId: string,
     input: UpdateVehicleCatalogOfferingReviewInput,
   ): Promise<VehicleCatalogPublishedOfferingReview> {
@@ -366,6 +368,10 @@ export class VehicleCatalogService {
     }
 
     const sourceName = offering.sourceName;
+
+    if (!user.allowedCatalogSources.includes(sourceName) && !user.allowedCatalogSources.includes('*')) {
+      throw new ForbiddenException('You do not have permission to review this source.');
+    }
 
     const nextYearStart = input.yearStart !== undefined ? input.yearStart ?? null : offering.yearStart;
     const nextYearEnd = input.yearEnd !== undefined ? input.yearEnd ?? null : offering.yearEnd;
@@ -443,7 +449,7 @@ export class VehicleCatalogService {
     });
   }
 
-  async publishImportRun(userId: string, runId: string): Promise<VehicleCatalogImportRunReview> {
+  async publishImportRun(user: AuthUser, runId: string): Promise<VehicleCatalogImportRunReview> {
     const run = await this.prisma.vehicleCatalogImportRun.findUnique({
       where: {
         id: runId,
@@ -464,6 +470,10 @@ export class VehicleCatalogService {
 
     if (run.status !== 'succeeded') {
       throw new BadRequestException('Only successful import runs can be published.');
+    }
+
+    if (!user.allowedCatalogSources.includes(run.sourceKey) && !user.allowedCatalogSources.includes('*')) {
+      throw new ForbiddenException('You do not have permission to publish this import run.');
     }
 
     if (run.publishedAt) {
@@ -513,7 +523,7 @@ export class VehicleCatalogService {
         },
         data: {
           publishedAt: new Date(),
-          publishedByUserId: userId,
+          publishedByUserId: user.id,
           recordsUpserted,
         },
         include: {
@@ -530,7 +540,7 @@ export class VehicleCatalogService {
     return this.mapImportRunReview(updatedRun, dataset);
   }
 
-  async archiveMissingVariants(runId: string): Promise<VehicleCatalogImportRunReview> {
+  async archiveMissingVariants(user: AuthUser, runId: string): Promise<VehicleCatalogImportRunReview> {
     const run = await this.prisma.vehicleCatalogImportRun.findUnique({
       where: {
         id: runId,
@@ -551,6 +561,10 @@ export class VehicleCatalogService {
 
     if (run.status !== 'succeeded') {
       throw new BadRequestException('Only successful import runs can archive missing variants.');
+    }
+
+    if (!user.allowedCatalogSources.includes(run.sourceKey) && !user.allowedCatalogSources.includes('*')) {
+      throw new ForbiddenException('You do not have permission to archive missing variants for this import run.');
     }
 
     if (run.publishedAt) {

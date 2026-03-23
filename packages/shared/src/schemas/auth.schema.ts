@@ -28,6 +28,7 @@ export const UserSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(255),
+  allowedCatalogSources: z.array(z.string()).default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -36,6 +37,7 @@ export const AuthUserSchema = UserSchema.pick({
   id: true,
   name: true,
   email: true,
+  allowedCatalogSources: true,
 });
 
 export const AuthResponseSchema = z.object({

@@ -299,6 +299,7 @@ model User {
   refreshTokenHash String?   @db.Char(64)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  allowedCatalogSources String[] @default([])
   publishedCatalogImportRuns VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
   vehicles         Vehicle[]
 }

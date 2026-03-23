@@ -13,6 +13,50 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
       sourceUrl: 'https://www.tvsmotor.com/our-products',
       models: [
         {
+          name: 'Jupiter',
+          generations: [
+            {
+              name: 'Jupiter 110 (BS6)',
+              yearStart: 2020,
+              isCurrent: true,
+              variants: [
+                { name: 'Sheet Metal Wheel', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'ZX', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Classic', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+              ],
+            },
+            {
+              name: 'Jupiter 125',
+              yearStart: 2021,
+              isCurrent: true,
+              variants: [
+                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+                { name: 'SmartXonnect', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'NTORQ 125',
+          generations: [
+            {
+              name: 'NTORQ 125 (BS6)',
+              yearStart: 2020,
+              isCurrent: true,
+              variants: [
+                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Race Edition', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Super Squad', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Race XP', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+                { name: 'XT', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
           name: 'Raider 125',
           sourceUrl: 'https://www.tvsmotor.com/tvs-raider',
           generations: [

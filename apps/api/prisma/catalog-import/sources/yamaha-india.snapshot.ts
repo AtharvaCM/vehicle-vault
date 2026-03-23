@@ -34,6 +34,15 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
                 { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2019, yearEnd: 2022 }] },
               ],
             },
+            {
+              name: 'FZ-S Fi (V2 lineup)',
+              yearStart: 2014,
+              yearEnd: 2018,
+              isCurrent: false,
+              variants: [
+                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2014, yearEnd: 2018 }] },
+              ],
+            },
           ],
         },
         {
@@ -88,6 +97,30 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               variants: [
                 { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
                 { name: 'Chrome', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'RayZR',
+          sourceUrl: 'https://www.yamaha-motor-india.com/yamaha-rayzr125-fi.html',
+          generations: [
+            {
+              name: 'RayZR 125 Fi Hybrid (2021 launch)',
+              yearStart: 2021,
+              isCurrent: true,
+              variants: [
+                { name: 'Drum', offerings: [{ fuelTypes: ['petrol', 'hybrid'], yearStart: 2021, isCurrent: true }] },
+                { name: 'Disc', offerings: [{ fuelTypes: ['petrol', 'hybrid'], yearStart: 2021, isCurrent: true }] },
+              ],
+            },
+            {
+              name: 'RayZR 125 Fi (2020 launch)',
+              yearStart: 2020,
+              yearEnd: 2021,
+              isCurrent: false,
+              variants: [
+                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2021 }] },
               ],
             },
           ],

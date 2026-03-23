@@ -148,6 +148,48 @@ export const marutiSuzukiIndiaSnapshot: CatalogImportSource = {
             },
           ],
         },
+        {
+          name: '800',
+          generations: [
+            {
+              name: '800 (1983 launch)',
+              yearStart: 1983,
+              yearEnd: 2014,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 1983, yearEnd: 2014 }],
+                },
+                {
+                  name: 'AC',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 1983, yearEnd: 2014 }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Zen',
+          generations: [
+            {
+              name: 'Zen (1993 launch)',
+              yearStart: 1993,
+              yearEnd: 2006,
+              isCurrent: false,
+              variants: [
+                {
+                  name: 'LX',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 1993, yearEnd: 2006 }],
+                },
+                {
+                  name: 'LXi',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 1993, yearEnd: 2006 }],
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
     {

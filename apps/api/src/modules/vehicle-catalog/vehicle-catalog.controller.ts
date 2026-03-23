@@ -45,21 +45,25 @@ export class VehicleCatalogController {
     @Param() params: CatalogImportRunIdParamDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return successResponse(await this.vehicleCatalogService.publishImportRun(user.id, params.runId));
+    return successResponse(await this.vehicleCatalogService.publishImportRun(user, params.runId));
   }
 
   @Post('import-runs/:runId/archive-missing')
-  async archiveMissingVariants(@Param() params: CatalogImportRunIdParamDto) {
-    return successResponse(await this.vehicleCatalogService.archiveMissingVariants(params.runId));
+  async archiveMissingVariants(
+    @Param() params: CatalogImportRunIdParamDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(await this.vehicleCatalogService.archiveMissingVariants(user, params.runId));
   }
 
   @Patch('offerings/:offeringId/review')
   async updateOfferingReview(
     @Param() params: CatalogOfferingIdParamDto,
     @Body() body: UpdateVehicleCatalogOfferingReviewDto,
+    @CurrentUser() user: AuthUser,
   ) {
     return successResponse(
-      await this.vehicleCatalogService.updateOfferingReview(params.offeringId, body),
+      await this.vehicleCatalogService.updateOfferingReview(user, params.offeringId, body),
     );
   }
 }

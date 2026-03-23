@@ -29,6 +29,50 @@ export const heroIndiaSnapshot: CatalogImportSource = {
           ],
         },
         {
+          name: 'HF Deluxe',
+          generations: [
+            {
+              name: 'HF Deluxe (BS6)',
+              yearStart: 2020,
+              isCurrent: true,
+              variants: [
+                { name: 'Kick Start', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Self Start', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Passion Pro',
+          generations: [
+            {
+              name: 'Passion Pro (BS6)',
+              yearStart: 2020,
+              yearEnd: 2023,
+              isCurrent: false,
+              variants: [
+                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }] },
+                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Glamour',
+          generations: [
+            {
+              name: 'Glamour (BS6)',
+              yearStart: 2020,
+              isCurrent: true,
+              variants: [
+                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                { name: 'XTEC', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+              ],
+            },
+          ],
+        },
+        {
           name: 'Xpulse 200 4V',
           sourceUrl: 'https://www.heromotocorp.com/en-in/motorcycles/performance/xpulse-200-4v.html',
           generations: [
