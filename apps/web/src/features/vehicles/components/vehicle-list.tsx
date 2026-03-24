@@ -16,7 +16,7 @@ export function VehicleList({
   vehicles,
 }: VehicleListProps) {
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       {vehicles.map((vehicle) => (
         <VehicleCard
           key={vehicle.id}

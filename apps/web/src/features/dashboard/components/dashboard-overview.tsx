@@ -1,4 +1,3 @@
-import { Bell } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { ReminderStatus } from '@vehicle-vault/shared';
 
@@ -11,13 +10,6 @@ import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { DashboardSummary } from '../types/dashboard';
-
-type DashboardReminderSectionProps = {
-  title: string;
-  description: string;
-  emptyMessage: string;
-  reminders: DashboardSummary['upcomingReminders'];
-};
 import { DashboardQuickActions } from './dashboard-quick-actions';
 import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
 import { formatReminderType } from '@/features/reminders/utils/format-reminder-type';
@@ -36,7 +28,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
 
   if (!hasAnyData) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <DashboardQuickActions />
         <EmptyState
           action={
@@ -52,8 +44,8 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
   }
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           description="Vehicles currently tracked in your garage."
           label="Total vehicles"
@@ -81,7 +73,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
 
       <DashboardQuickActions />
 
-      <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <DashboardReminderSection
           description="Items that need attention before anything else."
           emptyMessage="No reminders are overdue right now."
@@ -96,102 +88,93 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
         />
       </div>
 
-      <div className="grid gap-8 xl:grid-cols-2">
-        <Card className="bg-white/60">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-5">
-            <div className="space-y-1">
-              <CardTitle className="text-lg font-bold">Recent maintenance</CardTitle>
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle>Recent maintenance</CardTitle>
               <CardDescription>
-                Latest logged services and repairs.
+                Your latest logged services and repairs, with receipt coverage.
               </CardDescription>
             </div>
-            <Badge variant="outline" className="bg-white shadow-premium-sm">{summary.totalAttachments} attachments</Badge>
+            <Badge tone="neutral">{summary.totalAttachments} attachments</Badge>
           </CardHeader>
-          <CardContent className="divide-y divide-slate-100 p-0">
+          <CardContent className="space-y-3">
             {summary.recentMaintenance.length ? (
               summary.recentMaintenance.map((record) => (
                 <Link
                   key={record.id}
-                  className="group flex flex-col gap-2 p-5 transition-all hover:bg-slate-50/80"
+                  className="block rounded-2xl border border-slate-200 p-4 transition-colors hover:border-slate-300"
                   params={{ recordId: record.id }}
                   to="/maintenance-records/$recordId"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-slate-950">
                       {record.workshopName?.trim() || 'Workshop not specified'}
                     </p>
-                    <Badge variant="secondary" className="text-[10px]">{formatMaintenanceCategory(record.category)}</Badge>
+                    <Badge>{formatMaintenanceCategory(record.category)}</Badge>
                   </div>
-                  <div className="flex items-center justify-between text-[13px] text-slate-500">
-                    <div className="flex items-center gap-3">
-                      <span>{record.vehicleLabel}</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-200" />
-                      <span>{formatDate(record.serviceDate)}</span>
-                    </div>
-                    <p className="font-bold text-slate-700">{formatCurrency(record.totalCost)}</p>
+                  <div className="mt-2 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                    <p>{record.vehicleLabel}</p>
+                    <p>{formatDate(record.serviceDate)}</p>
+                    <p>{formatCurrency(record.totalCost)}</p>
+                    <p>
+                      {record.attachmentCount} attachment{record.attachmentCount === 1 ? '' : 's'}
+                    </p>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="px-5 py-8">
-                <EmptyState
-                  action={
-                    <Link className={buttonVariants({ size: 'sm' })} to="/vehicles">
-                      Log maintenance
-                    </Link>
-                  }
-                  description="No maintenance records have been logged yet."
-                  title="No history yet"
-                />
-              </div>
+              <EmptyState
+                action={
+                  <Link className={buttonVariants()} to="/vehicles">
+                    Log maintenance from a vehicle
+                  </Link>
+                }
+                description="No maintenance records have been logged yet."
+                title="No maintenance history yet"
+              />
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-white/60">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-5">
-            <div className="space-y-1">
-              <CardTitle className="text-lg font-bold">Garage overview</CardTitle>
-              <CardDescription>
-                Recently added or updated vehicles.
-              </CardDescription>
-            </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Garage overview</CardTitle>
+            <CardDescription>
+              Vehicles you recently added or updated.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="divide-y divide-slate-100 p-0">
+          <CardContent className="space-y-3">
             {summary.recentVehicles.length ? (
               summary.recentVehicles.map((vehicle) => (
                 <Link
                   key={vehicle.id}
-                  className="group flex flex-col gap-2 p-5 transition-all hover:bg-slate-50/80"
+                  className="block rounded-2xl border border-slate-200 p-4 transition-colors hover:border-slate-300"
                   params={{ vehicleId: vehicle.id }}
                   to="/vehicles/$vehicleId"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors">{vehicle.displayName}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-slate-950">{vehicle.displayName}</p>
                     <Badge tone="accent">{vehicle.vehicleType}</Badge>
                   </div>
-                  <div className="flex items-center justify-between text-[13px] text-slate-500">
-                    <div className="flex items-center gap-3">
-                      <span className="tabular-nums">{vehicle.registrationNumber}</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-200" />
-                      <span className="tabular-nums">{vehicle.odometer.toLocaleString('en-IN')} km</span>
-                    </div>
-                    <p className="text-[11px] font-medium opacity-60">Updated {formatDate(vehicle.updatedAt)}</p>
+                  <div className="mt-2 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                    <p>{vehicle.registrationNumber}</p>
+                    <p>{vehicle.odometer.toLocaleString('en-IN')} km</p>
+                    <p>Updated {formatDate(vehicle.updatedAt)}</p>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="px-5 py-8">
-                <EmptyState
-                  action={
-                    <Link className={buttonVariants({ size: 'sm' })} to="/vehicles/new">
-                      Add a vehicle
-                    </Link>
-                  }
-                  description="Vehicles will appear here once your garage grows."
-                  title="No vehicles"
-                />
-              </div>
+              <EmptyState
+                action={
+                  <Link className={buttonVariants()} to="/vehicles/new">
+                    Add a vehicle
+                  </Link>
+                }
+                description="Vehicles will appear here once your garage starts growing."
+                title="No vehicles to review"
+              />
             )}
           </CardContent>
         </Card>
@@ -200,6 +183,13 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
   );
 }
 
+type DashboardReminderSectionProps = {
+  title: string;
+  description: string;
+  emptyMessage: string;
+  reminders: DashboardSummary['upcomingReminders'];
+};
+
 function DashboardReminderSection({
   title,
   description,
@@ -207,66 +197,51 @@ function DashboardReminderSection({
   reminders,
 }: DashboardReminderSectionProps) {
   return (
-    <Card className="bg-white/60 overflow-hidden">
-      <CardHeader className="border-b border-slate-100 pb-5">
-        <CardTitle className="text-lg font-bold">{title}</CardTitle>
-        <CardDescription className="text-[13px]">{description}</CardDescription>
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="divide-y divide-slate-100 p-0">
+      <CardContent className="space-y-3">
         {reminders.length ? (
           reminders.map((reminder) => (
             <Link
               key={reminder.id}
-              className="group flex flex-col gap-3 p-5 transition-all hover:bg-slate-50/80"
+              className="block rounded-2xl border border-slate-200 p-4 transition-colors hover:border-slate-300"
               params={{ reminderId: reminder.id }}
               to="/reminders/$reminderId"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors truncate">{reminder.title}</p>
-                    <Badge variant="outline" className="bg-white text-[10px] py-0">{formatReminderType(reminder.type)}</Badge>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-slate-950">{reminder.title}</p>
+                    <Badge>{formatReminderType(reminder.type)}</Badge>
                   </div>
-                  <p className="text-[12px] font-medium text-slate-500">{reminder.vehicleLabel}</p>
+                  <div className="space-y-1 text-sm text-slate-600">
+                    <p>{reminder.vehicleLabel}</p>
+                    {reminder.dueDate ? <p>Due date: {formatDate(reminder.dueDate)}</p> : null}
+                    {reminder.dueOdometer !== undefined ? (
+                      <p>Due odometer: {reminder.dueOdometer.toLocaleString('en-IN')} km</p>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <div className="flex items-center gap-2">
                   <ReminderStatusBadge status={reminder.status} />
                   {reminder.status === ReminderStatus.Overdue ? (
-                    <Badge tone="danger" className="animate-pulse">Urgent</Badge>
+                    <Badge tone="danger">Urgent</Badge>
                   ) : reminder.status === ReminderStatus.DueToday ? (
                     <Badge tone="warning">Today</Badge>
                   ) : null}
                 </div>
               </div>
-              
-              <div className="flex items-center gap-4 text-[12px] text-slate-500 font-medium">
-                {reminder.dueDate ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-400">Date</span>
-                    <span className="text-slate-700">{formatDate(reminder.dueDate)}</span>
-                  </div>
-                ) : null}
-                {reminder.dueOdometer !== undefined ? (
-                  <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
-                    <span className="text-slate-400">KM</span>
-                    <span className="text-slate-700 tabular-nums">{reminder.dueOdometer.toLocaleString('en-IN')} km</span>
-                  </div>
-                ) : null}
-              </div>
             </Link>
           ))
         ) : (
-          <div className="px-6 py-10 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
-               <Bell className="h-5 w-5" />
-            </div>
-            <p className="text-[13px] font-medium text-slate-400">
-              {emptyMessage}
-            </p>
-          </div>
+          <p className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-sm text-slate-500">
+            {emptyMessage}
+          </p>
         )}
       </CardContent>
     </Card>
   );
 }
-

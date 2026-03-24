@@ -5,9 +5,9 @@ import { Topbar } from './topbar';
 
 export function AppLayout({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen bg-slate-50/50 text-foreground selection:bg-primary/10 selection:text-primary">
+    <div className="min-h-screen bg-slate-50/70 text-foreground">
       <a
-        className="sr-only left-4 top-4 z-50 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:absolute focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        className="sr-only left-4 top-4 z-50 rounded-lg bg-slate-950 px-3 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
         href="#main-content"
       >
         Skip to main content

@@ -80,31 +80,26 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
-      <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-30 border-b border-border/70 bg-white/85 backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
           <Sheet onOpenChange={setIsMobileNavOpen} open={isMobileNavOpen}>
             <SheetTrigger asChild>
-              <Button className="xl:hidden" size="icon-sm" variant="ghost">
-                <Menu className="h-5 w-5" />
+              <Button className="xl:hidden" size="icon-sm" variant="outline">
+                <Menu className="h-4 w-4" />
                 <span className="sr-only">Open navigation</span>
               </Button>
             </SheetTrigger>
             <SheetContent className="w-[88vw] max-w-sm p-0" side="left">
-              <SheetHeader className="border-b border-slate-200/60 px-6 py-6 text-left">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-[11px] font-bold text-primary-foreground shadow-premium-sm">
-                    VV
-                  </div>
-                  <SheetTitle className="text-lg font-bold tracking-tight">{APP_NAME}</SheetTitle>
-                </div>
-                <SheetDescription className="mt-1 text-[13px]">
-                  Manage your garage, records, and reminders.
+              <SheetHeader className="border-b border-border/70 px-6 py-5">
+                <SheetTitle>{APP_NAME}</SheetTitle>
+                <SheetDescription>
+                  Jump between your garage, maintenance history, reminders, and settings.
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="flex h-[calc(100vh-100px)] flex-col">
-                <nav className="grid gap-1 p-3">
+              <div className="flex h-full flex-col">
+                <nav className="grid gap-2 p-4">
                   {appNavigation.map((item) => {
                     const Icon = item.icon;
 
@@ -113,17 +108,16 @@ export function Topbar() {
                         <Link
                           activeOptions={{ exact: item.exact ?? false }}
                           activeProps={{
-                            className: 'bg-primary text-primary-foreground shadow-premium-sm',
+                            className:
+                              'border-slate-950/10 bg-slate-950 text-white hover:bg-slate-900',
                           }}
-                          className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium transition-all hover:bg-slate-100"
+                          className="flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           to={item.to}
                         >
                           <Icon className="h-4 w-4" />
-                          <div className="min-w-0 flex-1">
-                            <p className="leading-none">{item.label}</p>
-                            <p className="mt-1 text-[10px] opacity-70">
-                              {item.subtitle}
-                            </p>
+                          <div className="space-y-0.5">
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.subtitle}</p>
                           </div>
                         </Link>
                       </SheetClose>
@@ -131,37 +125,33 @@ export function Topbar() {
                   })}
                 </nav>
 
-                <div className="mt-auto border-t border-slate-200/60 p-4">
-                  <div className="rounded-xl border border-slate-200/50 bg-slate-50/50 p-4 shadow-premium-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow-premium-sm">
-                        <span className="text-xs font-bold">{auth.user?.name?.charAt(0)}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-900">
-                          {auth.user?.name}
-                        </p>
-                      </div>
+                <div className="mt-auto border-t border-border/70 px-4 py-4">
+                  <div className="space-y-3 rounded-2xl border border-border/70 bg-slate-50/80 p-4">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium text-foreground">{auth.user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{auth.user?.email}</p>
                     </div>
-                    <div className="mt-4 grid gap-2">
+                    <div className="grid gap-2">
                       <SheetClose asChild>
-                        <Link className="w-full" to="/vehicles/new">
-                          <Button className="w-full shadow-premium-sm" size="sm">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Vehicle
-                          </Button>
+                        <Link
+                          className={buttonVariants({ size: 'sm' }) + ' w-full justify-center'}
+                          to="/vehicles/new"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Vehicle
                         </Link>
                       </SheetClose>
                       <Button
-                        className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        className="w-full justify-center"
                         onClick={() => {
                           void handleLogout();
                           setIsMobileNavOpen(false);
                         }}
                         size="sm"
-                        variant="ghost"
+                        type="button"
+                        variant="outline"
                       >
-                        <LogOut className="mr-2 h-4 w-4" />
+                        <LogOut className="h-4 w-4" />
                         Logout
                       </Button>
                     </div>
@@ -171,28 +161,32 @@ export function Topbar() {
             </SheetContent>
           </Sheet>
 
-          <div className="hidden h-8 w-px bg-slate-200/60 xl:block" />
-
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-base font-bold tracking-tight text-slate-900">{activeSection}</h2>
-            <div className="h-1 w-1 rounded-full bg-slate-300" />
-            <span className="text-xs font-medium text-slate-400">Manage your vault</span>
+          <div className="space-y-0.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              {APP_NAME}
+            </p>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">{activeSection}</h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'hidden shadow-premium-sm sm:inline-flex')}
+            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' hidden sm:inline-flex'}
             to="/vehicles/new"
           >
-            <Plus className="mr-2 h-3.5 w-3.5" />
-            New Vehicle
+            Add Vehicle
+          </Link>
+          <Link
+            className={buttonVariants({ variant: 'outline', size: 'icon-sm' }) + ' sm:hidden'}
+            to="/vehicles/new"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="sr-only">Add vehicle</span>
           </Link>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                className="relative h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() =>
                   appToast.info({
                     title: 'Alerts are coming soon',
@@ -200,55 +194,51 @@ export function Topbar() {
                       'For now, keep track of due items from the dashboard and reminders pages.',
                   })
                 }
-                size="icon"
+                size="icon-sm"
                 variant="ghost"
               >
                 <Bell className="h-4 w-4" />
-                <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
                 <span className="sr-only">Notifications</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Notifications</TooltipContent>
+            <TooltipContent>Reminder alerts are not available yet.</TooltipContent>
           </Tooltip>
-
-          <div className="h-6 w-px bg-slate-200/60" />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="h-9 w-9 rounded-full border-slate-200/60 p-0 shadow-premium-sm hover:bg-slate-50" variant="outline">
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
-                  {auth.user?.name?.charAt(0)}
-                </div>
+              <Button className="rounded-full px-3" size="sm" variant="outline">
+                <UserCircle2 className="mr-2 h-4 w-4" />
+                <span className="hidden max-w-[140px] truncate sm:inline-block">
+                  {auth.user?.name}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 rounded-xl border-slate-200/60 p-1.5 shadow-premium-lg">
-              <DropdownMenuLabel className="px-3 py-2">
-                <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-semibold text-slate-900">{auth.user?.name}</p>
-                  <p className="truncate text-[11px] font-normal text-slate-500">
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel>
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">{auth.user?.name}</p>
+                  <p className="truncate text-xs font-normal text-muted-foreground">
                     {auth.user?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="my-1.5" />
-              <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-slate-100">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link to="/settings">
-                  <Settings className="mr-2.5 h-4 w-4 text-slate-500" />
-                  Account Settings
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-slate-100">
-                <Link to="/maintenance">
-                  <Wrench className="mr-2.5 h-4 w-4 text-slate-500" />
-                  Service History
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="my-1.5" />
-              <DropdownMenuItem
-                className="rounded-lg px-3 py-2 text-rose-600 focus:bg-rose-50 focus:text-rose-700"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2.5 h-4 w-4" />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-rose-600 focus:text-rose-700" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -256,7 +246,7 @@ export function Topbar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto border-t border-slate-100 px-4 py-2 xl:hidden">
+      <div className="flex items-center gap-2 overflow-x-auto border-t border-border/60 px-4 py-2.5 xl:hidden">
         {appNavigation.map((item) => {
           const Icon = mobileIcons[item.to] ?? LayoutDashboard;
 
@@ -265,14 +255,14 @@ export function Topbar() {
               key={item.to}
               activeOptions={{ exact: item.exact ?? false }}
               activeProps={{
-                className: 'bg-primary text-primary-foreground shadow-premium-sm border-transparent',
+                className: 'bg-slate-950 text-white border-slate-950',
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 active:scale-95',
+                'inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               )}
               to={item.to}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               {item.label}
             </Link>
           );
