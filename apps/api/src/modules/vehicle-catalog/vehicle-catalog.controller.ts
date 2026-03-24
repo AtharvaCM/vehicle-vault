@@ -30,6 +30,21 @@ export class VehicleCatalogController {
     return successResponse(await this.vehicleCatalogService.listVariants(query));
   }
 
+  @Get('variants/:variantId/specs')
+  async getVariantSpecs(@Param('variantId') variantId: string) {
+    return successResponse(await this.vehicleCatalogService.getVariantSpecs(variantId));
+  }
+
+  @Get('specs')
+  async findVariantSpecs(
+    @Query('make') make: string,
+    @Query('model') model: string,
+    @Query('variant') variant: string,
+  ) {
+    const specs = await this.vehicleCatalogService.findVariantSpecsByName(make, model, variant);
+    return successResponse(specs);
+  }
+
   @Get('import-runs')
   async listImportRuns() {
     return successResponse(await this.vehicleCatalogService.listImportRuns());

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BellRing, ClipboardList, LayoutGrid } from 'lucide-react';
+import { BellRing, ClipboardList, LayoutGrid, Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
@@ -24,6 +24,7 @@ import { ReminderStatus } from '@vehicle-vault/shared';
 import { useNavigate } from '@tanstack/react-router';
 
 import { OdometerHistoryCard } from '../components/odometer-history-card';
+import { VehicleSpecsCard } from '../components/vehicle-specs-card';
 import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
@@ -191,6 +192,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             <ClipboardList className="h-4 w-4" />
             Maintenance
           </TabsTrigger>
+          <TabsTrigger className="min-w-[120px] flex-1 gap-2 py-2.5 sm:flex-none" value="specs">
+            <Wrench className="h-4 w-4" />
+            Specs
+          </TabsTrigger>
           <TabsTrigger className="min-w-[120px] flex-1 gap-2 py-2.5 sm:flex-none" value="reminders">
             <BellRing className="h-4 w-4" />
             Reminders
@@ -240,6 +245,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
               visibleReminders={activeReminders}
             />
           </div>
+        </TabsContent>
+
+        <TabsContent value="specs">
+          <VehicleSpecsCard make={vehicle.make} model={vehicle.model} variant={vehicle.variant} />
         </TabsContent>
 
         <TabsContent value="maintenance">

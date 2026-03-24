@@ -166,9 +166,65 @@ model VehicleCatalogVariant {
   generation        VehicleCatalogGeneration              @relation(fields: [generationId], references: [id], onDelete: Cascade)
   offerings         VehicleCatalogVariantOffering[]
   offeringOverrides VehicleCatalogVariantOfferingOverride[]
+  spec              VehicleCatalogVariantSpec?
 
   @@unique([generationId, slug])
   @@index([generationId, name])
+}
+
+model VehicleCatalogVariantSpec {
+  id                String   @id @default(uuid()) @db.Uuid
+  variantId         String   @unique @db.Uuid
+
+  // Engine & Drivetrain
+  engineCc          Int?
+  engineCyl         Int?
+  engineType        String?  @db.VarChar(60)
+  engineFuel        String?  @db.VarChar(60)
+  powerPs           Float?
+  powerRpm          Int?
+  torqueNm          Float?
+  torqueRpm         Int?
+  transmission      String?  @db.VarChar(80)
+  driveType         String?  @db.VarChar(40)
+
+  // Dimensions & Weight
+  lengthMm          Int?
+  widthMm           Int?
+  heightMm          Int?
+  wheelbaseMm       Int?
+  kerbWeightKg      Int?
+  grossWeightKg     Int?
+  bootSpaceLitres   Int?
+  groundClearanceMm Int?
+  turningRadiusM    Float?
+
+  // Performance & Economy
+  topSpeedKph       Int?
+  mileageCity       Float?
+  mileageHighway    Float?
+  mileageCombined   Float?
+  fuelCapLitres     Float?
+
+  // Body & Comfort
+  seatingCapacity   Int?
+  bodyType          String?  @db.VarChar(40)
+  doors             Int?
+
+  // Tyres & Wheels
+  tyreSize          String?  @db.VarChar(60)
+  wheelType         String?  @db.VarChar(40)
+  wheelSizeInch     Float?
+
+  // Safety
+  airbagCount       Int?
+  safetyFeatures    String?
+
+  sourceName        String?  @db.VarChar(80)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  variant           VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 }
 
 model VehicleCatalogMakeAlias {

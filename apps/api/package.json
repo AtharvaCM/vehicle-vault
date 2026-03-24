@@ -37,7 +37,8 @@
     "catalog:import:volkswagen-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=volkswagen-india",
     "catalog:import:yamaha-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=yamaha-india",
     "catalog:sync-aliases": "ts-node --project tsconfig.json --transpile-only prisma/sync-catalog-aliases.ts",
-    "catalog:scrape": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-carwale.ts"
+    "catalog:scrape": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-carwale.ts",
+    "catalog:seed-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/upsert-specs.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.11",

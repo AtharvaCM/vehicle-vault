@@ -40,6 +40,8 @@ export const queryKeys = {
         model,
         year ?? 'any',
       ] as const,
+    variantSpecs: (make: string, model: string, variant: string) =>
+      [...queryKeys.vehicleCatalog.all(), 'variantSpecs', make, model, variant] as const,
   },
   maintenance: {
     all: () => ['maintenance'] as const,

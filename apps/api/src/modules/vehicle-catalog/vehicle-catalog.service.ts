@@ -111,6 +111,41 @@ type NormalizedCatalogSummary = {
 export class VehicleCatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getVariantSpecs(variantId: string) {
+    const spec = await this.prisma.vehicleCatalogVariantSpec.findUnique({
+      where: { variantId },
+    });
+
+    if (!spec) {
+      throw new NotFoundException(`No specs found for variant ${variantId}`);
+    }
+
+    return spec;
+  }
+
+  async findVariantSpecsByName(make: string, model: string, variant: string) {
+    const catalogVariant = await this.prisma.vehicleCatalogVariant.findFirst({
+      where: {
+        name: { equals: variant, mode: 'insensitive' },
+        generation: {
+          model: {
+            name: { equals: model, mode: 'insensitive' },
+            make: {
+              name: { equals: make, mode: 'insensitive' },
+            },
+          },
+        },
+      },
+      include: { spec: true },
+    });
+
+    if (!catalogVariant?.spec) {
+      return null;
+    }
+
+    return catalogVariant.spec;
+  }
+
   async listMakes(query: ListVehicleCatalogMakesDto): Promise<VehicleCatalogMakeOption[]> {
     const normalized = normalizeMakeQuery(query);
     const makes = await this.prisma.vehicleCatalogMake.findMany({

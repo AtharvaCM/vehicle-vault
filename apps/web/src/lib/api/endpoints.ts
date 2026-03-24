@@ -28,6 +28,7 @@ export const endpoints = {
     archiveMissingImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/archive-missing`,
     reviewOffering: (offeringId: string) => `/vehicle-catalog/offerings/${offeringId}/review`,
     publishImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/publish`,
+    specs: '/vehicle-catalog/specs',
   },
   maintenance: {
     all: '/maintenance-records',
