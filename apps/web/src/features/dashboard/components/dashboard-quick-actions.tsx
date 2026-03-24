@@ -6,28 +6,28 @@ import { Button } from '@/components/ui/button';
 
 export function DashboardQuickActions() {
   return (
-    <Card className="rounded-xl">
-      <CardHeader className="pb-3">
-        <CardTitle>Quick actions</CardTitle>
-        <CardDescription>
-          Start the tasks you are most likely to do next.
+    <Card className="border-slate-200/60 bg-white/60">
+      <CardHeader className="pb-4 border-b border-slate-100">
+        <CardTitle className="text-lg font-bold">Quick actions</CardTitle>
+        <CardDescription className="text-[13px]">
+          Frequently used tasks and shortcuts.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2.5 sm:grid-cols-3">
+      <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
         <Link to="/vehicles/new">
-          <Button className="w-full justify-start" size="sm">
+          <Button className="w-full justify-start shadow-premium-sm" size="sm">
             <CarFront className="mr-2 h-4 w-4" />
             Add vehicle
           </Button>
         </Link>
         <Link to="/vehicles">
-          <Button className="w-full justify-start" size="sm" variant="secondary">
+          <Button className="w-full justify-start shadow-premium-sm" size="sm" variant="outline">
             <Wrench className="mr-2 h-4 w-4" />
             Log maintenance
           </Button>
         </Link>
         <Link to="/vehicles">
-          <Button className="w-full justify-start" size="sm" variant="secondary">
+          <Button className="w-full justify-start shadow-premium-sm" size="sm" variant="outline">
             <BellRing className="mr-2 h-4 w-4" />
             Create reminder
           </Button>

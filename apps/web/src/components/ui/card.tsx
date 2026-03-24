@@ -12,8 +12,8 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        'rounded-xl border bg-card text-card-foreground shadow-sm',
-        size === 'sm' ? 'p-4' : 'p-5',
+        'rounded-xl border border-slate-200/60 bg-card text-card-foreground shadow-premium-sm transition-shadow hover:shadow-premium-md',
+        size === 'sm' ? 'p-4' : 'p-6',
         className,
       )}
       {...props}
