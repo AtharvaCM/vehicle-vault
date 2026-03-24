@@ -1,255 +1,27 @@
 import type { CatalogImportSource } from '../types';
 
-export const kiaIndiaSnapshot: CatalogImportSource = {
+export const jeepIndiaSnapshot: CatalogImportSource = {
   "marketCode": "IN",
-  "sourceKey": "kia-india",
-  "sourceUrl": "https://www.carwale.com/kia-cars/",
+  "sourceKey": "jeep-india",
+  "sourceUrl": "https://www.carwale.com/jeep-cars/",
   "capturedAt": "2026-03-24",
   "dataset": [
     {
       "marketCode": "IN",
       "vehicleType": "car",
-      "name": "Kia",
-      "sourceUrl": "https://www.carwale.com/kia-cars/",
+      "name": "Jeep",
+      "sourceUrl": "https://www.carwale.com/jeep-cars/",
       "models": [
         {
-          "name": "Syros",
-          "sourceUrl": "https://www.carwale.com/kia-cars/syros/",
+          "name": "Avenger",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/avenger/",
           "generations": [
             {
-              "name": "Syros (current)",
+              "name": "Avenger (current)",
               "isCurrent": true,
               "variants": [
                 {
-                  "name": "View",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK EX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTX Plus (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Syros News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Syros Long Term Report - Highway And Wrap-upBy Aditya Nadkarni02 Nov 2025Kia Syros Long Term Report - Highway and Wrap-up",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Syros Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Delhi",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
+                  "name": "Avenger News",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -265,543 +37,15 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
           ]
         },
         {
-          "name": "Carnival",
-          "sourceUrl": "https://www.carwale.com/kia-cars/carnival/",
+          "name": "Willys",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/willys/",
           "generations": [
             {
-              "name": "Carnival (current)",
+              "name": "Willys (current)",
               "isCurrent": true,
               "variants": [
                 {
-                  "name": "View",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Limousine Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carnival News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carnival Limousine Plus First Drive ReviewBy Desirazu Venkat22 Oct 2024The new-generation Kia Carnival is offered in fully-loaded variant and only with diesel power",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carnival Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Delhi",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "EV6",
-          "sourceUrl": "https://www.carwale.com/kia-cars/ev6/",
-          "generations": [
-            {
-              "name": "EV6 (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "View",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "GT Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "EV6 News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kia EV6 GT-Line AWD First Drive ReviewBy Abhishek Nigam25 May 2022We get behind the wheel of Kia's first EV at India's first F1 circuit",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "EV6 Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Delhi",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "EV9",
-          "sourceUrl": "https://www.carwale.com/kia-cars/ev9/",
-          "generations": [
-            {
-              "name": "EV9 (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "GT-Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "EV9 News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kia EV9 Expert Reviews",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "EV9 Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Delhi",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "EV3",
-          "sourceUrl": "https://www.carwale.com/kia-cars/ev3/",
-          "generations": [
-            {
-              "name": "EV3 (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "EV3 News",
+                  "name": "Diesel",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -813,7 +57,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "EV3 First Drive Review By Sagar Bhanushali15 Nov 2025We spent some time with the EV3 GT-Line in the UK. The midsize EV space in India could become very interesting if Kia India decides to bring the EV3 here.",
+                  "name": "Willys News",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -829,15 +73,27 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
           ]
         },
         {
-          "name": "Syros EV",
-          "sourceUrl": "https://www.carwale.com/kia-cars/syros-ev/",
+          "name": "Kaiser",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/kaiser/",
           "generations": [
             {
-              "name": "Syros EV (current)",
+              "name": "Kaiser (current)",
               "isCurrent": true,
               "variants": [
                 {
-                  "name": "Syros EV News",
+                  "name": "CJ-5",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Kaiser News",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -853,255 +109,15 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
           ]
         },
         {
-          "name": "Sorento",
-          "sourceUrl": "https://www.carwale.com/kia-cars/sorento/",
+          "name": "Renegade",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/renegade/",
           "generations": [
             {
-              "name": "Sorento (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "Sorento News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "EV5",
-          "sourceUrl": "https://www.carwale.com/kia-cars/ev5/",
-          "generations": [
-            {
-              "name": "EV5 (current)",
+              "name": "Renegade (current)",
               "isCurrent": true,
               "variants": [
                 {
                   "name": "Standard",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Tasman",
-          "sourceUrl": "https://www.carwale.com/kia-cars/tasman/",
-          "generations": [
-            {
-              "name": "Tasman (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "Tasman News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "EV6 [2022-2025]",
-          "sourceUrl": "https://www.carwale.com/kia-cars/ev6-2022-2025/",
-          "generations": [
-            {
-              "name": "EV6 [2022-2025] (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "[2022-2025] GT Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2022-2025] GT Line AWD",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Range Details",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kia EV6 GT-Line AWD First Drive ReviewBy Abhishek Nigam25 May 2022We get behind the wheel of Kia's first EV at India's first F1 circuit",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Rio",
-          "sourceUrl": "https://www.carwale.com/kia-cars/rio/",
-          "generations": [
-            {
-              "name": "Rio (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "Standard",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Carnival [2020-2023]",
-          "sourceUrl": "https://www.carwale.com/kia-cars/carnival-2020-2023/",
-          "generations": [
-            {
-              "name": "Carnival [2020-2023] (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "[2020-2023] Premium",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2020-2023] Prestige",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2020-2023] Limousine",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carnival real-world fuel efficiency figures revealedBy Ninad Ambre24 Aug 2020Kia Motors launched the Carnival in India to offer a luxurious yet practical MPV for our market. It's powered by a 2.2-litre diesel engine with power rated at 197bhp and 440Nm of torque. This VGT motor comes mated to an eight-speed ‘sportsmatic’ transmission. Looking at this MPV's mammoth-like proportions, a prospective buyer knows he/she might not be able to duplicate its ARAI figures of 13.9kmpl in the real world. And, it's still quite understandable if one wants a good fuel economy from his/her vehicle with fuel costs rising again and again. For letting you know how much fuel economy the Kia Carnival gives in actual driving conditions, here's our report from its fuel efficiency tests.",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Videos",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1121,291 +137,15 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
     {
       "marketCode": "IN",
       "vehicleType": "suv",
-      "name": "Kia",
-      "sourceUrl": "https://www.carwale.com/kia-cars/",
+      "name": "Jeep",
+      "sourceUrl": "https://www.carwale.com/jeep-cars/",
       "models": [
         {
-          "name": "Seltos",
-          "sourceUrl": "https://www.carwale.com/kia-cars/seltos/",
+          "name": "Wrangler",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/wrangler/",
           "generations": [
             {
-              "name": "Seltos (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "HTE",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTE (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTX (A)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "GTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "X-Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "GTX (A)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "X-Line (A)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Seltos News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kia Seltos First Drive ReviewBy Sagar Bhanushali23 Dec 2025Does the new Seltos do enough to justify the generational upgrade? More importantly, has Kia finally addressed the ride quality concerns? We spent some time with it to find out.",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Seltos Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Delhi",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Sonet",
-          "sourceUrl": "https://www.carwale.com/kia-cars/sonet/",
-          "generations": [
-            {
-              "name": "Sonet (current)",
+              "name": "Wrangler (current)",
               "isCurrent": true,
               "variants": [
                 {
@@ -1421,7 +161,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "HTE",
+                  "name": "Unlimited | Petrol Turbo | Automatic",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1433,7 +173,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "HTE (O)",
+                  "name": "Rubicon | Petrol Turbo | Automatic",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1445,7 +185,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "HTK",
+                  "name": "Willys 41 Special Edition | Petrol Turbo | Automatic",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1457,7 +197,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "HTK (O)",
+                  "name": "Wrangler News",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1469,91 +209,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "HTK Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTK Plus (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "GTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "X Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Sonet News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Sonet Diesel iMT Longterm Review: Highway reportBy Rishabh Bhaskar18 Dec 2024We put the Sonet through its paces on the highway",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Sonet Videos",
+                  "name": "Jeep Wrangler Rubicon ReviewBy Sagar Bhanushali25 Apr 2024Like I said, Jeep has tried to mordernize the Wrangler by adding more sound deadening to the cabin and new features. Time to find out whether this notably improved 2024 model stays true to the Wrangler formula and how.",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1677,11 +333,347 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
           ]
         },
         {
-          "name": "Carens Clavis",
-          "sourceUrl": "https://www.carwale.com/kia-cars/carens-clavis/",
+          "name": "Compass",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/compass/",
           "generations": [
             {
-              "name": "Carens Clavis (current)",
+              "name": "Compass (current)",
+              "isCurrent": true,
+              "variants": [
+                {
+                  "name": "Sport | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude | 2WD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude (O) | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Trail Edition | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Limited (O) | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude (O) | 2WD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Trail Edition | 2WD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Model S (O) | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Limited (O) | 2WD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Track Edition | 2WD Diesel 2.0L Turbo | Manual",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Model S (O) | 2WD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Track Edition | 2WD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Model S (O) | AWD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Track Edition | AWD Diesel 2.0L Turbo | Automatic (TC)",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Compass News",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "six SUVs and MPVs we have tested in 2022 so far By Sagar Bhanushali30 Jul 2022We have driven and tested two very important MPVs along with a bunch of SUV/crossovers from this year so far and here’s our list of top six that we prefer for various reasons.",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Compass Videos",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Delhi",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Hyderabad",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Bangalore",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Mumbai",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Ahmedabad",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Kolkata",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Chennai",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Pune",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Lucknow",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Meridian",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/meridian/",
+          "generations": [
+            {
+              "name": "Meridian (current)",
               "isCurrent": true,
               "variants": [
                 {
@@ -1689,7 +681,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   "offerings": [
                     {
                       "fuelTypes": [
-                        "petrol"
+                        "diesel"
                       ],
                       "yearStart": 2020,
                       "isCurrent": true
@@ -1697,7 +689,331 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Clavis HTE",
+                  "name": "Longitude | 2WD Diesel Turbo | Manual | 5 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude Plus | 2WD Diesel Turbo | Manual | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude | 2WD Diesel Turbo | Automatic | 5 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Longitude Plus | 2WD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Trail Edition | 2WD Diesel Turbo | Manual | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Limited (O) | 2WD Diesel Turbo | Manual | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Trail Edition | 2WD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Limited (O) | 2WD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Trail Edition | AWD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Limited (O) | AWD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Overland | 2WD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Track Edition | 2WD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Overland | AWD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Track Edition | AWD Diesel Turbo | Automatic | 7 STR",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Meridian News",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Meridian Special Editions First LookBy  Pawan Mudaliar30 May 2023Last month, Jeep India introduced two new special-edition models of the Meridian SUV, dubbed Meridian X and Meridian Upland. The Meridian X is based on the Limited Plus variant, while the Meridian Upland is based on the Limited(O) trim. The special edition Meridians get a distinct look that make them stand out and are capable both on off-road trails as well as the urban jungle. We have seen both these SUVs in person and here is everything you need to know about it.",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Meridian Videos",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Delhi",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Hyderabad",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Bangalore",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Mumbai",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Ahmedabad",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Kolkata",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Chennai",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Pune",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Lucknow",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "diesel"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Grand Cherokee",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/grand-cherokee/",
+          "generations": [
+            {
+              "name": "Grand Cherokee (current)",
+              "isCurrent": true,
+              "variants": [
+                {
+                  "name": "Cherokee Limited (O) 4x4 AT",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1709,7 +1025,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Clavis HTE (O)",
+                  "name": "Cherokee Signature Edition",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1721,7 +1037,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Clavis HTE EX",
+                  "name": "Grand Cherokee News",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1733,7 +1049,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Clavis HTK Plus",
+                  "name": "8 luxury cars we tested in 2022By Sagar Bhanushali09 Jan 2023This year we have driven many a luxury cars at different price points and here are our top six cars if you want to be chauffeured.",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1745,127 +1061,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Clavis HTK Plus (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis HTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis HTX (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis GTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis HTX(O) A",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis GTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis X-Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis 1.5 T-GDi DCT Long-Term Review: City ReportBy Santosh Nair13 Mar 2026After a month with the Clavis, it’s become my go-to for the daily grind, covering 14.1km each way through the unpredictable madness of Navi Mumbai city streets.",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis Videos",
+                  "name": "Grand Cherokee Videos",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -1989,15 +1185,15 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
           ]
         },
         {
-          "name": "Carens",
-          "sourceUrl": "https://www.carwale.com/kia-cars/carens/",
+          "name": "Grand Cherokee [2016-2020]",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/grandcherokee-2016-2020/",
           "generations": [
             {
-              "name": "Carens (current)",
+              "name": "Grand Cherokee [2016-2020] (current)",
               "isCurrent": true,
               "variants": [
                 {
-                  "name": "View",
+                  "name": "Petrol [2017-2020]",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2009,7 +1205,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Premium (O)",
+                  "name": "Petrol",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2021,7 +1217,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "CNG",
+                  "name": "[2016-2020]",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2033,7 +1229,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Carens News",
+                  "name": "Limited",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2045,7 +1241,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Kia Carens Expert Reviews",
+                  "name": "[2016-2020]",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2057,7 +1253,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Carens Videos",
+                  "name": "Summit",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2069,7 +1265,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Delhi",
+                  "name": "[2016-2020]",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2081,571 +1277,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Carens Clavis EV",
-          "sourceUrl": "https://www.carwale.com/kia-cars/carens-clavis-ev/",
-          "generations": [
-            {
-              "name": "Carens Clavis EV (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "Clavis EV HTK Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV HTX E",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV HTX E ER",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV HTX ER",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV GTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV HTX Plus ER",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV X-Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Clavis EV GTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis EV Range Details",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis EV News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis EV First Drive ReviewBy Aditya Nadkarni22 Jul 2025Kia Carens Clavis EV First Drive Review",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Carens Clavis EV Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Delhi",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Hyderabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Bangalore",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Mumbai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Ahmedabad",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kolkata",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Chennai",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Pune",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Lucknow",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "electric"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Old Generation Seltos 2024",
-          "sourceUrl": "https://www.carwale.com/kia-cars/old-generation-seltos-2024/",
-          "generations": [
-            {
-              "name": "Old Generation Seltos 2024 (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "View",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTE (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTE",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTK",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTK (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTK Plus (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTK Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTX (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 Gravity",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 HTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 GTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 GTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 GTX Plus (S)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 X Line (S)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Generation Seltos 2024 X Line",
+                  "name": "SRT",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2669,7 +1301,67 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Seltos Turbo Petrol iMT ReviewBy Sagar Bhanushali01 Apr 2024We have driven the new Seltos already. For this review, we are focusing on the real-world performance, fuel efficiency and of course, the drive experience of the turbo petrol iMT version.",
+                  "name": "Grand Cherokee diesel First Drive ReviewBy Santosh Nair23 Sep 2016Jeep has over 75 years of experience in building SUVs and the brand explicitly claims that their vehicles clearly inspire a sense of freedom and adventure. If you take a trip down memory lane, you will always come across Jeep owners who confirm that the brand has always gone by the ‘Go Anywhere. Do Anything.’ slogan. After contemplating for four years, Jeep finally rolled into Indian showrooms late last month.",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Wrangler [2021-2024]",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/wrangler-2021-2024/",
+          "generations": [
+            {
+              "name": "Wrangler [2021-2024] (current)",
+              "isCurrent": true,
+              "variants": [
+                {
+                  "name": "Unlimited",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Rubicon",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "News",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Pinza AT - First ImpressionsBy Jay Shah27 Feb 2023Most people nowadays like travelling to unexplored places by taking the unchartered routes to experience the majestic landscapes. And in today’s time, there are a variety of capable SUVs that can help fulfill these boundless desires. However, not all SUVs can go off the beaten path and not all SUV owners take their machines off-road. That said, one would agree that along with other important factors, tyres play a crucial role in these conditions. And to entice the enthusiasts, there’s a new range of All-Terrain (AT) tyres in town. Meet, Vredestein’s Pinza AT.",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2697,167 +1389,11 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
           ]
         },
         {
-          "name": "Sonet [2024-2024]",
-          "sourceUrl": "https://www.carwale.com/kia-cars/sonet-2024-2024/",
+          "name": "Compass [2017-2021]",
+          "sourceUrl": "https://www.carwale.com/jeep-cars/compass-2017-2021/",
           "generations": [
             {
-              "name": "Sonet [2024-2024] (current)",
-              "isCurrent": true,
-              "variants": [
-                {
-                  "name": "[2024-2024] HTE",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] HTE (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] HTK",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] HTK (O)",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] HTK Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] HTX",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] HTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] GTX Plus",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "[2024-2024] X Line",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "News",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Kia Sonet X-Line Turbo DCT First drive reviewBy Ninad Ambre11 Jan 2024The 2024 Kia Sonet is a facelift and not a generation change. This mid-life refresh comprising cosmetic changes and new features is crucial to keep this compact SUV abreast with competition, especially since it was first launched in 2020. But will this help in bringing in more sales? We find out.",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                },
-                {
-                  "name": "Videos",
-                  "offerings": [
-                    {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Carens [2023-2024]",
-          "sourceUrl": "https://www.carwale.com/kia-cars/carens-2023-2024/",
-          "generations": [
-            {
-              "name": "Carens [2023-2024] (current)",
+              "name": "Compass [2017-2021] (current)",
               "isCurrent": true,
               "variants": [
                 {
@@ -2873,7 +1409,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] Premium",
+                  "name": "1.4 Petrol",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2885,7 +1421,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] Prestige",
+                  "name": "Plus 1.4 Petrol [2019-2020]",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2897,7 +1433,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] Prestige Plus",
+                  "name": "Plus 1.4 Petrol",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2909,7 +1445,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] Luxury",
+                  "name": "2.0 Diesel",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2921,7 +1457,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] Luxury Plus",
+                  "name": "Plus 2.0 Diesel [2019-2020]",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2933,7 +1469,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] Luxury (O)",
+                  "name": "Bedrock 2.0 Diesel",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2945,7 +1481,499 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "[2023-2024] X Line",
+                  "name": "Plus 2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 1.4 Petrol AT [2019-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 1.4 Petrol AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus 1.4 Petrol AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "1.4 Petrol AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "1.4 Petrol AT [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Eagle 1.4 Petrol AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus 2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel Black Pack",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel Black Pack [2019-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 1.4 Petrol AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 1.4 Petrol AT [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 1.4 Petrol AT Black Pack",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 1.4 Petrol AT Black Pack [2019-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Eagle 2.0 Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus Diesel [2018-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel 4x4 [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel 4x4",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus Petrol AT [2018-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus Petrol AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel 4x4 [2017-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel 4x4",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 Diesel 4x4 AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel 4x4 Black Pack",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 Diesel 4x4 Black Pack [2019-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus Diesel",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus 2.0 Diesel 4x4 AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus Diesel 4x4 [2018-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Eagle 2.0 Diesel 4x4 AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus Diesel 4x4",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus 2.0 Diesel 4x4 AT [2020-2020]",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Plus 2.0 Diesel 4x4 AT",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "2.0 4x4",
+                  "offerings": [
+                    {
+                      "fuelTypes": [
+                        "petrol"
+                      ],
+                      "yearStart": 2020,
+                      "isCurrent": true
+                    }
+                  ]
+                },
+                {
+                  "name": "(O) 2.0 4x4",
                   "offerings": [
                     {
                       "fuelTypes": [
@@ -2969,7 +1997,7 @@ export const kiaIndiaSnapshot: CatalogImportSource = {
                   ]
                 },
                 {
-                  "name": "Carens 1.4T DCT Luxury Plus Long-Term Review: ServiceBy Bilal Ahmed Firfiray08 Nov 2022We found a good opportunity to take a look at Kia Carens’ aftersales experience and tell you all that goes into its periodic servicing.",
+                  "name": "Harrier vs Jeep Compass: Interior dimensions comparedBy Bilal Ahmed Firfiray15 Apr 2020Let us take a look on the inside and see a detailed comparison of the interior dimensions of Tata Harrier and Jeep Compass.",
                   "offerings": [
                     {
                       "fuelTypes": [
