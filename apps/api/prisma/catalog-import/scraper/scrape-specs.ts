@@ -416,8 +416,8 @@ async function main() {
     }
   }
 
-  await page.close();
-  await browser.close();
+  try { await page.close(); } catch {}
+  try { await browser.close(); } catch {}
   await prisma.$disconnect();
 
   console.log(`\n${'═'.repeat(50)}`);
