@@ -142,6 +142,20 @@ function getSeedSpecs(): SpecInput[] {
       safetyFeatures: '["ABS","EBD","ESC","Hill Hold","Rear Parking Sensors","Reverse Camera","Tyre Pressure Monitor","ISOFIX","6 Airbags"]',
       sourceName: 'carwale-seed',
     },
+    {
+      make: 'Volkswagen', model: 'Virtus', variant: 'GT Plus',
+      engineCc: 1498, engineCyl: 4, engineType: 'Inline', engineFuel: 'Petrol',
+      powerPs: 150, powerRpm: 5000, torqueNm: 250, torqueRpm: 1600,
+      transmission: '7-speed DSG', driveType: 'FWD',
+      lengthMm: 4561, widthMm: 1752, heightMm: 1507, wheelbaseMm: 2651,
+      kerbWeightKg: 1275, bootSpaceLitres: 521, groundClearanceMm: 179, turningRadiusM: 5.0,
+      topSpeedKph: 190, mileageCity: 14.5, mileageHighway: 18.6, fuelCapLitres: 45,
+      seatingCapacity: 5, bodyType: 'Sedan', doors: 4,
+      tyreSize: '205/55 R16', wheelType: 'Alloy', wheelSizeInch: 16,
+      airbagCount: 6,
+      safetyFeatures: '["ABS","EBD","ESC","Hill Hold","Rear Parking Sensors","Reverse Camera","Tyre Pressure Monitor","ISOFIX","6 Airbags"]',
+      sourceName: 'carwale-seed',
+    },
     // Hyundai Creta
     {
       make: 'Hyundai', model: 'Creta', variant: 'SX',
