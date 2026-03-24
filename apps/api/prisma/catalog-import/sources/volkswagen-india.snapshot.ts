@@ -4,7 +4,7 @@ export const volkswagenIndiaSnapshot: CatalogImportSource = {
   marketCode: 'IN',
   sourceKey: 'volkswagen-india',
   sourceUrl: 'https://www.volkswagen.co.in/',
-  capturedAt: '2026-03-22',
+  capturedAt: '2026-03-24',
   dataset: [
     {
       marketCode: 'IN',
@@ -25,6 +25,7 @@ export const volkswagenIndiaSnapshot: CatalogImportSource = {
                 { name: 'Highline', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
                 { name: 'Topline', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
                 { name: 'GT Plus', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                { name: 'GT Edge', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
               ],
             },
           ],
@@ -65,6 +66,22 @@ export const volkswagenIndiaSnapshot: CatalogImportSource = {
             },
           ],
         },
+        {
+          name: 'Ameo',
+          generations: [
+            {
+              name: 'Ameo (2016 launch)',
+              yearStart: 2016,
+              yearEnd: 2020,
+              isCurrent: false,
+              variants: [
+                { name: 'Trendline', offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2016, yearEnd: 2020 }] },
+                { name: 'Comfortline', offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2016, yearEnd: 2020 }] },
+                { name: 'Highline', offerings: [{ fuelTypes: ['petrol', 'diesel'], yearStart: 2016, yearEnd: 2020 }] },
+              ],
+            },
+          ],
+        },
       ],
     },
     {
@@ -86,6 +103,9 @@ export const volkswagenIndiaSnapshot: CatalogImportSource = {
                 { name: 'Highline', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
                 { name: 'Topline', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
                 { name: 'GT Plus', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+                { name: 'GT Line', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
+                { name: 'GT Edge', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                { name: 'Sport', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
               ],
             },
           ],
@@ -100,6 +120,30 @@ export const volkswagenIndiaSnapshot: CatalogImportSource = {
               isCurrent: true,
               variants: [
                 { name: 'Elegance', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+              ],
+            },
+            {
+              name: 'Tiguan (2017 launch)',
+              yearStart: 2017,
+              yearEnd: 2020,
+              isCurrent: false,
+              variants: [
+                { name: 'Comfortline', offerings: [{ fuelTypes: ['diesel'], yearStart: 2017, yearEnd: 2020 }] },
+                { name: 'Highline', offerings: [{ fuelTypes: ['diesel'], yearStart: 2017, yearEnd: 2020 }] },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'Tayron',
+          generations: [
+            {
+              name: 'Tayron (2025 launch)',
+              yearStart: 2025,
+              isCurrent: true,
+              variants: [
+                { name: 'Elegance', offerings: [{ fuelTypes: ['petrol'], yearStart: 2025, isCurrent: true }] },
+                { name: 'R-Line', offerings: [{ fuelTypes: ['petrol'], yearStart: 2025, isCurrent: true }] },
               ],
             },
           ],

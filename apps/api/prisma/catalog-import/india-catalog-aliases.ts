@@ -134,5 +134,6 @@ export const indiaCatalogAliases: {
     { marketCode: 'IN', vehicleType: 'suv', makeName: 'Mahindra', modelName: 'Scorpio Classic', generationName: 'Scorpio Classic (2022 launch)', variantName: 'S11', aliases: ['Scorpio S11'] },
     { marketCode: 'IN', vehicleType: 'motorcycle', makeName: 'Bajaj', modelName: 'Pulsar 220F', generationName: 'Pulsar 220F (BS6)', variantName: 'Standard', aliases: ['Pulsar 220'] },
     { marketCode: 'IN', vehicleType: 'motorcycle', makeName: 'Royal Enfield', modelName: 'Bullet 350', generationName: 'Bullet 350 (J-platform)', variantName: 'Base', aliases: ['Bullet Standard'] },
+    { marketCode: 'IN', vehicleType: 'suv', makeName: 'Skoda', modelName: 'Kushaq', generationName: 'Kushaq (2021 launch)', variantName: 'Monte Carlo', aliases: ['Kushaq Monte Carlo'] },
   ],
 };
