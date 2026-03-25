@@ -228,6 +228,7 @@ export class VehiclesService {
       odometer: vehicle.odometer,
       vehicleType: vehicle.vehicleType as VehicleType,
       nickname: vehicle.nickname ?? undefined,
+      catalogVariantId: vehicle.catalogVariantId ?? undefined,
       createdAt: vehicle.createdAt.toISOString(),
       updatedAt: vehicle.updatedAt.toISOString(),
     } satisfies Vehicle;

@@ -23,6 +23,7 @@ type ConfirmActionDialogProps = {
   triggerVariant?: React.ComponentProps<typeof Button>['variant'];
   triggerSize?: React.ComponentProps<typeof Button>['size'];
   triggerIcon?: ReactNode;
+  className?: string;
 };
 
 export function ConfirmActionDialog({
@@ -35,11 +36,12 @@ export function ConfirmActionDialog({
   triggerVariant = 'secondary',
   triggerSize = 'sm',
   triggerIcon,
+  className,
 }: ConfirmActionDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size={triggerSize} variant={triggerVariant}>
+        <Button className={className} size={triggerSize} variant={triggerVariant}>
           {triggerIcon}
           {triggerLabel}
         </Button>

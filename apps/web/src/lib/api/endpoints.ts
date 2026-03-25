@@ -55,4 +55,11 @@ export const endpoints = {
     delete: (reminderId: string) => `/reminders/${reminderId}`,
     complete: (reminderId: string) => `/reminders/${reminderId}/complete`,
   },
+  fuelLogs: {
+    byVehicle: (vehicleId: string) => `/fuel-logs/vehicle/${vehicleId}`,
+    create: (vehicleId: string) => `/fuel-logs/vehicle/${vehicleId}`,
+    detail: (id: string) => `/fuel-logs/${id}`,
+    update: (id: string) => `/fuel-logs/${id}`,
+    delete: (id: string) => `/fuel-logs/${id}`,
+  },
 } as const;

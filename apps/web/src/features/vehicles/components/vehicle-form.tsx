@@ -189,6 +189,7 @@ export function VehicleForm({
     const result = vehicleFormSchema.safeParse({
       ...values,
       nickname: values.nickname?.trim() ? values.nickname.trim() : undefined,
+      catalogVariantId: selectedVariantOption?.id,
     });
 
     if (!result.success) {

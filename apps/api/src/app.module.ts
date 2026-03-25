@@ -13,6 +13,7 @@ import { RemindersModule } from './modules/reminders/reminders.module';
 import { UsersModule } from './modules/users/users.module';
 import { VehicleCatalogModule } from './modules/vehicle-catalog/vehicle-catalog.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
+import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
     VehiclesModule,
     MaintenanceModule,
     RemindersModule,
+    FuelLogsModule,
     AttachmentsModule,
     ExportsModule,
   ],

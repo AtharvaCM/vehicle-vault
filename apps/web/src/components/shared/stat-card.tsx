@@ -20,23 +20,25 @@ export function StatCard({
   icon: Icon = ArrowUpRight,
 }: StatCardProps) {
   return (
-    <Card className="rounded-xl border-border/70 shadow-sm">
-      <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-border/60 pb-3.5">
-        <div className="space-y-1">
-          <CardTitle className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {label}
-          </CardTitle>
-          <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
-        </div>
+    <Card className="group border-slate-200/60 bg-white/70 shadow-premium-sm transition-all hover:translate-y-[-2px] hover:shadow-premium-md">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
         <div className="flex items-center gap-2">
-          {accent ? <div>{accent}</div> : null}
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500 shadow-inner group-hover:bg-primary/5 group-hover:text-primary group-hover:shadow-none transition-colors">
             <Icon className="h-4 w-4" />
           </div>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-slate-500 transition-colors">
+            {label}
+          </span>
         </div>
+        {accent ? <div className="animate-in fade-in zoom-in duration-500">{accent}</div> : null}
       </CardHeader>
-      <CardContent className="pt-4">
-        <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+      <CardContent className="space-y-1.5 pt-0">
+        <p className="text-3xl font-bold tracking-tight text-slate-900 group-hover:text-primary transition-colors">
+          {value}
+        </p>
+        <p className="text-[13px] leading-relaxed text-slate-500 line-clamp-2">
+          {description}
+        </p>
       </CardContent>
     </Card>
   );

@@ -87,15 +87,19 @@ model Vehicle {
   odometer           Int
   vehicleType        VehicleType
   nickname           String?             @db.VarChar(80)
+  catalogVariantId   String?             @db.Uuid
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catalogVariant     VehicleCatalogVariant? @relation(fields: [catalogVariantId], references: [id], onDelete: SetNull)
   maintenanceRecords MaintenanceRecord[]
   reminders          Reminder[]
+  fuelLogs           FuelLog[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
+  @@index([catalogVariantId])
 }
 
 model VehicleCatalogMake {
@@ -167,6 +171,7 @@ model VehicleCatalogVariant {
   offerings         VehicleCatalogVariantOffering[]
   offeringOverrides VehicleCatalogVariantOfferingOverride[]
   spec              VehicleCatalogVariantSpec?
+  vehicles          Vehicle[]
 
   @@unique([generationId, slug])
   @@index([generationId, name])
@@ -410,4 +415,21 @@ model Attachment {
   maintenanceRecord   MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
 
   @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
+}
+
+model FuelLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  vehicleId   String   @db.Uuid
+  date        DateTime
+  odometer    Int
+  quantity    Float    // Litres/Gallons
+  price       Decimal  @db.Decimal(10, 2)
+  totalCost   Decimal  @db.Decimal(12, 2)
+  location    String?  @db.VarChar(120)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, date(sort: Desc)])
 }

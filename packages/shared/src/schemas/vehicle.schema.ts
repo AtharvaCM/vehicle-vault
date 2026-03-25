@@ -12,6 +12,7 @@ export const VehicleCreateSchema = z.object({
   fuelType: z.nativeEnum(FuelType),
   nickname: z.string().trim().min(1).max(80).optional(),
   odometer: z.number().int().nonnegative(),
+  catalogVariantId: z.string().uuid().optional(),
 });
 
 export const VehicleUpdateSchema = VehicleCreateSchema.partial().refine(
@@ -25,4 +26,5 @@ export const VehicleSchema = VehicleCreateSchema.extend({
   id: z.string().trim().min(1),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  catalogVariantId: z.string().uuid().optional().nullable(),
 });

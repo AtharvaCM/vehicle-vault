@@ -62,4 +62,8 @@ export class UpdateVehicleDto {
   @IsInt()
   @Min(0)
   odometer?: number;
+
+  @IsOptional()
+  @IsString()
+  catalogVariantId?: string;
 }

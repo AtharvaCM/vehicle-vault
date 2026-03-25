@@ -6,3 +6,4 @@ export * from './maintenance';
 export * from './reminder';
 export * from './vehicle-catalog';
 export * from './vehicle';
+export * from './fuel-log';
