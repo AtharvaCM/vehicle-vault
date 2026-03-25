@@ -35,6 +35,11 @@ export class FuelLogsController {
     return this.fuelLogsOCRService.scanReceipt(file.buffer, file.mimetype);
   }
 
+  @Get('scan/status')
+  async getScanStatus() {
+    return { available: this.fuelLogsOCRService.isAvailable };
+  }
+
   @Get('vehicle/:vehicleId')
   async getByVehicle(
     @CurrentUser('id') userId: string,

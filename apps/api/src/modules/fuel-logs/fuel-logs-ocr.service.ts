@@ -59,6 +59,10 @@ export class FuelLogsOCRService {
     }
   }
 
+  get isAvailable(): boolean {
+    return !!this.model;
+  }
+
   async scanReceipt(file: Buffer, mimeType: string): Promise<ScannedFuelLog> {
     if (!this.model) {
       throw new InternalServerErrorException('OCR service is not configured (missing API key)');

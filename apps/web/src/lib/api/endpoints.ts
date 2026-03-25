@@ -61,6 +61,7 @@ export const endpoints = {
     create: (vehicleId: string) => `/fuel-logs/vehicle/${vehicleId}`,
     bulk: (vehicleId: string) => `/fuel-logs/vehicle/${vehicleId}/bulk`,
     scan: () => `/fuel-logs/scan`,
+    scanStatus: () => `/fuel-logs/scan/status`,
     detail: (id: string) => `/fuel-logs/${id}`,
     update: (id: string) => `/fuel-logs/${id}`,
     delete: (id: string) => `/fuel-logs/${id}`,

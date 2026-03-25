@@ -33,3 +33,15 @@ export function useScanReceipt() {
     mutationFn: (file: File) => scanReceipt(file),
   });
 }
+
+export function useScanStatus() {
+  return {
+    queryKey: ['fuel-logs', 'scan-status'],
+    queryFn: async () => {
+      const response = await apiClient.get<ApiSuccessResponse<{ available: boolean }>>(
+        endpoints.fuelLogs.scanStatus()
+      );
+      return response.data;
+    },
+  };
+}

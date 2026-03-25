@@ -32,6 +32,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
   const createMutation = useCreateFuelLog(vehicleId);
   const deleteMutation = useDeleteFuelLog(vehicleId);
   const scanMutation = useScanReceipt();
+  const scanStatus = useQuery(useScanStatus());
 
   const handleCreate = async (values: any) => {
     try {
@@ -109,15 +110,28 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
           
           <Button 
             disabled={scanMutation.isPending}
-            onClick={() => fileInputRef.current?.click()} 
+            onClick={() => {
+              if (scanStatus.data?.available === false) {
+                appToast.info({
+                  title: 'AI Not Configured',
+                  description: 'Please set your GEMINI_API_KEY in the backend .env to enable receipt scanning.'
+                });
+                return;
+              }
+              fileInputRef.current?.click();
+            }} 
             size="sm" 
             variant="outline" 
-            className="gap-2 border-primary/20 hover:border-primary/50 text-primary bg-primary/5"
+            className="gap-2 border-primary/20 hover:border-primary/50 text-primary bg-primary/5 relative"
+            title={scanStatus.data?.available ? 'AI Ready' : 'AI Plugin Missing'}
           >
             {scanMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Scan className="h-4 w-4" />
+              <div className="relative">
+                <Scan className="h-4 w-4" />
+                <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${scanStatus.data?.available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`} />
+              </div>
             )}
             {scanMutation.isPending ? 'Analyzing...' : 'Scan Receipt'}
           </Button>
