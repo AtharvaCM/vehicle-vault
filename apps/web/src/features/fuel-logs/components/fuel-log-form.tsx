@@ -43,6 +43,22 @@ export function FuelLogForm({
     },
   });
 
+  // Reset form when initialValues change (e.g. from OCR)
+  useEffect(() => {
+    if (initialValues) {
+      form.reset({
+        date: new Date().toISOString().split('T')[0],
+        odometer: 0,
+        quantity: 0,
+        price: 0,
+        totalCost: 0,
+        location: '',
+        notes: '',
+        ...initialValues,
+      });
+    }
+  }, [initialValues, form]);
+
   const quantity = form.watch('quantity');
   const price = form.watch('price');
 

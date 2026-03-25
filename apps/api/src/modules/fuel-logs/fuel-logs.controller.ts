@@ -1,3 +1,4 @@
+import 'multer';
 import {
   Body,
   Controller,
@@ -6,8 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
@@ -15,11 +19,21 @@ import { BulkCreateFuelLogDto } from './dto/bulk-create-fuel-log.dto';
 import { CreateFuelLogDto } from './dto/create-fuel-log.dto';
 import { UpdateFuelLogDto } from './dto/update-fuel-log.dto';
 import { FuelLogsService } from './fuel-logs.service';
+import { FuelLogsOCRService } from './fuel-logs-ocr.service';
 
 @Controller('fuel-logs')
 @UseGuards(JwtAuthGuard)
 export class FuelLogsController {
-  constructor(private readonly fuelLogsService: FuelLogsService) {}
+  constructor(
+    private readonly fuelLogsService: FuelLogsService,
+    private readonly fuelLogsOCRService: FuelLogsOCRService,
+  ) {}
+
+  @Post('scan')
+  @UseInterceptors(FileInterceptor('file'))
+  async scanReceipt(@UploadedFile() file: Express.Multer.File) {
+    return this.fuelLogsOCRService.scanReceipt(file.buffer, file.mimetype);
+  }
 
   @Get('vehicle/:vehicleId')
   async getByVehicle(

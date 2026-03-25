@@ -106,4 +106,8 @@ export class AppConfigService {
   get isProduction() {
     return this.nodeEnv === 'production';
   }
+
+  get geminiApiKey() {
+    return this.configService.get<string>('app.geminiApiKey') ?? null;
+  }
 }

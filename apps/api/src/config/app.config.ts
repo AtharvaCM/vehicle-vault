@@ -114,4 +114,5 @@ export const appConfig = registerAs('app', () => ({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
+  geminiApiKey: process.env.GEMINI_API_KEY ?? null,
 }));
