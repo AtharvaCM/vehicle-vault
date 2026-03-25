@@ -42,6 +42,7 @@ import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-remi
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
+import { OdometerForecastCard } from '../components/odometer-forecast-card';
 import { OdometerHistoryCard } from '../components/odometer-history-card';
 import { VehicleSpecsCard } from '../components/vehicle-specs-card';
 import { ServiceTrendCard } from '../components/service-trend-card';
@@ -268,31 +269,25 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           <TabsContent value="overview" className="space-y-8 animate-in fade-in duration-500">
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
               <VehicleSummaryCard vehicle={vehicle} />
-              <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">At a glance</CardTitle>
-                  <CardDescription>
-                    Key metrics and status for this vehicle.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 sm:grid-cols-2">
-                  <SnapshotMetric
-                    label="Records"
-                    value={
-                      maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'
-                    }
-                  />
-                  <SnapshotMetric
-                    label="Reminders"
-                    value={remindersQuery.isSuccess ? String(activeReminders.length) : '...'}
-                  />
-                  <SnapshotMetric
-                    label="Odometer"
-                    value={`${vehicle.odometer.toLocaleString('en-IN')} km`}
-                  />
-                  <SnapshotMetric label="Class" value={vehicle.vehicleType} />
-                </CardContent>
-              </Card>
+              <OdometerForecastCard vehicleId={vehicleId} />
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <SnapshotMetric
+                label="Total Records"
+                value={
+                  maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'
+                }
+              />
+              <SnapshotMetric
+                label="Active Reminders"
+                value={remindersQuery.isSuccess ? String(activeReminders.length) : '...'}
+              />
+              <SnapshotMetric
+                label="Official Odometer"
+                value={`${vehicle.odometer.toLocaleString('en-IN')} km`}
+              />
+              <SnapshotMetric label="Engine Type" value={vehicle.fuelType} />
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

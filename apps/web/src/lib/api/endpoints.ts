@@ -18,6 +18,7 @@ export const endpoints = {
     list: '/vehicles',
     create: '/vehicles',
     detail: (vehicleId: string) => `/vehicles/${vehicleId}`,
+    insights: (vehicleId: string) => `/vehicles/${vehicleId}/insights`,
   },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',
