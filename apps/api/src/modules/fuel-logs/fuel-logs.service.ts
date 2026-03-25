@@ -65,6 +65,27 @@ export class FuelLogsService {
     return this.toFuelLog(log);
   }
 
+  async createBulkFuelLogs(userId: string, vehicleId: string, dtos: CreateFuelLogDto[]) {
+    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+
+    const logs = await this.prisma.fuelLog.createMany({
+      data: dtos.map((dto) => ({
+        vehicleId,
+        date: new Date(dto.date),
+        odometer: dto.odometer,
+        quantity: dto.quantity,
+        price: dto.price,
+        totalCost: dto.totalCost,
+        location: dto.location,
+        notes: dto.notes,
+      })),
+    });
+
+    return {
+      count: logs.count,
+    };
+  }
+
   async updateFuelLog(userId: string, logId: string, dto: UpdateFuelLogDto) {
     const log = await this.prisma.fuelLog.findFirst({
       where: {

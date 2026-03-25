@@ -12,6 +12,7 @@ import { appToast } from '@/lib/toast';
 
 import { FuelLogList } from './fuel-log-list';
 import { FuelLogForm } from './fuel-log-form';
+import { FuelImportDialog } from './fuel-import-dialog';
 import { useFuelLogs } from '../hooks/use-fuel-logs';
 import { useCreateFuelLog } from '../hooks/use-create-fuel-log';
 import { useDeleteFuelLog } from '../hooks/use-delete-fuel-log';
@@ -23,6 +24,7 @@ type FuelTabProps = {
 
 export function FuelTab({ vehicleId }: FuelTabProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<FuelLog | null>(null);
 
   const logsQuery = useFuelLogs(vehicleId);
@@ -69,10 +71,15 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
           <h3 className="text-lg font-bold text-slate-900">Fuel History</h3>
           <p className="text-sm text-slate-500">Track your fuel consumption and efficiency over time.</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Log Fuel
-        </Button>
+        <div className="flex gap-3">
+          <Button onClick={() => setIsImportOpen(true)} size="sm" variant="outline" className="gap-2">
+            Import CSV
+          </Button>
+          <Button onClick={() => setIsFormOpen(true)} size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Log Fuel
+          </Button>
+        </div>
       </div>
 
       <FuelLogList 
@@ -80,6 +87,12 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
         isLoading={logsQuery.isLoading}
         onAdd={() => setIsFormOpen(true)}
         onDelete={handleDelete}
+      />
+
+      <FuelImportDialog 
+        vehicleId={vehicleId}
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

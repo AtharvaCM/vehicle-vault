@@ -11,6 +11,7 @@ import {
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { BulkCreateFuelLogDto } from './dto/bulk-create-fuel-log.dto';
 import { CreateFuelLogDto } from './dto/create-fuel-log.dto';
 import { UpdateFuelLogDto } from './dto/update-fuel-log.dto';
 import { FuelLogsService } from './fuel-logs.service';
@@ -43,6 +44,15 @@ export class FuelLogsController {
     @Body() dto: CreateFuelLogDto,
   ) {
     return this.fuelLogsService.createFuelLog(userId, vehicleId, dto);
+  }
+
+  @Post('vehicle/:vehicleId/bulk')
+  async createBulk(
+    @CurrentUser('id') userId: string,
+    @Param('vehicleId') vehicleId: string,
+    @Body() body: BulkCreateFuelLogDto,
+  ) {
+    return this.fuelLogsService.createBulkFuelLogs(userId, vehicleId, body.logs);
   }
 
   @Patch(':id')
