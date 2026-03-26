@@ -131,6 +131,7 @@ describe('AuthService', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        allowedCatalogSources: [],
       },
     });
   });
@@ -243,6 +244,7 @@ describe('AuthService', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        allowedCatalogSources: [],
       },
     });
   });
@@ -455,6 +457,7 @@ describe('AuthService', () => {
       id: 'user-1',
       name: 'Atharva',
       email: 'atharva@example.com',
+      allowedCatalogSources: [],
     });
   });
 });

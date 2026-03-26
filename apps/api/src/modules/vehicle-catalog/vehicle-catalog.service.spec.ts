@@ -73,6 +73,13 @@ describe('VehicleCatalogService', () => {
     $transaction: vi.fn(),
   };
 
+  const mockUser = {
+    id: 'user-1',
+    name: 'Atharva',
+    email: 'atharva@example.com',
+    allowedCatalogSources: ['*'],
+  };
+
   let service: VehicleCatalogService;
 
   beforeEach(() => {
@@ -325,7 +332,7 @@ describe('VehicleCatalogService', () => {
     });
 
     await expect(
-      service.updateOfferingReview('offering-1', {
+      service.updateOfferingReview(mockUser as any, 'offering-1', {
         yearStart: 2023,
         yearEnd: 2025,
         isCurrent: false,
@@ -398,7 +405,7 @@ describe('VehicleCatalogService', () => {
     prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
     vi.mocked(upsertCatalogDataset).mockResolvedValue(14);
 
-    await expect(service.publishImportRun('user-1', 'run-1')).resolves.toEqual(
+    await expect(service.publishImportRun(mockUser as any, 'run-1')).resolves.toEqual(
       expect.objectContaining({
         id: 'run-1',
         publishedByUserId: 'user-1',
@@ -483,7 +490,7 @@ describe('VehicleCatalogService', () => {
       .mockResolvedValueOnce([]);
     prisma.vehicleCatalogVariantOffering.updateMany = vi.fn().mockResolvedValue({ count: 1 });
 
-    await expect(service.archiveMissingVariants('run-1')).resolves.toEqual(
+    await expect(service.archiveMissingVariants(mockUser as any, 'run-1')).resolves.toEqual(
       expect.objectContaining({
         id: 'run-1',
         diff: expect.objectContaining({
@@ -518,7 +525,7 @@ describe('VehicleCatalogService', () => {
       id: 'run-2',
     });
 
-    await expect(service.publishImportRun('user-1', 'run-1')).rejects.toBeInstanceOf(
+    await expect(service.publishImportRun(mockUser as any, 'run-1')).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
@@ -550,7 +557,7 @@ describe('VehicleCatalogService', () => {
       ],
     });
 
-    await expect(service.archiveMissingVariants('run-1')).rejects.toBeInstanceOf(
+    await expect(service.archiveMissingVariants(mockUser as any, 'run-1')).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
