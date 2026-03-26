@@ -31,7 +31,7 @@ export class FuelLogsController {
 
   @Post('scan')
   @UseInterceptors(FileInterceptor('file'))
-  async scanReceipt(@UploadedFile() file: Express.Multer.File) {
+  async scanReceipt(@UploadedFile() file: any) {
     return this.fuelLogsOCRService.scanReceipt(file.buffer, file.mimetype);
   }
 

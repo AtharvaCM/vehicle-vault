@@ -21,7 +21,7 @@ export class FuelLogsOCRService {
       this.genAI = new GoogleGenerativeAI(apiKey);
       
       // Use constrained output schema for reliable JSON
-      const schema = {
+      const schema: any = {
         description: "Fuel receipt data extraction",
         type: SchemaType.OBJECT,
         properties: {

@@ -11,10 +11,11 @@ import { appToast } from '@/lib/toast';
 import { FuelLogList } from './fuel-log-list';
 import { FuelLogForm } from './fuel-log-form';
 import { FuelImportDialog } from './fuel-import-dialog';
+import { useQuery } from '@tanstack/react-query';
 import { useFuelLogs } from '../hooks/use-fuel-logs';
 import { useCreateFuelLog } from '../hooks/use-create-fuel-log';
 import { useDeleteFuelLog } from '../hooks/use-delete-fuel-log';
-import { useScanReceipt, type ScannedFuelLog } from '../hooks/use-scan-receipt';
+import { useScanReceipt, useScanStatus, type ScannedFuelLog } from '../hooks/use-scan-receipt';
 import type { FuelLog } from '@vehicle-vault/shared';
 
 type FuelTabProps = {
