@@ -1,5 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { FuelType, VehicleCatalogMarket, VehicleType } from '@vehicle-vault/shared';
+import { AuthUser, FuelType, VehicleCatalogMarket, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { upsertCatalogDataset } from '../../../prisma/catalog-import/upsert-catalog-dataset';
@@ -59,6 +59,7 @@ describe('VehicleCatalogService', () => {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     vehicleCatalogVariantOfferingOverride: {
       findMany: vi.fn(),
@@ -73,7 +74,7 @@ describe('VehicleCatalogService', () => {
     $transaction: vi.fn(),
   };
 
-  const mockUser = {
+  const mockUser: AuthUser = {
     id: 'user-1',
     name: 'Atharva',
     email: 'atharva@example.com',
@@ -332,7 +333,7 @@ describe('VehicleCatalogService', () => {
     });
 
     await expect(
-      service.updateOfferingReview(mockUser as any, 'offering-1', {
+      service.updateOfferingReview(mockUser, 'offering-1', {
         yearStart: 2023,
         yearEnd: 2025,
         isCurrent: false,
@@ -405,7 +406,7 @@ describe('VehicleCatalogService', () => {
     prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
     vi.mocked(upsertCatalogDataset).mockResolvedValue(14);
 
-    await expect(service.publishImportRun(mockUser as any, 'run-1')).resolves.toEqual(
+    await expect(service.publishImportRun(mockUser, 'run-1')).resolves.toEqual(
       expect.objectContaining({
         id: 'run-1',
         publishedByUserId: 'user-1',
@@ -490,7 +491,7 @@ describe('VehicleCatalogService', () => {
       .mockResolvedValueOnce([]);
     prisma.vehicleCatalogVariantOffering.updateMany = vi.fn().mockResolvedValue({ count: 1 });
 
-    await expect(service.archiveMissingVariants(mockUser as any, 'run-1')).resolves.toEqual(
+    await expect(service.archiveMissingVariants(mockUser, 'run-1')).resolves.toEqual(
       expect.objectContaining({
         id: 'run-1',
         diff: expect.objectContaining({
@@ -525,7 +526,7 @@ describe('VehicleCatalogService', () => {
       id: 'run-2',
     });
 
-    await expect(service.publishImportRun(mockUser as any, 'run-1')).rejects.toBeInstanceOf(
+    await expect(service.publishImportRun(mockUser, 'run-1')).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
@@ -557,7 +558,7 @@ describe('VehicleCatalogService', () => {
       ],
     });
 
-    await expect(service.archiveMissingVariants(mockUser as any, 'run-1')).rejects.toBeInstanceOf(
+    await expect(service.archiveMissingVariants(mockUser, 'run-1')).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
