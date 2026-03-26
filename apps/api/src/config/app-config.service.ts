@@ -107,7 +107,17 @@ export class AppConfigService {
     return this.nodeEnv === 'production';
   }
 
-  get geminiApiKey() {
-    return this.configService.get<string>('app.geminiApiKey') ?? null;
+  get geminiApiKey(): string | undefined {
+    return this.configService.get<string>('GEMINI_API_KEY');
+  }
+
+  get smtpConfig() {
+    return {
+      host: this.configService.get<string>('SMTP_HOST'),
+      port: this.configService.get<number>('SMTP_PORT', 587),
+      user: this.configService.get<string>('SMTP_USER'),
+      pass: this.configService.get<string>('SMTP_PASS'),
+      from: this.configService.get<string>('SMTP_FROM', 'noreply@vehiclevault.com'),
+    };
   }
 }

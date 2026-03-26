@@ -114,5 +114,12 @@ export const appConfig = registerAs('app', () => ({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
-  geminiApiKey: process.env.GEMINI_API_KEY ?? null,
+  geminiApiKey: process.env.GEMINI_API_KEY,
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    from: process.env.SMTP_FROM || 'noreply@vehiclevault.com',
+  },
 }));

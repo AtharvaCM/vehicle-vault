@@ -3,6 +3,7 @@ import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceCategory } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 // Smart maintenance intervals (in km)
 const MAINTENANCE_INTERVALS: Partial<Record<MaintenanceCategory, number>> = {
@@ -24,6 +25,7 @@ export class MaintenanceAlertService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly vehicleInsightsService: VehicleInsightsService,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -63,7 +65,7 @@ export class MaintenanceAlertService {
           ? `Your ${this.formatLabel(category)} is overdue by approx. ${Math.abs(Math.round(remainingDistance))} km. Please schedule service soon.`
           : `Your ${this.formatLabel(category)} is due in approx. ${Math.round(remainingDistance)} km. Time to plan a visit to the workshop.`;
 
-        await this.notificationsService.create({
+        const notification = await this.notificationsService.create({
           userId: vehicle.userId,
           vehicleId: vehicle.id,
           title,
@@ -71,6 +73,20 @@ export class MaintenanceAlertService {
           type: urgency,
           link: `/vehicles/${vehicle.id}?tab=maintenance`,
         });
+
+        // If it's a new notification (not deduplicated) or user preference permits, send email
+        // For simplicity now, we check the unread status. 
+        // If we just created it and it's unread, send a prompt email.
+        const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
+        if (user && !notification.isRead) {
+          await this.mailService.sendMaintenanceAlert(
+            user.email,
+            user.name,
+            `${vehicle.make} ${vehicle.model}`,
+            title,
+            message
+          );
+        }
       }
     }
   }

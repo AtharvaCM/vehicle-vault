@@ -15,6 +15,7 @@ import { VehicleCatalogModule } from './modules/vehicle-catalog/vehicle-catalog.
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     RemindersModule,
     FuelLogsModule,
     NotificationsModule,
+    MailModule,
     AttachmentsModule,
     ExportsModule,
   ],
