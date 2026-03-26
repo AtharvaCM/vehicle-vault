@@ -12,7 +12,12 @@ import {
   type ScrapedModel,
 } from './carwale-parser';
 
-import type { CatalogDataset, CatalogMakeInput, CatalogModelInput, CatalogGenerationInput } from '../types';
+import type {
+  CatalogDataset,
+  CatalogMakeInput,
+  CatalogModelInput,
+  CatalogGenerationInput,
+} from '../types';
 
 // Top Indian market brands to scrape (CarWale slugs)
 const INDIAN_MARKET_BRANDS = [
@@ -82,12 +87,20 @@ async function main() {
       // Summary
       const totalModels = dataset.reduce((sum, d) => sum + d.models.length, 0);
       const totalVariants = dataset.reduce(
-        (sum, d) => sum + d.models.reduce((ms, m) => ms + m.generations.reduce((gs, g) => gs + g.variants.length, 0), 0),
+        (sum, d) =>
+          sum +
+          d.models.reduce(
+            (ms, m) => ms + m.generations.reduce((gs, g) => gs + g.variants.length, 0),
+            0,
+          ),
         0,
       );
       console.log(`   📊 ${totalModels} models, ${totalVariants} variants`);
     } catch (error) {
-      console.error(`   ❌ Error scraping ${brandName}:`, error instanceof Error ? error.message : error);
+      console.error(
+        `   ❌ Error scraping ${brandName}:`,
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 
@@ -109,30 +122,39 @@ async function scrapeBrand(brandSlug: string, brandName: string): Promise<Catalo
   const suvModels: CatalogModelInput[] = [];
 
   for (const model of models) {
-    console.log(`   📦 Scraping model: ${model.name} (${model.isCurrent ? 'current' : 'discontinued'})`);
+    console.log(
+      `   📦 Scraping model: ${model.name} (${model.isCurrent ? 'current' : 'discontinued'})`,
+    );
 
     try {
       const modelHtml = await fetchPage(model.url, 600);
       const variants = parseVariantList(modelHtml);
 
       // If no variants found, create a "Standard" default
-      const catalogVariants = variants.length > 0
-        ? variants.map((v) => ({
-            name: v.name,
-            offerings: [{
-              fuelTypes: [mapFuelType(v.fuelType)] as any[],
-              yearStart: model.isCurrent ? 2020 : undefined,
-              isCurrent: model.isCurrent || undefined,
-            }],
-          }))
-        : [{
-            name: 'Standard',
-            offerings: [{
-              fuelTypes: ['petrol' as any],
-              yearStart: model.isCurrent ? 2020 : undefined,
-              isCurrent: model.isCurrent || undefined,
-            }],
-          }];
+      const catalogVariants =
+        variants.length > 0
+          ? variants.map((v) => ({
+              name: v.name,
+              offerings: [
+                {
+                  fuelTypes: [mapFuelType(v.fuelType)] as any[],
+                  yearStart: model.isCurrent ? 2020 : undefined,
+                  isCurrent: model.isCurrent || undefined,
+                },
+              ],
+            }))
+          : [
+              {
+                name: 'Standard',
+                offerings: [
+                  {
+                    fuelTypes: ['petrol' as any],
+                    yearStart: model.isCurrent ? 2020 : undefined,
+                    isCurrent: model.isCurrent || undefined,
+                  },
+                ],
+              },
+            ];
 
       const generation: CatalogGenerationInput = {
         name: `${model.name} (current)`,
@@ -153,7 +175,9 @@ async function scrapeBrand(brandSlug: string, brandName: string): Promise<Catalo
         carModels.push(catalogModel);
       }
     } catch (error) {
-      console.log(`      ⚠️  Failed to scrape variants for ${model.name}: ${error instanceof Error ? error.message : error}`);
+      console.log(
+        `      ⚠️  Failed to scrape variants for ${model.name}: ${error instanceof Error ? error.message : error}`,
+      );
     }
   }
 
@@ -182,7 +206,11 @@ async function scrapeBrand(brandSlug: string, brandName: string): Promise<Catalo
   return dataset;
 }
 
-function generateSnapshotFile(brandSlug: string, brandName: string, dataset: CatalogDataset): string {
+function generateSnapshotFile(
+  brandSlug: string,
+  brandName: string,
+  dataset: CatalogDataset,
+): string {
   const varName = toCamelCase(brandSlug) + 'IndiaSnapshot';
   const today = new Date().toISOString().split('T')[0];
 

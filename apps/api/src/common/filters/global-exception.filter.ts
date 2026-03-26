@@ -89,7 +89,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             ? 'You can upload up to 10 files at a time.'
             : multerException.code === 'LIMIT_UNEXPECTED_FILE'
               ? 'Attachment uploads must use the expected file field.'
-          : exception.message;
+              : exception.message;
 
       return {
         status: HttpStatus.BAD_REQUEST,

@@ -23,25 +23,25 @@ const prisma = new PrismaClient();
 // CarWale data-itemid → our internal field mapping
 const SPEC_ITEM_MAP: Record<string, string> = {
   '1706': '_mileage',
-  '484':  '_engine',
-  '249':  '_maxPower',
-  '250':  '_maxTorque',
+  '484': '_engine',
+  '249': '_maxPower',
+  '250': '_maxTorque',
   '1646': '_fuelType',
-  '500':  '_transmission',
-  '501':  '_drivetrain',
+  '500': '_transmission',
+  '501': '_drivetrain',
   '1645': '_dimensions',
-  '525':  '_wheelbase',
+  '525': '_wheelbase',
   '1591': '_kerbWeight',
   '1589': '_seatingCapacity',
-  '524':  '_groundClearance',
-  '485':  '_fuelTank',
+  '524': '_groundClearance',
+  '485': '_fuelTank',
   '1590': '_doors',
   '1647': '_turningRadius',
-  '529':  '_bootSpace',
-  '515':  '_frontTyres',
-  '516':  '_rearTyres',
+  '529': '_bootSpace',
+  '515': '_frontTyres',
+  '516': '_rearTyres',
   '1648': '_wheelType',
-  '643':  '_airbags',
+  '643': '_airbags',
 };
 
 type RawSpecData = Record<string, string>;
@@ -124,7 +124,10 @@ async function scrapeVariantSpecs(page: Page, url: string): Promise<RawSpecData>
 
 // ─── Extract variants from model page ───────────────────────────────────────
 
-async function extractVariantUrls(page: Page, modelUrl: string): Promise<{name: string, url: string}[]> {
+async function extractVariantUrls(
+  page: Page,
+  modelUrl: string,
+): Promise<{ name: string; url: string }[]> {
   try {
     const response = await page.goto(modelUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
     if (!response || response.status() >= 400) return [];
@@ -135,27 +138,41 @@ async function extractVariantUrls(page: Page, modelUrl: string): Promise<{name: 
   const modelPath = new URL(modelUrl).pathname;
 
   return page.evaluate((pathPrefix) => {
-    const variants: {name: string, url: string}[] = [];
+    const variants: { name: string; url: string }[] = [];
     const seenUrls = new Set<string>();
 
     const linkRegex = new RegExp('^' + pathPrefix + '([a-z0-9-]+)/?$');
 
-    document.querySelectorAll('a[href]').forEach(el => {
+    document.querySelectorAll('a[href]').forEach((el) => {
       const href = el.getAttribute('href')!;
       if (!href || href.startsWith('javascript:')) return;
 
       try {
-        const fullUrl = href.startsWith('http') ? href : `https://www.carwale.com${href.startsWith('/') ? href : '/' + href}`;
+        const fullUrl = href.startsWith('http')
+          ? href
+          : `https://www.carwale.com${href.startsWith('/') ? href : '/' + href}`;
         const pathname = new URL(fullUrl, 'https://www.carwale.com').pathname;
 
         if (linkRegex.test(pathname) && !seenUrls.has(fullUrl)) {
           const slug = pathname.split('/').filter(Boolean).pop() || '';
-          if (['price-in', 'images', 'videos', 'compare', 'colours', 'mileage', 'specifications', 'features', 'emi-calculator'].includes(slug)) {
+          if (
+            [
+              'price-in',
+              'images',
+              'videos',
+              'compare',
+              'colours',
+              'mileage',
+              'specifications',
+              'features',
+              'emi-calculator',
+            ].includes(slug)
+          ) {
             return;
           }
 
           const rawText = el.textContent?.trim() || '';
-          const name = rawText.replace(/^.*?(?:\r?\n|\s{2,})/, '').trim(); 
+          const name = rawText.replace(/^.*?(?:\r?\n|\s{2,})/, '').trim();
           if (name && name.length > 1 && !name.includes('Rs.')) {
             seenUrls.add(fullUrl);
             variants.push({ name, url: fullUrl });
@@ -354,18 +371,20 @@ async function main() {
           // Match extracted variant against DB by slug or name-matching
           // The ev.name might be something like "Highline 1.0L TSI MT" while DB holds "Highline".
           // The best matching logic: find DB variant whose name is contained in the extracted name, or vice-versa
-          const dbVariant = dbVariants.find(v => {
+          const dbVariant = dbVariants.find((v) => {
             const vName = v.name.toLowerCase().replace(/[^a-z0-9]/g, '');
             const eName = ev.name.toLowerCase().replace(/[^a-z0-9]/g, '');
             // Also check the URL slug
             const urlSlug = ev.url.split('/').filter(Boolean).pop()?.replace(/-/g, '');
 
-            return eName.includes(vName) || vName.includes(eName) || (urlSlug && vName.includes(urlSlug));
+            return (
+              eName.includes(vName) || vName.includes(eName) || (urlSlug && vName.includes(urlSlug))
+            );
           });
 
           if (!dbVariant) {
-             // Skipping un-matched variant purely on client side
-             continue;
+            // Skipping un-matched variant purely on client side
+            continue;
           }
 
           if (dbVariant.spec && !args.force) {
@@ -388,7 +407,9 @@ async function main() {
             }
 
             if (args.dryRun) {
-              console.log(`      📋 [DRY] ${dbVariant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`);
+              console.log(
+                `      📋 [DRY] ${dbVariant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`,
+              );
             } else {
               await prisma.vehicleCatalogVariantSpec.upsert({
                 where: { variantId: dbVariant.id },
@@ -416,8 +437,12 @@ async function main() {
     }
   }
 
-  try { await page.close(); } catch {}
-  try { await browser.close(); } catch {}
+  try {
+    await page.close();
+  } catch {}
+  try {
+    await browser.close();
+  } catch {}
   await prisma.$disconnect();
 
   console.log(`\n${'═'.repeat(50)}`);

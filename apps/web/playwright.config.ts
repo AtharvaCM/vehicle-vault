@@ -1,8 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:4307';
-const apiProxyTarget =
-  process.env.E2E_API_PROXY_TARGET ?? 'https://vehiclevault.middle-earth.in';
+const apiProxyTarget = process.env.E2E_API_PROXY_TARGET ?? 'https://vehiclevault.middle-earth.in';
 
 export default defineConfig({
   testDir: './tests/e2e',

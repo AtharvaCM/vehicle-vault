@@ -22,7 +22,11 @@ export function ServiceTrendCard({ insights }: ServiceTrendCardProps) {
       <CardContent className="grid gap-4 sm:grid-cols-2">
         <TrendMetric
           label="Average spend"
-          value={insights.averageSpend !== null ? formatCurrency(insights.averageSpend) : 'Not enough data'}
+          value={
+            insights.averageSpend !== null
+              ? formatCurrency(insights.averageSpend)
+              : 'Not enough data'
+          }
         />
         <TrendMetric
           label="Average gap"
@@ -44,27 +48,19 @@ export function ServiceTrendCard({ insights }: ServiceTrendCardProps) {
               ? `${insights.kmSinceLastService.toLocaleString('en-IN')} km`
               : 'No service logged yet'
           }
-          detail={insights.latestService ? `Last service ${formatDate(insights.latestService.serviceDate)}` : undefined}
+          detail={
+            insights.latestService
+              ? `Last service ${formatDate(insights.latestService.serviceDate)}`
+              : undefined
+          }
         />
-        <TrendMetric
-          label="Next due"
-          value={nextDueLabel.value}
-          detail={nextDueLabel.detail}
-        />
+        <TrendMetric label="Next due" value={nextDueLabel.value} detail={nextDueLabel.detail} />
       </CardContent>
     </Card>
   );
 }
 
-function TrendMetric({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-}) {
+function TrendMetric({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-slate-50/80 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">

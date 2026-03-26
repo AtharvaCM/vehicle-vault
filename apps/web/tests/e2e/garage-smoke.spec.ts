@@ -23,9 +23,11 @@ async function selectSearchableOption(
   const content = page.locator(`#${fieldId}-content`);
   await expect(content).toBeVisible();
   await content.getByPlaceholder(searchPlaceholder).fill(searchValue);
-  await expect(content.locator('[cmdk-item]').filter({ hasText: optionLabel }).first()).toBeVisible({
-    timeout: 15000,
-  });
+  await expect(content.locator('[cmdk-item]').filter({ hasText: optionLabel }).first()).toBeVisible(
+    {
+      timeout: 15000,
+    },
+  );
   await content.locator('[cmdk-item]').filter({ hasText: optionLabel }).first().click();
   await expect(trigger).toContainText(optionLabel);
 }
@@ -71,7 +73,10 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await expect(page).toHaveURL(/\/dashboard$/);
 
-  await page.getByRole('link', { name: /add vehicle/i }).first().click();
+  await page
+    .getByRole('link', { name: /add vehicle/i })
+    .first()
+    .click();
 
   await expect(page).toHaveURL(/\/vehicles\/new$/);
   await page.getByLabel(/registration number/i).fill(registrationNumber);
@@ -127,7 +132,10 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
   await expect(page.getByText('Odometer: 16,250 km')).toBeVisible();
 
-  await page.getByRole('link', { name: /^add maintenance$/i }).first().click();
+  await page
+    .getByRole('link', { name: /^add maintenance$/i })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
   await page.getByLabel(/service date/i).fill('2026-03-20');
   await page.getByLabel(/^odometer$/i).fill('16250');
@@ -157,7 +165,10 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.goto(vehicleUrl);
   await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
 
-  await page.getByRole('link', { name: /^add reminder$/i }).first().click();
+  await page
+    .getByRole('link', { name: /^add reminder$/i })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/reminders\/new$/);
   await page.getByLabel(/^title$/i).fill(reminderTitle);
   await page.getByLabel(/due date/i).fill('2026-04-20');
@@ -174,7 +185,5 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByRole('button', { name: /save changes/i }).click();
 
   await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
-  await expect(
-    page.getByRole('heading', { level: 1, name: updatedReminderTitle }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: updatedReminderTitle })).toBeVisible();
 });

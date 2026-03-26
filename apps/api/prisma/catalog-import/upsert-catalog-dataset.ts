@@ -103,14 +103,16 @@ export async function upsertCatalogDataset(
             update: {
               name: variant.name,
               sourceName: defaultSourceName,
-              sourceUrl: variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+              sourceUrl:
+                variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
             },
             create: {
               generationId: generationRecord.id,
               name: variant.name,
               slug: slugify(variant.name),
               sourceName: defaultSourceName,
-              sourceUrl: variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+              sourceUrl:
+                variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
             },
           });
           recordsUpserted += 1;
@@ -141,7 +143,9 @@ export async function upsertCatalogDataset(
                 fuelTypes: offering.fuelTypes,
                 yearStart: override ? override.manualYearStart : offering.yearStart,
                 yearEnd: override ? override.manualYearEnd : offering.yearEnd,
-                isCurrent: override ? (override.manualIsCurrent ?? false) : (offering.isCurrent ?? false),
+                isCurrent: override
+                  ? (override.manualIsCurrent ?? false)
+                  : (offering.isCurrent ?? false),
                 sourceName: defaultSourceName,
                 sourceUrl:
                   offering.sourceUrl ??

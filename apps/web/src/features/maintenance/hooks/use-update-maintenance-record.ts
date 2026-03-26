@@ -9,8 +9,7 @@ export function useUpdateMaintenanceRecord(recordId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: UpdateMaintenanceRecordInput) =>
-      updateMaintenanceRecord(recordId, input),
+    mutationFn: (input: UpdateMaintenanceRecordInput) => updateMaintenanceRecord(recordId, input),
     onSuccess: (record) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.maintenance.all(),

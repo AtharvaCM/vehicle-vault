@@ -27,6 +27,8 @@ describe('PasswordResetRequestForm', () => {
       />,
     );
 
-    expect(screen.getByText('Unable to start the password reset flow right now.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Unable to start the password reset flow right now.'),
+    ).toBeInTheDocument();
   });
 });

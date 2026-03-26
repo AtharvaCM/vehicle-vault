@@ -85,8 +85,8 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle>Data export</CardTitle>
             <CardDescription>
-              Download a JSON backup of your vehicles, maintenance history, reminders, receipts,
-              and account details.
+              Download a JSON backup of your vehicles, maintenance history, reminders, receipts, and
+              account details.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
@@ -95,8 +95,9 @@ export function SettingsPage() {
               <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 text-slate-500" />
                 <p>
-                  Only data saved under <span className="font-medium text-slate-900">{auth.user?.email}</span>{' '}
-                  is included in this export.
+                  Only data saved under{' '}
+                  <span className="font-medium text-slate-900">{auth.user?.email}</span> is included
+                  in this export.
                 </p>
               </div>
             </div>
@@ -129,14 +130,17 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
             <div className="space-y-2">
-              <p>Reminder defaults, currency, and date formatting are planned for a future update.</p>
+              <p>
+                Reminder defaults, currency, and date formatting are planned for a future update.
+              </p>
               <p>For now, this page also includes a repair tool for attachment metadata.</p>
             </div>
             <div className="space-y-3 rounded-xl border border-border/70 bg-slate-50/80 p-4">
               <div className="space-y-1">
                 <p className="font-semibold text-slate-900">Attachment reconciliation</p>
                 <p className="text-sm leading-6 text-slate-600">
-                  Scan your attachment records and remove stale metadata if a stored file is no longer available.
+                  Scan your attachment records and remove stale metadata if a stored file is no
+                  longer available.
                 </p>
               </div>
               {reconcileMutation.isError ? (

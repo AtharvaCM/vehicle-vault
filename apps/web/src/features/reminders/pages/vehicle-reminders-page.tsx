@@ -14,9 +14,7 @@ import { appToast } from '@/lib/toast';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { BulkReminderActions } from '../components/bulk-reminder-actions';
-import {
-  ReminderListControls,
-} from '../components/reminder-list-controls';
+import { ReminderListControls } from '../components/reminder-list-controls';
 import { ReminderList } from '../components/reminder-list';
 import { useBulkCompleteReminders } from '../hooks/use-bulk-complete-reminders';
 import { useBulkDeleteReminders } from '../hooks/use-bulk-delete-reminders';

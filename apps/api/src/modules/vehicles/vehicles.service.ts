@@ -152,7 +152,9 @@ export class VehiclesService {
       record.attachments.map((attachment) => attachment.fileName),
     );
 
-    await Promise.all(attachmentFileNames.map((fileName) => this.storageService.deleteObject(fileName)));
+    await Promise.all(
+      attachmentFileNames.map((fileName) => this.storageService.deleteObject(fileName)),
+    );
 
     return {
       id: vehicle.id,

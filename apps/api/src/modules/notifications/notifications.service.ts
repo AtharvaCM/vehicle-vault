@@ -33,13 +33,13 @@ export class NotificationsService {
     });
   }
 
-  async create(data: { 
-    userId: string; 
-    vehicleId?: string; 
-    title: string; 
-    message: string; 
-    type?: string; 
-    link?: string 
+  async create(data: {
+    userId: string;
+    vehicleId?: string;
+    title: string;
+    message: string;
+    type?: string;
+    link?: string;
   }) {
     // Basic deduplication: don't create same title/message for same vehicle if unread
     if (data.vehicleId) {

@@ -18,9 +18,7 @@ import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import type { Vehicle } from '@/features/vehicles/types/vehicle';
 
 import { BulkMaintenanceActions } from '../components/bulk-maintenance-actions';
-import {
-  MaintenanceListControls,
-} from '../components/maintenance-list-controls';
+import { MaintenanceListControls } from '../components/maintenance-list-controls';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
 import { useBulkDeleteMaintenanceRecords } from '../hooks/use-bulk-delete-maintenance-records';
 import { useAllMaintenanceRecords } from '../hooks/use-all-maintenance-records';
@@ -82,7 +80,9 @@ export function MaintenanceOverviewPage({
   );
 
   useEffect(() => {
-    setSelectedRecordIds((current) => current.filter((recordId) => visibleRecordIds.includes(recordId)));
+    setSelectedRecordIds((current) =>
+      current.filter((recordId) => visibleRecordIds.includes(recordId)),
+    );
   }, [visibleRecordIds]);
 
   if (maintenanceQuery.isPending || vehiclesQuery.isPending) {

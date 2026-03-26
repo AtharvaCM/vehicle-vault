@@ -45,14 +45,17 @@ export class MaintenanceAlertService {
     if (!vehicle) return;
 
     // 1. Get current predicted odometer
-    const insights = await this.vehicleInsightsService.getOdometerInsights(vehicle.userId, vehicleId);
+    const insights = await this.vehicleInsightsService.getOdometerInsights(
+      vehicle.userId,
+      vehicleId,
+    );
     const currentOdo = insights.currentOdometerPredicted;
 
     // 2. Check each category for due service
     for (const [category, interval] of Object.entries(MAINTENANCE_INTERVALS)) {
-      const lastRecord = vehicle.maintenanceRecords.find(r => r.category === category);
-      const lastOdo = lastRecord ? lastRecord.odometer : (vehicle.odometer || 0);
-      
+      const lastRecord = vehicle.maintenanceRecords.find((r) => r.category === category);
+      const lastOdo = lastRecord ? lastRecord.odometer : vehicle.odometer || 0;
+
       const distanceSinceLast = currentOdo - lastOdo;
       const remainingDistance = interval - distanceSinceLast;
 
@@ -60,7 +63,9 @@ export class MaintenanceAlertService {
       if (remainingDistance <= 500) {
         const isOverdue = remainingDistance < 0;
         const urgency = isOverdue ? 'error' : 'warning';
-        const title = isOverdue ? `Overdue Service: ${this.formatLabel(category)}` : `Service Due Soon: ${this.formatLabel(category)}`;
+        const title = isOverdue
+          ? `Overdue Service: ${this.formatLabel(category)}`
+          : `Service Due Soon: ${this.formatLabel(category)}`;
         const message = isOverdue
           ? `Your ${this.formatLabel(category)} is overdue by approx. ${Math.abs(Math.round(remainingDistance))} km. Please schedule service soon.`
           : `Your ${this.formatLabel(category)} is due in approx. ${Math.round(remainingDistance)} km. Time to plan a visit to the workshop.`;
@@ -75,7 +80,7 @@ export class MaintenanceAlertService {
         });
 
         // If it's a new notification (not deduplicated) or user preference permits, send email
-        // For simplicity now, we check the unread status. 
+        // For simplicity now, we check the unread status.
         // If we just created it and it's unread, send a prompt email.
         const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
         if (user && !notification.isRead) {
@@ -84,7 +89,7 @@ export class MaintenanceAlertService {
             user.name,
             `${vehicle.make} ${vehicle.model}`,
             title,
-            message
+            message,
           );
         }
       }
@@ -92,13 +97,13 @@ export class MaintenanceAlertService {
   }
 
   /**
-   * Trigger checks for ALL vehicles. 
+   * Trigger checks for ALL vehicles.
    * In production, this would be a CRON job.
    */
   async runDailyChecks() {
     this.logger.log('Starting daily maintenance alert checks...');
     const vehicles = await this.prisma.vehicle.findMany({
-      select: { id: true }
+      select: { id: true },
     });
 
     for (const v of vehicles) {
@@ -112,6 +117,9 @@ export class MaintenanceAlertService {
   }
 
   private formatLabel(category: string) {
-    return category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return category
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
   }
 }

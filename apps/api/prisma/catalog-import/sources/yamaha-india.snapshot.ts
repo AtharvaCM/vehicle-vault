@@ -21,8 +21,14 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearStart: 2023,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Deluxe', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Deluxe',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
               ],
             },
             {
@@ -31,7 +37,10 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2022,
               isCurrent: false,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2019, yearEnd: 2022 }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2019, yearEnd: 2022 }],
+                },
               ],
             },
             {
@@ -40,7 +49,10 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2018,
               isCurrent: false,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2014, yearEnd: 2018 }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2014, yearEnd: 2018 }],
+                },
               ],
             },
           ],
@@ -54,8 +66,14 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearStart: 2022,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
-                { name: 'Deluxe', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'Deluxe',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -69,9 +87,18 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Metallic Red', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Dark Knight', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'M', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Metallic Red',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Dark Knight',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'M',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
             {
@@ -80,8 +107,14 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2021,
               isCurrent: false,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2021 }] },
-                { name: 'M', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2021 }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2021 }],
+                },
+                {
+                  name: 'M',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2021 }],
+                },
               ],
             },
           ],
@@ -95,8 +128,14 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Chrome', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Chrome',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -110,8 +149,18 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol', 'hybrid'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Disc', offerings: [{ fuelTypes: ['petrol', 'hybrid'], yearStart: 2021, isCurrent: true }] },
+                {
+                  name: 'Drum',
+                  offerings: [
+                    { fuelTypes: ['petrol', 'hybrid'], yearStart: 2021, isCurrent: true },
+                  ],
+                },
+                {
+                  name: 'Disc',
+                  offerings: [
+                    { fuelTypes: ['petrol', 'hybrid'], yearStart: 2021, isCurrent: true },
+                  ],
+                },
               ],
             },
             {
@@ -120,7 +169,10 @@ export const yamahaIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2021,
               isCurrent: false,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2021 }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2021 }],
+                },
               ],
             },
           ],

@@ -28,16 +28,24 @@ describe('SupabaseStorageService', () => {
     } as never);
 
     await service.onModuleInit();
-    await service.uploadObject('attachments/user-1/record-1/example.pdf', Buffer.from('hello'), 'application/pdf');
-
-    await expect(service.objectExists('attachments/user-1/record-1/example.pdf')).resolves.toBe(true);
-    await expect(service.downloadObject('attachments/user-1/record-1/example.pdf')).resolves.toEqual(
+    await service.uploadObject(
+      'attachments/user-1/record-1/example.pdf',
       Buffer.from('hello'),
+      'application/pdf',
     );
+
+    await expect(service.objectExists('attachments/user-1/record-1/example.pdf')).resolves.toBe(
+      true,
+    );
+    await expect(
+      service.downloadObject('attachments/user-1/record-1/example.pdf'),
+    ).resolves.toEqual(Buffer.from('hello'));
     await expect(service.deleteObject('attachments/user-1/record-1/example.pdf')).resolves.toBe(
       'deleted',
     );
-    await expect(service.objectExists('attachments/user-1/record-1/example.pdf')).resolves.toBe(false);
+    await expect(service.objectExists('attachments/user-1/record-1/example.pdf')).resolves.toBe(
+      false,
+    );
   });
 
   it('returns not found when a local attachment object is missing', async () => {
@@ -51,8 +59,8 @@ describe('SupabaseStorageService', () => {
 
     await service.onModuleInit();
 
-    await expect(service.downloadObject('attachments/user-1/record-1/missing.pdf')).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(
+      service.downloadObject('attachments/user-1/record-1/missing.pdf'),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

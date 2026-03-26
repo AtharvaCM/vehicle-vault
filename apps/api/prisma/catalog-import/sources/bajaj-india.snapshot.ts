@@ -20,8 +20,14 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2018,
               isCurrent: true,
               variants: [
-                { name: 'Single Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
-                { name: 'Twin Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+                {
+                  name: 'Single Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }],
+                },
+                {
+                  name: 'Twin Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -34,7 +40,10 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -48,9 +57,18 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2022,
               isCurrent: true,
               variants: [
-                { name: 'Single Channel ABS', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
-                { name: 'Dual Channel ABS', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
-                { name: 'USD Fork', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
+                {
+                  name: 'Single Channel ABS',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'Dual Channel ABS',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'USD Fork',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -64,7 +82,10 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2024,
               isCurrent: true,
               variants: [
-                { name: 'Dual Channel ABS', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
+                {
+                  name: 'Dual Channel ABS',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
               ],
             },
             {
@@ -73,7 +94,10 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2023,
               isCurrent: false,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2012, yearEnd: 2023 }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2012, yearEnd: 2023 }],
+                },
               ],
             },
           ],
@@ -87,7 +111,10 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2019,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2019, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2019, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -101,7 +128,10 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Cruise 220', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                {
+                  name: 'Cruise 220',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -114,7 +144,10 @@ export const bajajIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'ES Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                {
+                  name: 'ES Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
               ],
             },
           ],

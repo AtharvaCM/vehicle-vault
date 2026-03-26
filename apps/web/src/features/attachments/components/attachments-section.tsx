@@ -73,7 +73,10 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
   }
 
   const attachmentsCount = attachmentsQuery.data?.length ?? 0;
-  const totalSize = (attachmentsQuery.data ?? []).reduce((sum, attachment) => sum + attachment.size, 0);
+  const totalSize = (attachmentsQuery.data ?? []).reduce(
+    (sum, attachment) => sum + attachment.size,
+    0,
+  );
   const latestAttachment = (attachmentsQuery.data ?? [])
     .slice()
     .sort((left, right) => Date.parse(right.uploadedAt) - Date.parse(left.uploadedAt))[0];

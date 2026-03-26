@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { CreateFuelLogInput } from '@vehicle-vault/shared';
@@ -27,8 +27,6 @@ export function FuelLogForm({
   initialValues,
   submitLabel = 'Save Fuel Log',
 }: FuelLogFormProps) {
-  const [submissionState, setSubmissionState] = useState<string | null>(null);
-
   const form = useForm<FuelLogFormValues>({
     resolver: zodResolver(fuelLogFormSchema),
     defaultValues: {
@@ -76,9 +74,8 @@ export function FuelLogForm({
         ...values,
         date: new Date(values.date).toISOString(),
       });
-      setSubmissionState('Fuel log saved successfully.');
-    } catch (error) {
-      setSubmissionState(null);
+    } catch {
+      // Error handled by parent via submitError
     }
   });
 
@@ -91,16 +88,8 @@ export function FuelLogForm({
       <CardContent className="px-0">
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField
-              htmlFor="fuel-date"
-              label="Date"
-              error={form.formState.errors.date?.message}
-            >
-              <Input
-                id="fuel-date"
-                {...form.register('date')}
-                type="date"
-              />
+            <FormField htmlFor="fuel-date" label="Date" error={form.formState.errors.date?.message}>
+              <Input id="fuel-date" {...form.register('date')} type="date" />
             </FormField>
 
             <FormField

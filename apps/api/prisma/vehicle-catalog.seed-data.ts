@@ -209,8 +209,18 @@ export const vehicleCatalogSeedData: CatalogSeedMake[] = [
       {
         name: 'Nexon',
         variants: [
-          { name: 'Smart', fuelTypes: ['petrol', 'diesel', 'cng'], yearStart: 2023, isCurrent: true },
-          { name: 'Pure', fuelTypes: ['petrol', 'diesel', 'cng'], yearStart: 2023, isCurrent: true },
+          {
+            name: 'Smart',
+            fuelTypes: ['petrol', 'diesel', 'cng'],
+            yearStart: 2023,
+            isCurrent: true,
+          },
+          {
+            name: 'Pure',
+            fuelTypes: ['petrol', 'diesel', 'cng'],
+            yearStart: 2023,
+            isCurrent: true,
+          },
           { name: 'Creative', fuelTypes: ['petrol', 'diesel'], yearStart: 2023, isCurrent: true },
           { name: 'Fearless', fuelTypes: ['petrol', 'diesel'], yearStart: 2023, isCurrent: true },
         ],

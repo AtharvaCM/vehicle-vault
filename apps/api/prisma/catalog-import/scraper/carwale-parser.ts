@@ -74,17 +74,43 @@ export function parseModelList(html: string, brandSlug: string): ScrapedModel[] 
 
   // Non-model slugs to skip (navigation, editorial, filter pages)
   const skipSlugs = new Set([
-    'price-in', 'dealers', 'images', 'videos', 'compare', 'news', 'reviews',
-    'specifications', 'features', 'mileage', 'colours', 'on-road-price',
-    'expert-reviews', 'faqs', 'service-centers', 'car-loan',
+    'price-in',
+    'dealers',
+    'images',
+    'videos',
+    'compare',
+    'news',
+    'reviews',
+    'specifications',
+    'features',
+    'mileage',
+    'colours',
+    'on-road-price',
+    'expert-reviews',
+    'faqs',
+    'service-centers',
+    'car-loan',
   ]);
 
   // Non-model name patterns to skip
   const skipPatterns = [
-    /expert\s*review/i, /\bnews\b/i, /\bfaq/i, /\bdealer/i, /\bprice\b/i,
-    /\bcompare\b/i, /\bservice\b/i, /\bloan\b/i, /\bimage/i, /\bvideo/i,
-    /\bcolour/i, /\bmileage/i, /^\[/, /facelift$/i, /\bsuv$/i,
-    /^upcoming$/i, /\bupcoming\b/i,
+    /expert\s*review/i,
+    /\bnews\b/i,
+    /\bfaq/i,
+    /\bdealer/i,
+    /\bprice\b/i,
+    /\bcompare\b/i,
+    /\bservice\b/i,
+    /\bloan\b/i,
+    /\bimage/i,
+    /\bvideo/i,
+    /\bcolour/i,
+    /\bmileage/i,
+    /^\[/,
+    /facelift$/i,
+    /\bsuv$/i,
+    /^upcoming$/i,
+    /\bupcoming\b/i,
   ];
 
   // Current models — links like /{brand}-cars/{model}/
@@ -128,17 +154,20 @@ export function parseModelList(html: string, brandSlug: string): ScrapedModel[] 
   $('h2').each((_, el) => {
     if ($(el).text().toLowerCase().includes('discontinued')) {
       inDiscontinued = true;
-      $(el).parent().find(`a[href*="/${brandSlug}-cars/"]`).each((__, linkEl) => {
-        const href = $(linkEl).attr('href') || '';
-        const modelMatch = href.match(new RegExp(`/${brandSlug}-cars/([a-z0-9-]+)/?$`));
-        if (modelMatch) {
-          const slug = modelMatch[1];
-          const existing = models.find((m) => m.slug === slug);
-          if (existing) {
-            existing.isCurrent = false;
+      $(el)
+        .parent()
+        .find(`a[href*="/${brandSlug}-cars/"]`)
+        .each((__, linkEl) => {
+          const href = $(linkEl).attr('href') || '';
+          const modelMatch = href.match(new RegExp(`/${brandSlug}-cars/([a-z0-9-]+)/?$`));
+          if (modelMatch) {
+            const slug = modelMatch[1];
+            const existing = models.find((m) => m.slug === slug);
+            if (existing) {
+              existing.isCurrent = false;
+            }
           }
-        }
-      });
+        });
     }
   });
 
@@ -164,13 +193,32 @@ export function parseVariantList(html: string): ScrapedVariant[] {
     if (parts.length >= 3 && parts[0].endsWith('-cars')) {
       const variantSlug = parts[2];
       // Skip non-variant links
-      if (['price-in', 'images', 'videos', 'compare', 'on-road-price', 'specifications', 'features',
-           'mileage', 'reviews', 'colours', 'automatic'].includes(variantSlug)) return;
+      if (
+        [
+          'price-in',
+          'images',
+          'videos',
+          'compare',
+          'on-road-price',
+          'specifications',
+          'features',
+          'mileage',
+          'reviews',
+          'colours',
+          'automatic',
+        ].includes(variantSlug)
+      )
+        return;
       if (seen.has(variantSlug)) return;
 
       // Try to extract a clean variant name
       const variantName = text.replace(/^.*?\s+/, '').trim(); // Strip brand+model prefix
-      if (variantName && variantName.length > 1 && !variantName.includes('Price') && !variantName.includes('Rs.')) {
+      if (
+        variantName &&
+        variantName.length > 1 &&
+        !variantName.includes('Price') &&
+        !variantName.includes('Rs.')
+      ) {
         seen.add(variantSlug);
         variants.push({
           name: variantName,
@@ -221,17 +269,57 @@ export function mapFuelType(fuel: string | null): string {
  */
 export function classifyVehicleType(modelName: string): 'car' | 'suv' {
   const suvKeywords = [
-    'suv', 'xuv', 'thar', 'bolero', 'scorpio', 'safari', 'harrier', 'nexon', 'punch',
-    'seltos', 'sonet', 'carens', 'venue', 'creta', 'alcazar', 'tucson',
-    'taigun', 'tiguan', 'tayron', 'kushaq', 'kodiaq', 'tera',
-    'hyryder', 'fortuner', 'innova', 'urban cruiser',
-    'duster', 'kiger', 'triber',
-    'brezza', 'grand vitara', 'jimny', 'fronx', 'invicto',
-    'compass', 'meridian', 'wrangler', 'grand cherokee',
-    'hector', 'astor', 'gloster', 'comet', 'windsor',
-    'c3 aircross', 'basalt', 'c5 aircross',
-    'magnite', 'x-trail', 'kicks',
-    'curvv', 'tera',
+    'suv',
+    'xuv',
+    'thar',
+    'bolero',
+    'scorpio',
+    'safari',
+    'harrier',
+    'nexon',
+    'punch',
+    'seltos',
+    'sonet',
+    'carens',
+    'venue',
+    'creta',
+    'alcazar',
+    'tucson',
+    'taigun',
+    'tiguan',
+    'tayron',
+    'kushaq',
+    'kodiaq',
+    'tera',
+    'hyryder',
+    'fortuner',
+    'innova',
+    'urban cruiser',
+    'duster',
+    'kiger',
+    'triber',
+    'brezza',
+    'grand vitara',
+    'jimny',
+    'fronx',
+    'invicto',
+    'compass',
+    'meridian',
+    'wrangler',
+    'grand cherokee',
+    'hector',
+    'astor',
+    'gloster',
+    'comet',
+    'windsor',
+    'c3 aircross',
+    'basalt',
+    'c5 aircross',
+    'magnite',
+    'x-trail',
+    'kicks',
+    'curvv',
+    'tera',
   ];
   const lower = modelName.toLowerCase();
   return suvKeywords.some((kw) => lower.includes(kw)) ? 'suv' : 'car';

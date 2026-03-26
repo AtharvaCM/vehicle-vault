@@ -14,9 +14,7 @@ import { appToast } from '@/lib/toast';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { BulkMaintenanceActions } from '../components/bulk-maintenance-actions';
-import {
-  MaintenanceListControls,
-} from '../components/maintenance-list-controls';
+import { MaintenanceListControls } from '../components/maintenance-list-controls';
 import { useMaintenanceRecords } from '../hooks/use-maintenance-records';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
 import { useBulkDeleteMaintenanceRecords } from '../hooks/use-bulk-delete-maintenance-records';
@@ -68,7 +66,9 @@ export function VehicleMaintenanceListPage({
   );
 
   useEffect(() => {
-    setSelectedRecordIds((current) => current.filter((recordId) => visibleRecordIds.includes(recordId)));
+    setSelectedRecordIds((current) =>
+      current.filter((recordId) => visibleRecordIds.includes(recordId)),
+    );
   }, [visibleRecordIds]);
 
   function resetControls() {

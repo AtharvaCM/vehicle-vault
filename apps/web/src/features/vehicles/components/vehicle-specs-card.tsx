@@ -1,14 +1,4 @@
-import {
-  Car,
-  Compass,
-  Fuel,
-  Gauge,
-  Ruler,
-  ShieldCheck,
-  Users,
-  Weight,
-  CircleDot,
-} from 'lucide-react';
+import { Car, Fuel, Gauge, Ruler, ShieldCheck, CircleDot } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -30,7 +20,9 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
       <Card>
         <CardHeader>
           <CardTitle>Vehicle Specifications</CardTitle>
-          <CardDescription>Loading specs for {make} {model} {variant}…</CardDescription>
+          <CardDescription>
+            Loading specs for {make} {model} {variant}…
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -46,7 +38,9 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
       <Card>
         <CardHeader>
           <CardTitle>Vehicle Specifications</CardTitle>
-          <CardDescription>Specifications for {make} {model} {variant}</CardDescription>
+          <CardDescription>
+            Specifications for {make} {model} {variant}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <EmptyState
@@ -140,9 +134,7 @@ function BodySection({ specs }: SpecSectionProps) {
 
   if (items.length === 0) return null;
 
-  return (
-    <SpecCard icon={<Car className="h-5 w-5" />} items={items} title="Body & Comfort" />
-  );
+  return <SpecCard icon={<Car className="h-5 w-5" />} items={items} title="Body & Comfort" />;
 }
 
 function TyresSection({ specs }: SpecSectionProps) {
@@ -154,15 +146,11 @@ function TyresSection({ specs }: SpecSectionProps) {
 
   if (items.length === 0) return null;
 
-  return (
-    <SpecCard icon={<CircleDot className="h-5 w-5" />} items={items} title="Tyres & Wheels" />
-  );
+  return <SpecCard icon={<CircleDot className="h-5 w-5" />} items={items} title="Tyres & Wheels" />;
 }
 
 function SafetySection({ specs }: SpecSectionProps) {
-  const items = buildSpecItems([
-    ['Airbags', specs.airbagCount],
-  ]);
+  const items = buildSpecItems([['Airbags', specs.airbagCount]]);
 
   if (specs.safetyFeatures) {
     try {
@@ -175,16 +163,12 @@ function SafetySection({ specs }: SpecSectionProps) {
 
   if (items.length === 0) return null;
 
-  return (
-    <SpecCard icon={<ShieldCheck className="h-5 w-5" />} items={items} title="Safety" />
-  );
+  return <SpecCard icon={<ShieldCheck className="h-5 w-5" />} items={items} title="Safety" />;
 }
 
 type SpecItem = { label: string; value: string };
 
-function buildSpecItems(
-  raw: [string, string | number | null | undefined, string?][],
-): SpecItem[] {
+function buildSpecItems(raw: [string, string | number | null | undefined, string?][]): SpecItem[] {
   return raw
     .filter(([, v]) => v !== null && v !== undefined && v !== '')
     .map(([label, value, unit]) => ({

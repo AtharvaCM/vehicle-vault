@@ -20,9 +20,18 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2023,
               isCurrent: true,
               variants: [
-                { name: 'Base', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Mid', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Top', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                {
+                  name: 'Base',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Mid',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Top',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -36,11 +45,26 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Redditch', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Halcyon', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Signals', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Dark', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Chrome', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+                {
+                  name: 'Redditch',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Halcyon',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Signals',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Dark',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Chrome',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -54,8 +78,14 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2022,
               isCurrent: true,
               variants: [
-                { name: 'Retro', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
-                { name: 'Metro', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Retro',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'Metro',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
                 {
                   name: 'Metro Rebel',
                   offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
@@ -73,9 +103,18 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2023,
               isCurrent: true,
               variants: [
-                { name: 'Base', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Pass', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Summit', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                {
+                  name: 'Base',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Pass',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Summit',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -89,9 +128,18 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Fireball', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Stellar', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Supernova', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                {
+                  name: 'Fireball',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Stellar',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Supernova',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -104,8 +152,14 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2018,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
-                { name: 'Custom', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }],
+                },
+                {
+                  name: 'Custom',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -118,8 +172,14 @@ export const royalEnfieldIndiaSnapshot: CatalogImportSource = {
               yearStart: 2018,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
-                { name: 'Custom', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }],
+                },
+                {
+                  name: 'Custom',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, isCurrent: true }],
+                },
               ],
             },
           ],

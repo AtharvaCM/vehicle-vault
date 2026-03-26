@@ -31,6 +31,7 @@ export class FuelLogsController {
 
   @Post('scan')
   @UseInterceptors(FileInterceptor('file'))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async scanReceipt(@UploadedFile() file: any) {
     return this.fuelLogsOCRService.scanReceipt(file.buffer, file.mimetype);
   }
@@ -41,18 +42,12 @@ export class FuelLogsController {
   }
 
   @Get('vehicle/:vehicleId')
-  async getByVehicle(
-    @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
-  ) {
+  async getByVehicle(@CurrentUser('id') userId: string, @Param('vehicleId') vehicleId: string) {
     return this.fuelLogsService.getFuelLogsByVehicle(userId, vehicleId);
   }
 
   @Get(':id')
-  async getById(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async getById(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.fuelLogsService.getFuelLogById(userId, id);
   }
 
@@ -84,10 +79,7 @@ export class FuelLogsController {
   }
 
   @Delete(':id')
-  async delete(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.fuelLogsService.deleteFuelLog(userId, id);
   }
 }

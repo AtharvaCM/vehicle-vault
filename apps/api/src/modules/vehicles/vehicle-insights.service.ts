@@ -65,10 +65,17 @@ export class VehicleInsightsService {
     const firstReading = readings[0];
     const lastReading = readings[readings.length - 1];
 
+    if (!firstReading || !lastReading) {
+      // Fallback if something went wrong with the logic above
+      throw new Error('Unexpected empty readings after check');
+    }
+
     const totalDistance = lastReading.odometer - firstReading.odometer;
     const totalDays = Math.max(
       1,
-      Math.floor((lastReading.date.getTime() - firstReading.date.getTime()) / (1000 * 60 * 60 * 24)),
+      Math.floor(
+        (lastReading.date.getTime() - firstReading.date.getTime()) / (1000 * 60 * 60 * 24),
+      ),
     );
 
     const averageDailyMileage = totalDistance / totalDays;

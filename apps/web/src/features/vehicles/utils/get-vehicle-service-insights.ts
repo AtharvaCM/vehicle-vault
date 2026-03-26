@@ -65,10 +65,9 @@ export function getVehicleServiceInsights({
     latestService?.nextDueOdometer !== undefined && latestService?.nextDueOdometer !== null
       ? latestService.nextDueOdometer - vehicle.odometer
       : null;
-  const nextDueDateDeltaDays =
-    latestService?.nextDueDate
-      ? Math.ceil((Date.parse(latestService.nextDueDate) - now.getTime()) / (1000 * 60 * 60 * 24))
-      : null;
+  const nextDueDateDeltaDays = latestService?.nextDueDate
+    ? Math.ceil((Date.parse(latestService.nextDueDate) - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
 
   return {
     averageDaysBetweenServices: average(positiveDayDiffs),

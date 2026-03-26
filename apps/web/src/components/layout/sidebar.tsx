@@ -14,7 +14,6 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { APP_NAME } from '@vehicle-vault/shared';
 
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
@@ -80,7 +79,10 @@ export function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-slate-200/60 bg-slate-50/40 xl:flex xl:flex-col">
       <div className="px-6 py-8">
-        <Link className="flex items-center gap-2.5 transition-opacity hover:opacity-90" to="/dashboard">
+        <Link
+          className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
+          to="/dashboard"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-[13px] font-bold text-primary-foreground shadow-premium-sm">
             VV
           </div>

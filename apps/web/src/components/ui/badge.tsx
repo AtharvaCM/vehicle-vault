@@ -31,7 +31,7 @@ function Badge({
   tone,
   asChild = false,
   ...props
-}: React.ComponentProps<"span"> &
+}: React.ComponentProps<'span'> &
   VariantProps<typeof badgeVariants> & {
     asChild?: boolean;
     tone?: 'accent' | 'danger' | 'warning' | 'neutral';

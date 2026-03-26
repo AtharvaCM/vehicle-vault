@@ -113,7 +113,9 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
         <Card>
           <CardHeader>
             <CardTitle>What to capture</CardTitle>
-            <CardDescription>One entry should represent one completed visit, repair, or service job.</CardDescription>
+            <CardDescription>
+              One entry should represent one completed visit, repair, or service job.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
             <p>Workshop is optional, so self-done work and roadside fixes can still be logged.</p>

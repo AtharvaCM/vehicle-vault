@@ -4,6 +4,4 @@ import { AttachmentReconciliationSummarySchema, AttachmentSchema } from '../sche
 
 export type Attachment = z.infer<typeof AttachmentSchema>;
 export type CreateAttachmentResponse = Attachment[];
-export type AttachmentReconciliationSummary = z.infer<
-  typeof AttachmentReconciliationSummarySchema
->;
+export type AttachmentReconciliationSummary = z.infer<typeof AttachmentReconciliationSummarySchema>;

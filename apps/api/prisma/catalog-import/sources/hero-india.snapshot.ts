@@ -21,9 +21,18 @@ export const heroIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'i3S', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'XTEC', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'i3S',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'XTEC',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -36,8 +45,14 @@ export const heroIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Kick Start', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Self Start', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                {
+                  name: 'Kick Start',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Self Start',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -51,8 +66,14 @@ export const heroIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2023,
               isCurrent: false,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }] },
-                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }] },
+                {
+                  name: 'Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }],
+                },
+                {
+                  name: 'Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }],
+                },
               ],
             },
           ],
@@ -65,24 +86,40 @@ export const heroIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'XTEC', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
+                {
+                  name: 'Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'XTEC',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
               ],
             },
           ],
         },
         {
           name: 'Xpulse 200 4V',
-          sourceUrl: 'https://www.heromotocorp.com/en-in/motorcycles/performance/xpulse-200-4v.html',
+          sourceUrl:
+            'https://www.heromotocorp.com/en-in/motorcycles/performance/xpulse-200-4v.html',
           generations: [
             {
               name: 'Xpulse 200 4V (2021 launch)',
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Pro', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Pro',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -96,23 +133,36 @@ export const heroIndiaSnapshot: CatalogImportSource = {
               yearStart: 2023,
               isCurrent: true,
               variants: [
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Combat Edition', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Combat Edition',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
               ],
             },
           ],
         },
         {
           name: 'Xtreme 160R 4V',
-          sourceUrl: 'https://www.heromotocorp.com/en-in/motorcycles/performance/xtreme-160r-4v.html',
+          sourceUrl:
+            'https://www.heromotocorp.com/en-in/motorcycles/performance/xtreme-160r-4v.html',
           generations: [
             {
               name: 'Xtreme 160R 4V (2023 launch)',
               yearStart: 2023,
               isCurrent: true,
               variants: [
-                { name: 'Double Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
-                { name: 'Connected', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                {
+                  name: 'Double Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
+                {
+                  name: 'Connected',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
               ],
             },
           ],

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 import { ArrowUpRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 type StatCardProps = {
   label: string;
@@ -36,9 +36,7 @@ export function StatCard({
         <p className="text-3xl font-bold tracking-tight text-slate-900 group-hover:text-primary transition-colors">
           {value}
         </p>
-        <p className="text-[13px] leading-relaxed text-slate-500 line-clamp-2">
-          {description}
-        </p>
+        <p className="text-[13px] leading-relaxed text-slate-500 line-clamp-2">{description}</p>
       </CardContent>
     </Card>
   );

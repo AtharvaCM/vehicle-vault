@@ -26,10 +26,7 @@ type VehiclesListPageProps = {
   onSearchStateChange: (next: Partial<VehicleListSearch>) => void;
 };
 
-export function VehiclesListPage({
-  searchState,
-  onSearchStateChange,
-}: VehiclesListPageProps) {
+export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesListPageProps) {
   const vehiclesQuery = useVehicles();
   const bulkDeleteMutation = useBulkDeleteVehicles();
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
@@ -136,10 +133,7 @@ export function VehiclesListPage({
       />
 
       {vehiclesQuery.isPending ? (
-        <LoadingState
-          description="Loading the vehicles in your garage."
-          title="Loading vehicles"
-        />
+        <LoadingState description="Loading the vehicles in your garage." title="Loading vehicles" />
       ) : vehiclesQuery.isError ? (
         <ErrorState
           action={

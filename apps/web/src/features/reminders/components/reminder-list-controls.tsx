@@ -74,7 +74,10 @@ export function ReminderListControls({
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
             Status
           </p>
-          <Select onValueChange={(value) => onStatusChange(value as ReminderStatus | 'all')} value={status}>
+          <Select
+            onValueChange={(value) => onStatusChange(value as ReminderStatus | 'all')}
+            value={status}
+          >
             <SelectTrigger>
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
@@ -93,7 +96,10 @@ export function ReminderListControls({
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
             Type
           </p>
-          <Select onValueChange={(value) => onTypeChange(value as ReminderType | 'all')} value={type}>
+          <Select
+            onValueChange={(value) => onTypeChange(value as ReminderType | 'all')}
+            value={type}
+          >
             <SelectTrigger>
               <SelectValue placeholder="All types" />
             </SelectTrigger>
@@ -112,7 +118,10 @@ export function ReminderListControls({
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
             Sort
           </p>
-          <Select onValueChange={(value) => onSortChange(value as ReminderSortOption)} value={sortBy}>
+          <Select
+            onValueChange={(value) => onSortChange(value as ReminderSortOption)}
+            value={sortBy}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Sort reminders" />
             </SelectTrigger>
@@ -128,7 +137,8 @@ export function ReminderListControls({
 
         <div className="flex items-center justify-between gap-3 xl:flex-col xl:items-end">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{resultCount}</span> of {totalCount}
+            Showing <span className="font-medium text-foreground">{resultCount}</span> of{' '}
+            {totalCount}
           </p>
           {hasFilters ? (
             <Button onClick={onReset} size="xs" type="button" variant="ghost">

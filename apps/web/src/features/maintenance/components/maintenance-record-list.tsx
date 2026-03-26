@@ -44,9 +44,7 @@ export function MaintenanceRecordList({
                     className={cn(
                       'h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-400',
                     )}
-                    onChange={(event) =>
-                      onSelectionChange(record.id, event.currentTarget.checked)
-                    }
+                    onChange={(event) => onSelectionChange(record.id, event.currentTarget.checked)}
                     type="checkbox"
                   />
                 </label>

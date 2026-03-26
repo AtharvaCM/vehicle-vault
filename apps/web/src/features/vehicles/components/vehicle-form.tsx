@@ -9,7 +9,10 @@ import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
-import { SearchableSelect, type SearchableSelectOption } from '@/components/shared/searchable-select';
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from '@/components/shared/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -36,9 +39,7 @@ function formatOptionLabel(value: string) {
     return value.toUpperCase();
   }
 
-  return value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 type VehicleFormProps = {
@@ -126,11 +127,7 @@ export function VehicleForm({
     usesCatalog && Boolean(selectedMake) && Boolean(selectedModel),
   );
 
-  const catalogError = getCatalogError([
-    makesQuery.error,
-    modelsQuery.error,
-    variantsQuery.error,
-  ]);
+  const catalogError = getCatalogError([makesQuery.error, modelsQuery.error, variantsQuery.error]);
   const canUseCatalogSelectors = usesCatalog && !catalogError;
 
   const makeOptions = useMemo(
@@ -280,7 +277,11 @@ export function VehicleForm({
               />
             </FormField>
 
-            <FormField htmlFor="vehicle-year" label="Year" error={form.formState.errors.year?.message}>
+            <FormField
+              htmlFor="vehicle-year"
+              label="Year"
+              error={form.formState.errors.year?.message}
+            >
               <Input
                 id="vehicle-year"
                 {...form.register('year', {
@@ -297,7 +298,11 @@ export function VehicleForm({
               />
             </FormField>
 
-            <FormField htmlFor="vehicle-make" label="Make" error={form.formState.errors.make?.message}>
+            <FormField
+              htmlFor="vehicle-make"
+              label="Make"
+              error={form.formState.errors.make?.message}
+            >
               {canUseCatalogSelectors ? (
                 <Controller
                   control={form.control}
@@ -327,7 +332,11 @@ export function VehicleForm({
               )}
             </FormField>
 
-            <FormField htmlFor="vehicle-model" label="Model" error={form.formState.errors.model?.message}>
+            <FormField
+              htmlFor="vehicle-model"
+              label="Model"
+              error={form.formState.errors.model?.message}
+            >
               {canUseCatalogSelectors ? (
                 <Controller
                   control={form.control}
@@ -335,7 +344,9 @@ export function VehicleForm({
                   render={({ field }) => (
                     <SearchableSelect
                       disabled={!selectedMake}
-                      emptyMessage={selectedMake ? 'No models found for this make.' : 'Select a make first.'}
+                      emptyMessage={
+                        selectedMake ? 'No models found for this make.' : 'Select a make first.'
+                      }
                       id="vehicle-model"
                       onChange={(nextModel) => {
                         field.onChange(nextModel);
@@ -364,7 +375,11 @@ export function VehicleForm({
               )}
             </FormField>
 
-            <FormField htmlFor="vehicle-variant" label="Variant" error={form.formState.errors.variant?.message}>
+            <FormField
+              htmlFor="vehicle-variant"
+              label="Variant"
+              error={form.formState.errors.variant?.message}
+            >
               {canUseCatalogSelectors ? (
                 <Controller
                   control={form.control}
@@ -373,7 +388,9 @@ export function VehicleForm({
                     <SearchableSelect
                       disabled={!selectedModel}
                       emptyMessage={
-                        selectedModel ? 'No variants found for this model.' : 'Select a model first.'
+                        selectedModel
+                          ? 'No variants found for this model.'
+                          : 'Select a model first.'
                       }
                       id="vehicle-variant"
                       onChange={field.onChange}
@@ -400,13 +417,20 @@ export function VehicleForm({
               )}
             </FormField>
 
-            <FormField htmlFor="fuel-type" label="Fuel type" error={form.formState.errors.fuelType?.message}>
+            <FormField
+              htmlFor="fuel-type"
+              label="Fuel type"
+              error={form.formState.errors.fuelType?.message}
+            >
               <Controller
                 control={form.control}
                 name="fuelType"
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger id="fuel-type" aria-invalid={Boolean(form.formState.errors.fuelType)}>
+                    <SelectTrigger
+                      id="fuel-type"
+                      aria-invalid={Boolean(form.formState.errors.fuelType)}
+                    >
                       <SelectValue placeholder="Select fuel type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -421,7 +445,11 @@ export function VehicleForm({
               />
             </FormField>
 
-            <FormField htmlFor="vehicle-odometer" label="Odometer" error={form.formState.errors.odometer?.message}>
+            <FormField
+              htmlFor="vehicle-odometer"
+              label="Odometer"
+              error={form.formState.errors.odometer?.message}
+            >
               <Input
                 id="vehicle-odometer"
                 {...form.register('odometer', { valueAsNumber: true })}
@@ -431,7 +459,11 @@ export function VehicleForm({
               />
             </FormField>
 
-            <FormField htmlFor="vehicle-nickname" label="Nickname" error={form.formState.errors.nickname?.message}>
+            <FormField
+              htmlFor="vehicle-nickname"
+              label="Nickname"
+              error={form.formState.errors.nickname?.message}
+            >
               <Input
                 id="vehicle-nickname"
                 {...form.register('nickname')}
@@ -551,5 +583,7 @@ function getCatalogError(errors: Array<unknown>) {
 }
 
 function uniqueSearchKeywords(label: string, keywords?: string[]) {
-  return [...new Set([label.toLowerCase(), ...(keywords ?? []).map((keyword) => keyword.toLowerCase())])];
+  return [
+    ...new Set([label.toLowerCase(), ...(keywords ?? []).map((keyword) => keyword.toLowerCase())]),
+  ];
 }

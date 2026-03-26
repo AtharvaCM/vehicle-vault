@@ -78,12 +78,7 @@ export class MailService {
     });
   }
 
-  private async sendMail(input: {
-    html: string;
-    subject: string;
-    text: string;
-    to: string;
-  }) {
+  private async sendMail(input: { html: string; subject: string; text: string; to: string }) {
     if (!this.transporter || !this.appConfigService.mailFrom) {
       throw new ServiceUnavailableException('Email delivery is not configured.');
     }
@@ -98,7 +93,10 @@ export class MailService {
         html: input.html,
       });
     } catch (error) {
-      this.logger.error(`Failed to send email to ${input.to}`, error instanceof Error ? error.stack : undefined);
+      this.logger.error(
+        `Failed to send email to ${input.to}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new ServiceUnavailableException('Email delivery is unavailable right now.');
     }
   }

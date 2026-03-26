@@ -45,7 +45,10 @@ export function ForgotPasswordPage() {
         description: 'If the email matches an account, a password reset link has been sent.',
       });
     } catch (error) {
-      const message = getApiErrorMessage(error, 'Unable to start the password reset flow right now.');
+      const message = getApiErrorMessage(
+        error,
+        'Unable to start the password reset flow right now.',
+      );
 
       setSubmitError(message);
       appToast.error({
@@ -82,17 +85,23 @@ export function ForgotPasswordPage() {
             <div className="space-y-1">
               <p className="text-sm font-semibold text-slate-900">Development reset preview</p>
               <p className="text-xs leading-5 text-slate-600">
-                This environment returns the token directly so you can continue the reset flow without
-                relying on mailbox delivery.
+                This environment returns the token directly so you can continue the reset flow
+                without relying on mailbox delivery.
               </p>
             </div>
 
             <Input readOnly value={preview.token} />
 
             <div className="flex flex-col gap-2 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-              <span>{preview.expiresAt ? `Expires ${new Date(preview.expiresAt).toLocaleString()}` : null}</span>
+              <span>
+                {preview.expiresAt
+                  ? `Expires ${new Date(preview.expiresAt).toLocaleString()}`
+                  : null}
+              </span>
               <Button asChild size="sm" variant="secondary">
-                <a href={`/reset-password?token=${encodeURIComponent(preview.token)}`}>Continue to reset</a>
+                <a href={`/reset-password?token=${encodeURIComponent(preview.token)}`}>
+                  Continue to reset
+                </a>
               </Button>
             </div>
           </div>

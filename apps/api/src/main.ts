@@ -17,8 +17,10 @@ async function bootstrap() {
   const allowedOriginPattern = appConfig.frontendOriginPattern;
   const corsOrigin:
     | true
-    | ((origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => void) =
-    appConfig.isProduction
+    | ((
+        origin: string | undefined,
+        callback: (error: Error | null, allow?: boolean) => void,
+      ) => void) = appConfig.isProduction
     ? (origin, callback) => {
         if (
           !origin ||

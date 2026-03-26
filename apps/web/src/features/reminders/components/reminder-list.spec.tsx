@@ -55,6 +55,8 @@ describe('ReminderList', () => {
       />,
     );
 
-    expect(screen.getByRole('checkbox', { name: /select reminder insurance renewal/i })).toBeChecked();
+    expect(
+      screen.getByRole('checkbox', { name: /select reminder insurance renewal/i }),
+    ).toBeChecked();
   });
 });

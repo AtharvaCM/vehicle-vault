@@ -1,4 +1,3 @@
-import { FuelLogCreateSchema } from '@vehicle-vault/shared';
 import { z } from 'zod';
 
 export const fuelLogFormSchema = z.object({

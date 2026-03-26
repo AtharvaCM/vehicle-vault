@@ -41,12 +41,7 @@ export function FuelLogList({ logs, onEdit, onDelete, onAdd, isLoading }: FuelLo
   return (
     <div className="space-y-4">
       {logs.map((log) => (
-        <FuelLogCard 
-          key={log.id} 
-          log={log} 
-          onEdit={onEdit} 
-          onDelete={onDelete} 
-        />
+        <FuelLogCard key={log.id} log={log} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </div>
   );

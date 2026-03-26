@@ -57,7 +57,11 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
         />
       </FormField>
 
-      <FormField htmlFor="register-email" label="Email address" error={form.formState.errors.email?.message}>
+      <FormField
+        htmlFor="register-email"
+        label="Email address"
+        error={form.formState.errors.email?.message}
+      >
         <Input
           autoComplete="email"
           id="register-email"
@@ -68,7 +72,11 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
         />
       </FormField>
 
-      <FormField htmlFor="register-password" label="Password" error={form.formState.errors.password?.message}>
+      <FormField
+        htmlFor="register-password"
+        label="Password"
+        error={form.formState.errors.password?.message}
+      >
         <Input
           autoComplete="new-password"
           id="register-password"

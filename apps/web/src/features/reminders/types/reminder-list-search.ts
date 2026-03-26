@@ -25,7 +25,8 @@ export function normalizeReminderListSearch(search: Record<string, unknown>): Re
       : undefined;
   const normalizedStatus =
     typeof search.status === 'string' &&
-    (search.status === 'all' || Object.values(ReminderStatus).includes(search.status as ReminderStatus))
+    (search.status === 'all' ||
+      Object.values(ReminderStatus).includes(search.status as ReminderStatus))
       ? (search.status as ReminderStatus | 'all')
       : undefined;
   const normalizedType =
@@ -34,7 +35,8 @@ export function normalizeReminderListSearch(search: Record<string, unknown>): Re
       ? (search.type as ReminderType | 'all')
       : undefined;
   const normalizedSort =
-    typeof search.sort === 'string' && reminderSortOptions.includes(search.sort as ReminderSortOption)
+    typeof search.sort === 'string' &&
+    reminderSortOptions.includes(search.sort as ReminderSortOption)
       ? (search.sort as ReminderSortOption)
       : undefined;
 
@@ -42,8 +44,6 @@ export function normalizeReminderListSearch(search: Record<string, unknown>): Re
     ...(normalizedSearch ? { search: normalizedSearch } : {}),
     ...(normalizedStatus && normalizedStatus !== 'all' ? { status: normalizedStatus } : {}),
     ...(normalizedType && normalizedType !== 'all' ? { type: normalizedType } : {}),
-    ...(normalizedSort && normalizedSort !== defaultReminderSort
-      ? { sort: normalizedSort }
-      : {}),
+    ...(normalizedSort && normalizedSort !== defaultReminderSort ? { sort: normalizedSort } : {}),
   };
 }

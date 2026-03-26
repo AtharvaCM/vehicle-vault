@@ -17,9 +17,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
     <Card>
       <CardHeader>
         <CardTitle>Maintenance summary</CardTitle>
-        <CardDescription>
-          Review the recorded details for this service entry.
-        </CardDescription>
+        <CardDescription>Review the recorded details for this service entry.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
         <Detail

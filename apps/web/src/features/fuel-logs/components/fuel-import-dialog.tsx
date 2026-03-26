@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, Check, AlertCircle, ChevronRight, ArrowLeft } from 'lucide-react';
 import Papa from 'papaparse';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -47,9 +47,8 @@ const OPTIONAL_FIELDS = [
 export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDialogProps) {
   const [step, setStep] = useState<ImportStep>('upload');
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [csvRows, setCsvRows] = useState<any[]>([]);
+  const [csvRows, setCsvRows] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [mapping, setMapping] = useState<Record<string, string>>({});
-  const [importCount, setImportCount] = useState(0);
 
   const bulkCreateMutation = useBulkCreateFuelLogs(vehicleId);
 
@@ -58,7 +57,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
     setCsvHeaders([]);
     setCsvRows([]);
     setMapping({});
-    setImportCount(0);
+    setMapping({});
   }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,13 +71,14 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
         if (results.meta.fields) {
           setCsvHeaders(results.meta.fields);
           setCsvRows(results.data);
-          
+
           // Auto-mapping attempt
           const initialMapping: Record<string, string> = {};
-          [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS].forEach(field => {
-            const match = results.meta.fields?.find(h => 
-              h.toLowerCase().includes(field.id.toLowerCase()) || 
-              h.toLowerCase().includes(field.label.toLowerCase())
+          [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS].forEach((field) => {
+            const match = results.meta.fields?.find(
+              (h) =>
+                h.toLowerCase().includes(field.id.toLowerCase()) ||
+                h.toLowerCase().includes(field.label.toLowerCase()),
             );
             if (match) initialMapping[field.id] = match;
           });
@@ -92,9 +92,12 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
   };
 
   const handleMap = () => {
-    const missingRequired = REQUIRED_FIELDS.find(f => !mapping[f.id]);
+    const missingRequired = REQUIRED_FIELDS.find((f) => !mapping[f.id]);
     if (missingRequired) {
-      appToast.error({ title: 'Missing mapping', description: `Please map the ${missingRequired.label} field.` });
+      appToast.error({
+        title: 'Missing mapping',
+        description: `Please map the ${missingRequired.label} field.`,
+      });
       return;
     }
     setStep('preview');
@@ -103,9 +106,9 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
   const handleImport = async () => {
     setStep('importing');
     try {
-      const processedLogs = csvRows.map(row => {
-        const log: any = {};
-        
+      const processedLogs = csvRows.map((row) => {
+        const log: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+
         // Map fields
         Object.entries(mapping).forEach(([localField, csvHeader]) => {
           let value = row[csvHeader];
@@ -138,21 +141,29 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
       });
 
       const result = await bulkCreateMutation.mutateAsync(processedLogs);
-      setImportCount(result.count);
-      appToast.success({ title: 'Import successful', description: `Successfully imported ${result.count} records.` });
+      appToast.success({
+        title: 'Import successful',
+        description: `Successfully imported ${result.count} records.`,
+      });
       onOpenChange(false);
       reset();
-    } catch (error) {
+    } catch {
       setStep('preview');
-      appToast.error({ title: 'Import failed', description: 'There was an error saving the records.' });
+      appToast.error({
+        title: 'Import failed',
+        description: 'There was an error saving the records.',
+      });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      onOpenChange(val);
-      if (!val) setTimeout(reset, 300);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        onOpenChange(val);
+        if (!val) setTimeout(reset, 300);
+      }}
+    >
       <DialogContent className="sm:max-w-[700px] overflow-hidden flex flex-col max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -172,9 +183,11 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               <div className="rounded-full bg-primary/10 p-4 mb-4 group-hover:scale-110 transition-transform">
                 <Upload className="h-8 w-8 text-primary" />
               </div>
-              <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Select CSV File</h4>
+              <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+                Select CSV File
+              </h4>
               <p className="text-sm text-zinc-500 text-center max-w-[300px] mb-6">
-                Upload your fuel registry. We'll help you map the columns in the next step.
+                Upload your fuel registry. We&apos;ll help you map the columns in the next step.
               </p>
               <input
                 type="file"
@@ -196,7 +209,9 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               <div className="flex items-center justify-between px-1">
                 <div className="space-y-0.5">
                   <h4 className="text-sm font-bold">Column Mapping</h4>
-                  <p className="text-xs text-zinc-500">Map your CSV headers to our registry fields.</p>
+                  <p className="text-xs text-zinc-500">
+                    Map your CSV headers to our registry fields.
+                  </p>
                 </div>
                 <Badge variant="secondary" className="font-mono">
                   {csvRows.length} rows detected
@@ -206,23 +221,27 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               <div className="h-[350px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
                 <div className="space-y-6">
                   <section className="space-y-4">
-                    <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Required Fields</h5>
+                    <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
+                      Required Fields
+                    </h5>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      {REQUIRED_FIELDS.map(field => (
+                      {REQUIRED_FIELDS.map((field) => (
                         <div key={field.id} className="space-y-2">
                           <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                             {field.label} <span className="text-destructive">*</span>
                           </label>
-                          <Select 
-                            value={mapping[field.id]} 
-                            onValueChange={(val) => setMapping(m => ({ ...m, [field.id]: val }))}
+                          <Select
+                            value={mapping[field.id]}
+                            onValueChange={(val) => setMapping((m) => ({ ...m, [field.id]: val }))}
                           >
                             <SelectTrigger className="h-9">
                               <SelectValue placeholder="Select column..." />
                             </SelectTrigger>
                             <SelectContent>
-                              {csvHeaders.map(h => (
-                                <SelectItem key={h} value={h}>{h}</SelectItem>
+                              {csvHeaders.map((h) => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -232,22 +251,28 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                   </section>
 
                   <section className="space-y-4">
-                    <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Optional Fields</h5>
+                    <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
+                      Optional Fields
+                    </h5>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      {OPTIONAL_FIELDS.map(field => (
+                      {OPTIONAL_FIELDS.map((field) => (
                         <div key={field.id} className="space-y-2">
-                          <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{field.label}</label>
-                          <Select 
-                            value={mapping[field.id]} 
-                            onValueChange={(val) => setMapping(m => ({ ...m, [field.id]: val }))}
+                          <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                            {field.label}
+                          </label>
+                          <Select
+                            value={mapping[field.id]}
+                            onValueChange={(val) => setMapping((m) => ({ ...m, [field.id]: val }))}
                           >
                             <SelectTrigger className="h-9">
                               <SelectValue placeholder="Skip mapping" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="">Skip mapping</SelectItem>
-                              {csvHeaders.map(h => (
-                                <SelectItem key={h} value={h}>{h}</SelectItem>
+                              {csvHeaders.map((h) => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -262,12 +287,14 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
 
           {step === 'preview' && (
             <div className="space-y-6">
-               <div className="flex items-center justify-between px-1">
+              <div className="flex items-center justify-between px-1">
                 <div className="space-y-0.5">
                   <h4 className="text-sm font-bold text-emerald-600 flex items-center gap-2">
                     <Check className="h-4 w-4" /> Ready for Ingestion
                   </h4>
-                  <p className="text-xs text-zinc-500">Previewing first 5 of {csvRows.length} records.</p>
+                  <p className="text-xs text-zinc-500">
+                    Previewing first 5 of {csvRows.length} records.
+                  </p>
                 </div>
               </div>
 
@@ -275,29 +302,49 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                 <table className="w-full text-left text-xs">
                   <thead className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                     <tr>
-                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">Date</th>
-                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">Odometer</th>
-                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">Qty (L)</th>
-                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">Total</th>
+                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">
+                        Date
+                      </th>
+                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">
+                        Odometer
+                      </th>
+                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">
+                        Qty (L)
+                      </th>
+                      <th className="px-3 py-2 font-bold text-zinc-500 uppercase tracking-tighter">
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {csvRows.slice(0, 5).map((row, i) => (
-                      <tr key={i} className="border-b last:border-0 border-zinc-100 dark:border-zinc-800">
-                        <td className="px-3 py-3 font-medium">{mapping['date'] ? row[mapping['date']] : 'N/A'}</td>
-                        <td className="px-3 py-3 tabular-nums">{mapping['odometer'] ? row[mapping['odometer']] : '0'}</td>
-                        <td className="px-3 py-3 tabular-nums font-bold">{mapping['quantity'] ? row[mapping['quantity']] : '0'}</td>
-                        <td className="px-3 py-3 tabular-nums font-bold text-primary">${mapping['totalCost'] ? row[mapping['totalCost']] : '0'}</td>
+                      <tr
+                        key={i}
+                        className="border-b last:border-0 border-zinc-100 dark:border-zinc-800"
+                      >
+                        <td className="px-3 py-3 font-medium">
+                          {mapping['date'] ? row[mapping['date']] : 'N/A'}
+                        </td>
+                        <td className="px-3 py-3 tabular-nums">
+                          {mapping['odometer'] ? row[mapping['odometer']] : '0'}
+                        </td>
+                        <td className="px-3 py-3 tabular-nums font-bold">
+                          {mapping['quantity'] ? row[mapping['quantity']] : '0'}
+                        </td>
+                        <td className="px-3 py-3 tabular-nums font-bold text-primary">
+                          ${mapping['totalCost'] ? row[mapping['totalCost']] : '0'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              
+
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50 p-3 rounded-lg flex gap-3">
                 <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-700 dark:text-amber-400 italic">
-                  Note: We've detected numeric formats and prepared them for the registry. Please ensure dates are valid.
+                  Note: We&apos;ve detected numeric formats and prepared them for the registry.
+                  Please ensure dates are valid.
                 </p>
               </div>
             </div>
@@ -305,9 +352,11 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
 
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-                <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                <h4 className="text-lg font-bold">Ingesting Data...</h4>
-                <p className="text-sm text-zinc-500">Processing {csvRows.length} records across the registry.</p>
+              <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+              <h4 className="text-lg font-bold">Ingesting Data...</h4>
+              <p className="text-sm text-zinc-500">
+                Processing {csvRows.length} records across the registry.
+              </p>
             </div>
           )}
         </div>
@@ -326,7 +375,9 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
             )}
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             {step === 'map' && (
               <Button size="sm" onClick={handleMap} className="gap-2">
                 Next: Preview <ChevronRight className="h-4 w-4" />

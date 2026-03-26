@@ -1,15 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { 
-  BellRing, 
-  CarFront, 
-  ChevronRight, 
-  ClipboardList, 
-  Fuel, 
-  Gauge, 
-  LayoutGrid, 
-  Plus, 
-  Wrench 
-} from 'lucide-react';
+import { CarFront, ChevronRight, ClipboardList, Fuel, Gauge, LayoutGrid, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
@@ -21,12 +11,12 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -99,10 +89,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           description="Loading this vehicle and its latest activity."
           title="Vehicle Detail"
         />
-        <LoadingState
-          description="Getting this vehicle ready."
-          title="Loading vehicle"
-        />
+        <LoadingState description="Getting this vehicle ready." title="Loading vehicle" />
       </PageContainer>
     );
   }
@@ -150,13 +137,18 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Link 
-                  to="/vehicles" 
+                <Link
+                  to="/vehicles"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                 >
                   <ChevronRight className="h-4 w-4 rotate-180" />
                 </Link>
-                <Badge variant="outline" className="bg-slate-50 font-bold uppercase tracking-widest text-[10px]">Registry entry</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-slate-50 font-bold uppercase tracking-widest text-[10px]"
+                >
+                  Registry entry
+                </Badge>
               </div>
 
               <div className="space-y-1">
@@ -164,23 +156,36 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                   {title}
                 </h1>
                 <p className="text-lg font-medium text-slate-500">
-                  {vehicle.make} {vehicle.model} <span className="mx-2 text-slate-300">•</span> {vehicle.variant} <span className="mx-2 text-slate-300">•</span> {vehicle.year}
+                  {vehicle.make} {vehicle.model} <span className="mx-2 text-slate-300">•</span>{' '}
+                  {vehicle.variant} <span className="mx-2 text-slate-300">•</span> {vehicle.year}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 pt-2">
-                 <HeroMetric icon={<Gauge className="h-4 w-4" />} label="Odometer" value={`${vehicle.odometer.toLocaleString('en-IN')} km`} />
-                 <div className="h-8 w-px bg-slate-100 hidden sm:block" />
-                 <HeroMetric icon={<Fuel className="h-4 w-4" />} label="Fuel Type" value={vehicle.fuelType} />
-                 <div className="h-8 w-px bg-slate-100 hidden sm:block" />
-                 <HeroMetric icon={<CarFront className="h-4 w-4" />} label="Vehicle Type" value={vehicle.vehicleType} />
+                <HeroMetric
+                  icon={<Gauge className="h-4 w-4" />}
+                  label="Odometer"
+                  value={`${vehicle.odometer.toLocaleString('en-IN')} km`}
+                />
+                <div className="h-8 w-px bg-slate-100 hidden sm:block" />
+                <HeroMetric
+                  icon={<Fuel className="h-4 w-4" />}
+                  label="Fuel Type"
+                  value={vehicle.fuelType}
+                />
+                <div className="h-8 w-px bg-slate-100 hidden sm:block" />
+                <HeroMetric
+                  icon={<CarFront className="h-4 w-4" />}
+                  label="Vehicle Type"
+                  value={vehicle.vehicleType}
+                />
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 <Link
-                  className={cn(buttonVariants({ variant: 'outline' }), "shadow-premium-sm")}
+                  className={cn(buttonVariants({ variant: 'outline' }), 'shadow-premium-sm')}
                   params={{ vehicleId }}
                   to="/vehicles/$vehicleId/edit"
                 >
@@ -188,7 +193,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                 </Link>
                 <div className="h-10 w-px bg-slate-200/60 hidden sm:block" />
                 <Link
-                  className={cn(buttonVariants({ variant: 'default' }), "shadow-premium-sm bg-primary")}
+                  className={cn(
+                    buttonVariants({ variant: 'default' }),
+                    'shadow-premium-sm bg-primary',
+                  )}
                   params={{ vehicleId }}
                   to="/vehicles/$vehicleId/maintenance/new"
                 >
@@ -196,32 +204,43 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                   Log Maintenance
                 </Link>
                 <Link
-                  className={cn(buttonVariants({ variant: 'secondary' }), "shadow-premium-sm")}
+                  className={cn(buttonVariants({ variant: 'secondary' }), 'shadow-premium-sm')}
                   params={{ vehicleId }}
                   to="/vehicles/$vehicleId/reminders/new"
                 >
                   Add Reminder
                 </Link>
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="shadow-premium-sm">
-                       <LayoutGrid className="h-4 w-4" />
+                      <LayoutGrid className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-premium-lg border-slate-200/60">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 rounded-xl shadow-premium-lg border-slate-200/60"
+                  >
                     <DropdownMenuItem asChild>
-                      <Link params={{ vehicleId }} className="w-full cursor-pointer" to="/vehicles/$vehicleId/maintenance">
-                         View Full History
+                      <Link
+                        params={{ vehicleId }}
+                        className="w-full cursor-pointer"
+                        to="/vehicles/$vehicleId/maintenance"
+                      >
+                        View Full History
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link params={{ vehicleId }} className="w-full cursor-pointer" to="/vehicles/$vehicleId/reminders">
-                         Manage All Reminders
+                      <Link
+                        params={{ vehicleId }}
+                        className="w-full cursor-pointer"
+                        to="/vehicles/$vehicleId/reminders"
+                      >
+                        Manage All Reminders
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="text-rose-600 focus:bg-rose-50 focus:text-rose-700 cursor-pointer"
                       onSelect={(e) => e.preventDefault()}
                     >
@@ -245,23 +264,42 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
       </div>
 
       <PageContainer className="py-8">
-        {actionError ? <div className="mb-6"><InlineError message={actionError} /></div> : null}
+        {actionError ? (
+          <div className="mb-6">
+            <InlineError message={actionError} />
+          </div>
+        ) : null}
 
         <Tabs className="space-y-8" defaultValue="overview">
           <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-slate-100/80 p-1 shadow-inner">
-            <TabsTrigger className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all" value="overview">
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="overview"
+            >
               Overview
             </TabsTrigger>
-            <TabsTrigger className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all" value="maintenance">
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="maintenance"
+            >
               Service Log
             </TabsTrigger>
-            <TabsTrigger className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all" value="specs">
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="specs"
+            >
               Tech Specs
             </TabsTrigger>
-            <TabsTrigger className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all" value="reminders">
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="reminders"
+            >
               Reminders
             </TabsTrigger>
-            <TabsTrigger className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all" value="fuel">
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="fuel"
+            >
               Fuel
             </TabsTrigger>
           </TabsList>
@@ -275,9 +313,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <SnapshotMetric
                 label="Total Records"
-                value={
-                  maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'
-                }
+                value={maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'}
               />
               <SnapshotMetric
                 label="Active Reminders"
@@ -320,22 +356,28 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
               <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">Vehicle Health</CardTitle>
-                  <CardDescription>
-                    Maintain a perfect digital service record.
-                  </CardDescription>
+                  <CardDescription>Maintain a perfect digital service record.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
                   <div className="flex gap-3">
-                     <div className="mt-1 flex-shrink-0 text-primary"><ClipboardList className="h-4 w-4" /></div>
-                     <p>Log each visit or repair with the odometer so the timeline stays accurate.</p>
+                    <div className="mt-1 flex-shrink-0 text-primary">
+                      <ClipboardList className="h-4 w-4" />
+                    </div>
+                    <p>
+                      Log each visit or repair with the odometer so the timeline stays accurate.
+                    </p>
                   </div>
                   <div className="flex gap-3">
-                     <div className="mt-1 flex-shrink-0 text-primary"><Plus className="h-4 w-4" /></div>
-                     <p>Open a service entry to attach receipts, invoices, or photos.</p>
+                    <div className="mt-1 flex-shrink-0 text-primary">
+                      <Plus className="h-4 w-4" />
+                    </div>
+                    <p>Open a service entry to attach receipts, invoices, or photos.</p>
                   </div>
                   <div className="flex gap-3">
-                     <div className="mt-1 flex-shrink-0 text-primary"><Gauge className="h-4 w-4" /></div>
-                     <p>Use next due fields to capture what should happen next.</p>
+                    <div className="mt-1 flex-shrink-0 text-primary">
+                      <Gauge className="h-4 w-4" />
+                    </div>
+                    <p>Use next due fields to capture what should happen next.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -354,13 +396,13 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
               <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">Preventative Care</CardTitle>
-                  <CardDescription>
-                    Stay ahead of maintenance tasks.
-                  </CardDescription>
+                  <CardDescription>Stay ahead of maintenance tasks.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
                   <p>Set a due date, a due odometer, or both depending on the job.</p>
-                  <p>Overdue and due today reminders show up on the dashboard and reminder lists.</p>
+                  <p>
+                    Overdue and due today reminders show up on the dashboard and reminder lists.
+                  </p>
                   <p>Completed reminders stay in history for reference.</p>
                 </CardContent>
               </Card>
@@ -373,22 +415,30 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
               <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">Fuel Analytics</CardTitle>
-                  <CardDescription>
-                    Understand your vehicle's efficiency.
-                  </CardDescription>
+                  <CardDescription>Understand your vehicle&apos;s efficiency.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
                   <div className="flex gap-3">
-                     <div className="mt-1 flex-shrink-0 text-primary"><Fuel className="h-4 w-4" /></div>
-                     <p>Log every fill-up to see how your driving habits affect your fuel economy.</p>
+                    <div className="mt-1 flex-shrink-0 text-primary">
+                      <Fuel className="h-4 w-4" />
+                    </div>
+                    <p>
+                      Log every fill-up to see how your driving habits affect your fuel economy.
+                    </p>
                   </div>
                   <div className="flex gap-3">
-                     <div className="mt-1 flex-shrink-0 text-primary"><Gauge className="h-4 w-4" /></div>
-                     <p>Capture the precise odometer reading for accurate consumption calculation.</p>
+                    <div className="mt-1 flex-shrink-0 text-primary">
+                      <Gauge className="h-4 w-4" />
+                    </div>
+                    <p>
+                      Capture the precise odometer reading for accurate consumption calculation.
+                    </p>
                   </div>
                   <div className="flex gap-3">
-                     <div className="mt-1 flex-shrink-0 text-primary"><LayoutGrid className="h-4 w-4" /></div>
-                     <p>Soon: We'll calculate your average km/L and total fueling costs.</p>
+                    <div className="mt-1 flex-shrink-0 text-primary">
+                      <LayoutGrid className="h-4 w-4" />
+                    </div>
+                    <p>Soon: We&apos;ll calculate your average km/L and total fueling costs.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -400,7 +450,15 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   );
 }
 
-function HeroMetric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function HeroMetric({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-center gap-3">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-400 shadow-inner">
@@ -417,9 +475,7 @@ function HeroMetric({ icon, label, value }: { icon: React.ReactNode; label: stri
 function SnapshotMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50 hover:shadow-inner">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-        {label}
-      </p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
       <p className="mt-1 text-xl font-black tracking-tight text-slate-900 tabular-nums">{value}</p>
     </div>
   );
@@ -439,7 +495,9 @@ function MaintenancePanel({
   visibleCount = 3,
 }: MaintenancePanelProps) {
   const records =
-    visibleCount === undefined ? (maintenanceQuery.data ?? []) : (maintenanceQuery.data ?? []).slice(0, visibleCount);
+    visibleCount === undefined
+      ? (maintenanceQuery.data ?? [])
+      : (maintenanceQuery.data ?? []).slice(0, visibleCount);
 
   return (
     <Card className="border-slate-200/60 bg-white shadow-premium-sm">
@@ -449,28 +507,28 @@ function MaintenancePanel({
           <CardDescription>Service history records.</CardDescription>
         </div>
         <div className="flex gap-2">
-           <Link
-              className={buttonVariants({ size: 'xs', variant: 'ghost' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/maintenance"
-            >
-              View all
-            </Link>
-           <Link
-              className={buttonVariants({ size: 'xs', variant: 'outline' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/maintenance/new"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Log
-            </Link>
+          <Link
+            className={buttonVariants({ size: 'xs', variant: 'ghost' })}
+            params={{ vehicleId }}
+            to="/vehicles/$vehicleId/maintenance"
+          >
+            View all
+          </Link>
+          <Link
+            className={buttonVariants({ size: 'xs', variant: 'outline' })}
+            params={{ vehicleId }}
+            to="/vehicles/$vehicleId/maintenance/new"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Log
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="p-5">
         {maintenanceQuery.isPending ? (
           <div className="animate-pulse space-y-3">
-             <div className="h-20 bg-slate-50 rounded-xl" />
-             <div className="h-20 bg-slate-50 rounded-xl" />
+            <div className="h-20 bg-slate-50 rounded-xl" />
+            <div className="h-20 bg-slate-50 rounded-xl" />
           </div>
         ) : maintenanceQuery.isError ? (
           <EmptyState
@@ -531,28 +589,28 @@ function ReminderPanel({
           <CardDescription>Active maintenance alerts.</CardDescription>
         </div>
         <div className="flex gap-2">
-            <Link
-              className={buttonVariants({ size: 'xs', variant: 'ghost' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/reminders"
-            >
-              View all
-            </Link>
-            <Link
-              className={buttonVariants({ size: 'xs', variant: 'outline' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/reminders/new"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add
-            </Link>
+          <Link
+            className={buttonVariants({ size: 'xs', variant: 'ghost' })}
+            params={{ vehicleId }}
+            to="/vehicles/$vehicleId/reminders"
+          >
+            View all
+          </Link>
+          <Link
+            className={buttonVariants({ size: 'xs', variant: 'outline' })}
+            params={{ vehicleId }}
+            to="/vehicles/$vehicleId/reminders/new"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="p-5">
         {remindersQuery.isPending ? (
           <div className="animate-pulse space-y-3">
-             <div className="h-20 bg-slate-50 rounded-xl" />
-             <div className="h-20 bg-slate-50 rounded-xl" />
+            <div className="h-20 bg-slate-50 rounded-xl" />
+            <div className="h-20 bg-slate-50 rounded-xl" />
           </div>
         ) : remindersQuery.isError ? (
           <EmptyState

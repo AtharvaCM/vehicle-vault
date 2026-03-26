@@ -38,9 +38,7 @@ export function normalizeMaintenanceListSearch(
 
   return {
     ...(normalizedSearch ? { search: normalizedSearch } : {}),
-    ...(normalizedCategory && normalizedCategory !== 'all'
-      ? { category: normalizedCategory }
-      : {}),
+    ...(normalizedCategory && normalizedCategory !== 'all' ? { category: normalizedCategory } : {}),
     ...(normalizedSort && normalizedSort !== defaultMaintenanceSort
       ? { sort: normalizedSort }
       : {}),

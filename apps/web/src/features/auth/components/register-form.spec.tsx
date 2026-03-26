@@ -24,7 +24,9 @@ describe('RegisterForm', () => {
   });
 
   it('renders submit errors from the server cleanly', () => {
-    render(<RegisterForm onSubmit={vi.fn()} submitError="An account with this email already exists." />);
+    render(
+      <RegisterForm onSubmit={vi.fn()} submitError="An account with this email already exists." />,
+    );
 
     expect(screen.getByText('An account with this email already exists.')).toBeInTheDocument();
   });

@@ -109,7 +109,11 @@ export function PasswordResetForm({
 
       {submitError ? <InlineError message={submitError} /> : null}
 
-      <Button className="w-full" disabled={form.formState.isSubmitting || isSubmitting} type="submit">
+      <Button
+        className="w-full"
+        disabled={form.formState.isSubmitting || isSubmitting}
+        type="submit"
+      >
         {isSubmitting ? 'Resetting password...' : 'Reset password'}
       </Button>
     </form>

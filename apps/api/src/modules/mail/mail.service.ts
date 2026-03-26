@@ -9,7 +9,7 @@ export class MailService {
 
   constructor(private readonly config: AppConfigService) {
     const smtp = this.config.smtpConfig;
-    
+
     if (smtp.host && smtp.user) {
       this.transporter = nodemailer.createTransport({
         host: smtp.host,

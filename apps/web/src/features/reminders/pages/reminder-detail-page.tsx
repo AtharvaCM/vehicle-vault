@@ -75,10 +75,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
     return (
       <PageContainer>
         <PageTitle description="Loading this reminder." title="Reminder" />
-        <LoadingState
-          description="Getting the latest reminder details."
-          title="Loading reminder"
-        />
+        <LoadingState description="Getting the latest reminder details." title="Loading reminder" />
       </PageContainer>
     );
   }
@@ -111,7 +108,9 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   }
 
   const reminder = reminderQuery.data;
-  const linkedVehicle = (vehiclesQuery.data ?? []).find((vehicle) => vehicle.id === reminder.vehicleId);
+  const linkedVehicle = (vehiclesQuery.data ?? []).find(
+    (vehicle) => vehicle.id === reminder.vehicleId,
+  );
   const vehicleLabel = linkedVehicle
     ? `${linkedVehicle.nickname?.trim() || `${linkedVehicle.make} ${linkedVehicle.model}`} • ${linkedVehicle.registrationNumber}`
     : 'Vehicle details unavailable';

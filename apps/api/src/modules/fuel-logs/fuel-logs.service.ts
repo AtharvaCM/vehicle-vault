@@ -144,14 +144,16 @@ export class FuelLogsService {
     };
   }
 
-  private toFuelLog(log: Prisma.FuelLogUncheckedCreateInput & { 
-    id: string; 
-    createdAt: Date; 
-    updatedAt: Date;
-    totalCost: Prisma.Decimal;
-    price: Prisma.Decimal;
-    date: Date;
-  }): FuelLog {
+  private toFuelLog(
+    log: Prisma.FuelLogUncheckedCreateInput & {
+      id: string;
+      createdAt: Date;
+      updatedAt: Date;
+      totalCost: Prisma.Decimal;
+      price: Prisma.Decimal;
+      date: Date;
+    },
+  ): FuelLog {
     return {
       id: log.id,
       vehicleId: log.vehicleId,

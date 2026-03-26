@@ -22,7 +22,7 @@ export async function scanReceipt(file: File): Promise<ScannedFuelLog> {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    }
+    },
   );
 
   return response.data;
@@ -39,7 +39,7 @@ export function useScanStatus() {
     queryKey: ['fuel-logs', 'scan-status'],
     queryFn: async () => {
       const response = await apiClient.get<ApiSuccessResponse<{ available: boolean }>>(
-        endpoints.fuelLogs.scanStatus()
+        endpoints.fuelLogs.scanStatus(),
       );
       return response.data;
     },

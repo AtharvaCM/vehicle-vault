@@ -24,7 +24,7 @@ export function useNotifications() {
     queryKey: ['notifications'],
     queryFn: async () => {
       const response = await apiClient.get<ApiSuccessResponse<NotificationsResponse>>(
-        endpoints.notifications.list()
+        endpoints.notifications.list(),
       );
       return response.data;
     },
@@ -34,7 +34,7 @@ export function useNotifications() {
 
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       await apiClient.patch(endpoints.notifications.markRead(id), {});
@@ -47,7 +47,7 @@ export function useMarkNotificationRead() {
 
 export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async () => {
       await apiClient.patch(endpoints.notifications.markAllRead(), {});

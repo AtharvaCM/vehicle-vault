@@ -166,7 +166,9 @@ export function MaintenanceForm({
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Maintenance record</CardTitle>
-        <CardDescription>Capture the details of one completed service visit, repair, or inspection.</CardDescription>
+        <CardDescription>
+          Capture the details of one completed service visit, repair, or inspection.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>

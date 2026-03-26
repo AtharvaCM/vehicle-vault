@@ -28,7 +28,7 @@ export function PageHeader({
         'flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-end sm:justify-between',
         className,
       )}
-      >
+    >
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
           {eyebrow}

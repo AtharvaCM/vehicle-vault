@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto';
 
 import { PrismaClient, CatalogImportRunStatus } from '@prisma/client';
 
-import { catalogImportSources, type CatalogImportSourceKey } from './catalog-import/source-registry';
+import {
+  catalogImportSources,
+  type CatalogImportSourceKey,
+} from './catalog-import/source-registry';
 
 const prisma = new PrismaClient();
 

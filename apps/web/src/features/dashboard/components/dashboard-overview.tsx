@@ -101,11 +101,11 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
           <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-5">
             <div className="space-y-1">
               <CardTitle className="text-lg font-bold">Recent maintenance</CardTitle>
-              <CardDescription>
-                Latest logged services and repairs.
-              </CardDescription>
+              <CardDescription>Latest logged services and repairs.</CardDescription>
             </div>
-            <Badge variant="outline" className="bg-white shadow-premium-sm">{summary.totalAttachments} attachments</Badge>
+            <Badge variant="outline" className="bg-white shadow-premium-sm">
+              {summary.totalAttachments} attachments
+            </Badge>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 p-0">
             {summary.recentMaintenance.length ? (
@@ -120,7 +120,9 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
                     <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors">
                       {record.workshopName?.trim() || 'Workshop not specified'}
                     </p>
-                    <Badge variant="secondary" className="text-[10px]">{formatMaintenanceCategory(record.category)}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {formatMaintenanceCategory(record.category)}
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between text-[13px] text-slate-500">
                     <div className="flex items-center gap-3">
@@ -152,9 +154,7 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
           <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-5">
             <div className="space-y-1">
               <CardTitle className="text-lg font-bold">Garage overview</CardTitle>
-              <CardDescription>
-                Recently added or updated vehicles.
-              </CardDescription>
+              <CardDescription>Recently added or updated vehicles.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 p-0">
@@ -167,16 +167,22 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
                   to="/vehicles/$vehicleId"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors">{vehicle.displayName}</p>
+                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors">
+                      {vehicle.displayName}
+                    </p>
                     <Badge tone="accent">{vehicle.vehicleType}</Badge>
                   </div>
                   <div className="flex items-center justify-between text-[13px] text-slate-500">
                     <div className="flex items-center gap-3">
                       <span className="tabular-nums">{vehicle.registrationNumber}</span>
                       <span className="h-1 w-1 rounded-full bg-slate-200" />
-                      <span className="tabular-nums">{vehicle.odometer.toLocaleString('en-IN')} km</span>
+                      <span className="tabular-nums">
+                        {vehicle.odometer.toLocaleString('en-IN')} km
+                      </span>
                     </div>
-                    <p className="text-[11px] font-medium opacity-60">Updated {formatDate(vehicle.updatedAt)}</p>
+                    <p className="text-[11px] font-medium opacity-60">
+                      Updated {formatDate(vehicle.updatedAt)}
+                    </p>
                   </div>
                 </Link>
               ))
@@ -224,21 +230,27 @@ function DashboardReminderSection({
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1.5 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors truncate">{reminder.title}</p>
-                    <Badge variant="outline" className="bg-white text-[10px] py-0">{formatReminderType(reminder.type)}</Badge>
+                    <p className="font-semibold text-slate-900 group-hover:text-primary transition-colors truncate">
+                      {reminder.title}
+                    </p>
+                    <Badge variant="outline" className="bg-white text-[10px] py-0">
+                      {formatReminderType(reminder.type)}
+                    </Badge>
                   </div>
                   <p className="text-[12px] font-medium text-slate-500">{reminder.vehicleLabel}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <ReminderStatusBadge status={reminder.status} />
                   {reminder.status === ReminderStatus.Overdue ? (
-                    <Badge tone="danger" className="animate-pulse">Urgent</Badge>
+                    <Badge tone="danger" className="animate-pulse">
+                      Urgent
+                    </Badge>
                   ) : reminder.status === ReminderStatus.DueToday ? (
                     <Badge tone="warning">Today</Badge>
                   ) : null}
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4 text-[12px] text-slate-500 font-medium">
                 {reminder.dueDate ? (
                   <div className="flex items-center gap-1.5">
@@ -249,7 +261,9 @@ function DashboardReminderSection({
                 {reminder.dueOdometer !== undefined ? (
                   <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
                     <span className="text-slate-400">KM</span>
-                    <span className="text-slate-700 tabular-nums">{reminder.dueOdometer.toLocaleString('en-IN')} km</span>
+                    <span className="text-slate-700 tabular-nums">
+                      {reminder.dueOdometer.toLocaleString('en-IN')} km
+                    </span>
                   </div>
                 ) : null}
               </div>
@@ -258,15 +272,12 @@ function DashboardReminderSection({
         ) : (
           <div className="px-6 py-10 flex flex-col items-center justify-center text-center space-y-2">
             <div className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
-               <Bell className="h-5 w-5" />
+              <Bell className="h-5 w-5" />
             </div>
-            <p className="text-[13px] font-medium text-slate-400">
-              {emptyMessage}
-            </p>
+            <p className="text-[13px] font-medium text-slate-400">{emptyMessage}</p>
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
-

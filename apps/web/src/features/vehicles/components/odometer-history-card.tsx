@@ -43,7 +43,9 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
                     {entry.odometer.toLocaleString('en-IN')} km
                   </p>
                   {entry.totalCost !== undefined ? (
-                    <p className="text-xs text-muted-foreground">{formatCurrency(entry.totalCost)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCurrency(entry.totalCost)}
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -51,7 +53,8 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border/80 bg-slate-50/70 px-4 py-6 text-sm text-muted-foreground">
-            Log the first maintenance visit with an odometer reading to start a useful mileage history.
+            Log the first maintenance visit with an odometer reading to start a useful mileage
+            history.
           </div>
         )}
 
@@ -62,7 +65,8 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
           <div className="space-y-1">
             <p className="text-sm font-semibold text-slate-950">Why this matters</p>
             <p className="text-sm text-muted-foreground">
-              Consistent odometer entries make kilometre-based reminders and service planning more reliable.
+              Consistent odometer entries make kilometre-based reminders and service planning more
+              reliable.
             </p>
           </div>
         </div>

@@ -1,30 +1,24 @@
-import { 
-  Bell, 
-  CheckCheck, 
-  Info, 
-  AlertTriangle, 
-  AlertCircle, 
+import {
+  Bell,
+  CheckCheck,
+  Info,
+  AlertTriangle,
+  AlertCircle,
   CheckCircle2,
-  X,
   Clock,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate, Link } from '@tanstack/react-router';
 
-import { 
-  useNotifications, 
-  useMarkNotificationRead, 
+import {
+  useNotifications,
+  useMarkNotificationRead,
   useMarkAllNotificationsRead,
-  type Notification 
+  type Notification,
 } from '../hooks/use-notifications';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils/cn';
 
 export function NotificationCenter() {
@@ -42,22 +36,30 @@ export function NotificationCenter() {
     }
     if (notif.link) {
       // Handle navigation path
-      // Note: router might need string for external or object for internal
-      const route = notif.link.split('?')[0];
-      const search = notif.link.includes('?') ? { tab: new URLSearchParams(notif.link.split('?')[1]).get('tab') } : {};
-      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const route = notif.link.split('?')[0] as any;
+      const search = notif.link.includes('?')
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({ tab: new URLSearchParams(notif.link.split('?')[1]).get('tab') } as any)
+        : {};
+
       // Simpler approach for now using window context if router is complex
       // but let's try standard navigate
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await navigate({ to: route as any, search: search as any });
     }
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case 'error': return <AlertCircle className="h-4 w-4 text-rose-500" />;
-      case 'success': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      default: return <Info className="h-4 w-4 text-blue-500" />;
+      case 'warning':
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-rose-500" />;
+      case 'success':
+        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+      default:
+        return <Info className="h-4 w-4 text-blue-500" />;
     }
   };
 
@@ -78,13 +80,16 @@ export function NotificationCenter() {
           <span className="sr-only">Notifications</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 sm:w-96 rounded-xl shadow-premium-lg border-slate-200/60 overflow-hidden" align="end">
+      <PopoverContent
+        className="w-80 p-0 sm:w-96 rounded-xl shadow-premium-lg border-slate-200/60 overflow-hidden"
+        align="end"
+      >
         <div className="flex items-center justify-between p-4 pb-2">
           <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
           {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="h-8 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/5 px-2"
               onClick={() => markAllRead.mutate()}
               disabled={markAllRead.isPending}
@@ -94,7 +99,7 @@ export function NotificationCenter() {
             </Button>
           )}
         </div>
-        
+
         <div className="h-px bg-slate-100/80" />
 
         <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
@@ -108,7 +113,9 @@ export function NotificationCenter() {
                 <Bell className="h-6 w-6 text-slate-300" />
               </div>
               <p className="text-sm font-medium text-slate-900">All caught up!</p>
-              <p className="text-xs text-slate-500 mt-1">No new maintenance alerts for your vehicles.</p>
+              <p className="text-xs text-slate-500 mt-1">
+                No new maintenance alerts for your vehicles.
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-slate-50/80">
@@ -117,20 +124,20 @@ export function NotificationCenter() {
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={cn(
-                    "w-full text-left p-4 transition-colors hover:bg-slate-50/80 focus:outline-none focus:bg-slate-50",
-                    !notif.isRead && "bg-primary/[0.02]"
+                    'w-full text-left p-4 transition-colors hover:bg-slate-50/80 focus:outline-none focus:bg-slate-50',
+                    !notif.isRead && 'bg-primary/[0.02]',
                   )}
                 >
                   <div className="flex gap-3">
-                    <div className="mt-0.5 shrink-0">
-                      {getIcon(notif.type)}
-                    </div>
+                    <div className="mt-0.5 shrink-0">{getIcon(notif.type)}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={cn(
-                          "text-[13px] leading-tight",
-                          notif.isRead ? "text-slate-600" : "font-bold text-slate-900"
-                        )}>
+                        <p
+                          className={cn(
+                            'text-[13px] leading-tight',
+                            notif.isRead ? 'text-slate-600' : 'font-bold text-slate-900',
+                          )}
+                        >
                           {notif.title}
                         </p>
                         {!notif.isRead && (
@@ -159,12 +166,12 @@ export function NotificationCenter() {
             </div>
           )}
         </div>
-        
+
         <div className="h-px bg-slate-100/80" />
-        
+
         <div className="p-2 bg-slate-50/50">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full text-xs text-slate-500 font-semibold h-8 hover:bg-slate-100/80"
             asChild
           >

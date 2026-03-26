@@ -26,7 +26,8 @@ export const endpoints = {
     variants: '/vehicle-catalog/variants',
     importRuns: '/vehicle-catalog/import-runs',
     importRunDetail: (runId: string) => `/vehicle-catalog/import-runs/${runId}`,
-    archiveMissingImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/archive-missing`,
+    archiveMissingImportRun: (runId: string) =>
+      `/vehicle-catalog/import-runs/${runId}/archive-missing`,
     reviewOffering: (offeringId: string) => `/vehicle-catalog/offerings/${offeringId}/review`,
     publishImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/publish`,
     specs: '/vehicle-catalog/specs',

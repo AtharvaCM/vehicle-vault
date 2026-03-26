@@ -13,9 +13,7 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { BulkReminderActions } from '../components/bulk-reminder-actions';
-import {
-  ReminderListControls,
-} from '../components/reminder-list-controls';
+import { ReminderListControls } from '../components/reminder-list-controls';
 import { ReminderList } from '../components/reminder-list';
 import { useBulkCompleteReminders } from '../hooks/use-bulk-complete-reminders';
 import { useBulkDeleteReminders } from '../hooks/use-bulk-delete-reminders';
@@ -33,10 +31,7 @@ type RemindersPageProps = {
   onSearchStateChange: (next: Partial<ReminderListSearch>) => void;
 };
 
-export function RemindersPage({
-  searchState,
-  onSearchStateChange,
-}: RemindersPageProps) {
+export function RemindersPage({ searchState, onSearchStateChange }: RemindersPageProps) {
   const remindersQuery = useReminders();
   const vehiclesQuery = useVehicles();
   const bulkCompleteMutation = useBulkCompleteReminders();

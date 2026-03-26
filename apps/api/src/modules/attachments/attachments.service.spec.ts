@@ -279,9 +279,7 @@ describe('AttachmentsService', () => {
       { id: 'attachment-2', fileName: 'attachments/user-1/record-1/attachment-2.pdf' },
     ]);
     prisma.attachment.deleteMany = vi.fn().mockResolvedValue({ count: 1 });
-    storageService.objectExists
-      .mockResolvedValueOnce(false)
-      .mockResolvedValueOnce(true);
+    storageService.objectExists.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
 
     const result = await service.reconcileAttachments('user-1');
 

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { FuelLog } from '@vehicle-vault/shared';
 
 import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
@@ -21,10 +20,10 @@ export type BulkCreateFuelLogResponse = {
 };
 
 export async function createBulkFuelLogs(vehicleId: string, logs: CreateFuelLogInput[]) {
-  const response = await apiClient.post<ApiSuccessResponse<BulkCreateFuelLogResponse>, { logs: CreateFuelLogInput[] }>(
-    endpoints.fuelLogs.bulk(vehicleId),
-    { logs },
-  );
+  const response = await apiClient.post<
+    ApiSuccessResponse<BulkCreateFuelLogResponse>,
+    { logs: CreateFuelLogInput[] }
+  >(endpoints.fuelLogs.bulk(vehicleId), { logs });
 
   return response.data;
 }

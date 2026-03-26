@@ -83,10 +83,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
     return (
       <PageContainer>
         <PageTitle description="Loading this vehicle before you edit it." title="Edit Vehicle" />
-        <LoadingState
-          description="Getting the latest vehicle details."
-          title="Loading vehicle"
-        />
+        <LoadingState description="Getting the latest vehicle details." title="Loading vehicle" />
       </PageContainer>
     );
   }
@@ -160,11 +157,16 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
         <Card>
           <CardHeader>
             <CardTitle>Keep details accurate</CardTitle>
-            <CardDescription>Small changes here keep the rest of your records clear.</CardDescription>
+            <CardDescription>
+              Small changes here keep the rest of your records clear.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
             <p>Update the odometer when you want kilometre-based reminders to stay trustworthy.</p>
-            <p>Registration, make, model, and nickname help you recognise the right vehicle everywhere in the app.</p>
+            <p>
+              Registration, make, model, and nickname help you recognise the right vehicle
+              everywhere in the app.
+            </p>
             <p>Use this page whenever ownership details or naming need cleanup.</p>
           </CardContent>
         </Card>

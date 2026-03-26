@@ -1,14 +1,11 @@
 import {
-  Bell,
   CarFront,
-  ChevronDown,
   LayoutDashboard,
   LogOut,
   Menu,
   Plus,
   Settings,
   Siren,
-  UserCircle2,
   Wrench,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
@@ -35,7 +32,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
 import { NotificationCenter } from '@/features/notifications/components/notification-center';
@@ -122,9 +118,7 @@ export function Topbar() {
                           <Icon className="h-4 w-4" />
                           <div className="min-w-0 flex-1">
                             <p className="leading-none">{item.label}</p>
-                            <p className="mt-1 text-[10px] opacity-70">
-                              {item.subtitle}
-                            </p>
+                            <p className="mt-1 text-[10px] opacity-70">{item.subtitle}</p>
                           </div>
                         </Link>
                       </SheetClose>
@@ -183,7 +177,10 @@ export function Topbar() {
 
         <div className="flex items-center gap-3">
           <Link
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'hidden shadow-premium-sm sm:inline-flex')}
+            className={cn(
+              buttonVariants({ size: 'sm', variant: 'outline' }),
+              'hidden shadow-premium-sm sm:inline-flex',
+            )}
             to="/vehicles/new"
           >
             <Plus className="mr-2 h-3.5 w-3.5" />
@@ -198,13 +195,19 @@ export function Topbar() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="h-9 w-9 rounded-full border-slate-200/60 p-0 shadow-premium-sm hover:bg-slate-50" variant="outline">
+              <Button
+                className="h-9 w-9 rounded-full border-slate-200/60 p-0 shadow-premium-sm hover:bg-slate-50"
+                variant="outline"
+              >
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
                   {auth.user?.name?.charAt(0)}
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 rounded-xl border-slate-200/60 p-1.5 shadow-premium-lg">
+            <DropdownMenuContent
+              align="end"
+              className="w-64 rounded-xl border-slate-200/60 p-1.5 shadow-premium-lg"
+            >
               <DropdownMenuLabel className="px-3 py-2">
                 <div className="flex flex-col space-y-0.5">
                   <p className="text-sm font-semibold text-slate-900">{auth.user?.name}</p>
@@ -248,7 +251,8 @@ export function Topbar() {
               key={item.to}
               activeOptions={{ exact: item.exact ?? false }}
               activeProps={{
-                className: 'bg-primary text-primary-foreground shadow-premium-sm border-transparent',
+                className:
+                  'bg-primary text-primary-foreground shadow-premium-sm border-transparent',
               }}
               className={cn(
                 'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 active:scale-95',

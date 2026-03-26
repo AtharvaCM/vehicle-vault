@@ -134,7 +134,9 @@ export class AuthService {
     return this.buildAuthResponse(this.toUser(user));
   }
 
-  async requestPasswordReset(payload: PasswordResetRequestDto): Promise<PasswordResetRequestResponse> {
+  async requestPasswordReset(
+    payload: PasswordResetRequestDto,
+  ): Promise<PasswordResetRequestResponse> {
     const input = this.validatePasswordResetRequestInput(payload);
 
     if (this.appConfigService.isProduction && !this.mailService.isConfigured) {

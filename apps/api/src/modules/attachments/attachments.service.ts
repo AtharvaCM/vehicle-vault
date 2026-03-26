@@ -201,7 +201,9 @@ export class AttachmentsService {
   }
 
   private async cleanupUploadedObjects(paths: string[]) {
-    await Promise.all(paths.map((path) => this.storageService.deleteObject(path).catch(() => undefined)));
+    await Promise.all(
+      paths.map((path) => this.storageService.deleteObject(path).catch(() => undefined)),
+    );
   }
 
   private async getStoredAttachmentById(userId: string, attachmentId: string) {

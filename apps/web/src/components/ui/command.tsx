@@ -4,23 +4,20 @@ import { Search } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-function Command({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive>) {
+function Command({ className, ...props }: ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
-      className={cn('flex h-full w-full flex-col overflow-hidden rounded-xl bg-popover text-popover-foreground', className)}
+      className={cn(
+        'flex h-full w-full flex-col overflow-hidden rounded-xl bg-popover text-popover-foreground',
+        className,
+      )}
       data-slot="command"
       {...props}
     />
   );
 }
 
-function CommandInput({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.Input>) {
+function CommandInput({ className, ...props }: ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div className="flex items-center border-b px-3" data-slot="command-input-wrapper">
       <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -36,10 +33,7 @@ function CommandInput({
   );
 }
 
-function CommandList({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.List>) {
+function CommandList({ className, ...props }: ComponentProps<typeof CommandPrimitive.List>) {
   return (
     <CommandPrimitive.List
       className={cn('max-h-[280px] overflow-x-hidden overflow-y-auto', className)}
@@ -59,23 +53,20 @@ function CommandEmpty(props: ComponentProps<typeof CommandPrimitive.Empty>) {
   );
 }
 
-function CommandGroup({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.Group>) {
+function CommandGroup({ className, ...props }: ComponentProps<typeof CommandPrimitive.Group>) {
   return (
     <CommandPrimitive.Group
-      className={cn('overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.12em] [&_[cmdk-group-heading]]:text-muted-foreground', className)}
+      className={cn(
+        'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.12em] [&_[cmdk-group-heading]]:text-muted-foreground',
+        className,
+      )}
       data-slot="command-group"
       {...props}
     />
   );
 }
 
-function CommandItem({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.Item>) {
+function CommandItem({ className, ...props }: ComponentProps<typeof CommandPrimitive.Item>) {
   return (
     <CommandPrimitive.Item
       className={cn(

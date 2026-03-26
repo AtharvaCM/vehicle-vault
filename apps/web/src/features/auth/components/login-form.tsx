@@ -46,7 +46,11 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <FormField htmlFor="login-email" label="Email address" error={form.formState.errors.email?.message}>
+      <FormField
+        htmlFor="login-email"
+        label="Email address"
+        error={form.formState.errors.email?.message}
+      >
         <Input
           autoComplete="email"
           id="login-email"
@@ -57,7 +61,11 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
         />
       </FormField>
 
-      <FormField htmlFor="login-password" label="Password" error={form.formState.errors.password?.message}>
+      <FormField
+        htmlFor="login-password"
+        label="Password"
+        error={form.formState.errors.password?.message}
+      >
         <Input
           autoComplete="current-password"
           id="login-password"
@@ -69,7 +77,10 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
       </FormField>
 
       <div className="flex justify-end">
-        <Link className="text-sm font-medium text-slate-700 hover:text-slate-950" to="/forgot-password">
+        <Link
+          className="text-sm font-medium text-slate-700 hover:text-slate-950"
+          to="/forgot-password"
+        >
           Forgot password?
         </Link>
       </div>

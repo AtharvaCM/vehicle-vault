@@ -152,12 +152,18 @@ export function ReminderForm({
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Reminder details</CardTitle>
-        <CardDescription>Give the reminder a clear title and at least one due trigger.</CardDescription>
+        <CardDescription>
+          Give the reminder a clear title and at least one due trigger.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-3.5 md:grid-cols-2">
-            <FormField htmlFor="reminder-title" label="Title" error={form.formState.errors.title?.message}>
+            <FormField
+              htmlFor="reminder-title"
+              label="Title"
+              error={form.formState.errors.title?.message}
+            >
               <Input
                 id="reminder-title"
                 {...form.register('title')}
@@ -166,13 +172,20 @@ export function ReminderForm({
               />
             </FormField>
 
-            <FormField htmlFor="reminder-type" label="Type" error={form.formState.errors.type?.message}>
+            <FormField
+              htmlFor="reminder-type"
+              label="Type"
+              error={form.formState.errors.type?.message}
+            >
               <Controller
                 control={form.control}
                 name="type"
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger id="reminder-type" aria-invalid={Boolean(form.formState.errors.type)}>
+                    <SelectTrigger
+                      id="reminder-type"
+                      aria-invalid={Boolean(form.formState.errors.type)}
+                    >
                       <SelectValue placeholder="Select a reminder type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -187,7 +200,11 @@ export function ReminderForm({
               />
             </FormField>
 
-            <FormField htmlFor="reminder-due-date" label="Due date" error={form.formState.errors.dueDate?.message}>
+            <FormField
+              htmlFor="reminder-due-date"
+              label="Due date"
+              error={form.formState.errors.dueDate?.message}
+            >
               <Input
                 id="reminder-due-date"
                 {...form.register('dueDate')}
@@ -213,7 +230,11 @@ export function ReminderForm({
             </FormField>
           </div>
 
-          <FormField htmlFor="reminder-notes" label="Notes" error={form.formState.errors.notes?.message}>
+          <FormField
+            htmlFor="reminder-notes"
+            label="Notes"
+            error={form.formState.errors.notes?.message}
+          >
             <Textarea
               id="reminder-notes"
               {...form.register('notes')}

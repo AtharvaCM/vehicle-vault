@@ -52,10 +52,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
   if (recordQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle
-          description="Loading this service entry."
-          title="Maintenance Record"
-        />
+        <PageTitle description="Loading this service entry." title="Maintenance Record" />
         <LoadingState
           description="Getting the latest service details."
           title="Loading maintenance record"

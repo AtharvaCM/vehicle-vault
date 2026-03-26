@@ -74,10 +74,14 @@ export function VehicleCreatePage() {
         <Card>
           <CardHeader>
             <CardTitle>What to add first</CardTitle>
-            <CardDescription>A few accurate basics make every later record easier to trust.</CardDescription>
+            <CardDescription>
+              A few accurate basics make every later record easier to trust.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Start with the current odometer so future due dates and due kilometres stay realistic.</p>
+            <p>
+              Start with the current odometer so future due dates and due kilometres stay realistic.
+            </p>
             <p>Use a nickname if you manage similar vehicles or a family garage.</p>
             <p>Once saved, you can begin logging services, reminders, and receipts.</p>
           </CardContent>

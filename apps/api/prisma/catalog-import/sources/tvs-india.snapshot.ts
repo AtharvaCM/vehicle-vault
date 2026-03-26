@@ -20,10 +20,22 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Sheet Metal Wheel', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Standard', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'ZX', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Classic', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
+                {
+                  name: 'Sheet Metal Wheel',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Standard',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'ZX',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Classic',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
               ],
             },
             {
@@ -31,9 +43,18 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'SmartXonnect', offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }] },
+                {
+                  name: 'Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'SmartXonnect',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2023, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -46,12 +67,30 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2020,
               isCurrent: true,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Race Edition', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Super Squad', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }] },
-                { name: 'Race XP', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'XT', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Race Edition',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Super Squad',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, isCurrent: true }],
+                },
+                {
+                  name: 'Race XP',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'XT',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -65,10 +104,22 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2021,
               isCurrent: true,
               variants: [
-                { name: 'Drum', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'SmartXonnect', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }] },
-                { name: 'Super Squad', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'Drum',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'SmartXonnect',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, isCurrent: true }],
+                },
+                {
+                  name: 'Super Squad',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
           ],
@@ -82,8 +133,14 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2024,
               isCurrent: true,
               variants: [
-                { name: 'Dual Disc', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
-                { name: 'Special Edition', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
+                {
+                  name: 'Dual Disc',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
+                {
+                  name: 'Special Edition',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
               ],
             },
             {
@@ -92,8 +149,14 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2023,
               isCurrent: false,
               variants: [
-                { name: 'Carb', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2020 }] },
-                { name: 'FI', offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }] },
+                {
+                  name: 'Carb',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2020 }],
+                },
+                {
+                  name: 'FI',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2020, yearEnd: 2023 }],
+                },
               ],
             },
           ],
@@ -107,8 +170,14 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2024,
               isCurrent: true,
               variants: [
-                { name: 'Red', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
-                { name: 'Bomber Grey', offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }] },
+                {
+                  name: 'Red',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
+                {
+                  name: 'Bomber Grey',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2024, isCurrent: true }],
+                },
               ],
             },
             {
@@ -117,8 +186,14 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearEnd: 2023,
               isCurrent: false,
               variants: [
-                { name: 'Race Replica', offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2021 }] },
-                { name: 'BTO', offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, yearEnd: 2023 }] },
+                {
+                  name: 'Race Replica',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2018, yearEnd: 2021 }],
+                },
+                {
+                  name: 'BTO',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2021, yearEnd: 2023 }],
+                },
               ],
             },
           ],
@@ -132,9 +207,18 @@ export const tvsIndiaSnapshot: CatalogImportSource = {
               yearStart: 2022,
               isCurrent: true,
               variants: [
-                { name: 'SS', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
-                { name: 'DS', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
-                { name: 'TD', offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }] },
+                {
+                  name: 'SS',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'DS',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
+                {
+                  name: 'TD',
+                  offerings: [{ fuelTypes: ['petrol'], yearStart: 2022, isCurrent: true }],
+                },
               ],
             },
           ],

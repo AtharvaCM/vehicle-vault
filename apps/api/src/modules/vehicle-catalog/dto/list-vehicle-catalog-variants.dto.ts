@@ -1,6 +1,10 @@
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { DEFAULT_VEHICLE_CATALOG_MARKET, VehicleCatalogMarket, VehicleType } from '@vehicle-vault/shared';
+import {
+  DEFAULT_VEHICLE_CATALOG_MARKET,
+  VehicleCatalogMarket,
+  VehicleType,
+} from '@vehicle-vault/shared';
 
 export class ListVehicleCatalogVariantsDto {
   @IsOptional()

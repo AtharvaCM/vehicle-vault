@@ -4,7 +4,15 @@ import type {
   VehicleCatalogImportRunReview,
   VehicleCatalogPublishedOfferingReview,
 } from '@vehicle-vault/shared';
-import { CheckCheck, DatabaseZap, GitCompareArrows, PencilLine, Save, ScanSearch, X } from 'lucide-react';
+import {
+  CheckCheck,
+  DatabaseZap,
+  GitCompareArrows,
+  PencilLine,
+  Save,
+  ScanSearch,
+  X,
+} from 'lucide-react';
 
 import { InlineError } from '@/components/shared/inline-error';
 import { Badge } from '@/components/ui/badge';
@@ -89,8 +97,8 @@ export function CatalogImportReviewCard() {
         <CardHeader>
           <CardTitle>Catalog review</CardTitle>
           <CardDescription>
-            Internal catalog operations. Review staged source imports before publishing them into the
-            trusted make/model/variant catalog.
+            Internal catalog operations. Review staged source imports before publishing them into
+            the trusted make/model/variant catalog.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -108,7 +116,8 @@ export function CatalogImportReviewCard() {
             />
           ) : !runsQuery.data?.length ? (
             <div className="rounded-2xl border border-dashed border-border/70 bg-slate-50/70 p-5 text-sm text-slate-600">
-              No import runs have been staged yet. Run `pnpm catalog:import:all` to capture the next review batch.
+              No import runs have been staged yet. Run `pnpm catalog:import:all` to capture the next
+              review batch.
             </div>
           ) : (
             <div className="space-y-3">
@@ -195,7 +204,11 @@ export function CatalogImportReviewCard() {
                   throw error;
                 }
               }}
-              savingOfferingId={updateOfferingReviewMutation.isPending ? updateOfferingReviewMutation.variables?.offeringId : undefined}
+              savingOfferingId={
+                updateOfferingReviewMutation.isPending
+                  ? updateOfferingReviewMutation.variables?.offeringId
+                  : undefined
+              }
             />
           ) : null}
         </DialogContent>
@@ -226,7 +239,12 @@ function RunRow({
           <Badge tone="neutral">{run.marketCode}</Badge>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-          <span>Captured {run.snapshotCapturedAt ? formatDate(run.snapshotCapturedAt, { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown'}</span>
+          <span>
+            Captured{' '}
+            {run.snapshotCapturedAt
+              ? formatDate(run.snapshotCapturedAt, { dateStyle: 'medium', timeStyle: 'short' })
+              : 'Unknown'}
+          </span>
           <span>{run.diff.newModels.length} new models</span>
           <span>{run.diff.newVariants.length} new variants</span>
           <span>{run.diff.changedVariants.length} changed variants</span>
@@ -330,7 +348,10 @@ function CatalogImportDetail({
           </div>
           <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
             {detail.dataset.map((make) => (
-              <div key={`${make.marketCode}-${make.vehicleType}-${make.name}`} className="rounded-xl border border-border/60 p-3">
+              <div
+                key={`${make.marketCode}-${make.vehicleType}-${make.name}`}
+                className="rounded-xl border border-border/60 p-3"
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-slate-900">{make.name}</p>
                   <Badge tone="accent">{make.vehicleType}</Badge>
@@ -340,8 +361,13 @@ function CatalogImportDetail({
                     <div key={model.name} className="rounded-xl bg-slate-50/80 px-3 py-2">
                       <p className="font-medium text-slate-900">{model.name}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {model.generations.length} generation{model.generations.length === 1 ? '' : 's'} ·{' '}
-                        {model.generations.reduce((count, generation) => count + generation.variants.length, 0)} variants
+                        {model.generations.length} generation
+                        {model.generations.length === 1 ? '' : 's'} ·{' '}
+                        {model.generations.reduce(
+                          (count, generation) => count + generation.variants.length,
+                          0,
+                        )}{' '}
+                        variants
                       </p>
                     </div>
                   ))}
@@ -356,8 +382,8 @@ function CatalogImportDetail({
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-900">Published source reviews</p>
           <p className="text-sm text-slate-600">
-            Add provenance notes or correct ambiguous year ranges on the currently published source rows.
-            Those corrections stay attached to future imports for the same source.
+            Add provenance notes or correct ambiguous year ranges on the currently published source
+            rows. Those corrections stay attached to future imports for the same source.
           </p>
         </div>
         {detail.publishedOfferings.length ? (
@@ -373,8 +399,8 @@ function CatalogImportDetail({
           </div>
         ) : (
           <p className="text-sm text-slate-500">
-            No published source data exists for this importer yet. Publish the first trusted run before
-            manual provenance review is needed.
+            No published source data exists for this importer yet. Publish the first trusted run
+            before manual provenance review is needed.
           </p>
         )}
       </div>
@@ -383,7 +409,12 @@ function CatalogImportDetail({
         {canPublish ? (
           <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
             {canArchiveMissing ? (
-              <Button disabled={isArchiving} onClick={onArchiveMissing} type="button" variant="outline">
+              <Button
+                disabled={isArchiving}
+                onClick={onArchiveMissing}
+                type="button"
+                variant="outline"
+              >
                 <ScanSearch className="mr-2 h-4 w-4" />
                 {isArchiving ? 'Archiving missing...' : 'Archive missing as historical'}
               </Button>
@@ -477,7 +508,9 @@ function PublishedOfferingReviewRow({
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium text-slate-900">{offering.variantName}</p>
             <Badge tone="accent">{formatFuelTypes(offering.fuelTypes)}</Badge>
-            <Badge tone="neutral">{formatYearRange(offering.yearStart, offering.yearEnd, offering.isCurrent)}</Badge>
+            <Badge tone="neutral">
+              {formatYearRange(offering.yearStart, offering.yearEnd, offering.isCurrent)}
+            </Badge>
             {offering.manualOverrideApplied ? <Badge tone="warning">Reviewed</Badge> : null}
           </div>
           <p className="text-sm text-slate-600">
@@ -602,15 +635,7 @@ function PublishedOfferingReviewRow({
   );
 }
 
-function SummaryMetric({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: number;
-  icon: ReactNode;
-}) {
+function SummaryMetric({ label, value, icon }: { label: string; value: number; icon: ReactNode }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-white p-4">
       <div className="flex items-center justify-between gap-3">
@@ -676,11 +701,7 @@ function formatFuelTypes(fuelTypes: string[]) {
   return fuelTypes.map((fuelType) => fuelType.toUpperCase()).join(' / ');
 }
 
-function formatYearRange(
-  yearStart?: number,
-  yearEnd?: number,
-  isCurrent?: boolean,
-) {
+function formatYearRange(yearStart?: number, yearEnd?: number, isCurrent?: boolean) {
   if (yearStart && yearEnd) {
     return `${yearStart} to ${yearEnd}`;
   }

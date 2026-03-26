@@ -79,10 +79,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
     return (
       <PageContainer>
         <PageTitle description="Loading this reminder before you edit it." title="Edit Reminder" />
-        <LoadingState
-          description="Getting the latest reminder details."
-          title="Loading reminder"
-        />
+        <LoadingState description="Getting the latest reminder details." title="Loading reminder" />
       </PageContainer>
     );
   }
@@ -152,8 +149,14 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
             <CardDescription>Clear reminder details are easier to trust later.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Use edits when a reminder&apos;s title, timing, or kilometre target was logged incorrectly.</p>
-            <p>Completed reminders can still be cleaned up if their reference details need correction.</p>
+            <p>
+              Use edits when a reminder&apos;s title, timing, or kilometre target was logged
+              incorrectly.
+            </p>
+            <p>
+              Completed reminders can still be cleaned up if their reference details need
+              correction.
+            </p>
             <p>Keep notes clear so the reminder still makes sense when it resurfaces later.</p>
           </CardContent>
         </Card>

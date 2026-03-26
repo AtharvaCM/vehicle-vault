@@ -24,7 +24,9 @@ describe('apiClient', () => {
       next: 'dashboard',
     });
 
-    expect(String(url)).toBe('https://vehiclevault.middle-earth.in/api/auth/register?next=dashboard');
+    expect(String(url)).toBe(
+      'https://vehiclevault.middle-earth.in/api/auth/register?next=dashboard',
+    );
   });
 
   it('sends the bearer token on authenticated requests', async () => {

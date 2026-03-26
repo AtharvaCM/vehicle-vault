@@ -49,7 +49,8 @@ export function MaintenanceListControls({
   onSortChange,
   onReset,
 }: MaintenanceListControlsProps) {
-  const hasFilters = searchValue.trim().length > 0 || category !== 'all' || sortBy !== 'service-date-desc';
+  const hasFilters =
+    searchValue.trim().length > 0 || category !== 'all' || sortBy !== 'service-date-desc';
 
   return (
     <div className="rounded-xl border border-border/70 bg-white p-4 shadow-sm">
@@ -95,7 +96,10 @@ export function MaintenanceListControls({
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
             Sort
           </p>
-          <Select onValueChange={(value) => onSortChange(value as MaintenanceSortOption)} value={sortBy}>
+          <Select
+            onValueChange={(value) => onSortChange(value as MaintenanceSortOption)}
+            value={sortBy}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Sort records" />
             </SelectTrigger>
@@ -111,7 +115,8 @@ export function MaintenanceListControls({
 
         <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{resultCount}</span> of {totalCount}
+            Showing <span className="font-medium text-foreground">{resultCount}</span> of{' '}
+            {totalCount}
           </p>
           {hasFilters ? (
             <Button onClick={onReset} size="xs" type="button" variant="ghost">

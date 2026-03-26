@@ -68,7 +68,9 @@ export class VehicleCatalogController {
     @Param() params: CatalogImportRunIdParamDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return successResponse(await this.vehicleCatalogService.archiveMissingVariants(user, params.runId));
+    return successResponse(
+      await this.vehicleCatalogService.archiveMissingVariants(user, params.runId),
+    );
   }
 
   @Patch('offerings/:offeringId/review')

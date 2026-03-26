@@ -21,10 +21,7 @@ export class NotificationsController {
   }
 
   @Patch(':id/read')
-  async markAsRead(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async markAsRead(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.notificationsService.markAsRead(userId, id);
   }
 
@@ -35,10 +32,7 @@ export class NotificationsController {
   }
 
   @Delete(':id')
-  async delete(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
     await this.notificationsService.delete(userId, id);
     return { success: true };
   }

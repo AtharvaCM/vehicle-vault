@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   FuelType,
   type UpdateVehicleCatalogOfferingReviewInput,
@@ -302,7 +307,8 @@ export class VehicleCatalogService {
           },
         },
         offerings: {
-          where: normalized.year !== undefined ? buildOfferingYearWhere(normalized.year) : undefined,
+          where:
+            normalized.year !== undefined ? buildOfferingYearWhere(normalized.year) : undefined,
           orderBy: [{ isCurrent: 'desc' }, { yearEnd: 'desc' }, { yearStart: 'desc' }],
         },
       },
@@ -399,25 +405,27 @@ export class VehicleCatalogService {
     }
 
     if (!offering.sourceName) {
-      throw new BadRequestException('Only source-backed catalog offerings can be manually reviewed.');
+      throw new BadRequestException(
+        'Only source-backed catalog offerings can be manually reviewed.',
+      );
     }
 
     const sourceName = offering.sourceName;
 
-    if (!user.allowedCatalogSources.includes(sourceName) && !user.allowedCatalogSources.includes('*')) {
+    if (
+      !user.allowedCatalogSources.includes(sourceName) &&
+      !user.allowedCatalogSources.includes('*')
+    ) {
       throw new ForbiddenException('You do not have permission to review this source.');
     }
 
-    const nextYearStart = input.yearStart !== undefined ? input.yearStart ?? null : offering.yearStart;
-    const nextYearEnd = input.yearEnd !== undefined ? input.yearEnd ?? null : offering.yearEnd;
+    const nextYearStart =
+      input.yearStart !== undefined ? (input.yearStart ?? null) : offering.yearStart;
+    const nextYearEnd = input.yearEnd !== undefined ? (input.yearEnd ?? null) : offering.yearEnd;
     const nextIsCurrent = input.isCurrent !== undefined ? input.isCurrent : offering.isCurrent;
     const fuelTypeSignature = buildFuelTypeSignature(offering.fuelTypes as FuelType[]);
 
-    if (
-      nextYearStart !== null &&
-      nextYearEnd !== null &&
-      nextYearEnd < nextYearStart
-    ) {
+    if (nextYearStart !== null && nextYearEnd !== null && nextYearEnd < nextYearStart) {
       throw new BadRequestException('End year cannot be earlier than start year.');
     }
 
@@ -457,7 +465,7 @@ export class VehicleCatalogService {
           },
         },
         update: {
-          reviewNote: input.reviewNote !== undefined ? input.reviewNote ?? null : undefined,
+          reviewNote: input.reviewNote !== undefined ? (input.reviewNote ?? null) : undefined,
           manualYearStart: nextYearStart,
           manualYearEnd: nextYearEnd,
           manualIsCurrent: nextIsCurrent,
@@ -477,7 +485,7 @@ export class VehicleCatalogService {
     });
 
     return this.mapPublishedOfferingReview(updatedOffering, {
-      reviewNote: input.reviewNote !== undefined ? input.reviewNote ?? null : null,
+      reviewNote: input.reviewNote !== undefined ? (input.reviewNote ?? null) : null,
       manualYearStart: nextYearStart,
       manualYearEnd: nextYearEnd,
       manualIsCurrent: nextIsCurrent,
@@ -507,7 +515,10 @@ export class VehicleCatalogService {
       throw new BadRequestException('Only successful import runs can be published.');
     }
 
-    if (!user.allowedCatalogSources.includes(run.sourceKey) && !user.allowedCatalogSources.includes('*')) {
+    if (
+      !user.allowedCatalogSources.includes(run.sourceKey) &&
+      !user.allowedCatalogSources.includes('*')
+    ) {
       throw new ForbiddenException('You do not have permission to publish this import run.');
     }
 
@@ -575,7 +586,10 @@ export class VehicleCatalogService {
     return this.mapImportRunReview(updatedRun, dataset);
   }
 
-  async archiveMissingVariants(user: AuthUser, runId: string): Promise<VehicleCatalogImportRunReview> {
+  async archiveMissingVariants(
+    user: AuthUser,
+    runId: string,
+  ): Promise<VehicleCatalogImportRunReview> {
     const run = await this.prisma.vehicleCatalogImportRun.findUnique({
       where: {
         id: runId,
@@ -598,8 +612,13 @@ export class VehicleCatalogService {
       throw new BadRequestException('Only successful import runs can archive missing variants.');
     }
 
-    if (!user.allowedCatalogSources.includes(run.sourceKey) && !user.allowedCatalogSources.includes('*')) {
-      throw new ForbiddenException('You do not have permission to archive missing variants for this import run.');
+    if (
+      !user.allowedCatalogSources.includes(run.sourceKey) &&
+      !user.allowedCatalogSources.includes('*')
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to archive missing variants for this import run.',
+      );
     }
 
     if (run.publishedAt) {
@@ -614,7 +633,10 @@ export class VehicleCatalogService {
 
     const dataset = parseImportDataset(snapshot.payload);
     const incomingSummary = summarizeImportDataset(dataset);
-    const activeOfferings = await this.getActivePublishedSourceOfferings(run.marketCode, run.sourceKey);
+    const activeOfferings = await this.getActivePublishedSourceOfferings(
+      run.marketCode,
+      run.sourceKey,
+    );
     const missingVariantOfferingIds = new Set<string>();
 
     for (const offering of activeOfferings) {
@@ -688,7 +710,10 @@ export class VehicleCatalogService {
   ): Promise<VehicleCatalogImportRunReview> {
     const snapshot = run.snapshots[0];
     const dataset = datasetOverride ?? parseImportDataset(snapshot?.payload);
-    const currentPublishedDataset = await this.getPublishedSourceDataset(run.marketCode, run.sourceKey);
+    const currentPublishedDataset = await this.getPublishedSourceDataset(
+      run.marketCode,
+      run.sourceKey,
+    );
 
     return {
       id: run.id,
@@ -711,7 +736,10 @@ export class VehicleCatalogService {
     const snapshot = run.snapshots[0];
     const dataset = parseImportDataset(snapshot?.payload);
     const review = await this.mapImportRunReview(run, dataset);
-    const publishedOfferings = await this.getPublishedOfferingReviews(run.marketCode, run.sourceKey);
+    const publishedOfferings = await this.getPublishedOfferingReviews(
+      run.marketCode,
+      run.sourceKey,
+    );
 
     return {
       ...review,
@@ -770,17 +798,15 @@ export class VehicleCatalogService {
       const generation = offering.variant.generation;
       const model = generation.model;
       const make = model.make;
-    const makeKey = `${make.marketCode}|${make.vehicleType}|${normalizeKey(make.name)}`;
+      const makeKey = `${make.marketCode}|${make.vehicleType}|${normalizeKey(make.name)}`;
 
-      const makeRecord: CatalogMakeRecord =
-        makeMap.get(makeKey) ??
-        {
-          marketCode: make.marketCode,
-          vehicleType: make.vehicleType as VehicleType,
-          name: make.name,
-          sourceUrl: make.sourceUrl ?? undefined,
-          models: [],
-        };
+      const makeRecord: CatalogMakeRecord = makeMap.get(makeKey) ?? {
+        marketCode: make.marketCode,
+        vehicleType: make.vehicleType as VehicleType,
+        name: make.name,
+        sourceUrl: make.sourceUrl ?? undefined,
+        models: [],
+      };
 
       let modelRecord: CatalogModelRecord | undefined = makeRecord.models.find(
         (entry) => normalizeKey(entry.name) === normalizeKey(model.name),
@@ -1241,7 +1267,9 @@ function buildImportDiff(
       .filter((key) => published.variantKeys.has(key))
       .filter((key) => {
         const incomingSignatures = [...(incoming.variantOfferingSignatures.get(key) ?? [])].sort();
-        const publishedSignatures = [...(published.variantOfferingSignatures.get(key) ?? [])].sort();
+        const publishedSignatures = [
+          ...(published.variantOfferingSignatures.get(key) ?? []),
+        ].sort();
 
         return incomingSignatures.join('|') !== publishedSignatures.join('|');
       })
@@ -1323,7 +1351,10 @@ function summarizeImportDataset(dataset: VehicleCatalogImportDataset): Normalize
         for (const variant of generation.variants) {
           const variantKey = `${generationKey}|${normalizeKey(variant.name)}`;
           variantKeys.add(variantKey);
-          variantLabels.set(variantKey, `${make.name} / ${model.name} / ${generation.name} / ${variant.name}`);
+          variantLabels.set(
+            variantKey,
+            `${make.name} / ${model.name} / ${generation.name} / ${variant.name}`,
+          );
           variantOfferingSignatures.set(
             variantKey,
             variant.offerings.map((offering) => buildOfferingSignature(offering)).sort(),
@@ -1382,7 +1413,10 @@ function compareImportMakes(
   return left.name.localeCompare(right.name, 'en');
 }
 
-function compareVariantOptions(left: VehicleCatalogVariantOption, right: VehicleCatalogVariantOption) {
+function compareVariantOptions(
+  left: VehicleCatalogVariantOption,
+  right: VehicleCatalogVariantOption,
+) {
   if (left.isCurrent !== right.isCurrent) {
     return left.isCurrent ? -1 : 1;
   }
@@ -1391,8 +1425,12 @@ function compareVariantOptions(left: VehicleCatalogVariantOption, right: Vehicle
     return (right.yearEnd ?? Number.MAX_SAFE_INTEGER) - (left.yearEnd ?? Number.MAX_SAFE_INTEGER);
   }
 
-  if ((left.yearStart ?? Number.MIN_SAFE_INTEGER) !== (right.yearStart ?? Number.MIN_SAFE_INTEGER)) {
-    return (right.yearStart ?? Number.MIN_SAFE_INTEGER) - (left.yearStart ?? Number.MIN_SAFE_INTEGER);
+  if (
+    (left.yearStart ?? Number.MIN_SAFE_INTEGER) !== (right.yearStart ?? Number.MIN_SAFE_INTEGER)
+  ) {
+    return (
+      (right.yearStart ?? Number.MIN_SAFE_INTEGER) - (left.yearStart ?? Number.MIN_SAFE_INTEGER)
+    );
   }
 
   return left.name.localeCompare(right.name, 'en');

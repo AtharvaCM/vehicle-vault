@@ -52,10 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const clearSession = useCallback(
-    (
-      shouldRedirectToLogin: boolean,
-      reason: ClearSessionReason = 'manual',
-    ) => {
+    (shouldRedirectToLogin: boolean, reason: ClearSessionReason = 'manual') => {
       clearExpiryTimeout();
       clearStoredAuthSession();
       sessionRef.current = null;
@@ -190,12 +187,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return;
           }
 
-          persistSession(
-            {
-              ...storedSession,
-              user,
-            },
-          );
+          persistSession({
+            ...storedSession,
+            user,
+          });
           return;
         } catch {
           // Fall through to refresh when the access token is no longer accepted.

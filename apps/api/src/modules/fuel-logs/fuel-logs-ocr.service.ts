@@ -13,46 +13,49 @@ export interface ScannedFuelLog {
 @Injectable()
 export class FuelLogsOCRService {
   private genAI: GoogleGenerativeAI;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private model: any;
 
   constructor(private readonly config: AppConfigService) {
     const apiKey = this.config.geminiApiKey;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      
+
       // Use constrained output schema for reliable JSON
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const schema: any = {
-        description: "Fuel receipt data extraction",
+        description: 'Fuel receipt data extraction',
         type: SchemaType.OBJECT,
         properties: {
           date: {
             type: SchemaType.STRING,
-            description: "ISO 8601 date string of the transaction",
+            description: 'ISO 8601 date string of the transaction',
           },
           quantity: {
             type: SchemaType.NUMBER,
-            description: "Number of litres filled",
+            description: 'Number of litres filled',
           },
           price: {
             type: SchemaType.NUMBER,
-            description: "Price per litre",
+            description: 'Price per litre',
           },
           totalCost: {
             type: SchemaType.NUMBER,
-            description: "Total amount paid",
+            description: 'Total amount paid',
           },
           location: {
             type: SchemaType.STRING,
-            description: "Name of the gas station",
+            description: 'Name of the gas station',
           },
         },
-        required: ["totalCost"],
+        required: ['totalCost'],
       };
 
       this.model = this.genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: 'gemini-1.5-flash',
         generationConfig: {
-          responseMimeType: "application/json",
+          responseMimeType: 'application/json',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           responseSchema: schema as any,
         },
       });
@@ -69,8 +72,9 @@ export class FuelLogsOCRService {
     }
 
     try {
-      const prompt = "Extract fuel receipt data from this image. If a field is not found, omit it. Return valid JSON.";
-      
+      const prompt =
+        'Extract fuel receipt data from this image. If a field is not found, omit it. Return valid JSON.';
+
       const result = await this.model.generateContent([
         prompt,
         {

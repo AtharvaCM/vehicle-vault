@@ -56,7 +56,9 @@ export class AppConfigService {
   }
 
   get supabaseStorageBucket() {
-    return this.configService.get<string>('app.supabaseStorageBucket') ?? 'vehicle-vault-attachments';
+    return (
+      this.configService.get<string>('app.supabaseStorageBucket') ?? 'vehicle-vault-attachments'
+    );
   }
 
   get smtpHost() {
@@ -92,7 +94,9 @@ export class AppConfigService {
   }
 
   get jwtRefreshSecret() {
-    return this.configService.get<string>('app.jwtRefreshSecret') ?? 'vehicle-vault-dev-refresh-secret';
+    return (
+      this.configService.get<string>('app.jwtRefreshSecret') ?? 'vehicle-vault-dev-refresh-secret'
+    );
   }
 
   get jwtRefreshExpiresIn() {
