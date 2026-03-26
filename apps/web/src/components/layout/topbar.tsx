@@ -38,6 +38,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
+import { NotificationCenter } from '@/features/notifications/components/notification-center';
 
 import { appNavigation } from './sidebar';
 
@@ -189,27 +190,9 @@ export function Topbar() {
             New Vehicle
           </Link>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                className="relative h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                onClick={() =>
-                  appToast.info({
-                    title: 'Alerts are coming soon',
-                    description:
-                      'For now, keep track of due items from the dashboard and reminders pages.',
-                  })
-                }
-                size="icon"
-                variant="ghost"
-              >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
-                <span className="sr-only">Notifications</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Notifications</TooltipContent>
-          </Tooltip>
+          <div className="hidden h-8 w-px bg-slate-200/60 xl:block" />
+
+          <NotificationCenter />
 
           <div className="h-6 w-px bg-slate-200/60" />
 

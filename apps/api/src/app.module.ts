@@ -14,6 +14,7 @@ import { UsersModule } from './modules/users/users.module';
 import { VehicleCatalogModule } from './modules/vehicle-catalog/vehicle-catalog.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
     MaintenanceModule,
     RemindersModule,
     FuelLogsModule,
+    NotificationsModule,
     AttachmentsModule,
     ExportsModule,
   ],
