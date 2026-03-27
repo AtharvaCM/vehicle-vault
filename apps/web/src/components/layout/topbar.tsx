@@ -196,6 +196,7 @@ export function Topbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                aria-label={auth.user?.name || 'User profile'}
                 className="h-9 w-9 rounded-full border-slate-200/60 p-0 shadow-premium-sm hover:bg-slate-50"
                 variant="outline"
               >
