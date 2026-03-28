@@ -133,7 +133,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page.getByText('Odometer: 16,250 km')).toBeVisible();
 
   await page
-    .getByRole('link', { name: /^add maintenance$/i })
+    .getByRole('link', { name: /log maintenance/i })
     .first()
     .click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
