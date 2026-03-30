@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { API_PREFIX } from './common/constants/app.constants';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -53,8 +54,26 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ApiResponseInterceptor());
 
+  const config = new DocumentBuilder()
+    .setTitle('Vehicle Vault API')
+    .setDescription('The API documentation for the Vehicle Vault application.')
+    .setVersion('0.1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup(`${API_PREFIX}/docs`, app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
+
   await app.listen(port);
   Logger.log(`API listening on http://localhost:${port}/${API_PREFIX}`, 'Bootstrap');
+  Logger.log(
+    `Swagger documentation available at http://localhost:${port}/${API_PREFIX}/docs`,
+    'Bootstrap',
+  );
 }
 
 void bootstrap();
