@@ -46,6 +46,29 @@ enum MaintenanceCategory {
   other
 }
 
+enum MaintenanceSource {
+  manual
+  ocr
+  csv
+  api
+}
+
+enum MaintenanceRecordStatus {
+  draft
+  confirmed
+}
+
+enum MaintenanceLineItemKind {
+  job
+  part
+  fluid
+  labor
+  fee
+  tax
+  discount
+  other
+}
+
 enum ReminderType {
   service
   insurance
@@ -67,6 +90,12 @@ enum AttachmentKind {
   document
   image
   other
+}
+
+enum AttachmentExtractionStatus {
+  pending
+  completed
+  failed
 }
 
 enum CatalogImportRunStatus {
@@ -378,16 +407,53 @@ model MaintenanceRecord {
   odometer        Int
   category        MaintenanceCategory
   workshopName    String?             @db.VarChar(120)
+  invoiceNumber   String?             @db.VarChar(120)
+  currencyCode    String              @default("INR") @db.VarChar(3)
+  source          MaintenanceSource   @default(manual)
+  status          MaintenanceRecordStatus @default(confirmed)
   totalCost       Decimal             @db.Decimal(12, 2)
+  laborCost       Decimal?            @db.Decimal(12, 2)
+  partsCost       Decimal?            @db.Decimal(12, 2)
+  fluidsCost      Decimal?            @db.Decimal(12, 2)
+  taxCost         Decimal?            @db.Decimal(12, 2)
+  discountAmount  Decimal?            @db.Decimal(12, 2)
   notes           String?
+  metadata        Json?
   nextDueDate     DateTime?
   nextDueOdometer Int?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   vehicle         Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   attachments     Attachment[]
+  lineItems       MaintenanceLineItem[]
 
   @@index([vehicleId, serviceDate(sort: Desc)])
+  @@index([vehicleId, status, serviceDate(sort: Desc)])
+  @@index([vehicleId, invoiceNumber])
+}
+
+model MaintenanceLineItem {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  maintenanceRecordId String                  @db.Uuid
+  kind                MaintenanceLineItemKind
+  name                String                  @db.VarChar(160)
+  normalizedCategory  MaintenanceCategory?
+  quantity            Decimal?                @db.Decimal(10, 2)
+  unit                String?                 @db.VarChar(24)
+  unitPrice           Decimal?                @db.Decimal(12, 2)
+  lineTotal           Decimal?                @db.Decimal(12, 2)
+  brand               String?                 @db.VarChar(80)
+  partNumber          String?                 @db.VarChar(80)
+  notes               String?
+  position            Int                     @default(0)
+  metadata            Json?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  maintenanceRecord   MaintenanceRecord       @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+
+  @@index([maintenanceRecordId, position])
+  @@index([maintenanceRecordId, kind])
+  @@index([normalizedCategory])
 }
 
 model Reminder {
@@ -419,8 +485,34 @@ model Attachment {
   url                 String
   uploadedAt          DateTime          @default(now())
   maintenanceRecord   MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+  extraction          AttachmentExtraction?
 
   @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
+}
+
+model AttachmentExtraction {
+  id            String                   @id @default(uuid()) @db.Uuid
+  attachmentId  String                   @unique @db.Uuid
+  status        AttachmentExtractionStatus @default(pending)
+  provider      String?                  @db.VarChar(40)
+  confidence    Decimal?                 @db.Decimal(4, 3)
+  vendorName    String?                  @db.VarChar(120)
+  workshopName  String?                  @db.VarChar(120)
+  invoiceNumber String?                  @db.VarChar(120)
+  documentDate  DateTime?
+  serviceDate   DateTime?
+  odometer      Int?
+  totalCost     Decimal?                 @db.Decimal(12, 2)
+  currencyCode  String?                  @db.VarChar(3)
+  notes         String?
+  lineItems     Json?
+  failureReason String?
+  extractedAt   DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  attachment    Attachment               @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@index([status, extractedAt(sort: Desc)])
 }
 
 model FuelLog {

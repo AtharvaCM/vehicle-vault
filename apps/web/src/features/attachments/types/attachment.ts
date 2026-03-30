@@ -1,3 +1,15 @@
-import type { Attachment, AttachmentKind, CreateAttachmentResponse } from '@vehicle-vault/shared';
+import type {
+  Attachment,
+  AttachmentExtraction,
+  AttachmentExtractionStatusResponse,
+  AttachmentKind,
+  CreateAttachmentResponse,
+} from '@vehicle-vault/shared';
 
-export type { Attachment, AttachmentKind, CreateAttachmentResponse };
+export type {
+  Attachment,
+  AttachmentExtraction,
+  AttachmentExtractionStatusResponse,
+  AttachmentKind,
+  CreateAttachmentResponse,
+};

@@ -15,9 +15,10 @@ Vehicle Vault is a feature-rich authenticated maintenance platform with:
 - dashboard summary aggregation
 - Gemini 1.5 Flash-backed Receipt OCR
 - Integrated Fuel Log tracking and cost analytics
-- Automated Maintenance Alerts (Cron-based)
+- Automated Maintenance Alerts (Cron-based) for service, reminders, and insurance expiries
 - Mandatory Email Verification for account security
 - "Quick Fill" presets for common service/reminder tasks
+- Specialized "Protection" dashboard for Insurance and Warranty tracking
 - regression coverage across unit, integration, and Playwright smoke flows
 
 The product already supports the core ownership loop:
@@ -167,6 +168,13 @@ The product already supports the core ownership loop:
 - Global "Smart Feed" aggregation on the main dashboard
 - Specialized Tyre Health Tracker with 4-wheel visualization
 
+### Insurance & Warranty Management (Milestone 5)
+- Store core insurance policy details (Provider, Policy #, Premium, Dates)
+- Track manufacturer and extended warranty coverage (date and odometer based)
+- Integrated "Protection" tab on vehicle detail pages with status indicators (Active/Expiring/Expired)
+- Automated proactive alerts 7 days before insurance expiry via in-app notification and email
+- Centralized insurance/warranty history and current status visibility
+
 ### Export and Portability
 
 - User-scoped JSON account export from settings
@@ -185,16 +193,7 @@ These are the main items that still prevent the product from being a more comple
 - No OAuth/social auth
 - No audit logging or admin tooling
 
-### Milestone 5: Documentation & Coverage (Insurance & Warranty) (Next)
-
-Goal: provide a specialized location for tracking vehicle protection and coverage.
-
-- **Insurance Management:** Store policy numbers, providers, premiums, and validity.
-- **Warranty Tracking:** Monitor manufacturer and extended warranty coverage (date and odometer based).
-- **Document Vault:** Centralized view for all vehicle-level documentation (Insurance copies, RC, Warranty cards).
-- **Auto-Reminders:** Link insurance expiry and warranty end dates to the notification system.
-
-### Milestone 6: Financial Insights & Reporting
+### Milestone 6: Financial Insights & Reporting (Next)
 
 Goal: Provide deep visibility into ownership costs and facilitate resale value.
 

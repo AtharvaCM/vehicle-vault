@@ -2,9 +2,13 @@ import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   MaintenanceCategory,
+  MaintenanceLineItemKind,
   MaintenanceRecordCreateSchema,
+  MaintenanceRecordStatus,
   MaintenanceRecordUpdateSchema,
+  MaintenanceSource,
   type CreateMaintenanceRecordInput,
+  type MaintenanceLineItem,
   type MaintenanceRecord,
   type UpdateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
@@ -15,6 +19,16 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
+
+const maintenanceRecordInclude = {
+  lineItems: {
+    orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+  },
+} satisfies Prisma.MaintenanceRecordInclude;
+
+type MaintenanceRecordWithLineItems = Prisma.MaintenanceRecordGetPayload<{
+  include: typeof maintenanceRecordInclude;
+}>;
 
 @Injectable()
 export class MaintenanceService {
@@ -31,6 +45,7 @@ export class MaintenanceService {
           userId,
         },
       },
+      include: maintenanceRecordInclude,
       orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
     });
 
@@ -48,6 +63,7 @@ export class MaintenanceService {
         where: {
           vehicleId,
         },
+        include: maintenanceRecordInclude,
         skip: start,
         take: limit,
         orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
@@ -83,9 +99,60 @@ export class MaintenanceService {
     });
     const record = await this.prisma.maintenanceRecord.create({
       data: this.toCreateMaintenanceData(input),
+      include: maintenanceRecordInclude,
     });
 
     return this.toMaintenanceRecord(record);
+  }
+
+  async createDraftForVehicle(userId: string, vehicleId: string) {
+    const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    const record = await this.prisma.maintenanceRecord.create({
+      data: {
+        vehicleId,
+        category: MaintenanceCategory.Other,
+        serviceDate: new Date(),
+        odometer: vehicle.odometer,
+        currencyCode: 'INR',
+        source: MaintenanceSource.Ocr,
+        status: MaintenanceRecordStatus.Draft,
+        totalCost: 0,
+      },
+      include: maintenanceRecordInclude,
+    });
+
+    return this.toMaintenanceRecord(record);
+  }
+
+  async createBulkForVehicle(
+    userId: string,
+    vehicleId: string,
+    payloads: CreateMaintenanceRecordDto[],
+  ) {
+    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+
+    if (!payloads.length) {
+      throw new BadRequestException('Add at least one maintenance record to import.');
+    }
+
+    const inputs = payloads.map((payload) =>
+      this.validateCreateMaintenanceInput({
+        ...payload,
+        vehicleId,
+      }),
+    );
+
+    await this.prisma.$transaction(
+      inputs.map((input) =>
+        this.prisma.maintenanceRecord.create({
+          data: this.toCreateMaintenanceData(input),
+        }),
+      ),
+    );
+
+    return {
+      count: inputs.length,
+    };
   }
 
   async updateRecord(userId: string, recordId: string, payload: UpdateMaintenanceRecordDto) {
@@ -96,6 +163,7 @@ export class MaintenanceService {
         id: recordId,
       },
       data: this.toUpdateMaintenanceData(input),
+      include: maintenanceRecordInclude,
     });
 
     return this.toMaintenanceRecord(record);
@@ -146,6 +214,7 @@ export class MaintenanceService {
           userId,
         },
       },
+      include: maintenanceRecordInclude,
     });
 
     if (!record) {
@@ -192,10 +261,28 @@ export class MaintenanceService {
       serviceDate: new Date(input.serviceDate),
       odometer: input.odometer,
       workshopName: input.workshopName,
+      invoiceNumber: input.invoiceNumber,
+      currencyCode: input.currencyCode,
+      source: input.source,
+      status: input.status,
       totalCost: input.totalCost,
+      laborCost: input.laborCost,
+      partsCost: input.partsCost,
+      fluidsCost: input.fluidsCost,
+      taxCost: input.taxCost,
+      discountAmount: input.discountAmount,
       notes: input.notes,
+      metadata: input.metadata ? this.toJsonValue(input.metadata) : undefined,
       nextDueDate: input.nextDueDate ? new Date(input.nextDueDate) : undefined,
       nextDueOdometer: input.nextDueOdometer,
+      lineItems:
+        input.lineItems !== undefined
+          ? {
+              create: input.lineItems.map((lineItem, index) =>
+                this.toLineItemCreateData(lineItem, lineItem.position ?? index),
+              ),
+            }
+          : undefined,
     };
   }
 
@@ -205,24 +292,57 @@ export class MaintenanceService {
       serviceDate: input.serviceDate ? new Date(input.serviceDate) : undefined,
       odometer: input.odometer,
       workshopName: input.workshopName,
+      invoiceNumber: input.invoiceNumber,
+      currencyCode: input.currencyCode,
+      source: input.source,
+      status: input.status,
       totalCost: input.totalCost,
+      laborCost: input.laborCost,
+      partsCost: input.partsCost,
+      fluidsCost: input.fluidsCost,
+      taxCost: input.taxCost,
+      discountAmount: input.discountAmount,
       notes: input.notes,
+      metadata: input.metadata !== undefined ? this.toJsonValue(input.metadata) : undefined,
       nextDueDate: input.nextDueDate ? new Date(input.nextDueDate) : undefined,
       nextDueOdometer: input.nextDueOdometer,
+      lineItems:
+        input.lineItems !== undefined
+          ? {
+              deleteMany: {},
+              ...(input.lineItems.length
+                ? {
+                    create: input.lineItems.map((lineItem, index) =>
+                      this.toLineItemCreateData(lineItem, lineItem.position ?? index),
+                    ),
+                  }
+                : {}),
+            }
+          : undefined,
     };
   }
 
-  private toMaintenanceRecord(
-    record: Prisma.MaintenanceRecordUncheckedCreateInput &
-      Prisma.MaintenanceRecordUncheckedUpdateInput & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        serviceDate: Date;
-        totalCost: Prisma.Decimal;
-        nextDueDate: Date | null;
-      },
+  private toLineItemCreateData(
+    input: NonNullable<CreateMaintenanceRecordInput['lineItems']>[number],
+    position: number,
   ) {
+    return {
+      kind: input.kind,
+      name: input.name,
+      normalizedCategory: input.normalizedCategory,
+      quantity: input.quantity,
+      unit: input.unit,
+      unitPrice: input.unitPrice,
+      lineTotal: input.lineTotal,
+      brand: input.brand,
+      partNumber: input.partNumber,
+      notes: input.notes,
+      position,
+      metadata: input.metadata ? this.toJsonValue(input.metadata) : undefined,
+    };
+  }
+
+  private toMaintenanceRecord(record: MaintenanceRecordWithLineItems) {
     return {
       id: record.id,
       vehicleId: record.vehicleId,
@@ -230,12 +350,58 @@ export class MaintenanceService {
       serviceDate: record.serviceDate.toISOString(),
       odometer: record.odometer,
       workshopName: record.workshopName ?? undefined,
+      invoiceNumber: record.invoiceNumber ?? undefined,
+      currencyCode: record.currencyCode,
+      source: record.source as MaintenanceSource,
+      status: record.status as MaintenanceRecordStatus,
       totalCost: Number(record.totalCost),
+      laborCost: record.laborCost !== null ? Number(record.laborCost) : undefined,
+      partsCost: record.partsCost !== null ? Number(record.partsCost) : undefined,
+      fluidsCost: record.fluidsCost !== null ? Number(record.fluidsCost) : undefined,
+      taxCost: record.taxCost !== null ? Number(record.taxCost) : undefined,
+      discountAmount: record.discountAmount !== null ? Number(record.discountAmount) : undefined,
       notes: record.notes ?? undefined,
+      metadata: this.fromJsonValue(record.metadata),
       nextDueDate: record.nextDueDate?.toISOString(),
       nextDueOdometer: record.nextDueOdometer ?? undefined,
+      lineItems: record.lineItems.map((lineItem) => this.toMaintenanceLineItem(lineItem)),
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
     } satisfies MaintenanceRecord;
+  }
+
+  private toMaintenanceLineItem(
+    lineItem: MaintenanceRecordWithLineItems['lineItems'][number],
+  ): MaintenanceLineItem {
+    return {
+      id: lineItem.id,
+      maintenanceRecordId: lineItem.maintenanceRecordId,
+      kind: lineItem.kind as MaintenanceLineItemKind,
+      name: lineItem.name,
+      normalizedCategory: lineItem.normalizedCategory as MaintenanceCategory | undefined,
+      quantity: lineItem.quantity !== null ? Number(lineItem.quantity) : undefined,
+      unit: lineItem.unit ?? undefined,
+      unitPrice: lineItem.unitPrice !== null ? Number(lineItem.unitPrice) : undefined,
+      lineTotal: lineItem.lineTotal !== null ? Number(lineItem.lineTotal) : undefined,
+      brand: lineItem.brand ?? undefined,
+      partNumber: lineItem.partNumber ?? undefined,
+      notes: lineItem.notes ?? undefined,
+      position: lineItem.position,
+      metadata: this.fromJsonValue(lineItem.metadata),
+      createdAt: lineItem.createdAt.toISOString(),
+      updatedAt: lineItem.updatedAt.toISOString(),
+    };
+  }
+
+  private toJsonValue(value: Record<string, unknown>) {
+    return value as Prisma.InputJsonValue;
+  }
+
+  private fromJsonValue(value: Prisma.JsonValue | null | undefined) {
+    if (!value || Array.isArray(value) || typeof value !== 'object') {
+      return undefined;
+    }
+
+    return value as Record<string, unknown>;
   }
 }

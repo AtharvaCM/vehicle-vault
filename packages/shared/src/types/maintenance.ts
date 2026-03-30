@@ -1,6 +1,8 @@
 import type { z } from 'zod';
 
 import {
+  MaintenanceLineItemCreateSchema,
+  MaintenanceLineItemSchema,
   MaintenanceRecordCreateSchema,
   MaintenanceRecordSchema,
   MaintenanceRecordUpdateSchema,
@@ -8,6 +10,8 @@ import {
 
 import { MaintenanceCategory } from '../enums/maintenance-category.enum';
 
+export type CreateMaintenanceLineItemInput = z.infer<typeof MaintenanceLineItemCreateSchema>;
+export type MaintenanceLineItem = z.infer<typeof MaintenanceLineItemSchema>;
 export type CreateMaintenanceRecordInput = z.infer<typeof MaintenanceRecordCreateSchema>;
 export type UpdateMaintenanceRecordInput = z.infer<typeof MaintenanceRecordUpdateSchema>;
 export type MaintenanceRecord = z.infer<typeof MaintenanceRecordSchema>;

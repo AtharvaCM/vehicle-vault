@@ -143,6 +143,63 @@ export class MaintenanceAlertService {
         }
       }
     }
+
+    // 4. Check Insurance Policies for expiry (7-day reminder)
+    await this.checkInsurancePolicies(vehicle.userId, vehicleId);
+  }
+
+  private async checkInsurancePolicies(userId: string, vehicleId: string) {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const inSevenDaysStart = new Date(todayStart);
+    inSevenDaysStart.setDate(todayStart.getDate() + 7);
+
+    const inSevenDaysEnd = new Date(inSevenDaysStart);
+    inSevenDaysEnd.setDate(inSevenDaysEnd.getDate() + 1);
+
+    const policies = await this.prisma.insurancePolicy.findMany({
+      where: {
+        vehicleId,
+        endDate: {
+          gte: inSevenDaysStart,
+          lt: inSevenDaysEnd,
+        },
+      },
+      include: {
+        vehicle: true,
+      },
+    });
+
+    for (const policy of policies) {
+      const title = `Insurance Expiring Soon (7-day reminder): ${policy.provider}`;
+      const expiryDate = policy.endDate.toLocaleDateString('en-IN', {
+        dateStyle: 'medium',
+        timeZone: 'Asia/Kolkata',
+      });
+
+      const message = `Your insurance policy for ${policy.vehicle.make} ${policy.vehicle.model} with ${policy.provider} (Policy: ${policy.policyNumber}) is expiring in 7 days on ${expiryDate}. Please ensure you renew it in time.`;
+
+      const notification = await this.notificationsService.create({
+        userId,
+        vehicleId,
+        title,
+        message,
+        type: 'warning',
+        link: `/vehicles/${vehicleId}?tab=protection`,
+      });
+
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user && !notification.isRead) {
+        await this.mailService.sendMaintenanceAlert({
+          email: user.email,
+          userName: user.name,
+          vehicleName: `${policy.vehicle.make} ${policy.vehicle.model}`,
+          alertTitle: title,
+          message,
+        });
+      }
+    }
   }
 
 

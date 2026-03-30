@@ -7,14 +7,17 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 
+import { MaintenanceDraftReviewCard } from '../components/maintenance-draft-review-card';
 import { MaintenanceForm } from '../components/maintenance-form';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
+import type { MaintenanceFormValues } from '../schemas/maintenance-form.schema';
 import { useUpdateMaintenanceRecord } from '../hooks/use-update-maintenance-record';
 
 type MaintenanceRecordEditPageProps = {
@@ -30,18 +33,37 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     when: isDirty,
     message: 'You have unsaved maintenance edits. Leave without saving?',
   });
-  const initialValues = useMemo(
+  const initialValues = useMemo<Partial<MaintenanceFormValues> | undefined>(
     () =>
       recordQuery.data
         ? {
+            entryMode:
+              recordQuery.data.lineItems?.length || recordQuery.data.invoiceNumber
+                ? 'detailed'
+                : 'quick',
             serviceDate: toDateInputValue(recordQuery.data.serviceDate),
             odometer: recordQuery.data.odometer,
             category: recordQuery.data.category,
             workshopName: recordQuery.data.workshopName ?? '',
+            invoiceNumber: recordQuery.data.invoiceNumber ?? '',
+            currencyCode: recordQuery.data.currencyCode ?? 'INR',
             totalCost: recordQuery.data.totalCost,
             notes: recordQuery.data.notes ?? '',
             nextDueDate: toDateInputValue(recordQuery.data.nextDueDate),
             nextDueOdometer: recordQuery.data.nextDueOdometer,
+            lineItems:
+              recordQuery.data.lineItems?.map((lineItem) => ({
+                kind: lineItem.kind,
+                name: lineItem.name,
+                normalizedCategory: lineItem.normalizedCategory,
+                quantity: lineItem.quantity,
+                unit: lineItem.unit ?? '',
+                unitPrice: lineItem.unitPrice,
+                lineTotal: lineItem.lineTotal,
+                brand: lineItem.brand ?? '',
+                partNumber: lineItem.partNumber ?? '',
+                notes: lineItem.notes ?? '',
+              })) ?? [],
           }
         : undefined,
     [recordQuery.data],
@@ -155,19 +177,29 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           vehicleId={recordQuery.data?.vehicleId}
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Keep the record clear</CardTitle>
-            <CardDescription>
-              Small corrections now make the history easier to trust later.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Update the date, odometer, and cost whenever the original entry needs correction.</p>
-            <p>Receipts and documents stay attached to the same service entry after edits.</p>
-            <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          {recordQuery.data?.status === 'draft' || recordQuery.data?.source === 'ocr' ? (
+            <MaintenanceDraftReviewCard recordId={recordId} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Keep the record clear</CardTitle>
+                <CardDescription>
+                  Small corrections now make the history easier to trust later.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+                <p>
+                  Update the date, odometer, and cost whenever the original entry needs correction.
+                </p>
+                <p>Receipts and documents stay attached to the same service entry after edits.</p>
+                <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          <AttachmentsSection recordId={recordId} />
+        </div>
       </div>
     </PageContainer>
   );

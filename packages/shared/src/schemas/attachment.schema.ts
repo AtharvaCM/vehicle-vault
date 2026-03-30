@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AttachmentKind } from '../enums';
+import { AttachmentExtractionSchema } from './attachment-extraction.schema';
 
 const isoDateTimeString = z.string().datetime({ offset: true });
 
@@ -14,6 +15,7 @@ export const AttachmentSchema = z.object({
   size: z.number().int().nonnegative(),
   url: z.string().trim().min(1),
   uploadedAt: isoDateTimeString,
+  extraction: AttachmentExtractionSchema.optional(),
 });
 
 export const AttachmentReconciliationSummarySchema = z.object({

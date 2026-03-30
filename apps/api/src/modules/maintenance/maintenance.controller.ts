@@ -5,6 +5,7 @@ import { CurrentUser } from '../../common/auth/decorators/current-user.decorator
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { successResponse } from '../../common/utils/api-response.util';
 import { VehicleIdParamDto } from '../vehicles/dto/vehicle-id-param.dto';
+import { BulkCreateMaintenanceRecordDto } from './dto/bulk-create-maintenance-record.dto';
 import { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import { MaintenanceRecordIdParamDto } from './dto/maintenance-record-id-param.dto';
 import { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
@@ -45,6 +46,22 @@ export class MaintenanceController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.maintenanceService.createForVehicle(user.id, params.vehicleId, body);
+  }
+
+  @Post('vehicles/:vehicleId/maintenance-records/bulk')
+  async createBulkMaintenanceRecords(
+    @Param() params: VehicleIdParamDto,
+    @Body() body: BulkCreateMaintenanceRecordDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.maintenanceService.createBulkForVehicle(user.id, params.vehicleId, body.records),
+    );
+  }
+
+  @Post('vehicles/:vehicleId/maintenance-records/drafts')
+  async createMaintenanceDraft(@Param() params: VehicleIdParamDto, @CurrentUser() user: AuthUser) {
+    return this.maintenanceService.createDraftForVehicle(user.id, params.vehicleId);
   }
 
   @Patch('maintenance-records/:recordId')

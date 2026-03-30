@@ -20,6 +20,23 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium text-slate-950">{attachment.originalFileName}</p>
           <Badge>{getAttachmentKindLabel(attachment.kind)}</Badge>
+          {attachment.extraction ? (
+            <Badge
+              tone={
+                attachment.extraction.status === 'failed'
+                  ? 'danger'
+                  : attachment.extraction.status === 'pending'
+                    ? 'warning'
+                    : 'accent'
+              }
+            >
+              {attachment.extraction.status === 'completed'
+                ? 'OCR ready'
+                : attachment.extraction.status === 'failed'
+                  ? 'OCR failed'
+                  : 'OCR pending'}
+            </Badge>
+          ) : null}
         </div>
         <div className="space-y-1 text-sm text-slate-600">
           <p>

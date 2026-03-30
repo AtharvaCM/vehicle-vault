@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, ReminderType as PrismaReminderType } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ReminderCreateSchema,
@@ -112,7 +112,7 @@ export class RemindersService {
       data: {
         vehicleId,
         title: input.title,
-        type: input.type as any,
+        type: input.type as PrismaReminderType,
         dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
         dueOdometer: input.dueOdometer,
         notes: input.notes,
@@ -150,7 +150,7 @@ export class RemindersService {
       },
       data: {
         title: input.title,
-        type: input.type as any,
+        type: input.type as PrismaReminderType,
         dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
         dueOdometer: input.dueOdometer,
         notes: input.notes,

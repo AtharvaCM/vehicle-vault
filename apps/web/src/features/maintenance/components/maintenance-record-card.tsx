@@ -21,6 +21,15 @@ export function MaintenanceRecordCard({
   selectionControl,
   vehicleLabel,
 }: MaintenanceRecordCardProps) {
+  const detailBits = [
+    vehicleLabel,
+    formatDate(record.serviceDate),
+    record.invoiceNumber?.trim() ? `Invoice ${record.invoiceNumber.trim()}` : undefined,
+    record.lineItems?.length
+      ? `${record.lineItems.length} item${record.lineItems.length === 1 ? '' : 's'}`
+      : undefined,
+  ].filter(Boolean);
+
   return (
     <div className="group relative flex items-center gap-4">
       {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
@@ -50,9 +59,12 @@ export function MaintenanceRecordCard({
                 </Badge>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-slate-500">
-                {vehicleLabel ? <span>{vehicleLabel}</span> : null}
-                {vehicleLabel ? <span className="text-slate-300">•</span> : null}
-                <span>{formatDate(record.serviceDate)}</span>
+                {detailBits.map((detail, index) => (
+                  <span key={`${detail}-${index}`}>
+                    {index > 0 ? <span className="mr-3 text-slate-300">•</span> : null}
+                    {detail}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -74,7 +86,7 @@ export function MaintenanceRecordCard({
                   Total Cost
                 </p>
                 <p className="text-[13px] font-bold tabular-nums text-primary">
-                  {formatCurrency(record.totalCost)}
+                  {formatCurrency(record.totalCost, record.currencyCode)}
                 </p>
               </div>
             </div>

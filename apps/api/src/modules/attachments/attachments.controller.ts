@@ -28,6 +28,11 @@ import { attachmentFileFilter } from './utils/attachment-upload.util';
 export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}
 
+  @Get('attachments/extraction/status')
+  async getExtractionStatus() {
+    return successResponse(this.attachmentsService.getExtractionStatus());
+  }
+
   @Get('maintenance-records/:recordId/attachments')
   async listAttachments(
     @Param() params: MaintenanceRecordIdParamDto,
@@ -66,6 +71,23 @@ export class AttachmentsController {
   async getAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
     return successResponse(
       await this.attachmentsService.getAttachmentById(user.id, params.attachmentId),
+    );
+  }
+
+  @Post('attachments/:attachmentId/extract')
+  async extractAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
+    return successResponse(
+      await this.attachmentsService.extractAttachment(user.id, params.attachmentId),
+    );
+  }
+
+  @Post('attachments/:attachmentId/apply')
+  async applyAttachmentExtraction(
+    @Param() params: AttachmentIdParamDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.applyExtraction(user.id, params.attachmentId),
     );
   }
 

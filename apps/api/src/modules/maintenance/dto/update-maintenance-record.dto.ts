@@ -1,14 +1,24 @@
-import { MaintenanceCategory } from '@vehicle-vault/shared';
+import {
+  MaintenanceCategory,
+  MaintenanceRecordStatus,
+  MaintenanceSource,
+} from '@vehicle-vault/shared';
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
+  Length,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+
+import { CreateMaintenanceLineItemDto } from './create-maintenance-record.dto';
 
 export class UpdateMaintenanceRecordDto {
   @IsOptional()
@@ -31,15 +41,67 @@ export class UpdateMaintenanceRecordDto {
   workshopName?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  invoiceNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(3, 3)
+  currencyCode?: string;
+
+  @IsOptional()
+  @IsEnum(MaintenanceSource)
+  source?: MaintenanceSource;
+
+  @IsOptional()
+  @IsEnum(MaintenanceRecordStatus)
+  status?: MaintenanceRecordStatus;
+
+  @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   totalCost?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  laborCost?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  partsCost?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  fluidsCost?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  taxCost?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  discountAmount?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(1000)
   notes?: string;
+
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, unknown>;
 
   @IsOptional()
   @IsDateString()
@@ -50,4 +112,10 @@ export class UpdateMaintenanceRecordDto {
   @IsNumber({ maxDecimalPlaces: 0 })
   @Min(0)
   nextDueOdometer?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMaintenanceLineItemDto)
+  lineItems?: CreateMaintenanceLineItemDto[];
 }

@@ -14,6 +14,7 @@ import { appToast } from '@/lib/toast';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { BulkMaintenanceActions } from '../components/bulk-maintenance-actions';
+import { MaintenanceImportDialog } from '../components/maintenance-import-dialog';
 import { MaintenanceListControls } from '../components/maintenance-list-controls';
 import { useMaintenanceRecords } from '../hooks/use-maintenance-records';
 import { MaintenanceRecordList } from '../components/maintenance-record-list';
@@ -39,6 +40,7 @@ export function VehicleMaintenanceListPage({
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const bulkDeleteMutation = useBulkDeleteMaintenanceRecords();
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
   const searchValue = searchState.search ?? '';
   const category = searchState.category ?? 'all';
@@ -142,6 +144,9 @@ export function VehicleMaintenanceListPage({
             >
               Back to Vehicle
             </Link>
+            <Button onClick={() => setIsImportOpen(true)} type="button" variant="outline">
+              Import CSV
+            </Button>
             <Link
               className={buttonVariants()}
               params={{ vehicleId }}
@@ -172,6 +177,11 @@ export function VehicleMaintenanceListPage({
         />
       ) : (
         <div className="space-y-4">
+          <MaintenanceImportDialog
+            onOpenChange={setIsImportOpen}
+            open={isImportOpen}
+            vehicleId={vehicleId}
+          />
           {maintenanceQuery.data.length ? (
             <div className="space-y-4">
               <MaintenanceListControls
@@ -218,13 +228,18 @@ export function VehicleMaintenanceListPage({
             ) : (
               <EmptyState
                 action={
-                  <Link
-                    className={buttonVariants()}
-                    params={{ vehicleId }}
-                    to="/vehicles/$vehicleId/maintenance/new"
-                  >
-                    Add the first maintenance record
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => setIsImportOpen(true)} type="button" variant="outline">
+                      Import CSV
+                    </Button>
+                    <Link
+                      className={buttonVariants()}
+                      params={{ vehicleId }}
+                      to="/vehicles/$vehicleId/maintenance/new"
+                    >
+                      Add the first maintenance record
+                    </Link>
+                  </div>
                 }
                 description="No service entries have been logged for this vehicle yet."
                 title="No maintenance records yet"
