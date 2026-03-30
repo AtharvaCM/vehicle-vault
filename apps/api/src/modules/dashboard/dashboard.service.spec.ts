@@ -23,6 +23,9 @@ describe('DashboardService', () => {
   const attachmentsService = {
     listAllAttachments: vi.fn(),
   };
+  const forecastService = {
+    getUpcomingSuggestions: vi.fn(),
+  };
 
   let service: DashboardService;
 
@@ -33,6 +36,7 @@ describe('DashboardService', () => {
       maintenanceService as never,
       remindersService as never,
       attachmentsService as never,
+      forecastService as never,
     );
   });
 
@@ -110,6 +114,7 @@ describe('DashboardService', () => {
         uploadedAt: '2026-03-18T00:00:00.000Z',
       },
     ]);
+    forecastService.getUpcomingSuggestions.mockResolvedValue([]);
 
     const result = await service.getSummary('user-1');
 

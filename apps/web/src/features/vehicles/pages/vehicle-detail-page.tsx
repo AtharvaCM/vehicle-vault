@@ -37,6 +37,8 @@ import { OdometerHistoryCard } from '../components/odometer-history-card';
 import { VehicleSpecsCard } from '../components/vehicle-specs-card';
 import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
+import { VehicleTyreTracker } from '../components/vehicle-tyre-tracker';
+import { ProtectionTab } from '../components/protection-tab';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
 import { getVehicleServiceInsights } from '../utils/get-vehicle-service-insights';
@@ -302,6 +304,18 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             >
               Fuel
             </TabsTrigger>
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="tyres"
+            >
+              Tyres
+            </TabsTrigger>
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="protection"
+            >
+              Protection
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8 animate-in fade-in duration-500">
@@ -443,6 +457,12 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          <TabsContent value="tyres" className="animate-in fade-in duration-500">
+            <VehicleTyreTracker maintenanceQuery={maintenanceQuery} vehicle={vehicle} />
+          </TabsContent>
+          <TabsContent value="protection" className="animate-in fade-in duration-500">
+            <ProtectionTab vehicleId={vehicleId} />
           </TabsContent>
         </Tabs>
       </PageContainer>

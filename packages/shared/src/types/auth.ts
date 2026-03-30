@@ -11,6 +11,8 @@ import {
   RefreshTokenSchema,
   RegisterSchema,
   UserSchema,
+  VerifyEmailSchema,
+  ResendVerificationSchema,
 } from '../schemas';
 
 export type User = z.infer<typeof UserSchema>;
@@ -23,3 +25,13 @@ export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchem
 export type PasswordResetRequestResponse = z.infer<typeof PasswordResetRequestResponseSchema>;
 export type PasswordResetConfirmResponse = z.infer<typeof PasswordResetConfirmResponseSchema>;
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type VerifyEmailInput = z.infer<typeof VerifyEmailSchema>;
+export type ResendVerificationInput = z.infer<typeof ResendVerificationSchema>;
+
+export type VerifyEmailResponse = {
+  verified: boolean;
+};
+
+export type ResendVerificationResponse = {
+  accepted: boolean;
+};

@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceCategory } from '@prisma/client';
-import { MailService } from '../mail/mail.service';
+import { MailService } from '../../common/mail/mail.service';
 
 // Smart maintenance intervals (in km)
 const MAINTENANCE_INTERVALS: Partial<Record<MaintenanceCategory, number>> = {
@@ -84,22 +85,72 @@ export class MaintenanceAlertService {
         // If we just created it and it's unread, send a prompt email.
         const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
         if (user && !notification.isRead) {
-          await this.mailService.sendMaintenanceAlert(
-            user.email,
-            user.name,
-            `${vehicle.make} ${vehicle.model}`,
-            title,
+          await this.mailService.sendMaintenanceAlert({
+            email: user.email,
+            userName: user.name,
+            vehicleName: `${vehicle.make} ${vehicle.model}`,
+            alertTitle: title,
             message,
-          );
+          });
+        }
+      }
+    }
+
+    // 3. Check specific Reminders with dueOdometer
+    const reminders = await this.prisma.reminder.findMany({
+      where: {
+        vehicleId,
+        status: { not: 'completed' },
+        dueOdometer: { not: null },
+      },
+    });
+
+    for (const reminder of reminders) {
+      if (!reminder.dueOdometer) continue;
+
+      const remainingDistance = reminder.dueOdometer - currentOdo;
+
+      // Alert if due within 500km or already overdue
+      if (remainingDistance <= 500) {
+        const isOverdue = remainingDistance < 0;
+        const urgency = isOverdue ? 'error' : 'warning';
+        const title = isOverdue
+          ? `Overdue Reminder: ${reminder.title}`
+          : `Reminder Due Soon: ${reminder.title}`;
+        
+        const message = isOverdue
+          ? `Your vehicle has passed the ${reminder.dueOdometer}km mark set for "${reminder.title}". Please attend to this task.`
+          : `Your vehicle is approaching ${reminder.dueOdometer}km (approx. ${Math.round(remainingDistance)}km left) for "${reminder.title}".`;
+
+        const notification = await this.notificationsService.create({
+          userId: vehicle.userId,
+          vehicleId: vehicle.id,
+          title,
+          message,
+          type: urgency,
+          link: `/vehicles/${vehicle.id}?tab=reminders`,
+        });
+
+        const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
+        if (user && !notification.isRead) {
+          await this.mailService.sendMaintenanceAlert({
+            email: user.email,
+            userName: user.name,
+            vehicleName: `${vehicle.make} ${vehicle.model}`,
+            alertTitle: title,
+            message,
+          });
         }
       }
     }
   }
 
+
   /**
    * Trigger checks for ALL vehicles.
-   * In production, this would be a CRON job.
+   * This is called automatically every day at 6:00 AM.
    */
+  @Cron(process.env.MAINTENANCE_ALERT_CRON || '0 6 * * *')
   async runDailyChecks() {
     this.logger.log('Starting daily maintenance alert checks...');
     const vehicles = await this.prisma.vehicle.findMany({

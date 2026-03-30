@@ -99,7 +99,7 @@ export const appConfig = registerAs('app', () => ({
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
-  mailFrom: resolveOptionalString(process.env.MAIL_FROM),
+  mailFrom: resolveOptionalString(process.env.MAIL_FROM) ?? resolveOptionalString(process.env.SMTP_FROM),
   mailReplyTo: resolveOptionalString(process.env.MAIL_REPLY_TO),
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? 'vehicle-vault-attachments',

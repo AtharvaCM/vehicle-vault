@@ -25,6 +25,7 @@ import {
   vehicleRemindersRoute,
   vehiclesNewRoute,
   vehiclesRoute,
+  verifyEmailRoute,
 } from '@/routes';
 
 const protectedRouteTree = appRoute.addChildren([
@@ -52,6 +53,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   resetPasswordRoute,
+  verifyEmailRoute,
   protectedRouteTree,
 ]);
 

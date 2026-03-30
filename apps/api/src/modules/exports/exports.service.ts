@@ -58,6 +58,7 @@ export class ExportsService {
     id: string;
     name: string;
     email: string;
+    emailVerified: boolean;
     allowedCatalogSources: string[];
     createdAt: Date;
     updatedAt: Date;
@@ -66,6 +67,7 @@ export class ExportsService {
       id: user.id,
       name: user.name,
       email: user.email,
+      emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),

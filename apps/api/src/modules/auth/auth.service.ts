@@ -20,6 +20,8 @@ import {
   RefreshTokenSchema,
   RegisterSchema,
   UserSchema,
+  VerifyEmailSchema,
+  ResendVerificationSchema,
   type AuthResponse,
   type AuthUser,
   type LoginInput,
@@ -30,6 +32,8 @@ import {
   type RefreshTokenInput,
   type RegisterInput,
   type User,
+  type VerifyEmailInput,
+  type ResendVerificationInput,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -40,6 +44,8 @@ import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import type { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import type { RefreshTokenDto } from './dto/refresh-token.dto';
 import type { RegisterDto } from './dto/register.dto';
+import type { VerifyEmailDto } from './dto/verify-email.dto';
+import type { ResendVerificationDto } from './dto/resend-verification.dto';
 import type { JwtPayload, RefreshTokenPayload } from './auth.types';
 
 type UserRecord = {
@@ -49,6 +55,8 @@ type UserRecord = {
   passwordHash?: string;
   passwordResetTokenExpiresAt?: Date | null;
   passwordResetTokenHash?: string | null;
+  emailVerified: boolean;
+  emailVerificationTokenHash?: string | null;
   refreshTokenHash?: string | null;
   allowedCatalogSources: string[];
   createdAt: Date;
@@ -75,12 +83,21 @@ export class AuthService {
     const passwordHash = await hash(input.password, 12);
 
     try {
+      const verificationToken = randomBytes(32).toString('hex');
       const user = await this.prisma.user.create({
         data: {
           name: input.name.trim(),
           email: input.email.trim().toLowerCase(),
           passwordHash,
+          emailVerificationTokenHash: this.hashVerificationToken(verificationToken),
+          emailVerified: false,
         },
+      });
+
+      await this.mailService.sendVerificationEmail({
+        email: user.email,
+        name: user.name,
+        verificationUrl: this.buildVerificationUrl(verificationToken),
       });
 
       return this.buildAuthResponse(this.toUser(user));
@@ -229,6 +246,64 @@ export class AuthService {
     });
   }
 
+  async verifyEmail(payload: VerifyEmailDto) {
+    const input = this.validateVerifyEmailInput(payload);
+    const emailVerificationTokenHash = this.hashVerificationToken(input.token);
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        emailVerificationTokenHash,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid or expired verification token.');
+    }
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        emailVerified: true,
+        emailVerificationTokenHash: null,
+      },
+    });
+
+    return { verified: true };
+  }
+
+  async resendVerification(payload: ResendVerificationDto) {
+    const input = this.validateResendVerificationInput(payload);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: input.email.trim().toLowerCase(),
+      },
+    });
+
+    if (!user || user.emailVerified) {
+      return { accepted: true };
+    }
+
+    const verificationToken = randomBytes(32).toString('hex');
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        emailVerificationTokenHash: this.hashVerificationToken(verificationToken),
+      },
+    });
+
+    await this.mailService.sendVerificationEmail({
+      email: user.email,
+      name: user.name,
+      verificationUrl: this.buildVerificationUrl(verificationToken),
+    });
+
+    return { accepted: true };
+  }
+
   async logout(payload: RefreshTokenDto) {
     const input = this.validateRefreshTokenInput(payload);
     const refreshTokenPayload = await this.tryVerifyRefreshToken(input.refreshToken);
@@ -289,6 +364,13 @@ export class AuthService {
     }
 
     return this.toUser(user);
+  }
+
+  private buildVerificationUrl(token: string) {
+    const url = new URL('/verify-email', this.appConfigService.frontendOrigin);
+    url.searchParams.set('token', token);
+
+    return url.toString();
   }
 
   private buildPasswordResetUrl(token: string) {
@@ -379,6 +461,10 @@ export class AuthService {
     return createHash('sha256').update(token).digest('hex');
   }
 
+  private hashVerificationToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
   private validateRegisterInput(payload: RegisterDto): RegisterInput {
     return RegisterSchema.parse({
       ...payload,
@@ -413,11 +499,20 @@ export class AuthService {
     return RefreshTokenSchema.parse(payload);
   }
 
+  private validateVerifyEmailInput(payload: VerifyEmailDto): VerifyEmailInput {
+    return VerifyEmailSchema.parse(payload);
+  }
+
+  private validateResendVerificationInput(payload: ResendVerificationDto): ResendVerificationInput {
+    return ResendVerificationSchema.parse(payload);
+  }
+
   private toUser(user: UserRecord): User {
     return UserSchema.parse({
       id: user.id,
       name: user.name,
       email: user.email,
+      emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
@@ -429,6 +524,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
     });
   }

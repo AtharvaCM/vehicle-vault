@@ -1,9 +1,20 @@
 import type { PropsWithChildren } from 'react';
-
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { EmailVerificationScreen } from '@/features/auth/components/email-verification-screen';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 
 export function AppLayout({ children }: PropsWithChildren) {
+  const { user } = useAuth();
+
+  if (user && !user.emailVerified) {
+    return (
+      <div className="min-h-screen bg-slate-50/70 text-foreground">
+        <EmailVerificationScreen />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/70 text-foreground">
       <a

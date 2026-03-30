@@ -45,6 +45,7 @@ describe('AuthService', () => {
   type MailServiceMock = {
     isConfigured: boolean;
     sendPasswordResetEmail: ReturnType<typeof vi.fn>;
+    sendVerificationEmail: ReturnType<typeof vi.fn>;
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -73,6 +74,7 @@ describe('AuthService', () => {
   const mailService: MailServiceMock = {
     isConfigured: false,
     sendPasswordResetEmail: vi.fn(),
+    sendVerificationEmail: vi.fn(),
   };
 
   let service: AuthService;
@@ -82,6 +84,7 @@ describe('AuthService', () => {
     appConfigService.isProduction = false;
     mailService.isConfigured = false;
     mailService.sendPasswordResetEmail.mockResolvedValue(undefined);
+    mailService.sendVerificationEmail.mockResolvedValue(undefined);
     service = new AuthService(
       prisma as never,
       jwtService as never,
@@ -132,6 +135,7 @@ describe('AuthService', () => {
         name: 'Atharva',
         email: 'atharva@example.com',
         allowedCatalogSources: [],
+        emailVerified: false,
       },
     });
   });
@@ -245,6 +249,7 @@ describe('AuthService', () => {
         name: 'Atharva',
         email: 'atharva@example.com',
         allowedCatalogSources: [],
+        emailVerified: false,
       },
     });
   });
@@ -458,6 +463,7 @@ describe('AuthService', () => {
       name: 'Atharva',
       email: 'atharva@example.com',
       allowedCatalogSources: [],
+      emailVerified: false,
     });
   });
 });

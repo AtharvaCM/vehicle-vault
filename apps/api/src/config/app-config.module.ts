@@ -9,7 +9,7 @@ import { appConfig } from './app.config';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env.local', '.env', 'apps/api/.env.local', 'apps/api/.env'],
       load: [appConfig],
     }),
   ],

@@ -112,7 +112,7 @@ export class RemindersService {
       data: {
         vehicleId,
         title: input.title,
-        type: input.type,
+        type: input.type as any,
         dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
         dueOdometer: input.dueOdometer,
         notes: input.notes,
@@ -150,7 +150,7 @@ export class RemindersService {
       },
       data: {
         title: input.title,
-        type: input.type,
+        type: input.type as any,
         dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
         dueOdometer: input.dueOdometer,
         notes: input.notes,

@@ -4,6 +4,7 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button } from '@/components/ui/button';
 
+import { DashboardInsights } from '../components/dashboard-insights';
 import { DashboardOverview } from '../components/dashboard-overview';
 import { useDashboardSummary } from '../hooks/use-dashboard-summary';
 
@@ -52,7 +53,10 @@ export function DashboardPage() {
         title="Dashboard"
       />
 
-      <DashboardOverview summary={dashboardSummaryQuery.data} />
+      <div className="space-y-8">
+        <DashboardInsights insights={dashboardSummaryQuery.data.insights || []} />
+        <DashboardOverview summary={dashboardSummaryQuery.data} />
+      </div>
     </PageContainer>
   );
 }

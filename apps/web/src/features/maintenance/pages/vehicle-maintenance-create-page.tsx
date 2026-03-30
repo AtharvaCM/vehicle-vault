@@ -108,6 +108,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
           onDirtyChange={setIsDirty}
           onSubmit={handleCreateMaintenanceRecord}
           submitError={submitError}
+          vehicleId={vehicleId}
         />
 
         <Card>

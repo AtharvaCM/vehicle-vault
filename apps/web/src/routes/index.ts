@@ -21,3 +21,4 @@ export * from './vehicle-reminders-new-route';
 export * from './vehicle-reminders-route';
 export * from './vehicles-new-route';
 export * from './vehicles-route';
+export * from './verify-email-route';

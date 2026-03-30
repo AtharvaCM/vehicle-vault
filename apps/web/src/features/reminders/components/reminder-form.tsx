@@ -1,6 +1,7 @@
 import { ReminderCreateSchema, ReminderType } from '@vehicle-vault/shared';
 import { useEffect, useState } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { ApiError } from '@/lib/api/api-error';
 import { FormField } from '@/components/shared/form-field';
@@ -157,6 +158,33 @@ export function ReminderForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Quick fill</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Insurance', title: 'Insurance Renewal', type: ReminderType.Insurance },
+              { label: 'Road Tax', title: 'Road Tax Renewal', type: ReminderType.Tax },
+              { label: 'Annual Service', title: 'Annual Service', type: ReminderType.Service },
+              { label: 'Emission Check', title: 'Emission/Pollution Check', type: ReminderType.Inspection },
+            ].map((preset) => (
+              <Button
+                key={preset.label}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-lg border-slate-200 bg-slate-50 text-xs hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => {
+                  form.setValue('title', preset.title, { shouldDirty: true });
+                  form.setValue('type', preset.type, { shouldDirty: true });
+                  toast.info(`Applied ${preset.label} preset`);
+                }}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-3.5 md:grid-cols-2">
             <FormField

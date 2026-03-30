@@ -9,6 +9,7 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleIdParamDto } from './dto/vehicle-id-param.dto';
 
 import { VehicleInsightsService } from './vehicle-insights.service';
+import { MaintenanceForecastService } from './maintenance-forecast.service';
 import { VehiclesService } from './vehicles.service';
 
 @Controller('vehicles')
@@ -16,11 +17,17 @@ export class VehiclesController {
   constructor(
     private readonly vehiclesService: VehiclesService,
     private readonly vehicleInsightsService: VehicleInsightsService,
+    private readonly maintenanceForecastService: MaintenanceForecastService,
   ) {}
 
   @Get(':vehicleId/insights')
   async getVehicleInsights(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {
     return this.vehicleInsightsService.getOdometerInsights(user.id, params.vehicleId);
+  }
+
+  @Get(':vehicleId/forecast')
+  async getVehicleForecast(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {
+    return this.maintenanceForecastService.getUpcomingSuggestions(user.id, params.vehicleId);
   }
 
   @Get()

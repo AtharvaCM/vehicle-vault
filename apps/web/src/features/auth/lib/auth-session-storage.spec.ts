@@ -30,6 +30,7 @@ describe('authSessionStorage', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        emailVerified: true,
         allowedCatalogSources: [],
       },
     });
@@ -41,6 +42,7 @@ describe('authSessionStorage', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        emailVerified: true,
         allowedCatalogSources: [],
       },
     });
@@ -63,6 +65,7 @@ describe('authSessionStorage', () => {
           id: 'user-1',
           name: 'Atharva',
           email: 'atharva@example.com',
+          emailVerified: true,
           allowedCatalogSources: [],
         },
       }),
@@ -82,6 +85,7 @@ describe('authSessionStorage', () => {
           id: 'user-1',
           name: 'Atharva',
           email: 'atharva@example.com',
+          emailVerified: true,
           allowedCatalogSources: [],
         },
       }),
@@ -103,6 +107,7 @@ describe('authSessionStorage', () => {
           id: 'user-1',
           name: 'Atharva',
           email: 'atharva@example.com',
+          emailVerified: true,
           allowedCatalogSources: [],
         },
       }),
@@ -115,6 +120,7 @@ describe('authSessionStorage', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        emailVerified: true,
         allowedCatalogSources: [],
       },
     });
@@ -128,6 +134,7 @@ describe('authSessionStorage', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        emailVerified: true,
         allowedCatalogSources: [],
       },
     });

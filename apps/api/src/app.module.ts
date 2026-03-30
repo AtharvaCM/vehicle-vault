@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { PrismaModule } from './common/prisma/prisma.module';
 import { SupabaseStorageModule } from './common/storage/supabase-storage.module';
@@ -15,10 +16,13 @@ import { VehicleCatalogModule } from './modules/vehicle-catalog/vehicle-catalog.
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { MailModule } from './modules/mail/mail.module';
+import { MailModule } from './common/mail/mail.module';
+import { InsuranceModule } from './modules/insurance/insurance.module';
+import { WarrantyModule } from './modules/warranty/warranty.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     AppConfigModule,
     PrismaModule,
     SupabaseStorageModule,
@@ -35,6 +39,8 @@ import { MailModule } from './modules/mail/mail.module';
     MailModule,
     AttachmentsModule,
     ExportsModule,
+    InsuranceModule,
+    WarrantyModule,
   ],
 })
 export class AppModule {}

@@ -10,6 +10,8 @@ import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +45,18 @@ export class AuthController {
   @Post('password-reset/confirm')
   async resetPassword(@Body() body: PasswordResetConfirmDto) {
     return successResponse(await this.authService.resetPassword(body));
+  }
+
+  @Public()
+  @Post('verify-email')
+  async verifyEmail(@Body() body: VerifyEmailDto) {
+    return successResponse(await this.authService.verifyEmail(body));
+  }
+
+  @Public()
+  @Post('resend-verification')
+  async resendVerification(@Body() body: ResendVerificationDto) {
+    return successResponse(await this.authService.resendVerification(body));
   }
 
   @Public()

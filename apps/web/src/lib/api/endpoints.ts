@@ -7,6 +7,8 @@ export const endpoints = {
     passwordResetRequest: '/auth/password-reset/request',
     refresh: '/auth/refresh',
     register: '/auth/register',
+    verifyEmail: '/auth/verify-email',
+    resendVerification: '/auth/resend-verification',
   },
   dashboard: {
     summary: '/dashboard/summary',
@@ -19,6 +21,7 @@ export const endpoints = {
     create: '/vehicles',
     detail: (vehicleId: string) => `/vehicles/${vehicleId}`,
     insights: (vehicleId: string) => `/vehicles/${vehicleId}/insights`,
+    forecast: (vehicleId: string) => `/vehicles/${vehicleId}/forecast`,
   },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',

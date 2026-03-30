@@ -152,6 +152,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           submitLabel="Save Changes"
           submittingLabel="Saving changes..."
           successMessage="Maintenance record updated."
+          vehicleId={recordQuery.data?.vehicleId}
         />
 
         <Card>

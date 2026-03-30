@@ -115,6 +115,10 @@ export class AppConfigService {
     return this.configService.get<string>('GEMINI_API_KEY');
   }
 
+  get maintenanceAlertCron() {
+    return this.configService.get<string>('MAINTENANCE_ALERT_CRON') ?? '0 6 * * *';
+  }
+
   get smtpConfig() {
     return {
       host: this.configService.get<string>('SMTP_HOST'),

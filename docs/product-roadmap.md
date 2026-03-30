@@ -1,19 +1,23 @@
 # Product Roadmap
 
-Last updated: 2026-03-22
+Last updated: 2026-03-29
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
 ## Current Product State
 
-Vehicle Vault is now a working authenticated MVP with:
+Vehicle Vault is a feature-rich authenticated maintenance platform with:
 
 - email/password authentication
 - user-scoped vehicles, maintenance records, reminders, and attachments
 - Prisma + PostgreSQL persistence
 - cloud-backed attachment binaries via Supabase Storage
 - dashboard summary aggregation
-- receipt/document upload support
+- Gemini 1.5 Flash-backed Receipt OCR
+- Integrated Fuel Log tracking and cost analytics
+- Automated Maintenance Alerts (Cron-based)
+- Mandatory Email Verification for account security
+- "Quick Fill" presets for common service/reminder tasks
 - regression coverage across unit, integration, and Playwright smoke flows
 
 The product already supports the core ownership loop:
@@ -46,6 +50,7 @@ The product already supports the core ownership loop:
 - Authenticated session bootstrap in the frontend
 - Proactive frontend handling for expired or malformed JWT sessions
 - Route protection in the frontend and backend
+- Mandatory Email Verification flow with hard enforcement
 - User ownership enforced through vehicles and inherited by maintenance, reminders, dashboard data, and attachments
 
 ### Vehicles
@@ -102,6 +107,22 @@ The product already supports the core ownership loop:
 - Maintenance-detail attachment summary, upload guidance, and clearer action feedback
 - Open / download an attachment
 - Delete attachment metadata and stored object with confirmation
+- Gemini 1.5 Flash integration for automated receipt parsing (OCR)
+
+### Fuel Tracking & Analytics
+
+- Create fuel logs for a vehicle (odometer, quantity, price per unit)
+- Automatic total cost calculation and currency formatting
+- Premium "Registry Shell" layout for fuel log history
+- Usage-aware analytics including average km/L and cost-per-km metrics
+
+### Notifications
+
+- Real-time in-app Notification Center in the topbar
+- Automated maintenance alerts for upcoming and overdue reminders
+- Configurable Cron-based alert delivery (MAINTENANCE_ALERT_CRON)
+- Onboarding notifications for new vehicles
+- Status-based badge system and "Mark all as read" functionality
 
 ### Dashboard and Product Cohesion
 
@@ -117,6 +138,7 @@ The product already supports the core ownership loop:
 - Playwright smoke test for the main garage journey
 - GitHub Actions CI for lint, typecheck, build, test, and E2E smoke
 - Vercel frontend deployment
+- Stable production Docker runtime (resolved dependency hoisting issues)
 - GHCR-based API image publishing
 - Self-hosted API deployment path for Portainer + nginx proxy
 - Fresh-environment deployment checklist for database, storage, auth secrets, and build steps
@@ -127,6 +149,7 @@ The product already supports the core ownership loop:
 - Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
 - Unsaved-changes protection across core vehicle, maintenance, and reminder create/edit forms
 - URL-backed search, filter, and sort state across vehicles, maintenance, and reminder list views
+- "Quick Fill" presets for common maintenance (Oil, Brakes) and reminders (Insurance, Tax)
 
 ### Responsive and Accessibility
 
@@ -134,6 +157,15 @@ The product already supports the core ownership loop:
 - Mobile sheet navigation with account quick actions and close-on-select behavior
 - More resilient dialog, sheet, select, and dropdown sizing on smaller screens
 - Better small-screen action layout for forms and vehicle-detail tabs
+
+### Smart Utility & AI Forecasts (Milestone 3)
+
+- AI-driven maintenance forecasting based on usage trends (ADM)
+- Usage-aware reminder notifications (predicted odometer alerts)
+- Catalog-linked service intervals for factory-accurate suggestions
+- Premium "Smart Suggestions" UI in the maintenance form with Quick Apply
+- Global "Smart Feed" aggregation on the main dashboard
+- Specialized Tyre Health Tracker with 4-wheel visualization
 
 ### Export and Portability
 
@@ -150,30 +182,26 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No email verification flow
 - No OAuth/social auth
-- No background jobs or reminder delivery
 - No audit logging or admin tooling
 
-## Recommended Next Milestones
+### Milestone 5: Documentation & Coverage (Insurance & Warranty) (Next)
 
-These are ordered by product leverage, not by technical novelty.
+Goal: provide a specialized location for tracking vehicle protection and coverage.
 
-### Milestone 1: Catalog Coverage and Ingestion
+- **Insurance Management:** Store policy numbers, providers, premiums, and validity.
+- **Warranty Tracking:** Monitor manufacturer and extended warranty coverage (date and odometer based).
+- **Document Vault:** Centralized view for all vehicle-level documentation (Insurance copies, RC, Warranty cards).
+- **Auto-Reminders:** Link insurance expiry and warranty end dates to the notification system.
 
-Goal: turn the vehicle catalog from a curated seed into a maintainable regional data asset.
+### Milestone 6: Financial Insights & Reporting
 
-- Continue expanding India coverage toward rarer long-tail brands, discontinued trims, and deeper pre-2018 generation coverage
-- Keep expanding alias coverage alongside canonical rows so common shorthand, legacy trim labels, and owner slang continue resolving cleanly during vehicle entry
-- Add source-level operator ownership and tighter internal permissions around catalog review if this workflow expands beyond a small trusted team
-- Keep market onboarding data-driven so adding markets beyond India means seeding/importing new rows, not rewriting the vehicle-entry flow
+Goal: Provide deep visibility into ownership costs and facilitate resale value.
 
-### Milestone 2: Production Hardening
-
-Goal: close the highest-value operational gaps without expanding product scope too early.
-
-- Add email verification for new accounts
-- Decide on reminder delivery architecture before adding background jobs or notifications
+- **Visual Analytics:** Fuel vs Maintenance vs Insurance cost split (Pie/Donut charts)
+- **Ownership Trend:** Line charts for cost-per-month and cost-per-km over time
+- **PDF Service History:** Generate a professional Service Book report for records or resale
+- **Total Cost of Ownership (TCO):** Aggregated metrics across years for entire vehicle life
 
 ## Later Roadmap
 
@@ -181,13 +209,10 @@ These are intentionally deferred so the product does not sprawl too early.
 
 ### Product Enhancements
 
-- Service presets and templates
-- Reminder presets for common India-specific ownership tasks
 - Shared vehicle access for families or teams
 
 ### Smart Features
 
-- OCR invoice parsing
 - AI-assisted service entry suggestions
 - Usage-aware reminder suggestions
 - Vehicle-specific service schedule intelligence

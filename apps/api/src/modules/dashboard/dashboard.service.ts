@@ -6,6 +6,8 @@ import { MaintenanceService } from '../maintenance/maintenance.service';
 import { RemindersService } from '../reminders/reminders.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 
+import { MaintenanceForecastService } from '../vehicles/maintenance-forecast.service';
+
 const DASHBOARD_LIST_LIMIT = 5;
 
 @Injectable()
@@ -15,6 +17,7 @@ export class DashboardService {
     private readonly maintenanceService: MaintenanceService,
     private readonly remindersService: RemindersService,
     private readonly attachmentsService: AttachmentsService,
+    private readonly forecastService: MaintenanceForecastService,
   ) {}
 
   async getSummary(userId: string): Promise<DashboardSummary> {
@@ -24,6 +27,20 @@ export class DashboardService {
       this.remindersService.getAllReminders(userId),
       this.attachmentsService.listAllAttachments(userId),
     ]);
+
+    // Fetch individual vehicle insights
+    const allForecasts = await Promise.all(
+      vehicles.map((v) => this.forecastService.getUpcomingSuggestions(userId, v.id)),
+    );
+
+    const flattenedInsights = allForecasts
+      .flat()
+      .filter((i) => i.priority === 'high' || i.priority === 'medium')
+      .sort((a, b) => {
+        const priorities = { high: 0, medium: 1, low: 2 };
+        return priorities[a.priority] - priorities[b.priority];
+      })
+      .slice(0, DASHBOARD_LIST_LIMIT);
 
     const vehicleLabelById = Object.fromEntries(
       vehicles.map((vehicle) => [
@@ -53,6 +70,7 @@ export class DashboardService {
         completed: reminders.filter((reminder) => reminder.status === ReminderStatus.Completed)
           .length,
       },
+      insights: flattenedInsights,
       recentVehicles: vehicles.slice(0, DASHBOARD_LIST_LIMIT).map((vehicle) => ({
         id: vehicle.id,
         displayName: vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`,

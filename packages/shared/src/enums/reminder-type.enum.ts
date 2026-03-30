@@ -4,5 +4,8 @@ export enum ReminderType {
   Puc = 'puc',
   TyreRotation = 'tyre_rotation',
   Battery = 'battery',
+  Tax = 'tax',
+  Inspection = 'inspection',
+  Emission = 'emission',
   Custom = 'custom',
 }

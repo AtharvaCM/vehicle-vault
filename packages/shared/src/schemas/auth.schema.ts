@@ -28,6 +28,7 @@ export const UserSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(255),
+  emailVerified: z.boolean().default(false),
   allowedCatalogSources: z.array(z.string()).default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -37,7 +38,16 @@ export const AuthUserSchema = UserSchema.pick({
   id: true,
   name: true,
   email: true,
+  emailVerified: true,
   allowedCatalogSources: true,
+});
+
+export const VerifyEmailSchema = z.object({
+  token: z.string().trim().min(1),
+});
+
+export const ResendVerificationSchema = z.object({
+  email: z.string().trim().email().max(255),
 });
 
 export const AuthResponseSchema = z.object({

@@ -95,6 +95,8 @@ model Vehicle {
   maintenanceRecords MaintenanceRecord[]
   reminders          Reminder[]
   fuelLogs           FuelLog[]
+  insurancePolicies  InsurancePolicy[]
+  warranties         Warranty[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
@@ -172,6 +174,7 @@ model VehicleCatalogVariant {
   offeringOverrides VehicleCatalogVariantOfferingOverride[]
   spec              VehicleCatalogVariantSpec?
   vehicles          Vehicle[]
+  serviceIntervals  ServiceInterval[]
 
   @@unique([generationId, slug])
   @@index([generationId, name])
@@ -360,6 +363,8 @@ model User {
   refreshTokenHash String?   @db.Char(64)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  emailVerified    Boolean   @default(false)
+  emailVerificationTokenHash String? @db.Char(64)
   allowedCatalogSources String[] @default([])
   publishedCatalogImportRuns VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
   vehicles         Vehicle[]
@@ -450,4 +455,53 @@ model Notification {
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, isRead])
+}
+ 
+model ServiceInterval {
+  id                String                @id @default(uuid()) @db.Uuid
+  variantId         String                @db.Uuid
+  category          MaintenanceCategory
+  intervalKm        Int?
+  intervalMonths    Int?
+  priority          String                @default("medium") // low, medium, high
+  notes             String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  variant           VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+ 
+  @@index([variantId])
+}
+
+model InsurancePolicy {
+  id              String   @id @default(uuid()) @db.Uuid
+  vehicleId       String   @db.Uuid
+  provider        String   @db.VarChar(120)
+  policyNumber    String   @db.VarChar(80)
+  startDate       DateTime
+  endDate         DateTime
+  premiumAmount   Decimal? @db.Decimal(12, 2)
+  insuredValue    Decimal? @db.Decimal(12, 2)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, endDate])
+}
+
+model Warranty {
+  id              String   @id @default(uuid()) @db.Uuid
+  vehicleId       String   @db.Uuid
+  provider        String   @db.VarChar(120)
+  warrantyNumber  String?  @db.VarChar(80)
+  type            String   @db.VarChar(60) // manufacturer, extended, parts
+  startDate       DateTime
+  endDate         DateTime?
+  endOdometer     Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
 }

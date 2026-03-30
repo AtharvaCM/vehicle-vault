@@ -39,6 +39,8 @@ export type DashboardReminderSummary = {
   updatedAt: string;
 };
 
+import type { MaintenanceSuggestion } from './maintenance';
+
 export type DashboardSummary = {
   totalVehicles: number;
   totalMaintenanceRecords: number;
@@ -48,4 +50,5 @@ export type DashboardSummary = {
   recentMaintenance: DashboardMaintenanceSummary[];
   upcomingReminders: DashboardReminderSummary[];
   overdueReminders: DashboardReminderSummary[];
+  insights: MaintenanceSuggestion[];
 };
