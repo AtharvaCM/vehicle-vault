@@ -50,6 +50,7 @@ export class DashboardService {
     );
     const attachmentCountByRecordId = attachments.reduce<Record<string, number>>(
       (counts, attachment) => {
+        if (!attachment.maintenanceRecordId) return counts;
         counts[attachment.maintenanceRecordId] = (counts[attachment.maintenanceRecordId] ?? 0) + 1;
 
         return counts;
