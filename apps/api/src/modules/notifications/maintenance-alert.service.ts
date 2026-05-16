@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { NotificationsService } from './notifications.service';
 import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceCategory } from '@prisma/client';
-import { MailService } from '../../common/mail/mail.service';
+
+const DOCUMENT_EXPIRY_WINDOW_DAYS = 7;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Smart maintenance intervals (in km)
 const MAINTENANCE_INTERVALS: Partial<Record<MaintenanceCategory, number>> = {
@@ -25,10 +27,9 @@ export class MaintenanceAlertService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsService: NotificationsService,
     private readonly vehicleInsightsService: VehicleInsightsService,
-    private readonly mailService: MailService,
     private readonly notifyService: NotifyService,
+    private readonly vehicleDocumentsService: VehicleDocumentsService,
   ) {}
 
   /**
@@ -100,62 +101,28 @@ export class MaintenanceAlertService {
       }
     }
 
-    // 4. Check Insurance Policies for expiry (7-day reminder)
-    // Slice 1c migrates this to NotifyService via document-expiring template.
-    await this.checkInsurancePolicies(vehicle.userId, vehicleId);
-  }
+    // 4. Document expiry (insurance, warranty, future kinds).
+    // Range query replaces the previous 1-day cron slice — alerts no longer
+    // drop silently when the cron drifts.
+    const expiring = await this.vehicleDocumentsService.findExpiring(
+      vehicle.userId,
+      DOCUMENT_EXPIRY_WINDOW_DAYS,
+    );
 
-  private async checkInsurancePolicies(userId: string, vehicleId: string) {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const inSevenDaysStart = new Date(todayStart);
-    inSevenDaysStart.setDate(todayStart.getDate() + 7);
-
-    const inSevenDaysEnd = new Date(inSevenDaysStart);
-    inSevenDaysEnd.setDate(inSevenDaysEnd.getDate() + 1);
-
-    const policies = await this.prisma.insurancePolicy.findMany({
-      where: {
-        vehicleId,
-        endDate: {
-          gte: inSevenDaysStart,
-          lt: inSevenDaysEnd,
-        },
-      },
-      include: {
-        vehicle: true,
-      },
-    });
-
-    for (const policy of policies) {
-      const title = `Insurance Expiring Soon (7-day reminder): ${policy.provider}`;
-      const expiryDate = policy.endDate.toLocaleDateString('en-IN', {
-        dateStyle: 'medium',
-        timeZone: 'Asia/Kolkata',
+    for (const doc of expiring) {
+      if (doc.vehicleId !== vehicleId) continue;
+      if (!doc.endDate) continue;
+      const daysUntilExpiry = Math.max(
+        0,
+        Math.ceil((doc.endDate.getTime() - today.getTime()) / MS_PER_DAY),
+      );
+      await this.notifyService.raise(vehicle.userId, doc.vehicleId, 'document-expiring', {
+        document: doc,
+        daysUntilExpiry,
       });
-
-      const message = `Your insurance policy for ${policy.vehicle.make} ${policy.vehicle.model} with ${policy.provider} (Policy: ${policy.policyNumber}) is expiring in 7 days on ${expiryDate}. Please ensure you renew it in time.`;
-
-      const notification = await this.notificationsService.create({
-        userId,
-        vehicleId,
-        title,
-        message,
-        type: 'warning',
-        link: `/vehicles/${vehicleId}?tab=protection`,
-      });
-
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      if (user && !notification.isRead) {
-        await this.mailService.sendMaintenanceAlert({
-          email: user.email,
-          userName: user.name,
-          vehicleName: `${policy.vehicle.make} ${policy.vehicle.model}`,
-          alertTitle: title,
-          message,
-        });
-      }
     }
   }
 
