@@ -537,6 +537,8 @@ model Notification {
   id          String   @id @default(uuid()) @db.Uuid
   userId      String   @db.Uuid
   vehicleId   String?  @db.Uuid
+  kind        String   @default("legacy") @db.VarChar(60)
+  dedupKey    String?  @db.VarChar(160)
   title       String   @db.VarChar(120)
   message     String   @db.Text
   type        String   @default("info") // info, warning, success, error
@@ -548,6 +550,7 @@ model Notification {
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, isRead])
+  @@index([userId, kind, createdAt(sort: Desc)])
 }
  
 model ServiceInterval {
