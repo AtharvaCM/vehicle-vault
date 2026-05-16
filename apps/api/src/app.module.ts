@@ -19,6 +19,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MailModule } from './common/mail/mail.module';
 import { InsuranceModule } from './modules/insurance/insurance.module';
 import { WarrantyModule } from './modules/warranty/warranty.module';
+import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { WarrantyModule } from './modules/warranty/warranty.module';
     ExportsModule,
     InsuranceModule,
     WarrantyModule,
+    VehicleDocumentsModule,
   ],
 })
 export class AppModule {}
