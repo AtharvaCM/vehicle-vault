@@ -3,10 +3,15 @@ import type { Notification, User } from '@prisma/client';
 /**
  * Every typed alert flowing through {@link NotifyService}.
  *
- * Extended by future slices (maintenance-overdue, reminder-due, reminder-overdue,
- * document-expiring). Keep `AlertPayloads` in lockstep when adding a kind.
+ * Extended by future slices (document-expiring lands with the
+ * VehicleDocument deepening). Keep `AlertPayloads` in lockstep when
+ * adding a kind.
  */
-export type AlertKind = 'maintenance-due';
+export type AlertKind =
+  | 'maintenance-due'
+  | 'maintenance-overdue'
+  | 'reminder-due'
+  | 'reminder-overdue';
 
 export type MaintenanceDuePayload = {
   vehicleId: string;
@@ -14,8 +19,34 @@ export type MaintenanceDuePayload = {
   remainingDistanceKm: number;
 };
 
+export type MaintenanceOverduePayload = {
+  vehicleId: string;
+  category: string;
+  /** Negative or zero when overdue; absolute value is the distance past the interval. */
+  remainingDistanceKm: number;
+};
+
+export type ReminderDuePayload = {
+  reminderId: string;
+  vehicleId: string;
+  title: string;
+  dueOdometer: number;
+  remainingDistanceKm: number;
+};
+
+export type ReminderOverduePayload = {
+  reminderId: string;
+  vehicleId: string;
+  title: string;
+  dueOdometer: number;
+  remainingDistanceKm: number;
+};
+
 export type AlertPayloads = {
   'maintenance-due': MaintenanceDuePayload;
+  'maintenance-overdue': MaintenanceOverduePayload;
+  'reminder-due': ReminderDuePayload;
+  'reminder-overdue': ReminderOverduePayload;
 };
 
 export type NotificationUrgency = 'info' | 'warning' | 'success' | 'error';
