@@ -1,0 +1,32 @@
+-- Supabase exposes the `public` schema through PostgREST by default.
+-- This app talks to Postgres through Prisma, so until we explicitly need
+-- client-side PostgREST access these tables should be deny-by-default.
+
+ALTER TABLE "Vehicle" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "MaintenanceRecord" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "MaintenanceLineItem" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Reminder" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Attachment" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AttachmentExtraction" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "FuelLog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Notification" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "InsurancePolicy" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Warranty" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "VehicleCatalogMake" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogModel" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogGeneration" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogVariant" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogVariantSpec" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogVariantOffering" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogVariantOfferingOverride" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogMakeAlias" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogModelAlias" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogGenerationAlias" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogVariantAlias" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ServiceInterval" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogImportRun" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VehicleCatalogImportSnapshot" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "_prisma_migrations" ENABLE ROW LEVEL SECURITY;
