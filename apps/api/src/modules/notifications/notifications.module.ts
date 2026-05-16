@@ -8,6 +8,9 @@ import { NotificationsService } from './notifications.service';
 import { NotifyService } from './notify.service';
 import { EmailChannel } from './channels/email.channel';
 import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
+import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
+import { ReminderDueTemplate } from './templates/reminder-due.template';
+import { ReminderOverdueTemplate } from './templates/reminder-overdue.template';
 import {
   ALERT_TEMPLATES,
   NOTIFICATION_CHANNELS,
@@ -24,13 +27,29 @@ import {
     MaintenanceAlertService,
     NotifyService,
     MaintenanceDueTemplate,
+    MaintenanceOverdueTemplate,
+    ReminderDueTemplate,
+    ReminderOverdueTemplate,
     EmailChannel,
     {
       provide: ALERT_TEMPLATES,
-      useFactory: (maintenanceDue: MaintenanceDueTemplate): AlertTemplate<AlertKind>[] => [
+      useFactory: (
+        maintenanceDue: MaintenanceDueTemplate,
+        maintenanceOverdue: MaintenanceOverdueTemplate,
+        reminderDue: ReminderDueTemplate,
+        reminderOverdue: ReminderOverdueTemplate,
+      ): AlertTemplate<AlertKind>[] => [
         maintenanceDue,
+        maintenanceOverdue,
+        reminderDue,
+        reminderOverdue,
       ],
-      inject: [MaintenanceDueTemplate],
+      inject: [
+        MaintenanceDueTemplate,
+        MaintenanceOverdueTemplate,
+        ReminderDueTemplate,
+        ReminderOverdueTemplate,
+      ],
     },
     {
       provide: NOTIFICATION_CHANNELS,

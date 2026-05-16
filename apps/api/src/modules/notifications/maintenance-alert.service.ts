@@ -64,40 +64,12 @@ export class MaintenanceAlertService {
 
       // Alert if due within 500km or already overdue
       if (remainingDistance <= 500) {
-        const isOverdue = remainingDistance < 0;
-
-        if (!isOverdue) {
-          await this.notifyService.raise(vehicle.userId, vehicle.id, 'maintenance-due', {
-            vehicleId: vehicle.id,
-            category,
-            remainingDistanceKm: remainingDistance,
-          });
-          continue;
-        }
-
-        // Overdue path remains inline until slice 4b migrates it to NotifyService.
-        const title = `Overdue Service: ${this.formatLabel(category)}`;
-        const message = `Your ${this.formatLabel(category)} is overdue by approx. ${Math.abs(Math.round(remainingDistance))} km. Please schedule service soon.`;
-
-        const notification = await this.notificationsService.create({
-          userId: vehicle.userId,
+        const kind = remainingDistance < 0 ? 'maintenance-overdue' : 'maintenance-due';
+        await this.notifyService.raise(vehicle.userId, vehicle.id, kind, {
           vehicleId: vehicle.id,
-          title,
-          message,
-          type: 'error',
-          link: `/vehicles/${vehicle.id}?tab=maintenance`,
+          category,
+          remainingDistanceKm: remainingDistance,
         });
-
-        const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
-        if (user && !notification.isRead) {
-          await this.mailService.sendMaintenanceAlert({
-            email: user.email,
-            userName: user.name,
-            vehicleName: `${vehicle.make} ${vehicle.model}`,
-            alertTitle: title,
-            message,
-          });
-        }
       }
     }
 
@@ -117,39 +89,19 @@ export class MaintenanceAlertService {
 
       // Alert if due within 500km or already overdue
       if (remainingDistance <= 500) {
-        const isOverdue = remainingDistance < 0;
-        const urgency = isOverdue ? 'error' : 'warning';
-        const title = isOverdue
-          ? `Overdue Reminder: ${reminder.title}`
-          : `Reminder Due Soon: ${reminder.title}`;
-        
-        const message = isOverdue
-          ? `Your vehicle has passed the ${reminder.dueOdometer}km mark set for "${reminder.title}". Please attend to this task.`
-          : `Your vehicle is approaching ${reminder.dueOdometer}km (approx. ${Math.round(remainingDistance)}km left) for "${reminder.title}".`;
-
-        const notification = await this.notificationsService.create({
-          userId: vehicle.userId,
+        const kind = remainingDistance < 0 ? 'reminder-overdue' : 'reminder-due';
+        await this.notifyService.raise(vehicle.userId, vehicle.id, kind, {
+          reminderId: reminder.id,
           vehicleId: vehicle.id,
-          title,
-          message,
-          type: urgency,
-          link: `/vehicles/${vehicle.id}?tab=reminders`,
+          title: reminder.title,
+          dueOdometer: reminder.dueOdometer,
+          remainingDistanceKm: remainingDistance,
         });
-
-        const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
-        if (user && !notification.isRead) {
-          await this.mailService.sendMaintenanceAlert({
-            email: user.email,
-            userName: user.name,
-            vehicleName: `${vehicle.make} ${vehicle.model}`,
-            alertTitle: title,
-            message,
-          });
-        }
       }
     }
 
     // 4. Check Insurance Policies for expiry (7-day reminder)
+    // Slice 1c migrates this to NotifyService via document-expiring template.
     await this.checkInsurancePolicies(vehicle.userId, vehicleId);
   }
 
@@ -227,12 +179,5 @@ export class MaintenanceAlertService {
       }
     }
     this.logger.log(`Completed alert checks for ${vehicles.length} vehicles.`);
-  }
-
-  private formatLabel(category: string) {
-    return category
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
   }
 }
