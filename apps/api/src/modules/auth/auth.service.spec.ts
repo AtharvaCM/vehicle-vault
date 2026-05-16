@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 import {
   ConflictException,
   ServiceUnavailableException,
@@ -9,10 +7,6 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from './auth.service';
-
-function hashRefreshToken(refreshToken: string) {
-  return createHash('sha256').update(refreshToken).digest('hex');
-}
 
 describe('AuthService', () => {
   type UserDelegateMock = {
@@ -49,6 +43,10 @@ describe('AuthService', () => {
     consumeEmailVerification: ReturnType<typeof vi.fn>;
     issuePasswordReset: ReturnType<typeof vi.fn>;
     consumePasswordReset: ReturnType<typeof vi.fn>;
+    rotateRefreshToken: ReturnType<typeof vi.fn>;
+    verifyRefreshToken: ReturnType<typeof vi.fn>;
+    tryVerifyRefreshToken: ReturnType<typeof vi.fn>;
+    revokeRefreshToken: ReturnType<typeof vi.fn>;
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -85,6 +83,10 @@ describe('AuthService', () => {
     consumeEmailVerification: vi.fn(),
     issuePasswordReset: vi.fn(),
     consumePasswordReset: vi.fn(),
+    rotateRefreshToken: vi.fn(),
+    verifyRefreshToken: vi.fn(),
+    tryVerifyRefreshToken: vi.fn(),
+    revokeRefreshToken: vi.fn(),
   };
 
   const passwordResetExpiresAt = new Date('2026-03-20T00:30:00.000Z');
@@ -117,6 +119,9 @@ describe('AuthService', () => {
       email: 'atharva@example.com',
       name: 'Atharva',
     });
+    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
+    tokenService.tryVerifyRefreshToken.mockResolvedValue(null);
+    tokenService.revokeRefreshToken.mockResolvedValue(undefined);
     service = new AuthService(
       prisma as never,
       jwtService as never,
@@ -134,10 +139,8 @@ describe('AuthService', () => {
       createdAt,
       updatedAt: createdAt,
     });
-    prisma.user.update = vi.fn().mockResolvedValue(undefined);
-    jwtService.signAsync
-      .mockResolvedValueOnce('access-token')
-      .mockResolvedValueOnce('refresh-token');
+    jwtService.signAsync.mockResolvedValueOnce('access-token');
+    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
 
     const result = await service.register({
       name: '  Atharva  ',
@@ -165,14 +168,9 @@ describe('AuthService', () => {
           'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
       }),
     );
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: {
-        id: 'user-1',
-      },
-      data: {
-        refreshTokenHash: hashRefreshToken('refresh-token'),
-      },
-    });
+    expect(tokenService.rotateRefreshToken).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1', email: 'atharva@example.com' }),
+    );
     expect(result).toEqual({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
@@ -225,10 +223,8 @@ describe('AuthService', () => {
       createdAt,
       updatedAt: createdAt,
     });
-    prisma.user.update = vi.fn().mockResolvedValue(undefined);
-    jwtService.signAsync
-      .mockResolvedValueOnce('access-token')
-      .mockResolvedValueOnce('refresh-token');
+    jwtService.signAsync.mockResolvedValueOnce('access-token');
+    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
 
     const result = await service.login({
       email: '  ATHARVA@example.com ',
@@ -240,53 +236,33 @@ describe('AuthService', () => {
         email: 'atharva@example.com',
       },
     });
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: {
-        id: 'user-1',
-      },
-      data: {
-        refreshTokenHash: hashRefreshToken('refresh-token'),
-      },
-    });
+    expect(tokenService.rotateRefreshToken).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1' }),
+    );
     expect(result.accessToken).toBe('access-token');
     expect(result.refreshToken).toBe('refresh-token');
   });
 
-  it('refreshes the session when the supplied refresh token matches the stored hash', async () => {
-    prisma.user.findUnique = vi.fn().mockResolvedValue({
+  it('refreshes the session via TokenService.verifyRefreshToken and rotates the refresh credential', async () => {
+    tokenService.verifyRefreshToken.mockResolvedValue({
       id: 'user-1',
       name: 'Atharva',
       email: 'atharva@example.com',
-      refreshTokenHash: hashRefreshToken('current-refresh-token'),
       createdAt,
       updatedAt: createdAt,
     });
-    prisma.user.update = vi.fn().mockResolvedValue(undefined);
-    jwtService.verifyAsync = vi.fn().mockResolvedValue({
-      sub: 'user-1',
-      type: 'refresh',
-    });
-    jwtService.signAsync
-      .mockResolvedValueOnce('next-access-token')
-      .mockResolvedValueOnce('next-refresh-token');
+    jwtService.signAsync.mockResolvedValueOnce('next-access-token');
+    tokenService.rotateRefreshToken.mockResolvedValue('next-refresh-token');
 
     const result = await service.refresh({
       refreshToken: 'current-refresh-token',
     });
 
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({
-      where: {
-        id: 'user-1',
-      },
-    });
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: {
-        id: 'user-1',
-      },
-      data: {
-        refreshTokenHash: hashRefreshToken('next-refresh-token'),
-      },
-    });
+    expect(tokenService.verifyRefreshToken).toHaveBeenCalledWith('current-refresh-token');
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(tokenService.rotateRefreshToken).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1' }),
+    );
     expect(result).toEqual({
       accessToken: 'next-access-token',
       refreshToken: 'next-refresh-token',
@@ -300,40 +276,27 @@ describe('AuthService', () => {
     });
   });
 
-  it('rejects refresh when the token hash does not match the stored session', async () => {
-    prisma.user.findUnique = vi.fn().mockResolvedValue({
-      id: 'user-1',
-      name: 'Atharva',
-      email: 'atharva@example.com',
-      refreshTokenHash: hashRefreshToken('different-token'),
-      createdAt,
-      updatedAt: createdAt,
-    });
-    jwtService.verifyAsync = vi.fn().mockResolvedValue({
-      sub: 'user-1',
-      type: 'refresh',
-    });
+  it('rejects refresh when TokenService.verifyRefreshToken throws', async () => {
+    tokenService.verifyRefreshToken.mockRejectedValueOnce(
+      new UnauthorizedException('Invalid refresh token.'),
+    );
 
     await expect(
       service.refresh({
         refreshToken: 'current-refresh-token',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(tokenService.rotateRefreshToken).not.toHaveBeenCalled();
   });
 
   it('clears the stored refresh token hash on logout', async () => {
-    prisma.user.findUnique = vi.fn().mockResolvedValue({
+    tokenService.tryVerifyRefreshToken.mockResolvedValueOnce({
       id: 'user-1',
       name: 'Atharva',
       email: 'atharva@example.com',
-      refreshTokenHash: hashRefreshToken('current-refresh-token'),
+      refreshTokenHash: 'stored-refresh-hash',
       createdAt,
       updatedAt: createdAt,
-    });
-    prisma.user.update = vi.fn().mockResolvedValue(undefined);
-    jwtService.verifyAsync = vi.fn().mockResolvedValue({
-      sub: 'user-1',
-      type: 'refresh',
     });
 
     await expect(
@@ -342,14 +305,20 @@ describe('AuthService', () => {
       }),
     ).resolves.toBeUndefined();
 
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: {
-        id: 'user-1',
-      },
-      data: {
-        refreshTokenHash: null,
-      },
-    });
+    expect(tokenService.tryVerifyRefreshToken).toHaveBeenCalledWith('current-refresh-token');
+    expect(tokenService.revokeRefreshToken).toHaveBeenCalledWith('user-1');
+  });
+
+  it('silently no-ops on logout when TokenService rejects the refresh token', async () => {
+    tokenService.tryVerifyRefreshToken.mockResolvedValueOnce(null);
+
+    await expect(
+      service.logout({
+        refreshToken: 'bogus-token',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(tokenService.revokeRefreshToken).not.toHaveBeenCalled();
   });
 
   it('delegates issuance to TokenService and returns the preview token outside production', async () => {

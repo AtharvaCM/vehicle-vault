@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import {
   ConflictException,
@@ -47,7 +45,7 @@ import type { RefreshTokenDto } from './dto/refresh-token.dto';
 import type { RegisterDto } from './dto/register.dto';
 import type { VerifyEmailDto } from './dto/verify-email.dto';
 import type { ResendVerificationDto } from './dto/resend-verification.dto';
-import type { JwtPayload, RefreshTokenPayload } from './auth.types';
+import type { JwtPayload } from './auth.types';
 
 type UserRecord = {
   id: string;
@@ -65,7 +63,6 @@ type UserRecord = {
 };
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
-const INVALID_REFRESH_TOKEN_MESSAGE = 'Invalid refresh token.';
 const PASSWORD_RESET_UNAVAILABLE_MESSAGE = 'Password reset is unavailable right now.';
 
 @Injectable()
@@ -133,21 +130,7 @@ export class AuthService {
 
   async refresh(payload: RefreshTokenDto) {
     const input = this.validateRefreshTokenInput(payload);
-    const refreshTokenPayload = await this.verifyRefreshToken(input.refreshToken);
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: refreshTokenPayload.sub,
-      },
-    });
-
-    if (!user || !user.refreshTokenHash) {
-      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
-    }
-
-    if (user.refreshTokenHash !== this.hashRefreshToken(input.refreshToken)) {
-      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
-    }
-
+    const user = await this.tokenService.verifyRefreshToken(input.refreshToken);
     return this.buildAuthResponse(this.toUser(user));
   }
 
@@ -252,34 +235,9 @@ export class AuthService {
 
   async logout(payload: RefreshTokenDto) {
     const input = this.validateRefreshTokenInput(payload);
-    const refreshTokenPayload = await this.tryVerifyRefreshToken(input.refreshToken);
-
-    if (!refreshTokenPayload) {
-      return;
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: refreshTokenPayload.sub,
-      },
-    });
-
-    if (!user?.refreshTokenHash) {
-      return;
-    }
-
-    if (user.refreshTokenHash !== this.hashRefreshToken(input.refreshToken)) {
-      return;
-    }
-
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        refreshTokenHash: null,
-      },
-    });
+    const user = await this.tokenService.tryVerifyRefreshToken(input.refreshToken);
+    if (!user) return;
+    await this.tokenService.revokeRefreshToken(user.id);
   }
 
   async getMe(userId: string) {
@@ -315,9 +273,7 @@ export class AuthService {
   private async buildAuthResponse(user: User): Promise<AuthResponse> {
     const authUser = this.toAuthUser(user);
     const accessToken = await this.signAccessToken(authUser);
-    const refreshToken = await this.signRefreshToken(authUser);
-
-    await this.persistRefreshToken(user.id, refreshToken);
+    const refreshToken = await this.tokenService.rotateRefreshToken(authUser);
 
     return AuthResponseSchema.parse({
       user: authUser,
@@ -334,59 +290,6 @@ export class AuthService {
     };
 
     return this.jwtService.signAsync(payload);
-  }
-
-  private async signRefreshToken(authUser: AuthUser) {
-    const payload: RefreshTokenPayload = {
-      sub: authUser.id,
-      type: 'refresh',
-    };
-
-    return this.jwtService.signAsync(payload, {
-      secret: this.appConfigService.jwtRefreshSecret,
-      expiresIn: this.appConfigService.jwtRefreshExpiresIn as never,
-    });
-  }
-
-  private async verifyRefreshToken(refreshToken: string) {
-    const payload = await this.tryVerifyRefreshToken(refreshToken);
-
-    if (!payload) {
-      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
-    }
-
-    return payload;
-  }
-
-  private async tryVerifyRefreshToken(refreshToken: string) {
-    try {
-      const payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(refreshToken, {
-        secret: this.appConfigService.jwtRefreshSecret,
-      });
-
-      if (payload.type !== 'refresh' || !payload.sub) {
-        return null;
-      }
-
-      return payload;
-    } catch {
-      return null;
-    }
-  }
-
-  private async persistRefreshToken(userId: string, refreshToken: string) {
-    await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        refreshTokenHash: this.hashRefreshToken(refreshToken),
-      },
-    });
-  }
-
-  private hashRefreshToken(refreshToken: string) {
-    return createHash('sha256').update(refreshToken).digest('hex');
   }
 
   private validateRegisterInput(payload: RegisterDto): RegisterInput {
