@@ -64,12 +64,8 @@ export const queryKeys = {
     byVehicle: (vehicleId: string) => [...queryKeys.reminders.all(), 'vehicle', vehicleId] as const,
     detail: (reminderId: string) => [...queryKeys.reminders.all(), 'detail', reminderId] as const,
   },
-  insurance: {
-    all: () => ['insurance'] as const,
-    byVehicle: (vehicleId: string) => [...queryKeys.insurance.all(), 'vehicle', vehicleId] as const,
-  },
-  warranty: {
-    all: () => ['warranty'] as const,
-    byVehicle: (vehicleId: string) => [...queryKeys.warranty.all(), 'vehicle', vehicleId] as const,
+  vehicleDocuments: {
+    all: () => ['vehicleDocuments'] as const,
+    byVehicle: (vehicleId: string, kind?: string) => [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId, kind ?? 'all'] as const,
   },
 };
