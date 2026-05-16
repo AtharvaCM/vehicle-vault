@@ -168,6 +168,12 @@ export class AttachmentsService {
       throw new BadRequestException('This extraction does not contain enough data to apply.');
     }
 
+    if (!attachment.maintenanceRecordId) {
+      throw new BadRequestException(
+        'This attachment is not linked to a maintenance record and cannot apply extractions.',
+      );
+    }
+
     return this.maintenanceService.updateRecord(
       userId,
       attachment.maintenanceRecordId,
@@ -354,6 +360,13 @@ export class AttachmentsService {
   }
 
   private toAttachment(attachment: AttachmentWithExtraction) {
+    // The shared AttachmentSchema currently models maintenance-owned attachments only.
+    // Slice 1b introduces a VehicleDocument-owned variant with its own mapper.
+    if (!attachment.maintenanceRecordId) {
+      throw new Error(
+        `Cannot map attachment ${attachment.id}: not linked to a maintenance record.`,
+      );
+    }
     return {
       id: attachment.id,
       maintenanceRecordId: attachment.maintenanceRecordId,
