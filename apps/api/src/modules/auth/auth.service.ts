@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import {
@@ -66,9 +66,7 @@ type UserRecord = {
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
 const INVALID_REFRESH_TOKEN_MESSAGE = 'Invalid refresh token.';
-const INVALID_PASSWORD_RESET_TOKEN_MESSAGE = 'Invalid or expired password reset token.';
 const PASSWORD_RESET_UNAVAILABLE_MESSAGE = 'Password reset is unavailable right now.';
-const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -174,26 +172,15 @@ export class AuthService {
       });
     }
 
-    const resetToken = randomBytes(32).toString('hex');
-    const passwordResetTokenExpiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS);
-
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        passwordResetTokenExpiresAt,
-        passwordResetTokenHash: this.hashPasswordResetToken(resetToken),
-      },
-    });
+    const issued = await this.tokenService.issuePasswordReset(user.id);
 
     if (this.mailService.isConfigured) {
       try {
         await this.mailService.sendPasswordResetEmail({
           email: user.email,
-          expiresAt: passwordResetTokenExpiresAt,
+          expiresAt: issued.expiresAt,
           name: user.name,
-          resetUrl: this.buildPasswordResetUrl(resetToken),
+          resetUrl: issued.url,
         });
       } catch (error) {
         if (this.appConfigService.isProduction) {
@@ -207,27 +194,15 @@ export class AuthService {
       ...(this.appConfigService.isProduction
         ? {}
         : {
-            expiresAt: passwordResetTokenExpiresAt.toISOString(),
-            previewToken: resetToken,
+            expiresAt: issued.expiresAt.toISOString(),
+            previewToken: issued.token,
           }),
     });
   }
 
   async resetPassword(payload: PasswordResetConfirmDto): Promise<PasswordResetConfirmResponse> {
     const input = this.validatePasswordResetConfirmInput(payload);
-    const passwordResetTokenHash = this.hashPasswordResetToken(input.token);
-    const user = await this.prisma.user.findFirst({
-      where: {
-        passwordResetTokenExpiresAt: {
-          gt: new Date(),
-        },
-        passwordResetTokenHash,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(INVALID_PASSWORD_RESET_TOKEN_MESSAGE);
-    }
+    const user = await this.tokenService.consumePasswordReset(input.token);
 
     const passwordHash = await hash(input.password, 12);
 
@@ -237,8 +212,6 @@ export class AuthService {
       },
       data: {
         passwordHash,
-        passwordResetTokenExpiresAt: null,
-        passwordResetTokenHash: null,
         refreshTokenHash: null,
       },
     });
@@ -339,13 +312,6 @@ export class AuthService {
     return this.toUser(user);
   }
 
-  private buildPasswordResetUrl(token: string) {
-    const resetUrl = new URL('/reset-password', this.appConfigService.frontendOrigin);
-    resetUrl.searchParams.set('token', token);
-
-    return resetUrl.toString();
-  }
-
   private async buildAuthResponse(user: User): Promise<AuthResponse> {
     const authUser = this.toAuthUser(user);
     const accessToken = await this.signAccessToken(authUser);
@@ -421,10 +387,6 @@ export class AuthService {
 
   private hashRefreshToken(refreshToken: string) {
     return createHash('sha256').update(refreshToken).digest('hex');
-  }
-
-  private hashPasswordResetToken(token: string) {
-    return createHash('sha256').update(token).digest('hex');
   }
 
   private validateRegisterInput(payload: RegisterDto): RegisterInput {
