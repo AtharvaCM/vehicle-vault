@@ -14,10 +14,6 @@ function hashRefreshToken(refreshToken: string) {
   return createHash('sha256').update(refreshToken).digest('hex');
 }
 
-function hashPasswordResetToken(token: string) {
-  return createHash('sha256').update(token).digest('hex');
-}
-
 describe('AuthService', () => {
   type UserDelegateMock = {
     create: ReturnType<typeof vi.fn>;
@@ -51,6 +47,8 @@ describe('AuthService', () => {
   type TokenServiceMock = {
     issueEmailVerification: ReturnType<typeof vi.fn>;
     consumeEmailVerification: ReturnType<typeof vi.fn>;
+    issuePasswordReset: ReturnType<typeof vi.fn>;
+    consumePasswordReset: ReturnType<typeof vi.fn>;
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -85,7 +83,11 @@ describe('AuthService', () => {
   const tokenService: TokenServiceMock = {
     issueEmailVerification: vi.fn(),
     consumeEmailVerification: vi.fn(),
+    issuePasswordReset: vi.fn(),
+    consumePasswordReset: vi.fn(),
   };
+
+  const passwordResetExpiresAt = new Date('2026-03-20T00:30:00.000Z');
 
   let service: AuthService;
 
@@ -98,8 +100,19 @@ describe('AuthService', () => {
     tokenService.issueEmailVerification.mockResolvedValue({
       token: 'verification-token',
       url: 'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
+      expiresAt: new Date('2026-03-27T00:00:00.000Z'),
     });
     tokenService.consumeEmailVerification.mockResolvedValue({
+      id: 'user-1',
+      email: 'atharva@example.com',
+      name: 'Atharva',
+    });
+    tokenService.issuePasswordReset.mockResolvedValue({
+      token: 'reset-token',
+      url: 'https://vehicle-vault-eight.vercel.app/reset-password?token=reset-token',
+      expiresAt: passwordResetExpiresAt,
+    });
+    tokenService.consumePasswordReset.mockResolvedValue({
       id: 'user-1',
       email: 'atharva@example.com',
       name: 'Atharva',
@@ -339,7 +352,7 @@ describe('AuthService', () => {
     });
   });
 
-  it('creates a password reset token preview for existing users outside production', async () => {
+  it('delegates issuance to TokenService and returns the preview token outside production', async () => {
     prisma.user.findUnique = vi.fn().mockResolvedValue({
       id: 'user-1',
       name: 'Atharva',
@@ -347,7 +360,6 @@ describe('AuthService', () => {
       createdAt,
       updatedAt: createdAt,
     });
-    prisma.user.update = vi.fn().mockResolvedValue(undefined);
 
     const result = await service.requestPasswordReset({
       email: ' ATHARVA@example.com ',
@@ -358,22 +370,17 @@ describe('AuthService', () => {
         email: 'atharva@example.com',
       },
     });
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: {
-        id: 'user-1',
-      },
-      data: expect.objectContaining({
-        passwordResetTokenExpiresAt: expect.any(Date),
-        passwordResetTokenHash: expect.any(String),
-      }),
+    expect(tokenService.issuePasswordReset).toHaveBeenCalledWith('user-1');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      accepted: true,
+      previewToken: 'reset-token',
+      expiresAt: passwordResetExpiresAt.toISOString(),
     });
-    expect(result.accepted).toBe(true);
-    expect(result.previewToken).toMatch(/^[a-f0-9]{64}$/);
-    expect(result.expiresAt).toBeDefined();
     expect(mailService.sendPasswordResetEmail).not.toHaveBeenCalled();
   });
 
-  it('sends a real password reset email in production when smtp is configured', async () => {
+  it('sends a real password reset email in production using the TokenService url', async () => {
     appConfigService.isProduction = true;
     mailService.isConfigured = true;
     prisma.user.findUnique = vi.fn().mockResolvedValue({
@@ -383,7 +390,6 @@ describe('AuthService', () => {
       createdAt,
       updatedAt: createdAt,
     });
-    prisma.user.update = vi.fn().mockResolvedValue(undefined);
 
     const result = await service.requestPasswordReset({
       email: 'atharva@example.com',
@@ -392,15 +398,13 @@ describe('AuthService', () => {
     expect(result).toEqual({
       accepted: true,
     });
-    expect(mailService.sendPasswordResetEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: 'atharva@example.com',
-        name: 'Atharva',
-        resetUrl: expect.stringContaining(
-          'https://vehicle-vault-eight.vercel.app/reset-password?token=',
-        ),
-      }),
-    );
+    expect(tokenService.issuePasswordReset).toHaveBeenCalledWith('user-1');
+    expect(mailService.sendPasswordResetEmail).toHaveBeenCalledWith({
+      email: 'atharva@example.com',
+      name: 'Atharva',
+      resetUrl: 'https://vehicle-vault-eight.vercel.app/reset-password?token=reset-token',
+      expiresAt: passwordResetExpiresAt,
+    });
   });
 
   it('fails password reset requests in production when email delivery is not configured', async () => {
@@ -429,17 +433,7 @@ describe('AuthService', () => {
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
-  it('resets the password with a valid reset token and revokes refresh sessions', async () => {
-    prisma.user.findFirst = vi.fn().mockResolvedValue({
-      id: 'user-1',
-      name: 'Atharva',
-      email: 'atharva@example.com',
-      passwordResetTokenHash: hashPasswordResetToken('valid-reset-token'),
-      passwordResetTokenExpiresAt: new Date('2026-03-22T00:00:00.000Z'),
-      refreshTokenHash: hashRefreshToken('current-refresh-token'),
-      createdAt,
-      updatedAt: createdAt,
-    });
+  it('consumes the reset token via TokenService and revokes the refresh session', async () => {
     prisma.user.update = vi.fn().mockResolvedValue(undefined);
 
     const result = await service.resetPassword({
@@ -447,32 +441,28 @@ describe('AuthService', () => {
       password: 'updated-password123',
     });
 
-    expect(prisma.user.findFirst).toHaveBeenCalledWith({
-      where: {
-        passwordResetTokenExpiresAt: {
-          gt: expect.any(Date),
-        },
-        passwordResetTokenHash: hashPasswordResetToken('valid-reset-token'),
-      },
-    });
+    expect(tokenService.consumePasswordReset).toHaveBeenCalledWith('valid-reset-token');
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: {
         id: 'user-1',
       },
-      data: expect.objectContaining({
+      data: {
         passwordHash: expect.any(String),
-        passwordResetTokenExpiresAt: null,
-        passwordResetTokenHash: null,
         refreshTokenHash: null,
-      }),
+      },
     });
+    expect(prisma.user.update.mock.calls[0]?.[0]?.data.passwordHash).not.toBe(
+      'updated-password123',
+    );
     expect(result).toEqual({
       reset: true,
     });
   });
 
-  it('rejects password reset when the reset token is invalid or expired', async () => {
-    prisma.user.findFirst = vi.fn().mockResolvedValue(null);
+  it('rejects password reset when TokenService rejects the token', async () => {
+    tokenService.consumePasswordReset.mockRejectedValueOnce(
+      new UnauthorizedException('Invalid or expired password reset token.'),
+    );
 
     await expect(
       service.resetPassword({
@@ -480,6 +470,7 @@ describe('AuthService', () => {
         password: 'updated-password123',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it('delegates email verification to TokenService.consumeEmailVerification', async () => {

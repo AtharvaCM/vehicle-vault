@@ -3,7 +3,11 @@ import { createHash } from 'node:crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EMAIL_VERIFICATION_TTL_MS, TokenService } from './token.service';
+import {
+  EMAIL_VERIFICATION_TTL_MS,
+  PASSWORD_RESET_TTL_MS,
+  TokenService,
+} from './token.service';
 
 function hash(token: string) {
   return createHash('sha256').update(token).digest('hex');
@@ -155,6 +159,128 @@ describe('TokenService', () => {
       await service.consumeEmailVerification(token);
 
       await expect(service.consumeEmailVerification(token)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('issuePasswordReset', () => {
+    it('persists a hashed token with a 30-minute expiry and returns token + url + expiresAt', async () => {
+      const now = new Date('2026-05-16T12:00:00.000Z');
+      vi.useFakeTimers();
+      vi.setSystemTime(now);
+      prisma.user.update.mockResolvedValue(undefined);
+
+      const { token, url, expiresAt } = await service.issuePasswordReset('user-1');
+
+      expect(token).toMatch(/^[a-f0-9]{64}$/);
+      expect(url).toBe(
+        `https://vehicle-vault-eight.vercel.app/reset-password?token=${token}`,
+      );
+      expect(expiresAt).toEqual(new Date(now.getTime() + PASSWORD_RESET_TTL_MS));
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          passwordResetTokenHash: hash(token),
+          passwordResetTokenExpiresAt: expiresAt,
+        },
+      });
+    });
+
+    it('produces a different token on each call', async () => {
+      prisma.user.update.mockResolvedValue(undefined);
+
+      const first = await service.issuePasswordReset('user-1');
+      const second = await service.issuePasswordReset('user-1');
+
+      expect(first.token).not.toBe(second.token);
+    });
+  });
+
+  describe('consumePasswordReset', () => {
+    it('clears reset state and returns the user identity on the happy path', async () => {
+      const token = 'happy-reset';
+      prisma.user.findFirst.mockResolvedValue({
+        id: 'user-1',
+        email: 'atharva@example.com',
+        name: 'Atharva',
+        passwordResetTokenExpiresAt: new Date(Date.now() + 60_000),
+      });
+      prisma.user.update.mockResolvedValue(undefined);
+
+      const result = await service.consumePasswordReset(token);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { passwordResetTokenHash: hash(token) },
+        select: expect.any(Object),
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          passwordResetTokenHash: null,
+          passwordResetTokenExpiresAt: null,
+        },
+      });
+      expect(result).toEqual({
+        id: 'user-1',
+        email: 'atharva@example.com',
+        name: 'Atharva',
+      });
+    });
+
+    it('throws UnauthorizedException when no user matches the hashed token', async () => {
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.consumePasswordReset('invalid')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('throws UnauthorizedException when the matched record has no expiry recorded', async () => {
+      prisma.user.findFirst.mockResolvedValue({
+        id: 'user-1',
+        email: 'atharva@example.com',
+        name: 'Atharva',
+        passwordResetTokenExpiresAt: null,
+      });
+
+      await expect(service.consumePasswordReset('legacy-no-ttl')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('throws UnauthorizedException when the token has expired', async () => {
+      prisma.user.findFirst.mockResolvedValue({
+        id: 'user-1',
+        email: 'atharva@example.com',
+        name: 'Atharva',
+        passwordResetTokenExpiresAt: new Date(Date.now() - 1_000),
+      });
+
+      await expect(service.consumePasswordReset('expired')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('cannot be replayed: the second consume after a successful first sees no matching row', async () => {
+      const token = 'one-shot-reset';
+
+      prisma.user.findFirst
+        .mockResolvedValueOnce({
+          id: 'user-1',
+          email: 'atharva@example.com',
+          name: 'Atharva',
+          passwordResetTokenExpiresAt: new Date(Date.now() + 60_000),
+        })
+        .mockResolvedValueOnce(null);
+      prisma.user.update.mockResolvedValue(undefined);
+
+      await service.consumePasswordReset(token);
+
+      await expect(service.consumePasswordReset(token)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     });
