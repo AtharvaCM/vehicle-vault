@@ -39,6 +39,7 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MailService } from '../../common/mail/mail.service';
 import { AppConfigService } from '../../config/app-config.service';
+import { TokenService } from './token.service';
 import type { LoginDto } from './dto/login.dto';
 import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import type { PasswordResetRequestDto } from './dto/password-reset-request.dto';
@@ -76,6 +77,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly appConfigService: AppConfigService,
     private readonly mailService: MailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -83,21 +85,21 @@ export class AuthService {
     const passwordHash = await hash(input.password, 12);
 
     try {
-      const verificationToken = randomBytes(32).toString('hex');
       const user = await this.prisma.user.create({
         data: {
           name: input.name.trim(),
           email: input.email.trim().toLowerCase(),
           passwordHash,
-          emailVerificationTokenHash: this.hashVerificationToken(verificationToken),
           emailVerified: false,
         },
       });
 
+      const { url } = await this.tokenService.issueEmailVerification(user.id);
+
       await this.mailService.sendVerificationEmail({
         email: user.email,
         name: user.name,
-        verificationUrl: this.buildVerificationUrl(verificationToken),
+        verificationUrl: url,
       });
 
       return this.buildAuthResponse(this.toUser(user));
@@ -248,28 +250,7 @@ export class AuthService {
 
   async verifyEmail(payload: VerifyEmailDto) {
     const input = this.validateVerifyEmailInput(payload);
-    const emailVerificationTokenHash = this.hashVerificationToken(input.token);
-
-    const user = await this.prisma.user.findFirst({
-      where: {
-        emailVerificationTokenHash,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid or expired verification token.');
-    }
-
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        emailVerified: true,
-        emailVerificationTokenHash: null,
-      },
-    });
-
+    await this.tokenService.consumeEmailVerification(input.token);
     return { verified: true };
   }
 
@@ -285,20 +266,12 @@ export class AuthService {
       return { accepted: true };
     }
 
-    const verificationToken = randomBytes(32).toString('hex');
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        emailVerificationTokenHash: this.hashVerificationToken(verificationToken),
-      },
-    });
+    const { url } = await this.tokenService.issueEmailVerification(user.id);
 
     await this.mailService.sendVerificationEmail({
       email: user.email,
       name: user.name,
-      verificationUrl: this.buildVerificationUrl(verificationToken),
+      verificationUrl: url,
     });
 
     return { accepted: true };
@@ -364,13 +337,6 @@ export class AuthService {
     }
 
     return this.toUser(user);
-  }
-
-  private buildVerificationUrl(token: string) {
-    const url = new URL('/verify-email', this.appConfigService.frontendOrigin);
-    url.searchParams.set('token', token);
-
-    return url.toString();
   }
 
   private buildPasswordResetUrl(token: string) {
@@ -458,10 +424,6 @@ export class AuthService {
   }
 
   private hashPasswordResetToken(token: string) {
-    return createHash('sha256').update(token).digest('hex');
-  }
-
-  private hashVerificationToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
   }
 

@@ -48,6 +48,11 @@ describe('AuthService', () => {
     sendVerificationEmail: ReturnType<typeof vi.fn>;
   };
 
+  type TokenServiceMock = {
+    issueEmailVerification: ReturnType<typeof vi.fn>;
+    consumeEmailVerification: ReturnType<typeof vi.fn>;
+  };
+
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
 
   const prisma: PrismaMock = {
@@ -77,6 +82,11 @@ describe('AuthService', () => {
     sendVerificationEmail: vi.fn(),
   };
 
+  const tokenService: TokenServiceMock = {
+    issueEmailVerification: vi.fn(),
+    consumeEmailVerification: vi.fn(),
+  };
+
   let service: AuthService;
 
   beforeEach(() => {
@@ -85,11 +95,21 @@ describe('AuthService', () => {
     mailService.isConfigured = false;
     mailService.sendPasswordResetEmail.mockResolvedValue(undefined);
     mailService.sendVerificationEmail.mockResolvedValue(undefined);
+    tokenService.issueEmailVerification.mockResolvedValue({
+      token: 'verification-token',
+      url: 'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
+    });
+    tokenService.consumeEmailVerification.mockResolvedValue({
+      id: 'user-1',
+      email: 'atharva@example.com',
+      name: 'Atharva',
+    });
     service = new AuthService(
       prisma as never,
       jwtService as never,
       appConfigService as never,
       mailService as never,
+      tokenService as never,
     );
   });
 
@@ -116,9 +136,22 @@ describe('AuthService', () => {
       data: expect.objectContaining({
         name: 'Atharva',
         email: 'atharva@example.com',
+        emailVerified: false,
       }),
     });
+    expect(prisma.user.create.mock.calls[0]?.[0]?.data).not.toHaveProperty(
+      'emailVerificationTokenHash',
+    );
     expect(prisma.user.create.mock.calls[0]?.[0]?.data.passwordHash).not.toBe('password123');
+    expect(tokenService.issueEmailVerification).toHaveBeenCalledWith('user-1');
+    expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'atharva@example.com',
+        name: 'Atharva',
+        verificationUrl:
+          'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
+      }),
+    );
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: {
         id: 'user-1',
@@ -447,6 +480,69 @@ describe('AuthService', () => {
         password: 'updated-password123',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('delegates email verification to TokenService.consumeEmailVerification', async () => {
+    await expect(
+      service.verifyEmail({ token: 'verification-token' }),
+    ).resolves.toEqual({ verified: true });
+
+    expect(tokenService.consumeEmailVerification).toHaveBeenCalledWith('verification-token');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('returns accepted=true silently when resendVerification targets an unknown email', async () => {
+    prisma.user.findUnique = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      service.resendVerification({ email: 'unknown@example.com' }),
+    ).resolves.toEqual({ accepted: true });
+
+    expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
+    expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('returns accepted=true silently when resendVerification targets an already-verified user', async () => {
+    prisma.user.findUnique = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      emailVerified: true,
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    await expect(
+      service.resendVerification({ email: 'atharva@example.com' }),
+    ).resolves.toEqual({ accepted: true });
+
+    expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
+    expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('issues a fresh verification token and sends mail on resendVerification', async () => {
+    prisma.user.findUnique = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      emailVerified: false,
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    await expect(
+      service.resendVerification({ email: ' ATHARVA@example.com ' }),
+    ).resolves.toEqual({ accepted: true });
+
+    expect(tokenService.issueEmailVerification).toHaveBeenCalledWith('user-1');
+    expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'atharva@example.com',
+        name: 'Atharva',
+        verificationUrl:
+          'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
+      }),
+    );
   });
 
   it('returns the authenticated user from getMe', async () => {
