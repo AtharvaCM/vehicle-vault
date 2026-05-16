@@ -1,14 +1,43 @@
 import { Module } from '@nestjs/common';
+
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
-import { NotificationsService } from './notifications.service';
-import { NotificationsController } from './notifications.controller';
 import { MaintenanceAlertService } from './maintenance-alert.service';
+import { NotificationsController } from './notifications.controller';
+import { NotificationsService } from './notifications.service';
+import { NotifyService } from './notify.service';
+import { EmailChannel } from './channels/email.channel';
+import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
+import {
+  ALERT_TEMPLATES,
+  NOTIFICATION_CHANNELS,
+  type AlertKind,
+  type AlertTemplate,
+  type Channel,
+} from './types';
 
 @Module({
   imports: [PrismaModule, VehiclesModule],
   controllers: [NotificationsController],
-  providers: [NotificationsService, MaintenanceAlertService],
-  exports: [NotificationsService, MaintenanceAlertService],
+  providers: [
+    NotificationsService,
+    MaintenanceAlertService,
+    NotifyService,
+    MaintenanceDueTemplate,
+    EmailChannel,
+    {
+      provide: ALERT_TEMPLATES,
+      useFactory: (maintenanceDue: MaintenanceDueTemplate): AlertTemplate<AlertKind>[] => [
+        maintenanceDue,
+      ],
+      inject: [MaintenanceDueTemplate],
+    },
+    {
+      provide: NOTIFICATION_CHANNELS,
+      useFactory: (email: EmailChannel): Channel[] => [email],
+      inject: [EmailChannel],
+    },
+  ],
+  exports: [NotificationsService, MaintenanceAlertService, NotifyService],
 })
 export class NotificationsModule {}

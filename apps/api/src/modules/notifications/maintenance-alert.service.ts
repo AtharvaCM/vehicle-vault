@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { NotificationsService } from './notifications.service';
+import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceCategory } from '@prisma/client';
@@ -27,6 +28,7 @@ export class MaintenanceAlertService {
     private readonly notificationsService: NotificationsService,
     private readonly vehicleInsightsService: VehicleInsightsService,
     private readonly mailService: MailService,
+    private readonly notifyService: NotifyService,
   ) {}
 
   /**
@@ -63,26 +65,29 @@ export class MaintenanceAlertService {
       // Alert if due within 500km or already overdue
       if (remainingDistance <= 500) {
         const isOverdue = remainingDistance < 0;
-        const urgency = isOverdue ? 'error' : 'warning';
-        const title = isOverdue
-          ? `Overdue Service: ${this.formatLabel(category)}`
-          : `Service Due Soon: ${this.formatLabel(category)}`;
-        const message = isOverdue
-          ? `Your ${this.formatLabel(category)} is overdue by approx. ${Math.abs(Math.round(remainingDistance))} km. Please schedule service soon.`
-          : `Your ${this.formatLabel(category)} is due in approx. ${Math.round(remainingDistance)} km. Time to plan a visit to the workshop.`;
+
+        if (!isOverdue) {
+          await this.notifyService.raise(vehicle.userId, vehicle.id, 'maintenance-due', {
+            vehicleId: vehicle.id,
+            category,
+            remainingDistanceKm: remainingDistance,
+          });
+          continue;
+        }
+
+        // Overdue path remains inline until slice 4b migrates it to NotifyService.
+        const title = `Overdue Service: ${this.formatLabel(category)}`;
+        const message = `Your ${this.formatLabel(category)} is overdue by approx. ${Math.abs(Math.round(remainingDistance))} km. Please schedule service soon.`;
 
         const notification = await this.notificationsService.create({
           userId: vehicle.userId,
           vehicleId: vehicle.id,
           title,
           message,
-          type: urgency,
+          type: 'error',
           link: `/vehicles/${vehicle.id}?tab=maintenance`,
         });
 
-        // If it's a new notification (not deduplicated) or user preference permits, send email
-        // For simplicity now, we check the unread status.
-        // If we just created it and it's unread, send a prompt email.
         const user = await this.prisma.user.findUnique({ where: { id: vehicle.userId } });
         if (user && !notification.isRead) {
           await this.mailService.sendMaintenanceAlert({
