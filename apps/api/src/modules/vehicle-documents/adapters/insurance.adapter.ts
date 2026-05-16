@@ -55,6 +55,21 @@ export class InsuranceAdapter implements VehicleDocumentAdapter {
     return rows.map((row) => this.toDocument(row));
   }
 
+  async findExpiringBetween(
+    userId: string,
+    from: Date,
+    until: Date,
+  ): Promise<VehicleDocument[]> {
+    const rows = await this.prisma.insurancePolicy.findMany({
+      where: {
+        vehicle: { userId },
+        endDate: { gte: from, lte: until },
+      },
+      orderBy: { endDate: 'asc' },
+    });
+    return rows.map((row) => this.toDocument(row));
+  }
+
   async create(
     vehicleId: string,
     input: Extract<CreateVehicleDocumentInput, { kind: 'insurance' }>,

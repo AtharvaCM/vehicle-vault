@@ -11,6 +11,7 @@ function makeAdapter(kind: VehicleDocumentKind): VehicleDocumentAdapter {
     listForVehicle: vi.fn(),
     findForOwnerCheck: vi.fn(),
     activeAt: vi.fn(),
+    findExpiringBetween: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
@@ -193,6 +194,57 @@ describe('VehicleDocumentsService', () => {
 
       expect(insurance.remove).toHaveBeenCalledWith('pol-1');
       expect(warranty.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findExpiring', () => {
+    it('queries every adapter with a midnight-anchored range and flattens results', async () => {
+      const fakeNow = new Date('2026-05-16T15:30:00.000Z');
+      vi.useFakeTimers();
+      vi.setSystemTime(fakeNow);
+
+      (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
+        insuranceDoc(),
+      ]);
+      (warranty.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
+        warrantyDoc(),
+      ]);
+
+      const result = await service.findExpiring('user-1', 7);
+
+      expect(insurance.findExpiringBetween).toHaveBeenCalledTimes(1);
+      const [insArgs] = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock
+        .calls[0] as [string, Date, Date];
+      expect(insArgs).toBe('user-1');
+
+      // `from` is today's midnight in the local TZ; `until` is 7 days later at 23:59:59.999.
+      const fromArg = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock.calls[0][1] as Date;
+      const untilArg = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock.calls[0][2] as Date;
+      expect(fromArg.getHours()).toBe(0);
+      expect(fromArg.getMinutes()).toBe(0);
+      expect(untilArg.getHours()).toBe(23);
+      expect(untilArg.getMinutes()).toBe(59);
+      // Range spans 7 full days plus the trailing 23:59:59.999 of day 7.
+      expect(
+        Math.floor((untilArg.getTime() - fromArg.getTime()) / (24 * 60 * 60 * 1000)),
+      ).toBe(7);
+
+      expect(warranty.findExpiringBetween).toHaveBeenCalledTimes(1);
+      expect(result.map((d) => d.kind).sort()).toEqual(['insurance', 'warranty']);
+
+      vi.useRealTimers();
+    });
+
+    it('limits to a single adapter when kind is provided', async () => {
+      (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
+        insuranceDoc(),
+      ]);
+
+      const result = await service.findExpiring('user-1', 7, 'insurance');
+
+      expect(insurance.findExpiringBetween).toHaveBeenCalledTimes(1);
+      expect(warranty.findExpiringBetween).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
     });
   });
 

@@ -125,6 +125,26 @@ describe('InsuranceAdapter', () => {
     });
   });
 
+  describe('findExpiringBetween', () => {
+    it('scopes to the user via vehicle.userId and filters endDate by inclusive range', async () => {
+      prisma.insurancePolicy.findMany.mockResolvedValue([rowWithDecimals()]);
+      const from = new Date('2026-05-16T00:00:00.000Z');
+      const until = new Date('2026-05-23T23:59:59.999Z');
+
+      const result = await adapter.findExpiringBetween('user-1', from, until);
+
+      expect(prisma.insurancePolicy.findMany).toHaveBeenCalledWith({
+        where: {
+          vehicle: { userId: 'user-1' },
+          endDate: { gte: from, lte: until },
+        },
+        orderBy: { endDate: 'asc' },
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0]?.kind).toBe('insurance');
+    });
+  });
+
   describe('findForOwnerCheck', () => {
     it('returns the document and the owning user id', async () => {
       prisma.insurancePolicy.findUnique.mockResolvedValue({

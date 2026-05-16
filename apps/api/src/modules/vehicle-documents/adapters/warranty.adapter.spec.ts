@@ -82,6 +82,27 @@ describe('WarrantyAdapter', () => {
     });
   });
 
+  describe('findExpiringBetween', () => {
+    it('scopes to the user and excludes warranties with a null endDate', async () => {
+      prisma.warranty.findMany.mockResolvedValue([baseRow]);
+      const from = new Date('2026-05-16T00:00:00.000Z');
+      const until = new Date('2026-05-23T23:59:59.999Z');
+
+      const result = await adapter.findExpiringBetween('user-1', from, until);
+
+      // The OR-on-null guard from activeAt is intentionally absent — a warranty
+      // with no end date never expires and should not produce an alert.
+      expect(prisma.warranty.findMany).toHaveBeenCalledWith({
+        where: {
+          vehicle: { userId: 'user-1' },
+          endDate: { gte: from, lte: until },
+        },
+        orderBy: { endDate: 'asc' },
+      });
+      expect(result[0]?.kind).toBe('warranty');
+    });
+  });
+
   describe('create', () => {
     it('writes the prisma row with vehicleId scope and nullish fallbacks', async () => {
       prisma.warranty.create.mockResolvedValue(baseRow);

@@ -1,17 +1,17 @@
 import type { Notification, User } from '@prisma/client';
+import type { VehicleDocument } from '@vehicle-vault/shared';
 
 /**
  * Every typed alert flowing through {@link NotifyService}.
  *
- * Extended by future slices (document-expiring lands with the
- * VehicleDocument deepening). Keep `AlertPayloads` in lockstep when
- * adding a kind.
+ * Keep `AlertPayloads` in lockstep when adding a kind.
  */
 export type AlertKind =
   | 'maintenance-due'
   | 'maintenance-overdue'
   | 'reminder-due'
-  | 'reminder-overdue';
+  | 'reminder-overdue'
+  | 'document-expiring';
 
 export type MaintenanceDuePayload = {
   vehicleId: string;
@@ -42,11 +42,17 @@ export type ReminderOverduePayload = {
   remainingDistanceKm: number;
 };
 
+export type DocumentExpiringPayload = {
+  document: VehicleDocument;
+  daysUntilExpiry: number;
+};
+
 export type AlertPayloads = {
   'maintenance-due': MaintenanceDuePayload;
   'maintenance-overdue': MaintenanceOverduePayload;
   'reminder-due': ReminderDuePayload;
   'reminder-overdue': ReminderOverduePayload;
+  'document-expiring': DocumentExpiringPayload;
 };
 
 export type NotificationUrgency = 'info' | 'warning' | 'success' | 'error';

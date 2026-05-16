@@ -27,6 +27,13 @@ export interface VehicleDocumentAdapter {
 
   activeAt(vehicleId: string, date: Date): Promise<VehicleDocument[]>;
 
+  /**
+   * Return all documents owned by the user whose validity window ends in
+   * `[from, until]`. Used by the alert engine to surface upcoming
+   * expirations as `document-expiring` notifications.
+   */
+  findExpiringBetween(userId: string, from: Date, until: Date): Promise<VehicleDocument[]>;
+
   create(
     vehicleId: string,
     input: Extract<CreateVehicleDocumentInput, { kind: VehicleDocumentKind }>,

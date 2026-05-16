@@ -66,6 +66,35 @@ export class VehicleDocumentsService {
     await adapter.remove(owned.id);
   }
 
+  /**
+   * Return every document owned by the user whose validity window ends
+   * within the next `withinDays`. The range starts at the current
+   * day's midnight (caller-local) so a cron that fires at 06:00 produces
+   * the same set of rows as one that fires at 23:59.
+   *
+   * Replaces the buggy single-day slice that previously lived inside
+   * `MaintenanceAlertService.checkInsurancePolicies` — that query only
+   * matched `endDate` on exactly one specific day, so a cron miss
+   * silently dropped the alert. The range query is robust to cron drift.
+   */
+  async findExpiring(
+    userId: string,
+    withinDays: number,
+    kind?: VehicleDocumentKind,
+  ): Promise<VehicleDocument[]> {
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+    const until = new Date(from);
+    until.setDate(until.getDate() + withinDays);
+    until.setHours(23, 59, 59, 999);
+
+    const targets = kind ? [this.requireAdapter(kind)] : this.adapters;
+    const lists = await Promise.all(
+      targets.map((a) => a.findExpiringBetween(userId, from, until)),
+    );
+    return lists.flat();
+  }
+
   async activeCoverageAt(
     userId: string,
     vehicleId: string,
