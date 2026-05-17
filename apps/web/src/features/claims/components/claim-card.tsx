@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
 
 import { useDeleteClaim } from '../hooks/use-claims';
+import { ClaimAttachmentsSection } from './claim-attachments-section';
 
 interface ClaimCardProps {
   claim: Claim;
@@ -134,6 +135,8 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
             <span>{claim.notes}</span>
           </div>
         ) : null}
+
+        <ClaimAttachmentsSection claimId={claim.id} />
       </CardContent>
     </Card>
   );

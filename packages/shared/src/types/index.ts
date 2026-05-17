@@ -11,3 +11,4 @@ export * from './insurance';
 export * from './warranty';
 export * from './vehicle-document';
 export * from './claim';
+export * from './claim-attachment';

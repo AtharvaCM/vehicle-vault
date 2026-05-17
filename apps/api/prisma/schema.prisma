@@ -485,11 +485,13 @@ model Reminder {
 
 model Attachment {
   id                  String             @id @default(uuid()) @db.Uuid
-  // Polymorphic owner: exactly one of maintenanceRecordId / insurancePolicyId / warrantyId is non-null.
-  // Enforced by the `attachment_owner_exclusive` CHECK constraint.
+  // Polymorphic owner: exactly one of maintenanceRecordId / insurancePolicyId /
+  // warrantyId / claimId is non-null. Enforced by the
+  // `attachment_owner_exclusive` CHECK constraint.
   maintenanceRecordId String?            @db.Uuid
   insurancePolicyId   String?            @db.Uuid
   warrantyId          String?            @db.Uuid
+  claimId             String?            @db.Uuid
   kind                AttachmentKind
   fileName            String
   originalFileName    String
@@ -500,11 +502,13 @@ model Attachment {
   maintenanceRecord   MaintenanceRecord? @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
   insurancePolicy     InsurancePolicy?   @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
   warranty            Warranty?          @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+  claim               Claim?             @relation(fields: [claimId], references: [id], onDelete: Cascade)
   extraction          AttachmentExtraction?
 
   @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
   @@index([insurancePolicyId, uploadedAt(sort: Desc)])
   @@index([warrantyId, uploadedAt(sort: Desc)])
+  @@index([claimId, uploadedAt(sort: Desc)])
 }
 
 model AttachmentExtraction {
@@ -620,6 +624,7 @@ model Claim {
   updatedAt           DateTime            @updatedAt
   insurancePolicy     InsurancePolicy     @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
   maintenanceRecord   MaintenanceRecord?  @relation(fields: [maintenanceRecordId], references: [id], onDelete: SetNull)
+  attachments         Attachment[]
 
   @@index([insurancePolicyId, filedDate(sort: Desc)])
   @@index([status, filedDate(sort: Desc)])
