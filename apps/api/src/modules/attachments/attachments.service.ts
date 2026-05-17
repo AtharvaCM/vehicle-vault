@@ -26,7 +26,7 @@ import { AttachmentExtractionService } from './attachment-extraction.service';
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
 import {
   buildStoredAttachmentPath,
-  validateAttachmentUploadFile,
+  convertHeicToJpegIfNeeded,
 } from './utils/attachment-upload.util';
 
 const attachmentInclude = {
@@ -152,6 +152,125 @@ export class AttachmentsService {
     }
   }
 
+  async extractAttachments(userId: string, recordId: string, attachmentIds: string[]) {
+    if (!this.attachmentExtractionService.isAvailable) {
+      throw new InternalServerErrorException('OCR service is not configured (missing API key)');
+    }
+
+    await this.maintenanceService.getRecordById(userId, recordId);
+
+    const uniqueAttachmentIds = [...new Set(attachmentIds)];
+
+    if (!uniqueAttachmentIds.length) {
+      throw new BadRequestException('Select at least one attachment to extract.');
+    }
+
+    const attachments = await this.prisma.attachment.findMany({
+      where: {
+        id: {
+          in: uniqueAttachmentIds,
+        },
+        maintenanceRecordId: recordId,
+        maintenanceRecord: {
+          vehicle: {
+            userId,
+          },
+        },
+      },
+      include: attachmentInclude,
+    });
+
+    if (attachments.length !== uniqueAttachmentIds.length) {
+      throw new NotFoundException('One or more attachments were not found for this record.');
+    }
+
+    const attachmentsById = new Map(attachments.map((attachment) => [attachment.id, attachment]));
+    const orderedAttachments = uniqueAttachmentIds.map((id) => {
+      const attachment = attachmentsById.get(id);
+
+      if (!attachment) {
+        throw new NotFoundException('One or more attachments were not found for this record.');
+      }
+
+      return attachment;
+    });
+    const [primaryAttachment] = orderedAttachments;
+
+    if (!primaryAttachment) {
+      throw new BadRequestException('Select at least one attachment to extract.');
+    }
+
+    await Promise.all(
+      orderedAttachments.map((attachment) =>
+        this.prisma.attachmentExtraction.upsert({
+          where: {
+            attachmentId: attachment.id,
+          },
+          create: {
+            attachmentId: attachment.id,
+            status: AttachmentExtractionStatus.Pending,
+            provider: 'gemini',
+          },
+          update: {
+            status: AttachmentExtractionStatus.Pending,
+            provider: 'gemini',
+            failureReason: null,
+          },
+        }),
+      ),
+    );
+
+    try {
+      const documents = await Promise.all(
+        orderedAttachments.map(async (attachment) => ({
+          buffer: await this.storageService.downloadObject(attachment.fileName),
+          mimeType: attachment.mimeType,
+          name: attachment.originalFileName,
+        })),
+      );
+
+      const extracted = await this.attachmentExtractionService.extractDocuments(documents);
+      const storedExtractions = await Promise.all(
+        orderedAttachments.map((attachment) =>
+          this.prisma.attachmentExtraction.upsert({
+            where: {
+              attachmentId: attachment.id,
+            },
+            create: this.toAttachmentExtractionCreateData(attachment.id, extracted),
+            update: this.toAttachmentExtractionUpdateData(extracted),
+          }),
+        ),
+      );
+      const primaryExtraction = storedExtractions.find(
+        (extraction) => extraction.attachmentId === primaryAttachment.id,
+      );
+
+      return this.toAttachmentExtraction(primaryExtraction ?? storedExtractions[0]!);
+    } catch (error) {
+      await Promise.all(
+        orderedAttachments.map((attachment) =>
+          this.prisma.attachmentExtraction.upsert({
+            where: {
+              attachmentId: attachment.id,
+            },
+            create: {
+              attachmentId: attachment.id,
+              status: AttachmentExtractionStatus.Failed,
+              provider: 'gemini',
+              failureReason: this.getErrorMessage(error),
+            },
+            update: {
+              status: AttachmentExtractionStatus.Failed,
+              provider: 'gemini',
+              failureReason: this.getErrorMessage(error),
+            },
+          }),
+        ),
+      );
+      throw error;
+    }
+  }
+
   async applyExtraction(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
     const extraction = attachment.extraction
@@ -198,24 +317,31 @@ export class AttachmentsService {
       throw new BadRequestException('Add at least one attachment to upload.');
     }
 
-    const preparedFiles = files.map((file) => {
-      const originalFileName = validateAttachmentUploadFile(file);
-      const id = randomUUID();
-      const fileName = buildStoredAttachmentPath(userId, recordId, originalFileName);
+    const preparedFiles = await Promise.all(
+      files.map(async (file) => {
+        const preparedFile = await convertHeicToJpegIfNeeded(file);
+        const id = randomUUID();
+        const fileName = buildStoredAttachmentPath(
+          userId,
+          recordId,
+          preparedFile.originalFileName,
+          preparedFile.storageExtension,
+        );
 
-      return {
-        id,
-        maintenanceRecordId: recordId,
-        kind: this.getAttachmentKind(file.mimetype),
-        fileName,
-        originalFileName,
-        mimeType: file.mimetype,
-        size: file.size,
-        url: `/api/attachments/${id}/file`,
-        uploadedAt: new Date(),
-        buffer: file.buffer,
-      };
-    });
+        return {
+          id,
+          maintenanceRecordId: recordId,
+          kind: this.getAttachmentKind(preparedFile.mimeType),
+          fileName,
+          originalFileName: preparedFile.originalFileName,
+          mimeType: preparedFile.mimeType,
+          size: preparedFile.size,
+          url: `/api/attachments/${id}/file`,
+          uploadedAt: new Date(),
+          buffer: preparedFile.buffer,
+        };
+      }),
+    );
 
     const uploadedPaths: string[] = [];
 

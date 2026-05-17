@@ -4,6 +4,7 @@ import {
   MaintenanceSource,
 } from '@vehicle-vault/shared';
 import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -19,6 +20,7 @@ import {
 } from 'class-validator';
 
 import { CreateMaintenanceLineItemDto } from './create-maintenance-record.dto';
+import { roundMoney } from '../../../common/transforms/round-money.transform';
 
 export class UpdateMaintenanceRecordDto {
   @IsOptional()
@@ -59,37 +61,37 @@ export class UpdateMaintenanceRecordDto {
   status?: MaintenanceRecordStatus;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => roundMoney(value))
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   totalCost?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => roundMoney(value))
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   laborCost?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => roundMoney(value))
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   partsCost?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => roundMoney(value))
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   fluidsCost?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => roundMoney(value))
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   taxCost?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => roundMoney(value))
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   discountAmount?: number;

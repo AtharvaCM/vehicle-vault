@@ -1,6 +1,7 @@
 import {
   Controller,
   Delete,
+  Body,
   Get,
   Param,
   Post,
@@ -19,6 +20,7 @@ import {
   ATTACHMENTS_MAX_FILE_SIZE_BYTES,
 } from './constants/attachment.constants';
 import { AttachmentIdParamDto } from './dto/attachment-id-param.dto';
+import { ExtractAttachmentsDto } from './dto/extract-attachments.dto';
 import { MaintenanceRecordIdParamDto } from './dto/maintenance-record-id-param.dto';
 import { AttachmentsService } from './attachments.service';
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
@@ -78,6 +80,21 @@ export class AttachmentsController {
   async extractAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
     return successResponse(
       await this.attachmentsService.extractAttachment(user.id, params.attachmentId),
+    );
+  }
+
+  @Post('maintenance-records/:recordId/attachments/extract')
+  async extractAttachments(
+    @Param() params: MaintenanceRecordIdParamDto,
+    @Body() body: ExtractAttachmentsDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.extractAttachments(
+        user.id,
+        params.recordId,
+        body.attachmentIds,
+      ),
     );
   }
 

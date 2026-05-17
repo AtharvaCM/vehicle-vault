@@ -28,7 +28,8 @@ export class ClaimExtractionService {
     this.genAI = new GoogleGenerativeAI(apiKey);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const schema: any = {
-      description: 'Insurance-claim extraction from receipts, surveyor reports, or settlement letters',
+      description:
+        'Insurance-claim extraction from receipts, surveyor reports, or settlement letters',
       type: SchemaType.OBJECT,
       properties: {
         confidence: {
@@ -37,7 +38,8 @@ export class ClaimExtractionService {
         },
         claimNumber: {
           type: SchemaType.STRING,
-          description: 'Insurer claim reference number if visible (often labelled Claim #, Claim No, CL/...)',
+          description:
+            'Insurer claim reference number if visible (often labelled Claim #, Claim No, CL/...)',
         },
         grossAmount: {
           type: SchemaType.NUMBER,
@@ -50,11 +52,13 @@ export class ClaimExtractionService {
         },
         filedDate: {
           type: SchemaType.STRING,
-          description: 'Date the claim was filed (ISO 8601). Often the document or intimation date.',
+          description:
+            'Date the claim was filed (ISO 8601). Often the document or intimation date.',
         },
         settledDate: {
           type: SchemaType.STRING,
-          description: 'Date the claim was settled / paid out (ISO 8601). Only if explicitly stated.',
+          description:
+            'Date the claim was settled / paid out (ISO 8601). Only if explicitly stated.',
         },
         vendorName: {
           type: SchemaType.STRING,
@@ -68,7 +72,7 @@ export class ClaimExtractionService {
     };
 
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: this.config.geminiModel,
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: schema,

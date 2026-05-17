@@ -10,6 +10,7 @@ import { useApplyAttachmentExtraction } from '@/features/attachments/hooks/use-a
 import { useAttachments } from '@/features/attachments/hooks/use-attachments';
 import { useAttachmentExtractionStatus } from '@/features/attachments/hooks/use-attachment-extraction-status';
 import { useExtractAttachment } from '@/features/attachments/hooks/use-extract-attachment';
+import { useExtractAttachments } from '@/features/attachments/hooks/use-extract-attachments';
 import type { AttachmentExtraction } from '@/features/attachments/types/attachment';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -24,7 +25,10 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
   const attachmentsQuery = useAttachments(recordId);
   const extractionStatusQuery = useAttachmentExtractionStatus();
   const extractAttachmentMutation = useExtractAttachment(recordId);
+  const extractAttachmentsMutation = useExtractAttachments(recordId);
   const applyAttachmentExtractionMutation = useApplyAttachmentExtraction(recordId);
+  const attachments = attachmentsQuery.data ?? [];
+  const isExtracting = extractAttachmentMutation.isPending || extractAttachmentsMutation.isPending;
 
   async function handleExtract(attachmentId: string) {
     try {
@@ -37,6 +41,21 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
       appToast.error({
         title: 'Unable to extract document',
         description: getApiErrorMessage(error, 'The document could not be analyzed.'),
+      });
+    }
+  }
+
+  async function handleExtractAll() {
+    try {
+      await extractAttachmentsMutation.mutateAsync(attachments.map((attachment) => attachment.id));
+      appToast.success({
+        title: 'Documents extracted',
+        description: 'Review the merged maintenance fields before saving the draft.',
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Unable to extract documents',
+        description: getApiErrorMessage(error, 'The documents could not be analyzed together.'),
       });
     }
   }
@@ -72,6 +91,31 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {attachments.length > 1 ? (
+          <div className="flex flex-col gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">Multi-page document OCR</p>
+              <p className="text-sm text-slate-600">
+                Extract all attached pages together into one merged maintenance suggestion.
+              </p>
+            </div>
+            <Button
+              disabled={!extractionStatusQuery.data?.available || isExtracting}
+              onClick={handleExtractAll}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              {extractAttachmentsMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ScanText className="h-4 w-4" />
+              )}
+              Run OCR on all
+            </Button>
+          </div>
+        ) : null}
+
         {attachmentsQuery.isPending ? (
           <LoadingState
             description="Loading the files attached to this draft."
@@ -87,13 +131,13 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
             description="The linked draft documents could not be loaded."
             title="Unable to load draft documents"
           />
-        ) : attachmentsQuery.data.length === 0 ? (
+        ) : attachments.length === 0 ? (
           <EmptyState
             description="Upload a receipt or job card first, then review the extracted data here."
             title="No draft documents yet"
           />
         ) : (
-          attachmentsQuery.data.map((attachment) => (
+          attachments.map((attachment) => (
             <div
               key={attachment.id}
               className="space-y-3 rounded-2xl border border-border/70 bg-slate-50/60 p-4"
@@ -115,9 +159,7 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
 
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    disabled={
-                      !extractionStatusQuery.data?.available || extractAttachmentMutation.isPending
-                    }
+                    disabled={!extractionStatusQuery.data?.available || isExtracting}
                     onClick={() => handleExtract(attachment.id)}
                     size="sm"
                     type="button"

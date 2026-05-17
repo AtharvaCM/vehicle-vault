@@ -52,7 +52,7 @@ export class FuelLogsOCRService {
       };
 
       this.model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: this.config.geminiModel,
         generationConfig: {
           responseMimeType: 'application/json',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

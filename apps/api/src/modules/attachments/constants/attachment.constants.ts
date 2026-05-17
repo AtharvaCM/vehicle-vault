@@ -5,11 +5,15 @@ export const ATTACHMENTS_ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
   'application/pdf',
 ] as const;
 export const ATTACHMENTS_ALLOWED_EXTENSIONS_BY_MIME_TYPE = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/webp': ['.webp'],
+  'image/heic': ['.heic', '.heif'],
+  'image/heif': ['.heic', '.heif'],
   'application/pdf': ['.pdf'],
 } as const;

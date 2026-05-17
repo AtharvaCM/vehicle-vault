@@ -1,11 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { extname } from 'node:path';
 
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Attachment as AttachmentRow } from '@prisma/client';
 import {
   AttachmentKind,
@@ -17,15 +12,22 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import type { AttachmentUploadFile } from '../attachments/types/attachment-upload-file.type';
-import { validateAttachmentUploadFile } from '../attachments/utils/attachment-upload.util';
+import {
+  buildStoredFileName,
+  convertHeicToJpegIfNeeded,
+} from '../attachments/utils/attachment-upload.util';
 import { ClaimExtractionService } from './claim-extraction.service';
 
 function buildStoredClaimAttachmentPath(
   userId: string,
   claimId: string,
   originalFileName: string,
+  storageExtension?: string,
 ): string {
-  return `claim-attachments/${userId}/${claimId}/${randomUUID()}${extname(originalFileName)}`;
+  return `claim-attachments/${userId}/${claimId}/${buildStoredFileName(
+    originalFileName,
+    storageExtension,
+  )}`;
 }
 
 function getAttachmentKind(mimeType: string): AttachmentKind {
@@ -83,24 +85,31 @@ export class ClaimAttachmentsService {
       throw new BadRequestException('Add at least one attachment to upload.');
     }
 
-    const preparedFiles = files.map((file) => {
-      const originalFileName = validateAttachmentUploadFile(file);
-      const id = randomUUID();
-      const fileName = buildStoredClaimAttachmentPath(userId, claimId, originalFileName);
+    const preparedFiles = await Promise.all(
+      files.map(async (file) => {
+        const preparedFile = await convertHeicToJpegIfNeeded(file);
+        const id = randomUUID();
+        const fileName = buildStoredClaimAttachmentPath(
+          userId,
+          claimId,
+          preparedFile.originalFileName,
+          preparedFile.storageExtension,
+        );
 
-      return {
-        id,
-        claimId,
-        kind: getAttachmentKind(file.mimetype),
-        fileName,
-        originalFileName,
-        mimeType: file.mimetype,
-        size: file.size,
-        url: `/api/claim-attachments/${id}/file`,
-        uploadedAt: new Date(),
-        buffer: file.buffer,
-      };
-    });
+        return {
+          id,
+          claimId,
+          kind: getAttachmentKind(preparedFile.mimeType),
+          fileName,
+          originalFileName: preparedFile.originalFileName,
+          mimeType: preparedFile.mimeType,
+          size: preparedFile.size,
+          url: `/api/claim-attachments/${id}/file`,
+          uploadedAt: new Date(),
+          buffer: preparedFile.buffer,
+        };
+      }),
+    );
 
     const uploadedPaths: string[] = [];
 

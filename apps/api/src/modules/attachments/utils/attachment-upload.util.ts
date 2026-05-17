@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
 
 import { BadRequestException } from '@nestjs/common';
+import heicConvert from 'heic-convert';
 
 import {
   ATTACHMENTS_ALLOWED_EXTENSIONS_BY_MIME_TYPE,
@@ -11,25 +12,37 @@ import {
 } from '../constants/attachment.constants';
 import type { AttachmentUploadFile } from '../types/attachment-upload-file.type';
 
+type SupportedAttachmentMimeType = (typeof ATTACHMENTS_ALLOWED_MIME_TYPES)[number];
+
+type PreparedAttachmentUploadFile = {
+  buffer: Buffer;
+  mimeType: SupportedAttachmentMimeType;
+  originalFileName: string;
+  size: number;
+  storageExtension: string;
+};
+
 export function attachmentFileFilter(
   _request: unknown,
   file: AttachmentUploadFile,
   callback: (error: Error | null, acceptFile: boolean) => void,
 ) {
-  if (isSupportedAttachmentMimeType(file.mimetype)) {
+  if (resolveAttachmentMimeType(file)) {
     callback(null, true);
     return;
   }
 
   callback(
-    new BadRequestException('Unsupported file type. Allowed types: JPEG, PNG, WEBP, and PDF.'),
+    new BadRequestException(
+      'Unsupported file type. Allowed types: JPEG, PNG, WEBP, HEIC, HEIF, and PDF.',
+    ),
     false,
   );
 }
 
 export function isSupportedAttachmentMimeType(
   mimeType: string,
-): mimeType is (typeof ATTACHMENTS_ALLOWED_MIME_TYPES)[number] {
+): mimeType is SupportedAttachmentMimeType {
   return ATTACHMENTS_ALLOWED_MIME_TYPES.some((allowedMimeType) => allowedMimeType === mimeType);
 }
 
@@ -49,10 +62,11 @@ export function sanitizeOriginalFileName(originalFileName: string) {
 
 export function validateAttachmentUploadFile(file: AttachmentUploadFile) {
   const originalFileName = sanitizeOriginalFileName(file.originalname);
+  const mimeType = resolveAttachmentMimeType(file, originalFileName);
 
-  if (!isSupportedAttachmentMimeType(file.mimetype)) {
+  if (!mimeType) {
     throw new BadRequestException(
-      'Unsupported file type. Allowed types: JPEG, PNG, WEBP, and PDF.',
+      'Unsupported file type. Allowed types: JPEG, PNG, WEBP, HEIC, HEIF, and PDF.',
     );
   }
 
@@ -65,29 +79,115 @@ export function validateAttachmentUploadFile(file: AttachmentUploadFile) {
   }
 
   const extension = extname(originalFileName).toLowerCase();
-  const allowedExtensions = ATTACHMENTS_ALLOWED_EXTENSIONS_BY_MIME_TYPE[file.mimetype];
+  const allowedExtensions = ATTACHMENTS_ALLOWED_EXTENSIONS_BY_MIME_TYPE[mimeType];
 
   if (!allowedExtensions.includes(extension as never)) {
     throw new BadRequestException('The file extension does not match the uploaded file type.');
   }
 
-  if (!matchesAttachmentFileSignature(file.buffer, file.mimetype)) {
+  if (!matchesAttachmentFileSignature(file.buffer, mimeType)) {
     throw new BadRequestException('Uploaded file content does not match the declared file type.');
   }
 
-  return originalFileName;
+  return { mimeType, originalFileName };
 }
 
-export function buildStoredFileName(originalFileName: string) {
-  return `${randomUUID()}${extname(originalFileName)}`;
+export async function convertHeicToJpegIfNeeded(
+  file: AttachmentUploadFile,
+): Promise<PreparedAttachmentUploadFile> {
+  const { mimeType, originalFileName } = validateAttachmentUploadFile(file);
+
+  if (!isHeicMimeType(mimeType)) {
+    return {
+      buffer: file.buffer,
+      mimeType,
+      originalFileName,
+      size: file.size,
+      storageExtension: extname(originalFileName).toLowerCase(),
+    };
+  }
+
+  let converted: Buffer;
+
+  try {
+    const output = await heicConvert({
+      buffer: file.buffer,
+      format: 'JPEG',
+      quality: 0.9,
+    });
+    converted = toBuffer(output);
+  } catch {
+    throw new BadRequestException('HEIC image could not be converted to JPEG.');
+  }
+
+  if (converted.byteLength > ATTACHMENTS_MAX_FILE_SIZE_BYTES) {
+    throw new BadRequestException('Each file must be 5 MB or smaller.');
+  }
+
+  if (!matchesAttachmentFileSignature(converted, 'image/jpeg')) {
+    throw new BadRequestException('Converted HEIC image did not produce a valid JPEG.');
+  }
+
+  return {
+    buffer: converted,
+    mimeType: 'image/jpeg',
+    originalFileName,
+    size: converted.byteLength,
+    storageExtension: '.jpg',
+  };
+}
+
+export function buildStoredFileName(originalFileName: string, storageExtension?: string) {
+  return `${randomUUID()}${storageExtension ?? extname(originalFileName)}`;
 }
 
 export function buildStoredAttachmentPath(
   userId: string,
   maintenanceRecordId: string,
   originalFileName: string,
+  storageExtension?: string,
 ) {
-  return `attachments/${userId}/${maintenanceRecordId}/${buildStoredFileName(originalFileName)}`;
+  return `attachments/${userId}/${maintenanceRecordId}/${buildStoredFileName(
+    originalFileName,
+    storageExtension,
+  )}`;
+}
+
+function isHeicMimeType(mimeType: string) {
+  return mimeType === 'image/heic' || mimeType === 'image/heif';
+}
+
+function resolveAttachmentMimeType(
+  file: AttachmentUploadFile,
+  originalFileName = file.originalname,
+): SupportedAttachmentMimeType | null {
+  if (isSupportedAttachmentMimeType(file.mimetype)) {
+    return file.mimetype;
+  }
+
+  const extension = extname(originalFileName).toLowerCase();
+
+  if ((file.mimetype === 'application/octet-stream' || !file.mimetype) && extension === '.heic') {
+    return 'image/heic';
+  }
+
+  if ((file.mimetype === 'application/octet-stream' || !file.mimetype) && extension === '.heif') {
+    return 'image/heif';
+  }
+
+  return null;
+}
+
+function toBuffer(output: ArrayBuffer | Buffer | Uint8Array) {
+  if (Buffer.isBuffer(output)) {
+    return output;
+  }
+
+  if (output instanceof ArrayBuffer) {
+    return Buffer.from(output);
+  }
+
+  return Buffer.from(output.buffer, output.byteOffset, output.byteLength);
 }
 
 function matchesAttachmentFileSignature(buffer: Buffer, mimeType: string) {
@@ -114,7 +214,19 @@ function matchesAttachmentFileSignature(buffer: Buffer, mimeType: string) {
         buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
         buffer.subarray(8, 12).toString('ascii') === 'WEBP'
       );
+    case 'image/heic':
+    case 'image/heif':
+      return matchesHeifFileSignature(buffer);
     default:
       return false;
   }
+}
+
+function matchesHeifFileSignature(buffer: Buffer) {
+  if (buffer.length < 12 || buffer.subarray(4, 8).toString('ascii') !== 'ftyp') {
+    return false;
+  }
+
+  const brand = buffer.subarray(8, 12).toString('ascii');
+  return ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'].includes(brand);
 }

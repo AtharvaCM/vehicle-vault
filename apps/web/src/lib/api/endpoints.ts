@@ -52,6 +52,7 @@ export const endpoints = {
     reconcile: '/attachments/reconciliation',
     detail: (attachmentId: string) => `/attachments/${attachmentId}`,
     extract: (attachmentId: string) => `/attachments/${attachmentId}/extract`,
+    extractBatch: (recordId: string) => `/maintenance-records/${recordId}/attachments/extract`,
     applyExtraction: (attachmentId: string) => `/attachments/${attachmentId}/apply`,
     file: (attachmentId: string) => `/attachments/${attachmentId}/file`,
     delete: (attachmentId: string) => `/attachments/${attachmentId}`,

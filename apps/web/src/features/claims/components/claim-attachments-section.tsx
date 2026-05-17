@@ -30,7 +30,8 @@ import {
 } from '../hooks/use-claim-attachments';
 import { useUpdateClaim } from '../hooks/use-claims';
 
-const ACCEPT = '.jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf';
+const ACCEPT =
+  '.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -280,10 +281,8 @@ export function ClaimAttachmentsSection({
                   {uploadMutation.isPending ? 'Uploading…' : 'Upload receipts / photos'}
                 </Button>
                 <p className="text-[10px] text-slate-400 mt-1.5">
-                  JPEG, PNG, WEBP, or PDF · up to 5 MB each
-                  {ocrAvailable
-                    ? ' · ✨ AI can suggest claim fields from each file'
-                    : ''}
+                  JPEG, PNG, WEBP, HEIC, or PDF · up to 5 MB each
+                  {ocrAvailable ? ' · ✨ AI can suggest claim fields from each file' : ''}
                 </p>
               </div>
             </>
@@ -323,8 +322,7 @@ function suggestionToDraft(s: ClaimExtractionSuggestion): DraftState {
     values: {
       claimNumber: s.claimNumber ?? '',
       grossAmount: typeof s.grossAmount === 'number' ? String(s.grossAmount) : '',
-      insurerPaidAmount:
-        typeof s.insurerPaidAmount === 'number' ? String(s.insurerPaidAmount) : '',
+      insurerPaidAmount: typeof s.insurerPaidAmount === 'number' ? String(s.insurerPaidAmount) : '',
       filedDate: toDateInputValue(s.filedDate),
       settledDate: toDateInputValue(s.settledDate),
       vendorName: s.vendorName ?? '',
@@ -385,9 +383,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
     setDraft(suggestionToDraft(suggestion));
   }, [suggestion]);
 
-  const hasInitialFindings = Object.values(suggestionToDraft(suggestion).included).some(
-    Boolean,
-  );
+  const hasInitialFindings = Object.values(suggestionToDraft(suggestion).included).some(Boolean);
   const anyIncluded = Object.values(draft.included).some(Boolean);
 
   function setValue(key: FieldKey, value: string) {

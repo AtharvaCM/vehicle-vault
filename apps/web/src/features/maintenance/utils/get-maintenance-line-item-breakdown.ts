@@ -28,7 +28,7 @@ export type MaintenanceLineItemBreakdown = {
 export function getMaintenanceLineItemBreakdown(
   lineItems: MaintenanceLineItemLike[],
 ): MaintenanceLineItemBreakdown {
-  return lineItems.reduce<MaintenanceLineItemBreakdown>(
+  const totals = lineItems.reduce<MaintenanceLineItemBreakdown>(
     (totals, lineItem) => {
       const amount = resolveMaintenanceLineItemTotal(lineItem);
 
@@ -69,18 +69,31 @@ export function getMaintenanceLineItemBreakdown(
       discountAmount: 0,
     },
   );
+
+  return {
+    totalCost: roundMoney(totals.totalCost),
+    laborCost: roundMoney(totals.laborCost),
+    partsCost: roundMoney(totals.partsCost),
+    fluidsCost: roundMoney(totals.fluidsCost),
+    taxCost: roundMoney(totals.taxCost),
+    discountAmount: roundMoney(totals.discountAmount),
+  };
 }
 
 export function resolveMaintenanceLineItemTotal(lineItem: MaintenanceLineItemLike) {
   if (typeof lineItem.lineTotal === 'number') {
-    return lineItem.lineTotal;
+    return roundMoney(lineItem.lineTotal);
   }
 
   if (typeof lineItem.quantity === 'number' && typeof lineItem.unitPrice === 'number') {
-    return lineItem.quantity * lineItem.unitPrice;
+    return roundMoney(lineItem.quantity * lineItem.unitPrice);
   }
 
   return 0;
+}
+
+export function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 export function isMeaningfulMaintenanceLineItem(lineItem: MaintenanceLineItemLike) {

@@ -40,6 +40,12 @@ type AttachmentExtractionSuggestion = Omit<
   'attachmentId' | 'createdAt' | 'id' | 'status' | 'updatedAt'
 >;
 
+type ExtractionDocumentPart = {
+  buffer: Buffer;
+  mimeType: string;
+  name?: string;
+};
+
 const maintenanceCategories = Object.values(MaintenanceCategory);
 const maintenanceLineItemKinds = Object.values(MaintenanceLineItemKind);
 
@@ -148,7 +154,7 @@ export class AttachmentExtractionService {
     };
 
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: this.config.geminiModel,
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: schema,
@@ -161,14 +167,28 @@ export class AttachmentExtractionService {
   }
 
   async extractDocument(file: Buffer, mimeType: string): Promise<AttachmentExtractionSuggestion> {
+    return this.extractDocuments([{ buffer: file, mimeType }]);
+  }
+
+  async extractDocuments(
+    documents: ExtractionDocumentPart[],
+  ): Promise<AttachmentExtractionSuggestion> {
     if (!this.model) {
       throw new InternalServerErrorException('OCR service is not configured (missing API key)');
     }
 
+    if (!documents.length) {
+      throw new InternalServerErrorException('At least one document is required for OCR.');
+    }
+
     try {
       const prompt = [
-        'Extract structured maintenance data from this invoice, receipt, or workshop job card.',
+        documents.length > 1
+          ? `Extract one merged maintenance record from these ${documents.length} invoice, receipt, or workshop job card pages.`
+          : 'Extract structured maintenance data from this invoice, receipt, or workshop job card.',
         'Return only JSON that matches the provided schema.',
+        'Treat multiple files as pages of the same document in the order provided.',
+        'Merge header fields, totals, taxes, and line items into one coherent result.',
         'Use the best matching line item kind from this set:',
         maintenanceLineItemKinds.join(', '),
         'Use the best matching normalizedCategory from this set when obvious:',
@@ -177,15 +197,19 @@ export class AttachmentExtractionService {
         'Keep line items concise and only include actual maintenance-related entries.',
       ].join(' ');
 
-      const result = await this.model.generateContent([
-        prompt,
+      const documentParts = documents.flatMap((document, index) => [
+        {
+          text: `Document page ${index + 1}${document.name ? `: ${document.name}` : ''}`,
+        },
         {
           inlineData: {
-            data: file.toString('base64'),
-            mimeType,
+            data: document.buffer.toString('base64'),
+            mimeType: document.mimeType,
           },
         },
       ]);
+
+      const result = await this.model.generateContent([prompt, ...documentParts]);
 
       const response = await result.response;
       const text = response.text();

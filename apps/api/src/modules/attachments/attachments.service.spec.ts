@@ -9,7 +9,8 @@ import {
 } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { randomUuidMock } = vi.hoisted(() => ({
+const { heicConvertMock, randomUuidMock } = vi.hoisted(() => ({
+  heicConvertMock: vi.fn(),
   randomUuidMock: vi.fn(),
 }));
 
@@ -22,7 +23,17 @@ vi.mock('node:crypto', async () => {
   };
 });
 
+vi.mock('heic-convert', () => ({
+  default: heicConvertMock,
+}));
+
 import { AttachmentsService } from './attachments.service';
+
+function createHeicBuffer() {
+  return Buffer.from([
+    0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
+  ]);
+}
 
 describe('AttachmentsService', () => {
   type AttachmentDelegateMock = {
@@ -117,6 +128,32 @@ describe('AttachmentsService', () => {
       extractedAt: '2026-03-20T00:00:00.000Z',
       failureReason: undefined,
     }),
+    extractDocuments: vi.fn().mockResolvedValue({
+      provider: 'gemini',
+      confidence: 0.92,
+      vendorName: 'Torque Garage',
+      workshopName: 'Torque Garage',
+      invoiceNumber: 'INV-1',
+      documentDate: '2026-03-19T00:00:00.000Z',
+      serviceDate: '2026-03-20T00:00:00.000Z',
+      odometer: 12500,
+      totalCost: 2499,
+      currencyCode: 'INR',
+      notes: 'OCR notes',
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Part,
+          name: 'Oil filter',
+          normalizedCategory: MaintenanceCategory.OilFilter,
+          quantity: 1,
+          unit: 'pcs',
+          unitPrice: 450,
+          lineTotal: 450,
+        },
+      ],
+      extractedAt: '2026-03-20T00:00:00.000Z',
+      failureReason: undefined,
+    }),
   };
 
   let service: AttachmentsService;
@@ -126,6 +163,7 @@ describe('AttachmentsService', () => {
     vi.useFakeTimers();
     vi.setSystemTime(uploadedAt);
     randomUuidMock.mockReturnValue('attachment-1');
+    heicConvertMock.mockResolvedValue(Buffer.from([0xff, 0xd8, 0xff, 0xdb]));
     maintenanceService.getRecordById.mockResolvedValue({
       id: 'record-1',
     });
@@ -147,6 +185,32 @@ describe('AttachmentsService', () => {
       updatedAt: '2026-03-20T00:00:00.000Z',
     });
     attachmentExtractionService.extractDocument.mockResolvedValue({
+      provider: 'gemini',
+      confidence: 0.92,
+      vendorName: 'Torque Garage',
+      workshopName: 'Torque Garage',
+      invoiceNumber: 'INV-1',
+      documentDate: '2026-03-19T00:00:00.000Z',
+      serviceDate: '2026-03-20T00:00:00.000Z',
+      odometer: 12500,
+      totalCost: 2499,
+      currencyCode: 'INR',
+      notes: 'OCR notes',
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Part,
+          name: 'Oil filter',
+          normalizedCategory: MaintenanceCategory.OilFilter,
+          quantity: 1,
+          unit: 'pcs',
+          unitPrice: 450,
+          lineTotal: 450,
+        },
+      ],
+      extractedAt: '2026-03-20T00:00:00.000Z',
+      failureReason: undefined,
+    });
+    attachmentExtractionService.extractDocuments.mockResolvedValue({
       provider: 'gemini',
       confidence: 0.92,
       vendorName: 'Torque Garage',
@@ -261,6 +325,35 @@ describe('AttachmentsService', () => {
         uploadedAt: uploadedAt.toISOString(),
       },
     ]);
+  });
+
+  it('converts HEIC uploads to JPEG before storing while preserving the original file name', async () => {
+    const result = await service.uploadAttachments('user-1', 'record-1', [
+      {
+        originalname: 'service-photo.heic',
+        mimetype: 'application/octet-stream',
+        size: 1024,
+        buffer: createHeicBuffer(),
+      },
+    ]);
+
+    expect(heicConvertMock).toHaveBeenCalledWith({
+      buffer: createHeicBuffer(),
+      format: 'JPEG',
+      quality: 0.9,
+    });
+    expect(storageService.uploadObject).toHaveBeenCalledWith(
+      'attachments/user-1/record-1/attachment-1.jpg',
+      Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
+      'image/jpeg',
+    );
+    expect(result[0]).toMatchObject({
+      kind: AttachmentKind.Image,
+      fileName: 'attachments/user-1/record-1/attachment-1.jpg',
+      originalFileName: 'service-photo.heic',
+      mimeType: 'image/jpeg',
+      size: 4,
+    });
   });
 
   it('rejects uploads without files', async () => {
@@ -472,6 +565,65 @@ describe('AttachmentsService', () => {
       Buffer.from('%PDF-1.7'),
       'application/pdf',
     );
+    expect(result).toEqual(
+      expect.objectContaining({
+        attachmentId: 'attachment-1',
+        status: AttachmentExtractionStatus.Completed,
+        invoiceNumber: 'INV-1',
+        totalCost: 2499,
+      }),
+    );
+  });
+
+  it('extracts multiple attachments as one merged maintenance document', async () => {
+    prisma.attachment.findMany = vi.fn().mockResolvedValue([
+      {
+        id: 'attachment-1',
+        maintenanceRecordId: 'record-1',
+        kind: AttachmentKind.Image,
+        fileName: 'attachments/user-1/record-1/page-1.jpg',
+        originalFileName: 'page-1.heic',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        url: '/api/attachments/attachment-1/file',
+        uploadedAt,
+        extraction: null,
+      },
+      {
+        id: 'attachment-2',
+        maintenanceRecordId: 'record-1',
+        kind: AttachmentKind.Image,
+        fileName: 'attachments/user-1/record-1/page-2.jpg',
+        originalFileName: 'page-2.heic',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        url: '/api/attachments/attachment-2/file',
+        uploadedAt,
+        extraction: null,
+      },
+    ]);
+    storageService.downloadObject
+      .mockResolvedValueOnce(Buffer.from([0xff, 0xd8, 0xff, 0x01]))
+      .mockResolvedValueOnce(Buffer.from([0xff, 0xd8, 0xff, 0x02]));
+
+    const result = await service.extractAttachments('user-1', 'record-1', [
+      'attachment-1',
+      'attachment-2',
+    ]);
+
+    expect(maintenanceService.getRecordById).toHaveBeenCalledWith('user-1', 'record-1');
+    expect(attachmentExtractionService.extractDocuments).toHaveBeenCalledWith([
+      {
+        buffer: Buffer.from([0xff, 0xd8, 0xff, 0x01]),
+        mimeType: 'image/jpeg',
+        name: 'page-1.heic',
+      },
+      {
+        buffer: Buffer.from([0xff, 0xd8, 0xff, 0x02]),
+        mimeType: 'image/jpeg',
+        name: 'page-2.heic',
+      },
+    ]);
     expect(result).toEqual(
       expect.objectContaining({
         attachmentId: 'attachment-1',

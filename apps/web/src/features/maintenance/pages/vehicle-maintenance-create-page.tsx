@@ -9,6 +9,7 @@ import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { uploadAttachments } from '@/features/attachments/api/upload-attachments';
 import { extractAttachment } from '@/features/attachments/api/extract-attachment';
+import { extractAttachments } from '@/features/attachments/api/extract-attachments';
 import { useAttachmentExtractionStatus } from '@/features/attachments/hooks/use-attachment-extraction-status';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
@@ -97,9 +98,13 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       const canExtract = extractionStatusQuery.data?.available !== false;
 
       if (canExtract) {
-        await Promise.all(
-          attachments.map((attachment) => extractAttachment(attachment.id).catch(() => undefined)),
-        );
+        const attachmentIds = attachments.map((attachment) => attachment.id);
+
+        if (attachmentIds.length > 1) {
+          await extractAttachments(draftRecord.id, attachmentIds).catch(() => undefined);
+        } else if (attachmentIds[0]) {
+          await extractAttachment(attachmentIds[0]).catch(() => undefined);
+        }
       }
 
       appToast.success({
@@ -222,7 +227,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
                 {isUploadFirstPending ? 'Creating Draft...' : 'Upload Job Card First'}
               </Button>
               <input
-                accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
                 className="sr-only"
                 multiple
                 onChange={handleUploadFirst}

@@ -99,7 +99,8 @@ export const appConfig = registerAs('app', () => ({
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public',
-  mailFrom: resolveOptionalString(process.env.MAIL_FROM) ?? resolveOptionalString(process.env.SMTP_FROM),
+  mailFrom:
+    resolveOptionalString(process.env.MAIL_FROM) ?? resolveOptionalString(process.env.SMTP_FROM),
   mailReplyTo: resolveOptionalString(process.env.MAIL_REPLY_TO),
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? 'vehicle-vault-attachments',
@@ -115,6 +116,7 @@ export const appConfig = registerAs('app', () => ({
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
   geminiApiKey: process.env.GEMINI_API_KEY,
+  geminiModel: resolveOptionalString(process.env.GEMINI_MODEL) ?? 'gemini-2.5-flash',
   smtp: {
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587', 10),

@@ -51,6 +51,7 @@ export function AttachmentUploadForm({
               <Badge tone="neutral">JPEG</Badge>
               <Badge tone="neutral">PNG</Badge>
               <Badge tone="neutral">WEBP</Badge>
+              <Badge tone="neutral">HEIC</Badge>
               <Badge tone="neutral">PDF</Badge>
               <Badge tone="warning">Up to 5 MB each</Badge>
             </div>
@@ -61,7 +62,7 @@ export function AttachmentUploadForm({
           </Button>
         </div>
         <input
-          accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+          accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
           ref={inputRef}
           className="sr-only"
           disabled={isUploading}

@@ -44,6 +44,8 @@ const OPTIONAL_FIELDS = [
   { id: 'notes', label: 'Notes', description: 'Additional details' },
 ];
 
+const SKIP_MAPPING_VALUE = '__skip__';
+
 export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDialogProps) {
   const [step, setStep] = useState<ImportStep>('upload');
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -57,7 +59,6 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
     setCsvHeaders([]);
     setCsvRows([]);
     setMapping({});
-    setMapping({});
   }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,13 +70,14 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
       skipEmptyLines: true,
       complete: (results) => {
         if (results.meta.fields) {
-          setCsvHeaders(results.meta.fields);
+          const detectedHeaders = results.meta.fields.filter((header) => header.trim().length > 0);
+          setCsvHeaders(detectedHeaders);
           setCsvRows(results.data);
 
           // Auto-mapping attempt
           const initialMapping: Record<string, string> = {};
           [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS].forEach((field) => {
-            const match = results.meta.fields?.find(
+            const match = detectedHeaders.find(
               (h) =>
                 h.toLowerCase().includes(field.id.toLowerCase()) ||
                 h.toLowerCase().includes(field.label.toLowerCase()),
@@ -261,14 +263,24 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                             {field.label}
                           </label>
                           <Select
-                            value={mapping[field.id]}
-                            onValueChange={(val) => setMapping((m) => ({ ...m, [field.id]: val }))}
+                            value={mapping[field.id] ?? SKIP_MAPPING_VALUE}
+                            onValueChange={(val) =>
+                              setMapping((current) => {
+                                if (val !== SKIP_MAPPING_VALUE) {
+                                  return { ...current, [field.id]: val };
+                                }
+
+                                const nextMapping = { ...current };
+                                delete nextMapping[field.id];
+                                return nextMapping;
+                              })
+                            }
                           >
                             <SelectTrigger className="h-9">
                               <SelectValue placeholder="Skip mapping" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Skip mapping</SelectItem>
+                              <SelectItem value={SKIP_MAPPING_VALUE}>Skip mapping</SelectItem>
                               {csvHeaders.map((h) => (
                                 <SelectItem key={h} value={h}>
                                   {h}

@@ -36,6 +36,7 @@ import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
 import {
   getMaintenanceLineItemBreakdown,
   isMeaningfulMaintenanceLineItem,
+  roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
@@ -111,8 +112,10 @@ function toCreateMaintenanceLineItems(values: MaintenanceFormValues) {
       normalizedCategory: lineItem.normalizedCategory,
       quantity: lineItem.quantity,
       unit: lineItem.unit?.trim() ? lineItem.unit.trim() : undefined,
-      unitPrice: lineItem.unitPrice,
-      lineTotal: lineItem.lineTotal,
+      unitPrice:
+        typeof lineItem.unitPrice === 'number' ? roundMoney(lineItem.unitPrice) : undefined,
+      lineTotal:
+        typeof lineItem.lineTotal === 'number' ? roundMoney(lineItem.lineTotal) : undefined,
       brand: lineItem.brand?.trim() ? lineItem.brand.trim() : undefined,
       partNumber: lineItem.partNumber?.trim() ? lineItem.partNumber.trim() : undefined,
       notes: lineItem.notes?.trim() ? lineItem.notes.trim() : undefined,
@@ -135,7 +138,7 @@ function toCreateMaintenanceRecordInput(
     workshopName: values.workshopName?.trim() ? values.workshopName.trim() : undefined,
     invoiceNumber: values.invoiceNumber?.trim() ? values.invoiceNumber.trim() : undefined,
     currencyCode: values.currencyCode.trim().toUpperCase(),
-    totalCost: hasStructuredLineItems ? derivedBreakdown.totalCost : values.totalCost,
+    totalCost: hasStructuredLineItems ? derivedBreakdown.totalCost : roundMoney(values.totalCost),
     laborCost: hasStructuredLineItems ? derivedBreakdown.laborCost : undefined,
     partsCost: hasStructuredLineItems ? derivedBreakdown.partsCost : undefined,
     fluidsCost: hasStructuredLineItems ? derivedBreakdown.fluidsCost : undefined,

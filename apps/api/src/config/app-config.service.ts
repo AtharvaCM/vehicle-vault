@@ -115,6 +115,10 @@ export class AppConfigService {
     return this.configService.get<string>('GEMINI_API_KEY');
   }
 
+  get geminiModel() {
+    return this.configService.get<string>('app.geminiModel') ?? 'gemini-2.5-flash';
+  }
+
   get maintenanceAlertCron() {
     return this.configService.get<string>('MAINTENANCE_ALERT_CRON') ?? '0 6 * * *';
   }
