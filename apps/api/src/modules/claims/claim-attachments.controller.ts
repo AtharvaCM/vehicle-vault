@@ -28,6 +28,11 @@ import { ClaimAttachmentsService } from './claim-attachments.service';
 export class ClaimAttachmentsController {
   constructor(private readonly claimAttachmentsService: ClaimAttachmentsService) {}
 
+  @Get('claim-attachments/extraction/status')
+  async getExtractionStatus() {
+    return this.claimAttachmentsService.getExtractionStatus();
+  }
+
   @Get('claims/:claimId/attachments')
   async list(@Param('claimId') claimId: string, @CurrentUser() user: AuthUser) {
     return this.claimAttachmentsService.listByClaim(user.id, claimId);
@@ -62,6 +67,14 @@ export class ClaimAttachmentsController {
       `inline; filename="${encodeURIComponent(attachment.originalFileName)}"`,
     );
     return new StreamableFile(attachment.fileBuffer);
+  }
+
+  @Post('claim-attachments/:attachmentId/extract')
+  async extract(
+    @Param('attachmentId') attachmentId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.claimAttachmentsService.extractFromAttachment(user.id, attachmentId);
   }
 
   @Delete('claim-attachments/:attachmentId')

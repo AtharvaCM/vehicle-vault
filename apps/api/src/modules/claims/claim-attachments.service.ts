@@ -11,12 +11,14 @@ import {
   AttachmentKind,
   ClaimAttachmentSchema,
   type ClaimAttachment,
+  type ClaimExtractionSuggestion,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import type { AttachmentUploadFile } from '../attachments/types/attachment-upload-file.type';
 import { validateAttachmentUploadFile } from '../attachments/utils/attachment-upload.util';
+import { ClaimExtractionService } from './claim-extraction.service';
 
 function buildStoredClaimAttachmentPath(
   userId: string,
@@ -54,7 +56,12 @@ export class ClaimAttachmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: SupabaseStorageService,
+    private readonly extractionService: ClaimExtractionService,
   ) {}
+
+  getExtractionStatus() {
+    return { available: this.extractionService.isAvailable };
+  }
 
   async listByClaim(userId: string, claimId: string): Promise<ClaimAttachment[]> {
     await this.ensureClaimOwnedBy(userId, claimId);
@@ -139,6 +146,15 @@ export class ClaimAttachmentsService {
       ...toClaimAttachment(attachment),
       fileBuffer,
     };
+  }
+
+  async extractFromAttachment(
+    userId: string,
+    attachmentId: string,
+  ): Promise<ClaimExtractionSuggestion> {
+    const attachment = await this.getOwnedAttachment(userId, attachmentId);
+    const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
+    return this.extractionService.extractFromDocument(fileBuffer, attachment.mimeType);
   }
 
   async remove(userId: string, attachmentId: string) {
