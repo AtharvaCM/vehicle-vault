@@ -1,13 +1,16 @@
-import { ShieldCheck, Plus, Car } from 'lucide-react';
+import { ShieldCheck, Plus, Car, ReceiptText } from 'lucide-react';
 import { useVehicleDocuments } from '../../vehicle-documents/hooks/use-documents';
 import { DocumentCard } from '../../vehicle-documents/components/document-card';
+import { ClaimCard } from '../../claims/components/claim-card';
+import { ClaimFormDialog } from '../../claims/components/claim-form-dialog';
+import { useVehicleClaims } from '../../claims/hooks/use-claims';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { useState } from 'react';
 import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
-import { type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
+import { type Claim, type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
 
 interface ProtectionTabProps {
   vehicleId: string;
@@ -15,10 +18,14 @@ interface ProtectionTabProps {
 
 export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const documentsQuery = useVehicleDocuments(vehicleId);
+  const claimsQuery = useVehicleClaims(vehicleId);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [defaultKind, setDefaultKind] = useState<VehicleDocumentKind>('insurance');
   const [editingDocument, setEditingDocument] = useState<VehicleDocument | null>(null);
+
+  const [isClaimDialogOpen, setIsClaimDialogOpen] = useState(false);
+  const [editingClaim, setEditingClaim] = useState<Claim | null>(null);
 
   if (documentsQuery.isPending) {
     return <LoadingState title="Loading protection details" description="Checking policy and warranty status..." />;
@@ -27,6 +34,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const allDocuments = documentsQuery.data || [];
   const policies = allDocuments.filter(d => d.kind === 'insurance');
   const warranties = allDocuments.filter(d => d.kind === 'warranty');
+  const claims = claimsQuery.data || [];
 
   function openDialog(kind: VehicleDocumentKind) {
     setEditingDocument(null);
@@ -43,6 +51,21 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   function handleClose() {
     setEditingDocument(null);
     setIsDialogOpen(false);
+  }
+
+  function openClaimDialog() {
+    setEditingClaim(null);
+    setIsClaimDialogOpen(true);
+  }
+
+  function handleClaimEdit(claim: Claim) {
+    setEditingClaim(claim);
+    setIsClaimDialogOpen(true);
+  }
+
+  function handleClaimClose() {
+    setEditingClaim(null);
+    setIsClaimDialogOpen(false);
   }
 
   return (
@@ -74,6 +97,57 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   <Button variant="secondary" onClick={() => openDialog('insurance')}>
                     Register first policy
                   </Button>
+                }
+              />
+            )}
+          </div>
+        </section>
+
+        {/* Claims Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ReceiptText className="h-5 w-5 text-primary" />
+              <h3 className="text-xl font-bold text-slate-900">Insurance Claims</h3>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={openClaimDialog}
+              disabled={policies.length === 0}
+              title={policies.length === 0 ? 'Add an insurance policy first' : undefined}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Record Claim
+            </Button>
+          </div>
+
+          <div className="grid gap-4">
+            {claimsQuery.isPending ? (
+              <p className="text-xs text-slate-400">Loading claims…</p>
+            ) : claims.length > 0 ? (
+              claims.map((claim) => (
+                <ClaimCard
+                  key={claim.id}
+                  claim={claim}
+                  vehicleId={vehicleId}
+                  onEdit={handleClaimEdit}
+                />
+              ))
+            ) : (
+              <EmptyState
+                title="No claims yet"
+                description={
+                  policies.length === 0
+                    ? 'Add an insurance policy before recording a claim.'
+                    : 'Track accident repairs and what your insurer covered.'
+                }
+                action={
+                  policies.length > 0 ? (
+                    <Button variant="secondary" onClick={openClaimDialog}>
+                      Record first claim
+                    </Button>
+                  ) : undefined
                 }
               />
             )}
@@ -132,12 +206,20 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
          </Card>
       </aside>
 
-      <DocumentFormDialog 
-        isOpen={isDialogOpen} 
-        onClose={handleClose} 
+      <DocumentFormDialog
+        isOpen={isDialogOpen}
+        onClose={handleClose}
         vehicleId={vehicleId}
         defaultKind={defaultKind}
         editingDocument={editingDocument}
+      />
+
+      <ClaimFormDialog
+        isOpen={isClaimDialogOpen}
+        onClose={handleClaimClose}
+        vehicleId={vehicleId}
+        insurancePolicies={policies}
+        editingClaim={editingClaim}
       />
     </div>
   );

@@ -85,6 +85,13 @@ enum ReminderStatus {
   completed
 }
 
+enum ClaimStatus {
+  filed
+  approved
+  settled
+  rejected
+}
+
 enum AttachmentKind {
   receipt
   document
@@ -427,6 +434,7 @@ model MaintenanceRecord {
   vehicle         Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   attachments     Attachment[]
   lineItems       MaintenanceLineItem[]
+  claim           Claim?
 
   @@index([vehicleId, serviceDate(sort: Desc)])
   @@index([vehicleId, status, serviceDate(sort: Desc)])
@@ -590,8 +598,31 @@ model InsurancePolicy {
   updatedAt       DateTime     @updatedAt
   vehicle         Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   attachments     Attachment[]
+  claims          Claim[]
 
   @@index([vehicleId, endDate])
+}
+
+model Claim {
+  id                  String              @id @default(uuid()) @db.Uuid
+  insurancePolicyId   String              @db.Uuid
+  // 1:1 with a maintenance record. Nullable so a claim can be filed
+  // before the repair record is logged; backfilled when the bill arrives.
+  maintenanceRecordId String?             @unique @db.Uuid
+  claimNumber         String?             @db.VarChar(120)
+  grossAmount         Decimal             @db.Decimal(12, 2)
+  insurerPaidAmount   Decimal             @db.Decimal(12, 2)
+  status              ClaimStatus         @default(filed)
+  filedDate           DateTime
+  settledDate         DateTime?
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  insurancePolicy     InsurancePolicy     @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
+  maintenanceRecord   MaintenanceRecord?  @relation(fields: [maintenanceRecordId], references: [id], onDelete: SetNull)
+
+  @@index([insurancePolicyId, filedDate(sort: Desc)])
+  @@index([status, filedDate(sort: Desc)])
 }
 
 model Warranty {

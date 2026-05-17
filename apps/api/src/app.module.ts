@@ -18,6 +18,7 @@ import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MailModule } from './common/mail/mail.module';
 import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
+import { ClaimsModule } from './modules/claims/claims.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-docu
     AttachmentsModule,
     ExportsModule,
     VehicleDocumentsModule,
+    ClaimsModule,
   ],
 })
 export class AppModule {}
