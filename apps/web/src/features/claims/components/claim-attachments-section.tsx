@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import type { Claim, ClaimExtractionSuggestion } from '@vehicle-vault/shared';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { appToast } from '@/lib/toast';
 
 import { getClaimAttachmentFileUrl } from '../api/claim-attachments';
@@ -37,12 +38,10 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatINR(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
+function toDateInputValue(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
 }
 
 interface ClaimAttachmentsSectionProps {
@@ -126,26 +125,22 @@ export function ClaimAttachmentsSection({
     }
   }
 
-  async function handleApplySuggestion() {
-    if (!suggestion) return;
-    const { data } = suggestion;
+  async function handleApplySuggestion(edited: ClaimExtractionSuggestion) {
     const patch: Parameters<typeof updateClaimMutation.mutateAsync>[0]['data'] = {};
 
-    if (data.claimNumber) patch.claimNumber = data.claimNumber;
-    if (typeof data.grossAmount === 'number') patch.grossAmount = data.grossAmount;
-    if (typeof data.insurerPaidAmount === 'number') {
-      patch.insurerPaidAmount = data.insurerPaidAmount;
+    if (edited.claimNumber) patch.claimNumber = edited.claimNumber;
+    if (typeof edited.grossAmount === 'number') patch.grossAmount = edited.grossAmount;
+    if (typeof edited.insurerPaidAmount === 'number') {
+      patch.insurerPaidAmount = edited.insurerPaidAmount;
     }
-    if (data.filedDate) patch.filedDate = new Date(data.filedDate);
-    if (data.settledDate) {
-      patch.settledDate = new Date(data.settledDate);
+    if (edited.filedDate) patch.filedDate = new Date(edited.filedDate);
+    if (edited.settledDate) {
+      patch.settledDate = new Date(edited.settledDate);
       patch.status = 'settled';
     }
-    if (data.notes && !claim.notes) patch.notes = data.notes;
-    if (data.vendorName && !claim.notes) {
-      patch.notes = patch.notes
-        ? `${patch.notes}\n${data.vendorName}`
-        : data.vendorName;
+    if (edited.notes && !claim.notes) patch.notes = edited.notes;
+    if (edited.vendorName && !claim.notes) {
+      patch.notes = patch.notes ? `${patch.notes}\n${edited.vendorName}` : edited.vendorName;
     }
 
     if (Object.keys(patch).length === 0) {
@@ -299,39 +294,140 @@ export function ClaimAttachmentsSection({
   );
 }
 
+type FieldKey =
+  | 'claimNumber'
+  | 'grossAmount'
+  | 'insurerPaidAmount'
+  | 'filedDate'
+  | 'settledDate'
+  | 'vendorName'
+  | 'notes';
+
+const FIELD_LABEL: Record<FieldKey, string> = {
+  claimNumber: 'Claim #',
+  grossAmount: 'Gross bill (₹)',
+  insurerPaidAmount: 'Insurer paid (₹)',
+  filedDate: 'Filed date',
+  settledDate: 'Settled date',
+  vendorName: 'Vendor',
+  notes: 'Notes',
+};
+
+type DraftState = {
+  values: Record<FieldKey, string>;
+  included: Record<FieldKey, boolean>;
+};
+
+function suggestionToDraft(s: ClaimExtractionSuggestion): DraftState {
+  return {
+    values: {
+      claimNumber: s.claimNumber ?? '',
+      grossAmount: typeof s.grossAmount === 'number' ? String(s.grossAmount) : '',
+      insurerPaidAmount:
+        typeof s.insurerPaidAmount === 'number' ? String(s.insurerPaidAmount) : '',
+      filedDate: toDateInputValue(s.filedDate),
+      settledDate: toDateInputValue(s.settledDate),
+      vendorName: s.vendorName ?? '',
+      notes: s.notes ?? '',
+    },
+    included: {
+      claimNumber: Boolean(s.claimNumber),
+      grossAmount: typeof s.grossAmount === 'number',
+      insurerPaidAmount: typeof s.insurerPaidAmount === 'number',
+      filedDate: Boolean(s.filedDate),
+      settledDate: Boolean(s.settledDate),
+      vendorName: Boolean(s.vendorName),
+      notes: Boolean(s.notes),
+    },
+  };
+}
+
+function draftToSuggestion(draft: DraftState): ClaimExtractionSuggestion {
+  const out: ClaimExtractionSuggestion = {};
+  if (draft.included.claimNumber && draft.values.claimNumber.trim()) {
+    out.claimNumber = draft.values.claimNumber.trim();
+  }
+  if (draft.included.grossAmount && draft.values.grossAmount.trim()) {
+    const n = Number(draft.values.grossAmount);
+    if (!Number.isNaN(n) && n >= 0) out.grossAmount = n;
+  }
+  if (draft.included.insurerPaidAmount && draft.values.insurerPaidAmount.trim()) {
+    const n = Number(draft.values.insurerPaidAmount);
+    if (!Number.isNaN(n) && n >= 0) out.insurerPaidAmount = n;
+  }
+  if (draft.included.filedDate && draft.values.filedDate) {
+    out.filedDate = new Date(draft.values.filedDate).toISOString();
+  }
+  if (draft.included.settledDate && draft.values.settledDate) {
+    out.settledDate = new Date(draft.values.settledDate).toISOString();
+  }
+  if (draft.included.vendorName && draft.values.vendorName.trim()) {
+    out.vendorName = draft.values.vendorName.trim();
+  }
+  if (draft.included.notes && draft.values.notes.trim()) {
+    out.notes = draft.values.notes.trim();
+  }
+  return out;
+}
+
 interface SuggestionPanelProps {
   suggestion: ClaimExtractionSuggestion;
-  onApply: () => void;
+  onApply: (edited: ClaimExtractionSuggestion) => void;
   onDismiss: () => void;
   isApplying: boolean;
 }
 
 function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: SuggestionPanelProps) {
-  const entries: Array<[string, string]> = [];
-  if (suggestion.claimNumber) entries.push(['Claim #', suggestion.claimNumber]);
-  if (typeof suggestion.grossAmount === 'number') {
-    entries.push(['Gross bill', formatINR(suggestion.grossAmount)]);
-  }
-  if (typeof suggestion.insurerPaidAmount === 'number') {
-    entries.push(['Insurer paid', formatINR(suggestion.insurerPaidAmount)]);
-  }
-  if (suggestion.filedDate) {
-    entries.push(['Filed date', format(new Date(suggestion.filedDate), 'd MMM yyyy')]);
-  }
-  if (suggestion.settledDate) {
-    entries.push(['Settled date', format(new Date(suggestion.settledDate), 'd MMM yyyy')]);
-  }
-  if (suggestion.vendorName) entries.push(['Vendor', suggestion.vendorName]);
-  if (suggestion.notes) entries.push(['Notes', suggestion.notes]);
+  const [draft, setDraft] = useState<DraftState>(() => suggestionToDraft(suggestion));
 
-  const hasFindings = entries.length > 0;
+  // Re-seed when the underlying suggestion changes (different attachment extracted).
+  useEffect(() => {
+    setDraft(suggestionToDraft(suggestion));
+  }, [suggestion]);
+
+  const hasInitialFindings = Object.values(suggestionToDraft(suggestion).included).some(
+    Boolean,
+  );
+  const anyIncluded = Object.values(draft.included).some(Boolean);
+
+  function setValue(key: FieldKey, value: string) {
+    setDraft((prev) => ({
+      values: { ...prev.values, [key]: value },
+      // Editing a field implicitly includes it.
+      included: { ...prev.included, [key]: true },
+    }));
+  }
+
+  function toggleIncluded(key: FieldKey) {
+    setDraft((prev) => ({
+      ...prev,
+      included: { ...prev.included, [key]: !prev.included[key] },
+    }));
+  }
+
+  function renderField(key: FieldKey, input: ReactNode) {
+    return (
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={draft.included[key]}
+          onChange={() => toggleIncluded(key)}
+          className="h-3 w-3 accent-indigo-600"
+        />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 w-28 shrink-0">
+          {FIELD_LABEL[key]}
+        </span>
+        <div className="flex-1">{input}</div>
+      </label>
+    );
+  }
 
   return (
-    <div className="rounded-md border border-indigo-100 bg-indigo-50/40 p-3 space-y-2">
+    <div className="rounded-md border border-indigo-100 bg-indigo-50/40 p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700 flex items-center gap-1">
           <Sparkles className="h-3 w-3" />
-          AI Suggestion
+          AI Suggestion (editable)
           {typeof suggestion.confidence === 'number' ? (
             <span className="text-indigo-400 normal-case tracking-normal">
               · {Math.round(suggestion.confidence * 100)}% confidence
@@ -348,32 +444,91 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
         </button>
       </div>
 
-      {hasFindings ? (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          {entries.map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt className="text-slate-500">{label}</dt>
-              <dd className="font-bold text-slate-900 truncate">{value}</dd>
-            </div>
-          ))}
-        </dl>
+      {hasInitialFindings ? (
+        <>
+          <p className="text-[10px] text-slate-500">
+            Uncheck a field to skip it. Edit values to correct OCR mistakes before applying.
+          </p>
+          <div className="space-y-2">
+            {renderField(
+              'claimNumber',
+              <Input
+                value={draft.values.claimNumber}
+                onChange={(e) => setValue('claimNumber', e.target.value)}
+                placeholder="e.g. CL-2026-1234"
+                className="h-8 text-xs"
+              />,
+            )}
+            {renderField(
+              'grossAmount',
+              <Input
+                type="number"
+                step="0.01"
+                value={draft.values.grossAmount}
+                onChange={(e) => setValue('grossAmount', e.target.value)}
+                className="h-8 text-xs"
+              />,
+            )}
+            {renderField(
+              'insurerPaidAmount',
+              <Input
+                type="number"
+                step="0.01"
+                value={draft.values.insurerPaidAmount}
+                onChange={(e) => setValue('insurerPaidAmount', e.target.value)}
+                className="h-8 text-xs"
+              />,
+            )}
+            {renderField(
+              'filedDate',
+              <Input
+                type="date"
+                value={draft.values.filedDate}
+                onChange={(e) => setValue('filedDate', e.target.value)}
+                className="h-8 text-xs"
+              />,
+            )}
+            {renderField(
+              'settledDate',
+              <Input
+                type="date"
+                value={draft.values.settledDate}
+                onChange={(e) => setValue('settledDate', e.target.value)}
+                className="h-8 text-xs"
+              />,
+            )}
+            {renderField(
+              'vendorName',
+              <Input
+                value={draft.values.vendorName}
+                onChange={(e) => setValue('vendorName', e.target.value)}
+                className="h-8 text-xs"
+              />,
+            )}
+            {renderField(
+              'notes',
+              <Input
+                value={draft.values.notes}
+                onChange={(e) => setValue('notes', e.target.value)}
+                className="h-8 text-xs"
+              />,
+            )}
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="w-full"
+            onClick={() => onApply(draftToSuggestion(draft))}
+            disabled={isApplying || !anyIncluded}
+          >
+            <Check className="h-3 w-3" /> {isApplying ? 'Applying…' : 'Apply to claim'}
+          </Button>
+        </>
       ) : (
         <p className="text-xs text-slate-500 italic">
           AI could not detect claim fields in this document.
         </p>
       )}
-
-      {hasFindings ? (
-        <Button
-          type="button"
-          size="sm"
-          className="w-full"
-          onClick={onApply}
-          disabled={isApplying}
-        >
-          <Check className="h-3 w-3" /> {isApplying ? 'Applying…' : 'Apply to claim'}
-        </Button>
-      ) : null}
     </div>
   );
 }
