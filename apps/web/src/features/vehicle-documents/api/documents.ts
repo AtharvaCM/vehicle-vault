@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api/api-client';
+import { apiClient, type ApiSuccessResponse } from '@/lib/api/api-client';
 import {
   type CreateVehicleDocumentInput,
   type UpdateVehicleDocumentInput,
@@ -8,17 +8,22 @@ import {
 
 export async function listVehicleDocuments(vehicleId: string, kind?: VehicleDocumentKind) {
   const query = kind ? { kind } : undefined;
-  return apiClient.get<VehicleDocument[]>(`vehicles/${vehicleId}/documents`, { query });
+  const response = await apiClient.get<ApiSuccessResponse<VehicleDocument[]>>(
+    `vehicles/${vehicleId}/documents`,
+    { query },
+  );
+  return response.data;
 }
 
 export async function createVehicleDocument(
   vehicleId: string,
   data: CreateVehicleDocumentInput,
 ) {
-  return apiClient.post<VehicleDocument, CreateVehicleDocumentInput>(
-    `vehicles/${vehicleId}/documents`,
-    data,
-  );
+  const response = await apiClient.post<
+    ApiSuccessResponse<VehicleDocument>,
+    CreateVehicleDocumentInput
+  >(`vehicles/${vehicleId}/documents`, data);
+  return response.data;
 }
 
 export async function updateVehicleDocument(
@@ -26,10 +31,11 @@ export async function updateVehicleDocument(
   id: string,
   data: UpdateVehicleDocumentInput,
 ) {
-  return apiClient.patch<VehicleDocument, UpdateVehicleDocumentInput>(
-    `vehicles/${vehicleId}/documents/${id}`,
-    data,
-  );
+  const response = await apiClient.patch<
+    ApiSuccessResponse<VehicleDocument>,
+    UpdateVehicleDocumentInput
+  >(`vehicles/${vehicleId}/documents/${id}`, data);
+  return response.data;
 }
 
 export async function deleteVehicleDocument(
@@ -37,5 +43,7 @@ export async function deleteVehicleDocument(
   id: string,
   kind: VehicleDocumentKind,
 ) {
-  return apiClient.delete(`vehicles/${vehicleId}/documents/${kind}/${id}`);
+  return apiClient.delete<ApiSuccessResponse<{ removed: boolean }>>(
+    `vehicles/${vehicleId}/documents/${kind}/${id}`,
+  );
 }
