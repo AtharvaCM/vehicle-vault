@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { appToast } from '@/lib/toast';
+import { formatCurrency } from '@/lib/utils/format-currency';
+import { parseLocaleNumber } from '@/lib/utils/parse-locale-number';
 import { useBulkCreateFuelLogs } from '../hooks/use-bulk-create-fuel-logs';
 
 type FuelImportDialogProps = {
@@ -115,7 +117,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
         Object.entries(mapping).forEach(([localField, csvHeader]) => {
           let value = row[csvHeader];
           if (['odometer', 'quantity', 'price', 'totalCost'].includes(localField)) {
-            value = parseFloat(String(value).replace(/[^0-9.]/g, ''));
+            value = parseLocaleNumber(value);
           }
           if (localField === 'date') {
             // Basic date normalization attempt
@@ -344,7 +346,11 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                           {mapping['quantity'] ? row[mapping['quantity']] : '0'}
                         </td>
                         <td className="px-3 py-3 tabular-nums font-bold text-primary">
-                          ${mapping['totalCost'] ? row[mapping['totalCost']] : '0'}
+                          {formatCurrency(
+                            parseLocaleNumber(
+                              mapping['totalCost'] ? row[mapping['totalCost']] : '0',
+                            ) || 0,
+                          )}
                         </td>
                       </tr>
                     ))}
