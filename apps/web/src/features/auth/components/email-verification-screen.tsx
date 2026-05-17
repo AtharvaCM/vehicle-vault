@@ -23,7 +23,7 @@ export function EmailVerificationScreen() {
       });
       // Reset "Sent" state after 60 seconds to allow another resend
       setTimeout(() => setHasSent(false), 60000);
-    } catch (error) {
+    } catch {
       toast.error('Failed to resend email', {
         description: 'Please try again later or contact support.',
       });
@@ -44,7 +44,7 @@ export function EmailVerificationScreen() {
             Verify your email
           </h2>
           <p className="mt-3 text-slate-500">
-            We've sent a verification link to <span className="font-semibold text-slate-900">{user?.email}</span>. 
+            We&apos;ve sent a verification link to <span className="font-semibold text-slate-900">{user?.email}</span>.
             Please check your inbox to activate your account.
           </p>
         </div>

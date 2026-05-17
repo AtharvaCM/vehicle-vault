@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Sparkles, ArrowRight, Clock, Calendar } from 'lucide-react';
 import type { MaintenanceSuggestion } from '@vehicle-vault/shared';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface DashboardInsightsProps {
@@ -27,7 +27,7 @@ export function DashboardInsights({ insights }: DashboardInsightsProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {insights.map((insight, index) => (
+        {insights.map((insight) => (
           <Card key={`${insight.vehicleId}-${insight.category}`} className="relative overflow-hidden border-indigo-100 bg-indigo-50/20 transition-all hover:bg-indigo-50/40">
             <div className={`absolute top-0 right-0 h-1.5 w-1.5 rounded-full m-3 ${
               insight.priority === 'high' ? 'bg-red-500 animate-pulse' : 

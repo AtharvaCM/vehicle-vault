@@ -620,7 +620,7 @@ function parseNumber(value: string | undefined) {
     return undefined;
   }
 
-  const normalized = value.replace(/[^0-9.\-]/g, '');
+  const normalized = value.replace(/[^0-9.-]/g, '');
   const parsed = Number.parseFloat(normalized);
 
   return Number.isNaN(parsed) ? undefined : parsed;
