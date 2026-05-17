@@ -57,8 +57,8 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASS=
-MAIL_FROM=Vehicle Vault <no-reply@example.com>
-MAIL_REPLY_TO=
+MAIL_FROM=Vehicle Vault <no-reply@middle-earth.in>
+MAIL_REPLY_TO=support@middle-earth.in
 ```
 
 `FRONTEND_ORIGIN_PATTERN` is optional. Use it only when you need preview browser origins, such as dynamic Vercel preview URLs, alongside the stable allowlist in `FRONTEND_ORIGIN`.

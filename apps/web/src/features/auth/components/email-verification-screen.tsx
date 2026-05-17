@@ -74,7 +74,7 @@ export function EmailVerificationScreen() {
         </div>
 
         <div className="mt-8 border-t border-slate-100 pt-6 text-center text-sm text-slate-400">
-          <p>Need help? <a href="mailto:support@vehiclevault.com" className="font-medium text-slate-900 hover:underline">Contact support</a></p>
+          <p>Need help? <a href="mailto:support@middle-earth.in" className="font-medium text-slate-900 hover:underline">Contact support</a></p>
         </div>
       </div>
     </div>

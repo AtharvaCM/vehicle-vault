@@ -1,33 +1,49 @@
 import { ShieldCheck, Plus, Car } from 'lucide-react';
-import { useInsurancePolicies } from '../hooks/use-insurance';
-import { useWarranties } from '../hooks/use-warranty';
-import { InsuranceCard } from './insurance-card';
-import { WarrantyCard } from './warranty-card';
+import { useVehicleDocuments } from '../../vehicle-documents/hooks/use-documents';
+import { DocumentCard } from '../../vehicle-documents/components/document-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { useState } from 'react';
-import { InsuranceFormDialog } from './insurance-form-dialog';
-import { WarrantyFormDialog } from './warranty-form-dialog';
+import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
+import { type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
 
 interface ProtectionTabProps {
   vehicleId: string;
 }
 
 export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
-  const insuranceQuery = useInsurancePolicies(vehicleId);
-  const warrantyQuery = useWarranties(vehicleId);
-  
-  const [isInsuranceDialogOpen, setIsInsuranceDialogOpen] = useState(false);
-  const [isWarrantyDialogOpen, setIsWarrantyDialogOpen] = useState(false);
+  const documentsQuery = useVehicleDocuments(vehicleId);
 
-  if (insuranceQuery.isPending || warrantyQuery.isPending) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [defaultKind, setDefaultKind] = useState<VehicleDocumentKind>('insurance');
+  const [editingDocument, setEditingDocument] = useState<VehicleDocument | null>(null);
+
+  if (documentsQuery.isPending) {
     return <LoadingState title="Loading protection details" description="Checking policy and warranty status..." />;
   }
 
-  const policies = insuranceQuery.data || [];
-  const warranties = warrantyQuery.data || [];
+  const allDocuments = documentsQuery.data || [];
+  const policies = allDocuments.filter(d => d.kind === 'insurance');
+  const warranties = allDocuments.filter(d => d.kind === 'warranty');
+
+  function openDialog(kind: VehicleDocumentKind) {
+    setEditingDocument(null);
+    setDefaultKind(kind);
+    setIsDialogOpen(true);
+  }
+
+  function handleEdit(doc: VehicleDocument) {
+    setEditingDocument(doc);
+    setDefaultKind(doc.kind);
+    setIsDialogOpen(true);
+  }
+
+  function handleClose() {
+    setEditingDocument(null);
+    setIsDialogOpen(false);
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_350px]">
@@ -39,7 +55,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <ShieldCheck className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Insurance Policies</h3>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setIsInsuranceDialogOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
               <Plus className="mr-2 h-4 w-4" />
               Add Policy
             </Button>
@@ -48,14 +64,14 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
           <div className="grid gap-4">
             {policies.length > 0 ? (
               policies.map((policy) => (
-                <InsuranceCard key={policy.id} policy={policy} vehicleId={vehicleId} />
+                <DocumentCard key={policy.id} document={policy} vehicleId={vehicleId} onEdit={handleEdit} />
               ))
             ) : (
               <EmptyState 
                 title="No insurance policies" 
                 description="Keep your motor insurance details handy for renewals and claims."
                 action={
-                  <Button variant="secondary" onClick={() => setIsInsuranceDialogOpen(true)}>
+                  <Button variant="secondary" onClick={() => openDialog('insurance')}>
                     Register first policy
                   </Button>
                 }
@@ -71,7 +87,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <Car className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Warranty Coverage</h3>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setIsWarrantyDialogOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
               <Plus className="mr-2 h-4 w-4" />
               Add Warranty
             </Button>
@@ -80,14 +96,14 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
           <div className="grid gap-4">
             {warranties.length > 0 ? (
               warranties.map((warranty) => (
-                <WarrantyCard key={warranty.id} warranty={warranty} vehicleId={vehicleId} />
+                <DocumentCard key={warranty.id} document={warranty} vehicleId={vehicleId} onEdit={handleEdit} />
               ))
             ) : (
               <EmptyState 
                 title="No warranty info" 
                 description="Track your manufacturer or extended warranty coverage."
                 action={
-                  <Button variant="secondary" onClick={() => setIsWarrantyDialogOpen(true)}>
+                  <Button variant="secondary" onClick={() => openDialog('warranty')}>
                     Add warranty details
                   </Button>
                 }
@@ -116,15 +132,12 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
          </Card>
       </aside>
 
-      <InsuranceFormDialog 
-        isOpen={isInsuranceDialogOpen} 
-        onClose={() => setIsInsuranceDialogOpen(false)} 
+      <DocumentFormDialog 
+        isOpen={isDialogOpen} 
+        onClose={handleClose} 
         vehicleId={vehicleId}
-      />
-      <WarrantyFormDialog 
-        isOpen={isWarrantyDialogOpen} 
-        onClose={() => setIsWarrantyDialogOpen(false)} 
-        vehicleId={vehicleId}
+        defaultKind={defaultKind}
+        editingDocument={editingDocument}
       />
     </div>
   );

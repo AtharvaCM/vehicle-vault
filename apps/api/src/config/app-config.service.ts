@@ -125,7 +125,7 @@ export class AppConfigService {
       port: this.configService.get<number>('SMTP_PORT', 587),
       user: this.configService.get<string>('SMTP_USER'),
       pass: this.configService.get<string>('SMTP_PASS'),
-      from: this.configService.get<string>('SMTP_FROM', 'noreply@vehiclevault.com'),
+      from: this.configService.get<string>('SMTP_FROM', 'no-reply@middle-earth.in'),
     };
   }
 }
