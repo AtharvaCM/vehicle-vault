@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   deleteClaimAttachment,
+  extractClaimAttachment,
+  getClaimExtractionStatus,
   listClaimAttachments,
   uploadClaimAttachments,
 } from '../api/claim-attachments';
@@ -33,5 +35,19 @@ export function useDeleteClaimAttachment(claimId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: claimAttachmentsKey(claimId) });
     },
+  });
+}
+
+export function useClaimExtractionStatus() {
+  return useQuery({
+    queryKey: ['claim-attachments', 'extraction-status'],
+    queryFn: () => getClaimExtractionStatus(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useExtractClaimAttachment() {
+  return useMutation({
+    mutationFn: (attachmentId: string) => extractClaimAttachment(attachmentId),
   });
 }

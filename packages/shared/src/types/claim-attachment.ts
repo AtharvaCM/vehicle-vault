@@ -22,3 +22,24 @@ export const ClaimAttachmentSchema = z.object({
 });
 
 export type ClaimAttachment = z.infer<typeof ClaimAttachmentSchema>;
+
+/**
+ * Ephemeral OCR-extracted suggestion for a claim, parsed from an uploaded
+ * receipt / settlement letter / surveyor report. Never persisted —
+ * returned by the extraction endpoint, displayed to the user, and then
+ * applied to the underlying Claim via the standard update endpoint.
+ *
+ * All fields optional; the model returns whatever it can recognise.
+ */
+export const ClaimExtractionSuggestionSchema = z.object({
+  confidence: z.number().min(0).max(1).optional(),
+  claimNumber: z.string().max(120).optional(),
+  grossAmount: z.number().nonnegative().optional(),
+  insurerPaidAmount: z.number().nonnegative().optional(),
+  filedDate: z.string().datetime({ offset: true }).optional(),
+  settledDate: z.string().datetime({ offset: true }).optional(),
+  vendorName: z.string().optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export type ClaimExtractionSuggestion = z.infer<typeof ClaimExtractionSuggestionSchema>;

@@ -136,7 +136,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
           </div>
         ) : null}
 
-        <ClaimAttachmentsSection claimId={claim.id} />
+        <ClaimAttachmentsSection claim={claim} vehicleId={vehicleId} />
       </CardContent>
     </Card>
   );
