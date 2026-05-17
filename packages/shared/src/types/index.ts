@@ -10,3 +10,4 @@ export * from './fuel-log';
 export * from './insurance';
 export * from './warranty';
 export * from './vehicle-document';
+export * from './claim';

@@ -68,4 +68,8 @@ export const queryKeys = {
     all: () => ['vehicleDocuments'] as const,
     byVehicle: (vehicleId: string, kind?: string) => [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId, kind ?? 'all'] as const,
   },
+  claims: {
+    all: () => ['claims'] as const,
+    byVehicle: (vehicleId: string) => [...queryKeys.claims.all(), 'vehicle', vehicleId] as const,
+  },
 };
