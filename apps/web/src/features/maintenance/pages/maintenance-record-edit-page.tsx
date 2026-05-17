@@ -8,6 +8,7 @@ import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
+import { MaintenanceClaimLinkCard } from '@/features/claims/components/maintenance-claim-link-card';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -197,6 +198,13 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               </CardContent>
             </Card>
           )}
+
+          {recordQuery.data?.vehicleId ? (
+            <MaintenanceClaimLinkCard
+              vehicleId={recordQuery.data.vehicleId}
+              maintenanceRecordId={recordId}
+            />
+          ) : null}
 
           <AttachmentsSection recordId={recordId} />
         </div>

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Loader2, ScanText } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -15,6 +16,8 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
+
+import { MaintenanceClaimLinkCard } from '@/features/claims/components/maintenance-claim-link-card';
 
 import { MaintenanceForm } from '../components/maintenance-form';
 import { useCreateMaintenanceDraft } from '../hooks/use-create-maintenance-draft';
@@ -42,11 +45,19 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
     values: Parameters<typeof createMaintenanceMutation.mutateAsync>[0],
   ) {
     try {
-      await createMaintenanceMutation.mutateAsync(values);
+      const created = await createMaintenanceMutation.mutateAsync(values);
       const restoreNavigationGuard = allowNextNavigation();
-      appToast.success({
-        title: 'Maintenance record created',
+      toast.success('Maintenance record created', {
         description: 'The service entry was added to this vehicle.',
+        action: {
+          label: 'Link to claim',
+          onClick: () => {
+            navigate({
+              to: '/maintenance-records/$recordId/edit',
+              params: { recordId: created.id },
+            }).catch(() => undefined);
+          },
+        },
       });
 
       try {
@@ -225,6 +236,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
               </p>
             </CardContent>
           </Card>
+
+          <MaintenanceClaimLinkCard vehicleId={vehicleId} />
 
           <Card>
             <CardHeader>
