@@ -17,8 +17,6 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MailModule } from './common/mail/mail.module';
-import { InsuranceModule } from './modules/insurance/insurance.module';
-import { WarrantyModule } from './modules/warranty/warranty.module';
 import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
 
 @Module({
@@ -40,8 +38,6 @@ import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-docu
     MailModule,
     AttachmentsModule,
     ExportsModule,
-    InsuranceModule,
-    WarrantyModule,
     VehicleDocumentsModule,
   ],
 })
