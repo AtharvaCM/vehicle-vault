@@ -1,3 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// react-hook-form + Zod's discriminatedUnion don't narrow `register` calls by
+// the runtime-only `kind` field. The shared fields stay typed; the per-kind
+// (`policyNumber`, `warrantyNumber`, etc.) register/error accessors fall back
+// to `any` until react-hook-form gains first-class discriminated-union
+// support. The runtime cleanPayload + Zod resolver still validate the shape.
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,7 +86,6 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
     reset,
     control,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<CreateVehicleDocumentInput>({
     resolver: zodResolver(CreateVehicleDocumentSchema),
@@ -128,7 +133,7 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
       }
       reset();
       onClose();
-    } catch (error) {
+    } catch {
       appToast.error({ title: 'Failed to save', description: 'Please check your inputs and try again.' });
     }
   }

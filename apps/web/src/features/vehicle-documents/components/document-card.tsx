@@ -1,4 +1,4 @@
-import { Calendar, Gauge, Pencil, Trash2, Shield, ShieldCheck } from 'lucide-react';
+import { Calendar, Gauge, Pencil, Trash2, Shield } from 'lucide-react';
 import { format, isBefore, addDays } from 'date-fns';
 import { type VehicleDocument } from '@vehicle-vault/shared';
 
@@ -25,7 +25,7 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
       try {
         await deleteMutation.mutateAsync({ id: document.id, kind: document.kind });
         appToast.success({ title: `${document.kind === 'insurance' ? 'Policy' : 'Warranty'} removed`, description: 'History updated.' });
-      } catch (error) {
+      } catch {
         appToast.error({ title: 'Delete failed', description: 'Failed to remove record.' });
       }
     }
