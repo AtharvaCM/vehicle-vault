@@ -112,6 +112,9 @@ describe('VehiclesService', () => {
         odometer: 12000,
         vehicleType: VehicleType.Car,
         nickname: 'Family car',
+        purchaseDate: null,
+        purchasePrice: null,
+        purchaseOdometer: null,
       },
     });
     expect(result.id).toBe('vehicle-1');

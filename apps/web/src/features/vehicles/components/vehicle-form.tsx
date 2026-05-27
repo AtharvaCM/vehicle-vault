@@ -471,6 +471,57 @@ export function VehicleForm({
                 placeholder="Family SUV"
               />
             </FormField>
+
+            <FormField
+              htmlFor="vehicle-purchase-date"
+              label="Purchase date (optional)"
+              error={form.formState.errors.purchaseDate?.message}
+            >
+              <Input
+                id="vehicle-purchase-date"
+                type="date"
+                {...form.register('purchaseDate', {
+                  setValueAs: (v) => (v ? new Date(v).toISOString() : null),
+                })}
+                aria-invalid={Boolean(form.formState.errors.purchaseDate)}
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="vehicle-purchase-price"
+              label="Purchase price (₹, optional)"
+              error={form.formState.errors.purchasePrice?.message}
+            >
+              <Input
+                id="vehicle-purchase-price"
+                type="number"
+                min={0}
+                step="1"
+                {...form.register('purchasePrice', {
+                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+                })}
+                aria-invalid={Boolean(form.formState.errors.purchasePrice)}
+                placeholder="e.g. 850000"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="vehicle-purchase-odometer"
+              label="Odometer at purchase (optional)"
+              error={form.formState.errors.purchaseOdometer?.message}
+            >
+              <Input
+                id="vehicle-purchase-odometer"
+                type="number"
+                min={0}
+                step="1"
+                {...form.register('purchaseOdometer', {
+                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+                })}
+                aria-invalid={Boolean(form.formState.errors.purchaseOdometer)}
+                placeholder="0 for brand new"
+              />
+            </FormField>
           </div>
 
           {canUseCatalogSelectors ? (

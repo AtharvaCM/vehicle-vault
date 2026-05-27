@@ -90,6 +90,9 @@ export class VehiclesService {
         data: {
           userId,
           ...input,
+          purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : null,
+          purchasePrice: input.purchasePrice ?? null,
+          purchaseOdometer: input.purchaseOdometer ?? null,
         },
       });
 
@@ -105,11 +108,17 @@ export class VehiclesService {
     const input = this.validateUpdateVehicleInput(payload);
 
     try {
+      const { purchaseDate, ...rest } = input;
       const vehicle = await this.prisma.vehicle.update({
         where: {
           id: vehicleId,
         },
-        data: input,
+        data: {
+          ...rest,
+          ...(purchaseDate !== undefined
+            ? { purchaseDate: purchaseDate ? new Date(purchaseDate) : null }
+            : {}),
+        },
       });
 
       return this.toVehicle(vehicle);
@@ -217,6 +226,9 @@ export class VehiclesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        purchaseDate?: Date | null;
+        purchasePrice?: Prisma.Decimal | null;
+        purchaseOdometer?: number | null;
       },
   ) {
     return {
@@ -231,6 +243,10 @@ export class VehiclesService {
       vehicleType: vehicle.vehicleType as VehicleType,
       nickname: vehicle.nickname ?? undefined,
       catalogVariantId: vehicle.catalogVariantId ?? undefined,
+      purchaseDate: vehicle.purchaseDate ? vehicle.purchaseDate.toISOString() : null,
+      purchasePrice:
+        vehicle.purchasePrice != null ? Number(vehicle.purchasePrice.toString()) : null,
+      purchaseOdometer: vehicle.purchaseOdometer ?? null,
       createdAt: vehicle.createdAt.toISOString(),
       updatedAt: vehicle.updatedAt.toISOString(),
     } satisfies Vehicle;

@@ -19,6 +19,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MailModule } from './common/mail/mail.module';
 import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
 import { ClaimsModule } from './modules/claims/claims.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ClaimsModule } from './modules/claims/claims.module';
     ExportsModule,
     VehicleDocumentsModule,
     ClaimsModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

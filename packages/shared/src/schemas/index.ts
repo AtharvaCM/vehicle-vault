@@ -8,3 +8,4 @@ export * from './reminder.schema';
 export * from './vehicle-catalog.schema';
 export * from './vehicle.schema';
 export * from './fuel-log.schema';
+export * from './analytics.schema';

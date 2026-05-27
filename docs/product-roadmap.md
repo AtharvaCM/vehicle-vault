@@ -1,6 +1,6 @@
 # Product Roadmap
 
-Last updated: 2026-03-29
+Last updated: 2026-05-27
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
@@ -193,14 +193,15 @@ These are the main items that still prevent the product from being a more comple
 - No OAuth/social auth
 - No audit logging or admin tooling
 
-### Milestone 6: Financial Insights & Reporting (Next)
+### Milestone 6: Financial Insights & Reporting (In Progress)
 
 Goal: Provide deep visibility into ownership costs and facilitate resale value.
 
-- **Visual Analytics:** Fuel vs Maintenance vs Insurance cost split (Pie/Donut charts)
-- **Ownership Trend:** Line charts for cost-per-month and cost-per-km over time
-- **PDF Service History:** Generate a professional Service Book report for records or resale
-- **Total Cost of Ownership (TCO):** Aggregated metrics across years for entire vehicle life
+- **Visual Analytics:** Fuel vs Maintenance vs Insurance cost split — donut chart on dashboard (shipped, slice 1). Pro-rated insurance premium across overlap; insurer-paid claim amounts netted out of the maintenance bucket.
+- **Vehicle purchase metadata:** `purchaseDate`, `purchasePrice`, `purchaseOdometer` captured on the vehicle form (shipped). Backbone for TCO and ownership-trend slices.
+- **Ownership Trend:** Line charts for cost-per-month and cost-per-km over time (next).
+- **Total Cost of Ownership (TCO):** Aggregated metrics across years for entire vehicle life (next, depends on purchase metadata).
+- **PDF Service History:** Generate a professional Service Book report for records or resale (later in milestone).
 
 ## Later Roadmap
 

@@ -76,6 +76,9 @@ export const endpoints = {
     update: (id: string) => `/fuel-logs/${id}`,
     delete: (id: string) => `/fuel-logs/${id}`,
   },
+  analytics: {
+    costSplit: '/analytics/cost-split',
+  },
   notifications: {
     list: () => '/notifications',
     unreadCount: () => '/notifications/unread-count',

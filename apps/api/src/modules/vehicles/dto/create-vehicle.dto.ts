@@ -1,8 +1,10 @@
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
 import { Type } from 'class-transformer';
 import {
+  IsDateString,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -59,4 +61,20 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsString()
   catalogVariantId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  purchaseDate?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  purchasePrice?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  purchaseOdometer?: number | null;
 }

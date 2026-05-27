@@ -13,6 +13,9 @@ export const VehicleCreateSchema = z.object({
   nickname: z.string().trim().min(1).max(80).optional(),
   odometer: z.number().int().nonnegative(),
   catalogVariantId: z.string().uuid().optional(),
+  purchaseDate: z.string().datetime().optional().nullable(),
+  purchasePrice: z.number().nonnegative().optional().nullable(),
+  purchaseOdometer: z.number().int().nonnegative().optional().nullable(),
 });
 
 export const VehicleUpdateSchema = VehicleCreateSchema.partial().refine(

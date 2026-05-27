@@ -4,6 +4,8 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button } from '@/components/ui/button';
 
+import { CostSplitDonut } from '@/features/analytics/components/cost-split-donut';
+
 import { DashboardInsights } from '../components/dashboard-insights';
 import { DashboardOverview } from '../components/dashboard-overview';
 import { useDashboardSummary } from '../hooks/use-dashboard-summary';
@@ -55,6 +57,7 @@ export function DashboardPage() {
 
       <div className="space-y-8">
         <DashboardInsights insights={dashboardSummaryQuery.data.insights || []} />
+        <CostSplitDonut />
         <DashboardOverview summary={dashboardSummaryQuery.data} />
       </div>
     </PageContainer>
