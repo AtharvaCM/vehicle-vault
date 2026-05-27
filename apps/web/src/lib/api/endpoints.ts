@@ -78,6 +78,7 @@ export const endpoints = {
   },
   analytics: {
     costSplit: '/analytics/cost-split',
+    costTrend: '/analytics/cost-trend',
   },
   notifications: {
     list: () => '/notifications',

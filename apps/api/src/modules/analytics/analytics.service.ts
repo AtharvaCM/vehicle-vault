@@ -1,10 +1,32 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { CostSplitResponse } from '@vehicle-vault/shared';
+import type { CostSplitResponse, CostTrendPoint, CostTrendResponse } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+function monthKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function* monthsBetween(from: Date, to: Date): Generator<string> {
+  const cursor = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1));
+  while (cursor.getTime() <= end.getTime()) {
+    yield monthKey(cursor);
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+}
+
+function monthBoundsUtc(key: string): { start: Date; end: Date } {
+  const parts = key.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const start = new Date(Date.UTC(y, m - 1, 1));
+  const end = new Date(Date.UTC(y, m, 1));
+  return { start, end };
+}
 
 /**
  * Cost-split analytics over fuel, maintenance, and insurance.
@@ -105,6 +127,172 @@ export class AnalyticsService {
         insurance: insurance.toFixed(2),
         total: total.toFixed(2),
       },
+    };
+  }
+
+  /**
+   * Monthly cost trend over the requested range.
+   *
+   * Per-month buckets contain fuel, maintenance (net of insurer-paid),
+   * insurance (pro-rated across the month's overlap with each policy),
+   * total cost, kilometres driven, and cost-per-km.
+   *
+   * Kilometres are derived from fuel-log odometer deltas, attributed to
+   * the month of the later reading. Months with km=0 report
+   * `costPerKm: null` to avoid divide-by-zero noise in charts.
+   */
+  async getCostTrend(
+    userId: string,
+    options: { vehicleId?: string; from?: Date; to?: Date } = {},
+  ): Promise<CostTrendResponse> {
+    const now = new Date();
+    const to = options.to ?? now;
+    const from = options.from ?? new Date(to.getTime() - 365 * DAY_MS);
+
+    if (options.vehicleId) {
+      const vehicle = await this.prisma.vehicle.findFirst({
+        where: { id: options.vehicleId, userId },
+        select: { id: true },
+      });
+      if (!vehicle) throw new NotFoundException('Vehicle not found');
+    }
+
+    const vehicleFilter = options.vehicleId
+      ? { id: options.vehicleId, userId }
+      : { userId };
+
+    const [fuelLogs, maintenanceRecords, claimRows, policies] = await Promise.all([
+      this.prisma.fuelLog.findMany({
+        where: { date: { gte: from, lte: to }, vehicle: vehicleFilter },
+        select: { date: true, totalCost: true, odometer: true, vehicleId: true },
+        orderBy: { date: 'asc' },
+      }),
+      this.prisma.maintenanceRecord.findMany({
+        where: { serviceDate: { gte: from, lte: to }, vehicle: vehicleFilter },
+        select: { id: true, serviceDate: true, totalCost: true },
+      }),
+      this.prisma.claim.findMany({
+        where: {
+          maintenanceRecordId: { not: null },
+          maintenanceRecord: {
+            serviceDate: { gte: from, lte: to },
+            vehicle: vehicleFilter,
+          },
+        },
+        select: {
+          insurerPaidAmount: true,
+          maintenanceRecord: { select: { serviceDate: true } },
+        },
+      }),
+      this.prisma.insurancePolicy.findMany({
+        where: {
+          vehicle: vehicleFilter,
+          startDate: { lte: to },
+          endDate: { gte: from },
+          premiumAmount: { not: null },
+        },
+        select: { startDate: true, endDate: true, premiumAmount: true },
+      }),
+    ]);
+
+    type Bucket = {
+      fuel: Prisma.Decimal;
+      maintenance: Prisma.Decimal;
+      insurerPaid: Prisma.Decimal;
+      insurance: Prisma.Decimal;
+      km: number;
+    };
+    const buckets = new Map<string, Bucket>();
+    const ensure = (key: string): Bucket => {
+      let b = buckets.get(key);
+      if (!b) {
+        b = {
+          fuel: new Prisma.Decimal(0),
+          maintenance: new Prisma.Decimal(0),
+          insurerPaid: new Prisma.Decimal(0),
+          insurance: new Prisma.Decimal(0),
+          km: 0,
+        };
+        buckets.set(key, b);
+      }
+      return b;
+    };
+
+    // Seed every month in range so points form a continuous series.
+    for (const key of monthsBetween(from, to)) ensure(key);
+
+    // Fuel cost + odometer deltas (per vehicle, sorted asc).
+    const logsByVehicle = new Map<string, typeof fuelLogs>();
+    for (const log of fuelLogs) {
+      const key = monthKey(log.date);
+      ensure(key).fuel = ensure(key).fuel.plus(log.totalCost);
+      const list = logsByVehicle.get(log.vehicleId) ?? [];
+      list.push(log);
+      logsByVehicle.set(log.vehicleId, list);
+    }
+    for (const logs of logsByVehicle.values()) {
+      for (let i = 1; i < logs.length; i += 1) {
+        const curr = logs[i];
+        const prev = logs[i - 1];
+        if (!curr || !prev) continue;
+        const delta = curr.odometer - prev.odometer;
+        if (delta > 0) {
+          ensure(monthKey(curr.date)).km += delta;
+        }
+      }
+    }
+
+    // Maintenance gross.
+    for (const record of maintenanceRecords) {
+      const key = monthKey(record.serviceDate);
+      ensure(key).maintenance = ensure(key).maintenance.plus(record.totalCost);
+    }
+
+    // Claim insurer-paid → subtracted from maintenance bucket.
+    for (const row of claimRows) {
+      if (!row.maintenanceRecord) continue;
+      const key = monthKey(row.maintenanceRecord.serviceDate);
+      ensure(key).insurerPaid = ensure(key).insurerPaid.plus(row.insurerPaidAmount);
+    }
+
+    // Insurance pro-rated per month overlap.
+    for (const p of policies) {
+      if (!p.premiumAmount) continue;
+      const total = p.endDate.getTime() - p.startDate.getTime();
+      if (total <= 0) continue;
+      for (const key of buckets.keys()) {
+        const { start, end } = monthBoundsUtc(key);
+        const overlapStart = Math.max(p.startDate.getTime(), start.getTime());
+        const overlapEnd = Math.min(p.endDate.getTime(), end.getTime());
+        const overlap = Math.max(0, overlapEnd - overlapStart);
+        if (overlap === 0) continue;
+        ensure(key).insurance = ensure(key).insurance.plus(p.premiumAmount.mul(overlap / total));
+      }
+    }
+
+    const points: CostTrendPoint[] = [...buckets.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([period, b]) => {
+        const maintenanceNet = b.maintenance.minus(b.insurerPaid);
+        const total = b.fuel.plus(maintenanceNet).plus(b.insurance);
+        const costPerKm = b.km > 0 ? total.div(b.km).toFixed(2) : null;
+        return {
+          period,
+          fuel: b.fuel.toFixed(2),
+          maintenance: maintenanceNet.toFixed(2),
+          insurance: b.insurance.toFixed(2),
+          total: total.toFixed(2),
+          km: b.km,
+          costPerKm,
+        };
+      });
+
+    return {
+      currency: 'INR',
+      granularity: 'month',
+      range: { from: from.toISOString(), to: to.toISOString() },
+      vehicleId: options.vehicleId,
+      points,
     };
   }
 }

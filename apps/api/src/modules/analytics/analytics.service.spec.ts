@@ -8,9 +8,9 @@ type Mock = ReturnType<typeof vi.fn>;
 function makePrismaMock() {
   return {
     vehicle: { findFirst: vi.fn() },
-    fuelLog: { aggregate: vi.fn() },
-    maintenanceRecord: { aggregate: vi.fn() },
-    claim: { aggregate: vi.fn() },
+    fuelLog: { aggregate: vi.fn(), findMany: vi.fn() },
+    maintenanceRecord: { aggregate: vi.fn(), findMany: vi.fn() },
+    claim: { aggregate: vi.fn(), findMany: vi.fn() },
     insurancePolicy: { findMany: vi.fn() },
   };
 }
@@ -82,5 +82,88 @@ describe('AnalyticsService.getCostSplit', () => {
     await expect(
       service.getCostSplit('user-1', { vehicleId: '11111111-1111-1111-1111-111111111111' }),
     ).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('AnalyticsService.getCostTrend', () => {
+  let prisma: ReturnType<typeof makePrismaMock>;
+  let service: AnalyticsService;
+
+  beforeEach(() => {
+    prisma = makePrismaMock();
+    service = new AnalyticsService(prisma as never);
+  });
+
+  it('buckets fuel cost and km by month and computes cost-per-km', async () => {
+    (prisma.fuelLog.findMany as Mock).mockResolvedValue([
+      {
+        date: new Date('2026-01-05T00:00:00.000Z'),
+        totalCost: new Prisma.Decimal('500.00'),
+        odometer: 1000,
+        vehicleId: 'v1',
+      },
+      {
+        date: new Date('2026-01-20T00:00:00.000Z'),
+        totalCost: new Prisma.Decimal('600.00'),
+        odometer: 1500, // +500km in Jan
+        vehicleId: 'v1',
+      },
+      {
+        date: new Date('2026-02-10T00:00:00.000Z'),
+        totalCost: new Prisma.Decimal('400.00'),
+        odometer: 2000, // +500km in Feb
+        vehicleId: 'v1',
+      },
+    ]);
+    (prisma.maintenanceRecord.findMany as Mock).mockResolvedValue([]);
+    (prisma.claim.findMany as Mock).mockResolvedValue([]);
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+
+    const result = await service.getCostTrend('user-1', {
+      from: new Date('2026-01-01T00:00:00.000Z'),
+      to: new Date('2026-02-28T23:59:59.999Z'),
+    });
+
+    expect(result.granularity).toBe('month');
+    expect(result.points).toHaveLength(2);
+    const jan = result.points[0];
+    const feb = result.points[1];
+    expect(jan.period).toBe('2026-01');
+    expect(jan.fuel).toBe('1100.00');
+    expect(jan.km).toBe(500);
+    // total / km = 1100/500 = 2.20
+    expect(jan.costPerKm).toBe('2.20');
+    expect(feb.period).toBe('2026-02');
+    expect(feb.fuel).toBe('400.00');
+    expect(feb.km).toBe(500);
+    expect(feb.costPerKm).toBe('0.80');
+  });
+
+  it('nets insurer-paid out of monthly maintenance and reports null cost-per-km when km=0', async () => {
+    (prisma.fuelLog.findMany as Mock).mockResolvedValue([]);
+    (prisma.maintenanceRecord.findMany as Mock).mockResolvedValue([
+      {
+        id: 'm1',
+        serviceDate: new Date('2026-01-15T00:00:00.000Z'),
+        totalCost: new Prisma.Decimal('5000.00'),
+      },
+    ]);
+    (prisma.claim.findMany as Mock).mockResolvedValue([
+      {
+        insurerPaidAmount: new Prisma.Decimal('2000.00'),
+        maintenanceRecord: { serviceDate: new Date('2026-01-15T00:00:00.000Z') },
+      },
+    ]);
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+
+    const result = await service.getCostTrend('user-1', {
+      from: new Date('2026-01-01T00:00:00.000Z'),
+      to: new Date('2026-01-31T23:59:59.999Z'),
+    });
+
+    expect(result.points).toHaveLength(1);
+    expect(result.points[0].maintenance).toBe('3000.00');
+    expect(result.points[0].km).toBe(0);
+    expect(result.points[0].costPerKm).toBeNull();
   });
 });

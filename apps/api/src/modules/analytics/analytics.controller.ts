@@ -24,4 +24,15 @@ export class AnalyticsController {
     });
     return successResponse(result);
   }
+
+  @Get('cost-trend')
+  @ApiOperation({ summary: 'Monthly cost trend with km and cost-per-km' })
+  async getCostTrend(@CurrentUser('id') userId: string, @Query() query: CostSplitQueryDto) {
+    const result = await this.analyticsService.getCostTrend(userId, {
+      vehicleId: query.vehicleId,
+      from: query.from ? new Date(query.from) : undefined,
+      to: query.to ? new Date(query.to) : undefined,
+    });
+    return successResponse(result);
+  }
 }

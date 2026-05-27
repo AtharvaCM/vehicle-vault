@@ -5,6 +5,7 @@ import { PageTitle } from '@/components/shared/page-title';
 import { Button } from '@/components/ui/button';
 
 import { CostSplitDonut } from '@/features/analytics/components/cost-split-donut';
+import { CostTrendChart } from '@/features/analytics/components/cost-trend-chart';
 
 import { DashboardInsights } from '../components/dashboard-insights';
 import { DashboardOverview } from '../components/dashboard-overview';
@@ -57,7 +58,10 @@ export function DashboardPage() {
 
       <div className="space-y-8">
         <DashboardInsights insights={dashboardSummaryQuery.data.insights || []} />
-        <CostSplitDonut />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <CostSplitDonut />
+          <CostTrendChart />
+        </div>
         <DashboardOverview summary={dashboardSummaryQuery.data} />
       </div>
     </PageContainer>

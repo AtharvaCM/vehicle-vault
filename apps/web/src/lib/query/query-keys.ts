@@ -78,6 +78,14 @@ export const queryKeys = {
         params.from ?? 'default',
         params.to ?? 'default',
       ] as const,
+    costTrend: (params: { vehicleId?: string; from?: string; to?: string }) =>
+      [
+        ...queryKeys.analytics.all(),
+        'cost-trend',
+        params.vehicleId ?? 'all',
+        params.from ?? 'default',
+        params.to ?? 'default',
+      ] as const,
   },
   claims: {
     all: () => ['claims'] as const,
