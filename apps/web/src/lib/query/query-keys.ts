@@ -86,6 +86,7 @@ export const queryKeys = {
         params.from ?? 'default',
         params.to ?? 'default',
       ] as const,
+    tco: (vehicleId: string) => [...queryKeys.analytics.all(), 'tco', vehicleId] as const,
   },
   claims: {
     all: () => ['claims'] as const,

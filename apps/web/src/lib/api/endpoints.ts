@@ -80,6 +80,7 @@ export const endpoints = {
   analytics: {
     costSplit: '/analytics/cost-split',
     costTrend: '/analytics/cost-trend',
+    tco: (vehicleId: string) => `/analytics/tco/${vehicleId}`,
   },
   notifications: {
     list: () => '/notifications',

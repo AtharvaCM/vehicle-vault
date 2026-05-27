@@ -193,14 +193,14 @@ These are the main items that still prevent the product from being a more comple
 - No OAuth/social auth
 - No audit logging or admin tooling
 
-### Milestone 6: Financial Insights & Reporting (In Progress)
+### Milestone 6: Financial Insights & Reporting (Complete)
 
 Goal: Provide deep visibility into ownership costs and facilitate resale value.
 
 - **Visual Analytics:** Fuel vs Maintenance vs Insurance cost split — donut chart on dashboard (shipped, slice 1). Pro-rated insurance premium across overlap; insurer-paid claim amounts netted out of the maintenance bucket.
 - **Vehicle purchase metadata:** `purchaseDate`, `purchasePrice`, `purchaseOdometer` captured on the vehicle form (shipped). Backbone for TCO and ownership-trend slices.
 - **Ownership Trend:** Line charts for monthly fuel/maintenance/insurance/total spend and a derived cost-per-km series, served from `/analytics/cost-trend` (shipped, slice 2). Km derived from fuel-log odometer deltas attributed to the month of the later reading.
-- **Total Cost of Ownership (TCO):** Aggregated metrics across years for entire vehicle life (next, depends on purchase metadata).
+- **Total Cost of Ownership (TCO):** Lifetime card on vehicle detail page sourced from `/analytics/tco/:vehicleId` (shipped, slice 4). Sums maintenance + fuel + insurance, subtracts insurer-reimbursed claims, adds purchase price when available, and derives ₹/km and ₹/month against ownership window. Falls back to fuel-log odometer range when purchase odometer is missing.
 - **PDF Service History:** Generate a professional Service Book report for records or resale (shipped, slice 3). Endpoint `GET /vehicles/:vehicleId/service-history.pdf` builds a pdfkit document covering vehicle metadata, lifetime cost summary, full maintenance log, insurance policies, and claim history. The vehicle detail dropdown offers a one-click download.
 
 ## Later Roadmap

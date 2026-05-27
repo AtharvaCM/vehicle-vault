@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
@@ -33,6 +33,16 @@ export class AnalyticsController {
       from: query.from ? new Date(query.from) : undefined,
       to: query.to ? new Date(query.to) : undefined,
     });
+    return successResponse(result);
+  }
+
+  @Get('tco/:vehicleId')
+  @ApiOperation({ summary: 'Lifetime total cost of ownership for one vehicle' })
+  async getTco(
+    @CurrentUser('id') userId: string,
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+  ) {
+    const result = await this.analyticsService.getTco(userId, vehicleId);
     return successResponse(result);
   }
 }

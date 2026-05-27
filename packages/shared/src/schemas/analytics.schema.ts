@@ -51,3 +51,25 @@ export const CostTrendResponseSchema = z.object({
   vehicleId: z.string().uuid().optional(),
   points: z.array(CostTrendPointSchema),
 });
+
+export const TcoResponseSchema = z.object({
+  currency: z.literal('INR'),
+  vehicleId: z.string().uuid(),
+  purchaseDate: z.string().datetime().nullable(),
+  purchasePrice: decimalString.nullable(),
+  purchaseOdometer: z.number().int().nonnegative().nullable(),
+  ownershipMonths: z.number().nonnegative().nullable(),
+  kmSincePurchase: z.number().nonnegative(),
+  totals: z.object({
+    maintenance: decimalString,
+    fuel: decimalString,
+    insurance: decimalString,
+    insurerReimbursed: decimalString,
+    netSpend: decimalString,
+    tco: decimalString.nullable(),
+  }),
+  derived: z.object({
+    costPerKm: decimalString.nullable(),
+    costPerMonth: decimalString.nullable(),
+  }),
+});

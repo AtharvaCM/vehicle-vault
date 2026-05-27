@@ -39,6 +39,8 @@ import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { VehicleTyreTracker } from '../components/vehicle-tyre-tracker';
 import { ProtectionTab } from '../components/protection-tab';
+import { TcoCard } from '@/features/analytics/components/tco-card';
+
 import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
@@ -365,6 +367,8 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
               />
               <SnapshotMetric label="Engine Type" value={vehicle.fuelType} />
             </div>
+
+            <TcoCard vehicleId={vehicleId} />
 
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
               <OdometerHistoryCard insights={serviceInsights} />

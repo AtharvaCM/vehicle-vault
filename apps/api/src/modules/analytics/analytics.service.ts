@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { CostSplitResponse, CostTrendPoint, CostTrendResponse } from '@vehicle-vault/shared';
+import type {
+  CostSplitResponse,
+  CostTrendPoint,
+  CostTrendResponse,
+  TcoResponse,
+} from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 
@@ -293,6 +298,107 @@ export class AnalyticsService {
       range: { from: from.toISOString(), to: to.toISOString() },
       vehicleId: options.vehicleId,
       points,
+    };
+  }
+
+  /**
+   * Total cost of ownership for a single vehicle.
+   *
+   * Aggregates lifetime spend (no time window) across maintenance, fuel,
+   * and insurance, subtracts insurer-paid amounts, then derives ₹/km and
+   * ₹/month using the purchase metadata captured on the vehicle. When
+   * `purchasePrice` is set, the TCO field includes it on top of the net
+   * spend so the figure reflects "money out the door" for the asset.
+   *
+   * Falls back to fuel-log odometer range when `purchaseOdometer` isn't
+   * recorded, so the card still computes ₹/km on existing vehicles.
+   */
+  async getTco(userId: string, vehicleId: string): Promise<TcoResponse> {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, userId },
+    });
+    if (!vehicle) throw new NotFoundException('Vehicle not found');
+
+    const [maintenanceAgg, fuelAgg, claimsAgg, policies, firstFuel, lastFuel] = await Promise.all([
+      this.prisma.maintenanceRecord.aggregate({
+        _sum: { totalCost: true },
+        where: { vehicleId },
+      }),
+      this.prisma.fuelLog.aggregate({
+        _sum: { totalCost: true },
+        where: { vehicleId },
+      }),
+      this.prisma.claim.aggregate({
+        _sum: { insurerPaidAmount: true },
+        where: { maintenanceRecord: { vehicleId } },
+      }),
+      this.prisma.insurancePolicy.findMany({
+        where: { vehicleId, premiumAmount: { not: null } },
+        select: { premiumAmount: true },
+      }),
+      this.prisma.fuelLog.findFirst({
+        where: { vehicleId },
+        orderBy: { odometer: 'asc' },
+        select: { odometer: true },
+      }),
+      this.prisma.fuelLog.findFirst({
+        where: { vehicleId },
+        orderBy: { odometer: 'desc' },
+        select: { odometer: true },
+      }),
+    ]);
+
+    const maintenance = maintenanceAgg._sum.totalCost ?? new Prisma.Decimal(0);
+    const fuel = fuelAgg._sum.totalCost ?? new Prisma.Decimal(0);
+    const insurerReimbursed = claimsAgg._sum.insurerPaidAmount ?? new Prisma.Decimal(0);
+    const insurance = policies.reduce(
+      (acc, p) => (p.premiumAmount ? acc.plus(p.premiumAmount) : acc),
+      new Prisma.Decimal(0),
+    );
+    const netSpend = maintenance.plus(fuel).plus(insurance).minus(insurerReimbursed);
+    const tco = vehicle.purchasePrice ? netSpend.plus(vehicle.purchasePrice) : null;
+
+    let kmSincePurchase = 0;
+    if (vehicle.purchaseOdometer != null) {
+      kmSincePurchase = Math.max(0, vehicle.odometer - vehicle.purchaseOdometer);
+    } else if (firstFuel && lastFuel) {
+      kmSincePurchase = Math.max(0, lastFuel.odometer - firstFuel.odometer);
+    }
+
+    let ownershipMonths: number | null = null;
+    if (vehicle.purchaseDate) {
+      const now = new Date();
+      const months =
+        (now.getUTCFullYear() - vehicle.purchaseDate.getUTCFullYear()) * 12 +
+        (now.getUTCMonth() - vehicle.purchaseDate.getUTCMonth());
+      ownershipMonths = Math.max(0, months);
+    }
+
+    const costPerKm =
+      kmSincePurchase > 0 ? netSpend.div(kmSincePurchase).toFixed(2) : null;
+    const costPerMonth =
+      ownershipMonths && ownershipMonths > 0 ? netSpend.div(ownershipMonths).toFixed(2) : null;
+
+    return {
+      currency: 'INR',
+      vehicleId,
+      purchaseDate: vehicle.purchaseDate ? vehicle.purchaseDate.toISOString() : null,
+      purchasePrice: vehicle.purchasePrice ? vehicle.purchasePrice.toFixed(2) : null,
+      purchaseOdometer: vehicle.purchaseOdometer ?? null,
+      ownershipMonths,
+      kmSincePurchase,
+      totals: {
+        maintenance: maintenance.toFixed(2),
+        fuel: fuel.toFixed(2),
+        insurance: insurance.toFixed(2),
+        insurerReimbursed: insurerReimbursed.toFixed(2),
+        netSpend: netSpend.toFixed(2),
+        tco: tco ? tco.toFixed(2) : null,
+      },
+      derived: {
+        costPerKm,
+        costPerMonth,
+      },
     };
   }
 }

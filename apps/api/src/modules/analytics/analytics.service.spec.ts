@@ -8,7 +8,7 @@ type Mock = ReturnType<typeof vi.fn>;
 function makePrismaMock() {
   return {
     vehicle: { findFirst: vi.fn() },
-    fuelLog: { aggregate: vi.fn(), findMany: vi.fn() },
+    fuelLog: { aggregate: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
     maintenanceRecord: { aggregate: vi.fn(), findMany: vi.fn() },
     claim: { aggregate: vi.fn(), findMany: vi.fn() },
     insurancePolicy: { findMany: vi.fn() },
@@ -165,5 +165,88 @@ describe('AnalyticsService.getCostTrend', () => {
     expect(result.points[0].maintenance).toBe('3000.00');
     expect(result.points[0].km).toBe(0);
     expect(result.points[0].costPerKm).toBeNull();
+  });
+});
+
+describe('AnalyticsService.getTco', () => {
+  let prisma: ReturnType<typeof makePrismaMock>;
+  let service: AnalyticsService;
+
+  beforeEach(() => {
+    prisma = makePrismaMock();
+    service = new AnalyticsService(prisma as never);
+  });
+
+  it('computes lifetime spend, TCO with purchase price, cost-per-km, and cost-per-month', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-27T00:00:00.000Z'));
+
+    (prisma.vehicle.findFirst as Mock).mockResolvedValue({
+      id: 'v1',
+      odometer: 20000,
+      purchaseDate: new Date('2024-05-27T00:00:00.000Z'),
+      purchasePrice: new Prisma.Decimal('800000.00'),
+      purchaseOdometer: 0,
+    });
+    (prisma.maintenanceRecord.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('40000.00') },
+    });
+    (prisma.fuelLog.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('60000.00') },
+    });
+    (prisma.claim.aggregate as Mock).mockResolvedValue({
+      _sum: { insurerPaidAmount: new Prisma.Decimal('5000.00') },
+    });
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([
+      { premiumAmount: new Prisma.Decimal('15000.00') },
+      { premiumAmount: new Prisma.Decimal('15000.00') },
+    ]);
+    (prisma.fuelLog.findFirst as Mock).mockResolvedValue(null);
+
+    const result = await service.getTco('user-1', 'v1');
+
+    // net = 40000 + 60000 + 30000 - 5000 = 125000
+    expect(result.totals.netSpend).toBe('125000.00');
+    expect(result.totals.insurance).toBe('30000.00');
+    expect(result.totals.tco).toBe('925000.00'); // + purchasePrice 800k
+    expect(result.kmSincePurchase).toBe(20000);
+    expect(result.ownershipMonths).toBe(24);
+    // costPerKm = 125000/20000 = 6.25
+    expect(result.derived.costPerKm).toBe('6.25');
+    // costPerMonth = 125000/24 ≈ 5208.33
+    expect(result.derived.costPerMonth).toBe('5208.33');
+
+    vi.useRealTimers();
+  });
+
+  it('falls back to fuel-log odometer range when purchaseOdometer is missing', async () => {
+    (prisma.vehicle.findFirst as Mock).mockResolvedValue({
+      id: 'v1',
+      odometer: 30000,
+      purchaseDate: null,
+      purchasePrice: null,
+      purchaseOdometer: null,
+    });
+    (prisma.maintenanceRecord.aggregate as Mock).mockResolvedValue({ _sum: { totalCost: null } });
+    (prisma.fuelLog.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('10000.00') },
+    });
+    (prisma.claim.aggregate as Mock).mockResolvedValue({ _sum: { insurerPaidAmount: null } });
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    (prisma.fuelLog.findFirst as Mock)
+      .mockResolvedValueOnce({ odometer: 5000 })
+      .mockResolvedValueOnce({ odometer: 15000 });
+
+    const result = await service.getTco('user-1', 'v1');
+
+    expect(result.kmSincePurchase).toBe(10000);
+    expect(result.totals.tco).toBeNull();
+    expect(result.derived.costPerMonth).toBeNull();
+    expect(result.derived.costPerKm).toBe('1.00');
+  });
+
+  it('throws NotFound when vehicle is not owned', async () => {
+    (prisma.vehicle.findFirst as Mock).mockResolvedValue(null);
+    await expect(service.getTco('user-1', 'v-missing')).rejects.toMatchObject({ status: 404 });
   });
 });
