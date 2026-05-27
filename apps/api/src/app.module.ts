@@ -20,6 +20,7 @@ import { MailModule } from './common/mail/mail.module';
 import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
 import { ClaimsModule } from './modules/claims/claims.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     VehicleDocumentsModule,
     ClaimsModule,
     AnalyticsModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

@@ -39,6 +39,7 @@ import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { VehicleTyreTracker } from '../components/vehicle-tyre-tracker';
 import { ProtectionTab } from '../components/protection-tab';
+import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
 import { getVehicleServiceInsights } from '../utils/get-vehicle-service-insights';
@@ -240,6 +241,31 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                       >
                         Manage All Reminders
                       </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onSelect={async (event) => {
+                        event.preventDefault();
+                        const vehicle = vehicleQuery.data;
+                        if (!vehicle) return;
+                        try {
+                          await downloadServiceHistoryPdf(
+                            vehicle.id,
+                            vehicle.registrationNumber,
+                          );
+                          appToast.success({
+                            title: 'Service history downloaded',
+                            description: 'Saved as a PDF you can share or print.',
+                          });
+                        } catch (error) {
+                          appToast.error({
+                            title: 'Could not generate PDF',
+                            description: getApiErrorMessage(error),
+                          });
+                        }
+                      }}
+                    >
+                      Download Service History (PDF)
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

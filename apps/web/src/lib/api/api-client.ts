@@ -175,9 +175,34 @@ export function configureApiClient({
   refreshRequestPromise = null;
 }
 
+async function requestBlob(path: string, options: { signal?: AbortSignal } = {}): Promise<Blob> {
+  const accessToken = accessTokenResolver?.();
+  const response = await fetch(buildUrl(path), {
+    method: 'GET',
+    signal: options.signal,
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+  });
+  if (response.status === 401 && refreshAccessTokenHandler) {
+    const refreshed = await resolveRefreshedAccessToken();
+    if (refreshed) return requestBlob(path, options);
+    unauthorizedHandler?.();
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      `Request to ${path} failed with status ${response.status}`,
+      response.status,
+      null,
+    );
+  }
+  return response.blob();
+}
+
 export const apiClient = {
   request,
   buildUrl,
+  getBlob: requestBlob,
   get: <TResponse>(path: string, options?: Omit<ApiRequestOptions, 'method' | 'path'>) =>
     request<TResponse>({ ...options, method: 'GET', path }),
   post: <TResponse, TBody>(

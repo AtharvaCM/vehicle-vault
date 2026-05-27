@@ -201,7 +201,7 @@ Goal: Provide deep visibility into ownership costs and facilitate resale value.
 - **Vehicle purchase metadata:** `purchaseDate`, `purchasePrice`, `purchaseOdometer` captured on the vehicle form (shipped). Backbone for TCO and ownership-trend slices.
 - **Ownership Trend:** Line charts for monthly fuel/maintenance/insurance/total spend and a derived cost-per-km series, served from `/analytics/cost-trend` (shipped, slice 2). Km derived from fuel-log odometer deltas attributed to the month of the later reading.
 - **Total Cost of Ownership (TCO):** Aggregated metrics across years for entire vehicle life (next, depends on purchase metadata).
-- **PDF Service History:** Generate a professional Service Book report for records or resale (later in milestone).
+- **PDF Service History:** Generate a professional Service Book report for records or resale (shipped, slice 3). Endpoint `GET /vehicles/:vehicleId/service-history.pdf` builds a pdfkit document covering vehicle metadata, lifetime cost summary, full maintenance log, insurance policies, and claim history. The vehicle detail dropdown offers a one-click download.
 
 ## Later Roadmap
 
