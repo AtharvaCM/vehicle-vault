@@ -26,15 +26,23 @@ describe('OAuthService.loginOrLink', () => {
   let prisma: ReturnType<typeof basePrisma>;
   const tokenService = { rotateRefreshToken: vi.fn() };
   const jwtService = { signAsync: vi.fn() };
+  const auditService = { track: vi.fn().mockResolvedValue(undefined) };
   let service: OAuthService;
 
   beforeEach(() => {
     prisma = basePrisma();
     tokenService.rotateRefreshToken.mockReset();
     jwtService.signAsync.mockReset();
+    auditService.track.mockReset();
+    auditService.track.mockResolvedValue(undefined);
     tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
     jwtService.signAsync.mockResolvedValue('access-token');
-    service = new OAuthService(prisma as never, tokenService as never, jwtService as never);
+    service = new OAuthService(
+      prisma as never,
+      tokenService as never,
+      jwtService as never,
+      auditService as never,
+    );
   });
 
   const profile: OAuthProfile = {

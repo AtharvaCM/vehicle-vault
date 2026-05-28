@@ -53,12 +53,28 @@ describe('VehiclesService', () => {
     deleteObject: vi.fn().mockResolvedValue(undefined),
   };
 
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: VehiclesService;
 
   beforeEach(() => {
     vi.clearAllMocks();
     storageService.deleteObject.mockResolvedValue('deleted');
-    service = new VehiclesService(prisma as never, storageService as never);
+    auditService.track.mockResolvedValue(undefined);
+    // Default $transaction: invoke the callback with the prisma mock as tx.
+    prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
+      if (typeof arg === 'function') {
+        return (arg as (tx: unknown) => unknown)(prisma);
+      }
+      return Array.isArray(arg) ? arg : undefined;
+    });
+    service = new VehiclesService(
+      prisma as never,
+      storageService as never,
+      auditService as never,
+    );
   });
 
   it('lists only the current user vehicles with pagination metadata', async () => {

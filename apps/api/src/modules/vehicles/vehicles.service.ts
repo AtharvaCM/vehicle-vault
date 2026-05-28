@@ -19,6 +19,9 @@ import {
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { AuditResourceType } from '@prisma/client';
 import type { CreateVehicleDto } from './dto/create-vehicle.dto';
 import type { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
@@ -27,6 +30,7 @@ export class VehiclesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: SupabaseStorageService,
+    private readonly auditService: AuditService,
   ) {}
 
   async getAllVehicles(userId: string) {
@@ -86,14 +90,26 @@ export class VehiclesService {
     const input = this.validateCreateVehicleInput(payload);
 
     try {
-      const vehicle = await this.prisma.vehicle.create({
-        data: {
-          userId,
-          ...input,
-          purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : null,
-          purchasePrice: input.purchasePrice ?? null,
-          purchaseOdometer: input.purchaseOdometer ?? null,
-        },
+      const vehicle = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.vehicle.create({
+          data: {
+            userId,
+            ...input,
+            purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : null,
+            purchasePrice: input.purchasePrice ?? null,
+            purchaseOdometer: input.purchaseOdometer ?? null,
+          },
+        });
+        await this.auditService.track(tx, {
+          actorUserId: userId,
+          ownerUserId: userId,
+          action: AUDIT_ACTIONS.vehicle.created,
+          resourceType: AuditResourceType.vehicle,
+          resourceId: created.id,
+          before: null,
+          after: created as unknown as Record<string, unknown>,
+        });
+        return created;
       });
 
       return this.toVehicle(vehicle);
@@ -104,21 +120,31 @@ export class VehiclesService {
   }
 
   async updateVehicle(userId: string, vehicleId: string, payload: UpdateVehicleDto) {
-    await this.getOwnedVehicleRecord(userId, vehicleId);
+    const before = await this.getOwnedVehicleRecord(userId, vehicleId);
     const input = this.validateUpdateVehicleInput(payload);
 
     try {
       const { purchaseDate, ...rest } = input;
-      const vehicle = await this.prisma.vehicle.update({
-        where: {
-          id: vehicleId,
-        },
-        data: {
-          ...rest,
-          ...(purchaseDate !== undefined
-            ? { purchaseDate: purchaseDate ? new Date(purchaseDate) : null }
-            : {}),
-        },
+      const vehicle = await this.prisma.$transaction(async (tx) => {
+        const updated = await tx.vehicle.update({
+          where: { id: vehicleId },
+          data: {
+            ...rest,
+            ...(purchaseDate !== undefined
+              ? { purchaseDate: purchaseDate ? new Date(purchaseDate) : null }
+              : {}),
+          },
+        });
+        await this.auditService.track(tx, {
+          actorUserId: userId,
+          ownerUserId: userId,
+          action: AUDIT_ACTIONS.vehicle.updated,
+          resourceType: AuditResourceType.vehicle,
+          resourceId: vehicleId,
+          before: before as unknown as Record<string, unknown>,
+          after: updated as unknown as Record<string, unknown>,
+        });
+        return updated;
       });
 
       return this.toVehicle(vehicle);
@@ -151,10 +177,17 @@ export class VehiclesService {
       throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
     }
 
-    await this.prisma.vehicle.delete({
-      where: {
-        id: vehicleId,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.vehicle.delete({ where: { id: vehicleId } });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.vehicle.deleted,
+        resourceType: AuditResourceType.vehicle,
+        resourceId: vehicleId,
+        before: vehicle as unknown as Record<string, unknown>,
+        after: null,
+      });
     });
 
     const attachmentFileNames = vehicle.maintenanceRecords.flatMap((record) =>

@@ -37,6 +37,9 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MailService } from '../../common/mail/mail.service';
 import { AppConfigService } from '../../config/app-config.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { AuditResourceType } from '@prisma/client';
 import { TokenService } from './token.service';
 import type { LoginDto } from './dto/login.dto';
 import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
@@ -73,6 +76,7 @@ export class AuthService {
     private readonly appConfigService: AppConfigService,
     private readonly mailService: MailService,
     private readonly tokenService: TokenService,
+    private readonly auditService: AuditService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -87,6 +91,15 @@ export class AuthService {
           passwordHash,
           emailVerified: false,
         },
+      });
+
+      await this.auditService.track(this.prisma, {
+        actorUserId: user.id,
+        ownerUserId: user.id,
+        action: AUDIT_ACTIONS.auth.accountCreated,
+        resourceType: AuditResourceType.user,
+        resourceId: user.id,
+        after: { email: user.email, name: user.name },
       });
 
       const { url } = await this.tokenService.issueEmailVerification(user.id);
@@ -116,14 +129,39 @@ export class AuthService {
     });
 
     if (!user || !user.passwordHash) {
+      await this.auditService.track(this.prisma, {
+        actorUserId: user?.id ?? null,
+        ownerUserId: user?.id ?? null,
+        action: AUDIT_ACTIONS.auth.loginFailed,
+        resourceType: AuditResourceType.user,
+        resourceId: user?.id ?? null,
+        after: { email: input.email.trim().toLowerCase(), reason: 'no_credential' },
+      });
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     const isPasswordValid = await compare(input.password, user.passwordHash);
 
     if (!isPasswordValid) {
+      await this.auditService.track(this.prisma, {
+        actorUserId: user.id,
+        ownerUserId: user.id,
+        action: AUDIT_ACTIONS.auth.loginFailed,
+        resourceType: AuditResourceType.user,
+        resourceId: user.id,
+        after: { email: user.email, reason: 'bad_password' },
+      });
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
+
+    await this.auditService.track(this.prisma, {
+      actorUserId: user.id,
+      ownerUserId: user.id,
+      action: AUDIT_ACTIONS.auth.loginSucceeded,
+      resourceType: AuditResourceType.user,
+      resourceId: user.id,
+      after: { email: user.email },
+    });
 
     return this.buildAuthResponse(this.toUser(user));
   }
@@ -238,6 +276,13 @@ export class AuthService {
     const user = await this.tokenService.tryVerifyRefreshToken(input.refreshToken);
     if (!user) return;
     await this.tokenService.revokeRefreshToken(user.id);
+    await this.auditService.track(this.prisma, {
+      actorUserId: user.id,
+      ownerUserId: user.id,
+      action: AUDIT_ACTIONS.auth.loggedOut,
+      resourceType: AuditResourceType.user,
+      resourceId: user.id,
+    });
   }
 
   async getMe(userId: string) {

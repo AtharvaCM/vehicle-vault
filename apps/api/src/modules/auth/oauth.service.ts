@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { OAuthProvider } from '@prisma/client';
+import { AuditResourceType, OAuthProvider } from '@prisma/client';
 import {
   AuthResponseSchema,
   AuthUserSchema,
@@ -11,6 +11,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { TokenService } from './token.service';
 import type { JwtPayload } from './auth.types';
 
@@ -38,6 +40,7 @@ export class OAuthService {
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
     private readonly jwtService: JwtService,
+    private readonly auditService: AuditService,
   ) {}
 
   async loginOrLink(profile: OAuthProfile): Promise<AuthResponse> {
@@ -46,12 +49,38 @@ export class OAuthService {
     }
 
     let user = await this.findUserByLinkedAccount(profile);
+    let outcome: 'linked_existing' | 'linked_new' | 'login_only' = 'login_only';
     if (!user && profile.email && profile.emailVerified) {
       user = await this.linkExistingUserByEmail(profile);
+      if (user) outcome = 'linked_existing';
     }
     if (!user) {
       user = await this.createUserAndLink(profile);
+      outcome = 'linked_new';
     }
+
+    if (outcome === 'linked_existing' || outcome === 'linked_new') {
+      await this.auditService.track(this.prisma, {
+        actorUserId: user.id,
+        ownerUserId: user.id,
+        action:
+          outcome === 'linked_new'
+            ? AUDIT_ACTIONS.auth.accountCreated
+            : AUDIT_ACTIONS.auth.oauthLinked,
+        resourceType: AuditResourceType.oauth_account,
+        resourceId: null,
+        after: { provider: profile.provider, email: user.email },
+      });
+    }
+
+    await this.auditService.track(this.prisma, {
+      actorUserId: user.id,
+      ownerUserId: user.id,
+      action: AUDIT_ACTIONS.auth.loginSucceeded,
+      resourceType: AuditResourceType.user,
+      resourceId: user.id,
+      after: { provider: profile.provider, email: user.email },
+    });
 
     return this.buildAuthResponse(this.toUser(user));
   }

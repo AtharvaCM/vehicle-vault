@@ -410,11 +410,49 @@ model User {
   vehicles         Vehicle[]
   notifications    Notification[]
   oauthAccounts    OAuthAccount[]
+  auditEventsActed AuditEvent[] @relation("AuditActor")
+  auditEventsOwned AuditEvent[] @relation("AuditOwner")
 }
 
 enum OAuthProvider {
   google
   github
+}
+
+enum AuditResourceType {
+  vehicle
+  maintenance_record
+  reminder
+  insurance_policy
+  warranty
+  claim
+  fuel_log
+  user
+  oauth_account
+  attachment
+}
+
+model AuditEvent {
+  id            String             @id @default(uuid()) @db.Uuid
+  occurredAt    DateTime           @default(now())
+  actorUserId   String?            @db.Uuid
+  ownerUserId   String?            @db.Uuid
+  action        String             @db.VarChar(80)
+  resourceType  AuditResourceType?
+  resourceId    String?            @db.Uuid
+  before        Json?
+  after         Json?
+  changedFields String[]           @default([])
+  ipAddress     String?            @db.Inet
+  userAgent     String?            @db.VarChar(500)
+  actor         User?              @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  owner         User?              @relation("AuditOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId, occurredAt(sort: Desc)])
+  @@index([actorUserId, occurredAt(sort: Desc)])
+  @@index([resourceType, resourceId, occurredAt(sort: Desc)])
+  @@index([action, occurredAt(sort: Desc)])
+  @@index([ipAddress])
 }
 
 model OAuthAccount {

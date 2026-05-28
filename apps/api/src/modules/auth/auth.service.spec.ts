@@ -89,6 +89,11 @@ describe('AuthService', () => {
     revokeRefreshToken: vi.fn(),
   };
 
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+    anonymiseForUser: vi.fn().mockResolvedValue(undefined),
+  };
+
   const passwordResetExpiresAt = new Date('2026-03-20T00:30:00.000Z');
 
   let service: AuthService;
@@ -122,12 +127,14 @@ describe('AuthService', () => {
     tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
     tokenService.tryVerifyRefreshToken.mockResolvedValue(null);
     tokenService.revokeRefreshToken.mockResolvedValue(undefined);
+    auditService.track.mockResolvedValue(undefined);
     service = new AuthService(
       prisma as never,
       jwtService as never,
       appConfigService as never,
       mailService as never,
       tokenService as never,
+      auditService as never,
     );
   });
 

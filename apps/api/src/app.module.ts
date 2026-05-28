@@ -21,6 +21,7 @@ import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-docu
 import { ClaimsModule } from './modules/claims/claims.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     ClaimsModule,
     AnalyticsModule,
     ReportsModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

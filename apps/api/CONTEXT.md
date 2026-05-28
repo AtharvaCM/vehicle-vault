@@ -38,6 +38,13 @@ The orchestrator that runs per-vehicle, reads current predicted odometer, and ca
 **Token**:
 A credential issued to a **User** for a specific purpose: email verification, password reset, or refresh session. **TokenService** owns issue/consume/rotate/revoke lifecycle for all purposes, regardless of whether the bits are a JWT (refresh) or a SHA-256 hash of random bytes (verification, reset). See ADR-0002.
 
+**AuditEvent**:
+An immutable record of one happened-thing in the system. Two flavours: a **mutation** against a tracked resource (vehicle, maintenance record, reminder, document, claim, fuel log, user) or an **auth event** (login success/failure, logout, password reset request/complete, email verify, OAuth link, account created). Each row has a dotted `action` string (`vehicle.updated`, `auth.login_failed`), an optional `actorUserId` (null only when the actor cannot be resolved — failed login on unknown email, future system events), an optional polymorphic resource reference (`resourceType` enum + `resourceId`), and a diff payload (`before` / `after` / `changedFields`). Survives the deletion of the subject and of the actor — that's the point. Rendered to end users as "Activity"; the storage entity stays **AuditEvent**.
+_Not_ a **Notification** (user-facing message, may be deleted, has dedup); not a system log line (those are out-of-band, untyped).
+
+**Actor**:
+The **User** who caused an **AuditEvent**, or `null` when no user can be resolved. Distinct from the subject of the event — `actorUserId = subjectUserId` only for self-targeted auth events.
+
 ## Relationships
 
 - A **Vehicle** has many **VehicleDocuments**, **MaintenanceRecords**, **Reminders**.
