@@ -6,6 +6,7 @@ import { appToast } from '@/lib/toast';
 
 import { register } from '../api/register';
 import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
+import { OAuthButtons } from '../components/oauth-buttons';
 import { RegisterForm } from '../components/register-form';
 import { useAuth } from '../hooks/use-auth';
 
@@ -47,7 +48,10 @@ export function RegisterPage() {
       description="Create an account to keep your vehicles, maintenance history, reminders, and receipts in one place."
       title="Create your account"
     >
-      <RegisterForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
+      <div className="space-y-6">
+        <RegisterForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
+        <OAuthButtons />
+      </div>
     </AuthPageShell>
   );
 }

@@ -190,8 +190,11 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No OAuth/social auth
 - No audit logging or admin tooling
+
+### Production Hardening Shipped
+
+- **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
 
 ### Milestone 6: Financial Insights & Reporting (Complete)
 

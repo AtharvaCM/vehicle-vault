@@ -103,6 +103,49 @@ export class AppConfigService {
     return this.configService.get<string>('app.jwtRefreshExpiresIn') ?? '30d';
   }
 
+  get oauthGoogleClientId() {
+    return this.configService.get<string | null>('app.oauthGoogleClientId') ?? null;
+  }
+
+  get oauthGoogleClientSecret() {
+    return this.configService.get<string | null>('app.oauthGoogleClientSecret') ?? null;
+  }
+
+  get oauthGoogleCallbackUrl() {
+    return this.configService.get<string | null>('app.oauthGoogleCallbackUrl') ?? null;
+  }
+
+  get oauthGithubClientId() {
+    return this.configService.get<string | null>('app.oauthGithubClientId') ?? null;
+  }
+
+  get oauthGithubClientSecret() {
+    return this.configService.get<string | null>('app.oauthGithubClientSecret') ?? null;
+  }
+
+  get oauthGithubCallbackUrl() {
+    return this.configService.get<string | null>('app.oauthGithubCallbackUrl') ?? null;
+  }
+
+  get oauthFrontendRedirectUrl() {
+    return (
+      this.configService.get<string | null>('app.oauthFrontendRedirectUrl') ??
+      `${this.frontendOrigin.replace(/\/$/, '')}/auth/oauth-callback`
+    );
+  }
+
+  get isGoogleOAuthConfigured() {
+    return Boolean(
+      this.oauthGoogleClientId && this.oauthGoogleClientSecret && this.oauthGoogleCallbackUrl,
+    );
+  }
+
+  get isGithubOAuthConfigured() {
+    return Boolean(
+      this.oauthGithubClientId && this.oauthGithubClientSecret && this.oauthGithubCallbackUrl,
+    );
+  }
+
   get nodeEnv(): NodeEnv {
     return this.configService.get<NodeEnv>('app.nodeEnv') ?? 'development';
   }

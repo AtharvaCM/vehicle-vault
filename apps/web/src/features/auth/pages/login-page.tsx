@@ -7,6 +7,7 @@ import { appToast } from '@/lib/toast';
 import { login } from '../api/login';
 import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
 import { LoginForm } from '../components/login-form';
+import { OAuthButtons } from '../components/oauth-buttons';
 import { useAuth } from '../hooks/use-auth';
 
 export function LoginPage() {
@@ -47,7 +48,10 @@ export function LoginPage() {
       description="Sign in to see your garage, service history, reminders, and receipts."
       title="Welcome back"
     >
-      <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
+      <div className="space-y-6">
+        <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
+        <OAuthButtons />
+      </div>
     </AuthPageShell>
   );
 }

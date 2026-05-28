@@ -115,6 +115,13 @@ export const appConfig = registerAs('app', () => ({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'vehicle-vault-dev-refresh-secret',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
+  oauthGoogleClientId: resolveOptionalString(process.env.GOOGLE_OAUTH_CLIENT_ID),
+  oauthGoogleClientSecret: resolveOptionalString(process.env.GOOGLE_OAUTH_CLIENT_SECRET),
+  oauthGoogleCallbackUrl: resolveOptionalString(process.env.GOOGLE_OAUTH_CALLBACK_URL),
+  oauthGithubClientId: resolveOptionalString(process.env.GITHUB_OAUTH_CLIENT_ID),
+  oauthGithubClientSecret: resolveOptionalString(process.env.GITHUB_OAUTH_CLIENT_SECRET),
+  oauthGithubCallbackUrl: resolveOptionalString(process.env.GITHUB_OAUTH_CALLBACK_URL),
+  oauthFrontendRedirectUrl: resolveOptionalString(process.env.OAUTH_FRONTEND_REDIRECT_URL),
   geminiApiKey: process.env.GEMINI_API_KEY,
   geminiModel: resolveOptionalString(process.env.GEMINI_MODEL) ?? 'gemini-2.5-flash',
   smtp: {

@@ -396,7 +396,7 @@ model User {
   id               String    @id @default(uuid()) @db.Uuid
   name             String    @db.VarChar(120)
   email            String    @unique @db.VarChar(255)
-  passwordHash     String    @db.VarChar(255)
+  passwordHash     String?   @db.VarChar(255)
   passwordResetTokenExpiresAt DateTime?
   passwordResetTokenHash      String?   @db.Char(64)
   refreshTokenHash String?   @db.Char(64)
@@ -409,6 +409,25 @@ model User {
   publishedCatalogImportRuns VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
   vehicles         Vehicle[]
   notifications    Notification[]
+  oauthAccounts    OAuthAccount[]
+}
+
+enum OAuthProvider {
+  google
+  github
+}
+
+model OAuthAccount {
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String        @db.Uuid
+  provider          OAuthProvider
+  providerAccountId String        @db.VarChar(190)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model MaintenanceRecord {

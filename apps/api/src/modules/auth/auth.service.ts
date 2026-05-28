@@ -51,7 +51,7 @@ type UserRecord = {
   id: string;
   name: string;
   email: string;
-  passwordHash?: string;
+  passwordHash?: string | null;
   passwordResetTokenExpiresAt?: Date | null;
   passwordResetTokenHash?: string | null;
   emailVerified: boolean;
@@ -115,7 +115,7 @@ export class AuthService {
       },
     });
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
