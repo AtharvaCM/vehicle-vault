@@ -82,6 +82,10 @@ export const endpoints = {
     costTrend: '/analytics/cost-trend',
     tco: (vehicleId: string) => `/analytics/tco/${vehicleId}`,
   },
+  audit: {
+    me: '/audit/me',
+    byVehicle: (vehicleId: string) => `/vehicles/${vehicleId}/audit`,
+  },
   notifications: {
     list: () => '/notifications',
     unreadCount: () => '/notifications/unread-count',

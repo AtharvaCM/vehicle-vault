@@ -32,6 +32,8 @@ import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-remi
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
+import { AuditFeed } from '@/features/audit/components/audit-feed';
+import { useVehicleAudit } from '@/features/audit/hooks/use-vehicle-audit';
 import { OdometerForecastCard } from '../components/odometer-forecast-card';
 import { OdometerHistoryCard } from '../components/odometer-history-card';
 import { VehicleSpecsCard } from '../components/vehicle-specs-card';
@@ -56,6 +58,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
+  const auditQuery = useVehicleAudit(vehicleId);
   const deleteVehicleMutation = useDeleteVehicle();
   const vehicle = vehicleQuery.data ?? null;
   const serviceInsights = useMemo(
@@ -344,6 +347,12 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             >
               Protection
             </TabsTrigger>
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="activity"
+            >
+              Activity
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8 animate-in fade-in duration-500">
@@ -493,6 +502,23 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           </TabsContent>
           <TabsContent value="protection" className="animate-in fade-in duration-500">
             <ProtectionTab vehicleId={vehicleId} />
+          </TabsContent>
+          <TabsContent value="activity" className="animate-in fade-in duration-500">
+            <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <CardTitle className="text-lg font-bold">Activity log</CardTitle>
+                <CardDescription>
+                  Every change to this vehicle and its records, newest first. Click an entry to see
+                  what changed.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-5">
+                <AuditFeed
+                  query={auditQuery}
+                  emptyDescription="Changes to this vehicle and its maintenance, reminders, fuel, and documents will show up here."
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </PageContainer>

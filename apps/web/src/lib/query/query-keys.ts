@@ -92,4 +92,10 @@ export const queryKeys = {
     all: () => ['claims'] as const,
     byVehicle: (vehicleId: string) => [...queryKeys.claims.all(), 'vehicle', vehicleId] as const,
   },
+  audit: {
+    all: () => ['audit'] as const,
+    me: (resourceType?: string) =>
+      [...queryKeys.audit.all(), 'me', resourceType ?? 'all'] as const,
+    byVehicle: (vehicleId: string) => [...queryKeys.audit.all(), 'vehicle', vehicleId] as const,
+  },
 };

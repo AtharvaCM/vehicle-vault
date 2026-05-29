@@ -18,6 +18,7 @@ import {
   resetPasswordRoute,
   rootRoute,
   settingsRoute,
+  settingsActivityRoute,
   vehicleDetailRoute,
   vehicleEditRoute,
   vehicleMaintenanceNewRoute,
@@ -46,6 +47,7 @@ const protectedRouteTree = appRoute.addChildren([
   reminderDetailRoute,
   reminderEditRoute,
   settingsRoute,
+  settingsActivityRoute,
 ]);
 
 const routeTree = rootRoute.addChildren([

@@ -1,4 +1,5 @@
-import { Download, ScanSearch, ShieldCheck } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { ChevronRight, Download, History, ScanSearch, ShieldCheck } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { InlineError } from '@/components/shared/inline-error';
@@ -164,6 +165,30 @@ export function SettingsPage() {
                 {reconcileMutation.isPending ? 'Checking attachments...' : 'Reconcile attachments'}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Activity log</CardTitle>
+            <CardDescription>
+              Review every change made across your garage — what changed, and when.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+            <p>
+              A complete, newest-first history of vehicle, maintenance, reminder, fuel, and account
+              events tied to your account.
+            </p>
+            <Link
+              to="/settings/activity"
+              className="flex items-center justify-between rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3 font-medium text-slate-900 transition-colors hover:bg-slate-100"
+            >
+              <span className="flex items-center gap-2">
+                <History className="h-4 w-4 text-slate-500" />
+                View activity log
+              </span>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </Link>
           </CardContent>
         </Card>
       </div>
