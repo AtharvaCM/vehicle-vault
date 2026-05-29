@@ -57,6 +57,11 @@ describe('VehicleDocumentsService', () => {
     ensureVehicleExists: vi.fn(),
   };
 
+  const prisma = {};
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+  };
+
   let insurance: VehicleDocumentAdapter;
   let warranty: VehicleDocumentAdapter;
   let service: VehicleDocumentsService;
@@ -64,11 +69,14 @@ describe('VehicleDocumentsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vehiclesService.ensureVehicleExists.mockResolvedValue(undefined);
+    auditService.track.mockResolvedValue(undefined);
     insurance = makeAdapter('insurance');
     warranty = makeAdapter('warranty');
     service = new VehicleDocumentsService(
       vehiclesService as never,
       [insurance, warranty],
+      prisma as never,
+      auditService as never,
     );
   });
 

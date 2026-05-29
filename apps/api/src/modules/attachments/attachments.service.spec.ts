@@ -100,6 +100,10 @@ describe('AttachmentsService', () => {
     uploadObject: vi.fn(),
   };
 
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+  };
+
   const attachmentExtractionService = {
     isAvailable: true,
     extractDocument: vi.fn().mockResolvedValue({
@@ -236,9 +240,12 @@ describe('AttachmentsService', () => {
       extractedAt: '2026-03-20T00:00:00.000Z',
       failureReason: undefined,
     });
-    prisma.$transaction = vi.fn(async (operations: Array<Promise<unknown> | unknown>) =>
-      Promise.all(operations),
-    );
+    prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
+      if (typeof arg === 'function') {
+        return (arg as (tx: unknown) => unknown)(prisma);
+      }
+      return Promise.all(arg as Array<Promise<unknown> | unknown>);
+    });
     prisma.attachment.create = vi.fn().mockImplementation(({ data }) =>
       Promise.resolve({
         ...data,
@@ -289,6 +296,7 @@ describe('AttachmentsService', () => {
       maintenanceService as never,
       storageService as never,
       attachmentExtractionService as never,
+      auditService as never,
     );
   });
 

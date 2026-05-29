@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { AuditResourceType, Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   MaintenanceCategory,
@@ -16,6 +16,8 @@ import {
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
@@ -36,6 +38,7 @@ export class MaintenanceService {
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
     private readonly storageService: SupabaseStorageService,
+    private readonly auditService: AuditService,
   ) {}
 
   async getAllRecords(userId: string) {
@@ -97,9 +100,20 @@ export class MaintenanceService {
       ...payload,
       vehicleId,
     });
-    const record = await this.prisma.maintenanceRecord.create({
-      data: this.toCreateMaintenanceData(input),
-      include: maintenanceRecordInclude,
+    const record = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.maintenanceRecord.create({
+        data: this.toCreateMaintenanceData(input),
+        include: maintenanceRecordInclude,
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.maintenance.created,
+        resourceType: AuditResourceType.maintenance_record,
+        resourceId: created.id,
+        after: created as unknown as Record<string, unknown>,
+      });
+      return created;
     });
 
     return this.toMaintenanceRecord(record);
@@ -107,18 +121,29 @@ export class MaintenanceService {
 
   async createDraftForVehicle(userId: string, vehicleId: string) {
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
-    const record = await this.prisma.maintenanceRecord.create({
-      data: {
-        vehicleId,
-        category: MaintenanceCategory.Other,
-        serviceDate: new Date(),
-        odometer: vehicle.odometer,
-        currencyCode: 'INR',
-        source: MaintenanceSource.Ocr,
-        status: MaintenanceRecordStatus.Draft,
-        totalCost: 0,
-      },
-      include: maintenanceRecordInclude,
+    const record = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.maintenanceRecord.create({
+        data: {
+          vehicleId,
+          category: MaintenanceCategory.Other,
+          serviceDate: new Date(),
+          odometer: vehicle.odometer,
+          currencyCode: 'INR',
+          source: MaintenanceSource.Ocr,
+          status: MaintenanceRecordStatus.Draft,
+          totalCost: 0,
+        },
+        include: maintenanceRecordInclude,
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.maintenance.created,
+        resourceType: AuditResourceType.maintenance_record,
+        resourceId: created.id,
+        after: { ...created, draft: true } as unknown as Record<string, unknown>,
+      });
+      return created;
     });
 
     return this.toMaintenanceRecord(record);
@@ -156,14 +181,24 @@ export class MaintenanceService {
   }
 
   async updateRecord(userId: string, recordId: string, payload: UpdateMaintenanceRecordDto) {
-    await this.getOwnedMaintenanceRecord(userId, recordId);
+    const before = await this.getOwnedMaintenanceRecord(userId, recordId);
     const input = this.validateUpdateMaintenanceInput(payload);
-    const record = await this.prisma.maintenanceRecord.update({
-      where: {
-        id: recordId,
-      },
-      data: this.toUpdateMaintenanceData(input),
-      include: maintenanceRecordInclude,
+    const record = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.maintenanceRecord.update({
+        where: { id: recordId },
+        data: this.toUpdateMaintenanceData(input),
+        include: maintenanceRecordInclude,
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.maintenance.updated,
+        resourceType: AuditResourceType.maintenance_record,
+        resourceId: recordId,
+        before: before as unknown as Record<string, unknown>,
+        after: updated as unknown as Record<string, unknown>,
+      });
+      return updated;
     });
 
     return this.toMaintenanceRecord(record);
@@ -190,10 +225,16 @@ export class MaintenanceService {
       throw new NotFoundException(`Maintenance record ${recordId} was not found`);
     }
 
-    await this.prisma.maintenanceRecord.delete({
-      where: {
-        id: recordId,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.maintenanceRecord.delete({ where: { id: recordId } });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.maintenance.deleted,
+        resourceType: AuditResourceType.maintenance_record,
+        resourceId: recordId,
+        before: record as unknown as Record<string, unknown>,
+      });
     });
 
     await Promise.all(

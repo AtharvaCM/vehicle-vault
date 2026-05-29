@@ -28,6 +28,7 @@ const claimRow = (overrides: Record<string, unknown> = {}) => ({
 
 describe('ClaimsService', () => {
   const prisma = {
+    $transaction: vi.fn(),
     claim: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -47,12 +48,27 @@ describe('ClaimsService', () => {
     ensureVehicleExists: vi.fn(),
   };
 
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: ClaimsService;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vehiclesService.ensureVehicleExists.mockResolvedValue(undefined);
-    service = new ClaimsService(prisma as never, vehiclesService as never);
+    auditService.track.mockResolvedValue(undefined);
+    prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
+      if (typeof arg === 'function') {
+        return (arg as (tx: unknown) => unknown)(prisma);
+      }
+      return Array.isArray(arg) ? arg : undefined;
+    });
+    service = new ClaimsService(
+      prisma as never,
+      vehiclesService as never,
+      auditService as never,
+    );
   });
 
   describe('listForVehicle', () => {

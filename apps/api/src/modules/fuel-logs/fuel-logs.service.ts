@@ -1,8 +1,10 @@
-import { Prisma } from '@prisma/client';
+import { AuditResourceType, Prisma } from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { FuelLog } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { CreateFuelLogDto } from './dto/create-fuel-log.dto';
 import { UpdateFuelLogDto } from './dto/update-fuel-log.dto';
@@ -12,6 +14,7 @@ export class FuelLogsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
+    private readonly auditService: AuditService,
   ) {}
 
   async getFuelLogsByVehicle(userId: string, vehicleId: string) {
@@ -49,17 +52,28 @@ export class FuelLogsService {
   async createFuelLog(userId: string, vehicleId: string, dto: CreateFuelLogDto) {
     await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
-    const log = await this.prisma.fuelLog.create({
-      data: {
-        vehicleId,
-        date: new Date(dto.date),
-        odometer: dto.odometer,
-        quantity: dto.quantity,
-        price: dto.price,
-        totalCost: dto.totalCost,
-        location: dto.location,
-        notes: dto.notes,
-      },
+    const log = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.fuelLog.create({
+        data: {
+          vehicleId,
+          date: new Date(dto.date),
+          odometer: dto.odometer,
+          quantity: dto.quantity,
+          price: dto.price,
+          totalCost: dto.totalCost,
+          location: dto.location,
+          notes: dto.notes,
+        },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.fuel.created,
+        resourceType: AuditResourceType.fuel_log,
+        resourceId: created.id,
+        after: created as unknown as Record<string, unknown>,
+      });
+      return created;
     });
 
     return this.toFuelLog(log);
@@ -68,22 +82,33 @@ export class FuelLogsService {
   async createBulkFuelLogs(userId: string, vehicleId: string, dtos: CreateFuelLogDto[]) {
     await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
-    const logs = await this.prisma.fuelLog.createMany({
-      data: dtos.map((dto) => ({
-        vehicleId,
-        date: new Date(dto.date),
-        odometer: dto.odometer,
-        quantity: dto.quantity,
-        price: dto.price,
-        totalCost: dto.totalCost,
-        location: dto.location,
-        notes: dto.notes,
-      })),
+    return this.prisma.$transaction(async (tx) => {
+      let count = 0;
+      for (const dto of dtos) {
+        const created = await tx.fuelLog.create({
+          data: {
+            vehicleId,
+            date: new Date(dto.date),
+            odometer: dto.odometer,
+            quantity: dto.quantity,
+            price: dto.price,
+            totalCost: dto.totalCost,
+            location: dto.location,
+            notes: dto.notes,
+          },
+        });
+        await this.auditService.track(tx, {
+          actorUserId: userId,
+          ownerUserId: userId,
+          action: AUDIT_ACTIONS.fuel.created,
+          resourceType: AuditResourceType.fuel_log,
+          resourceId: created.id,
+          after: { ...created, bulkImport: true } as unknown as Record<string, unknown>,
+        });
+        count += 1;
+      }
+      return { count };
     });
-
-    return {
-      count: logs.count,
-    };
   }
 
   async updateFuelLog(userId: string, logId: string, dto: UpdateFuelLogDto) {
@@ -100,19 +125,29 @@ export class FuelLogsService {
       throw new NotFoundException(`Fuel log ${logId} was not found`);
     }
 
-    const updatedLog = await this.prisma.fuelLog.update({
-      where: {
-        id: logId,
-      },
-      data: {
-        date: dto.date ? new Date(dto.date) : undefined,
-        odometer: dto.odometer,
-        quantity: dto.quantity,
-        price: dto.price,
-        totalCost: dto.totalCost,
-        location: dto.location,
-        notes: dto.notes,
-      },
+    const updatedLog = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.fuelLog.update({
+        where: { id: logId },
+        data: {
+          date: dto.date ? new Date(dto.date) : undefined,
+          odometer: dto.odometer,
+          quantity: dto.quantity,
+          price: dto.price,
+          totalCost: dto.totalCost,
+          location: dto.location,
+          notes: dto.notes,
+        },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.fuel.updated,
+        resourceType: AuditResourceType.fuel_log,
+        resourceId: logId,
+        before: log as unknown as Record<string, unknown>,
+        after: updated as unknown as Record<string, unknown>,
+      });
+      return updated;
     });
 
     return this.toFuelLog(updatedLog);
@@ -132,10 +167,16 @@ export class FuelLogsService {
       throw new NotFoundException(`Fuel log ${logId} was not found`);
     }
 
-    await this.prisma.fuelLog.delete({
-      where: {
-        id: logId,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.fuelLog.delete({ where: { id: logId } });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.fuel.deleted,
+        resourceType: AuditResourceType.fuel_log,
+        resourceId: logId,
+        before: log as unknown as Record<string, unknown>,
+      });
     });
 
     return {

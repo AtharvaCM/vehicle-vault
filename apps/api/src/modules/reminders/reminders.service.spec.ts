@@ -14,12 +14,14 @@ describe('RemindersService', () => {
   };
 
   type PrismaMock = {
+    $transaction: ReturnType<typeof vi.fn>;
     reminder: ReminderDelegateMock;
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
 
   const prisma: PrismaMock = {
+    $transaction: vi.fn(),
     reminder: {
       create: vi.fn(),
       delete: vi.fn(),
@@ -36,6 +38,10 @@ describe('RemindersService', () => {
     }),
   };
 
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: RemindersService;
 
   beforeEach(() => {
@@ -46,7 +52,14 @@ describe('RemindersService', () => {
       id: 'vehicle-1',
       odometer: 12000,
     });
-    service = new RemindersService(prisma, vehiclesService as never);
+    auditService.track.mockResolvedValue(undefined);
+    prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
+      if (typeof arg === 'function') {
+        return (arg as (tx: unknown) => unknown)(prisma);
+      }
+      return Array.isArray(arg) ? arg : undefined;
+    });
+    service = new RemindersService(prisma as never, vehiclesService as never, auditService as never);
   });
 
   afterEach(() => {

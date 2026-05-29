@@ -96,6 +96,10 @@ describe('MaintenanceService', () => {
     deleteObject: vi.fn().mockResolvedValue(undefined),
   };
 
+  const auditService = {
+    track: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: MaintenanceService;
 
   beforeEach(() => {
@@ -105,10 +109,18 @@ describe('MaintenanceService', () => {
       odometer: 12345,
     });
     storageService.deleteObject.mockResolvedValue('deleted');
+    auditService.track.mockResolvedValue(undefined);
+    prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
+      if (typeof arg === 'function') {
+        return (arg as (tx: unknown) => unknown)(prisma);
+      }
+      return Array.isArray(arg) ? arg : undefined;
+    });
     service = new MaintenanceService(
       prisma as never,
       vehiclesService as never,
       storageService as never,
+      auditService as never,
     );
   });
 

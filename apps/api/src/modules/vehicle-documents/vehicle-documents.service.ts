@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AuditResourceType } from '@prisma/client';
 import {
   CreateVehicleDocumentSchema,
   UpdateVehicleDocumentSchema,
@@ -8,8 +9,24 @@ import {
   type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
 
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
+
+const KIND_TO_RESOURCE_TYPE: Record<VehicleDocumentKind, AuditResourceType> = {
+  insurance: AuditResourceType.insurance_policy,
+  warranty: AuditResourceType.warranty,
+};
+
+const KIND_TO_AUDIT_NAMESPACE: Record<
+  VehicleDocumentKind,
+  { created: string; updated: string; deleted: string }
+> = {
+  insurance: AUDIT_ACTIONS.insurance,
+  warranty: AUDIT_ACTIONS.warranty,
+};
 
 const NOT_FOUND_MESSAGE = 'Vehicle document not found';
 
@@ -21,6 +38,8 @@ export class VehicleDocumentsService {
     private readonly vehiclesService: VehiclesService,
     @Inject(VEHICLE_DOCUMENT_ADAPTERS)
     private readonly adapters: VehicleDocumentAdapter[],
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
   ) {
     this.adapterByKind = new Map(adapters.map((a) => [a.kind, a]));
   }
@@ -46,7 +65,16 @@ export class VehicleDocumentsService {
     const adapter = this.requireAdapter(input.kind);
     // Adapter signatures are typed per-kind; the discriminated union runtime guarantees
     // the payload matches the adapter resolved by its `kind` literal.
-    return adapter.create(vehicleId, input as never);
+    const created = await adapter.create(vehicleId, input as never);
+    await this.auditService.track(this.prisma, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: KIND_TO_AUDIT_NAMESPACE[input.kind].created,
+      resourceType: KIND_TO_RESOURCE_TYPE[input.kind],
+      resourceId: created.id,
+      after: created as unknown as Record<string, unknown>,
+    });
+    return created;
   }
 
   async update(
@@ -57,13 +85,31 @@ export class VehicleDocumentsService {
     const input = UpdateVehicleDocumentSchema.parse(payload);
     const owned = await this.findOwned(userId, id, input.kind);
     const adapter = this.requireAdapter(input.kind);
-    return adapter.update(owned.id, input as never);
+    const updated = await adapter.update(owned.id, input as never);
+    await this.auditService.track(this.prisma, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: KIND_TO_AUDIT_NAMESPACE[input.kind].updated,
+      resourceType: KIND_TO_RESOURCE_TYPE[input.kind],
+      resourceId: owned.id,
+      before: owned as unknown as Record<string, unknown>,
+      after: updated as unknown as Record<string, unknown>,
+    });
+    return updated;
   }
 
   async remove(userId: string, kind: VehicleDocumentKind, id: string): Promise<void> {
     const owned = await this.findOwned(userId, id, kind);
     const adapter = this.requireAdapter(kind);
     await adapter.remove(owned.id);
+    await this.auditService.track(this.prisma, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: KIND_TO_AUDIT_NAMESPACE[kind].deleted,
+      resourceType: KIND_TO_RESOURCE_TYPE[kind],
+      resourceId: owned.id,
+      before: owned as unknown as Record<string, unknown>,
+    });
   }
 
   /**

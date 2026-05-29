@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { AuditResourceType, Prisma } from '@prisma/client';
 import {
   BadRequestException,
   Injectable,
@@ -21,6 +21,8 @@ import { randomUUID } from 'node:crypto';
 
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import { AttachmentExtractionService } from './attachment-extraction.service';
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
@@ -46,6 +48,7 @@ export class AttachmentsService {
     private readonly maintenanceService: MaintenanceService,
     private readonly storageService: SupabaseStorageService,
     private readonly attachmentExtractionService: AttachmentExtractionService,
+    private readonly auditService: AuditService,
   ) {}
 
   getExtractionStatus() {
@@ -356,9 +359,10 @@ export class AttachmentsService {
     }
 
     try {
-      const attachments = await this.prisma.$transaction(
-        preparedFiles.map((file) =>
-          this.prisma.attachment.create({
+      const attachments = await this.prisma.$transaction(async (tx) => {
+        const created = [];
+        for (const file of preparedFiles) {
+          const row = await tx.attachment.create({
             data: {
               id: file.id,
               maintenanceRecordId: file.maintenanceRecordId,
@@ -371,9 +375,19 @@ export class AttachmentsService {
               uploadedAt: file.uploadedAt,
             },
             include: attachmentInclude,
-          }),
-        ),
-      );
+          });
+          await this.auditService.track(tx, {
+            actorUserId: userId,
+            ownerUserId: userId,
+            action: AUDIT_ACTIONS.attachment.uploaded,
+            resourceType: AuditResourceType.attachment,
+            resourceId: row.id,
+            after: row as unknown as Record<string, unknown>,
+          });
+          created.push(row);
+        }
+        return created;
+      });
 
       return attachments.map((attachment) => this.toAttachment(attachment));
     } catch (error) {
@@ -387,10 +401,16 @@ export class AttachmentsService {
 
     await this.storageService.deleteObject(attachment.fileName);
 
-    await this.prisma.attachment.delete({
-      where: {
-        id: attachmentId,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.attachment.delete({ where: { id: attachmentId } });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.attachment.deleted,
+        resourceType: AuditResourceType.attachment,
+        resourceId: attachmentId,
+        before: attachment as unknown as Record<string, unknown>,
+      });
     });
 
     return {

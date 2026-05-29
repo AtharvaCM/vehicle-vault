@@ -1,4 +1,4 @@
-import { Prisma, ReminderType as PrismaReminderType } from '@prisma/client';
+import { AuditResourceType, Prisma, ReminderType as PrismaReminderType } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ReminderCreateSchema,
@@ -10,6 +10,8 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
@@ -37,6 +39,7 @@ export class RemindersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
+    private readonly auditService: AuditService,
   ) {}
 
   async getAllReminders(userId: string) {
@@ -108,22 +111,30 @@ export class RemindersService {
       ...payload,
       vehicleId,
     });
-    const reminder = await this.prisma.reminder.create({
-      data: {
-        vehicleId,
-        title: input.title,
-        type: input.type as PrismaReminderType,
-        dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
-        dueOdometer: input.dueOdometer,
-        notes: input.notes,
-        status: this.computeReminderStatus(
-          {
-            dueDate: input.dueDate,
-            dueOdometer: input.dueOdometer,
-          },
-          vehicle.odometer,
-        ),
-      },
+    const reminder = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.reminder.create({
+        data: {
+          vehicleId,
+          title: input.title,
+          type: input.type as PrismaReminderType,
+          dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+          dueOdometer: input.dueOdometer,
+          notes: input.notes,
+          status: this.computeReminderStatus(
+            { dueDate: input.dueDate, dueOdometer: input.dueOdometer },
+            vehicle.odometer,
+          ),
+        },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.reminder.created,
+        resourceType: AuditResourceType.reminder,
+        resourceId: created.id,
+        after: created as unknown as Record<string, unknown>,
+      });
+      return created;
     });
 
     return this.getReminderById(userId, reminder.id);
@@ -144,46 +155,67 @@ export class RemindersService {
       reminder.vehicle.odometer,
     );
 
-    await this.prisma.reminder.update({
-      where: {
-        id: reminderId,
-      },
-      data: {
-        title: input.title,
-        type: input.type as PrismaReminderType,
-        dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
-        dueOdometer: input.dueOdometer,
-        notes: input.notes,
-        status: reminderStatus,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.reminder.update({
+        where: { id: reminderId },
+        data: {
+          title: input.title,
+          type: input.type as PrismaReminderType,
+          dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+          dueOdometer: input.dueOdometer,
+          notes: input.notes,
+          status: reminderStatus,
+        },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.reminder.updated,
+        resourceType: AuditResourceType.reminder,
+        resourceId: reminderId,
+        before: reminder as unknown as Record<string, unknown>,
+        after: updated as unknown as Record<string, unknown>,
+      });
     });
 
     return this.getReminderById(userId, reminderId);
   }
 
   async completeReminder(userId: string, reminderId: string) {
-    await this.getStoredReminderById(userId, reminderId);
+    const before = await this.getStoredReminderById(userId, reminderId);
     const now = new Date();
 
-    await this.prisma.reminder.update({
-      where: {
-        id: reminderId,
-      },
-      data: {
-        completedAt: now,
-        status: ReminderStatus.Completed,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.reminder.update({
+        where: { id: reminderId },
+        data: { completedAt: now, status: ReminderStatus.Completed },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.reminder.completed,
+        resourceType: AuditResourceType.reminder,
+        resourceId: reminderId,
+        before: before as unknown as Record<string, unknown>,
+        after: updated as unknown as Record<string, unknown>,
+      });
     });
 
     return this.getReminderById(userId, reminderId);
   }
 
   async deleteReminder(userId: string, reminderId: string) {
-    await this.getReminderById(userId, reminderId);
-    await this.prisma.reminder.delete({
-      where: {
-        id: reminderId,
-      },
+    const before = await this.getReminderById(userId, reminderId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.reminder.delete({ where: { id: reminderId } });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.reminder.deleted,
+        resourceType: AuditResourceType.reminder,
+        resourceId: reminderId,
+        before: before as unknown as Record<string, unknown>,
+      });
     });
 
     return {

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../common/prisma/prisma.module';
+import { AuditModule } from '../audit/audit.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { InsuranceAdapter } from './adapters/insurance.adapter';
 import { WarrantyAdapter } from './adapters/warranty.adapter';
@@ -9,7 +10,7 @@ import { VehicleDocumentsService } from './vehicle-documents.service';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
 
 @Module({
-  imports: [PrismaModule, VehiclesModule],
+  imports: [PrismaModule, VehiclesModule, AuditModule],
   controllers: [VehicleDocumentsController],
   providers: [
     VehicleDocumentsService,

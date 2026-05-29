@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 
+import { AuditModule } from '../audit/audit.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { RemindersController } from './reminders.controller';
 import { RemindersService } from './reminders.service';
 
 @Module({
-  imports: [VehiclesModule],
+  imports: [VehiclesModule, AuditModule],
   controllers: [RemindersController],
   providers: [RemindersService],
   exports: [RemindersService],

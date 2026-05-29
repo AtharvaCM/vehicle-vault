@@ -191,11 +191,11 @@ These are the main items that still prevent the product from being a more comple
 ### Production Hardening Gaps
 
 - No admin tooling
-- Audit emission only wired into Auth + Vehicles modules so far. Maintenance, reminders, fuel logs, documents, claims, and attachments still need `auditService.track` call sites.
+- Audit UI not built yet — endpoints exist (`GET /audit/me`, `GET /vehicles/:id/audit`) but the Activity tab on vehicle detail and Settings → Activity page are not implemented.
 
 ### Production Hardening Shipped
 
-- **Audit logging (v1):** `AuditEvent` table with typed `AuditResourceType` enum + uuid resource id (no FK — surviving the subject is the point), diff payload (`before`/`after`/`changedFields`) with per-resource PII redaction, denormalised `ownerUserId` for indexed self-service reads. `AuditService.track` is invoked inside the same `prisma.$transaction` as the mutation. Two read endpoints: `GET /audit/me` (filter by resourceType, action, actionPrefix, from/to; cursor-paginated) and `GET /vehicles/:vehicleId/audit` (vehicle + descendants). Emission wired into auth (account created, login success/failure, logout, OAuth link, refresh rotation) and vehicles (create/update/delete). Forever retention with anonymise-on-account-deletion. Design recorded in ADR-0004.
+- **Audit logging (v1):** `AuditEvent` table with typed `AuditResourceType` enum + uuid resource id (no FK — surviving the subject is the point), diff payload (`before`/`after`/`changedFields`) with per-resource PII redaction, denormalised `ownerUserId` for indexed self-service reads. `AuditService.track` is invoked inside the same `prisma.$transaction` as the mutation. Two read endpoints: `GET /audit/me` (filter by resourceType, action, actionPrefix, from/to; cursor-paginated) and `GET /vehicles/:vehicleId/audit` (vehicle + descendants). Emission wired across the full mutation surface — auth (account created, login success/failure, logout, OAuth link), vehicles, maintenance records, reminders (including completed), fuel logs (single + bulk), claims, vehicle documents (insurance + warranty), and attachments. Forever retention with anonymise-on-account-deletion. Design recorded in ADR-0004.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
 
 ### Milestone 6: Financial Insights & Reporting (Complete)
