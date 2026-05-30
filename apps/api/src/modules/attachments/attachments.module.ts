@@ -1,15 +1,25 @@
-import { Module } from '@nestjs/common';
+import { Module, type OnModuleInit } from '@nestjs/common';
 
 import { AuditModule } from '../audit/audit.module';
+import { ExtractionRegistry } from '../extraction/extraction-registry.service';
 import { MaintenanceModule } from '../maintenance/maintenance.module';
-import { AttachmentExtractionService } from './attachment-extraction.service';
 import { AttachmentsController } from './attachments.controller';
 import { AttachmentsService } from './attachments.service';
+import { MaintenanceInvoiceExtractionSpec } from './extractions/maintenance-invoice.extraction';
 
 @Module({
   imports: [MaintenanceModule, AuditModule],
   controllers: [AttachmentsController],
-  providers: [AttachmentExtractionService, AttachmentsService],
+  providers: [AttachmentsService, MaintenanceInvoiceExtractionSpec],
   exports: [AttachmentsService],
 })
-export class AttachmentsModule {}
+export class AttachmentsModule implements OnModuleInit {
+  constructor(
+    private readonly registry: ExtractionRegistry,
+    private readonly maintenanceInvoiceSpec: MaintenanceInvoiceExtractionSpec,
+  ) {}
+
+  onModuleInit(): void {
+    this.registry.register(this.maintenanceInvoiceSpec);
+  }
+}
