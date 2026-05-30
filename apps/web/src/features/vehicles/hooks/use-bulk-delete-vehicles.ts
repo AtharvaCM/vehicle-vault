@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import { deleteVehicle } from '../api/delete-vehicle';
 
@@ -16,6 +17,7 @@ export function useBulkDeleteVehicles() {
       return uniqueIds;
     },
     onSuccess: () => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: queryKeys.vehicles.all(),
       });

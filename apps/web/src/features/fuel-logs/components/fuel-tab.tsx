@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Plus, Scan, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { appToast } from '@/lib/toast';
 
 import { FuelLogList } from './fuel-log-list';
@@ -12,7 +12,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useFuelLogs } from '../hooks/use-fuel-logs';
 import { useCreateFuelLog } from '../hooks/use-create-fuel-log';
 import { useDeleteFuelLog } from '../hooks/use-delete-fuel-log';
+import { useUpdateFuelLog } from '../hooks/use-update-fuel-log';
 import { useScanReceipt, useScanStatus, type ScannedFuelLog } from '../hooks/use-scan-receipt';
+import type { FuelLog } from '@vehicle-vault/shared';
 
 type FuelTabProps = {
   vehicleId: string;
@@ -21,12 +23,15 @@ type FuelTabProps = {
 export function FuelTab({ vehicleId }: FuelTabProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<FuelLog | null>(null);
   const [scannedData, setScannedData] = useState<Partial<ScannedFuelLog> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const logsQuery = useFuelLogs(vehicleId);
   const createMutation = useCreateFuelLog(vehicleId);
   const deleteMutation = useDeleteFuelLog(vehicleId);
+  const updateMutation = useUpdateFuelLog(vehicleId, editingLog?.id ?? '');
   const scanMutation = useScanReceipt();
   const scanStatus = useQuery(useScanStatus());
 
@@ -67,6 +72,28 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
       });
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleEdit = (log: FuelLog) => {
+    setEditingLog(log);
+    setIsEditOpen(true);
+  };
+
+  const handleUpdate = async (values: Parameters<typeof updateMutation.mutateAsync>[0]) => {
+    try {
+      await updateMutation.mutateAsync(values);
+      setIsEditOpen(false);
+      setEditingLog(null);
+      appToast.success({
+        title: 'Fuel log updated',
+        description: 'Your changes have been saved.',
+      });
+    } catch {
+      appToast.error({
+        title: 'Failed to update log',
+        description: 'Please try again.',
+      });
     }
   };
 
@@ -165,10 +192,41 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
         logs={logsQuery.data || []}
         isLoading={logsQuery.isLoading}
         onAdd={() => setIsFormOpen(true)}
+        onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
       <FuelImportDialog vehicleId={vehicleId} open={isImportOpen} onOpenChange={setIsImportOpen} />
+
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(val) => {
+          setIsEditOpen(val);
+          if (!val) setEditingLog(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Fuel Log</DialogTitle>
+          </DialogHeader>
+          {editingLog && (
+            <FuelLogForm
+              onSubmit={handleUpdate}
+              isSubmitting={updateMutation.isPending}
+              submitLabel="Save Changes"
+              initialValues={{
+                date: editingLog.date.split('T')[0],
+                odometer: editingLog.odometer,
+                quantity: editingLog.quantity,
+                price: editingLog.price,
+                totalCost: editingLog.totalCost,
+                location: editingLog.location ?? '',
+                notes: editingLog.notes ?? '',
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isFormOpen}

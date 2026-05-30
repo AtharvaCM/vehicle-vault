@@ -51,6 +51,7 @@ export function OAuthCallbackPage() {
             id: '',
             name: '',
             email: '',
+            role: 'user',
             emailVerified: true,
             allowedCatalogSources: [],
           },

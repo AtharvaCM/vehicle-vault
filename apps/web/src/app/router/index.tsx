@@ -2,6 +2,7 @@ import { createRouter } from '@tanstack/react-router';
 
 import { queryClient } from '@/lib/query/query-client';
 import {
+  adminUsersRoute,
   appRoute,
   dashboardRoute,
   forgotPasswordRoute,
@@ -48,6 +49,7 @@ const protectedRouteTree = appRoute.addChildren([
   reminderEditRoute,
   settingsRoute,
   settingsActivityRoute,
+  adminUsersRoute,
 ]);
 
 const routeTree = rootRoute.addChildren([

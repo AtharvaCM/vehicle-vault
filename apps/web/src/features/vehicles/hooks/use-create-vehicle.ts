@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import { createVehicle } from '../api/create-vehicle';
 
@@ -10,6 +11,7 @@ export function useCreateVehicle() {
   return useMutation({
     mutationFn: createVehicle,
     onSuccess: (vehicle) => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: queryKeys.vehicles.all(),
       });

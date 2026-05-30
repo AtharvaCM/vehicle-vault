@@ -68,6 +68,17 @@ function resolveFrontendOrigins(value: string | undefined) {
   return origins.length > 0 ? origins : [DEFAULT_FRONTEND_ORIGIN];
 }
 
+function resolveAdminEmails(value: string | undefined) {
+  return [
+    ...new Set(
+      (value ?? '')
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 function resolveFrontendOriginPattern(value: string | undefined) {
   const normalized = value?.trim();
 
@@ -87,6 +98,7 @@ export const appConfig = registerAs('app', () => ({
   port: resolvePort(process.env.PORT),
   frontendOrigins: resolveFrontendOrigins(process.env.FRONTEND_ORIGIN),
   frontendOriginPattern: resolveFrontendOriginPattern(process.env.FRONTEND_ORIGIN_PATTERN),
+  adminEmails: resolveAdminEmails(process.env.ADMIN_EMAILS),
   attachmentStorageBackend:
     resolveAttachmentStorageBackend(process.env.ATTACHMENT_STORAGE_BACKEND) ??
     (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY

@@ -39,6 +39,7 @@ enum MaintenanceCategory {
   coolant
   clutch
   chain_service
+  timing_belt
   tyre_replacement
   puncture
   insurance
@@ -405,6 +406,7 @@ model User {
   emailVerified    Boolean   @default(false)
   emailVerificationTokenHash      String?   @db.Char(64)
   emailVerificationTokenExpiresAt DateTime?
+  role             Role      @default(user)
   allowedCatalogSources String[] @default([])
   publishedCatalogImportRuns VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
   vehicles         Vehicle[]
@@ -412,6 +414,11 @@ model User {
   oauthAccounts    OAuthAccount[]
   auditEventsActed AuditEvent[] @relation("AuditActor")
   auditEventsOwned AuditEvent[] @relation("AuditOwner")
+}
+
+enum Role {
+  user
+  admin
 }
 
 enum OAuthProvider {

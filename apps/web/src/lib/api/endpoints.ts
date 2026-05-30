@@ -90,6 +90,9 @@ export const endpoints = {
     me: '/audit/me',
     byVehicle: (vehicleId: string) => `/vehicles/${vehicleId}/audit`,
   },
+  admin: {
+    users: '/admin/users',
+  },
   notifications: {
     list: () => '/notifications',
     unreadCount: () => '/notifications/unread-count',

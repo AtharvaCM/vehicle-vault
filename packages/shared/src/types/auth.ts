@@ -11,11 +11,13 @@ import {
   RefreshTokenSchema,
   RegisterSchema,
   UserSchema,
+  UserRoleSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
 } from '../schemas';
 
 export type User = z.infer<typeof UserSchema>;
+export type UserRole = z.infer<typeof UserRoleSchema>;
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;

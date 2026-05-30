@@ -185,6 +185,7 @@ describe('AuthService', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        role: 'user',
         allowedCatalogSources: [],
         emailVerified: false,
       },
@@ -277,6 +278,7 @@ describe('AuthService', () => {
         id: 'user-1',
         name: 'Atharva',
         email: 'atharva@example.com',
+        role: 'user',
         allowedCatalogSources: [],
         emailVerified: false,
       },
@@ -525,6 +527,7 @@ describe('AuthService', () => {
       id: 'user-1',
       name: 'Atharva',
       email: 'atharva@example.com',
+      role: 'user',
       allowedCatalogSources: [],
       emailVerified: false,
     });

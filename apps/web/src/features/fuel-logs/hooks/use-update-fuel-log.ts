@@ -15,7 +15,13 @@ export function useUpdateFuelLog(vehicleId: string, logId: string) {
         queryKey: queryKeys.vehicles.fuelLogs(vehicleId),
       });
       void queryClient.invalidateQueries({
+        queryKey: queryKeys.vehicles.detail(vehicleId),
+      });
+      void queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.summary(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.audit.all(),
       });
     },
   });

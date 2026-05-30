@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import { updateVehicle } from '../api/update-vehicle';
 import type { UpdateVehicleInput } from '../types/vehicle';
@@ -11,6 +12,7 @@ export function useUpdateVehicle(vehicleId: string) {
   return useMutation({
     mutationFn: (input: UpdateVehicleInput) => updateVehicle(vehicleId, input),
     onSuccess: (vehicle) => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: queryKeys.vehicles.all(),
       });
