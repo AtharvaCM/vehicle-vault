@@ -73,6 +73,7 @@ export class FuelLogsService {
         resourceId: created.id,
         after: created as unknown as Record<string, unknown>,
       });
+      await this.bumpVehicleOdometer(tx, vehicleId, dto.odometer);
       return created;
     });
 
@@ -84,6 +85,7 @@ export class FuelLogsService {
 
     return this.prisma.$transaction(async (tx) => {
       let count = 0;
+      let maxOdometer = 0;
       for (const dto of dtos) {
         const created = await tx.fuelLog.create({
           data: {
@@ -105,8 +107,10 @@ export class FuelLogsService {
           resourceId: created.id,
           after: { ...created, bulkImport: true } as unknown as Record<string, unknown>,
         });
+        if (dto.odometer > maxOdometer) maxOdometer = dto.odometer;
         count += 1;
       }
+      await this.bumpVehicleOdometer(tx, vehicleId, maxOdometer);
       return { count };
     });
   }
@@ -147,6 +151,9 @@ export class FuelLogsService {
         before: log as unknown as Record<string, unknown>,
         after: updated as unknown as Record<string, unknown>,
       });
+      if (dto.odometer !== undefined) {
+        await this.bumpVehicleOdometer(tx, log.vehicleId as string, dto.odometer);
+      }
       return updated;
     });
 
@@ -183,6 +190,17 @@ export class FuelLogsService {
       id: logId,
       deleted: true,
     };
+  }
+
+  private async bumpVehicleOdometer(
+    tx: Prisma.TransactionClient,
+    vehicleId: string,
+    candidateOdometer: number,
+  ) {
+    const vehicle = await tx.vehicle.findUnique({ where: { id: vehicleId }, select: { odometer: true } });
+    if (vehicle && candidateOdometer > vehicle.odometer) {
+      await tx.vehicle.update({ where: { id: vehicleId }, data: { odometer: candidateOdometer } });
+    }
   }
 
   private toFuelLog(
