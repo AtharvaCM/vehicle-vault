@@ -55,3 +55,18 @@ export const InsurancePolicyExtractionDraftSchema = z.object({
 export type InsurancePolicyExtractionDraft = z.infer<
   typeof InsurancePolicyExtractionDraftSchema
 >;
+
+/**
+ * Draft hydrated into the fuel-log form after a successful receipt scan.
+ * Every field is optional — the model may extract some subset; the user
+ * always confirms via the form before persistence.
+ */
+export const FuelReceiptExtractionDraftSchema = z.object({
+  date: z.string().optional(),
+  quantity: z.number().min(0).optional(),
+  price: z.number().min(0).optional(),
+  totalCost: z.number().min(0).optional(),
+  location: z.string().max(200).optional(),
+});
+
+export type FuelReceiptExtractionDraft = z.infer<typeof FuelReceiptExtractionDraftSchema>;
