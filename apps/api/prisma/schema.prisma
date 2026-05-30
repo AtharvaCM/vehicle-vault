@@ -39,6 +39,7 @@ enum MaintenanceCategory {
   coolant
   clutch
   chain_service
+  timing_belt
   tyre_replacement
   puncture
   insurance

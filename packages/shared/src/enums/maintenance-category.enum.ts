@@ -10,6 +10,7 @@ export enum MaintenanceCategory {
   Coolant = 'coolant',
   Clutch = 'clutch',
   ChainService = 'chain_service',
+  TimingBelt = 'timing_belt',
   TyreReplacement = 'tyre_replacement',
   Puncture = 'puncture',
   Insurance = 'insurance',
