@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MaintenanceCategory, type MaintenanceSuggestion } from '@vehicle-vault/shared';
+import { MaintenanceCategory, VehicleType, type MaintenanceSuggestion } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleInsightsService } from './vehicle-insights.service';
@@ -16,8 +16,17 @@ const DEFAULT_INTERVALS: Partial<Record<MaintenanceCategory, ServiceInterval>> =
   [MaintenanceCategory.TyreRotation]: { km: 10000, months: 12 },
   [MaintenanceCategory.AirFilter]: { km: 15000, months: 12 },
   [MaintenanceCategory.Coolant]: { km: 30000, months: 24 },
-  [MaintenanceCategory.ChainService]: { km: 500, months: 1 }, // Short for motorcycles
+  [MaintenanceCategory.ChainService]: { km: 500, months: 1 }, // motorcycle drive chain only
+  [MaintenanceCategory.TimingBelt]: { km: 120000, months: 60 }, // car/SUV/van/truck only
 };
+
+const MOTORCYCLE_ONLY_CATEGORIES = new Set<MaintenanceCategory>([
+  MaintenanceCategory.ChainService,
+]);
+
+const NON_MOTORCYCLE_CATEGORIES = new Set<MaintenanceCategory>([
+  MaintenanceCategory.TimingBelt,
+]);
 
 @Injectable()
 export class MaintenanceForecastService {
@@ -29,7 +38,7 @@ export class MaintenanceForecastService {
   async getUpcomingSuggestions(userId: string, vehicleId: string): Promise<MaintenanceSuggestion[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: { id: vehicleId, userId },
-      select: { id: true, odometer: true, createdAt: true, catalogVariantId: true, make: true, model: true },
+      select: { id: true, odometer: true, createdAt: true, catalogVariantId: true, make: true, model: true, vehicleType: true },
     });
 
     if (!vehicle) {
@@ -68,8 +77,16 @@ export class MaintenanceForecastService {
       }
     }
 
+    const isMotorcycle = vehicle.vehicleType === VehicleType.Motorcycle;
+
     // 3. For each category, find the latest record and evaluate
     for (const [category, interval] of Object.entries(intervalsToCheck)) {
+      if (MOTORCYCLE_ONLY_CATEGORIES.has(category as MaintenanceCategory) && !isMotorcycle) {
+        continue;
+      }
+      if (NON_MOTORCYCLE_CATEGORIES.has(category as MaintenanceCategory) && isMotorcycle) {
+        continue;
+      }
       const latestRecord = await this.prisma.maintenanceRecord.findFirst({
         where: { vehicleId, category: category as MaintenanceCategory },
         orderBy: { serviceDate: 'desc' },
