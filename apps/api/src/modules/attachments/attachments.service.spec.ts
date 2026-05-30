@@ -104,60 +104,39 @@ describe('AttachmentsService', () => {
     track: vi.fn().mockResolvedValue(undefined),
   };
 
-  const attachmentExtractionService = {
+  const extractionEnvelope = {
+    provider: 'gemini' as const,
+    extractedAt: '2026-03-20T00:00:00.000Z',
+    confidence: 0.92,
+    data: {
+      confidence: 0.92,
+      vendorName: 'Torque Garage',
+      workshopName: 'Torque Garage',
+      invoiceNumber: 'INV-1',
+      documentDate: '2026-03-19T00:00:00.000Z',
+      serviceDate: '2026-03-20T00:00:00.000Z',
+      odometer: 12500,
+      totalCost: 2499,
+      currencyCode: 'INR',
+      notes: 'OCR notes',
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Part,
+          name: 'Oil filter',
+          normalizedCategory: MaintenanceCategory.OilFilter,
+          quantity: 1,
+          unit: 'pcs',
+          unitPrice: 450,
+          lineTotal: 450,
+        },
+      ],
+    },
+  };
+
+  const extractionService = {
     isAvailable: true,
-    extractDocument: vi.fn().mockResolvedValue({
-      provider: 'gemini',
-      confidence: 0.92,
-      vendorName: 'Torque Garage',
-      workshopName: 'Torque Garage',
-      invoiceNumber: 'INV-1',
-      documentDate: '2026-03-19T00:00:00.000Z',
-      serviceDate: '2026-03-20T00:00:00.000Z',
-      odometer: 12500,
-      totalCost: 2499,
-      currencyCode: 'INR',
-      notes: 'OCR notes',
-      lineItems: [
-        {
-          kind: MaintenanceLineItemKind.Part,
-          name: 'Oil filter',
-          normalizedCategory: MaintenanceCategory.OilFilter,
-          quantity: 1,
-          unit: 'pcs',
-          unitPrice: 450,
-          lineTotal: 450,
-        },
-      ],
-      extractedAt: '2026-03-20T00:00:00.000Z',
-      failureReason: undefined,
-    }),
-    extractDocuments: vi.fn().mockResolvedValue({
-      provider: 'gemini',
-      confidence: 0.92,
-      vendorName: 'Torque Garage',
-      workshopName: 'Torque Garage',
-      invoiceNumber: 'INV-1',
-      documentDate: '2026-03-19T00:00:00.000Z',
-      serviceDate: '2026-03-20T00:00:00.000Z',
-      odometer: 12500,
-      totalCost: 2499,
-      currencyCode: 'INR',
-      notes: 'OCR notes',
-      lineItems: [
-        {
-          kind: MaintenanceLineItemKind.Part,
-          name: 'Oil filter',
-          normalizedCategory: MaintenanceCategory.OilFilter,
-          quantity: 1,
-          unit: 'pcs',
-          unitPrice: 450,
-          lineTotal: 450,
-        },
-      ],
-      extractedAt: '2026-03-20T00:00:00.000Z',
-      failureReason: undefined,
-    }),
+    hasKind: vi.fn().mockReturnValue(true),
+    extract: vi.fn().mockResolvedValue(extractionEnvelope),
   };
 
   let service: AttachmentsService;
@@ -188,58 +167,9 @@ describe('AttachmentsService', () => {
       createdAt: '2026-03-20T00:00:00.000Z',
       updatedAt: '2026-03-20T00:00:00.000Z',
     });
-    attachmentExtractionService.extractDocument.mockResolvedValue({
-      provider: 'gemini',
-      confidence: 0.92,
-      vendorName: 'Torque Garage',
-      workshopName: 'Torque Garage',
-      invoiceNumber: 'INV-1',
-      documentDate: '2026-03-19T00:00:00.000Z',
-      serviceDate: '2026-03-20T00:00:00.000Z',
-      odometer: 12500,
-      totalCost: 2499,
-      currencyCode: 'INR',
-      notes: 'OCR notes',
-      lineItems: [
-        {
-          kind: MaintenanceLineItemKind.Part,
-          name: 'Oil filter',
-          normalizedCategory: MaintenanceCategory.OilFilter,
-          quantity: 1,
-          unit: 'pcs',
-          unitPrice: 450,
-          lineTotal: 450,
-        },
-      ],
-      extractedAt: '2026-03-20T00:00:00.000Z',
-      failureReason: undefined,
-    });
-    attachmentExtractionService.extractDocuments.mockResolvedValue({
-      provider: 'gemini',
-      confidence: 0.92,
-      vendorName: 'Torque Garage',
-      workshopName: 'Torque Garage',
-      invoiceNumber: 'INV-1',
-      documentDate: '2026-03-19T00:00:00.000Z',
-      serviceDate: '2026-03-20T00:00:00.000Z',
-      odometer: 12500,
-      totalCost: 2499,
-      currencyCode: 'INR',
-      notes: 'OCR notes',
-      lineItems: [
-        {
-          kind: MaintenanceLineItemKind.Part,
-          name: 'Oil filter',
-          normalizedCategory: MaintenanceCategory.OilFilter,
-          quantity: 1,
-          unit: 'pcs',
-          unitPrice: 450,
-          lineTotal: 450,
-        },
-      ],
-      extractedAt: '2026-03-20T00:00:00.000Z',
-      failureReason: undefined,
-    });
+    extractionService.extract.mockResolvedValue(extractionEnvelope);
+    extractionService.hasKind.mockReturnValue(true);
+    extractionService.isAvailable = true;
     prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
       if (typeof arg === 'function') {
         return (arg as (tx: unknown) => unknown)(prisma);
@@ -295,7 +225,7 @@ describe('AttachmentsService', () => {
       prisma as never,
       maintenanceService as never,
       storageService as never,
-      attachmentExtractionService as never,
+      extractionService as never,
       auditService as never,
     );
   });
@@ -569,10 +499,13 @@ describe('AttachmentsService', () => {
 
     const result = await service.extractAttachment('user-1', 'attachment-1');
 
-    expect(attachmentExtractionService.extractDocument).toHaveBeenCalledWith(
-      Buffer.from('%PDF-1.7'),
-      'application/pdf',
-    );
+    expect(extractionService.extract).toHaveBeenCalledWith('maintenance_invoice', [
+      {
+        buffer: Buffer.from('%PDF-1.7'),
+        mimeType: 'application/pdf',
+        name: 'receipt.pdf',
+      },
+    ]);
     expect(result).toEqual(
       expect.objectContaining({
         attachmentId: 'attachment-1',
@@ -620,7 +553,7 @@ describe('AttachmentsService', () => {
     ]);
 
     expect(maintenanceService.getRecordById).toHaveBeenCalledWith('user-1', 'record-1');
-    expect(attachmentExtractionService.extractDocuments).toHaveBeenCalledWith([
+    expect(extractionService.extract).toHaveBeenCalledWith('maintenance_invoice', [
       {
         buffer: Buffer.from([0xff, 0xd8, 0xff, 0x01]),
         mimeType: 'image/jpeg',
