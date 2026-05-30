@@ -25,7 +25,8 @@ async function scanVehicleDocument(input: ScanInput): Promise<InsurancePolicySca
     FormData
   >(endpoints.vehicleDocuments.scan(input.vehicleId), formData, {
     query: { kind: input.kind },
-    headers: { 'Content-Type': 'multipart/form-data' },
+    // Do NOT set Content-Type — fetch must auto-generate the multipart boundary.
+    // apiClient already skips Content-Type for FormData bodies.
   });
 
   return response.data;
