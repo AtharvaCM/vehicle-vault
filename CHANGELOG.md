@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.0.0...v1.1.0) (2026-05-30)
+
+
+### Features
+
+* **admin + fuel + forecast:** admin users slice, fuel UX fixes, vehicle-type forecast guards ([#38](https://github.com/AtharvaCM/vehicle-vault/issues/38)) ([a420160](https://github.com/AtharvaCM/vehicle-vault/commit/a42016023f34fc86424a0f722c1bdadf454cb725))
+
 # 1.0.0 (2026-05-30)
 
 
