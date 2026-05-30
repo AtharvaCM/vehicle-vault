@@ -1,6 +1,12 @@
-import { ShieldCheck, Plus, Car, ReceiptText } from 'lucide-react';
+import { ShieldCheck, Plus, Car, ReceiptText, Scan, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
 import { useVehicleDocuments } from '../../vehicle-documents/hooks/use-documents';
 import { DocumentCard } from '../../vehicle-documents/components/document-card';
+import {
+  useScanStatusQuery,
+  useScanVehicleDocument,
+} from '../../vehicle-documents/hooks/use-scan-document';
 import { ClaimCard } from '../../claims/components/claim-card';
 import { ClaimFormDialog } from '../../claims/components/claim-form-dialog';
 import { useVehicleClaims } from '../../claims/hooks/use-claims';
@@ -8,9 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingState } from '@/components/shared/loading-state';
-import { useState } from 'react';
+import { appToast } from '@/lib/toast';
 import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
-import { type Claim, type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
+import { type Claim, type InsurancePolicyExtractionDraft, type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
 
 interface ProtectionTabProps {
   vehicleId: string;
@@ -23,9 +29,14 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [defaultKind, setDefaultKind] = useState<VehicleDocumentKind>('insurance');
   const [editingDocument, setEditingDocument] = useState<VehicleDocument | null>(null);
+  const [scannedDraft, setScannedDraft] = useState<InsurancePolicyExtractionDraft | null>(null);
 
   const [isClaimDialogOpen, setIsClaimDialogOpen] = useState(false);
   const [editingClaim, setEditingClaim] = useState<Claim | null>(null);
+
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const scanMutation = useScanVehicleDocument();
+  const scanStatusQuery = useQuery(useScanStatusQuery(vehicleId, 'insurance'));
 
   if (documentsQuery.isPending) {
     return <LoadingState title="Loading protection details" description="Checking policy and warranty status..." />;
@@ -38,19 +49,54 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
 
   function openDialog(kind: VehicleDocumentKind) {
     setEditingDocument(null);
+    setScannedDraft(null);
     setDefaultKind(kind);
     setIsDialogOpen(true);
   }
 
   function handleEdit(doc: VehicleDocument) {
     setEditingDocument(doc);
+    setScannedDraft(null);
     setDefaultKind(doc.kind);
     setIsDialogOpen(true);
   }
 
   function handleClose() {
     setEditingDocument(null);
+    setScannedDraft(null);
     setIsDialogOpen(false);
+  }
+
+  function triggerScan() {
+    if (scanStatusQuery.data?.available === false) {
+      appToast.error({
+        title: 'AI scan unavailable',
+        description: 'Set GEMINI_API_KEY in the backend .env to enable document scanning.',
+      });
+      return;
+    }
+    scanInputRef.current?.click();
+  }
+
+  async function handleScanFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const result = await scanMutation.mutateAsync({ vehicleId, kind: 'insurance', file });
+      setScannedDraft(result.data);
+      setEditingDocument(null);
+      setDefaultKind('insurance');
+      setIsDialogOpen(true);
+      appToast.success({
+        title: 'Policy scanned',
+        description: 'Review the AI-filled fields and save.',
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      appToast.error({ title: 'Scan failed', description: message });
+    }
   }
 
   function openClaimDialog() {
@@ -78,10 +124,38 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <ShieldCheck className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Insurance Policies</h3>
             </div>
-            <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Policy
-            </Button>
+            <div className="flex items-center gap-2">
+              <input
+                ref={scanInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleScanFile}
+                className="hidden"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={triggerScan}
+                disabled={scanMutation.isPending}
+                title={scanStatusQuery.data?.available ? 'AI Ready' : 'AI Plugin Missing'}
+              >
+                {scanMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <span className="relative mr-2 inline-flex">
+                    <Scan className="h-4 w-4" />
+                    <span
+                      className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${scanStatusQuery.data?.available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
+                    />
+                  </span>
+                )}
+                {scanMutation.isPending ? 'Analyzing…' : 'Scan Policy'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Policy
+              </Button>
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -212,6 +286,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
         vehicleId={vehicleId}
         defaultKind={defaultKind}
         editingDocument={editingDocument}
+        initialValues={scannedDraft ?? undefined}
       />
 
       <ClaimFormDialog

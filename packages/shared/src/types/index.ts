@@ -13,3 +13,4 @@ export * from './vehicle-document';
 export * from './claim';
 export * from './claim-attachment';
 export * from './analytics';
+export * from './document-extraction';

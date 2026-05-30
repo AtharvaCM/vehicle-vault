@@ -82,6 +82,14 @@ export const endpoints = {
     costTrend: '/analytics/cost-trend',
     tco: (vehicleId: string) => `/analytics/tco/${vehicleId}`,
   },
+  vehicleDocuments: {
+    scan: (vehicleId: string) => `/vehicles/${vehicleId}/documents/scan`,
+    scanStatus: (vehicleId: string) => `/vehicles/${vehicleId}/documents/scan/status`,
+  },
+  audit: {
+    me: '/audit/me',
+    byVehicle: (vehicleId: string) => `/vehicles/${vehicleId}/audit`,
+  },
   notifications: {
     list: () => '/notifications',
     unreadCount: () => '/notifications/unread-count',

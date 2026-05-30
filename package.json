@@ -36,15 +36,28 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "clean": "pnpm -r --if-present run clean && rimraf node_modules"
+    "clean": "pnpm -r --if-present run clean && rimraf node_modules",
+    "prepare": "husky",
+    "commitlint": "commitlint --edit",
+    "release": "semantic-release"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.0",
+    "@semantic-release/npm": "^12.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "husky": "^9.1.6",
     "jsdom": "^29.0.1",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
+    "semantic-release": "^24.2.0",
     "vitest": "^4.1.0"
   }
 }
