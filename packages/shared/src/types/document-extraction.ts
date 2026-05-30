@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { AttachmentExtractionLineItemSchema } from '../schemas/attachment-extraction.schema';
+
 /**
  * Discriminator for what shape an extracted JSON payload takes and which
  * target resource the draft hydrates. One kind per use site.
@@ -70,3 +72,26 @@ export const FuelReceiptExtractionDraftSchema = z.object({
 });
 
 export type FuelReceiptExtractionDraft = z.infer<typeof FuelReceiptExtractionDraftSchema>;
+
+/**
+ * Draft hydrated from a maintenance invoice / job-card scan. Persisted
+ * into the AttachmentExtraction Prisma row by the attachments module
+ * (the only extraction kind today with opt-in persistence).
+ */
+export const MaintenanceInvoiceExtractionDraftSchema = z.object({
+  confidence: z.number().min(0).max(1).optional(),
+  vendorName: z.string().min(1).optional(),
+  workshopName: z.string().min(1).optional(),
+  invoiceNumber: z.string().min(1).optional(),
+  documentDate: z.string().datetime({ offset: true }).optional(),
+  serviceDate: z.string().datetime({ offset: true }).optional(),
+  odometer: z.number().int().nonnegative().optional(),
+  totalCost: z.number().nonnegative().optional(),
+  currencyCode: z.string().length(3).optional(),
+  notes: z.string().min(1).optional(),
+  lineItems: z.array(AttachmentExtractionLineItemSchema).optional(),
+});
+
+export type MaintenanceInvoiceExtractionDraft = z.infer<
+  typeof MaintenanceInvoiceExtractionDraftSchema
+>;

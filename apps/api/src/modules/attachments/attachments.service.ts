@@ -11,6 +11,7 @@ import {
   type AttachmentExtraction,
   type Attachment,
   type AttachmentReconciliationSummary,
+  type MaintenanceInvoiceExtractionDraft,
   MaintenanceCategory,
   MaintenanceLineItemKind,
   MaintenanceRecordStatus,
@@ -23,8 +24,26 @@ import { SupabaseStorageService } from '../../common/storage/supabase-storage.se
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { ExtractionService } from '../extraction/extraction.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
-import { AttachmentExtractionService } from './attachment-extraction.service';
+
+const MAINTENANCE_EXTRACTION_KIND = 'maintenance_invoice';
+
+type PersistableExtraction = Omit<
+  AttachmentExtraction,
+  'attachmentId' | 'createdAt' | 'id' | 'status' | 'updatedAt'
+>;
+
+function toPersistable(
+  result: { provider: string; extractedAt: string; data: MaintenanceInvoiceExtractionDraft },
+): PersistableExtraction {
+  return {
+    provider: result.provider,
+    extractedAt: result.extractedAt,
+    failureReason: undefined,
+    ...result.data,
+  };
+}
 import type { AttachmentUploadFile } from './types/attachment-upload-file.type';
 import {
   buildStoredAttachmentPath,
@@ -47,14 +66,23 @@ export class AttachmentsService {
     private readonly prisma: PrismaService,
     private readonly maintenanceService: MaintenanceService,
     private readonly storageService: SupabaseStorageService,
-    private readonly attachmentExtractionService: AttachmentExtractionService,
+    private readonly extractionService: ExtractionService,
     private readonly auditService: AuditService,
   ) {}
 
   getExtractionStatus() {
     return {
-      available: this.attachmentExtractionService.isAvailable,
+      available:
+        this.extractionService.isAvailable &&
+        this.extractionService.hasKind(MAINTENANCE_EXTRACTION_KIND),
     };
+  }
+
+  private get extractionAvailable(): boolean {
+    return (
+      this.extractionService.isAvailable &&
+      this.extractionService.hasKind(MAINTENANCE_EXTRACTION_KIND)
+    );
   }
 
   async listAllAttachments(userId: string) {
@@ -97,8 +125,10 @@ export class AttachmentsService {
   }
 
   async extractAttachment(userId: string, attachmentId: string) {
-    if (!this.attachmentExtractionService.isAvailable) {
-      throw new InternalServerErrorException('OCR service is not configured (missing API key)');
+    if (!this.extractionAvailable) {
+      throw new InternalServerErrorException(
+        'DocumentExtraction service is not configured (missing GEMINI_API_KEY or unregistered kind).',
+      );
     }
 
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
@@ -121,10 +151,17 @@ export class AttachmentsService {
     });
 
     try {
-      const extracted = await this.attachmentExtractionService.extractDocument(
-        fileBuffer,
-        attachment.mimeType,
+      const result = await this.extractionService.extract<MaintenanceInvoiceExtractionDraft>(
+        MAINTENANCE_EXTRACTION_KIND,
+        [
+          {
+            buffer: fileBuffer,
+            mimeType: attachment.mimeType,
+            name: attachment.originalFileName,
+          },
+        ],
       );
+      const extracted = toPersistable(result);
       const storedExtraction = await this.prisma.attachmentExtraction.upsert({
         where: {
           attachmentId: attachment.id,
@@ -156,8 +193,10 @@ export class AttachmentsService {
   }
 
   async extractAttachments(userId: string, recordId: string, attachmentIds: string[]) {
-    if (!this.attachmentExtractionService.isAvailable) {
-      throw new InternalServerErrorException('OCR service is not configured (missing API key)');
+    if (!this.extractionAvailable) {
+      throw new InternalServerErrorException(
+        'DocumentExtraction service is not configured (missing GEMINI_API_KEY or unregistered kind).',
+      );
     }
 
     await this.maintenanceService.getRecordById(userId, recordId);
@@ -232,7 +271,11 @@ export class AttachmentsService {
         })),
       );
 
-      const extracted = await this.attachmentExtractionService.extractDocuments(documents);
+      const result = await this.extractionService.extract<MaintenanceInvoiceExtractionDraft>(
+        MAINTENANCE_EXTRACTION_KIND,
+        documents,
+      );
+      const extracted = toPersistable(result);
       const storedExtractions = await Promise.all(
         orderedAttachments.map((attachment) =>
           this.prisma.attachmentExtraction.upsert({
