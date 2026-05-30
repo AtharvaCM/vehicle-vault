@@ -45,6 +45,13 @@ _Not_ a **Notification** (user-facing message, may be deleted, has dedup); not a
 **Actor**:
 The **User** who caused an **AuditEvent**, or `null` when no user can be resolved. Distinct from the subject of the event — `actorUserId = subjectUserId` only for self-targeted auth events.
 
+**DocumentExtraction**:
+Structured data pulled from a user-uploaded file (image or PDF) by an AI provider. Has an **ExtractionKind** (`fuel_receipt`, `maintenance_invoice`, `insurance_policy`, `claim_document`), an optional `confidence` score, a `provider` tag (`gemini` today), and optionally a persisted row (kept for replay/audit when the extraction informs a created resource — e.g. `AttachmentExtraction` for maintenance). Output is a draft, never an authoritative record — the human always confirms via a form before persistence of the target resource.
+_Not_ "OCR" — the provider reasons over the document, it does not just recognize characters. _Not_ "scan" — that is UI verb; persisted concept is **DocumentExtraction**.
+
+**ExtractionKind**:
+Discriminator for what shape the extracted JSON takes and which target resource the draft hydrates. One kind per use site. Adding a new use site (e.g. `registration_certificate`) means adding one entry to the registry, not a new service.
+
 ## Relationships
 
 - A **Vehicle** has many **VehicleDocuments**, **MaintenanceRecords**, **Reminders**.
@@ -54,3 +61,4 @@ The **User** who caused an **AuditEvent**, or `null` when no user can be resolve
 ## Flagged ambiguities
 
 - "Policy" was used to mean **InsurancePolicy** (Prisma model) and any **VehicleDocument**. Resolved: **InsurancePolicy** is the storage row for `kind=insurance`; the domain term is **VehicleDocument**.
+- "OCR" / "scan" / "extraction" were used interchangeably across `FuelLogsOCRService`, `AttachmentExtractionService`, `ClaimExtractionService`. Resolved: domain term is **DocumentExtraction**; "scan" is reserved for UI verbs only; "OCR" deprecated (Gemini reasons, doesn't just recognize).
