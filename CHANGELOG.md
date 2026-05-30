@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.1.0...v1.1.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **extraction:** scan multipart, date pre-fill, IN bundled-policy windows ([#39](https://github.com/AtharvaCM/vehicle-vault/issues/39)) ([686190d](https://github.com/AtharvaCM/vehicle-vault/commit/686190d656cb547daabb309368aa21e3e7e67b85)), closes [#31](https://github.com/AtharvaCM/vehicle-vault/issues/31)
+
 # [1.1.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.0.0...v1.1.0) (2026-05-30)
 
 
