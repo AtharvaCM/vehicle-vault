@@ -13,11 +13,7 @@ export async function scanReceipt(file: File): Promise<ScannedFuelLog> {
   const response = await apiClient.post<
     ApiSuccessResponse<ExtractionResult<FuelReceiptExtractionDraft>>,
     FormData
-  >(endpoints.fuelLogs.scan(), formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  >(endpoints.fuelLogs.scan(), formData);
 
   return response.data.data;
 }

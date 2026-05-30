@@ -14,6 +14,16 @@ type RawInsuranceExtraction = {
   policyNumber?: string;
   startDate?: string;
   endDate?: string;
+  // Bundled Indian motor policies usually carry two windows:
+  //   - Own Damage (OD): 1-year, optional
+  //   - Third-Party (TP): 3-year, mandatory by law
+  // We capture both when present, then collapse to the single
+  // startDate/endDate that the schema persists.
+  ownDamageStartDate?: string;
+  ownDamageEndDate?: string;
+  thirdPartyStartDate?: string;
+  thirdPartyEndDate?: string;
+  coverType?: string;
   premiumAmount?: number;
   insuredValue?: number;
   notes?: string;
@@ -47,12 +57,37 @@ export class InsurancePolicyExtractionSpec
       startDate: {
         type: SchemaType.STRING,
         description:
-          'Policy period start in ISO 8601 (YYYY-MM-DD). Also called "From", "Period of Insurance From".',
+          'Single policy period start in ISO 8601 (YYYY-MM-DD). For non-bundled policies. For bundled IN motor policies, use ownDamageStartDate / thirdPartyStartDate instead.',
       },
       endDate: {
         type: SchemaType.STRING,
         description:
-          'Policy period end in ISO 8601 (YYYY-MM-DD). Also called "To", "Expiry", "Valid Upto".',
+          'Single policy period end in ISO 8601 (YYYY-MM-DD). For non-bundled policies. For bundled IN motor policies, use ownDamageEndDate / thirdPartyEndDate instead.',
+      },
+      ownDamageStartDate: {
+        type: SchemaType.STRING,
+        description:
+          'Own Damage (OD) cover start date in ISO 8601 (YYYY-MM-DD). Indian bundled policies list this in a "Valid From" column next to "Own Damage Cover".',
+      },
+      ownDamageEndDate: {
+        type: SchemaType.STRING,
+        description:
+          'Own Damage (OD) cover end date in ISO 8601 (YYYY-MM-DD). Listed under "Valid Till" / "Valid Upto" next to "Own Damage Cover". OD is the 1-year renewable component.',
+      },
+      thirdPartyStartDate: {
+        type: SchemaType.STRING,
+        description:
+          'Third-Party (TP) liability cover start date in ISO 8601 (YYYY-MM-DD). Mandatory by Indian law. In bundled new-car policies the TP term is 3 years.',
+      },
+      thirdPartyEndDate: {
+        type: SchemaType.STRING,
+        description:
+          'Third-Party (TP) liability cover end date in ISO 8601 (YYYY-MM-DD). Mandatory by Indian law.',
+      },
+      coverType: {
+        type: SchemaType.STRING,
+        description:
+          'Short tag describing the cover: "Comprehensive", "Third-Party only", "Own Damage only", "Bundled (1yr OD + 3yr TP)", "Standalone OD", etc.',
       },
       premiumAmount: {
         type: SchemaType.NUMBER,
@@ -78,8 +113,10 @@ export class InsurancePolicyExtractionSpec
         : 'Extract structured insurance-policy data from this document.',
       'Source may be a policy schedule PDF, certificate of insurance, cover note, or a photo of either.',
       'Return only JSON matching the provided schema.',
-      'Use ISO 8601 (YYYY-MM-DD) for all dates.',
+      'Use ISO 8601 (YYYY-MM-DD) for all dates. Strip any time-of-day component.',
       'Strip currency symbols (₹, Rs., INR, $) and thousands separators from numeric fields.',
+      'Indian motor policies are often bundled — they list separate "Valid From"/"Valid Till" rows for Own Damage Cover (1-year term) and Third-Party Cover (3-year term). When you see both, populate ownDamageStartDate, ownDamageEndDate, thirdPartyStartDate, thirdPartyEndDate and leave the top-level startDate / endDate empty. When the policy is non-bundled (single-component or comprehensive single-window), populate only startDate / endDate.',
+      'Set coverType to a short tag like "Bundled (1yr OD + 3yr TP)", "Comprehensive", "Third-Party only", "Own Damage only", or "Standalone OD" so downstream code can render the right summary.',
       'Omit fields that are not present.',
     ];
 
@@ -100,16 +137,86 @@ export class InsurancePolicyExtractionSpec
 
   normalize(raw: unknown): InsurancePolicyExtractionDraft {
     const r = (raw ?? {}) as RawInsuranceExtraction;
+
+    const odStart = normalizeDate(r.ownDamageStartDate);
+    const odEnd = normalizeDate(r.ownDamageEndDate);
+    const tpStart = normalizeDate(r.thirdPartyStartDate);
+    const tpEnd = normalizeDate(r.thirdPartyEndDate);
+    const flatStart = normalizeDate(r.startDate);
+    const flatEnd = normalizeDate(r.endDate);
+
+    // Collapse multi-window bundled policies to the single window the
+    // schema persists. Prefer OD window because it drives yearly renewal
+    // reminders — TP is mandatory but legally re-issued separately and
+    // long enough that single-window expiry alerts would be useless.
+    // Fall back: TP window when only TP present, then plain single window.
+    const startDate = odStart ?? tpStart ?? flatStart;
+    const endDate = odEnd ?? tpEnd ?? flatEnd;
+
+    const notes = composeNotes({
+      modelNotes: r.notes,
+      coverType: r.coverType,
+      odStart,
+      odEnd,
+      tpStart,
+      tpEnd,
+      pickedStart: startDate,
+      pickedEnd: endDate,
+    });
+
     return {
       provider: normalizeString(r.provider),
       policyNumber: normalizeString(r.policyNumber),
-      startDate: normalizeDate(r.startDate),
-      endDate: normalizeDate(r.endDate),
+      startDate,
+      endDate,
       premiumAmount: normalizeNonNegativeNumber(r.premiumAmount),
       insuredValue: normalizeNonNegativeNumber(r.insuredValue),
-      notes: normalizeString(r.notes),
+      notes,
     };
   }
+}
+
+function composeNotes(input: {
+  modelNotes: string | undefined;
+  coverType: string | undefined;
+  odStart: string | undefined;
+  odEnd: string | undefined;
+  tpStart: string | undefined;
+  tpEnd: string | undefined;
+  pickedStart: string | undefined;
+  pickedEnd: string | undefined;
+}): string | undefined {
+  const parts: string[] = [];
+
+  const coverType = normalizeString(input.coverType);
+  const modelNotes = normalizeString(input.modelNotes);
+
+  if (coverType) parts.push(coverType);
+  if (modelNotes && modelNotes.toLowerCase() !== coverType?.toLowerCase()) {
+    parts.push(modelNotes);
+  }
+
+  // When the policy is bundled, expose both windows in the notes so the
+  // user can see what got captured vs. what got dropped by the
+  // single-window form. The form pre-fills with the picked window (OD
+  // first, then TP); the dropped window survives in notes.
+  const hasOd = input.odStart || input.odEnd;
+  const hasTp = input.tpStart || input.tpEnd;
+  if (hasOd && hasTp) {
+    parts.push(
+      `OD: ${formatRange(input.odStart, input.odEnd)} | TP: ${formatRange(input.tpStart, input.tpEnd)}`,
+    );
+  }
+
+  if (!parts.length) return undefined;
+  const joined = parts.join('. ');
+  return joined.length > 500 ? joined.slice(0, 497) + '…' : joined;
+}
+
+function formatRange(start: string | undefined, end: string | undefined): string {
+  const s = start ? start.slice(0, 10) : '?';
+  const e = end ? end.slice(0, 10) : '?';
+  return `${s} → ${e}`;
 }
 
 function normalizeString(value: string | undefined): string | undefined {

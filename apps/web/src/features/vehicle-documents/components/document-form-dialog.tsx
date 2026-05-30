@@ -58,6 +58,28 @@ interface DocumentFormDialogProps {
   }>;
 }
 
+/**
+ * `<input type="date">` only accepts `YYYY-MM-DD` strings. Date objects
+ * (or full ISO datetime strings) get coerced via `.toString()` which
+ * produces something like `Sat Feb 14 2026 …` — invalid format, input
+ * silently renders empty. Normalize everything here before handing to RHF.
+ */
+function toDateInputValue(value: unknown): string {
+  if (!value) return '';
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return '';
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === 'string') {
+    // Already YYYY-MM-DD — pass through.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toISOString().slice(0, 10);
+  }
+  return '';
+}
+
 function buildDefaults(
   kind: VehicleDocumentKind,
   doc?: VehicleDocument | null,
@@ -67,8 +89,8 @@ function buildDefaults(
     return {
       kind: doc.kind,
       provider: doc.provider,
-      startDate: doc.startDate,
-      endDate: doc.endDate ?? undefined,
+      startDate: toDateInputValue(doc.startDate),
+      endDate: toDateInputValue(doc.endDate),
       notes: doc.notes ?? '',
       // Insurance-specific
       policyNumber: doc.number ?? '',
@@ -81,11 +103,14 @@ function buildDefaults(
     };
   }
 
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
   const base: Record<string, unknown> = {
     kind,
     provider: '',
-    startDate: new Date(),
-    endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+    startDate: toDateInputValue(new Date()),
+    endDate: toDateInputValue(oneYearFromNow),
     notes: '',
     policyNumber: '',
     type: 'Manufacturer',
@@ -94,8 +119,8 @@ function buildDefaults(
   if (initial) {
     if (initial.provider) base.provider = initial.provider;
     if (initial.policyNumber) base.policyNumber = initial.policyNumber;
-    if (initial.startDate) base.startDate = new Date(initial.startDate);
-    if (initial.endDate) base.endDate = new Date(initial.endDate);
+    if (initial.startDate) base.startDate = toDateInputValue(initial.startDate);
+    if (initial.endDate) base.endDate = toDateInputValue(initial.endDate);
     if (typeof initial.premiumAmount === 'number') base.premiumAmount = initial.premiumAmount;
     if (typeof initial.insuredValue === 'number') base.insuredValue = initial.insuredValue;
     if (initial.notes) base.notes = initial.notes;
