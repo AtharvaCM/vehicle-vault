@@ -16,7 +16,9 @@ import {
   buildStoredFileName,
   convertHeicToJpegIfNeeded,
 } from '../attachments/utils/attachment-upload.util';
-import { ClaimExtractionService } from './claim-extraction.service';
+import { ExtractionService } from '../extraction/extraction.service';
+
+const CLAIM_EXTRACTION_KIND = 'claim_document';
 
 function buildStoredClaimAttachmentPath(
   userId: string,
@@ -58,11 +60,15 @@ export class ClaimAttachmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: SupabaseStorageService,
-    private readonly extractionService: ClaimExtractionService,
+    private readonly extractionService: ExtractionService,
   ) {}
 
   getExtractionStatus() {
-    return { available: this.extractionService.isAvailable };
+    return {
+      available:
+        this.extractionService.isAvailable &&
+        this.extractionService.hasKind(CLAIM_EXTRACTION_KIND),
+    };
   }
 
   async listByClaim(userId: string, claimId: string): Promise<ClaimAttachment[]> {
@@ -163,7 +169,11 @@ export class ClaimAttachmentsService {
   ): Promise<ClaimExtractionSuggestion> {
     const attachment = await this.getOwnedAttachment(userId, attachmentId);
     const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
-    return this.extractionService.extractFromDocument(fileBuffer, attachment.mimeType);
+    const result = await this.extractionService.extract<ClaimExtractionSuggestion>(
+      CLAIM_EXTRACTION_KIND,
+      [{ buffer: fileBuffer, mimeType: attachment.mimeType }],
+    );
+    return result.data;
   }
 
   async remove(userId: string, attachmentId: string) {
