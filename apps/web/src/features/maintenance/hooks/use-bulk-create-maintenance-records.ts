@@ -4,6 +4,7 @@ import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
 import { endpoints } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
 
@@ -30,6 +31,7 @@ export function useBulkCreateMaintenanceRecords(vehicleId: string) {
     mutationFn: (records: CreateMaintenanceRecordBody[]) =>
       createBulkMaintenanceRecords(vehicleId, records),
     onSuccess: () => {
+      void invalidateAudit(queryClient);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.maintenance.list(vehicleId),
       });

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import { completeReminder } from '../api/complete-reminder';
 
@@ -14,6 +15,7 @@ export function useBulkCompleteReminders() {
       return Promise.all(uniqueReminderIds.map((reminderId) => completeReminder(reminderId)));
     },
     onSuccess: (reminders) => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: queryKeys.reminders.all(),
       });

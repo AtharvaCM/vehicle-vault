@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import { createReminder } from '../api/create-reminder';
 import type { CreateReminderBody } from '../types/reminder';
@@ -11,6 +12,7 @@ export function useCreateReminder(vehicleId: string) {
   return useMutation({
     mutationFn: (input: CreateReminderBody) => createReminder(vehicleId, input),
     onSuccess: (reminder) => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: queryKeys.reminders.all(),
       });

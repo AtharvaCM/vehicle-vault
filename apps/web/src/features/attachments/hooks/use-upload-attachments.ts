@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 
 import { uploadAttachments } from '../api/upload-attachments';
 
@@ -10,6 +11,7 @@ export function useUploadAttachments(recordId: string) {
   return useMutation({
     mutationFn: (files: File[]) => uploadAttachments(recordId, files),
     onSuccess: () => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: queryKeys.attachments.byRecord(recordId),
       });

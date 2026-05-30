@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 import { queryKeys } from '@/lib/query/query-keys';
 import {
   type CreateClaimInput,
@@ -24,6 +25,7 @@ function invalidateClaims(queryClient: ReturnType<typeof useQueryClient>, vehicl
   queryClient.invalidateQueries({ queryKey: queryKeys.claims.byVehicle(vehicleId) });
   // Maintenance list also surfaces claim status; refresh.
   queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+  void invalidateAudit(queryClient);
 }
 
 export function useCreateClaim(vehicleId: string) {

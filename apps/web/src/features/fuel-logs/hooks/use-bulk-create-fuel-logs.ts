@@ -40,6 +40,9 @@ export function useBulkCreateFuelLogs(vehicleId: string) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.summary(),
       });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.audit.all(),
+      });
     },
   });
 }

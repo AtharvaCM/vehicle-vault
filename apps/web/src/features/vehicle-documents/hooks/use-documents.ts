@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/query-keys';
+import { invalidateAudit } from '@/lib/query/invalidate-audit';
 import {
   createVehicleDocument,
   deleteVehicleDocument,
@@ -25,6 +26,7 @@ export function useCreateVehicleDocument(vehicleId: string) {
   return useMutation({
     mutationFn: (data: CreateVehicleDocumentInput) => createVehicleDocument(vehicleId, data),
     onSuccess: () => {
+      void invalidateAudit(queryClient);
       // Prefix-based invalidation: refreshes all document queries for this vehicle
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
@@ -40,6 +42,7 @@ export function useUpdateVehicleDocument(vehicleId: string) {
     mutationFn: ({ id, data }: { id: string; data: UpdateVehicleDocumentInput }) =>
       updateVehicleDocument(vehicleId, id, data),
     onSuccess: () => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
@@ -54,6 +57,7 @@ export function useDeleteVehicleDocument(vehicleId: string) {
     mutationFn: ({ id, kind }: { id: string; kind: VehicleDocumentKind }) =>
       deleteVehicleDocument(vehicleId, id, kind),
     onSuccess: () => {
+      void invalidateAudit(queryClient);
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
