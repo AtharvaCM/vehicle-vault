@@ -42,9 +42,27 @@ interface DocumentFormDialogProps {
   defaultKind?: VehicleDocumentKind;
   /** When provided, the dialog operates in edit mode. */
   editingDocument?: VehicleDocument | null;
+  /**
+   * Pre-fill values from a DocumentExtraction draft. Each field is
+   * optional; only present values overwrite the empty defaults.
+   * When present, the dialog renders an "AI-filled" banner.
+   */
+  initialValues?: Partial<{
+    provider: string;
+    policyNumber: string;
+    startDate: string;
+    endDate: string;
+    premiumAmount: number;
+    insuredValue: number;
+    notes: string;
+  }>;
 }
 
-function buildDefaults(kind: VehicleDocumentKind, doc?: VehicleDocument | null): any {
+function buildDefaults(
+  kind: VehicleDocumentKind,
+  doc?: VehicleDocument | null,
+  initial?: DocumentFormDialogProps['initialValues'],
+): any {
   if (doc) {
     return {
       kind: doc.kind,
@@ -63,7 +81,7 @@ function buildDefaults(kind: VehicleDocumentKind, doc?: VehicleDocument | null):
     };
   }
 
-  return {
+  const base: Record<string, unknown> = {
     kind,
     provider: '',
     startDate: new Date(),
@@ -72,9 +90,21 @@ function buildDefaults(kind: VehicleDocumentKind, doc?: VehicleDocument | null):
     policyNumber: '',
     type: 'Manufacturer',
   };
+
+  if (initial) {
+    if (initial.provider) base.provider = initial.provider;
+    if (initial.policyNumber) base.policyNumber = initial.policyNumber;
+    if (initial.startDate) base.startDate = new Date(initial.startDate);
+    if (initial.endDate) base.endDate = new Date(initial.endDate);
+    if (typeof initial.premiumAmount === 'number') base.premiumAmount = initial.premiumAmount;
+    if (typeof initial.insuredValue === 'number') base.insuredValue = initial.insuredValue;
+    if (initial.notes) base.notes = initial.notes;
+  }
+
+  return base;
 }
 
-export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = 'insurance', editingDocument }: DocumentFormDialogProps) {
+export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = 'insurance', editingDocument, initialValues }: DocumentFormDialogProps) {
   const createMutation = useCreateVehicleDocument(vehicleId);
   const updateMutation = useUpdateVehicleDocument(vehicleId);
   const isEditing = !!editingDocument;
@@ -89,16 +119,17 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
     formState: { errors },
   } = useForm<CreateVehicleDocumentInput>({
     resolver: zodResolver(CreateVehicleDocumentSchema),
-    defaultValues: buildDefaults(defaultKind, editingDocument),
+    defaultValues: buildDefaults(defaultKind, editingDocument, initialValues),
   });
 
   const selectedKind = watch('kind');
+  const showAiBanner = !!initialValues && !editingDocument;
 
   useEffect(() => {
     if (isOpen) {
-      reset(buildDefaults(editingDocument?.kind ?? defaultKind, editingDocument));
+      reset(buildDefaults(editingDocument?.kind ?? defaultKind, editingDocument, initialValues));
     }
-  }, [isOpen, defaultKind, editingDocument, reset]);
+  }, [isOpen, defaultKind, editingDocument, initialValues, reset]);
 
   function cleanPayload(data: CreateVehicleDocumentInput) {
     const cleanData = { ...data };
@@ -151,6 +182,11 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+          {showAiBanner && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Fields below were filled by AI from your uploaded document. Please verify before saving.
+            </div>
+          )}
           {!isEditing && (
             <FormField label="Document Type" htmlFor="kind">
               <Controller

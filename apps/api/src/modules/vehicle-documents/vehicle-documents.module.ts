@@ -1,10 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, type OnModuleInit } from '@nestjs/common';
 
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
+import { ExtractionRegistry } from '../extraction/extraction-registry.service';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { InsuranceAdapter } from './adapters/insurance.adapter';
 import { WarrantyAdapter } from './adapters/warranty.adapter';
+import { InsurancePolicyExtractionSpec } from './extractions/insurance-policy.extraction';
 import { VehicleDocumentsController } from './vehicle-documents.controller';
 import { VehicleDocumentsService } from './vehicle-documents.service';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
@@ -16,6 +18,7 @@ import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types'
     VehicleDocumentsService,
     InsuranceAdapter,
     WarrantyAdapter,
+    InsurancePolicyExtractionSpec,
     {
       provide: VEHICLE_DOCUMENT_ADAPTERS,
       useFactory: (
@@ -27,4 +30,13 @@ import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types'
   ],
   exports: [VehicleDocumentsService],
 })
-export class VehicleDocumentsModule {}
+export class VehicleDocumentsModule implements OnModuleInit {
+  constructor(
+    private readonly registry: ExtractionRegistry,
+    private readonly insurancePolicySpec: InsurancePolicyExtractionSpec,
+  ) {}
+
+  onModuleInit(): void {
+    this.registry.register(this.insurancePolicySpec);
+  }
+}

@@ -22,6 +22,7 @@ import { ClaimsModule } from './modules/claims/claims.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { ExtractionModule } from './modules/extraction/extraction.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AuditModule } from './modules/audit/audit.module';
     AppConfigModule,
     PrismaModule,
     SupabaseStorageModule,
+    ExtractionModule,
     HealthModule,
     DashboardModule,
     AuthModule,
