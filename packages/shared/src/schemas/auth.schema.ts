@@ -24,10 +24,13 @@ export const PasswordResetConfirmSchema = z.object({
   password: z.string().min(8).max(72),
 });
 
+export const UserRoleSchema = z.enum(['user', 'admin']);
+
 export const UserSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(255),
+  role: UserRoleSchema.default('user'),
   emailVerified: z.boolean().default(false),
   allowedCatalogSources: z.array(z.string()).default([]),
   createdAt: z.string().datetime(),
@@ -38,6 +41,7 @@ export const AuthUserSchema = UserSchema.pick({
   id: true,
   name: true,
   email: true,
+  role: true,
   emailVerified: true,
   allowedCatalogSources: true,
 });

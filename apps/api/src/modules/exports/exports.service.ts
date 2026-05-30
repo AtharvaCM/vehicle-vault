@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { AccountExport, AccountExportMeta, User } from '@vehicle-vault/shared';
+import type { AccountExport, AccountExportMeta, User, UserRole } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AttachmentsService } from '../attachments/attachments.service';
@@ -58,6 +58,7 @@ export class ExportsService {
     id: string;
     name: string;
     email: string;
+    role: UserRole;
     emailVerified: boolean;
     allowedCatalogSources: string[];
     createdAt: Date;
@@ -67,6 +68,7 @@ export class ExportsService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
       createdAt: user.createdAt.toISOString(),

@@ -30,6 +30,7 @@ import {
   type RefreshTokenInput,
   type RegisterInput,
   type User,
+  type UserRole,
   type VerifyEmailInput,
   type ResendVerificationInput,
 } from '@vehicle-vault/shared';
@@ -60,6 +61,7 @@ type UserRecord = {
   emailVerified: boolean;
   emailVerificationTokenHash?: string | null;
   refreshTokenHash?: string | null;
+  role: UserRole;
   allowedCatalogSources: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -384,6 +386,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
       createdAt: user.createdAt.toISOString(),
@@ -396,6 +399,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
     });

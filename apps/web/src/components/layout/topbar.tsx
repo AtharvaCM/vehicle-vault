@@ -36,7 +36,7 @@ import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
 import { NotificationCenter } from '@/features/notifications/components/notification-center';
 
-import { appNavigation } from './sidebar';
+import { adminNavigation, appNavigation } from './sidebar';
 
 const sectionTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -66,6 +66,8 @@ export function Topbar() {
   const activeSection =
     Object.entries(sectionTitles).find(([routePath]) => pathname.startsWith(routePath))?.[1] ??
     'Garage';
+  const navItems =
+    auth.user?.role === 'admin' ? [...appNavigation, ...adminNavigation] : appNavigation;
 
   const handleLogout = async () => {
     auth.logout();
@@ -102,7 +104,7 @@ export function Topbar() {
 
               <div className="flex h-[calc(100vh-100px)] flex-col">
                 <nav className="grid gap-1 p-3">
-                  {appNavigation.map((item) => {
+                  {navItems.map((item) => {
                     const Icon = item.icon;
 
                     return (
@@ -244,8 +246,8 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto border-t border-slate-100 px-4 py-2 xl:hidden">
-        {appNavigation.map((item) => {
-          const Icon = mobileIcons[item.to] ?? LayoutDashboard;
+        {navItems.map((item) => {
+          const Icon = mobileIcons[item.to as keyof typeof mobileIcons] ?? item.icon;
 
           return (
             <Link

@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  Shield,
   Siren,
   Wrench,
 } from 'lucide-react';
@@ -21,7 +22,7 @@ import { cn } from '@/lib/utils/cn';
 type NavigationItem = {
   label: string;
   subtitle: string;
-  to: '/dashboard' | '/vehicles' | '/maintenance' | '/reminders' | '/settings';
+  to: '/dashboard' | '/vehicles' | '/maintenance' | '/reminders' | '/settings' | '/admin/users';
   icon: LucideIcon;
   exact?: boolean;
 };
@@ -63,9 +64,21 @@ export const appNavigation: NavigationItem[] = [
   },
 ];
 
+export const adminNavigation: NavigationItem[] = [
+  {
+    label: 'Users',
+    subtitle: 'Admin',
+    to: '/admin/users',
+    icon: Shield,
+    exact: true,
+  },
+];
+
 export function Sidebar() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const navItems =
+    auth.user?.role === 'admin' ? [...appNavigation, ...adminNavigation] : appNavigation;
 
   const handleLogout = async () => {
     auth.logout();
@@ -97,7 +110,7 @@ export function Sidebar() {
 
       <div className="flex flex-1 flex-col justify-between px-3 pb-8">
         <nav className="space-y-1">
-          {appNavigation.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
 
             return (

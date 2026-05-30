@@ -24,6 +24,10 @@ export class AppConfigService {
     return this.configService.get<RegExp | null>('app.frontendOriginPattern') ?? null;
   }
 
+  get adminEmails() {
+    return this.configService.get<string[]>('app.adminEmails') ?? [];
+  }
+
   get attachmentStorageBackend() {
     return this.configService.get<'local' | 'supabase'>('app.attachmentStorageBackend') ?? 'local';
   }

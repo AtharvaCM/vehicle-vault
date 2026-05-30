@@ -23,6 +23,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { ExtractionModule } from './modules/extraction/extraction.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ExtractionModule } from './modules/extraction/extraction.module';
     AnalyticsModule,
     ReportsModule,
     AuditModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

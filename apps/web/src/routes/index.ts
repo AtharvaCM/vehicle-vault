@@ -1,3 +1,4 @@
+export * from './admin-route';
 export * from './app-route';
 export * from './dashboard-route';
 export * from './forgot-password-route';
