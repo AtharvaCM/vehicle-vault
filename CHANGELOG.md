@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.1.1...v1.2.0) (2026-06-01)
+
+
+### Features
+
+* **loans:** vehicle loan tracking — amortization, prepayments, foreclosure, attachments, OCR ([3c81c9a](https://github.com/AtharvaCM/vehicle-vault/commit/3c81c9a954979650f004a4f5cbfb18dc202389b4))
+
 ## [1.1.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.1.0...v1.1.1) (2026-05-30)
 
 
