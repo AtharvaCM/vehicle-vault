@@ -69,6 +69,30 @@ export class AttachmentsController {
     );
   }
 
+  @Get('vehicle-loans/:loanId/attachments')
+  async listLoanAttachments(@Param('loanId') loanId: string, @CurrentUser() user: AuthUser) {
+    return successResponse(await this.attachmentsService.listByVehicleLoan(user.id, loanId));
+  }
+
+  @Post('vehicle-loans/:loanId/attachments')
+  @UseInterceptors(
+    FilesInterceptor('files', ATTACHMENTS_MAX_FILES, {
+      limits: {
+        fileSize: ATTACHMENTS_MAX_FILE_SIZE_BYTES,
+      },
+      fileFilter: attachmentFileFilter,
+    }),
+  )
+  async uploadLoanAttachments(
+    @Param('loanId') loanId: string,
+    @UploadedFiles() files: AttachmentUploadFile[],
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.uploadLoanAttachments(user.id, loanId, files ?? []),
+    );
+  }
+
   @Get('attachments/:attachmentId')
   async getAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
     return successResponse(

@@ -15,3 +15,4 @@ export * from './claim';
 export * from './claim-attachment';
 export * from './analytics';
 export * from './document-extraction';
+export * from './vehicle-loan';

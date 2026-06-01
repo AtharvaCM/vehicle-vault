@@ -1,6 +1,7 @@
 export * from './attachment-kind.enum';
 export * from './attachment-extraction-status.enum';
 export * from './fuel-type.enum';
+export * from './loan-status.enum';
 export * from './maintenance-category.enum';
 export * from './maintenance-line-item-kind.enum';
 export * from './maintenance-record-status.enum';

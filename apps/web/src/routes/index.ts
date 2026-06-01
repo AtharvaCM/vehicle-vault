@@ -3,6 +3,7 @@ export * from './app-route';
 export * from './dashboard-route';
 export * from './forgot-password-route';
 export * from './index-route';
+export * from './loans-route';
 export * from './login-route';
 export * from './oauth-callback-route';
 export * from './maintenance-route';

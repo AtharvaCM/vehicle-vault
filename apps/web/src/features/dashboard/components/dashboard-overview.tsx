@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react';
+import { Bell, Coins } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { ReminderStatus } from '@vehicle-vault/shared';
 
@@ -80,6 +80,10 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
       </div>
 
       <DashboardQuickActions />
+
+      {summary.loans && (summary.loans.activeCount > 0 || summary.loans.closedCount > 0) ? (
+        <DashboardLoansCard loans={summary.loans} />
+      ) : null}
 
       <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
         <DashboardReminderSection
@@ -203,6 +207,58 @@ export function DashboardOverview({ summary }: DashboardOverviewProps) {
         </Card>
       </div>
     </div>
+  );
+}
+
+function DashboardLoansCard({ loans }: { loans: NonNullable<DashboardSummary['loans']> }) {
+  const stats: Array<{ label: string; value: string; hint?: string }> = [
+    {
+      label: 'Monthly EMI',
+      value: formatCurrency(loans.monthlyEmi),
+      hint: `${loans.activeCount} active`,
+    },
+    {
+      label: 'Outstanding',
+      value: formatCurrency(loans.outstandingBalance),
+      hint: loans.nextEmiDate ? `Next EMI ${formatDate(loans.nextEmiDate)}` : undefined,
+    },
+    {
+      label: 'Interest paid',
+      value: formatCurrency(loans.interestPaidToDate),
+      hint: loans.prepaidToDate > 0 ? `Prepaid ${formatCurrency(loans.prepaidToDate)}` : undefined,
+    },
+  ];
+
+  return (
+    <Card className="bg-white/60">
+      <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-5">
+        <div className="space-y-1">
+          <CardTitle className="flex items-center gap-2 text-lg font-bold">
+            <Coins className="h-4 w-4 text-amber-600" />
+            Vehicle loans
+          </CardTitle>
+          <CardDescription>
+            EMI, outstanding balance, and lifetime interest across financed vehicles.
+          </CardDescription>
+        </div>
+        <Link className={buttonVariants({ variant: 'outline', size: 'sm' })} to="/loans">
+          Manage
+        </Link>
+      </CardHeader>
+      <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
+        {stats.map((stat) => (
+          <div key={stat.label} className="rounded-md border border-slate-100 bg-white p-4">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500">{stat.label}</div>
+            <div className="mt-1 text-xl font-semibold text-slate-900 tabular-nums">
+              {stat.value}
+            </div>
+            {stat.hint ? (
+              <div className="mt-0.5 text-[12px] text-slate-500">{stat.hint}</div>
+            ) : null}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 

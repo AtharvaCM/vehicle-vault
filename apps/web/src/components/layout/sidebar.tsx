@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   CarFront,
   ChevronRight,
+  Coins,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -22,7 +23,14 @@ import { cn } from '@/lib/utils/cn';
 type NavigationItem = {
   label: string;
   subtitle: string;
-  to: '/dashboard' | '/vehicles' | '/maintenance' | '/reminders' | '/settings' | '/admin/users';
+  to:
+    | '/dashboard'
+    | '/vehicles'
+    | '/maintenance'
+    | '/reminders'
+    | '/loans'
+    | '/settings'
+    | '/admin/users';
   icon: LucideIcon;
   exact?: boolean;
 };
@@ -53,6 +61,13 @@ export const appNavigation: NavigationItem[] = [
     subtitle: 'Due items',
     to: '/reminders',
     icon: Siren,
+    exact: true,
+  },
+  {
+    label: 'Loans',
+    subtitle: 'Financing & EMI',
+    to: '/loans',
+    icon: Coins,
     exact: true,
   },
   {

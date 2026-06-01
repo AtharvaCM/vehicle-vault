@@ -41,6 +41,16 @@ export type DashboardReminderSummary = {
 
 import type { MaintenanceSuggestion } from './maintenance';
 
+export type DashboardLoanSummary = {
+  activeCount: number;
+  closedCount: number;
+  monthlyEmi: number;
+  outstandingBalance: number;
+  interestPaidToDate: number;
+  prepaidToDate: number;
+  nextEmiDate: string | null;
+};
+
 export type DashboardSummary = {
   totalVehicles: number;
   totalMaintenanceRecords: number;
@@ -51,4 +61,5 @@ export type DashboardSummary = {
   upcomingReminders: DashboardReminderSummary[];
   overdueReminders: DashboardReminderSummary[];
   insights: MaintenanceSuggestion[];
+  loans: DashboardLoanSummary;
 };

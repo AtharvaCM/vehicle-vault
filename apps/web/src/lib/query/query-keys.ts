@@ -88,6 +88,16 @@ export const queryKeys = {
       ] as const,
     tco: (vehicleId: string) => [...queryKeys.analytics.all(), 'tco', vehicleId] as const,
   },
+  vehicleLoans: {
+    all: () => ['vehicleLoans'] as const,
+    list: () => [...queryKeys.vehicleLoans.all(), 'list'] as const,
+    byVehicle: (vehicleId: string) =>
+      [...queryKeys.vehicleLoans.all(), 'vehicle', vehicleId] as const,
+    detail: (id: string) => [...queryKeys.vehicleLoans.all(), 'detail', id] as const,
+    schedule: (id: string) => [...queryKeys.vehicleLoans.all(), 'schedule', id] as const,
+    attachments: (id: string) =>
+      [...queryKeys.vehicleLoans.all(), 'attachments', id] as const,
+  },
   claims: {
     all: () => ['claims'] as const,
     byVehicle: (vehicleId: string) => [...queryKeys.claims.all(), 'vehicle', vehicleId] as const,

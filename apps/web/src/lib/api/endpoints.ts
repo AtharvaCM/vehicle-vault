@@ -77,6 +77,23 @@ export const endpoints = {
     update: (id: string) => `/fuel-logs/${id}`,
     delete: (id: string) => `/fuel-logs/${id}`,
   },
+  vehicleLoans: {
+    list: '/vehicle-loans',
+    byVehicle: (vehicleId: string) => `/vehicle-loans/vehicle/${vehicleId}`,
+    create: (vehicleId: string) => `/vehicle-loans/vehicle/${vehicleId}`,
+    detail: (id: string) => `/vehicle-loans/${id}`,
+    update: (id: string) => `/vehicle-loans/${id}`,
+    delete: (id: string) => `/vehicle-loans/${id}`,
+    schedule: (id: string) => `/vehicle-loans/${id}/schedule`,
+    addPrepayment: (id: string) => `/vehicle-loans/${id}/prepayments`,
+    deletePrepayment: (id: string, prepaymentId: string) =>
+      `/vehicle-loans/${id}/prepayments/${prepaymentId}`,
+    foreclose: (id: string) => `/vehicle-loans/${id}/foreclose`,
+    attachments: (id: string) => `/vehicle-loans/${id}/attachments`,
+    uploadAttachments: (id: string) => `/vehicle-loans/${id}/attachments`,
+    scan: () => `/vehicle-loans/scan`,
+    scanStatus: () => `/vehicle-loans/scan/status`,
+  },
   analytics: {
     costSplit: '/analytics/cost-split',
     costTrend: '/analytics/cost-trend',

@@ -106,6 +106,11 @@ enum AttachmentExtractionStatus {
   failed
 }
 
+enum LoanStatus {
+  active
+  closed
+}
+
 enum CatalogImportRunStatus {
   running
   succeeded
@@ -137,6 +142,7 @@ model Vehicle {
   fuelLogs           FuelLog[]
   insurancePolicies  InsurancePolicy[]
   warranties         Warranty[]
+  loans              VehicleLoan[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
@@ -437,6 +443,8 @@ enum AuditResourceType {
   user
   oauth_account
   attachment
+  vehicle_loan
+  loan_prepayment
 }
 
 model AuditEvent {
@@ -553,12 +561,13 @@ model Reminder {
 model Attachment {
   id                  String             @id @default(uuid()) @db.Uuid
   // Polymorphic owner: exactly one of maintenanceRecordId / insurancePolicyId /
-  // warrantyId / claimId is non-null. Enforced by the
+  // warrantyId / claimId / vehicleLoanId is non-null. Enforced by the
   // `attachment_owner_exclusive` CHECK constraint.
   maintenanceRecordId String?            @db.Uuid
   insurancePolicyId   String?            @db.Uuid
   warrantyId          String?            @db.Uuid
   claimId             String?            @db.Uuid
+  vehicleLoanId       String?            @db.Uuid
   kind                AttachmentKind
   fileName            String
   originalFileName    String
@@ -570,12 +579,14 @@ model Attachment {
   insurancePolicy     InsurancePolicy?   @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
   warranty            Warranty?          @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
   claim               Claim?             @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  vehicleLoan         VehicleLoan?       @relation(fields: [vehicleLoanId], references: [id], onDelete: Cascade)
   extraction          AttachmentExtraction?
 
   @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
   @@index([insurancePolicyId, uploadedAt(sort: Desc)])
   @@index([warrantyId, uploadedAt(sort: Desc)])
   @@index([claimId, uploadedAt(sort: Desc)])
+  @@index([vehicleLoanId, uploadedAt(sort: Desc)])
 }
 
 model AttachmentExtraction {
@@ -713,4 +724,44 @@ model Warranty {
   attachments     Attachment[]
 
   @@index([vehicleId])
+}
+
+model VehicleLoan {
+  id             String     @id @default(uuid()) @db.Uuid
+  vehicleId      String     @db.Uuid
+  lender         String     @db.VarChar(120)
+  accountNumber  String?    @db.VarChar(80)
+  principal      Decimal    @db.Decimal(12, 2)
+  // Annual nominal interest rate as percent (e.g. 8.75 = 8.75%/yr).
+  interestRate   Decimal    @db.Decimal(6, 3)
+  tenureMonths   Int
+  startDate      DateTime
+  // Cached EMI so we don't recompute on every read. Client can also
+  // recompute from (principal, rate, tenure) and cross-check.
+  emiAmount      Decimal    @db.Decimal(12, 2)
+  currencyCode   String     @default("INR") @db.VarChar(3)
+  status         LoanStatus @default(active)
+  closedAt       DateTime?
+  notes          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  vehicle        Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  prepayments    LoanPrepayment[]
+  attachments    Attachment[]
+
+  @@index([vehicleId, startDate(sort: Desc)])
+  @@index([vehicleId, status])
+}
+
+model LoanPrepayment {
+  id        String      @id @default(uuid()) @db.Uuid
+  loanId    String      @db.Uuid
+  date      DateTime
+  amount    Decimal     @db.Decimal(12, 2)
+  notes     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  loan      VehicleLoan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId, date(sort: Desc)])
 }

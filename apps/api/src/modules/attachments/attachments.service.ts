@@ -26,6 +26,7 @@ import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { ExtractionService } from '../extraction/extraction.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
+import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
 
 const MAINTENANCE_EXTRACTION_KIND = 'maintenance_invoice';
 
@@ -68,6 +69,7 @@ export class AttachmentsService {
     private readonly storageService: SupabaseStorageService,
     private readonly extractionService: ExtractionService,
     private readonly auditService: AuditService,
+    private readonly vehicleLoansService: VehicleLoansService,
   ) {}
 
   getExtractionStatus() {
@@ -101,6 +103,95 @@ export class AttachmentsService {
     });
 
     return attachments.map((attachment) => this.toAttachment(attachment));
+  }
+
+  async listByVehicleLoan(userId: string, loanId: string) {
+    await this.vehicleLoansService.getById(userId, loanId);
+    const attachments = await this.prisma.attachment.findMany({
+      where: { vehicleLoanId: loanId },
+      include: attachmentInclude,
+      orderBy: { uploadedAt: 'desc' },
+    });
+    return attachments.map((attachment) => this.toAttachment(attachment));
+  }
+
+  async uploadLoanAttachments(userId: string, loanId: string, files: AttachmentUploadFile[]) {
+    await this.vehicleLoansService.getById(userId, loanId);
+    if (!files.length) {
+      throw new BadRequestException('Add at least one attachment to upload.');
+    }
+
+    const preparedFiles = await Promise.all(
+      files.map(async (file) => {
+        const preparedFile = await convertHeicToJpegIfNeeded(file);
+        const id = randomUUID();
+        const fileName = buildStoredAttachmentPath(
+          userId,
+          loanId,
+          preparedFile.originalFileName,
+          preparedFile.storageExtension,
+        );
+        return {
+          id,
+          vehicleLoanId: loanId,
+          kind: this.getAttachmentKind(preparedFile.mimeType),
+          fileName,
+          originalFileName: preparedFile.originalFileName,
+          mimeType: preparedFile.mimeType,
+          size: preparedFile.size,
+          url: `/api/attachments/${id}/file`,
+          uploadedAt: new Date(),
+          buffer: preparedFile.buffer,
+        };
+      }),
+    );
+
+    const uploadedPaths: string[] = [];
+    try {
+      for (const file of preparedFiles) {
+        await this.storageService.uploadObject(file.fileName, file.buffer, file.mimeType);
+        uploadedPaths.push(file.fileName);
+      }
+    } catch (error) {
+      await this.cleanupUploadedObjects(uploadedPaths);
+      throw error;
+    }
+
+    try {
+      const attachments = await this.prisma.$transaction(async (tx) => {
+        const created = [];
+        for (const file of preparedFiles) {
+          const row = await tx.attachment.create({
+            data: {
+              id: file.id,
+              vehicleLoanId: file.vehicleLoanId,
+              kind: file.kind,
+              fileName: file.fileName,
+              originalFileName: file.originalFileName,
+              mimeType: file.mimeType,
+              size: file.size,
+              url: file.url,
+              uploadedAt: file.uploadedAt,
+            },
+            include: attachmentInclude,
+          });
+          await this.auditService.track(tx, {
+            actorUserId: userId,
+            ownerUserId: userId,
+            action: AUDIT_ACTIONS.attachment.uploaded,
+            resourceType: AuditResourceType.attachment,
+            resourceId: row.id,
+            after: row as unknown as Record<string, unknown>,
+          });
+          created.push(row);
+        }
+        return created;
+      });
+      return attachments.map((attachment) => this.toAttachment(attachment));
+    } catch (error) {
+      await this.cleanupUploadedObjects(uploadedPaths);
+      throw error;
+    }
   }
 
   async listByMaintenanceRecord(userId: string, recordId: string) {
@@ -520,11 +611,10 @@ export class AttachmentsService {
     const attachment = await this.prisma.attachment.findFirst({
       where: {
         id: attachmentId,
-        maintenanceRecord: {
-          vehicle: {
-            userId,
-          },
-        },
+        OR: [
+          { maintenanceRecord: { vehicle: { userId } } },
+          { vehicleLoan: { vehicle: { userId } } },
+        ],
       },
       include: attachmentInclude,
     });
@@ -549,16 +639,15 @@ export class AttachmentsService {
   }
 
   private toAttachment(attachment: AttachmentWithExtraction) {
-    // The shared AttachmentSchema currently models maintenance-owned attachments only.
-    // Slice 1b introduces a VehicleDocument-owned variant with its own mapper.
-    if (!attachment.maintenanceRecordId) {
+    if (!attachment.maintenanceRecordId && !attachment.vehicleLoanId) {
       throw new Error(
-        `Cannot map attachment ${attachment.id}: not linked to a maintenance record.`,
+        `Cannot map attachment ${attachment.id}: no supported owner (expected maintenance record or vehicle loan).`,
       );
     }
     return {
       id: attachment.id,
-      maintenanceRecordId: attachment.maintenanceRecordId,
+      maintenanceRecordId: attachment.maintenanceRecordId ?? undefined,
+      vehicleLoanId: attachment.vehicleLoanId ?? undefined,
       kind: attachment.kind as AttachmentKind,
       fileName: attachment.fileName,
       originalFileName: attachment.originalFileName,

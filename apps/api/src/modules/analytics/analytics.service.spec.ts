@@ -12,6 +12,7 @@ function makePrismaMock() {
     maintenanceRecord: { aggregate: vi.fn(), findMany: vi.fn() },
     claim: { aggregate: vi.fn(), findMany: vi.fn() },
     insurancePolicy: { findMany: vi.fn() },
+    vehicleLoan: { findMany: vi.fn() },
   };
 }
 
@@ -22,6 +23,7 @@ describe('AnalyticsService.getCostSplit', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     service = new AnalyticsService(prisma as never);
+    (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
   it('aggregates fuel + maintenance + insurance and nets claim insurer-paid', async () => {
@@ -92,6 +94,7 @@ describe('AnalyticsService.getCostTrend', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     service = new AnalyticsService(prisma as never);
+    (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
   it('buckets fuel cost and km by month and computes cost-per-km', async () => {
@@ -175,6 +178,7 @@ describe('AnalyticsService.getTco', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     service = new AnalyticsService(prisma as never);
+    (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
   it('computes lifetime spend, TCO with purchase price, cost-per-km, and cost-per-month', async () => {

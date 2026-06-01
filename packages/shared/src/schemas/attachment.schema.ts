@@ -7,7 +7,8 @@ const isoDateTimeString = z.string().datetime({ offset: true });
 
 export const AttachmentSchema = z.object({
   id: z.string().trim().min(1),
-  maintenanceRecordId: z.string().trim().min(1),
+  maintenanceRecordId: z.string().trim().min(1).optional(),
+  vehicleLoanId: z.string().trim().min(1).optional(),
   kind: z.nativeEnum(AttachmentKind),
   fileName: z.string().trim().min(1),
   originalFileName: z.string().trim().min(1),

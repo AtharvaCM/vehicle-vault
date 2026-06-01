@@ -11,6 +11,7 @@ export const ExtractionKindSchema = z.enum([
   'maintenance_invoice',
   'insurance_policy',
   'claim_document',
+  'loan_document',
 ]);
 
 export type ExtractionKind = z.infer<typeof ExtractionKindSchema>;
@@ -95,3 +96,24 @@ export const MaintenanceInvoiceExtractionDraftSchema = z.object({
 export type MaintenanceInvoiceExtractionDraft = z.infer<
   typeof MaintenanceInvoiceExtractionDraftSchema
 >;
+
+/**
+ * Draft hydrated from a vehicle-loan document scan (sanction letter,
+ * loan agreement, schedule of charges). Every field optional — the
+ * user reviews and confirms via the Add Loan form before persistence.
+ */
+export const LoanDocumentExtractionDraftSchema = z.object({
+  confidence: z.number().min(0).max(1).optional(),
+  lender: z.string().min(1).max(120).optional(),
+  accountNumber: z.string().min(1).max(80).optional(),
+  principal: z.number().nonnegative().optional(),
+  // Annual nominal rate as percent (e.g. 8.75)
+  interestRate: z.number().nonnegative().max(100).optional(),
+  tenureMonths: z.number().int().positive().max(600).optional(),
+  startDate: z.string().datetime().optional(),
+  emiAmount: z.number().nonnegative().optional(),
+  currencyCode: z.string().length(3).optional(),
+  notes: z.string().min(1).max(500).optional(),
+});
+
+export type LoanDocumentExtractionDraft = z.infer<typeof LoanDocumentExtractionDraftSchema>;

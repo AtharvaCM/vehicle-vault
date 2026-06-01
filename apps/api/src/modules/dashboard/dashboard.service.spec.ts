@@ -26,17 +26,22 @@ describe('DashboardService', () => {
   const forecastService = {
     getUpcomingSuggestions: vi.fn(),
   };
+  const vehicleLoansService = {
+    listForUser: vi.fn(),
+  };
 
   let service: DashboardService;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vehicleLoansService.listForUser.mockResolvedValue([]);
     service = new DashboardService(
       vehiclesService as never,
       maintenanceService as never,
       remindersService as never,
       attachmentsService as never,
       forecastService as never,
+      vehicleLoansService as never,
     );
   });
 

@@ -8,6 +8,7 @@ import type {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { accruedInRange, summarize, type LoanParams } from '../vehicle-loans/amortization';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -68,7 +69,7 @@ export class AnalyticsService {
       ? { id: options.vehicleId, userId }
       : { userId };
 
-    const [fuelAgg, maintenanceAgg, claimsAgg, policies] = await Promise.all([
+    const [fuelAgg, maintenanceAgg, claimsAgg, policies, loans] = await Promise.all([
       this.prisma.fuelLog.aggregate({
         _sum: { totalCost: true },
         where: {
@@ -102,6 +103,17 @@ export class AnalyticsService {
         },
         select: { startDate: true, endDate: true, premiumAmount: true },
       }),
+      this.prisma.vehicleLoan.findMany({
+        where: { vehicle: vehicleFilter, startDate: { lte: to } },
+        select: {
+          principal: true,
+          interestRate: true,
+          tenureMonths: true,
+          startDate: true,
+          closedAt: true,
+          prepayments: { select: { date: true, amount: true } },
+        },
+      }),
     ]);
 
     const fuel = fuelAgg._sum.totalCost ?? new Prisma.Decimal(0);
@@ -120,7 +132,20 @@ export class AnalyticsService {
       return acc.plus(p.premiumAmount.mul(ratio));
     }, new Prisma.Decimal(0));
 
-    const total = fuel.plus(maintenance).plus(insurance);
+    const loanInterest = loans.reduce((acc, loan) => {
+      const params: LoanParams = {
+        principal: loan.principal,
+        interestRate: loan.interestRate,
+        tenureMonths: loan.tenureMonths,
+        startDate: loan.startDate,
+        prepayments: loan.prepayments,
+        closedAt: loan.closedAt,
+      };
+      const { interest } = accruedInRange(params, from, to);
+      return acc.plus(interest);
+    }, new Prisma.Decimal(0));
+
+    const total = fuel.plus(maintenance).plus(insurance).plus(loanInterest);
 
     return {
       currency: 'INR',
@@ -130,6 +155,7 @@ export class AnalyticsService {
         fuel: fuel.toFixed(2),
         maintenance: maintenance.toFixed(2),
         insurance: insurance.toFixed(2),
+        loanInterest: loanInterest.toFixed(2),
         total: total.toFixed(2),
       },
     };
@@ -166,7 +192,7 @@ export class AnalyticsService {
       ? { id: options.vehicleId, userId }
       : { userId };
 
-    const [fuelLogs, maintenanceRecords, claimRows, policies] = await Promise.all([
+    const [fuelLogs, maintenanceRecords, claimRows, policies, loans] = await Promise.all([
       this.prisma.fuelLog.findMany({
         where: { date: { gte: from, lte: to }, vehicle: vehicleFilter },
         select: { date: true, totalCost: true, odometer: true, vehicleId: true },
@@ -198,6 +224,17 @@ export class AnalyticsService {
         },
         select: { startDate: true, endDate: true, premiumAmount: true },
       }),
+      this.prisma.vehicleLoan.findMany({
+        where: { vehicle: vehicleFilter, startDate: { lte: to } },
+        select: {
+          principal: true,
+          interestRate: true,
+          tenureMonths: true,
+          startDate: true,
+          closedAt: true,
+          prepayments: { select: { date: true, amount: true } },
+        },
+      }),
     ]);
 
     type Bucket = {
@@ -205,6 +242,8 @@ export class AnalyticsService {
       maintenance: Prisma.Decimal;
       insurerPaid: Prisma.Decimal;
       insurance: Prisma.Decimal;
+      loanInterest: Prisma.Decimal;
+      loanPrincipal: Prisma.Decimal;
       km: number;
     };
     const buckets = new Map<string, Bucket>();
@@ -216,6 +255,8 @@ export class AnalyticsService {
           maintenance: new Prisma.Decimal(0),
           insurerPaid: new Prisma.Decimal(0),
           insurance: new Prisma.Decimal(0),
+          loanInterest: new Prisma.Decimal(0),
+          loanPrincipal: new Prisma.Decimal(0),
           km: 0,
         };
         buckets.set(key, b);
@@ -260,6 +301,28 @@ export class AnalyticsService {
       ensure(key).insurerPaid = ensure(key).insurerPaid.plus(row.insurerPaidAmount);
     }
 
+    // Loan interest + principal per scheduled EMI month.
+    for (const loan of loans) {
+      const params: LoanParams = {
+        principal: loan.principal,
+        interestRate: loan.interestRate,
+        tenureMonths: loan.tenureMonths,
+        startDate: loan.startDate,
+        prepayments: loan.prepayments,
+        closedAt: loan.closedAt,
+      };
+      for (const key of buckets.keys()) {
+        const { start, end } = monthBoundsUtc(key);
+        const overlapStart = new Date(Math.max(start.getTime(), from.getTime()));
+        const overlapEnd = new Date(Math.min(end.getTime() - 1, to.getTime()));
+        if (overlapEnd.getTime() < overlapStart.getTime()) continue;
+        const { interest, principal } = accruedInRange(params, overlapStart, overlapEnd);
+        const bucket = ensure(key);
+        bucket.loanInterest = bucket.loanInterest.plus(interest);
+        bucket.loanPrincipal = bucket.loanPrincipal.plus(principal);
+      }
+    }
+
     // Insurance pro-rated per month overlap.
     for (const p of policies) {
       if (!p.premiumAmount) continue;
@@ -279,13 +342,15 @@ export class AnalyticsService {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([period, b]) => {
         const maintenanceNet = b.maintenance.minus(b.insurerPaid);
-        const total = b.fuel.plus(maintenanceNet).plus(b.insurance);
+        const total = b.fuel.plus(maintenanceNet).plus(b.insurance).plus(b.loanInterest);
         const costPerKm = b.km > 0 ? total.div(b.km).toFixed(2) : null;
         return {
           period,
           fuel: b.fuel.toFixed(2),
           maintenance: maintenanceNet.toFixed(2),
           insurance: b.insurance.toFixed(2),
+          loanInterest: b.loanInterest.toFixed(2),
+          loanPrincipal: b.loanPrincipal.toFixed(2),
           total: total.toFixed(2),
           km: b.km,
           costPerKm,
@@ -319,7 +384,7 @@ export class AnalyticsService {
     });
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
-    const [maintenanceAgg, fuelAgg, claimsAgg, policies, firstFuel, lastFuel] = await Promise.all([
+    const [maintenanceAgg, fuelAgg, claimsAgg, policies, firstFuel, lastFuel, loans] = await Promise.all([
       this.prisma.maintenanceRecord.aggregate({
         _sum: { totalCost: true },
         where: { vehicleId },
@@ -346,6 +411,17 @@ export class AnalyticsService {
         orderBy: { odometer: 'desc' },
         select: { odometer: true },
       }),
+      this.prisma.vehicleLoan.findMany({
+        where: { vehicleId },
+        select: {
+          principal: true,
+          interestRate: true,
+          tenureMonths: true,
+          startDate: true,
+          closedAt: true,
+          prepayments: { select: { date: true, amount: true } },
+        },
+      }),
     ]);
 
     const maintenance = maintenanceAgg._sum.totalCost ?? new Prisma.Decimal(0);
@@ -355,7 +431,34 @@ export class AnalyticsService {
       (acc, p) => (p.premiumAmount ? acc.plus(p.premiumAmount) : acc),
       new Prisma.Decimal(0),
     );
-    const netSpend = maintenance.plus(fuel).plus(insurance).minus(insurerReimbursed);
+    const loanTotals = loans.reduce(
+      (acc, loan) => {
+        const summary = summarize({
+          principal: loan.principal,
+          interestRate: loan.interestRate,
+          tenureMonths: loan.tenureMonths,
+          startDate: loan.startDate,
+          prepayments: loan.prepayments,
+          closedAt: loan.closedAt,
+        });
+        return {
+          interestPaid: acc.interestPaid.plus(summary.interestPaidToDate),
+          principalPaid: acc.principalPaid.plus(summary.principalPaidToDate),
+          outstanding: acc.outstanding.plus(summary.outstandingBalance),
+        };
+      },
+      {
+        interestPaid: new Prisma.Decimal(0),
+        principalPaid: new Prisma.Decimal(0),
+        outstanding: new Prisma.Decimal(0),
+      },
+    );
+
+    const netSpend = maintenance
+      .plus(fuel)
+      .plus(insurance)
+      .plus(loanTotals.interestPaid)
+      .minus(insurerReimbursed);
     const tco = vehicle.purchasePrice ? netSpend.plus(vehicle.purchasePrice) : null;
 
     let kmSincePurchase = 0;
@@ -392,6 +495,9 @@ export class AnalyticsService {
         fuel: fuel.toFixed(2),
         insurance: insurance.toFixed(2),
         insurerReimbursed: insurerReimbursed.toFixed(2),
+        loanInterest: loanTotals.interestPaid.toFixed(2),
+        loanPrincipalPaid: loanTotals.principalPaid.toFixed(2),
+        loanOutstanding: loanTotals.outstanding.toFixed(2),
         netSpend: netSpend.toFixed(2),
         tco: tco ? tco.toFixed(2) : null,
       },

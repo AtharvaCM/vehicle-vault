@@ -227,6 +227,7 @@ describe('AttachmentsService', () => {
       storageService as never,
       extractionService as never,
       auditService as never,
+      { getById: vi.fn(), listForUser: vi.fn() } as never,
     );
   });
 

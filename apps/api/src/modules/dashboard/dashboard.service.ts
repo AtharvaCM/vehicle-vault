@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ReminderStatus, type DashboardSummary } from '@vehicle-vault/shared';
+import { LoanStatus, ReminderStatus, type DashboardSummary } from '@vehicle-vault/shared';
 
 import { AttachmentsService } from '../attachments/attachments.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import { RemindersService } from '../reminders/reminders.service';
+import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 
 import { MaintenanceForecastService } from '../vehicles/maintenance-forecast.service';
@@ -18,14 +19,16 @@ export class DashboardService {
     private readonly remindersService: RemindersService,
     private readonly attachmentsService: AttachmentsService,
     private readonly forecastService: MaintenanceForecastService,
+    private readonly vehicleLoansService: VehicleLoansService,
   ) {}
 
   async getSummary(userId: string): Promise<DashboardSummary> {
-    const [vehicles, maintenanceRecords, reminders, attachments] = await Promise.all([
+    const [vehicles, maintenanceRecords, reminders, attachments, loans] = await Promise.all([
       this.vehiclesService.getAllVehicles(userId),
       this.maintenanceService.getAllRecords(userId),
       this.remindersService.getAllReminders(userId),
       this.attachmentsService.listAllAttachments(userId),
+      this.vehicleLoansService.listForUser(userId),
     ]);
 
     // Fetch individual vehicle insights
@@ -58,10 +61,31 @@ export class DashboardService {
       {},
     );
 
+    const activeLoans = loans.filter((loan) => loan.status === LoanStatus.Active);
+    const closedLoans = loans.filter((loan) => loan.status === LoanStatus.Closed);
+    const nextEmiDate = activeLoans
+      .map((loan) => {
+        const elapsed = loan.tenureMonths - loan.monthsRemaining;
+        const next = new Date(loan.startDate);
+        next.setUTCMonth(next.getUTCMonth() + elapsed + 1);
+        return next;
+      })
+      .filter((date) => date.getTime() >= Date.now())
+      .sort((a, b) => a.getTime() - b.getTime())[0];
+
     return {
       totalVehicles: vehicles.length,
       totalMaintenanceRecords: maintenanceRecords.length,
       totalAttachments: attachments.length,
+      loans: {
+        activeCount: activeLoans.length,
+        closedCount: closedLoans.length,
+        monthlyEmi: activeLoans.reduce((acc, loan) => acc + loan.emiAmount, 0),
+        outstandingBalance: activeLoans.reduce((acc, loan) => acc + loan.outstandingBalance, 0),
+        interestPaidToDate: loans.reduce((acc, loan) => acc + loan.interestPaidToDate, 0),
+        prepaidToDate: loans.reduce((acc, loan) => acc + loan.prepaidToDate, 0),
+        nextEmiDate: nextEmiDate ? nextEmiDate.toISOString() : null,
+      },
       reminderCounts: {
         overdue: reminders.filter((reminder) => reminder.status === ReminderStatus.Overdue).length,
         dueToday: reminders.filter((reminder) => reminder.status === ReminderStatus.DueToday)

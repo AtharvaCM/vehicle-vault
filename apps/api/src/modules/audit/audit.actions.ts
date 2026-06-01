@@ -43,6 +43,15 @@ export const AUDIT_ACTIONS = {
     updated: 'fuel.updated',
     deleted: 'fuel.deleted',
   },
+  loan: {
+    created: 'loan.created',
+    updated: 'loan.updated',
+    deleted: 'loan.deleted',
+    closed: 'loan.closed',
+    foreclosed: 'loan.foreclosed',
+    prepaymentAdded: 'loan.prepayment_added',
+    prepaymentDeleted: 'loan.prepayment_deleted',
+  },
   attachment: {
     uploaded: 'attachment.uploaded',
     deleted: 'attachment.deleted',

@@ -12,6 +12,7 @@ export const CostSplitBucketSchema = z.object({
   fuel: decimalString,
   maintenance: decimalString,
   insurance: decimalString,
+  loanInterest: decimalString,
   total: decimalString,
 });
 
@@ -36,6 +37,8 @@ export const CostTrendPointSchema = z.object({
   fuel: decimalString,
   maintenance: decimalString,
   insurance: decimalString,
+  loanInterest: decimalString,
+  loanPrincipal: decimalString,
   total: decimalString,
   km: z.number().nonnegative(),
   costPerKm: decimalString.nullable(),
@@ -65,6 +68,9 @@ export const TcoResponseSchema = z.object({
     fuel: decimalString,
     insurance: decimalString,
     insurerReimbursed: decimalString,
+    loanInterest: decimalString,
+    loanPrincipalPaid: decimalString,
+    loanOutstanding: decimalString,
     netSpend: decimalString,
     tco: decimalString.nullable(),
   }),
