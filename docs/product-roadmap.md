@@ -1,6 +1,6 @@
 # Product Roadmap
 
-Last updated: 2026-05-29
+Last updated: 2026-06-03
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
@@ -19,6 +19,7 @@ Vehicle Vault is a feature-rich authenticated maintenance platform with:
 - Mandatory Email Verification for account security
 - "Quick Fill" presets for common service/reminder tasks
 - Specialized "Protection" dashboard for Insurance and Warranty tracking
+- Vehicle loan tracking with amortization, prepayments, foreclosure, attachments, and Gemini-backed sanction-letter OCR
 - regression coverage across unit, integration, and Playwright smoke flows
 
 The product already supports the core ownership loop:
@@ -198,6 +199,19 @@ These are the main items that still prevent the product from being a more comple
 - **Audit UI (v1):** Read-side surfaces for the audit log. Per-vehicle **Activity** tab on the vehicle detail page (`GET /vehicles/:vehicleId/audit`) and a **Settings → Activity** page (`GET /audit/me`, resource-type filter). Cursor-paginated infinite feed with expandable rows showing the `before`/`after` diff per changed field. Verified end-to-end against a live backend.
 - **Audit coverage safety net (dev/CI):** Prisma `$transaction` override that flags any mutation whose transaction emitted no matching `AuditEvent`, enforcing the ADR-0004 in-transaction-write contract. Active only when `NODE_ENV !== 'production'`; token-rotation `user.update` and catalog-import transactions are exempt to avoid false positives.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
+
+### Milestone 7: Vehicle Loans (Complete)
+
+Goal: Reflect financed purchases in true cost of ownership instead of assuming cash buyers.
+
+- **Domain model:** `VehicleLoan` (principal, annual rate, tenure, cached EMI, currency, status, closedAt, notes) + `LoanPrepayment` (date, amount, notes). `LoanStatus` enum (active/closed). New `AuditResourceType` values (`vehicle_loan`, `loan_prepayment`) with `accountNumber` redaction. `Attachment` extended with `vehicleLoanId` as a 5th polymorphic owner and the `attachment_owner_exclusive` CHECK constraint widened to 5-of-5. Three Prisma migrations applied to Supabase.
+- **Amortization engine:** Server-side EMI computation (`P*r*(1+r)^n / ((1+r)^n - 1)`, zero-rate linear fallback) and month-by-month schedule that honors prepayments (fixed-EMI / shorter-tenure strategy) and foreclosure (truncates schedule at `closedAt` with outstanding treated as lump-sum paid). Powers `summarize()` (totals, monthsRemaining, outstanding, interestPaidToDate, prepaidToDate, endDate) and `accruedInRange()` (per-window interest + principal for analytics).
+- **API:** `VehicleLoansModule` with CRUD (`GET/POST/PATCH/DELETE /vehicle-loans`), per-vehicle list (`/vehicle-loans/vehicle/:id`), amortization series (`GET /:id/schedule`), prepayment add/remove (`POST/DELETE /:id/prepayments[/:prepaymentId]`), and foreclosure (`POST /:id/foreclose`). Audit-logged inside each transaction.
+- **Document OCR:** `LoanDocumentExtractionSpec` (Gemini, registered via `onModuleInit`) with `POST /vehicle-loans/scan` + `/scan/status`. Extracts lender, account number, principal, annual rate, tenure (months), start date, EMI, currency, notes from sanction letters / agreements. Robust `normalize()` clamps rate to 0–100, validates positive integers, normalizes bare-date strings to ISO.
+- **Attachments:** `AttachmentsService.listByVehicleLoan` + `uploadLoanAttachments`. `getStoredAttachmentById` OR-matches loan and maintenance owners so the existing `DELETE /attachments/:id` endpoint works for both. Routes: `GET/POST /vehicle-loans/:loanId/attachments`.
+- **Analytics integration:** `AnalyticsService.getCostSplit`, `getCostTrend`, and `getTco` load loans + prepayments and credit loan interest into the per-window buckets and lifetime TCO. Response types gain `loanInterest`, `loanPrincipal`, `loanPrincipalPaid`, `loanOutstanding`. Dashboard summary gains a `loans` block (active count, monthly EMI, outstanding, interest paid, prepaid, next EMI date).
+- **Web (Loans feature):** Global `/loans` page with summary stats and per-loan cards. `LoanDetailDialog` includes an amortization chart (Recharts `ComposedChart`, stacked principal + interest + prepayment area + balance line on a secondary axis), prepayment add/remove, foreclose flow, and document upload/list/remove. Add Loan dialog auto-shows a "Scan document" button when `/scan/status` reports available, then prefills the form via key-remount with the extracted draft. Edit-loan dialog reuses the same form.
+- **Web (vehicle-centric surfaces):** "Loans" tab on vehicle detail (`VehicleLoansPanel`) for per-vehicle loan management. Sidebar gains a Loans entry (Coins icon). Dashboard overview gains a "Vehicle loans" card surfacing active EMI, outstanding, lifetime interest, and next EMI date when loans exist. Cost-split donut and ownership-trend chart render a new "Loan interest" series; TCO card conditionally renders "Loan interest paid" and "Loan outstanding".
 
 ### Milestone 6: Financial Insights & Reporting (Complete)
 
