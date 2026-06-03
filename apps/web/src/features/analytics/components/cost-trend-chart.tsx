@@ -63,6 +63,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
       fuel: Number(p.fuel),
       maintenance: Number(p.maintenance),
       insurance: Number(p.insurance),
+      loanInterest: Number(p.loanInterest),
       costPerKm: p.costPerKm ? Number(p.costPerKm) : null,
       km: p.km,
     }));
@@ -170,6 +171,14 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
                       dataKey="insurance"
                       name="Insurance"
                       stroke="#10b981"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="loanInterest"
+                      name="Loan interest"
+                      stroke="#ec4899"
                       strokeWidth={2}
                       dot={false}
                     />

@@ -46,6 +46,9 @@ export function TcoCard({ vehicleId }: Props) {
 function TcoBody({ data: tco }: { data: TcoResponse }) {
   const purchaseSet = tco.purchaseDate || tco.purchasePrice || tco.purchaseOdometer != null;
 
+  const loanInterestPaid = Number(tco.totals.loanInterest);
+  const loanOutstanding = Number(tco.totals.loanOutstanding);
+
   const figures: { label: string; value: string; emphasis?: boolean }[] = [
     {
       label: tco.totals.tco ? 'Total cost of ownership' : 'Net lifetime spend',
@@ -55,6 +58,12 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
     { label: 'Maintenance', value: inr.format(Number(tco.totals.maintenance)) },
     { label: 'Fuel', value: inr.format(Number(tco.totals.fuel)) },
     { label: 'Insurance', value: inr.format(Number(tco.totals.insurance)) },
+    ...(loanInterestPaid > 0
+      ? [{ label: 'Loan interest paid', value: inr.format(loanInterestPaid) }]
+      : []),
+    ...(loanOutstanding > 0
+      ? [{ label: 'Loan outstanding', value: inr.format(loanOutstanding) }]
+      : []),
     { label: 'Insurer reimbursed', value: `− ${inr.format(Number(tco.totals.insurerReimbursed))}` },
   ];
 

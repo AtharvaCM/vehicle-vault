@@ -21,6 +21,7 @@ const BUCKET_COLORS: Record<string, string> = {
   Fuel: '#f59e0b',
   Maintenance: '#6366f1',
   Insurance: '#10b981',
+  'Loan interest': '#ec4899',
 };
 
 const inrFormatter = new Intl.NumberFormat('en-IN', {
@@ -56,6 +57,7 @@ export function CostSplitDonut({ vehicleId, defaultRange = '1y' }: Props) {
       { name: 'Fuel', value: Number(b.fuel) },
       { name: 'Maintenance', value: Number(b.maintenance) },
       { name: 'Insurance', value: Number(b.insurance) },
+      { name: 'Loan interest', value: Number(b.loanInterest) },
     ].filter((d) => d.value > 0);
   }, [query.data]);
 

@@ -42,6 +42,7 @@ import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { VehicleTyreTracker } from '../components/vehicle-tyre-tracker';
 import { ProtectionTab } from '../components/protection-tab';
 import { TcoCard } from '@/features/analytics/components/tco-card';
+import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
 
 import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
@@ -349,6 +350,12 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             </TabsTrigger>
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="loans"
+            >
+              Loans
+            </TabsTrigger>
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
               value="activity"
             >
               Activity
@@ -502,6 +509,12 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           </TabsContent>
           <TabsContent value="protection" className="animate-in fade-in duration-500">
             <ProtectionTab vehicleId={vehicleId} />
+          </TabsContent>
+          <TabsContent value="loans" className="animate-in fade-in duration-500">
+            <VehicleLoansPanel
+              vehicleId={vehicleId}
+              vehicleLabel={`${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`}
+            />
           </TabsContent>
           <TabsContent value="activity" className="animate-in fade-in duration-500">
             <Card className="border-slate-200/60 bg-white shadow-premium-sm">
