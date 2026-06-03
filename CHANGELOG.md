@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.2.0...v1.3.0) (2026-06-03)
+
+
+### Features
+
+* **loans:** surface loan data in analytics + per-vehicle loans tab ([837b3d5](https://github.com/AtharvaCM/vehicle-vault/commit/837b3d5ccaa616dc856e9a1fd5e7e40dcd41509f)), closes [#ec4899](https://github.com/AtharvaCM/vehicle-vault/issues/ec4899)
+
 # [1.2.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.1.1...v1.2.0) (2026-06-01)
 
 
