@@ -234,7 +234,7 @@ export class ResaleReportService {
       ],
     ];
     for (const [label, ok, note] of checklist) {
-      const mark = ok ? '✓' : '○';
+      const mark = ok ? '[x]' : '[ ]';
       doc
         .text(`${mark}  `, { continued: true })
         .font('Helvetica-Bold')
