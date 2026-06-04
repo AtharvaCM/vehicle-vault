@@ -44,6 +44,7 @@ import { ProtectionTab } from '../components/protection-tab';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
 
+import { downloadResaleReportPdf } from '../api/download-resale-report';
 import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
@@ -272,6 +273,46 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                       }}
                     >
                       Download Service History (PDF)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onSelect={async (event) => {
+                        event.preventDefault();
+                        const vehicle = vehicleQuery.data;
+                        if (!vehicle) return;
+                        const input = window.prompt(
+                          'Optional asking price (₹). Leave blank to omit.',
+                          '',
+                        );
+                        if (input === null) return;
+                        const trimmed = input.trim();
+                        const askingPrice = trimmed === '' ? undefined : Number(trimmed);
+                        if (askingPrice != null && (!Number.isFinite(askingPrice) || askingPrice < 0)) {
+                          appToast.error({
+                            title: 'Invalid asking price',
+                            description: 'Enter a positive number or leave blank.',
+                          });
+                          return;
+                        }
+                        try {
+                          await downloadResaleReportPdf(
+                            vehicle.id,
+                            vehicle.registrationNumber,
+                            askingPrice,
+                          );
+                          appToast.success({
+                            title: 'Resale report downloaded',
+                            description: 'Buyer-facing PDF saved.',
+                          });
+                        } catch (error) {
+                          appToast.error({
+                            title: 'Could not generate report',
+                            description: getApiErrorMessage(error),
+                          });
+                        }
+                      }}
+                    >
+                      Download Resale Report (PDF)
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

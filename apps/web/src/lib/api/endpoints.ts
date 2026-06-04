@@ -23,6 +23,10 @@ export const endpoints = {
     insights: (vehicleId: string) => `/vehicles/${vehicleId}/insights`,
     forecast: (vehicleId: string) => `/vehicles/${vehicleId}/forecast`,
     serviceHistoryPdf: (vehicleId: string) => `/vehicles/${vehicleId}/service-history.pdf`,
+    resaleReportPdf: (vehicleId: string, askingPrice?: number) =>
+      askingPrice != null && askingPrice >= 0
+        ? `/vehicles/${vehicleId}/resale-report.pdf?askingPrice=${askingPrice}`
+        : `/vehicles/${vehicleId}/resale-report.pdf`,
   },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',

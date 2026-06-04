@@ -200,6 +200,16 @@ These are the main items that still prevent the product from being a more comple
 - **Audit coverage safety net (dev/CI):** Prisma `$transaction` override that flags any mutation whose transaction emitted no matching `AuditEvent`, enforcing the ADR-0004 in-transaction-write contract. Active only when `NODE_ENV !== 'production'`; token-rotation `user.update` and catalog-import transactions are exempt to avoid false positives.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
 
+### Milestone 8: Resale Report (Complete)
+
+Goal: Give owners a buyer-facing PDF that discloses outstanding loan, insurance status, pending service items, and a document checklist — without leaking owner-only cost analytics.
+
+- **API:** `GET /vehicles/:vehicleId/resale-report.pdf?askingPrice=…` in `ReportsController`. New `ResaleReportService` loads vehicle, maintenance, fuel-log (km only), policies, claim count, vehicle loans + prepayments, and open reminders, then reuses `summarize()` from `vehicle-loans/amortization.ts` to disclose per-loan outstanding balance and remaining tenure.
+- **PDF sections:** Cover (vehicle + owner-since + distance + optional asking price) → Loan disclosure (active loans flagged amber with outstanding ₹ and EMI; closed loans noted with NOC availability) → Insurance (active policy + valid-until + lifetime claim count) → Open service items (overdue/due-today/upcoming reminders) → Document checklist (RC, active insurance, PUC, loan NOC — auto-checked from data) → Maintenance log (date, category, workshop, odometer; no costs).
+- **Privacy:** Owner-only fields suppressed — no cost-per-km, no fuel/maintenance totals, no insurer-paid amounts. Footer disclaimer states data is self-reported.
+- **Shared helpers:** Extracted `pdf-utils.ts` (`inr`, `intFmt`, `fmtDate`, `decimalToNumber`, `drawRow`, `drawKeyValue`) so `ServiceHistoryService` and `ResaleReportService` share formatting.
+- **Web:** "Download Resale Report (PDF)" entry in vehicle detail dropdown, next to the existing service-history download. Optional asking-price captured via prompt and forwarded as query param.
+
 ### Milestone 7: Vehicle Loans (Complete)
 
 Goal: Reflect financed purchases in true cost of ownership instead of assuming cash buyers.
