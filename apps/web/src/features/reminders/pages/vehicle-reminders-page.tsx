@@ -16,6 +16,7 @@ import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 import { BulkReminderActions } from '../components/bulk-reminder-actions';
 import { ReminderListControls } from '../components/reminder-list-controls';
 import { ReminderList } from '../components/reminder-list';
+import { ServiceSchedulePanel } from '../components/service-schedule-panel';
 import { useBulkCompleteReminders } from '../hooks/use-bulk-complete-reminders';
 import { useBulkDeleteReminders } from '../hooks/use-bulk-delete-reminders';
 import { useVehicleReminders } from '../hooks/use-vehicle-reminders';
@@ -223,6 +224,7 @@ export function VehicleRemindersPage({
         />
       ) : remindersQuery.data.length ? (
         <div className="grid gap-4">
+          <ServiceSchedulePanel vehicleId={vehicleId} />
           <BulkReminderActions
             isCompleting={bulkCompleteMutation.isPending}
             isDeleting={bulkDeleteMutation.isPending}
@@ -295,19 +297,22 @@ export function VehicleRemindersPage({
           )}
         </div>
       ) : (
-        <EmptyState
-          action={
-            <Link
-              className={buttonVariants()}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/reminders/new"
-            >
-              Add the first reminder
-            </Link>
-          }
-          description="No reminders have been created for this vehicle yet."
-          title="No reminders yet"
-        />
+        <div className="grid gap-4">
+          <ServiceSchedulePanel vehicleId={vehicleId} />
+          <EmptyState
+            action={
+              <Link
+                className={buttonVariants()}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/reminders/new"
+              >
+                Add the first reminder
+              </Link>
+            }
+            description="No reminders have been created for this vehicle yet."
+            title="No reminders yet"
+          />
+        </div>
       )}
     </PageContainer>
   );

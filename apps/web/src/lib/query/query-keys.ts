@@ -63,6 +63,8 @@ export const queryKeys = {
     list: () => [...queryKeys.reminders.all(), 'list'] as const,
     byVehicle: (vehicleId: string) => [...queryKeys.reminders.all(), 'vehicle', vehicleId] as const,
     detail: (reminderId: string) => [...queryKeys.reminders.all(), 'detail', reminderId] as const,
+    scheduleSuggestions: (vehicleId: string) =>
+      [...queryKeys.reminders.all(), 'schedule-suggestions', vehicleId] as const,
   },
   vehicleDocuments: {
     all: () => ['vehicleDocuments'] as const,

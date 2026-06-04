@@ -200,6 +200,18 @@ These are the main items that still prevent the product from being a more comple
 - **Audit coverage safety net (dev/CI):** Prisma `$transaction` override that flags any mutation whose transaction emitted no matching `AuditEvent`, enforcing the ADR-0004 in-transaction-write contract. Active only when `NODE_ENV !== 'production'`; token-rotation `user.update` and catalog-import transactions are exempt to avoid false positives.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
 
+### Milestone 10: Service Schedule Catalog (Complete)
+
+Goal: Stop asking users to invent every reminder from scratch — surface a generic recommended service schedule per vehicle and let them apply selected items as real reminders with one click.
+
+- **Static catalog:** `apps/api/src/modules/reminders/service-schedule-catalog.ts` defines ten generic items (engine oil, tyre rotation, brake inspection, coolant flush, air filter, 12 V battery check, EV high-voltage battery check, PUC, insurance, motorcycle chain lube) with `intervalKm` / `intervalMonths`, `appliesToFuel`, `appliesToVehicle`. `filterCatalogForVehicle(fuelType, vehicleType)` returns the applicable subset so EV owners never see oil-change suggestions and motorcycle-only items don't leak into car suggestions.
+- **API:** New `ServiceScheduleService` exposes `getSuggestions` (computes proposed `dueOdometer` from `vehicle.odometer + intervalKm`, proposed `dueDate` from today + `intervalMonths`, and flags `alreadyScheduled` for items already present as active reminders matched by title or by a `[catalog:slug]` marker in notes) and `applySuggestions` (bulk-creates reminders inside one `prisma.$transaction`, emits per-reminder audit events, rejects unknown / non-applicable slugs).
+- **Endpoints (under existing `RemindersController`):**
+  - `GET /vehicles/:vehicleId/service-schedule/suggestions` → `ServiceScheduleSuggestion[]`.
+  - `POST /vehicles/:vehicleId/service-schedule/apply` body `{ slugs: string[] }` → `{ created: string[] }`.
+- **Web:** `ServiceSchedulePanel` on the per-vehicle reminders page renders the suggestions list with checkbox selection, badges for already-scheduled items, interval + projected-next preview, and an "Add N reminders" button. Mutation invalidates `reminders.byVehicle`, `reminders.list`, and `reminders.scheduleSuggestions`. Shown both when reminders exist and on the empty state so brand-new vehicles get a one-click bootstrap.
+- **Tests:** `service-schedule.service.spec.ts` covers fuel-type filtering (EV vs petrol), dueOdometer math, `alreadyScheduled` flagging from existing reminders, the bulk-apply happy path with audit emission, and rejection of unknown slugs.
+
 ### Milestone 9: Usage-Aware Reminder Projection (Complete)
 
 Goal: Turn km-based reminders into time-aware ones by projecting when the vehicle will actually hit `dueOdometer`, using its own fuel-log driving cadence.

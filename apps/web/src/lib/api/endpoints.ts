@@ -70,6 +70,9 @@ export const endpoints = {
     update: (reminderId: string) => `/reminders/${reminderId}`,
     delete: (reminderId: string) => `/reminders/${reminderId}`,
     complete: (reminderId: string) => `/reminders/${reminderId}/complete`,
+    scheduleSuggestions: (vehicleId: string) =>
+      `/vehicles/${vehicleId}/service-schedule/suggestions`,
+    applySchedule: (vehicleId: string) => `/vehicles/${vehicleId}/service-schedule/apply`,
   },
   fuelLogs: {
     byVehicle: (vehicleId: string) => `/fuel-logs/vehicle/${vehicleId}`,
