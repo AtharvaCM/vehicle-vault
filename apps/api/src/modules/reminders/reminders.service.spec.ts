@@ -16,6 +16,7 @@ describe('RemindersService', () => {
   type PrismaMock = {
     $transaction: ReturnType<typeof vi.fn>;
     reminder: ReminderDelegateMock;
+    fuelLog: { findMany: ReturnType<typeof vi.fn> };
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -29,6 +30,7 @@ describe('RemindersService', () => {
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    fuelLog: { findMany: vi.fn().mockResolvedValue([]) },
   };
 
   const vehiclesService = {
@@ -53,6 +55,7 @@ describe('RemindersService', () => {
       odometer: 12000,
     });
     auditService.track.mockResolvedValue(undefined);
+    prisma.fuelLog.findMany.mockResolvedValue([]);
     prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
       if (typeof arg === 'function') {
         return (arg as (tx: unknown) => unknown)(prisma);

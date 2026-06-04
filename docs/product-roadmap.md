@@ -200,6 +200,16 @@ These are the main items that still prevent the product from being a more comple
 - **Audit coverage safety net (dev/CI):** Prisma `$transaction` override that flags any mutation whose transaction emitted no matching `AuditEvent`, enforcing the ADR-0004 in-transaction-write contract. Active only when `NODE_ENV !== 'production'`; token-rotation `user.update` and catalog-import transactions are exempt to avoid false positives.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
 
+### Milestone 9: Usage-Aware Reminder Projection (Complete)
+
+Goal: Turn km-based reminders into time-aware ones by projecting when the vehicle will actually hit `dueOdometer`, using its own fuel-log driving cadence.
+
+- **Cadence engine:** `apps/api/src/modules/reminders/usage-projection.ts` — pure helpers `computeUsageCadence(samples, asOf, windowDays)` and `projectDueDate(currentOdo, dueOdo, cadence, asOf)`. Cadence = km/day over a trailing 180-day fuel-log window, with confidence tiers (high ≥ 6 samples / 90 days, medium ≥ 3 / 30, low otherwise). Returns null when there is not enough recent data, so projection is silently absent rather than misleading.
+- **API integration:** `RemindersService` now batches fuel-log loads per vehicle (`loadCadenceMap` for list paths, `loadCadenceForVehicle` for single reads — no N+1) and folds `usageProjection` into every reminder response when `dueOdometer` is set and the reminder isn't completed. Projection block carries `projectedDueDate`, `kmPerDay`, `confidence`, `sampleCount`, `sampleDays`.
+- **Shared schema:** `ReminderSchema` gains an optional `UsageProjectionSchema` field; type `UsageProjection` exported alongside `Reminder` so web consumes it without extra typing.
+- **Web:** Reminder card shows a "Projected ~Aug 12" pill next to the due-date row when the projection is available, with a tooltip explaining the km/day rate, sample window, and confidence tier.
+- **Tests:** `usage-projection.spec.ts` covers empty / non-advancing / out-of-window / low / medium / high confidence cases and the projection math; existing `reminders.service.spec.ts` extended with a `fuelLog.findMany` mock so the cadence loader is exercised in the integration path.
+
 ### Milestone 8: Resale Report (Complete)
 
 Goal: Give owners a buyer-facing PDF that discloses outstanding loan, insurance status, pending service items, and a document checklist — without leaking owner-only cost analytics.

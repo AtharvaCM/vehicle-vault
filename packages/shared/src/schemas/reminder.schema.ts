@@ -30,6 +30,14 @@ export const ReminderUpdateSchema = z
     message: 'At least one reminder field must be provided for update',
   });
 
+export const UsageProjectionSchema = z.object({
+  projectedDueDate: isoDateTimeString,
+  kmPerDay: z.number().nonnegative(),
+  confidence: z.enum(['high', 'medium', 'low']),
+  sampleCount: z.number().int().nonnegative(),
+  sampleDays: z.number().int().nonnegative(),
+});
+
 export const ReminderSchema = z.object({
   id: z.string().trim().min(1),
   vehicleId: z.string().trim().min(1),
@@ -42,4 +50,10 @@ export const ReminderSchema = z.object({
   notes: z.string().trim().max(1000).optional(),
   createdAt: isoDateTimeString,
   updatedAt: isoDateTimeString,
+  /**
+   * Server-derived projection of when `dueOdometer` will be reached based on
+   * recent fuel-log usage cadence. Present only when reminder has a
+   * `dueOdometer` and the vehicle has enough fuel-log history.
+   */
+  usageProjection: UsageProjectionSchema.optional(),
 });
