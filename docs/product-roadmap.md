@@ -191,7 +191,7 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No admin tooling
+- Admin tooling shipped in M11; further surfaces (per-user audit drilldown, account disable, impersonation) still deferred
 
 ### Production Hardening Shipped
 
@@ -199,6 +199,17 @@ These are the main items that still prevent the product from being a more comple
 - **Audit UI (v1):** Read-side surfaces for the audit log. Per-vehicle **Activity** tab on the vehicle detail page (`GET /vehicles/:vehicleId/audit`) and a **Settings → Activity** page (`GET /audit/me`, resource-type filter). Cursor-paginated infinite feed with expandable rows showing the `before`/`after` diff per changed field. Verified end-to-end against a live backend.
 - **Audit coverage safety net (dev/CI):** Prisma `$transaction` override that flags any mutation whose transaction emitted no matching `AuditEvent`, enforcing the ADR-0004 in-transaction-write contract. Active only when `NODE_ENV !== 'production'`; token-rotation `user.update` and catalog-import transactions are exempt to avoid false positives.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
+
+### Milestone 11: Admin Tooling — Search + Force Logout (Complete)
+
+Goal: Give admins the minimum operational surface needed to investigate accounts and recover compromised sessions, without leaning on direct database access.
+
+- **API — search + pagination:** `AdminService.listUsers({ search, page, limit })` runs case-insensitive `contains` on `email` and `name`, paginates with default 25 / max 100, and returns a `meta` block (`page`, `limit`, `total`, `search`). Count + page query batched inside a single `$transaction`. DTO (`ListAdminUsersQueryDto`) validates ranges with `class-validator`.
+- **API — force logout:** `POST /admin/users/:userId/force-logout` clears the target's `refreshTokenHash`. Refresh tokens are rotated server-side on every refresh, so wiping the hash breaks the next refresh attempt — the user is forced back through full login. Wrapped in `prisma.$transaction` with an `admin.force_logout` audit event capturing `actorUserId` (the admin), `ownerUserId` (the target), and the before/after refresh-token-presence flag. Returns `{ userId, refreshTokenCleared }` so the UI can tell the admin whether there was an active session to begin with.
+- **Audit action namespace:** added `AUDIT_ACTIONS.admin.forceLogout = 'admin.force_logout'`. Resource type reuses the existing `user` audit resource type so the event surfaces in the target's own activity feed too.
+- **Shared schema:** `AdminUserListResponseSchema` gained the optional `meta` block; new `AdminForceLogoutResponseSchema` exported as `AdminForceLogoutResponse`.
+- **Web:** Admin users page rewritten — debounced search input (300 ms), `keepPreviousData` for smooth paging, `Previous`/`Next` controls that respect the server-reported `total`, and a per-row "Force logout" `ConfirmActionDialog` that hits the new endpoint and invalidates the entire `admin` query namespace on success. Empty-state copy distinguishes "no users yet" from "no matches for that search".
+- **Tests:** `admin.service.spec.ts` covers default pagination, search-clause shape, limit clamping, page→skip math, NotFound on missing user, refresh-token clearing + audit emission, and the "no active session" branch.
 
 ### Milestone 10: Service Schedule Catalog (Complete)
 

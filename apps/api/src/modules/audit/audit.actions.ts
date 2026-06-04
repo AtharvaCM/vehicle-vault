@@ -67,6 +67,9 @@ export const AUDIT_ACTIONS = {
     emailVerified: 'auth.email_verified',
     oauthLinked: 'auth.oauth_linked',
   },
+  admin: {
+    forceLogout: 'admin.force_logout',
+  },
 } as const;
 
 export type AuditAction = string;

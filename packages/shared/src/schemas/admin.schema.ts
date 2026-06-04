@@ -15,4 +15,17 @@ export const AdminUserSummarySchema = z.object({
 
 export const AdminUserListResponseSchema = z.object({
   users: z.array(AdminUserSummarySchema),
+  meta: z
+    .object({
+      page: z.number().int().positive(),
+      limit: z.number().int().positive(),
+      total: z.number().int().nonnegative(),
+      search: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const AdminForceLogoutResponseSchema = z.object({
+  userId: z.string().trim().min(1),
+  refreshTokenCleared: z.boolean(),
 });

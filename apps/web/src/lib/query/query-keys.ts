@@ -106,7 +106,8 @@ export const queryKeys = {
   },
   admin: {
     all: () => ['admin'] as const,
-    users: () => [...queryKeys.admin.all(), 'users'] as const,
+    users: (params?: { search?: string; page?: number; limit?: number }) =>
+      [...queryKeys.admin.all(), 'users', params ?? {}] as const,
   },
   audit: {
     all: () => ['audit'] as const,

@@ -116,6 +116,7 @@ export const endpoints = {
   },
   admin: {
     users: '/admin/users',
+    forceLogout: (userId: string) => `/admin/users/${userId}/force-logout`,
   },
   notifications: {
     list: () => '/notifications',
