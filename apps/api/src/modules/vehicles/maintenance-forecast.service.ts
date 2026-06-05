@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MaintenanceCategory, VehicleType, type MaintenanceSuggestion } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { VehicleAccessService } from './vehicle-access.service';
 import { VehicleInsightsService } from './vehicle-insights.service';
 
 interface ServiceInterval {
@@ -33,11 +34,13 @@ export class MaintenanceForecastService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly insightsService: VehicleInsightsService,
+    private readonly access: VehicleAccessService,
   ) {}
 
   async getUpcomingSuggestions(userId: string, vehicleId: string): Promise<MaintenanceSuggestion[]> {
-    const vehicle = await this.prisma.vehicle.findFirst({
-      where: { id: vehicleId, userId },
+    await this.access.assert(userId, vehicleId);
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
       select: { id: true, odometer: true, createdAt: true, catalogVariantId: true, make: true, model: true, vehicleType: true },
     });
 

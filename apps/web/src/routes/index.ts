@@ -26,3 +26,4 @@ export * from './vehicle-reminders-route';
 export * from './vehicles-new-route';
 export * from './vehicles-route';
 export * from './verify-email-route';
+export * from './accept-invite-route';

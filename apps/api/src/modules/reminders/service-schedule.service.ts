@@ -6,6 +6,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditService } from '../audit/audit.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import {
   filterCatalogForVehicle,
   type ServiceScheduleItem,
@@ -39,6 +40,7 @@ export class ServiceScheduleService {
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
+    private readonly access: VehicleAccessService,
   ) {}
 
   async getSuggestions(userId: string, vehicleId: string): Promise<ServiceScheduleSuggestion[]> {
@@ -65,6 +67,7 @@ export class ServiceScheduleService {
   }
 
   async applySuggestions(userId: string, vehicleId: string, slugs: string[]) {
+    await this.access.assertEditor(userId, vehicleId);
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
     const unique = Array.from(new Set(slugs));
     const items = filterCatalogForVehicle(

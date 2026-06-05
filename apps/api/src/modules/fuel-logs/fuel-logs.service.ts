@@ -6,6 +6,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { CreateFuelLogDto } from './dto/create-fuel-log.dto';
 import { UpdateFuelLogDto } from './dto/update-fuel-log.dto';
 
@@ -15,6 +16,7 @@ export class FuelLogsService {
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
+    private readonly access: VehicleAccessService,
   ) {}
 
   async getFuelLogsByVehicle(userId: string, vehicleId: string) {
@@ -36,9 +38,7 @@ export class FuelLogsService {
     const log = await this.prisma.fuelLog.findFirst({
       where: {
         id: logId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
     });
 
@@ -50,7 +50,7 @@ export class FuelLogsService {
   }
 
   async createFuelLog(userId: string, vehicleId: string, dto: CreateFuelLogDto) {
-    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    await this.access.assertEditor(userId, vehicleId);
 
     const log = await this.prisma.$transaction(async (tx) => {
       const created = await tx.fuelLog.create({
@@ -81,7 +81,7 @@ export class FuelLogsService {
   }
 
   async createBulkFuelLogs(userId: string, vehicleId: string, dtos: CreateFuelLogDto[]) {
-    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    await this.access.assertEditor(userId, vehicleId);
 
     return this.prisma.$transaction(async (tx) => {
       let count = 0;
@@ -119,15 +119,14 @@ export class FuelLogsService {
     const log = await this.prisma.fuelLog.findFirst({
       where: {
         id: logId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
     });
 
     if (!log) {
       throw new NotFoundException(`Fuel log ${logId} was not found`);
     }
+    await this.access.assertEditor(userId, log.vehicleId);
 
     const updatedLog = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.fuelLog.update({
@@ -164,15 +163,14 @@ export class FuelLogsService {
     const log = await this.prisma.fuelLog.findFirst({
       where: {
         id: logId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
     });
 
     if (!log) {
       throw new NotFoundException(`Fuel log ${logId} was not found`);
     }
+    await this.access.assertEditor(userId, log.vehicleId);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.fuelLog.delete({ where: { id: logId } });

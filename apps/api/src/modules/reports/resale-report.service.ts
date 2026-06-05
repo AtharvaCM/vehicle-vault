@@ -25,7 +25,7 @@ export class ResaleReportService {
     options: ResaleReportOptions = {},
   ): Promise<{ buffer: Buffer; fileName: string }> {
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { id: vehicleId, userId },
+      where: { id: vehicleId, members: { some: { userId } } },
     });
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 

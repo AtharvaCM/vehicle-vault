@@ -13,6 +13,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
 
 const KIND_TO_RESOURCE_TYPE: Record<VehicleDocumentKind, AuditResourceType> = {
@@ -40,6 +41,7 @@ export class VehicleDocumentsService {
     private readonly adapters: VehicleDocumentAdapter[],
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly access: VehicleAccessService,
   ) {
     this.adapterByKind = new Map(adapters.map((a) => [a.kind, a]));
   }
@@ -60,7 +62,7 @@ export class VehicleDocumentsService {
     vehicleId: string,
     payload: CreateVehicleDocumentInput,
   ): Promise<VehicleDocument> {
-    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    await this.access.assertEditor(userId, vehicleId);
     const input = CreateVehicleDocumentSchema.parse(payload);
     const adapter = this.requireAdapter(input.kind);
     // Adapter signatures are typed per-kind; the discriminated union runtime guarantees
@@ -83,7 +85,7 @@ export class VehicleDocumentsService {
     payload: UpdateVehicleDocumentInput,
   ): Promise<VehicleDocument> {
     const input = UpdateVehicleDocumentSchema.parse(payload);
-    const owned = await this.findOwned(userId, id, input.kind);
+    const owned = await this.findOwned(userId, id, input.kind, 'editor');
     const adapter = this.requireAdapter(input.kind);
     const updated = await adapter.update(owned.id, input as never);
     await this.auditService.track(this.prisma, {
@@ -99,7 +101,7 @@ export class VehicleDocumentsService {
   }
 
   async remove(userId: string, kind: VehicleDocumentKind, id: string): Promise<void> {
-    const owned = await this.findOwned(userId, id, kind);
+    const owned = await this.findOwned(userId, id, kind, 'editor');
     const adapter = this.requireAdapter(kind);
     await adapter.remove(owned.id);
     await this.auditService.track(this.prisma, {
@@ -165,11 +167,18 @@ export class VehicleDocumentsService {
     userId: string,
     id: string,
     kind: VehicleDocumentKind,
+    minRole: 'viewer' | 'editor' = 'viewer',
   ): Promise<VehicleDocument> {
     const adapter = this.requireAdapter(kind);
     const found = await adapter.findForOwnerCheck(id);
-    if (!found || found.vehicleUserId !== userId) {
+    if (!found) {
       throw new NotFoundException(NOT_FOUND_MESSAGE);
+    }
+    // Throws NotFound if user has no membership, Forbidden if below minRole.
+    if (minRole === 'editor') {
+      await this.access.assertEditor(userId, found.document.vehicleId);
+    } else {
+      await this.access.assert(userId, found.document.vehicleId);
     }
     return found.document;
   }

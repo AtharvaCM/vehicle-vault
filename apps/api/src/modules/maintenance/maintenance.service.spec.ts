@@ -121,6 +121,7 @@ describe('MaintenanceService', () => {
       vehiclesService as never,
       storageService as never,
       auditService as never,
+      { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
     );
   });
 

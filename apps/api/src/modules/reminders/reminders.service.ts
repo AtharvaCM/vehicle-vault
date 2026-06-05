@@ -13,6 +13,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import type { UpdateReminderDto } from './dto/update-reminder.dto';
@@ -47,14 +48,13 @@ export class RemindersService {
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
+    private readonly access: VehicleAccessService,
   ) {}
 
   async getAllReminders(userId: string) {
     const reminders = await this.prisma.reminder.findMany({
       where: {
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       include: {
         vehicle: {
@@ -83,9 +83,7 @@ export class RemindersService {
     return this.getPaginatedReminders(
       {
         vehicleId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       query,
       vehicleId,
@@ -97,14 +95,10 @@ export class RemindersService {
       query.vehicleId
         ? {
             vehicleId: query.vehicleId,
-            vehicle: {
-              userId,
-            },
+            vehicle: { members: { some: { userId } } },
           }
         : {
-            vehicle: {
-              userId,
-            },
+            vehicle: { members: { some: { userId } } },
           },
       query,
     );
@@ -118,6 +112,7 @@ export class RemindersService {
   }
 
   async createReminder(userId: string, vehicleId: string, payload: CreateReminderDto) {
+    await this.access.assertEditor(userId, vehicleId);
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
     const input = this.validateCreateReminderInput({
       ...payload,
@@ -154,6 +149,7 @@ export class RemindersService {
 
   async updateReminder(userId: string, reminderId: string, payload: UpdateReminderDto) {
     const reminder = await this.getStoredReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, reminder.vehicleId);
     const input = this.validateUpdateReminderInput(payload);
     const dueDate = input.dueDate !== undefined ? input.dueDate : reminder.dueDate?.toISOString();
     const dueOdometer =
@@ -195,6 +191,7 @@ export class RemindersService {
 
   async completeReminder(userId: string, reminderId: string) {
     const before = await this.getStoredReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, before.vehicleId);
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
@@ -218,6 +215,7 @@ export class RemindersService {
 
   async deleteReminder(userId: string, reminderId: string) {
     const before = await this.getReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, before.vehicleId);
     await this.prisma.$transaction(async (tx) => {
       await tx.reminder.delete({ where: { id: reminderId } });
       await this.auditService.track(tx, {
@@ -283,9 +281,7 @@ export class RemindersService {
     const reminder = await this.prisma.reminder.findFirst({
       where: {
         id: reminderId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       include: {
         vehicle: {

@@ -145,6 +145,40 @@ export class MailService {
     });
   }
 
+  async sendVehicleInviteEmail(input: {
+    email: string;
+    inviterName: string;
+    vehicleLabel: string;
+    role: string;
+    acceptUrl: string;
+    expiresAt: Date;
+  }) {
+    const expiresAt = input.expiresAt.toLocaleString('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Kolkata',
+    });
+    const subject = `${input.inviterName} shared a vehicle with you on Vehicle Vault`;
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <h2 style="color: #0f172a; margin: 0 0 16px; font-size: 20px; font-weight: 800;">Vehicle Vault</h2>
+        <p style="color: #475569; font-size: 16px; line-height: 24px;"><strong>${escapeHtml(input.inviterName)}</strong> invited you to access <strong>${escapeHtml(input.vehicleLabel)}</strong> as a <strong>${escapeHtml(input.role)}</strong>.</p>
+        <div style="margin: 32px 0;">
+          <a href="${escapeAttribute(input.acceptUrl)}" style="background-color: #0f172a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">Accept invitation</a>
+        </div>
+        <p style="color: #475569; font-size: 14px; line-height: 20px;">Or open this link: ${escapeHtml(input.acceptUrl)}</p>
+        <p style="color: #94a3b8; font-size: 12px;">This invitation expires on ${escapeHtml(expiresAt)}.</p>
+      </div>
+    `;
+
+    return this.sendMail({
+      to: input.email,
+      subject,
+      text: `${input.inviterName} invited you to access ${input.vehicleLabel} on Vehicle Vault (${input.role}). Accept here: ${input.acceptUrl} (expires ${expiresAt})`,
+      html,
+    });
+  }
+
   private async sendMail(input: { html: string; subject: string; text: string; to: string }) {
     if (!this.transporter || !this.appConfigService.mailFrom) {
       throw new ServiceUnavailableException('Email delivery is not configured.');

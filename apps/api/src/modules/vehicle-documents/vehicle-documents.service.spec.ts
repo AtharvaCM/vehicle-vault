@@ -61,6 +61,12 @@ describe('VehicleDocumentsService', () => {
   const auditService = {
     track: vi.fn().mockResolvedValue(undefined),
   };
+  const accessService = {
+    assert: vi.fn().mockResolvedValue('owner'),
+    assertEditor: vi.fn().mockResolvedValue('owner'),
+    assertOwner: vi.fn().mockResolvedValue('owner'),
+    resolve: vi.fn(),
+  };
 
   let insurance: VehicleDocumentAdapter;
   let warranty: VehicleDocumentAdapter;
@@ -70,6 +76,9 @@ describe('VehicleDocumentsService', () => {
     vi.clearAllMocks();
     vehiclesService.ensureVehicleExists.mockResolvedValue(undefined);
     auditService.track.mockResolvedValue(undefined);
+    accessService.assert.mockResolvedValue('owner');
+    accessService.assertEditor.mockResolvedValue('owner');
+    accessService.assertOwner.mockResolvedValue('owner');
     insurance = makeAdapter('insurance');
     warranty = makeAdapter('warranty');
     service = new VehicleDocumentsService(
@@ -77,6 +86,7 @@ describe('VehicleDocumentsService', () => {
       [insurance, warranty],
       prisma as never,
       auditService as never,
+      accessService as never,
     );
   });
 
@@ -120,7 +130,6 @@ describe('VehicleDocumentsService', () => {
         endDate: new Date('2027-01-01T00:00:00.000Z'),
       });
 
-      expect(vehiclesService.ensureVehicleExists).toHaveBeenCalledWith('user-1', 'veh-1');
       expect(insurance.create).toHaveBeenCalledWith(
         'veh-1',
         expect.objectContaining({ kind: 'insurance', policyNumber: 'POL-1' }),
@@ -147,6 +156,9 @@ describe('VehicleDocumentsService', () => {
         document: insuranceDoc(),
         vehicleUserId: 'someone-else',
       });
+      accessService.assertEditor.mockRejectedValueOnce(
+        new NotFoundException('Vehicle veh-1 was not found'),
+      );
 
       await expect(
         service.update('user-1', 'pol-1', {

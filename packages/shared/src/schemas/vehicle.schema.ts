@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FuelType, VehicleType } from '../enums';
+import { FuelType, VehicleRole, VehicleType } from '../enums';
 
 export const VehicleCreateSchema = z.object({
   registrationNumber: z.string().trim().min(1).max(20),
@@ -30,4 +30,6 @@ export const VehicleSchema = VehicleCreateSchema.extend({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   catalogVariantId: z.string().uuid().optional().nullable(),
+  /** Current user's role on this vehicle. Omitted by older API versions. */
+  currentUserRole: z.nativeEnum(VehicleRole).optional(),
 });

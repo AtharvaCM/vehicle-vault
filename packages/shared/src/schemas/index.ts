@@ -11,3 +11,4 @@ export * from './vehicle.schema';
 export * from './fuel-log.schema';
 export * from './analytics.schema';
 export * from './vehicle-loan.schema';
+export * from './vehicle-sharing.schema';

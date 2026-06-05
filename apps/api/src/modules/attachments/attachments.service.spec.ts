@@ -52,6 +52,7 @@ describe('AttachmentsService', () => {
     $transaction: ReturnType<typeof vi.fn>;
     attachment: AttachmentDelegateMock;
     attachmentExtraction: AttachmentExtractionDelegateMock;
+    maintenanceRecord: { findUnique: ReturnType<typeof vi.fn> };
   };
 
   const uploadedAt = new Date('2026-03-20T00:00:00.000Z');
@@ -67,6 +68,9 @@ describe('AttachmentsService', () => {
     },
     attachmentExtraction: {
       upsert: vi.fn(),
+    },
+    maintenanceRecord: {
+      findUnique: vi.fn().mockResolvedValue({ vehicleId: 'vehicle-1' }),
     },
   };
 
@@ -150,6 +154,7 @@ describe('AttachmentsService', () => {
     maintenanceService.getRecordById.mockResolvedValue({
       id: 'record-1',
     });
+    prisma.maintenanceRecord.findUnique.mockResolvedValue({ vehicleId: 'vehicle-1' });
     maintenanceService.updateRecord.mockResolvedValue({
       id: 'record-1',
       vehicleId: 'vehicle-1',
@@ -228,6 +233,7 @@ describe('AttachmentsService', () => {
       extractionService as never,
       auditService as never,
       { getById: vi.fn(), listForUser: vi.fn() } as never,
+      { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
     );
   });
 
@@ -463,9 +469,7 @@ describe('AttachmentsService', () => {
           in: ['attachment-1'],
         },
         maintenanceRecord: {
-          vehicle: {
-            userId: 'user-1',
-          },
+          vehicle: { members: { some: { userId: 'user-1' } } },
         },
       },
     });

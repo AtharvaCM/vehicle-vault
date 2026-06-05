@@ -62,7 +62,12 @@ describe('RemindersService', () => {
       }
       return Array.isArray(arg) ? arg : undefined;
     });
-    service = new RemindersService(prisma as never, vehiclesService as never, auditService as never);
+    service = new RemindersService(
+      prisma as never,
+      vehiclesService as never,
+      auditService as never,
+      { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
+    );
   });
 
   afterEach(() => {

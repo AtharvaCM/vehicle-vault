@@ -118,6 +118,17 @@ export const endpoints = {
     users: '/admin/users',
     forceLogout: (userId: string) => `/admin/users/${userId}/force-logout`,
   },
+  vehicleSharing: {
+    members: (vehicleId: string) => `/vehicles/${vehicleId}/members`,
+    member: (vehicleId: string, memberId: string) =>
+      `/vehicles/${vehicleId}/members/${memberId}`,
+    invites: (vehicleId: string) => `/vehicles/${vehicleId}/invites`,
+    invite: (vehicleId: string, inviteId: string) =>
+      `/vehicles/${vehicleId}/invites/${inviteId}`,
+    transferOwnership: (vehicleId: string) =>
+      `/vehicles/${vehicleId}/transfer-ownership`,
+    accept: () => `/vehicle-invites/accept`,
+  },
   notifications: {
     list: () => '/notifications',
     unreadCount: () => '/notifications/unread-count',

@@ -30,6 +30,7 @@ import {
   vehiclesNewRoute,
   vehiclesRoute,
   verifyEmailRoute,
+  acceptInviteRoute,
 } from '@/routes';
 
 const protectedRouteTree = appRoute.addChildren([
@@ -52,6 +53,7 @@ const protectedRouteTree = appRoute.addChildren([
   settingsRoute,
   settingsActivityRoute,
   adminUsersRoute,
+  acceptInviteRoute,
 ]);
 
 const routeTree = rootRoute.addChildren([

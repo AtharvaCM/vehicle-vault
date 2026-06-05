@@ -109,6 +109,13 @@ export const queryKeys = {
     users: (params?: { search?: string; page?: number; limit?: number }) =>
       [...queryKeys.admin.all(), 'users', params ?? {}] as const,
   },
+  vehicleSharing: {
+    all: () => ['vehicleSharing'] as const,
+    members: (vehicleId: string) =>
+      [...queryKeys.vehicleSharing.all(), 'members', vehicleId] as const,
+    invites: (vehicleId: string) =>
+      [...queryKeys.vehicleSharing.all(), 'invites', vehicleId] as const,
+  },
   audit: {
     all: () => ['audit'] as const,
     me: (resourceType?: string) =>

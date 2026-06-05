@@ -32,6 +32,8 @@ import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-remi
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
+import { MembersTab } from '@/features/vehicle-sharing/components/members-tab';
+import { useCurrentUserRole } from '@/features/vehicle-sharing/hooks/use-sharing';
 import { AuditFeed } from '@/features/audit/components/audit-feed';
 import { useVehicleAudit } from '@/features/audit/hooks/use-vehicle-audit';
 import { OdometerForecastCard } from '../components/odometer-forecast-card';
@@ -61,6 +63,8 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
   const auditQuery = useVehicleAudit(vehicleId);
+  const { role: currentUserRole } = useCurrentUserRole(vehicleId);
+  const isOwner = currentUserRole === 'owner';
   const deleteVehicleMutation = useDeleteVehicle();
   const vehicle = vehicleQuery.data ?? null;
   const serviceInsights = useMemo(
@@ -389,11 +393,19 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             >
               Protection
             </TabsTrigger>
+            {isOwner ? (
+              <TabsTrigger
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                value="loans"
+              >
+                Loans
+              </TabsTrigger>
+            ) : null}
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
-              value="loans"
+              value="members"
             >
-              Loans
+              Members
             </TabsTrigger>
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
@@ -551,11 +563,16 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           <TabsContent value="protection" className="animate-in fade-in duration-500">
             <ProtectionTab vehicleId={vehicleId} />
           </TabsContent>
-          <TabsContent value="loans" className="animate-in fade-in duration-500">
-            <VehicleLoansPanel
-              vehicleId={vehicleId}
-              vehicleLabel={`${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`}
-            />
+          {isOwner ? (
+            <TabsContent value="loans" className="animate-in fade-in duration-500">
+              <VehicleLoansPanel
+                vehicleId={vehicleId}
+                vehicleLabel={`${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`}
+              />
+            </TabsContent>
+          ) : null}
+          <TabsContent value="members" className="animate-in fade-in duration-500">
+            <MembersTab vehicleId={vehicleId} currentUserRole={currentUserRole} />
           </TabsContent>
           <TabsContent value="activity" className="animate-in fade-in duration-500">
             <Card className="border-slate-200/60 bg-white shadow-premium-sm">

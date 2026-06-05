@@ -10,3 +10,4 @@ export * from './reminder-status.enum';
 export * from './reminder-type.enum';
 export * from './vehicle-catalog-market.enum';
 export * from './vehicle-type.enum';
+export * from './vehicle-role.enum';

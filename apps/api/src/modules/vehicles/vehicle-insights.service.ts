@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { VehicleAccessService } from './vehicle-access.service';
 
 export interface VehicleOdometerInsight {
   averageDailyMileage: number;
@@ -14,11 +15,15 @@ export interface VehicleOdometerInsight {
 
 @Injectable()
 export class VehicleInsightsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: VehicleAccessService,
+  ) {}
 
   async getOdometerInsights(userId: string, vehicleId: string): Promise<VehicleOdometerInsight> {
-    const vehicle = await this.prisma.vehicle.findFirst({
-      where: { id: vehicleId, userId },
+    await this.access.assert(userId, vehicleId);
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
       select: { odometer: true, createdAt: true },
     });
 

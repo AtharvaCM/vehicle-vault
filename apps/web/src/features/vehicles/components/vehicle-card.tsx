@@ -48,6 +48,11 @@ export function VehicleCard({ selectionControl, vehicle }: VehicleCardProps) {
                 <Badge tone="accent" className="shrink-0">
                   {vehicle.vehicleType}
                 </Badge>
+                {vehicle.currentUserRole && vehicle.currentUserRole !== 'owner' ? (
+                  <Badge className="shrink-0 bg-blue-100 text-blue-800">
+                    Shared • {vehicle.currentUserRole}
+                  </Badge>
+                ) : null}
               </div>
               <p className="truncate text-[13px] font-medium text-slate-500">
                 {vehicle.make} {vehicle.model} <span className="mx-1 text-slate-300">•</span>{' '}
