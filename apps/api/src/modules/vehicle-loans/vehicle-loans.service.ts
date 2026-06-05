@@ -38,7 +38,7 @@ export class VehicleLoansService {
 
   async listForUser(userId: string): Promise<VehicleLoan[]> {
     const loans = await this.prisma.vehicleLoan.findMany({
-      where: { vehicle: { userId } },
+      where: { vehicle: { members: { some: { userId, role: 'owner' } } } },
       include: loanInclude,
       orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
     });
@@ -285,7 +285,7 @@ export class VehicleLoansService {
 
   private async getOwnedLoan(userId: string, loanId: string): Promise<LoanRow> {
     const loan = await this.prisma.vehicleLoan.findFirst({
-      where: { id: loanId, vehicle: { userId } },
+      where: { id: loanId, vehicle: { members: { some: { userId, role: 'owner' } } } },
       include: loanInclude,
     });
     if (!loan) throw new NotFoundException(`Vehicle loan ${loanId} was not found`);

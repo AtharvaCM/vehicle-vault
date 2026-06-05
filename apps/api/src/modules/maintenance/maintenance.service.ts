@@ -19,6 +19,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
 
@@ -39,14 +40,13 @@ export class MaintenanceService {
     private readonly vehiclesService: VehiclesService,
     private readonly storageService: SupabaseStorageService,
     private readonly auditService: AuditService,
+    private readonly access: VehicleAccessService,
   ) {}
 
   async getAllRecords(userId: string) {
     const records = await this.prisma.maintenanceRecord.findMany({
       where: {
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       include: maintenanceRecordInclude,
       orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
@@ -94,6 +94,7 @@ export class MaintenanceService {
   }
 
   async createForVehicle(userId: string, vehicleId: string, payload: CreateMaintenanceRecordDto) {
+    await this.access.assertEditor(userId, vehicleId);
     await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
     const input = this.validateCreateMaintenanceInput({
@@ -120,6 +121,7 @@ export class MaintenanceService {
   }
 
   async createDraftForVehicle(userId: string, vehicleId: string) {
+    await this.access.assertEditor(userId, vehicleId);
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
     const record = await this.prisma.$transaction(async (tx) => {
       const created = await tx.maintenanceRecord.create({
@@ -154,7 +156,7 @@ export class MaintenanceService {
     vehicleId: string,
     payloads: CreateMaintenanceRecordDto[],
   ) {
-    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    await this.access.assertEditor(userId, vehicleId);
 
     if (!payloads.length) {
       throw new BadRequestException('Add at least one maintenance record to import.');
@@ -182,6 +184,7 @@ export class MaintenanceService {
 
   async updateRecord(userId: string, recordId: string, payload: UpdateMaintenanceRecordDto) {
     const before = await this.getOwnedMaintenanceRecord(userId, recordId);
+    await this.access.assertEditor(userId, before.vehicleId);
     const input = this.validateUpdateMaintenanceInput(payload);
     const record = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.maintenanceRecord.update({
@@ -208,10 +211,9 @@ export class MaintenanceService {
     const record = await this.prisma.maintenanceRecord.findFirst({
       where: {
         id: recordId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
+      // Note: editor-level assertion applied after lookup below.
       include: {
         attachments: {
           select: {
@@ -224,6 +226,8 @@ export class MaintenanceService {
     if (!record) {
       throw new NotFoundException(`Maintenance record ${recordId} was not found`);
     }
+
+    await this.access.assertEditor(userId, record.vehicleId);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.maintenanceRecord.delete({ where: { id: recordId } });
@@ -251,9 +255,7 @@ export class MaintenanceService {
     const record = await this.prisma.maintenanceRecord.findFirst({
       where: {
         id: recordId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       include: maintenanceRecordInclude,
     });

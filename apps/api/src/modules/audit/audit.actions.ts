@@ -67,6 +67,20 @@ export const AUDIT_ACTIONS = {
     emailVerified: 'auth.email_verified',
     oauthLinked: 'auth.oauth_linked',
   },
+  admin: {
+    forceLogout: 'admin.force_logout',
+  },
+  vehicleMember: {
+    added: 'vehicle_member.added',
+    roleChanged: 'vehicle_member.role_changed',
+    removed: 'vehicle_member.removed',
+    ownershipTransferred: 'vehicle_member.ownership_transferred',
+  },
+  vehicleInvite: {
+    created: 'vehicle_invite.created',
+    accepted: 'vehicle_invite.accepted',
+    revoked: 'vehicle_invite.revoked',
+  },
 } as const;
 
 export type AuditAction = string;

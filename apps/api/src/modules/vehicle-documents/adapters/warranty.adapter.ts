@@ -58,7 +58,7 @@ export class WarrantyAdapter implements VehicleDocumentAdapter {
     // Warranties with a null endDate never expire, so they're excluded here.
     const rows = await this.prisma.warranty.findMany({
       where: {
-        vehicle: { userId },
+        vehicle: { members: { some: { userId } } },
         endDate: { gte: from, lte: until },
       },
       orderBy: { endDate: 'asc' },

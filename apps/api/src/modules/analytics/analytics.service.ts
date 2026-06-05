@@ -59,15 +59,15 @@ export class AnalyticsService {
 
     if (options.vehicleId) {
       const vehicle = await this.prisma.vehicle.findFirst({
-        where: { id: options.vehicleId, userId },
+        where: { id: options.vehicleId, members: { some: { userId } } },
         select: { id: true },
       });
       if (!vehicle) throw new NotFoundException('Vehicle not found');
     }
 
     const vehicleFilter = options.vehicleId
-      ? { id: options.vehicleId, userId }
-      : { userId };
+      ? { id: options.vehicleId, members: { some: { userId } } }
+      : { members: { some: { userId } } };
 
     const [fuelAgg, maintenanceAgg, claimsAgg, policies, loans] = await Promise.all([
       this.prisma.fuelLog.aggregate({
@@ -182,15 +182,15 @@ export class AnalyticsService {
 
     if (options.vehicleId) {
       const vehicle = await this.prisma.vehicle.findFirst({
-        where: { id: options.vehicleId, userId },
+        where: { id: options.vehicleId, members: { some: { userId } } },
         select: { id: true },
       });
       if (!vehicle) throw new NotFoundException('Vehicle not found');
     }
 
     const vehicleFilter = options.vehicleId
-      ? { id: options.vehicleId, userId }
-      : { userId };
+      ? { id: options.vehicleId, members: { some: { userId } } }
+      : { members: { some: { userId } } };
 
     const [fuelLogs, maintenanceRecords, claimRows, policies, loans] = await Promise.all([
       this.prisma.fuelLog.findMany({
@@ -380,7 +380,7 @@ export class AnalyticsService {
    */
   async getTco(userId: string, vehicleId: string): Promise<TcoResponse> {
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { id: vehicleId, userId },
+      where: { id: vehicleId, members: { some: { userId } } },
     });
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 

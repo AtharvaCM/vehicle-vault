@@ -200,7 +200,7 @@ export class ClaimAttachmentsService {
       where: {
         id: attachmentId,
         claim: {
-          insurancePolicy: { vehicle: { userId } },
+          insurancePolicy: { vehicle: { members: { some: { userId, role: 'owner' } } } },
         },
       },
     });

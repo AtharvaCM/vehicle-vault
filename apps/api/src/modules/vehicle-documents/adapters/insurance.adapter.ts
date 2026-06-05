@@ -62,7 +62,7 @@ export class InsuranceAdapter implements VehicleDocumentAdapter {
   ): Promise<VehicleDocument[]> {
     const rows = await this.prisma.insurancePolicy.findMany({
       where: {
-        vehicle: { userId },
+        vehicle: { members: { some: { userId } } },
         endDate: { gte: from, lte: until },
       },
       orderBy: { endDate: 'asc' },

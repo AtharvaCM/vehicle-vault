@@ -13,9 +13,17 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import type { UpdateReminderDto } from './dto/update-reminder.dto';
+import {
+  computeUsageCadence,
+  projectDueDate,
+  type UsageCadence,
+} from './usage-projection';
+
+const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
 
 const reminderStatusPriority: Record<ReminderStatus, number> = {
   [ReminderStatus.Upcoming]: 0,
@@ -40,14 +48,13 @@ export class RemindersService {
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
+    private readonly access: VehicleAccessService,
   ) {}
 
   async getAllReminders(userId: string) {
     const reminders = await this.prisma.reminder.findMany({
       where: {
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       include: {
         vehicle: {
@@ -61,8 +68,12 @@ export class RemindersService {
       },
     });
 
+    const cadenceMap = await this.loadCadenceMap(
+      Array.from(new Set(reminders.map((r) => r.vehicleId))),
+    );
+
     return reminders
-      .map((record) => this.toReminder(record))
+      .map((record) => this.toReminder(record, cadenceMap.get(record.vehicleId)))
       .sort((left, right) => this.compareReminders(left, right));
   }
 
@@ -72,9 +83,7 @@ export class RemindersService {
     return this.getPaginatedReminders(
       {
         vehicleId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       query,
       vehicleId,
@@ -86,14 +95,10 @@ export class RemindersService {
       query.vehicleId
         ? {
             vehicleId: query.vehicleId,
-            vehicle: {
-              userId,
-            },
+            vehicle: { members: { some: { userId } } },
           }
         : {
-            vehicle: {
-              userId,
-            },
+            vehicle: { members: { some: { userId } } },
           },
       query,
     );
@@ -101,11 +106,13 @@ export class RemindersService {
 
   async getReminderById(userId: string, reminderId: string) {
     const reminder = await this.getStoredReminderById(userId, reminderId);
+    const cadence = await this.loadCadenceForVehicle(reminder.vehicleId);
 
-    return this.toReminder(reminder);
+    return this.toReminder(reminder, cadence);
   }
 
   async createReminder(userId: string, vehicleId: string, payload: CreateReminderDto) {
+    await this.access.assertEditor(userId, vehicleId);
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
     const input = this.validateCreateReminderInput({
       ...payload,
@@ -142,6 +149,7 @@ export class RemindersService {
 
   async updateReminder(userId: string, reminderId: string, payload: UpdateReminderDto) {
     const reminder = await this.getStoredReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, reminder.vehicleId);
     const input = this.validateUpdateReminderInput(payload);
     const dueDate = input.dueDate !== undefined ? input.dueDate : reminder.dueDate?.toISOString();
     const dueOdometer =
@@ -183,6 +191,7 @@ export class RemindersService {
 
   async completeReminder(userId: string, reminderId: string) {
     const before = await this.getStoredReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, before.vehicleId);
     const now = new Date();
 
     await this.prisma.$transaction(async (tx) => {
@@ -206,6 +215,7 @@ export class RemindersService {
 
   async deleteReminder(userId: string, reminderId: string) {
     const before = await this.getReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, before.vehicleId);
     await this.prisma.$transaction(async (tx) => {
       await tx.reminder.delete({ where: { id: reminderId } });
       await this.auditService.track(tx, {
@@ -244,7 +254,12 @@ export class RemindersService {
         createdAt: 'desc',
       },
     });
-    const computed = reminders.map((record) => this.toReminder(record));
+    const cadenceMap = await this.loadCadenceMap(
+      Array.from(new Set(reminders.map((r) => r.vehicleId))),
+    );
+    const computed = reminders.map((record) =>
+      this.toReminder(record, cadenceMap.get(record.vehicleId)),
+    );
     const filtered = query.status
       ? computed.filter((item) => item.status === query.status)
       : computed;
@@ -266,9 +281,7 @@ export class RemindersService {
     const reminder = await this.prisma.reminder.findFirst({
       where: {
         id: reminderId,
-        vehicle: {
-          userId,
-        },
+        vehicle: { members: { some: { userId } } },
       },
       include: {
         vehicle: {
@@ -286,7 +299,7 @@ export class RemindersService {
     return reminder;
   }
 
-  private toReminder(reminder: ReminderWithVehicle): Reminder {
+  private toReminder(reminder: ReminderWithVehicle, cadence?: UsageCadence): Reminder {
     const status = this.computeReminderStatus(
       {
         dueDate: reminder.dueDate?.toISOString(),
@@ -295,6 +308,27 @@ export class RemindersService {
       },
       reminder.vehicle.odometer,
     );
+
+    let usageProjection: Reminder['usageProjection'];
+    if (
+      cadence &&
+      reminder.dueOdometer !== null &&
+      reminder.dueOdometer !== undefined &&
+      reminder.completedAt === null
+    ) {
+      const projected = projectDueDate(
+        reminder.vehicle.odometer,
+        reminder.dueOdometer,
+        cadence,
+      );
+      usageProjection = {
+        projectedDueDate: projected.toISOString(),
+        kmPerDay: Number(cadence.kmPerDay.toFixed(2)),
+        confidence: cadence.confidence,
+        sampleCount: cadence.sampleCount,
+        sampleDays: cadence.sampleDays,
+      };
+    }
 
     return {
       id: reminder.id,
@@ -308,7 +342,39 @@ export class RemindersService {
       notes: reminder.notes ?? undefined,
       createdAt: reminder.createdAt.toISOString(),
       updatedAt: reminder.updatedAt.toISOString(),
+      usageProjection,
     };
+  }
+
+  private async loadCadenceMap(vehicleIds: string[]): Promise<Map<string, UsageCadence>> {
+    const map = new Map<string, UsageCadence>();
+    if (vehicleIds.length === 0) return map;
+
+    const cutoff = new Date(
+      Date.now() - USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const fuelLogs = await this.prisma.fuelLog.findMany({
+      where: { vehicleId: { in: vehicleIds }, date: { gte: cutoff } },
+      select: { vehicleId: true, date: true, odometer: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const grouped = new Map<string, { date: Date; odometer: number }[]>();
+    for (const log of fuelLogs) {
+      const list = grouped.get(log.vehicleId) ?? [];
+      list.push({ date: log.date, odometer: log.odometer });
+      grouped.set(log.vehicleId, list);
+    }
+    for (const [vehicleId, samples] of grouped.entries()) {
+      const cadence = computeUsageCadence(samples, new Date(), USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS);
+      if (cadence) map.set(vehicleId, cadence);
+    }
+    return map;
+  }
+
+  private async loadCadenceForVehicle(vehicleId: string): Promise<UsageCadence | undefined> {
+    const map = await this.loadCadenceMap([vehicleId]);
+    return map.get(vehicleId);
   }
 
   private computeReminderStatus(

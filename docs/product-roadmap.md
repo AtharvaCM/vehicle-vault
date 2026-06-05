@@ -1,6 +1,6 @@
 # Product Roadmap
 
-Last updated: 2026-06-03
+Last updated: 2026-06-05
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
@@ -191,7 +191,7 @@ These are the main items that still prevent the product from being a more comple
 
 ### Production Hardening Gaps
 
-- No admin tooling
+- Admin tooling shipped in M11; further surfaces (per-user audit drilldown, account disable, impersonation) still deferred
 
 ### Production Hardening Shipped
 
@@ -199,6 +199,87 @@ These are the main items that still prevent the product from being a more comple
 - **Audit UI (v1):** Read-side surfaces for the audit log. Per-vehicle **Activity** tab on the vehicle detail page (`GET /vehicles/:vehicleId/audit`) and a **Settings → Activity** page (`GET /audit/me`, resource-type filter). Cursor-paginated infinite feed with expandable rows showing the `before`/`after` diff per changed field. Verified end-to-end against a live backend.
 - **Audit coverage safety net (dev/CI):** Prisma `$transaction` override that flags any mutation whose transaction emitted no matching `AuditEvent`, enforcing the ADR-0004 in-transaction-write contract. Active only when `NODE_ENV !== 'production'`; token-rotation `user.update` and catalog-import transactions are exempt to avoid false positives.
 - **OAuth/social auth (Google + GitHub):** Passport-based strategies on the API; `GET /auth/oauth/{provider}` redirects to the provider, callback exchanges the code, links or creates the local user, and rebounds to a frontend OAuth callback page that hydrates the session. Verified-email matches auto-link existing password accounts. `passwordHash` is now nullable so OAuth-only users can sign in without a credential. Providers are environment-gated — buttons disappear when client IDs are unset.
+
+### Milestone 12 (slice c): Shared Vehicle Access — Web Surfaces (Complete)
+
+Goal: Surface the M12a/M12b backend in the frontend so owners can manage members without curl. M12 fully landed end-to-end.
+
+- **Sharing feature module:** New `apps/web/src/features/vehicle-sharing/` with API fns (`sharing-api.ts`), TanStack hooks (`useMembers`, `useInvites`, `useCreateInvite`, `useRevokeInvite`, `useUpdateMemberRole`, `useRemoveMember`, `useTransferOwnership`, `useAcceptInvite`, `useCurrentUserRole`), `MembersTab` component, and an `AcceptInvitePage`.
+- **Endpoints + query keys:** `endpoints.vehicleSharing` (members/invites/transferOwnership/accept) and `queryKeys.vehicleSharing` (members + invites scoped by vehicleId) added so cache invalidation cascades cleanly after any mutation.
+- **Members tab on vehicle detail:** Lists members with role badges (Owner / Editor / Viewer) and `(you)` indicator. Owners get inline role-change `Select`, **Promote** button (transfer-ownership confirm dialog), and **Remove** button per non-owner row. Non-owners see their own row with a **Leave** action. Owners also get an inline `InviteForm` (email + role select) and a `PendingInvitesCard` with per-row revoke.
+- **Accept-invite flow:** New route `/vehicle-invites/$token` mounted under the authed app shell. Auto-fires `POST /vehicle-invites/accept` on mount, redirects to the vehicle on success, surfaces a friendly error card on expired / mismatched / revoked / unknown-token cases.
+- **Owner-only UI gates:** `Loans` tab on vehicle detail (trigger + content) is now rendered only when `currentUserRole === 'owner'`. `MembersTab` itself is universally visible (every member needs to see the roster). Editors/viewers cannot see or open the Loans tab.
+- **"Shared with you" badge:** `Vehicle` DTO gained an optional `currentUserRole` field, emitted from `VehiclesService.{getAllVehicles, listVehicles, getVehicleById, createVehicle, updateVehicle}` using a scoped `members: { where: { userId } }` include (so it's one extra column on the existing query, no extra round-trip). `VehicleCard` renders a `Shared • editor` / `Shared • viewer` badge next to the vehicle-type chip when the role isn't `owner`.
+- **Tests:** API suite 277 pass (one regression — `listVehicles` spec now exercises the role-include path; fixed via `members?.[0]?.role ?? null`). Web suite 47 pass, web typecheck clean.
+
+### Milestone 12 (slice b): Shared Vehicle Access — Invites + Member Management (Complete)
+
+Goal: Make the foundation laid in M12a actually usable — owners can invite collaborators by email, accept lands them as members at the role the owner picked, and member management (role changes, removal, ownership transfer) is available via API. Web surfaces (M12c) still pending.
+
+- **Schema:** New `VehicleInvite` table (`email`, `role`, `tokenHash` (sha256 hex, unique), `expiresAt`, `acceptedAt`, `revokedAt`, `invitedByUserId`) with cascade-on-vehicle-delete and cascade-on-user-delete. `AuditResourceType` enum extended with `vehicle_member` + `vehicle_invite` (split into a second migration so Postgres can commit the enum addition before the table that references it). Audit redaction marks `VehicleInvite.tokenHash` as `[redacted]` so the raw bearer never lands in audit payloads.
+- **Invite flow:** `VehicleInvitesService.createInvite` (owner only, rejects owner-role grants, rejects duplicate active invites, normalises email to lowercase, mints a 32-byte random token, stores only the sha256 hash, optionally mails an accept link, returns the plaintext token in dev/preview for testing). `accept(userId, token)` validates the token by sha256-hash lookup, enforces email match against the accepting account, expiry, and not-revoked, then upserts the `VehicleMember` row inside the same transaction as the invite acceptance + dual audit events (`vehicle_invite.accepted` + `vehicle_member.added`). `revoke` and `listForVehicle` are owner-gated.
+- **Member management:** `VehicleMembersService.list` (any member can list), `updateRole` (owner only, rejects owner-role promotion and owner-role demotion — those go through transfer-ownership), `remove` (owner can remove anyone non-owner, members can self-leave), `transferOwnership` (owner promotes a target member to `owner`, demotes self to `editor`, and updates the canonical `Vehicle.userId` pointer atomically with the two `VehicleMember.role` flips inside a single `prisma.$transaction` — audit event `vehicle_member.ownership_transferred`).
+- **HTTP surface:** Single `VehicleSharingController` exposing `GET/POST/DELETE /vehicles/:vehicleId/invites[/:inviteId]`, `POST /vehicle-invites/accept`, `GET/PATCH/DELETE /vehicles/:vehicleId/members[/:memberId]`, `POST /vehicles/:vehicleId/transfer-ownership`. All bodies validated by class-validator DTOs.
+- **Email:** `MailService.sendVehicleInviteEmail` renders an HTML + text invite addressed to the recipient with the inviter's name, vehicle label, role, accept link, and IST-formatted expiry. Delivery is best-effort — failure is logged but does not roll back the invite row.
+- **Mutation gates upgraded:** With non-owner members now possible, every vehicle-scoped mutation entry explicitly `assertEditor`s. Touched: `maintenance` (create / draft / bulk / update / delete), `reminders` (create / update / complete / delete), `reminders/service-schedule` (apply), `fuel-logs` (create / bulk / update / delete), `vehicle-documents` (create / update / remove now route through `findOwned(..., 'editor')`), `attachments` (`uploadAttachments` + `deleteAttachment` for maintenance-record attachments — loan attachments stay owner-only via the existing upstream owner filter).
+- **Shared schemas:** `packages/shared` gains `VehicleRole` enum and Zod schemas for `VehicleMember`, `VehicleInvite`, `CreateVehicleInviteInput`, `AcceptVehicleInviteInput`, `UpdateVehicleMemberInput`, `TransferVehicleOwnershipInput` so the web layer (M12c) can consume them with no type duplication.
+- **Tests:** 17 new sharing specs (10 invites + 7 members) plus updates to every spec whose service constructor gained `VehicleAccessService`. Total backend suite: 277 pass, typecheck clean.
+- **Out of scope (lands in M12c):** all web surfaces — members tab, invite form, accept-invite page, role badges, hide-loans-for-non-owner UI, transfer-ownership UI.
+
+### Milestone 12 (slice a): Shared Vehicle Access — Backend Foundation (Complete)
+
+Goal: Lay the access-control foundation for sharing a vehicle with family/team members, without exposing any invite/UI surface yet. Slices `b` (invite + member management endpoints) and `c` (web surfaces) are still pending.
+
+- **Schema:** New `VehicleRole` enum (`owner` / `editor` / `viewer`) and `VehicleMember` join table (`vehicleId`, `userId`, `role`, unique on `(vehicleId, userId)`, indexed on both). `Vehicle.userId` retained as the canonical owner pointer so `@@unique([userId, registrationNumber])`, cascades, and existing audit `ownerUserId` semantics stay intact. Migration `20260605100000_vehicle_members` backfills one `owner` row per existing vehicle from `Vehicle.userId`.
+- **Access service:** `VehicleAccessService.resolve(userId, vehicleId)` returns `VehicleRole | null`; `assert(userId, vehicleId, min)` throws `NotFound` for non-members and `Forbidden` for under-privileged roles; `assertOwner` / `assertEditor` convenience wrappers; `listAccessibleVehicleIds(userId, min)` returns the set of ids the user can see at the requested level.
+- **Read paths uniformly membership-based:** Every vehicle-scoped query across `vehicles`, `maintenance`, `reminders`, `fuel-logs`, `attachments`, `vehicle-documents` (insurance/warranty), `analytics`, `reports`, and `exports` now filters via `vehicle: { members: { some: { userId } } }` instead of `vehicle: { userId }`. `VehiclesService.{getById, update}` route through `access.assert` (viewer / editor); `deleteVehicle` routes through `assertOwner`.
+- **Owner-only resources preserved:** `vehicle-loans` and `claims` (plus claim attachments and the loan branch of generic attachments) filter via `members: { some: { userId, role: 'owner' } }` so shared editors/viewers cannot read or mutate financial or insurance-claim data even on a shared vehicle.
+- **Vehicle creation now writes the owner membership row inside the same transaction** as `Vehicle.create`, so every freshly-created vehicle has a corresponding `VehicleMember` row from the moment it exists.
+- **Tests:** New `vehicle-access.service.spec.ts` exercises the role-rank matrix (resolve, assert at viewer/editor/owner, assertOwner, listAccessibleVehicleIds). Existing service specs updated to match the new membership-shaped `where` clauses; all 253 backend tests pass.
+- **Out of scope (lands in M12b/c):** invite issuance + accept flow, `GET/PATCH/DELETE` member endpoints, transfer-ownership, web "Members" surface, and the editor-vs-viewer mutation gate on nested resources (today every member is `owner` by backfill, so the distinction is not yet observable).
+
+### Milestone 11: Admin Tooling — Search + Force Logout (Complete)
+
+Goal: Give admins the minimum operational surface needed to investigate accounts and recover compromised sessions, without leaning on direct database access.
+
+- **API — search + pagination:** `AdminService.listUsers({ search, page, limit })` runs case-insensitive `contains` on `email` and `name`, paginates with default 25 / max 100, and returns a `meta` block (`page`, `limit`, `total`, `search`). Count + page query batched inside a single `$transaction`. DTO (`ListAdminUsersQueryDto`) validates ranges with `class-validator`.
+- **API — force logout:** `POST /admin/users/:userId/force-logout` clears the target's `refreshTokenHash`. Refresh tokens are rotated server-side on every refresh, so wiping the hash breaks the next refresh attempt — the user is forced back through full login. Wrapped in `prisma.$transaction` with an `admin.force_logout` audit event capturing `actorUserId` (the admin), `ownerUserId` (the target), and the before/after refresh-token-presence flag. Returns `{ userId, refreshTokenCleared }` so the UI can tell the admin whether there was an active session to begin with.
+- **Audit action namespace:** added `AUDIT_ACTIONS.admin.forceLogout = 'admin.force_logout'`. Resource type reuses the existing `user` audit resource type so the event surfaces in the target's own activity feed too.
+- **Shared schema:** `AdminUserListResponseSchema` gained the optional `meta` block; new `AdminForceLogoutResponseSchema` exported as `AdminForceLogoutResponse`.
+- **Web:** Admin users page rewritten — debounced search input (300 ms), `keepPreviousData` for smooth paging, `Previous`/`Next` controls that respect the server-reported `total`, and a per-row "Force logout" `ConfirmActionDialog` that hits the new endpoint and invalidates the entire `admin` query namespace on success. Empty-state copy distinguishes "no users yet" from "no matches for that search".
+- **Tests:** `admin.service.spec.ts` covers default pagination, search-clause shape, limit clamping, page→skip math, NotFound on missing user, refresh-token clearing + audit emission, and the "no active session" branch.
+
+### Milestone 10: Service Schedule Catalog (Complete)
+
+Goal: Stop asking users to invent every reminder from scratch — surface a generic recommended service schedule per vehicle and let them apply selected items as real reminders with one click.
+
+- **Static catalog:** `apps/api/src/modules/reminders/service-schedule-catalog.ts` defines ten generic items (engine oil, tyre rotation, brake inspection, coolant flush, air filter, 12 V battery check, EV high-voltage battery check, PUC, insurance, motorcycle chain lube) with `intervalKm` / `intervalMonths`, `appliesToFuel`, `appliesToVehicle`. `filterCatalogForVehicle(fuelType, vehicleType)` returns the applicable subset so EV owners never see oil-change suggestions and motorcycle-only items don't leak into car suggestions.
+- **API:** New `ServiceScheduleService` exposes `getSuggestions` (computes proposed `dueOdometer` from `vehicle.odometer + intervalKm`, proposed `dueDate` from today + `intervalMonths`, and flags `alreadyScheduled` for items already present as active reminders matched by title or by a `[catalog:slug]` marker in notes) and `applySuggestions` (bulk-creates reminders inside one `prisma.$transaction`, emits per-reminder audit events, rejects unknown / non-applicable slugs).
+- **Endpoints (under existing `RemindersController`):**
+  - `GET /vehicles/:vehicleId/service-schedule/suggestions` → `ServiceScheduleSuggestion[]`.
+  - `POST /vehicles/:vehicleId/service-schedule/apply` body `{ slugs: string[] }` → `{ created: string[] }`.
+- **Web:** `ServiceSchedulePanel` on the per-vehicle reminders page renders the suggestions list with checkbox selection, badges for already-scheduled items, interval + projected-next preview, and an "Add N reminders" button. Mutation invalidates `reminders.byVehicle`, `reminders.list`, and `reminders.scheduleSuggestions`. Shown both when reminders exist and on the empty state so brand-new vehicles get a one-click bootstrap.
+- **Tests:** `service-schedule.service.spec.ts` covers fuel-type filtering (EV vs petrol), dueOdometer math, `alreadyScheduled` flagging from existing reminders, the bulk-apply happy path with audit emission, and rejection of unknown slugs.
+
+### Milestone 9: Usage-Aware Reminder Projection (Complete)
+
+Goal: Turn km-based reminders into time-aware ones by projecting when the vehicle will actually hit `dueOdometer`, using its own fuel-log driving cadence.
+
+- **Cadence engine:** `apps/api/src/modules/reminders/usage-projection.ts` — pure helpers `computeUsageCadence(samples, asOf, windowDays)` and `projectDueDate(currentOdo, dueOdo, cadence, asOf)`. Cadence = km/day over a trailing 180-day fuel-log window, with confidence tiers (high ≥ 6 samples / 90 days, medium ≥ 3 / 30, low otherwise). Returns null when there is not enough recent data, so projection is silently absent rather than misleading.
+- **API integration:** `RemindersService` now batches fuel-log loads per vehicle (`loadCadenceMap` for list paths, `loadCadenceForVehicle` for single reads — no N+1) and folds `usageProjection` into every reminder response when `dueOdometer` is set and the reminder isn't completed. Projection block carries `projectedDueDate`, `kmPerDay`, `confidence`, `sampleCount`, `sampleDays`.
+- **Shared schema:** `ReminderSchema` gains an optional `UsageProjectionSchema` field; type `UsageProjection` exported alongside `Reminder` so web consumes it without extra typing.
+- **Web:** Reminder card shows a "Projected ~Aug 12" pill next to the due-date row when the projection is available, with a tooltip explaining the km/day rate, sample window, and confidence tier.
+- **Tests:** `usage-projection.spec.ts` covers empty / non-advancing / out-of-window / low / medium / high confidence cases and the projection math; existing `reminders.service.spec.ts` extended with a `fuelLog.findMany` mock so the cadence loader is exercised in the integration path.
+
+### Milestone 8: Resale Report (Complete)
+
+Goal: Give owners a buyer-facing PDF that discloses outstanding loan, insurance status, pending service items, and a document checklist — without leaking owner-only cost analytics.
+
+- **API:** `GET /vehicles/:vehicleId/resale-report.pdf?askingPrice=…` in `ReportsController`. New `ResaleReportService` loads vehicle, maintenance, fuel-log (km only), policies, claim count, vehicle loans + prepayments, and open reminders, then reuses `summarize()` from `vehicle-loans/amortization.ts` to disclose per-loan outstanding balance and remaining tenure.
+- **PDF sections:** Cover (vehicle + owner-since + distance + optional asking price) → Loan disclosure (active loans flagged amber with outstanding ₹ and EMI; closed loans noted with NOC availability) → Insurance (active policy + valid-until + lifetime claim count) → Open service items (overdue/due-today/upcoming reminders) → Document checklist (RC, active insurance, PUC, loan NOC — auto-checked from data) → Maintenance log (date, category, workshop, odometer; no costs).
+- **Privacy:** Owner-only fields suppressed — no cost-per-km, no fuel/maintenance totals, no insurer-paid amounts. Footer disclaimer states data is self-reported.
+- **Shared helpers:** Extracted `pdf-utils.ts` (`inr`, `intFmt`, `fmtDate`, `decimalToNumber`, `drawRow`, `drawKeyValue`) so `ServiceHistoryService` and `ResaleReportService` share formatting.
+- **Web:** "Download Resale Report (PDF)" entry in vehicle detail dropdown, next to the existing service-history download. Optional asking-price captured via prompt and forwarded as query param.
 
 ### Milestone 7: Vehicle Loans (Complete)
 

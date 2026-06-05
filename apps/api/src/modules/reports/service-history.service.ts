@@ -1,26 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
-
-const inr = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  maximumFractionDigits: 2,
-});
-
-const intFmt = new Intl.NumberFormat('en-IN');
-
-function fmtDate(d: Date | null | undefined): string {
-  if (!d) return '—';
-  return d.toISOString().slice(0, 10);
-}
-
-function decimalToNumber(d: Prisma.Decimal | null | undefined): number {
-  if (!d) return 0;
-  return Number(d.toString());
-}
+import { decimalToNumber, drawRow, fmtDate, inr, intFmt } from './pdf-utils';
 
 /**
  * Builds a printable Service History PDF for a single vehicle, covering
@@ -34,7 +16,7 @@ export class ServiceHistoryService {
 
   async buildPdf(userId: string, vehicleId: string): Promise<{ buffer: Buffer; fileName: string }> {
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { id: vehicleId, userId },
+      where: { id: vehicleId, members: { some: { userId } } },
     });
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
@@ -240,16 +222,3 @@ export class ServiceHistoryService {
   }
 }
 
-function drawRow(doc: PDFKit.PDFDocument, cells: string[], widths: number[]) {
-  const startX = doc.x;
-  const startY = doc.y;
-  let x = startX;
-  for (let i = 0; i < cells.length; i += 1) {
-    const w = widths[i] ?? 80;
-    doc.text(cells[i] ?? '', x, startY, { width: w - 4, ellipsis: true });
-    x += w;
-  }
-  // Reset to row start for next iteration; advance Y by the tallest line.
-  doc.x = startX;
-  doc.y = startY + 14;
-}

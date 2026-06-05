@@ -63,6 +63,8 @@ export const queryKeys = {
     list: () => [...queryKeys.reminders.all(), 'list'] as const,
     byVehicle: (vehicleId: string) => [...queryKeys.reminders.all(), 'vehicle', vehicleId] as const,
     detail: (reminderId: string) => [...queryKeys.reminders.all(), 'detail', reminderId] as const,
+    scheduleSuggestions: (vehicleId: string) =>
+      [...queryKeys.reminders.all(), 'schedule-suggestions', vehicleId] as const,
   },
   vehicleDocuments: {
     all: () => ['vehicleDocuments'] as const,
@@ -104,7 +106,15 @@ export const queryKeys = {
   },
   admin: {
     all: () => ['admin'] as const,
-    users: () => [...queryKeys.admin.all(), 'users'] as const,
+    users: (params?: { search?: string; page?: number; limit?: number }) =>
+      [...queryKeys.admin.all(), 'users', params ?? {}] as const,
+  },
+  vehicleSharing: {
+    all: () => ['vehicleSharing'] as const,
+    members: (vehicleId: string) =>
+      [...queryKeys.vehicleSharing.all(), 'members', vehicleId] as const,
+    invites: (vehicleId: string) =>
+      [...queryKeys.vehicleSharing.all(), 'invites', vehicleId] as const,
   },
   audit: {
     all: () => ['audit'] as const,

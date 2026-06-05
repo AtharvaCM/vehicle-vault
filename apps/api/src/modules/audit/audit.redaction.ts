@@ -27,6 +27,8 @@ export const REDACTED_FIELDS: Record<AuditResourceType, ReadonlySet<string>> = {
   [AuditResourceType.attachment]: new Set(['fileName']),
   [AuditResourceType.vehicle_loan]: new Set(['accountNumber']),
   [AuditResourceType.loan_prepayment]: new Set(),
+  [AuditResourceType.vehicle_member]: new Set(),
+  [AuditResourceType.vehicle_invite]: new Set(['tokenHash']),
 };
 
 const REDACTED_SENTINEL = '[redacted]';

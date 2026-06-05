@@ -27,6 +27,7 @@ import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { ExtractionService } from '../extraction/extraction.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
+import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 
 const MAINTENANCE_EXTRACTION_KIND = 'maintenance_invoice';
 
@@ -70,7 +71,17 @@ export class AttachmentsService {
     private readonly extractionService: ExtractionService,
     private readonly auditService: AuditService,
     private readonly vehicleLoansService: VehicleLoansService,
+    private readonly access: VehicleAccessService,
   ) {}
+
+  private async assertEditorOnMaintenanceRecord(userId: string, recordId: string) {
+    const record = await this.prisma.maintenanceRecord.findUnique({
+      where: { id: recordId },
+      select: { vehicleId: true },
+    });
+    if (!record) throw new BadRequestException('Maintenance record not found');
+    await this.access.assertEditor(userId, record.vehicleId);
+  }
 
   getExtractionStatus() {
     return {
@@ -91,9 +102,7 @@ export class AttachmentsService {
     const attachments = await this.prisma.attachment.findMany({
       where: {
         maintenanceRecord: {
-          vehicle: {
-            userId,
-          },
+          vehicle: { members: { some: { userId } } },
         },
       },
       include: attachmentInclude,
@@ -305,9 +314,7 @@ export class AttachmentsService {
         },
         maintenanceRecordId: recordId,
         maintenanceRecord: {
-          vehicle: {
-            userId,
-          },
+          vehicle: { members: { some: { userId } } },
         },
       },
       include: attachmentInclude,
@@ -449,6 +456,7 @@ export class AttachmentsService {
 
   async uploadAttachments(userId: string, recordId: string, files: AttachmentUploadFile[]) {
     await this.maintenanceService.getRecordById(userId, recordId);
+    await this.assertEditorOnMaintenanceRecord(userId, recordId);
 
     if (!files.length) {
       throw new BadRequestException('Add at least one attachment to upload.');
@@ -532,6 +540,10 @@ export class AttachmentsService {
 
   async deleteAttachment(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
+    if (attachment.maintenanceRecordId) {
+      await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
+    }
+    // Loan attachments stay owner-only via the upstream getStoredAttachmentById filter.
 
     await this.storageService.deleteObject(attachment.fileName);
 
@@ -557,9 +569,7 @@ export class AttachmentsService {
     const attachments = await this.prisma.attachment.findMany({
       where: {
         maintenanceRecord: {
-          vehicle: {
-            userId,
-          },
+          vehicle: { members: { some: { userId } } },
         },
       },
       select: {
@@ -585,9 +595,7 @@ export class AttachmentsService {
             in: missingAttachmentIds,
           },
           maintenanceRecord: {
-            vehicle: {
-              userId,
-            },
+            vehicle: { members: { some: { userId } } },
           },
         },
       });
@@ -612,8 +620,8 @@ export class AttachmentsService {
       where: {
         id: attachmentId,
         OR: [
-          { maintenanceRecord: { vehicle: { userId } } },
-          { vehicleLoan: { vehicle: { userId } } },
+          { maintenanceRecord: { vehicle: { members: { some: { userId } } } } },
+          { vehicleLoan: { vehicle: { members: { some: { userId, role: 'owner' } } } } },
         ],
       },
       include: attachmentInclude,

@@ -135,7 +135,7 @@ describe('InsuranceAdapter', () => {
 
       expect(prisma.insurancePolicy.findMany).toHaveBeenCalledWith({
         where: {
-          vehicle: { userId: 'user-1' },
+          vehicle: { members: { some: { userId: 'user-1' } } },
           endDate: { gte: from, lte: until },
         },
         orderBy: { endDate: 'asc' },

@@ -76,6 +76,17 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                 ) : (
                   <span>No date set</span>
                 )}
+                {reminder.status !== ReminderStatus.Completed && reminder.usageProjection ? (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span
+                      className="text-slate-500"
+                      title={`Based on ${reminder.usageProjection.kmPerDay.toFixed(1)} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs (${reminder.usageProjection.confidence} confidence)`}
+                    >
+                      Projected ~{formatDate(reminder.usageProjection.projectedDueDate)}
+                    </span>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>

@@ -32,6 +32,8 @@ import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-remi
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
+import { MembersTab } from '@/features/vehicle-sharing/components/members-tab';
+import { useCurrentUserRole } from '@/features/vehicle-sharing/hooks/use-sharing';
 import { AuditFeed } from '@/features/audit/components/audit-feed';
 import { useVehicleAudit } from '@/features/audit/hooks/use-vehicle-audit';
 import { OdometerForecastCard } from '../components/odometer-forecast-card';
@@ -44,6 +46,7 @@ import { ProtectionTab } from '../components/protection-tab';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
 
+import { downloadResaleReportPdf } from '../api/download-resale-report';
 import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
@@ -60,6 +63,8 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
   const auditQuery = useVehicleAudit(vehicleId);
+  const { role: currentUserRole } = useCurrentUserRole(vehicleId);
+  const isOwner = currentUserRole === 'owner';
   const deleteVehicleMutation = useDeleteVehicle();
   const vehicle = vehicleQuery.data ?? null;
   const serviceInsights = useMemo(
@@ -273,6 +278,46 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                     >
                       Download Service History (PDF)
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onSelect={async (event) => {
+                        event.preventDefault();
+                        const vehicle = vehicleQuery.data;
+                        if (!vehicle) return;
+                        const input = window.prompt(
+                          'Optional asking price (₹). Leave blank to omit.',
+                          '',
+                        );
+                        if (input === null) return;
+                        const trimmed = input.trim();
+                        const askingPrice = trimmed === '' ? undefined : Number(trimmed);
+                        if (askingPrice != null && (!Number.isFinite(askingPrice) || askingPrice < 0)) {
+                          appToast.error({
+                            title: 'Invalid asking price',
+                            description: 'Enter a positive number or leave blank.',
+                          });
+                          return;
+                        }
+                        try {
+                          await downloadResaleReportPdf(
+                            vehicle.id,
+                            vehicle.registrationNumber,
+                            askingPrice,
+                          );
+                          appToast.success({
+                            title: 'Resale report downloaded',
+                            description: 'Buyer-facing PDF saved.',
+                          });
+                        } catch (error) {
+                          appToast.error({
+                            title: 'Could not generate report',
+                            description: getApiErrorMessage(error),
+                          });
+                        }
+                      }}
+                    >
+                      Download Resale Report (PDF)
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-rose-600 focus:bg-rose-50 focus:text-rose-700 cursor-pointer"
@@ -348,11 +393,19 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
             >
               Protection
             </TabsTrigger>
+            {isOwner ? (
+              <TabsTrigger
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                value="loans"
+              >
+                Loans
+              </TabsTrigger>
+            ) : null}
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
-              value="loans"
+              value="members"
             >
-              Loans
+              Members
             </TabsTrigger>
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
@@ -510,11 +563,16 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           <TabsContent value="protection" className="animate-in fade-in duration-500">
             <ProtectionTab vehicleId={vehicleId} />
           </TabsContent>
-          <TabsContent value="loans" className="animate-in fade-in duration-500">
-            <VehicleLoansPanel
-              vehicleId={vehicleId}
-              vehicleLabel={`${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`}
-            />
+          {isOwner ? (
+            <TabsContent value="loans" className="animate-in fade-in duration-500">
+              <VehicleLoansPanel
+                vehicleId={vehicleId}
+                vehicleLabel={`${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`}
+              />
+            </TabsContent>
+          ) : null}
+          <TabsContent value="members" className="animate-in fade-in duration-500">
+            <MembersTab vehicleId={vehicleId} currentUserRole={currentUserRole} />
           </TabsContent>
           <TabsContent value="activity" className="animate-in fade-in duration-500">
             <Card className="border-slate-200/60 bg-white shadow-premium-sm">

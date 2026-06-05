@@ -94,7 +94,7 @@ describe('WarrantyAdapter', () => {
       // with no end date never expires and should not produce an alert.
       expect(prisma.warranty.findMany).toHaveBeenCalledWith({
         where: {
-          vehicle: { userId: 'user-1' },
+          vehicle: { members: { some: { userId: 'user-1' } } },
           endDate: { gte: from, lte: until },
         },
         orderBy: { endDate: 'asc' },

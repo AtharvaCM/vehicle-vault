@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/query-keys';
 
-import { getAdminUsers } from '../api/get-admin-users';
+import { getAdminUsers, type AdminUsersQueryParams } from '../api/get-admin-users';
 
-export function useAdminUsers() {
+export function useAdminUsers(params: AdminUsersQueryParams = {}) {
   return useQuery({
-    queryKey: queryKeys.admin.users(),
-    queryFn: getAdminUsers,
+    queryKey: queryKeys.admin.users(params),
+    queryFn: () => getAdminUsers(params),
+    placeholderData: keepPreviousData,
   });
 }
