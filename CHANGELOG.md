@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.4.0...v1.5.0) (2026-06-19)
+
+
+### Features
+
+* **vehicles:** shared vehicle access (M12) ([#41](https://github.com/AtharvaCM/vehicle-vault/issues/41)) ([b93df13](https://github.com/AtharvaCM/vehicle-vault/commit/b93df13a7efd928b8156757095ed44535e2ad14d)), closes [hi#voltage](https://github.com/hi/issues/voltage)
+
 # [1.4.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.3.0...v1.4.0) (2026-06-05)
 
 
