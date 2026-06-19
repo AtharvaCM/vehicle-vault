@@ -111,7 +111,27 @@ export function parseModelList(html: string, brandSlug: string): ScrapedModel[] 
     /\bsuv$/i,
     /^upcoming$/i,
     /\bupcoming\b/i,
+    // editorial / non-model labels CarWale uses as section headings
+    /^just\s+launched/i,
+    /^new\s+launches?/i,
+    /^old\s+generation/i,
+    /^unveiling/i,
+    /^coming\s+soon/i,
+    /^launched\s+on/i,
+    /^expected\s+launch/i,
+    /^view\b/i,
   ];
+
+  // Slugs that are clearly editorial section anchors, not model pages
+  const editorialSlugs = new Set([
+    'just-launched',
+    'new-launches',
+    'old-generation',
+    'upcoming',
+    'coming-soon',
+    'unveiling',
+    'view',
+  ]);
 
   // Current models — links like /{brand}-cars/{model}/
   $(`a[href*="/${brandSlug}-cars/"]`).each((_, el) => {
@@ -122,6 +142,7 @@ export function parseModelList(html: string, brandSlug: string): ScrapedModel[] 
 
       // Skip known non-model slugs
       if (skipSlugs.has(slug)) return;
+      if (editorialSlugs.has(slug)) return;
       if (slug.includes('price-in') || slug.includes('dealer')) return;
       if (seen.has(slug)) return;
 
@@ -132,7 +153,14 @@ export function parseModelList(html: string, brandSlug: string): ScrapedModel[] 
 
       // Skip entries that don't look like model names
       if (!name || name.length <= 1) return;
+      if (name.length > 40) return; // real model names stay short; long = editorial blurb
       if (skipPatterns.some((p) => p.test(name))) return;
+      // If brand name still appears mid-string after prefix-strip, it's a duplicate listing
+      // (e.g. "New Toyota Rumion" under the Toyota brand page)
+      const brandWords = brandSlug.split('-');
+      if (brandWords.some((bw) => bw.length > 2 && new RegExp(`\\b${bw}\\b`, 'i').test(name))) {
+        return;
+      }
       // Names in brackets like [2021-2023] are generation ranges, not models
       if (name.startsWith('[') || name.startsWith('(')) return;
       // Very short slugs are often fragments
@@ -171,7 +199,16 @@ export function parseModelList(html: string, brandSlug: string): ScrapedModel[] 
     }
   });
 
-  return models;
+  // Dedupe "New X" duplicates where a non-prefixed sibling exists
+  // (CarWale lists e.g. /toyota-cars/new-rumion/ alongside /toyota-cars/rumion/)
+  const slugSet = new Set(models.map((m) => m.slug));
+  const filtered = models.filter((m) => {
+    const stripped = m.slug.replace(/^(new|old|upcoming)-/, '');
+    if (stripped !== m.slug && slugSet.has(stripped)) return false;
+    return true;
+  });
+
+  return filtered;
 }
 
 /**
@@ -213,19 +250,33 @@ export function parseVariantList(html: string): ScrapedVariant[] {
 
       // Try to extract a clean variant name
       const variantName = text.replace(/^.*?\s+/, '').trim(); // Strip brand+model prefix
+      if (!variantName || variantName.length <= 1) return;
+      if (variantName.length > 60) return; // editorial prose, not a variant
+      if (variantName.includes('Price') || variantName.includes('Rs.')) return;
+      // Editorial prose markers
+      if (/\bBy\s+[A-Z]/.test(variantName)) return; // "...By Aditya Nadkarni..."
+      if (/\bReview\b/i.test(variantName)) return;
+      if (/\bFirst\s+(Drive|Look)\b/i.test(variantName)) return;
+      if (/\b20\d{2}\b/.test(variantName)) return; // year refs in copy
+      if (/[.!?]\s+[A-Z]/.test(variantName)) return; // multi-sentence
+      // Generic UI labels
+      if (/^(view|view\s+all|more|compare|read\s+more)$/i.test(variantName)) return;
+      // CarWale UI affordances mistaken for variants
+      if (/^360°/.test(variantName)) return; // "360° of X" image viewer button
+      if (/\bnews$/i.test(variantName)) return; // "X News" link to news page
+      if (/^news$/i.test(variantName)) return;
+      // Slugs that obviously aren't variants
       if (
-        variantName &&
-        variantName.length > 1 &&
-        !variantName.includes('Price') &&
-        !variantName.includes('Rs.')
-      ) {
-        seen.add(variantSlug);
-        variants.push({
-          name: variantName,
-          fuelType: null,
-          transmission: null,
-        });
-      }
+        ['news', 'reviews', 'overview', 'gallery', 'expert-reviews'].includes(variantSlug)
+      )
+        return;
+
+      seen.add(variantSlug);
+      variants.push({
+        name: variantName,
+        fuelType: null,
+        transmission: null,
+      });
     }
   });
 

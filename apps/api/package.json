@@ -37,6 +37,7 @@
     "catalog:import:volkswagen-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=volkswagen-india",
     "catalog:import:yamaha-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=yamaha-india",
     "catalog:sync-aliases": "ts-node --project tsconfig.json --transpile-only prisma/sync-catalog-aliases.ts",
+    "catalog:diff": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/diff-snapshots.ts",
     "catalog:scrape": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-carwale.ts",
     "catalog:seed-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/upsert-specs.ts",
     "catalog:scrape-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-specs.ts"
