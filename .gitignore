@@ -33,3 +33,6 @@ apps/api/uploads
 # Local Supabase CLI state
 apps/api/supabase/.temp
 apps/api/supabase/migrations/*_remote_schema.sql
+
+# Claude Code local config
+.claude/
