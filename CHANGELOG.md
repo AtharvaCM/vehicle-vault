@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.5.0...v1.6.0) (2026-06-19)
+
+
+### Features
+
+* **catalog:** tighten CarWale parser and refresh snapshots ([66c4900](https://github.com/AtharvaCM/vehicle-vault/commit/66c490041cc02d1527adf97a3fd726f22a4f505c))
+
 # [1.5.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.4.0...v1.5.0) (2026-06-19)
 
 
