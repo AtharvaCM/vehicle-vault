@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.6.0...v1.6.1) (2026-06-22)
+
+
+### Bug Fixes
+
+* **api:** use Supavisor transaction pooler and skip maintenance cron in dev ([ad58def](https://github.com/AtharvaCM/vehicle-vault/commit/ad58def145c5da3f90d6454fcacfb35a3b6bf63f))
+
 # [1.6.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.5.0...v1.6.0) (2026-06-19)
 
 
