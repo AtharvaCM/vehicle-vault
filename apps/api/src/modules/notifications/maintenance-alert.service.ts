@@ -133,6 +133,9 @@ export class MaintenanceAlertService {
    */
   @Cron(process.env.MAINTENANCE_ALERT_CRON || '0 6 * * *')
   async runDailyChecks() {
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
     this.logger.log('Starting daily maintenance alert checks...');
     const vehicles = await this.prisma.vehicle.findMany({
       select: { id: true },
