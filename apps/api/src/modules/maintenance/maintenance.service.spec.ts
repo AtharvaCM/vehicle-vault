@@ -122,6 +122,11 @@ describe('MaintenanceService', () => {
       storageService as never,
       auditService as never,
       { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
+      {
+        suggestCategory: vi.fn().mockResolvedValue(null),
+        searchByPrefix: vi.fn().mockResolvedValue([]),
+        recordObservation: vi.fn().mockResolvedValue(undefined),
+      } as never,
     );
   });
 

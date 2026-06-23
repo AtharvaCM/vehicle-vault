@@ -10,6 +10,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ExportsModule } from './modules/exports/exports.module';
 import { HealthModule } from './modules/health/health.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { MaintenancePartsModule } from './modules/maintenance-parts/maintenance-parts.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { UsersModule } from './modules/users/users.module';
 import { VehicleCatalogModule } from './modules/vehicle-catalog/vehicle-catalog.module';
@@ -41,6 +42,7 @@ import { VehicleSharingModule } from './modules/vehicle-sharing/vehicle-sharing.
     VehicleCatalogModule,
     VehiclesModule,
     MaintenanceModule,
+    MaintenancePartsModule,
     RemindersModule,
     FuelLogsModule,
     NotificationsModule,

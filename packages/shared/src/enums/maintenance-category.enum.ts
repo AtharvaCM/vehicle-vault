@@ -15,5 +15,11 @@ export enum MaintenanceCategory {
   Puncture = 'puncture',
   Insurance = 'insurance',
   Puc = 'puc',
+  BodyTrim = 'body_trim',
+  Lighting = 'lighting',
+  ElectricalRepair = 'electrical_repair',
+  Fasteners = 'fasteners',
+  Detailing = 'detailing',
+  BrakeService = 'brake_service',
   Other = 'other',
 }

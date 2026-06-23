@@ -18,6 +18,7 @@ import { SupabaseStorageService } from '../../common/storage/supabase-storage.se
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { MaintenancePartsService } from '../maintenance-parts/maintenance-parts.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
@@ -41,6 +42,7 @@ export class MaintenanceService {
     private readonly storageService: SupabaseStorageService,
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
+    private readonly parts: MaintenancePartsService,
   ) {}
 
   async getAllRecords(userId: string) {
@@ -101,6 +103,7 @@ export class MaintenanceService {
       ...payload,
       vehicleId,
     });
+    await this.enrichLineItemsFromCatalog(input.lineItems);
     const record = await this.prisma.$transaction(async (tx) => {
       const created = await tx.maintenanceRecord.create({
         data: this.toCreateMaintenanceData(input),
@@ -117,6 +120,7 @@ export class MaintenanceService {
       return created;
     });
 
+    await this.recordPartObservations(record.lineItems);
     return this.toMaintenanceRecord(record);
   }
 
@@ -169,13 +173,22 @@ export class MaintenanceService {
       }),
     );
 
-    await this.prisma.$transaction(
+    for (const input of inputs) {
+      await this.enrichLineItemsFromCatalog(input.lineItems);
+    }
+
+    const created = await this.prisma.$transaction(
       inputs.map((input) =>
         this.prisma.maintenanceRecord.create({
           data: this.toCreateMaintenanceData(input),
+          include: maintenanceRecordInclude,
         }),
       ),
     );
+
+    for (const record of created) {
+      await this.recordPartObservations(record.lineItems);
+    }
 
     return {
       count: inputs.length,
@@ -186,6 +199,7 @@ export class MaintenanceService {
     const before = await this.getOwnedMaintenanceRecord(userId, recordId);
     await this.access.assertEditor(userId, before.vehicleId);
     const input = this.validateUpdateMaintenanceInput(payload);
+    await this.enrichLineItemsFromCatalog(input.lineItems);
     const record = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.maintenanceRecord.update({
         where: { id: recordId },
@@ -204,6 +218,7 @@ export class MaintenanceService {
       return updated;
     });
 
+    await this.recordPartObservations(record.lineItems);
     return this.toMaintenanceRecord(record);
   }
 
@@ -295,6 +310,53 @@ export class MaintenanceService {
     }
 
     return result.data;
+  }
+
+  /**
+   * Fill in `normalizedCategory` for part line items the caller left blank or
+   * tagged as `other`, using suggestions from the part catalog. Mutates in
+   * place — cheaper than rebuilding the structure and the inputs are local.
+   */
+  private async enrichLineItemsFromCatalog(
+    lineItems:
+      | CreateMaintenanceRecordInput['lineItems']
+      | UpdateMaintenanceRecordInput['lineItems'],
+  ) {
+    if (!lineItems?.length) return;
+    for (const item of lineItems) {
+      if (item.kind !== MaintenanceLineItemKind.Part) continue;
+      if (item.normalizedCategory && item.normalizedCategory !== MaintenanceCategory.Other) {
+        continue;
+      }
+      const suggestion = await this.parts.suggestCategory(item.name, item.partNumber);
+      if (suggestion && suggestion.suggestedCategory !== MaintenanceCategory.Other) {
+        item.normalizedCategory = suggestion.suggestedCategory as MaintenanceCategory;
+      }
+    }
+  }
+
+  /**
+   * After a record is persisted, record each part observation back into the
+   * catalog so future entries inherit the user's classification. Fire-and-forget
+   * per item — failures are logged via console (no observability layer here yet)
+   * but never block the request.
+   */
+  private async recordPartObservations(
+    lineItems: MaintenanceRecordWithLineItems['lineItems'] | undefined,
+  ) {
+    if (!lineItems?.length) return;
+    await Promise.allSettled(
+      lineItems
+        .filter((item) => item.kind === 'part' && item.name?.trim())
+        .map((item) =>
+          this.parts.recordObservation({
+            name: item.name,
+            partNumber: item.partNumber,
+            brand: item.brand,
+            category: (item.normalizedCategory ?? null) as MaintenanceCategory | null,
+          }),
+        ),
+    );
   }
 
   private toCreateMaintenanceData(input: CreateMaintenanceRecordInput) {

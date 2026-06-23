@@ -44,6 +44,12 @@ enum MaintenanceCategory {
   puncture
   insurance
   puc
+  body_trim
+  lighting
+  electrical_repair
+  fasteners
+  detailing
+  brake_service
   other
 }
 
@@ -697,6 +703,26 @@ model Notification {
   @@index([userId, kind, createdAt(sort: Desc)])
 }
  
+// Global catalog of maintenance parts harvested from MaintenanceLineItem history.
+// Powers category suggestions for new line items so part names that previously
+// fell into "other" get classified correctly the next time anyone sees them.
+model MaintenancePartCatalog {
+  id                 String              @id @default(uuid()) @db.Uuid
+  nameNormalized     String              @db.VarChar(160)
+  partNumber         String?             @db.VarChar(80)
+  displayName        String              @db.VarChar(160)
+  brand              String?             @db.VarChar(80)
+  suggestedCategory  MaintenanceCategory
+  occurrences        Int                 @default(1)
+  lastSeenAt         DateTime            @default(now())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@unique([nameNormalized, partNumber])
+  @@index([suggestedCategory])
+  @@index([nameNormalized])
+}
+
 model ServiceInterval {
   id                String                @id @default(uuid()) @db.Uuid
   variantId         String                @db.Uuid
