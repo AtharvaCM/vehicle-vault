@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.6.1...v1.7.0) (2026-06-23)
+
+
+### Features
+
+* **maintenance:** part catalog + expanded categories ([4e9495c](https://github.com/AtharvaCM/vehicle-vault/commit/4e9495c015e4a9d5739ca6369d46cc9c396b1911))
+
 ## [1.6.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.6.0...v1.6.1) (2026-06-22)
 
 
