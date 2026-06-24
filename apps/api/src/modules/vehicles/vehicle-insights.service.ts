@@ -45,11 +45,15 @@ export class VehicleInsightsService {
       }),
     ]);
 
-    // Combine and sort all readings
+    // Combine and sort all readings. Entries with odometer <= 0 are treated as
+    // "unknown" placeholders (user didn't record the reading) and excluded so
+    // they don't poison the regression / last-reading lookup.
     const readings = [
       ...maintenanceRecords.map((r) => ({ date: r.serviceDate, odometer: r.odometer })),
       ...fuelLogs.map((f) => ({ date: f.date, odometer: f.odometer })),
-    ].sort((a, b) => a.date.getTime() - b.date.getTime());
+    ]
+      .filter((r) => r.odometer > 0)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // If no readings, return baseline using vehicle creation date
     if (readings.length === 0) {
