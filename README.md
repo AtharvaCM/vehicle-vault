@@ -148,6 +148,8 @@ For production, the web app should use:
 VITE_API_BASE_URL=https://vehiclevault.middle-earth.in/api
 ```
 
+This variable is required in production. The web build no longer falls back to a hardcoded API host, because that can silently point a new deployment at the wrong backend/database.
+
 Useful frontend env files:
 
 - `apps/web/.env.example` for local development
