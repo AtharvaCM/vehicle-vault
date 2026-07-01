@@ -87,6 +87,10 @@ describe('VehiclesService', () => {
       storageService as never,
       auditService as never,
       accessService as never,
+      {
+        findMatchingVariantId: vi.fn().mockResolvedValue(null),
+        resolveCatalogLink: vi.fn().mockResolvedValue({ variantId: null, generationId: null }),
+      } as never,
     );
   });
 
