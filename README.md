@@ -189,6 +189,8 @@ If you want preview deployments to work without editing CORS each time, set `FRO
 - `pnpm db:deploy` applies checked-in Prisma migrations.
 - `pnpm db:studio` opens Prisma Studio against the configured database.
 - `pnpm catalog:import:all` stages the approved India catalog source snapshots for in-app review.
+- `pnpm catalog:seed-specs` upserts curated variant specifications for high-traffic car, SUV, EV, and motorcycle variants.
+- `pnpm catalog:audit -- --json` reports make/model/generation/variant and spec coverage against the configured database.
 - `pnpm catalog:sync-aliases` backfills curated alias rows onto the published vehicle catalog.
 
 ## Notes
@@ -199,7 +201,7 @@ If you want preview deployments to work without editing CORS each time, set `FRO
 - The API uses Prisma + PostgreSQL, while uploaded receipt files now use Supabase Storage with metadata kept in Postgres.
 - Vehicle make/model/variant search is now backed by a Prisma catalog. The app ships with a curated India-first seed, plus generation-aware and year-aware offering support so the catalog can expand to more markets later without changing the core vehicle form flow.
 - The published vehicle catalog also stores curated aliases so messy real-world labels such as `i20 Sportz`, `Polo GT TSI`, `Old Swift ZXI`, and `FZ V3` can still resolve to the canonical catalog rows during vehicle entry.
-- Approved India import sources now include Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Kia, Toyota, Renault, Volkswagen, Skoda, Royal Enfield, Bajaj, Hero, TVS, and Yamaha via `pnpm catalog:import:all`. The dataset now also carries common older India-market generations for vehicles like Creta, Swift, Nexon, Seltos, Sonet, Fortuner, Innova Crysta, Duster, Polo, Rapid, Pulsar NS200, Apache RR 310, and R15. Imports stage source snapshots and review diffs first; publishing into the trusted catalog happens from the in-app catalog review surface.
+- Approved India import sources now include Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Honda two-wheelers, Kia, Toyota, Renault, Volkswagen, Skoda, Royal Enfield, Bajaj, Hero, TVS, Yamaha, BYD, Citroen, Force Motors, Isuzu, Jeep, MG, and Nissan via `pnpm catalog:import:all`. The dataset now also carries common older India-market generations for vehicles like Creta, Swift, Nexon, Nexon EV, Atto 3, ZS EV, Seltos, Sonet, Fortuner, Innova Crysta, Duster, Polo, Rapid, Pulsar NS200, Apache RR 310, Classic 350, and R15. Imports stage source snapshots and review diffs first; publishing into the trusted catalog happens from the in-app catalog review surface.
 - Auth supports email/password sign-in, refresh-token rotation, SMTP-backed password reset emails, and password reset request/confirm flows. Email verification and OAuth are still deferred.
 - Vehicles own the rest of the data model. Maintenance records, reminders, dashboard summary, and attachments are all scoped through the authenticated user's vehicles.
 - Background jobs, OCR, and notification delivery are intentionally deferred.

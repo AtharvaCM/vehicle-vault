@@ -2,6 +2,7 @@
  * Upsert vehicle catalog variant specs.
  *
  * Usage:
+ *   pnpm catalog:seed-specs
  *   ts-node prisma/catalog-import/scraper/upsert-specs.ts --file=specs.json
  *
  * The JSON file should contain an array of spec objects matching the schema fields,
@@ -48,6 +49,34 @@ type SpecInput = {
   wheelSizeInch?: number;
   airbagCount?: number;
   safetyFeatures?: string;
+  ncapStarsAdult?: number;
+  ncapStarsChild?: number;
+  ncapRegion?: string;
+  hasAbs?: boolean;
+  hasEsc?: boolean;
+  hasTpms?: boolean;
+  hasHillHoldAssist?: boolean;
+  isofixPoints?: number;
+  adasFeatures?: string;
+  batteryKwh?: number;
+  rangeKm?: number;
+  motorKw?: number;
+  acChargeKw?: number;
+  dcFastChargeKw?: number;
+  chargeTime0To80Min?: number;
+  batteryChemistry?: string;
+  gearCount?: number;
+  coolingType?: string;
+  frameType?: string;
+  seatHeightMm?: number;
+  brakeFrontType?: string;
+  brakeRearType?: string;
+  absChannels?: number;
+  payloadKg?: number;
+  gvwKg?: number;
+  cargoVolumeL?: number;
+  towingCapacityKg?: number;
+  axleConfig?: string;
   sourceName?: string;
 };
 
@@ -262,7 +291,7 @@ function getSeedSpecs(): SpecInput[] {
     {
       make: 'Tata',
       model: 'Nexon',
-      variant: 'XZ+ P',
+      variant: 'Creative Plus (PS)',
       engineCc: 1199,
       engineCyl: 3,
       engineType: 'Inline',
@@ -298,7 +327,7 @@ function getSeedSpecs(): SpecInput[] {
     {
       make: 'Maruti Suzuki',
       model: 'Brezza',
-      variant: 'ZXi+',
+      variant: 'ZXi Plus',
       engineCc: 1462,
       engineCyl: 4,
       engineType: 'Inline',
@@ -334,7 +363,7 @@ function getSeedSpecs(): SpecInput[] {
     {
       make: 'Mahindra',
       model: 'Thar Roxx',
-      variant: 'MX5',
+      variant: 'Roxx MX5',
       engineCc: 2184,
       engineCyl: 4,
       engineType: 'Inline',
@@ -365,6 +394,207 @@ function getSeedSpecs(): SpecInput[] {
       safetyFeatures:
         '["ABS","EBD","ESC","Hill Hold","Hill Descent","TPMS","ISOFIX","6 Airbags","Rear Parking Camera"]',
       sourceName: 'carwale-seed',
+    },
+    // EVs
+    {
+      make: 'Tata',
+      model: 'Nexon EV',
+      variant: 'EV Empowered Plus A',
+      engineFuel: 'Electric',
+      transmission: 'Single-speed automatic',
+      driveType: 'FWD',
+      lengthMm: 3994,
+      widthMm: 1811,
+      heightMm: 1616,
+      wheelbaseMm: 2498,
+      bootSpaceLitres: 350,
+      groundClearanceMm: 205,
+      rangeKm: 465,
+      batteryKwh: 40.5,
+      motorKw: 106.4,
+      acChargeKw: 7.2,
+      chargeTime0To80Min: 56,
+      seatingCapacity: 5,
+      bodyType: 'SUV',
+      doors: 4,
+      tyreSize: '215/60 R16',
+      wheelType: 'Alloy',
+      wheelSizeInch: 16,
+      airbagCount: 6,
+      hasAbs: true,
+      hasEsc: true,
+      hasTpms: true,
+      isofixPoints: 2,
+      safetyFeatures: '["ABS","EBD","ESC","TPMS","ISOFIX","6 Airbags","360° Camera","Hill Hold"]',
+      sourceName: 'curated-seed',
+    },
+    {
+      make: 'BYD',
+      model: 'Atto 3',
+      variant: '3 Superior',
+      engineFuel: 'Electric',
+      transmission: 'Single-speed automatic',
+      driveType: 'FWD',
+      lengthMm: 4455,
+      widthMm: 1875,
+      heightMm: 1615,
+      wheelbaseMm: 2720,
+      bootSpaceLitres: 440,
+      rangeKm: 521,
+      batteryKwh: 60.48,
+      motorKw: 150,
+      acChargeKw: 7,
+      dcFastChargeKw: 80,
+      chargeTime0To80Min: 50,
+      batteryChemistry: 'LFP',
+      seatingCapacity: 5,
+      bodyType: 'SUV',
+      doors: 4,
+      tyreSize: '215/55 R18',
+      wheelType: 'Alloy',
+      wheelSizeInch: 18,
+      airbagCount: 7,
+      ncapStarsAdult: 5,
+      ncapRegion: 'Euro NCAP',
+      hasAbs: true,
+      hasEsc: true,
+      hasTpms: true,
+      isofixPoints: 2,
+      adasFeatures: '["AEB","Adaptive Cruise Control","Lane Keep Assist","Blind Spot Monitoring"]',
+      safetyFeatures: '["ABS","EBD","ESC","TPMS","ISOFIX","7 Airbags","ADAS","360° Camera"]',
+      sourceName: 'curated-seed',
+    },
+    {
+      make: 'MG',
+      model: 'ZS EV',
+      variant: 'EV Exclusive Plus',
+      engineFuel: 'Electric',
+      transmission: 'Single-speed automatic',
+      driveType: 'FWD',
+      lengthMm: 4323,
+      widthMm: 1809,
+      heightMm: 1649,
+      wheelbaseMm: 2585,
+      bootSpaceLitres: 448,
+      rangeKm: 461,
+      batteryKwh: 50.3,
+      motorKw: 130,
+      dcFastChargeKw: 50,
+      chargeTime0To80Min: 60,
+      seatingCapacity: 5,
+      bodyType: 'SUV',
+      doors: 4,
+      tyreSize: '215/55 R17',
+      wheelType: 'Alloy',
+      wheelSizeInch: 17,
+      airbagCount: 6,
+      hasAbs: true,
+      hasEsc: true,
+      hasTpms: true,
+      isofixPoints: 2,
+      safetyFeatures: '["ABS","EBD","ESC","TPMS","ISOFIX","6 Airbags","360° Camera"]',
+      sourceName: 'curated-seed',
+    },
+    // Motorcycles
+    {
+      make: 'Royal Enfield',
+      model: 'Classic 350',
+      variant: 'Dark',
+      engineCc: 349,
+      engineCyl: 1,
+      engineType: 'Single-cylinder',
+      engineFuel: 'Petrol',
+      powerPs: 20.2,
+      powerRpm: 6100,
+      torqueNm: 27,
+      torqueRpm: 4000,
+      transmission: '5-speed MT',
+      gearCount: 5,
+      coolingType: 'air-oil-cooled',
+      frameType: 'Twin downtube spine frame',
+      lengthMm: 2145,
+      widthMm: 785,
+      heightMm: 1090,
+      wheelbaseMm: 1390,
+      kerbWeightKg: 195,
+      groundClearanceMm: 170,
+      seatHeightMm: 805,
+      fuelCapLitres: 13,
+      mileageCombined: 35,
+      bodyType: 'Cruiser',
+      tyreSize: '100/90-19 front, 120/80-18 rear',
+      brakeFrontType: 'Disc',
+      brakeRearType: 'Disc',
+      hasAbs: true,
+      absChannels: 2,
+      sourceName: 'curated-seed',
+    },
+    {
+      make: 'Yamaha',
+      model: 'R15',
+      variant: 'M',
+      engineCc: 155,
+      engineCyl: 1,
+      engineType: 'Single-cylinder VVA',
+      engineFuel: 'Petrol',
+      powerPs: 18.4,
+      powerRpm: 10000,
+      torqueNm: 14.2,
+      torqueRpm: 7500,
+      transmission: '6-speed MT',
+      gearCount: 6,
+      coolingType: 'liquid-cooled',
+      frameType: 'Deltabox',
+      lengthMm: 1990,
+      widthMm: 725,
+      heightMm: 1135,
+      wheelbaseMm: 1325,
+      kerbWeightKg: 142,
+      groundClearanceMm: 170,
+      seatHeightMm: 815,
+      fuelCapLitres: 11,
+      mileageCombined: 45,
+      topSpeedKph: 140,
+      bodyType: 'Sport',
+      tyreSize: '100/80-17 front, 140/70-17 rear',
+      brakeFrontType: 'Disc',
+      brakeRearType: 'Disc',
+      hasAbs: true,
+      absChannels: 2,
+      sourceName: 'curated-seed',
+    },
+    {
+      make: 'Bajaj',
+      model: 'Pulsar NS200',
+      variant: 'Dual Channel ABS',
+      engineCc: 199.5,
+      engineCyl: 1,
+      engineType: 'Single-cylinder',
+      engineFuel: 'Petrol',
+      powerPs: 24.5,
+      powerRpm: 9750,
+      torqueNm: 18.74,
+      torqueRpm: 8000,
+      transmission: '6-speed MT',
+      gearCount: 6,
+      coolingType: 'liquid-cooled',
+      frameType: 'Perimeter frame',
+      lengthMm: 2017,
+      widthMm: 804,
+      heightMm: 1075,
+      wheelbaseMm: 1363,
+      kerbWeightKg: 158,
+      groundClearanceMm: 168,
+      seatHeightMm: 805,
+      fuelCapLitres: 12,
+      mileageCombined: 36,
+      bodyType: 'Street',
+      tyreSize: '100/80-17 front, 130/70-17 rear',
+      brakeFrontType: 'Disc',
+      brakeRearType: 'Disc',
+      hasAbs: true,
+      absChannels: 2,
+      sourceName: 'curated-seed',
     },
   ];
 }
