@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.8.0...v1.9.0) (2026-07-01)
+
+
+### Features
+
+* **catalog:** expand vehicle spec coverage ([c168c3b](https://github.com/AtharvaCM/vehicle-vault/commit/c168c3b4c545ae05ddaa34739b5393e0c7f4dae3))
+
 # [1.8.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.7.0...v1.8.0) (2026-07-01)
 
 
