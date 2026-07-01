@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.9.0...v1.10.0) (2026-07-01)
+
+
+### Features
+
+* **catalog:** expand motorcycle coverage ([8021701](https://github.com/AtharvaCM/vehicle-vault/commit/80217018806d224adff643bf1764590e6b97f6f0))
+
 # [1.9.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.8.0...v1.9.0) (2026-07-01)
 
 
