@@ -15,12 +15,12 @@
  */
 import puppeteer, { type Page } from 'puppeteer';
 import { PrismaClient } from '@prisma/client';
-import { readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 const prisma = new PrismaClient();
 
-// CarWale data-itemid → our internal field mapping
+// CarWale data-itemid → our internal field mapping.
+// Add itemids for new nuance fields here as they are discovered on CarWale spec
+// pages (inspect element on a variant page → data-itemid attribute on the row).
 const SPEC_ITEM_MAP: Record<string, string> = {
   '1706': '_mileage',
   '484': '_engine',
@@ -42,7 +42,42 @@ const SPEC_ITEM_MAP: Record<string, string> = {
   '516': '_rearTyres',
   '1648': '_wheelType',
   '643': '_airbags',
+  '703': '_ncapRating',
+  // Free-text matchers below cover the rest (NCAP / EV / motorcycle / commercial).
 };
+
+// Regex-driven fallback. CarWale (and most sources) render a label + value block;
+// we scrape the whole "specifications" section into a single blob and pattern-match.
+// Keyed by ParsedSpec field, value is a list of regexes; first match wins.
+const TEXT_PATTERNS: Array<{ field: keyof ParsedSpec; pattern: RegExp; transform?: (m: RegExpMatchArray) => unknown }> = [
+  // Safety — NCAP
+  { field: 'ncapStarsAdult', pattern: /(\d)\s*star[^.\n]*adult/i, transform: (m) => +m[1] },
+  { field: 'ncapStarsChild', pattern: /(\d)\s*star[^.\n]*child/i, transform: (m) => +m[1] },
+  { field: 'ncapRegion', pattern: /(global\s*ncap|bharat\s*ncap|euro\s*ncap|asean\s*ncap)/i, transform: (m) => m[1].replace(/\s+/g, ' ').toLowerCase() },
+  { field: 'isofixPoints', pattern: /isofix[^0-9]{0,30}(\d+)/i, transform: (m) => +m[1] },
+  // Boolean safety flags intentionally not regex-matched: full-page text on
+  // CarWale variant pages includes comparison/related blocks, which yields
+  // false positives. Populate from per-variant feature lists once a stable
+  // selector is identified.
+  // EV / Hybrid
+  { field: 'batteryKwh', pattern: /([\d.]+)\s*kwh/i, transform: (m) => +m[1] },
+  { field: 'rangeKm', pattern: /(?:range|certified range|claimed range)[^0-9]{0,30}(\d{2,4})\s*km/i, transform: (m) => +m[1] },
+  { field: 'motorKw', pattern: /motor[^0-9]{0,30}([\d.]+)\s*kw/i, transform: (m) => +m[1] },
+  { field: 'dcFastChargeKw', pattern: /(?:dc\s*fast|fast\s*charg)[^0-9]{0,30}([\d.]+)\s*kw/i, transform: (m) => +m[1] },
+  { field: 'acChargeKw', pattern: /(?:ac\s*charg|onboard\s*charg)[^0-9]{0,30}([\d.]+)\s*kw/i, transform: (m) => +m[1] },
+  { field: 'chargeTime0To80Min', pattern: /0\s*-\s*80%[^0-9]{0,20}(\d{1,3})\s*min/i, transform: (m) => +m[1] },
+  { field: 'batteryChemistry', pattern: /\b(lfp|nmc|ncm|lithium[-\s]?ion|li[-\s]?ion)\b/i, transform: (m) => m[1].toLowerCase() },
+  // Motorcycle
+  { field: 'gearCount', pattern: /(\d)\s*[-\s]?speed|gearbox[^0-9]{0,20}(\d)/i, transform: (m) => +(m[1] || m[2]) },
+  { field: 'coolingType', pattern: /(liquid|oil|air)\s*[-\s]?cooled/i, transform: (m) => `${m[1].toLowerCase()}-cooled` },
+  { field: 'seatHeightMm', pattern: /seat\s*height[^0-9]{0,20}(\d{3,4})\s*mm/i, transform: (m) => +m[1] },
+  { field: 'absChannels', pattern: /(single|dual|2[-\s]?channel)\s*abs/i, transform: (m) => (/dual|2/i.test(m[1]) ? 2 : 1) },
+  // Commercial
+  { field: 'payloadKg', pattern: /payload[^0-9]{0,20}([\d,]+)\s*kg/i, transform: (m) => +m[1].replace(/,/g, '') },
+  { field: 'gvwKg', pattern: /(?:gvw|gross vehicle weight)[^0-9]{0,20}([\d,]+)\s*kg/i, transform: (m) => +m[1].replace(/,/g, '') },
+  { field: 'towingCapacityKg', pattern: /towing[^0-9]{0,20}([\d,]+)\s*kg/i, transform: (m) => +m[1].replace(/,/g, '') },
+  { field: 'cargoVolumeL', pattern: /cargo\s*(?:vol|capacity)[^0-9]{0,20}([\d,]+)\s*(?:l|litres)/i, transform: (m) => +m[1].replace(/,/g, '') },
+];
 
 type RawSpecData = Record<string, string>;
 
@@ -72,6 +107,38 @@ type ParsedSpec = {
   tyreSize?: string;
   wheelType?: string;
   airbagCount?: number;
+  // Safety nuance
+  ncapStarsAdult?: number;
+  ncapStarsChild?: number;
+  ncapRegion?: string;
+  hasAbs?: boolean;
+  hasEsc?: boolean;
+  hasTpms?: boolean;
+  hasHillHoldAssist?: boolean;
+  isofixPoints?: number;
+  adasFeatures?: string;
+  // EV / Hybrid
+  batteryKwh?: number;
+  rangeKm?: number;
+  motorKw?: number;
+  acChargeKw?: number;
+  dcFastChargeKw?: number;
+  chargeTime0To80Min?: number;
+  batteryChemistry?: string;
+  // Motorcycle
+  gearCount?: number;
+  coolingType?: string;
+  frameType?: string;
+  seatHeightMm?: number;
+  brakeFrontType?: string;
+  brakeRearType?: string;
+  absChannels?: number;
+  // Commercial
+  payloadKg?: number;
+  gvwKg?: number;
+  cargoVolumeL?: number;
+  towingCapacityKg?: number;
+  axleConfig?: string;
 };
 
 // ─── Scrape a single spec page ──────────────────────────────────────────────
@@ -118,6 +185,20 @@ async function scrapeVariantSpecs(page: Page, url: string): Promise<RawSpecData>
       if (rest) specs[field] = rest;
     }
 
+    // Capture full page text for regex fallback matching of nuance fields
+    // (NCAP, EV, motorcycle, commercial). CarWale renders these inline in the
+    // main content area; selectors targeting narrow "specification" sections
+    // miss them. Take the longest of a few candidates.
+    const candidates: string[] = [];
+    for (const sel of ['main', '#main', 'body']) {
+      const node = document.querySelector(sel);
+      const text = node?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (text) candidates.push(text);
+    }
+    if (candidates.length > 0) {
+      specs._fullText = candidates.reduce((a, b) => (b.length > a.length ? b : a));
+    }
+
     return specs;
   }, SPEC_ITEM_MAP);
 }
@@ -155,21 +236,41 @@ async function extractVariantUrls(
 
         if (linkRegex.test(pathname) && !seenUrls.has(fullUrl)) {
           const slug = pathname.split('/').filter(Boolean).pop() || '';
-          if (
-            [
-              'price-in',
-              'images',
-              'videos',
-              'compare',
-              'colours',
-              'mileage',
-              'specifications',
-              'features',
-              'emi-calculator',
-            ].includes(slug)
-          ) {
-            return;
-          }
+          // Exact-slug junk that lives under /<make>-cars/<model>/<slug>/.
+          const EXACT_JUNK = new Set([
+            'images',
+            'videos',
+            'compare',
+            'colours',
+            'mileage',
+            'specifications',
+            'features',
+            'emi-calculator',
+            '360-view',
+            'reviews',
+            'expert-reviews',
+            'user-reviews',
+            'news',
+            'photos',
+            'service-cost',
+            'service-centres',
+            'on-road-price',
+            'road-test',
+            'similar-cars',
+            'used-cars',
+            'comparison',
+          ]);
+          // Prefix-based junk (city-specific pages and aggregator slugs).
+          const isJunkPrefix =
+            slug.startsWith('price-in-') ||
+            slug.startsWith('on-road-price-in-') ||
+            slug.startsWith('emi-in-') ||
+            slug.startsWith('user-reviews-') ||
+            slug.startsWith('expert-reviews-') ||
+            slug.startsWith('compare-with-') ||
+            slug.startsWith('similar-to-') ||
+            slug.includes('-vs-');
+          if (EXACT_JUNK.has(slug) || isJunkPrefix) return;
 
           const rawText = el.textContent?.trim() || '';
           const name = rawText.replace(/^.*?(?:\r?\n|\s{2,})/, '').trim();
@@ -278,6 +379,31 @@ function parseRawSpecs(raw: RawSpecData): ParsedSpec {
   if (raw._frontTyres) s.tyreSize = raw._frontTyres.trim();
   if (raw._wheelType) s.wheelType = raw._wheelType.trim();
 
+  // NCAP rating value is itself the descriptive label, e.g.
+  //   "NCAP Rating (Not Tested)"
+  //   "NCAP Rating (5 Star Global NCAP, Adult)"
+  //   "5 Star Global NCAP (Adult & Child)"
+  // Extract stars + region; skip "Not Tested".
+  if (raw._ncapRating && !/not\s*tested/i.test(raw._ncapRating)) {
+    const adult = raw._ncapRating.match(/(\d)\s*star[^a-z]*(?:adult|global|bharat|euro|asean)/i);
+    if (adult) s.ncapStarsAdult = +adult[1];
+    const child = raw._ncapRating.match(/(\d)\s*star[^a-z]*child/i);
+    if (child) s.ncapStarsChild = +child[1];
+    const region = raw._ncapRating.match(/(global|bharat|euro|asean)\s*ncap/i);
+    if (region) s.ncapRegion = `${region[1].toLowerCase()} ncap`;
+  }
+
+  // Full-page regex fallback disabled: scraping over the entire main element
+  // catches comparison/related-variant blocks and produces false positives
+  // (e.g. petrol cars mis-flagged with battery kWh values from a recommended
+  // EV card). NCAP is now extracted via data-itemid 703 above. For ABS / ESP
+  // / hill-hold / ISOFIX / ADAS the variant page only encodes presence via a
+  // CSS class on an SVG icon (e.g. o-k3 = yes, o-k5 = no), which is too
+  // brittle to depend on. Future work: detect class pairs per snapshot run
+  // and translate to booleans.
+  void TEXT_PATTERNS;
+  void raw._fullText;
+
   return s;
 }
 
@@ -289,20 +415,39 @@ function hasData(spec: ParsedSpec): boolean {
 
 async function main() {
   const args = parseArgs();
-  const sourcesDir = resolve(__dirname, '../sources');
 
   console.log('🔬 CarWale Spec Scraper (Puppeteer — robust variant extraction)');
   console.log('================================================================');
 
-  const snapshotFiles = readdirSync(sourcesDir).filter(
-    (f) => f.endsWith('.snapshot.ts') && f.includes('-india'),
-  );
+  // Iterate the catalog DB directly instead of snapshot files. Snapshot files
+  // historically determined which models were scraped, but catalog models can
+  // outnumber what any single snapshot file lists (e.g. Honda Elevate is in
+  // the honda-cars snapshot, but Honda models also live in the broader honda
+  // file). Driving from the DB picks up every car/SUV model that has a CarWale
+  // sourceUrl.
+  const dbMakes = await prisma.vehicleCatalogMake.findMany({
+    where: {
+      vehicleType: { in: ['car', 'suv'] },
+      ...(args.brand
+        ? {
+            OR: [
+              { slug: args.brand },
+              { name: { equals: args.brand, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      models: {
+        include: {
+          generations: { include: { variants: { include: { spec: true } } } },
+        },
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
 
-  const filteredFiles = args.brand
-    ? snapshotFiles.filter((f) => f.startsWith(args.brand!))
-    : snapshotFiles;
-
-  console.log(`📂 ${filteredFiles.length} snapshot file(s) to process\n`);
+  console.log(`📂 ${dbMakes.length} make(s) to process\n`);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -319,121 +464,100 @@ async function main() {
   let totalUpserted = 0;
   let totalFailed = 0;
 
-  for (const file of filteredFiles) {
-    const brandSlug = file.replace('-india.snapshot.ts', '');
-    console.log(`🏭 ${brandSlug}`);
+  for (const make of dbMakes) {
+    console.log(`🏭 ${make.name} (${make.vehicleType})`);
 
-    const snapshotModule = await import(resolve(sourcesDir, file));
-    const snapshotKey = Object.keys(snapshotModule)[0];
-    const snapshot = snapshotModule[snapshotKey];
+    for (const model of make.models) {
+      if (!model.sourceUrl) continue;
+      totalModels++;
 
-    if (!snapshot?.dataset) {
-      console.log(`   ⚠️  No dataset, skipping`);
-      continue;
-    }
+      const modelUrl = model.sourceUrl.replace(/\/$/, '') + '/';
+      console.log(`   🚗 ${make.name} ${model.name}`);
 
-    for (const makeData of snapshot.dataset) {
-      for (const model of makeData.models) {
-        if (!model.sourceUrl) continue;
-        totalModels++;
+      const extractedVariants = await extractVariantUrls(page, modelUrl);
+      if (extractedVariants.length === 0) {
+        console.log(`      ⚠️  Could not find variant links on model page`);
+        await sleep(200);
+        continue;
+      }
 
-        const modelUrl = model.sourceUrl.replace(/\/$/, '') + '/';
-        console.log(`   🚗 ${makeData.name} ${model.name}`);
+      console.log(`      🔗 Found ${extractedVariants.length} variant links`);
 
-        // 1. Get exact variant URLs from the model page
-        const extractedVariants = await extractVariantUrls(page, modelUrl);
-        if (extractedVariants.length === 0) {
-          console.log(`      ⚠️  Could not find variant links on model page`);
-          await sleep(200);
-          continue;
+      const dbVariants = model.generations
+        .flatMap((g) => g.variants)
+        .map((v) => ({ ...v }));
+
+      const claimedIds = new Set<string>();
+
+      for (const ev of extractedVariants) {
+        totalVariantsTested++;
+
+        const evSlug = ev.url.split('/').filter(Boolean).pop() ?? '';
+        const evSlugNorm = evSlug.replace(/-/g, '');
+        const evNameNorm = ev.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        let dbVariant = dbVariants.find((v) => v.slug === evSlug && !claimedIds.has(v.id));
+
+        if (!dbVariant) {
+          const candidates = dbVariants
+            .filter((v) => !claimedIds.has(v.id))
+            .map((v) => {
+              const vSlugNorm = v.slug.replace(/-/g, '');
+              const vNameNorm = v.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+              let score = 0;
+              if (vSlugNorm === evSlugNorm) score = 100;
+              else if (vNameNorm === evNameNorm) score = 90;
+              else if (vNameNorm && evNameNorm.startsWith(vNameNorm)) score = 60 + vNameNorm.length;
+              else if (vNameNorm && evNameNorm.endsWith(vNameNorm)) score = 50 + vNameNorm.length;
+              else if (vNameNorm && evNameNorm.includes(vNameNorm)) score = 30 + vNameNorm.length;
+              else if (evSlugNorm && vNameNorm.includes(evSlugNorm)) score = 20 + evSlugNorm.length;
+              return { v, score };
+            })
+            .filter((x) => x.score > 0)
+            .sort((a, b) => b.score - a.score);
+          dbVariant = candidates[0]?.v;
         }
 
-        console.log(`      🔗 Found ${extractedVariants.length} variant links`);
+        if (dbVariant) claimedIds.add(dbVariant.id);
+        if (!dbVariant) continue;
+        if (dbVariant.spec && !args.force) continue;
 
-        // Get DB variants for this model
-        const dbVariants = await prisma.vehicleCatalogVariant.findMany({
-          where: {
-            generation: {
-              model: {
-                name: { equals: model.name, mode: 'insensitive' },
-                make: {
-                  name: { equals: makeData.name, mode: 'insensitive' },
-                },
-              },
-            },
-          },
-          include: { spec: true },
-        });
+        try {
+          const rawSpecs = await scrapeVariantSpecs(page, ev.url);
 
-        for (const ev of extractedVariants) {
-          totalVariantsTested++;
-
-          // Match extracted variant against DB by slug or name-matching
-          // The ev.name might be something like "Highline 1.0L TSI MT" while DB holds "Highline".
-          // The best matching logic: find DB variant whose name is contained in the extracted name, or vice-versa
-          const dbVariant = dbVariants.find((v) => {
-            const vName = v.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const eName = ev.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            // Also check the URL slug
-            const urlSlug = ev.url.split('/').filter(Boolean).pop()?.replace(/-/g, '');
-
-            return (
-              eName.includes(vName) || vName.includes(eName) || (urlSlug && vName.includes(urlSlug))
-            );
-          });
-
-          if (!dbVariant) {
-            // Skipping un-matched variant purely on client side
+          if (Object.keys(rawSpecs).length === 0) {
+            totalFailed++;
             continue;
           }
 
-          if (dbVariant.spec && !args.force) {
-            continue; // Already has specs
-          }
+          const parsed = parseRawSpecs(rawSpecs);
 
-          try {
-            const rawSpecs = await scrapeVariantSpecs(page, ev.url);
-
-            if (Object.keys(rawSpecs).length === 0) {
-              totalFailed++;
-              continue;
-            }
-
-            const parsed = parseRawSpecs(rawSpecs);
-
-            if (!hasData(parsed)) {
-              totalFailed++;
-              continue;
-            }
-
-            if (args.dryRun) {
-              console.log(
-                `      📋 [DRY] ${dbVariant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`,
-              );
-            } else {
-              await prisma.vehicleCatalogVariantSpec.upsert({
-                where: { variantId: dbVariant.id },
-                update: { ...parsed, sourceName: 'carwale-puppeteer' },
-                create: {
-                  variantId: dbVariant.id,
-                  ...parsed,
-                  sourceName: 'carwale-puppeteer',
-                },
-              });
-              console.log(`      ✅ Upserted ${dbVariant.name}`);
-            }
-
-            totalUpserted++;
-          } catch (e) {
-            console.log(`      ❌ Error scraping ${dbVariant.name}: ${e}`);
+          if (!hasData(parsed)) {
             totalFailed++;
+            continue;
           }
 
-          await sleep(500); // Be respectful per variant
+          if (args.dryRun) {
+            console.log(`      📋 [DRY] ${dbVariant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`);
+          } else {
+            await prisma.vehicleCatalogVariantSpec.upsert({
+              where: { variantId: dbVariant.id },
+              update: { ...parsed, sourceName: 'carwale-puppeteer' },
+              create: { variantId: dbVariant.id, ...parsed, sourceName: 'carwale-puppeteer' },
+            });
+            console.log(`      ✅ Upserted ${dbVariant.name}`);
+          }
+
+          totalUpserted++;
+        } catch (e) {
+          console.log(`      ❌ Error scraping ${dbVariant.name}: ${e}`);
+          totalFailed++;
         }
 
-        await sleep(1000); // Between models
+        await sleep(500);
       }
+
+      await sleep(1000);
     }
   }
 

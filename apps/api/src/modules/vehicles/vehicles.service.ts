@@ -25,6 +25,7 @@ import { AuditResourceType } from '@prisma/client';
 import type { CreateVehicleDto } from './dto/create-vehicle.dto';
 import type { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleAccessService } from './vehicle-access.service';
+import { VehicleCatalogLinkerService } from './vehicle-catalog-linker.service';
 
 @Injectable()
 export class VehiclesService {
@@ -33,6 +34,7 @@ export class VehiclesService {
     private readonly storageService: SupabaseStorageService,
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
+    private readonly catalogLinker: VehicleCatalogLinkerService,
   ) {}
 
   async getAllVehicles(userId: string) {
@@ -86,12 +88,29 @@ export class VehiclesService {
   async createVehicle(userId: string, payload: CreateVehicleDto) {
     const input = this.validateCreateVehicleInput(payload);
 
+    // Auto-link to catalog when caller did not supply catalogVariantId.
+    let catalogVariantId: string | null | undefined = input.catalogVariantId;
+    let catalogGenerationId: string | null | undefined;
+    if (!catalogVariantId) {
+      const resolved = await this.catalogLinker.resolveCatalogLink({
+        make: input.make,
+        model: input.model,
+        year: input.year,
+        vehicleType: input.vehicleType,
+        fuelType: input.fuelType,
+      });
+      catalogVariantId = resolved.variantId ?? undefined;
+      catalogGenerationId = resolved.generationId ?? undefined;
+    }
+
     try {
       const vehicle = await this.prisma.$transaction(async (tx) => {
         const created = await tx.vehicle.create({
           data: {
             userId,
             ...input,
+            catalogVariantId,
+            catalogGenerationId,
             purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : null,
             purchasePrice: input.purchasePrice ?? null,
             purchaseOdometer: input.purchaseOdometer ?? null,
@@ -127,6 +146,30 @@ export class VehiclesService {
     }
     const input = this.validateUpdateVehicleInput(payload);
 
+    // Re-link to catalog when identifying fields change and caller did not
+    // override catalogVariantId explicitly.
+    const willRelink =
+      input.catalogVariantId === undefined &&
+      (input.make !== undefined ||
+        input.model !== undefined ||
+        input.year !== undefined ||
+        input.fuelType !== undefined ||
+        input.vehicleType !== undefined);
+
+    let relinkedVariantId: string | null = null;
+    let relinkedGenerationId: string | null = null;
+    if (willRelink) {
+      const resolved = await this.catalogLinker.resolveCatalogLink({
+        make: input.make ?? before.make,
+        model: input.model ?? before.model,
+        year: input.year ?? before.year,
+        vehicleType: input.vehicleType ?? before.vehicleType,
+        fuelType: input.fuelType ?? before.fuelType,
+      });
+      relinkedVariantId = resolved.variantId;
+      relinkedGenerationId = resolved.generationId;
+    }
+
     try {
       const { purchaseDate, ...rest } = input;
       const vehicle = await this.prisma.$transaction(async (tx) => {
@@ -136,6 +179,12 @@ export class VehiclesService {
             ...rest,
             ...(purchaseDate !== undefined
               ? { purchaseDate: purchaseDate ? new Date(purchaseDate) : null }
+              : {}),
+            ...(willRelink
+              ? {
+                  catalogVariantId: relinkedVariantId,
+                  catalogGenerationId: relinkedGenerationId,
+                }
               : {}),
           },
         });

@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -124,38 +124,41 @@ enum CatalogImportRunStatus {
 }
 
 model Vehicle {
-  id                 String              @id @default(uuid()) @db.Uuid
-  userId             String              @db.Uuid
-  registrationNumber String              @db.VarChar(20)
-  make               String              @db.VarChar(80)
-  model              String              @db.VarChar(80)
-  variant            String              @db.VarChar(80)
-  year               Int
-  fuelType           FuelType
-  odometer           Int
-  vehicleType        VehicleType
-  nickname           String?             @db.VarChar(80)
-  catalogVariantId   String?             @db.Uuid
-  purchaseDate       DateTime?
-  purchasePrice      Decimal?            @db.Decimal(12, 2)
-  purchaseOdometer   Int?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  catalogVariant     VehicleCatalogVariant? @relation(fields: [catalogVariantId], references: [id], onDelete: SetNull)
-  maintenanceRecords MaintenanceRecord[]
-  reminders          Reminder[]
-  fuelLogs           FuelLog[]
-  insurancePolicies  InsurancePolicy[]
-  warranties         Warranty[]
-  loans              VehicleLoan[]
-  members            VehicleMember[]
-  invites            VehicleInvite[]
+  id                  String                    @id @default(uuid()) @db.Uuid
+  userId              String                    @db.Uuid
+  registrationNumber  String                    @db.VarChar(20)
+  make                String                    @db.VarChar(80)
+  model               String                    @db.VarChar(80)
+  variant             String                    @db.VarChar(80)
+  year                Int
+  fuelType            FuelType
+  odometer            Int
+  vehicleType         VehicleType
+  nickname            String?                   @db.VarChar(80)
+  catalogVariantId    String?                   @db.Uuid
+  catalogGenerationId String?                   @db.Uuid
+  purchaseDate        DateTime?
+  purchasePrice       Decimal?                  @db.Decimal(12, 2)
+  purchaseOdometer    Int?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catalogVariant      VehicleCatalogVariant?    @relation(fields: [catalogVariantId], references: [id], onDelete: SetNull)
+  catalogGeneration   VehicleCatalogGeneration? @relation(fields: [catalogGenerationId], references: [id], onDelete: SetNull)
+  maintenanceRecords  MaintenanceRecord[]
+  reminders           Reminder[]
+  fuelLogs            FuelLog[]
+  insurancePolicies   InsurancePolicy[]
+  warranties          Warranty[]
+  loans               VehicleLoan[]
+  members             VehicleMember[]
+  invites             VehicleInvite[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
   @@index([catalogVariantId])
+  @@index([catalogGenerationId])
 }
 
 enum VehicleRole {
@@ -199,15 +202,15 @@ model VehicleInvite {
 }
 
 model VehicleCatalogMake {
-  id          String                   @id @default(uuid()) @db.Uuid
-  marketCode  String                   @db.VarChar(2)
+  id          String                    @id @default(uuid()) @db.Uuid
+  marketCode  String                    @db.VarChar(2)
   vehicleType VehicleType
-  name        String                   @db.VarChar(120)
-  slug        String                   @db.VarChar(160)
-  sourceName  String?                  @db.VarChar(80)
+  name        String                    @db.VarChar(120)
+  slug        String                    @db.VarChar(160)
+  sourceName  String?                   @db.VarChar(80)
   sourceUrl   String?
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
   aliases     VehicleCatalogMakeAlias[]
   models      VehicleCatalogModel[]
 
@@ -216,16 +219,16 @@ model VehicleCatalogMake {
 }
 
 model VehicleCatalogModel {
-  id          String                    @id @default(uuid()) @db.Uuid
-  makeId      String                    @db.Uuid
-  name        String                    @db.VarChar(120)
-  slug        String                    @db.VarChar(160)
-  sourceName  String?                   @db.VarChar(80)
+  id          String                     @id @default(uuid()) @db.Uuid
+  makeId      String                     @db.Uuid
+  name        String                     @db.VarChar(120)
+  slug        String                     @db.VarChar(160)
+  sourceName  String?                    @db.VarChar(80)
   sourceUrl   String?
-  createdAt   DateTime                  @default(now())
-  updatedAt   DateTime                  @updatedAt
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
   aliases     VehicleCatalogModelAlias[]
-  make        VehicleCatalogMake        @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  make        VehicleCatalogMake         @relation(fields: [makeId], references: [id], onDelete: Cascade)
   generations VehicleCatalogGeneration[]
 
   @@unique([makeId, slug])
@@ -233,20 +236,21 @@ model VehicleCatalogModel {
 }
 
 model VehicleCatalogGeneration {
-  id         String                 @id @default(uuid()) @db.Uuid
-  modelId     String                 @db.Uuid
-  name        String                 @db.VarChar(160)
-  slug        String                 @db.VarChar(200)
-  yearStart   Int?
-  yearEnd     Int?
-  isCurrent   Boolean                @default(false)
-  sourceName  String?                @db.VarChar(80)
-  sourceUrl   String?
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  aliases     VehicleCatalogGenerationAlias[]
-  model       VehicleCatalogModel    @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  variants    VehicleCatalogVariant[]
+  id         String                          @id @default(uuid()) @db.Uuid
+  modelId    String                          @db.Uuid
+  name       String                          @db.VarChar(160)
+  slug       String                          @db.VarChar(200)
+  yearStart  Int?
+  yearEnd    Int?
+  isCurrent  Boolean                         @default(false)
+  sourceName String?                         @db.VarChar(80)
+  sourceUrl  String?
+  createdAt  DateTime                        @default(now())
+  updatedAt  DateTime                        @updatedAt
+  aliases    VehicleCatalogGenerationAlias[]
+  model      VehicleCatalogModel             @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  variants   VehicleCatalogVariant[]
+  vehicles   Vehicle[]
 
   @@unique([modelId, slug])
   @@index([modelId, name])
@@ -254,16 +258,16 @@ model VehicleCatalogGeneration {
 }
 
 model VehicleCatalogVariant {
-  id                String                                @id @default(uuid()) @db.Uuid
-  generationId      String                                @db.Uuid
-  name              String                                @db.VarChar(160)
-  slug              String                                @db.VarChar(200)
-  sourceName        String?                               @db.VarChar(80)
+  id                String                                  @id @default(uuid()) @db.Uuid
+  generationId      String                                  @db.Uuid
+  name              String                                  @db.VarChar(160)
+  slug              String                                  @db.VarChar(200)
+  sourceName        String?                                 @db.VarChar(80)
   sourceUrl         String?
-  createdAt         DateTime                              @default(now())
-  updatedAt         DateTime                              @updatedAt
+  createdAt         DateTime                                @default(now())
+  updatedAt         DateTime                                @updatedAt
   aliases           VehicleCatalogVariantAlias[]
-  generation        VehicleCatalogGeneration              @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  generation        VehicleCatalogGeneration                @relation(fields: [generationId], references: [id], onDelete: Cascade)
   offerings         VehicleCatalogVariantOffering[]
   offeringOverrides VehicleCatalogVariantOfferingOverride[]
   spec              VehicleCatalogVariantSpec?
@@ -275,20 +279,20 @@ model VehicleCatalogVariant {
 }
 
 model VehicleCatalogVariantSpec {
-  id                String   @id @default(uuid()) @db.Uuid
-  variantId         String   @unique @db.Uuid
+  id        String @id @default(uuid()) @db.Uuid
+  variantId String @unique @db.Uuid
 
   // Engine & Drivetrain
-  engineCc          Int?
-  engineCyl         Int?
-  engineType        String?  @db.VarChar(60)
-  engineFuel        String?  @db.VarChar(60)
-  powerPs           Float?
-  powerRpm          Int?
-  torqueNm          Float?
-  torqueRpm         Int?
-  transmission      String?  @db.VarChar(80)
-  driveType         String?  @db.VarChar(40)
+  engineCc     Int?
+  engineCyl    Int?
+  engineType   String? @db.VarChar(60)
+  engineFuel   String? @db.VarChar(60)
+  powerPs      Float?
+  powerRpm     Int?
+  torqueNm     Float?
+  torqueRpm    Int?
+  transmission String? @db.VarChar(80)
+  driveType    String? @db.VarChar(40)
 
   // Dimensions & Weight
   lengthMm          Int?
@@ -302,31 +306,65 @@ model VehicleCatalogVariantSpec {
   turningRadiusM    Float?
 
   // Performance & Economy
-  topSpeedKph       Int?
-  mileageCity       Float?
-  mileageHighway    Float?
-  mileageCombined   Float?
-  fuelCapLitres     Float?
+  topSpeedKph     Int?
+  mileageCity     Float?
+  mileageHighway  Float?
+  mileageCombined Float?
+  fuelCapLitres   Float?
 
   // Body & Comfort
-  seatingCapacity   Int?
-  bodyType          String?  @db.VarChar(40)
-  doors             Int?
+  seatingCapacity Int?
+  bodyType        String? @db.VarChar(40)
+  doors           Int?
 
   // Tyres & Wheels
-  tyreSize          String?  @db.VarChar(60)
-  wheelType         String?  @db.VarChar(40)
-  wheelSizeInch     Float?
+  tyreSize      String? @db.VarChar(60)
+  wheelType     String? @db.VarChar(40)
+  wheelSizeInch Float?
 
   // Safety
   airbagCount       Int?
   safetyFeatures    String?
+  ncapStarsAdult    Int?
+  ncapStarsChild    Int?
+  ncapRegion        String?  @db.VarChar(20)
+  hasAbs            Boolean?
+  hasEsc            Boolean?
+  hasTpms           Boolean?
+  hasHillHoldAssist Boolean?
+  isofixPoints      Int?
+  adasFeatures      String?
 
-  sourceName        String?  @db.VarChar(80)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  // EV / Hybrid
+  batteryKwh         Float?
+  rangeKm            Int?
+  motorKw            Float?
+  acChargeKw         Float?
+  dcFastChargeKw     Float?
+  chargeTime0To80Min Int?
+  batteryChemistry   String? @db.VarChar(40)
 
-  variant           VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  // Motorcycle-specific
+  gearCount      Int?
+  coolingType    String? @db.VarChar(40)
+  frameType      String? @db.VarChar(60)
+  seatHeightMm   Int?
+  brakeFrontType String? @db.VarChar(40)
+  brakeRearType  String? @db.VarChar(40)
+  absChannels    Int?
+
+  // Truck / Van / Commercial
+  payloadKg        Int?
+  gvwKg            Int?
+  cargoVolumeL     Int?
+  towingCapacityKg Int?
+  axleConfig       String? @db.VarChar(20)
+
+  sourceName String?  @db.VarChar(80)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  variant VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 }
 
 model VehicleCatalogMakeAlias {
@@ -416,60 +454,60 @@ model VehicleCatalogVariantOfferingOverride {
 }
 
 model VehicleCatalogImportRun {
-  id              String                   @id @default(uuid()) @db.Uuid
-  sourceKey       String                   @db.VarChar(80)
-  marketCode      String                   @db.VarChar(2)
-  status          CatalogImportRunStatus
-  publishedAt     DateTime?
-  publishedByUserId String?                @db.Uuid
-  startedAt       DateTime                 @default(now())
-  completedAt     DateTime?
-  snapshotCount   Int                      @default(0)
-  recordsUpserted Int                      @default(0)
-  recordsArchived Int                      @default(0)
-  notes           String?
-  publishedBy     User?                    @relation("CatalogImportPublishes", fields: [publishedByUserId], references: [id], onDelete: SetNull)
-  snapshots       VehicleCatalogImportSnapshot[]
+  id                String                         @id @default(uuid()) @db.Uuid
+  sourceKey         String                         @db.VarChar(80)
+  marketCode        String                         @db.VarChar(2)
+  status            CatalogImportRunStatus
+  publishedAt       DateTime?
+  publishedByUserId String?                        @db.Uuid
+  startedAt         DateTime                       @default(now())
+  completedAt       DateTime?
+  snapshotCount     Int                            @default(0)
+  recordsUpserted   Int                            @default(0)
+  recordsArchived   Int                            @default(0)
+  notes             String?
+  publishedBy       User?                          @relation("CatalogImportPublishes", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+  snapshots         VehicleCatalogImportSnapshot[]
 
   @@index([marketCode, sourceKey, startedAt(sort: Desc)])
   @@index([marketCode, sourceKey, publishedAt(sort: Desc)])
 }
 
 model VehicleCatalogImportSnapshot {
-  id         String                 @id @default(uuid()) @db.Uuid
-  importRunId String                @db.Uuid
-  sourceUrl  String
-  sourceHash String                 @db.Char(64)
-  payload    Json
-  capturedAt DateTime               @default(now())
-  importRun  VehicleCatalogImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  id          String                  @id @default(uuid()) @db.Uuid
+  importRunId String                  @db.Uuid
+  sourceUrl   String
+  sourceHash  String                  @db.Char(64)
+  payload     Json
+  capturedAt  DateTime                @default(now())
+  importRun   VehicleCatalogImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
 
   @@index([importRunId, capturedAt(sort: Desc)])
 }
 
 model User {
-  id               String    @id @default(uuid()) @db.Uuid
-  name             String    @db.VarChar(120)
-  email            String    @unique @db.VarChar(255)
-  passwordHash     String?   @db.VarChar(255)
-  passwordResetTokenExpiresAt DateTime?
-  passwordResetTokenHash      String?   @db.Char(64)
-  refreshTokenHash String?   @db.Char(64)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  emailVerified    Boolean   @default(false)
-  emailVerificationTokenHash      String?   @db.Char(64)
+  id                              String                    @id @default(uuid()) @db.Uuid
+  name                            String                    @db.VarChar(120)
+  email                           String                    @unique @db.VarChar(255)
+  passwordHash                    String?                   @db.VarChar(255)
+  passwordResetTokenExpiresAt     DateTime?
+  passwordResetTokenHash          String?                   @db.Char(64)
+  refreshTokenHash                String?                   @db.Char(64)
+  createdAt                       DateTime                  @default(now())
+  updatedAt                       DateTime                  @updatedAt
+  emailVerified                   Boolean                   @default(false)
+  emailVerificationTokenHash      String?                   @db.Char(64)
   emailVerificationTokenExpiresAt DateTime?
-  role             Role      @default(user)
-  allowedCatalogSources String[] @default([])
-  publishedCatalogImportRuns VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
-  vehicles         Vehicle[]
-  notifications    Notification[]
-  oauthAccounts    OAuthAccount[]
-  auditEventsActed AuditEvent[] @relation("AuditActor")
-  auditEventsOwned AuditEvent[] @relation("AuditOwner")
-  vehicleMemberships VehicleMember[]
-  vehicleInvitesSent VehicleInvite[] @relation("VehicleInviteAuthor")
+  role                            Role                      @default(user)
+  allowedCatalogSources           String[]                  @default([])
+  publishedCatalogImportRuns      VehicleCatalogImportRun[] @relation("CatalogImportPublishes")
+  vehicles                        Vehicle[]
+  notifications                   Notification[]
+  oauthAccounts                   OAuthAccount[]
+  auditEventsActed                AuditEvent[]              @relation("AuditActor")
+  auditEventsOwned                AuditEvent[]              @relation("AuditOwner")
+  vehicleMemberships              VehicleMember[]
+  vehicleInvitesSent              VehicleInvite[]           @relation("VehicleInviteAuthor")
 }
 
 enum Role {
@@ -536,29 +574,29 @@ model OAuthAccount {
 }
 
 model MaintenanceRecord {
-  id              String              @id @default(uuid()) @db.Uuid
-  vehicleId       String              @db.Uuid
+  id              String                  @id @default(uuid()) @db.Uuid
+  vehicleId       String                  @db.Uuid
   serviceDate     DateTime
   odometer        Int
   category        MaintenanceCategory
-  workshopName    String?             @db.VarChar(120)
-  invoiceNumber   String?             @db.VarChar(120)
-  currencyCode    String              @default("INR") @db.VarChar(3)
-  source          MaintenanceSource   @default(manual)
+  workshopName    String?                 @db.VarChar(120)
+  invoiceNumber   String?                 @db.VarChar(120)
+  currencyCode    String                  @default("INR") @db.VarChar(3)
+  source          MaintenanceSource       @default(manual)
   status          MaintenanceRecordStatus @default(confirmed)
-  totalCost       Decimal             @db.Decimal(12, 2)
-  laborCost       Decimal?            @db.Decimal(12, 2)
-  partsCost       Decimal?            @db.Decimal(12, 2)
-  fluidsCost      Decimal?            @db.Decimal(12, 2)
-  taxCost         Decimal?            @db.Decimal(12, 2)
-  discountAmount  Decimal?            @db.Decimal(12, 2)
+  totalCost       Decimal                 @db.Decimal(12, 2)
+  laborCost       Decimal?                @db.Decimal(12, 2)
+  partsCost       Decimal?                @db.Decimal(12, 2)
+  fluidsCost      Decimal?                @db.Decimal(12, 2)
+  taxCost         Decimal?                @db.Decimal(12, 2)
+  discountAmount  Decimal?                @db.Decimal(12, 2)
   notes           String?
   metadata        Json?
   nextDueDate     DateTime?
   nextDueOdometer Int?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  vehicle         Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  vehicle         Vehicle                 @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   attachments     Attachment[]
   lineItems       MaintenanceLineItem[]
   claim           Claim?
@@ -611,27 +649,27 @@ model Reminder {
 }
 
 model Attachment {
-  id                  String             @id @default(uuid()) @db.Uuid
+  id                  String                @id @default(uuid()) @db.Uuid
   // Polymorphic owner: exactly one of maintenanceRecordId / insurancePolicyId /
   // warrantyId / claimId / vehicleLoanId is non-null. Enforced by the
   // `attachment_owner_exclusive` CHECK constraint.
-  maintenanceRecordId String?            @db.Uuid
-  insurancePolicyId   String?            @db.Uuid
-  warrantyId          String?            @db.Uuid
-  claimId             String?            @db.Uuid
-  vehicleLoanId       String?            @db.Uuid
+  maintenanceRecordId String?               @db.Uuid
+  insurancePolicyId   String?               @db.Uuid
+  warrantyId          String?               @db.Uuid
+  claimId             String?               @db.Uuid
+  vehicleLoanId       String?               @db.Uuid
   kind                AttachmentKind
   fileName            String
   originalFileName    String
   mimeType            String
   size                Int
   url                 String
-  uploadedAt          DateTime           @default(now())
-  maintenanceRecord   MaintenanceRecord? @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
-  insurancePolicy     InsurancePolicy?   @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
-  warranty            Warranty?          @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
-  claim               Claim?             @relation(fields: [claimId], references: [id], onDelete: Cascade)
-  vehicleLoan         VehicleLoan?       @relation(fields: [vehicleLoanId], references: [id], onDelete: Cascade)
+  uploadedAt          DateTime              @default(now())
+  maintenanceRecord   MaintenanceRecord?    @relation(fields: [maintenanceRecordId], references: [id], onDelete: Cascade)
+  insurancePolicy     InsurancePolicy?      @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
+  warranty            Warranty?             @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+  claim               Claim?                @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  vehicleLoan         VehicleLoan?          @relation(fields: [vehicleLoanId], references: [id], onDelete: Cascade)
   extraction          AttachmentExtraction?
 
   @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
@@ -642,81 +680,81 @@ model Attachment {
 }
 
 model AttachmentExtraction {
-  id            String                   @id @default(uuid()) @db.Uuid
-  attachmentId  String                   @unique @db.Uuid
+  id            String                     @id @default(uuid()) @db.Uuid
+  attachmentId  String                     @unique @db.Uuid
   status        AttachmentExtractionStatus @default(pending)
-  provider      String?                  @db.VarChar(40)
-  confidence    Decimal?                 @db.Decimal(4, 3)
-  vendorName    String?                  @db.VarChar(120)
-  workshopName  String?                  @db.VarChar(120)
-  invoiceNumber String?                  @db.VarChar(120)
+  provider      String?                    @db.VarChar(40)
+  confidence    Decimal?                   @db.Decimal(4, 3)
+  vendorName    String?                    @db.VarChar(120)
+  workshopName  String?                    @db.VarChar(120)
+  invoiceNumber String?                    @db.VarChar(120)
   documentDate  DateTime?
   serviceDate   DateTime?
   odometer      Int?
-  totalCost     Decimal?                 @db.Decimal(12, 2)
-  currencyCode  String?                  @db.VarChar(3)
+  totalCost     Decimal?                   @db.Decimal(12, 2)
+  currencyCode  String?                    @db.VarChar(3)
   notes         String?
   lineItems     Json?
   failureReason String?
   extractedAt   DateTime?
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  attachment    Attachment               @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+  attachment    Attachment                 @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
 
   @@index([status, extractedAt(sort: Desc)])
 }
 
 model FuelLog {
-  id          String   @id @default(uuid()) @db.Uuid
-  vehicleId   String   @db.Uuid
-  date        DateTime
-  odometer    Int
-  quantity    Float    // Litres/Gallons
-  price       Decimal  @db.Decimal(10, 2)
-  totalCost   Decimal  @db.Decimal(12, 2)
-  location    String?  @db.VarChar(120)
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid()) @db.Uuid
+  vehicleId String   @db.Uuid
+  date      DateTime
+  odometer  Int
+  quantity  Float // Litres/Gallons
+  price     Decimal  @db.Decimal(10, 2)
+  totalCost Decimal  @db.Decimal(12, 2)
+  location  String?  @db.VarChar(120)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId, date(sort: Desc)])
 }
 
 model Notification {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @db.Uuid
-  vehicleId   String?  @db.Uuid
-  kind        String   @default("legacy") @db.VarChar(60)
-  dedupKey    String?  @db.VarChar(160)
-  title       String   @db.VarChar(120)
-  message     String   @db.Text
-  type        String   @default("info") // info, warning, success, error
-  isRead      Boolean  @default(false)
-  link        String?  // Optional path to redirect to
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  vehicleId String?  @db.Uuid
+  kind      String   @default("legacy") @db.VarChar(60)
+  dedupKey  String?  @db.VarChar(160)
+  title     String   @db.VarChar(120)
+  message   String   @db.Text
+  type      String   @default("info") // info, warning, success, error
+  isRead    Boolean  @default(false)
+  link      String? // Optional path to redirect to
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, isRead])
   @@index([userId, kind, createdAt(sort: Desc)])
 }
- 
+
 // Global catalog of maintenance parts harvested from MaintenanceLineItem history.
 // Powers category suggestions for new line items so part names that previously
 // fell into "other" get classified correctly the next time anyone sees them.
 model MaintenancePartCatalog {
-  id                 String              @id @default(uuid()) @db.Uuid
-  nameNormalized     String              @db.VarChar(160)
-  partNumber         String?             @db.VarChar(80)
-  displayName        String              @db.VarChar(160)
-  brand              String?             @db.VarChar(80)
-  suggestedCategory  MaintenanceCategory
-  occurrences        Int                 @default(1)
-  lastSeenAt         DateTime            @default(now())
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                String              @id @default(uuid()) @db.Uuid
+  nameNormalized    String              @db.VarChar(160)
+  partNumber        String?             @db.VarChar(80)
+  displayName       String              @db.VarChar(160)
+  brand             String?             @db.VarChar(80)
+  suggestedCategory MaintenanceCategory
+  occurrences       Int                 @default(1)
+  lastSeenAt        DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@unique([nameNormalized, partNumber])
   @@index([suggestedCategory])
@@ -724,56 +762,56 @@ model MaintenancePartCatalog {
 }
 
 model ServiceInterval {
-  id                String                @id @default(uuid()) @db.Uuid
-  variantId         String                @db.Uuid
-  category          MaintenanceCategory
-  intervalKm        Int?
-  intervalMonths    Int?
-  priority          String                @default("medium") // low, medium, high
-  notes             String?
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  variant           VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
- 
+  id             String                @id @default(uuid()) @db.Uuid
+  variantId      String                @db.Uuid
+  category       MaintenanceCategory
+  intervalKm     Int?
+  intervalMonths Int?
+  priority       String                @default("medium") // low, medium, high
+  notes          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  variant        VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
   @@index([variantId])
 }
 
 model InsurancePolicy {
-  id              String       @id @default(uuid()) @db.Uuid
-  vehicleId       String       @db.Uuid
-  provider        String       @db.VarChar(120)
-  policyNumber    String       @db.VarChar(80)
-  startDate       DateTime
-  endDate         DateTime
-  premiumAmount   Decimal?     @db.Decimal(12, 2)
-  insuredValue    Decimal?     @db.Decimal(12, 2)
-  notes           String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  vehicle         Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  attachments     Attachment[]
-  claims          Claim[]
+  id            String       @id @default(uuid()) @db.Uuid
+  vehicleId     String       @db.Uuid
+  provider      String       @db.VarChar(120)
+  policyNumber  String       @db.VarChar(80)
+  startDate     DateTime
+  endDate       DateTime
+  premiumAmount Decimal?     @db.Decimal(12, 2)
+  insuredValue  Decimal?     @db.Decimal(12, 2)
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  vehicle       Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  attachments   Attachment[]
+  claims        Claim[]
 
   @@index([vehicleId, endDate])
 }
 
 model Claim {
-  id                  String              @id @default(uuid()) @db.Uuid
-  insurancePolicyId   String              @db.Uuid
+  id                  String             @id @default(uuid()) @db.Uuid
+  insurancePolicyId   String             @db.Uuid
   // 1:1 with a maintenance record. Nullable so a claim can be filed
   // before the repair record is logged; backfilled when the bill arrives.
-  maintenanceRecordId String?             @unique @db.Uuid
-  claimNumber         String?             @db.VarChar(120)
-  grossAmount         Decimal             @db.Decimal(12, 2)
-  insurerPaidAmount   Decimal             @db.Decimal(12, 2)
-  status              ClaimStatus         @default(filed)
+  maintenanceRecordId String?            @unique @db.Uuid
+  claimNumber         String?            @db.VarChar(120)
+  grossAmount         Decimal            @db.Decimal(12, 2)
+  insurerPaidAmount   Decimal            @db.Decimal(12, 2)
+  status              ClaimStatus        @default(filed)
   filedDate           DateTime
   settledDate         DateTime?
   notes               String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  insurancePolicy     InsurancePolicy     @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
-  maintenanceRecord   MaintenanceRecord?  @relation(fields: [maintenanceRecordId], references: [id], onDelete: SetNull)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  insurancePolicy     InsurancePolicy    @relation(fields: [insurancePolicyId], references: [id], onDelete: Cascade)
+  maintenanceRecord   MaintenanceRecord? @relation(fields: [maintenanceRecordId], references: [id], onDelete: SetNull)
   attachments         Attachment[]
 
   @@index([insurancePolicyId, filedDate(sort: Desc)])
@@ -781,45 +819,45 @@ model Claim {
 }
 
 model Warranty {
-  id              String       @id @default(uuid()) @db.Uuid
-  vehicleId       String       @db.Uuid
-  provider        String       @db.VarChar(120)
-  warrantyNumber  String?      @db.VarChar(80)
-  type            String       @db.VarChar(60) // manufacturer, extended, parts
-  startDate       DateTime
-  endDate         DateTime?
-  endOdometer     Int?
-  notes           String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  vehicle         Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  attachments     Attachment[]
+  id             String       @id @default(uuid()) @db.Uuid
+  vehicleId      String       @db.Uuid
+  provider       String       @db.VarChar(120)
+  warrantyNumber String?      @db.VarChar(80)
+  type           String       @db.VarChar(60) // manufacturer, extended, parts
+  startDate      DateTime
+  endDate        DateTime?
+  endOdometer    Int?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  vehicle        Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  attachments    Attachment[]
 
   @@index([vehicleId])
 }
 
 model VehicleLoan {
-  id             String     @id @default(uuid()) @db.Uuid
-  vehicleId      String     @db.Uuid
-  lender         String     @db.VarChar(120)
-  accountNumber  String?    @db.VarChar(80)
-  principal      Decimal    @db.Decimal(12, 2)
+  id            String           @id @default(uuid()) @db.Uuid
+  vehicleId     String           @db.Uuid
+  lender        String           @db.VarChar(120)
+  accountNumber String?          @db.VarChar(80)
+  principal     Decimal          @db.Decimal(12, 2)
   // Annual nominal interest rate as percent (e.g. 8.75 = 8.75%/yr).
-  interestRate   Decimal    @db.Decimal(6, 3)
-  tenureMonths   Int
-  startDate      DateTime
+  interestRate  Decimal          @db.Decimal(6, 3)
+  tenureMonths  Int
+  startDate     DateTime
   // Cached EMI so we don't recompute on every read. Client can also
   // recompute from (principal, rate, tenure) and cross-check.
-  emiAmount      Decimal    @db.Decimal(12, 2)
-  currencyCode   String     @default("INR") @db.VarChar(3)
-  status         LoanStatus @default(active)
-  closedAt       DateTime?
-  notes          String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  vehicle        Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  prepayments    LoanPrepayment[]
-  attachments    Attachment[]
+  emiAmount     Decimal          @db.Decimal(12, 2)
+  currencyCode  String           @default("INR") @db.VarChar(3)
+  status        LoanStatus       @default(active)
+  closedAt      DateTime?
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  vehicle       Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  prepayments   LoanPrepayment[]
+  attachments   Attachment[]
 
   @@index([vehicleId, startDate(sort: Desc)])
   @@index([vehicleId, status])
