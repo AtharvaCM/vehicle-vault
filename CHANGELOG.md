@@ -1,3 +1,16 @@
+# [1.8.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.7.0...v1.8.0) (2026-07-01)
+
+
+### Bug Fixes
+
+* **api:** ignore zero-odometer readings in vehicle insights ([9794529](https://github.com/AtharvaCM/vehicle-vault/commit/979452913b21c258e70d1aaa770857c0333c07a0))
+* **web:** require explicit VITE_API_BASE_URL in production builds ([2cd7ca2](https://github.com/AtharvaCM/vehicle-vault/commit/2cd7ca2c624fab60a720991fdd3e882a5d20d15f))
+
+
+### Features
+
+* **catalog:** auto-link vehicles to catalog ([3baa450](https://github.com/AtharvaCM/vehicle-vault/commit/3baa450af9963962876ccd5cf987240280e7b8c1))
+
 # [1.7.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.6.1...v1.7.0) (2026-06-23)
 
 
