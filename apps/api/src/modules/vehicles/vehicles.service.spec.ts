@@ -23,6 +23,8 @@ describe('VehiclesService', () => {
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
+  const catalogVariantId = '11111111-1111-4111-8111-111111111111';
+  const catalogGenerationId = '22222222-2222-4222-8222-222222222222';
   const vehicleRecord = {
     id: 'vehicle-1',
     userId: 'user-1',
@@ -68,6 +70,11 @@ describe('VehiclesService', () => {
     listAccessibleVehicleIds: vi.fn().mockResolvedValue([]),
   };
 
+  const catalogLinker = {
+    findMatchingVariantId: vi.fn().mockResolvedValue(null),
+    resolveCatalogLink: vi.fn().mockResolvedValue({ variantId: null, generationId: null }),
+  };
+
   let service: VehiclesService;
 
   beforeEach(() => {
@@ -76,6 +83,8 @@ describe('VehiclesService', () => {
     auditService.track.mockResolvedValue(undefined);
     accessService.assert.mockResolvedValue(VehicleRole.owner);
     accessService.assertOwner.mockResolvedValue(VehicleRole.owner);
+    catalogLinker.findMatchingVariantId.mockResolvedValue(null);
+    catalogLinker.resolveCatalogLink.mockResolvedValue({ variantId: null, generationId: null });
     prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
       if (typeof arg === 'function') {
         return (arg as (tx: unknown) => unknown)(prisma);
@@ -87,10 +96,7 @@ describe('VehiclesService', () => {
       storageService as never,
       auditService as never,
       accessService as never,
-      {
-        findMatchingVariantId: vi.fn().mockResolvedValue(null),
-        resolveCatalogLink: vi.fn().mockResolvedValue({ variantId: null, generationId: null }),
-      } as never,
+      catalogLinker as never,
     );
   });
 
@@ -130,6 +136,100 @@ describe('VehiclesService', () => {
       }),
     });
     expect(result.id).toBe('vehicle-1');
+  });
+
+  it('auto-links a created vehicle to the resolved catalog references', async () => {
+    catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
+      variantId: catalogVariantId,
+      generationId: catalogGenerationId,
+    });
+    prisma.vehicle.create = vi.fn().mockResolvedValue({
+      ...vehicleRecord,
+      catalogVariantId,
+      catalogGenerationId,
+    });
+
+    await service.createVehicle('user-1', {
+      registrationNumber: 'MH12AB1234',
+      make: 'Hyundai',
+      model: 'Creta',
+      variant: 'SX',
+      year: 2022,
+      fuelType: FuelType.Petrol,
+      odometer: 12000,
+      vehicleType: VehicleType.Car,
+    });
+
+    expect(catalogLinker.resolveCatalogLink).toHaveBeenCalledWith({
+      make: 'Hyundai',
+      model: 'Creta',
+      year: 2022,
+      vehicleType: VehicleType.Car,
+      fuelType: FuelType.Petrol,
+    });
+    expect(prisma.vehicle.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        catalogVariantId,
+        catalogGenerationId,
+      }),
+    });
+  });
+
+  it('does not auto-link when the caller supplies a catalog variant', async () => {
+    prisma.vehicle.create = vi.fn().mockResolvedValue({
+      ...vehicleRecord,
+      catalogVariantId,
+    });
+
+    await service.createVehicle('user-1', {
+      registrationNumber: 'MH12AB1234',
+      make: 'Hyundai',
+      model: 'Creta',
+      variant: 'SX',
+      year: 2022,
+      fuelType: FuelType.Petrol,
+      odometer: 12000,
+      vehicleType: VehicleType.Car,
+      catalogVariantId,
+    });
+
+    expect(catalogLinker.resolveCatalogLink).not.toHaveBeenCalled();
+    expect(prisma.vehicle.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ catalogVariantId }),
+    });
+  });
+
+  it('relinks catalog references when identifying fields change', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(vehicleRecord);
+    catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
+      variantId: null,
+      generationId: catalogGenerationId,
+    });
+    prisma.vehicle.update = vi.fn().mockResolvedValue({
+      ...vehicleRecord,
+      model: 'Creta Facelift',
+      catalogVariantId: null,
+      catalogGenerationId,
+    });
+
+    await service.updateVehicle('user-1', 'vehicle-1', { model: 'Creta Facelift' });
+
+    expect(catalogLinker.resolveCatalogLink).toHaveBeenCalledWith({
+      make: 'Hyundai',
+      model: 'Creta Facelift',
+      year: 2022,
+      vehicleType: VehicleType.Car,
+      fuelType: FuelType.Petrol,
+    });
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: {
+        model: 'Creta Facelift',
+        catalogVariantId: null,
+        catalogGenerationId,
+      },
+    });
   });
 
   it('maps duplicate registration errors to conflict', async () => {
