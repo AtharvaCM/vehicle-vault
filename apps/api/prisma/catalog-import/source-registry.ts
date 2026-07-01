@@ -1,4 +1,5 @@
 import { bajajIndiaSnapshot } from './sources/bajaj-india.snapshot';
+import { atherIndiaSnapshot } from './sources/ather-india.snapshot';
 import { bydIndiaSnapshot } from './sources/byd-india.snapshot';
 import { citroenIndiaSnapshot } from './sources/citroen-india.snapshot';
 import { forceMotorsIndiaSnapshot } from './sources/force-motors-india.snapshot';
@@ -10,13 +11,16 @@ import { hyundaiIndiaSnapshot } from './sources/hyundai-india.snapshot';
 import { isuzuIndiaSnapshot } from './sources/isuzu-india.snapshot';
 import { jeepIndiaSnapshot } from './sources/jeep-india.snapshot';
 import { kiaIndiaSnapshot } from './sources/kia-india.snapshot';
+import { ktmIndiaSnapshot } from './sources/ktm-india.snapshot';
 import { mahindraIndiaSnapshot } from './sources/mahindra-india.snapshot';
 import { marutiSuzukiIndiaSnapshot } from './sources/maruti-suzuki-india.snapshot';
 import { mgIndiaSnapshot } from './sources/mg-india.snapshot';
 import { nissanIndiaSnapshot } from './sources/nissan-india.snapshot';
+import { olaElectricIndiaSnapshot } from './sources/ola-electric-india.snapshot';
 import { renaultIndiaSnapshot } from './sources/renault-india.snapshot';
 import { royalEnfieldIndiaSnapshot } from './sources/royal-enfield-india.snapshot';
 import { skodaIndiaSnapshot } from './sources/skoda-india.snapshot';
+import { suzukiIndiaSnapshot } from './sources/suzuki-india.snapshot';
 import { tataIndiaSnapshot } from './sources/tata-india.snapshot';
 import { toyotaIndiaSnapshot } from './sources/toyota-india.snapshot';
 import { tvsIndiaSnapshot } from './sources/tvs-india.snapshot';
@@ -24,6 +28,7 @@ import { volkswagenIndiaSnapshot } from './sources/volkswagen-india.snapshot';
 import { yamahaIndiaSnapshot } from './sources/yamaha-india.snapshot';
 
 export const catalogImportSources = {
+  'ather-india': atherIndiaSnapshot,
   'bajaj-india': bajajIndiaSnapshot,
   'byd-india': bydIndiaSnapshot,
   'citroen-india': citroenIndiaSnapshot,
@@ -35,13 +40,16 @@ export const catalogImportSources = {
   'isuzu-india': isuzuIndiaSnapshot,
   'jeep-india': jeepIndiaSnapshot,
   'kia-india': kiaIndiaSnapshot,
+  'ktm-india': ktmIndiaSnapshot,
   'mahindra-india': mahindraIndiaSnapshot,
   'maruti-suzuki-india': marutiSuzukiIndiaSnapshot,
   'mg-india': mgIndiaSnapshot,
   'nissan-india': nissanIndiaSnapshot,
+  'ola-electric-india': olaElectricIndiaSnapshot,
   'renault-india': renaultIndiaSnapshot,
   'royal-enfield-india': royalEnfieldIndiaSnapshot,
   'skoda-india': skodaIndiaSnapshot,
+  'suzuki-india': suzukiIndiaSnapshot,
   'tata-india': tataIndiaSnapshot,
   'toyota-india': toyotaIndiaSnapshot,
   'tvs-india': tvsIndiaSnapshot,
