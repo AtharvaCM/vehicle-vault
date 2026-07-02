@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.11.0...v1.12.0) (2026-07-02)
+
+
+### Features
+
+* **catalog:** backfill missing vehicle specs ([77f78a0](https://github.com/AtharvaCM/vehicle-vault/commit/77f78a0e44aa6dcb344eb071fee33281283ebda6))
+
 # [1.11.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.10.0...v1.11.0) (2026-07-02)
 
 
