@@ -3,6 +3,7 @@
  *
  * Reports:
  *   - Catalog size per market × vehicleType (makes, models, generations, variants).
+ *   - Model coverage: models WITH at least one spec-backed variant.
  *   - Spec coverage: variants WITH vs WITHOUT VehicleCatalogVariantSpec.
  *   - Offering coverage: variants WITHOUT any VehicleCatalogVariantOffering.
  *   - User-owned vehicles unmatched to catalogVariantId.
@@ -43,6 +44,7 @@ async function catalogCounts(market?: string) {
     type: VehicleType;
     makes: number;
     models: number;
+    modelsWithSpec: number;
     generations: number;
     variants: number;
     variantsWithSpec: number;
@@ -59,6 +61,12 @@ async function catalogCounts(market?: string) {
 
     const models = await prisma.vehicleCatalogModel.count({
       where: { makeId: { in: makeIds } },
+    });
+    const modelsWithSpec = await prisma.vehicleCatalogModel.count({
+      where: {
+        makeId: { in: makeIds },
+        generations: { some: { variants: { some: { spec: { isNot: null } } } } },
+      },
     });
     const generations = await prisma.vehicleCatalogGeneration.count({
       where: { model: { makeId: { in: makeIds } } },
@@ -84,6 +92,7 @@ async function catalogCounts(market?: string) {
       type: m.vehicleType,
       makes: m._count._all,
       models,
+      modelsWithSpec,
       generations,
       variants,
       variantsWithSpec,
@@ -142,26 +151,35 @@ async function main() {
 
   console.log('\n=== Catalog coverage ===\n');
   console.log(
-    'market  type        makes  models  gens   variants  w/spec        w/offering'
+    'market  type        makes  models  model-spec    gens   variants  variant-spec  w/offering',
   );
   for (const r of counts) {
+    const modelSpecCol = `${r.modelsWithSpec} (${pct(r.modelsWithSpec, r.models)})`;
     const specCol = `${r.variantsWithSpec} (${pct(r.variantsWithSpec, r.variants)})`;
     const offCol = `${r.variantsWithOffering} (${pct(r.variantsWithOffering, r.variants)})`;
     console.log(
-      `${r.market.padEnd(7)} ${r.type.padEnd(11)} ${String(r.makes).padEnd(6)} ${String(r.models).padEnd(7)} ${String(r.generations).padEnd(6)} ${String(r.variants).padEnd(9)} ${specCol.padEnd(13)} ${offCol}`
+      `${r.market.padEnd(7)} ${r.type.padEnd(11)} ${String(r.makes).padEnd(6)} ${String(r.models).padEnd(7)} ${modelSpecCol.padEnd(13)} ${String(r.generations).padEnd(6)} ${String(r.variants).padEnd(9)} ${specCol.padEnd(13)} ${offCol}`,
     );
   }
 
   console.log('\n=== User vehicles ===\n');
   console.log(`total: ${vehicles.total}`);
-  console.log(`linked to variant:     ${vehicles.variantLinked} (${pct(vehicles.variantLinked, vehicles.total)})`);
-  console.log(`linked to generation:  ${vehicles.generationOnly} (${pct(vehicles.generationOnly, vehicles.total)})`);
-  console.log(`unlinked:              ${vehicles.unlinked} (${pct(vehicles.unlinked, vehicles.total)})`);
+  console.log(
+    `linked to variant:     ${vehicles.variantLinked} (${pct(vehicles.variantLinked, vehicles.total)})`,
+  );
+  console.log(
+    `linked to generation:  ${vehicles.generationOnly} (${pct(vehicles.generationOnly, vehicles.total)})`,
+  );
+  console.log(
+    `unlinked:              ${vehicles.unlinked} (${pct(vehicles.unlinked, vehicles.total)})`,
+  );
 
   if (vehicles.topUnlinked.length > 0) {
     console.log('\nTop fully-unlinked clusters (priority for catalog ingest):');
     for (const c of vehicles.topUnlinked) {
-      console.log(`  ${String(c.count).padStart(4)}  ${c.type.padEnd(11)} ${c.make} ${c.model} ${c.year}`);
+      console.log(
+        `  ${String(c.count).padStart(4)}  ${c.type.padEnd(11)} ${c.make} ${c.model} ${c.year}`,
+      );
     }
   }
   console.log('');
