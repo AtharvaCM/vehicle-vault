@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.13.0...v1.13.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* **catalog:** remove pseudo variants ([db98b7e](https://github.com/AtharvaCM/vehicle-vault/commit/db98b7e39dd59ccb1316d1f3f295eb60ed2c57ac))
+
 # [1.13.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.12.0...v1.13.0) (2026-07-02)
 
 
