@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.12.0...v1.13.0) (2026-07-02)
+
+
+### Features
+
+* **catalog:** scrape missing model specs ([4bf6283](https://github.com/AtharvaCM/vehicle-vault/commit/4bf6283f334fee0588478626219b248737ff7111))
+
 # [1.12.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.11.0...v1.12.0) (2026-07-02)
 
 
