@@ -10,6 +10,7 @@
  * Usage:
  *   pnpm catalog:scrape-specs -- --brand=volkswagen
  *   pnpm catalog:scrape-specs                          # All brands
+ *   pnpm catalog:scrape-specs -- --missing-models       # Only models with no specs
  *   pnpm catalog:scrape-specs -- --brand=volkswagen --dry-run
  *   pnpm catalog:scrape-specs -- --brand=volkswagen --force  # Overwrite existing
  */
@@ -49,11 +50,19 @@ const SPEC_ITEM_MAP: Record<string, string> = {
 // Regex-driven fallback. CarWale (and most sources) render a label + value block;
 // we scrape the whole "specifications" section into a single blob and pattern-match.
 // Keyed by ParsedSpec field, value is a list of regexes; first match wins.
-const TEXT_PATTERNS: Array<{ field: keyof ParsedSpec; pattern: RegExp; transform?: (m: RegExpMatchArray) => unknown }> = [
+const TEXT_PATTERNS: Array<{
+  field: keyof ParsedSpec;
+  pattern: RegExp;
+  transform?: (m: RegExpMatchArray) => unknown;
+}> = [
   // Safety — NCAP
   { field: 'ncapStarsAdult', pattern: /(\d)\s*star[^.\n]*adult/i, transform: (m) => +m[1] },
   { field: 'ncapStarsChild', pattern: /(\d)\s*star[^.\n]*child/i, transform: (m) => +m[1] },
-  { field: 'ncapRegion', pattern: /(global\s*ncap|bharat\s*ncap|euro\s*ncap|asean\s*ncap)/i, transform: (m) => m[1].replace(/\s+/g, ' ').toLowerCase() },
+  {
+    field: 'ncapRegion',
+    pattern: /(global\s*ncap|bharat\s*ncap|euro\s*ncap|asean\s*ncap)/i,
+    transform: (m) => m[1].replace(/\s+/g, ' ').toLowerCase(),
+  },
   { field: 'isofixPoints', pattern: /isofix[^0-9]{0,30}(\d+)/i, transform: (m) => +m[1] },
   // Boolean safety flags intentionally not regex-matched: full-page text on
   // CarWale variant pages includes comparison/related blocks, which yields
@@ -61,22 +70,74 @@ const TEXT_PATTERNS: Array<{ field: keyof ParsedSpec; pattern: RegExp; transform
   // selector is identified.
   // EV / Hybrid
   { field: 'batteryKwh', pattern: /([\d.]+)\s*kwh/i, transform: (m) => +m[1] },
-  { field: 'rangeKm', pattern: /(?:range|certified range|claimed range)[^0-9]{0,30}(\d{2,4})\s*km/i, transform: (m) => +m[1] },
+  {
+    field: 'rangeKm',
+    pattern: /(?:range|certified range|claimed range)[^0-9]{0,30}(\d{2,4})\s*km/i,
+    transform: (m) => +m[1],
+  },
   { field: 'motorKw', pattern: /motor[^0-9]{0,30}([\d.]+)\s*kw/i, transform: (m) => +m[1] },
-  { field: 'dcFastChargeKw', pattern: /(?:dc\s*fast|fast\s*charg)[^0-9]{0,30}([\d.]+)\s*kw/i, transform: (m) => +m[1] },
-  { field: 'acChargeKw', pattern: /(?:ac\s*charg|onboard\s*charg)[^0-9]{0,30}([\d.]+)\s*kw/i, transform: (m) => +m[1] },
-  { field: 'chargeTime0To80Min', pattern: /0\s*-\s*80%[^0-9]{0,20}(\d{1,3})\s*min/i, transform: (m) => +m[1] },
-  { field: 'batteryChemistry', pattern: /\b(lfp|nmc|ncm|lithium[-\s]?ion|li[-\s]?ion)\b/i, transform: (m) => m[1].toLowerCase() },
+  {
+    field: 'dcFastChargeKw',
+    pattern: /(?:dc\s*fast|fast\s*charg)[^0-9]{0,30}([\d.]+)\s*kw/i,
+    transform: (m) => +m[1],
+  },
+  {
+    field: 'acChargeKw',
+    pattern: /(?:ac\s*charg|onboard\s*charg)[^0-9]{0,30}([\d.]+)\s*kw/i,
+    transform: (m) => +m[1],
+  },
+  {
+    field: 'chargeTime0To80Min',
+    pattern: /0\s*-\s*80%[^0-9]{0,20}(\d{1,3})\s*min/i,
+    transform: (m) => +m[1],
+  },
+  {
+    field: 'batteryChemistry',
+    pattern: /\b(lfp|nmc|ncm|lithium[-\s]?ion|li[-\s]?ion)\b/i,
+    transform: (m) => m[1].toLowerCase(),
+  },
   // Motorcycle
-  { field: 'gearCount', pattern: /(\d)\s*[-\s]?speed|gearbox[^0-9]{0,20}(\d)/i, transform: (m) => +(m[1] || m[2]) },
-  { field: 'coolingType', pattern: /(liquid|oil|air)\s*[-\s]?cooled/i, transform: (m) => `${m[1].toLowerCase()}-cooled` },
-  { field: 'seatHeightMm', pattern: /seat\s*height[^0-9]{0,20}(\d{3,4})\s*mm/i, transform: (m) => +m[1] },
-  { field: 'absChannels', pattern: /(single|dual|2[-\s]?channel)\s*abs/i, transform: (m) => (/dual|2/i.test(m[1]) ? 2 : 1) },
+  {
+    field: 'gearCount',
+    pattern: /(\d)\s*[-\s]?speed|gearbox[^0-9]{0,20}(\d)/i,
+    transform: (m) => +(m[1] || m[2]),
+  },
+  {
+    field: 'coolingType',
+    pattern: /(liquid|oil|air)\s*[-\s]?cooled/i,
+    transform: (m) => `${m[1].toLowerCase()}-cooled`,
+  },
+  {
+    field: 'seatHeightMm',
+    pattern: /seat\s*height[^0-9]{0,20}(\d{3,4})\s*mm/i,
+    transform: (m) => +m[1],
+  },
+  {
+    field: 'absChannels',
+    pattern: /(single|dual|2[-\s]?channel)\s*abs/i,
+    transform: (m) => (/dual|2/i.test(m[1]) ? 2 : 1),
+  },
   // Commercial
-  { field: 'payloadKg', pattern: /payload[^0-9]{0,20}([\d,]+)\s*kg/i, transform: (m) => +m[1].replace(/,/g, '') },
-  { field: 'gvwKg', pattern: /(?:gvw|gross vehicle weight)[^0-9]{0,20}([\d,]+)\s*kg/i, transform: (m) => +m[1].replace(/,/g, '') },
-  { field: 'towingCapacityKg', pattern: /towing[^0-9]{0,20}([\d,]+)\s*kg/i, transform: (m) => +m[1].replace(/,/g, '') },
-  { field: 'cargoVolumeL', pattern: /cargo\s*(?:vol|capacity)[^0-9]{0,20}([\d,]+)\s*(?:l|litres)/i, transform: (m) => +m[1].replace(/,/g, '') },
+  {
+    field: 'payloadKg',
+    pattern: /payload[^0-9]{0,20}([\d,]+)\s*kg/i,
+    transform: (m) => +m[1].replace(/,/g, ''),
+  },
+  {
+    field: 'gvwKg',
+    pattern: /(?:gvw|gross vehicle weight)[^0-9]{0,20}([\d,]+)\s*kg/i,
+    transform: (m) => +m[1].replace(/,/g, ''),
+  },
+  {
+    field: 'towingCapacityKg',
+    pattern: /towing[^0-9]{0,20}([\d,]+)\s*kg/i,
+    transform: (m) => +m[1].replace(/,/g, ''),
+  },
+  {
+    field: 'cargoVolumeL',
+    pattern: /cargo\s*(?:vol|capacity)[^0-9]{0,20}([\d,]+)\s*(?:l|litres)/i,
+    transform: (m) => +m[1].replace(/,/g, ''),
+  },
 ];
 
 type RawSpecData = Record<string, string>;
@@ -103,6 +164,7 @@ type ParsedSpec = {
   mileageCombined?: number;
   fuelCapLitres?: number;
   seatingCapacity?: number;
+  bodyType?: string;
   doors?: number;
   tyreSize?: string;
   wheelType?: string;
@@ -201,6 +263,92 @@ async function scrapeVariantSpecs(page: Page, url: string): Promise<RawSpecData>
 
     return specs;
   }, SPEC_ITEM_MAP);
+}
+
+async function scrapeModelSpecs(page: Page, modelUrl: string): Promise<RawSpecData> {
+  const urls = [
+    modelUrl,
+    modelUrl.replace(/\/$/, '') + '/specifications-features/',
+    modelUrl.replace(/\/$/, '') + '/specifications/',
+  ];
+
+  for (const url of urls) {
+    const specs = await scrapeVariantSpecs(page, url);
+    if (Object.keys(specs).length > 0) return specs;
+  }
+
+  return {};
+}
+
+async function scrapeModelJsonLdSpecs(page: Page, modelUrl: string): Promise<ParsedSpec> {
+  try {
+    const response = await page.goto(modelUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    if (!response || response.status() >= 400) return {};
+  } catch {
+    return {};
+  }
+
+  const car = await page.evaluate(() => {
+    const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+    for (const script of scripts) {
+      try {
+        const parsed = JSON.parse(script.textContent || '{}');
+        const nodes = Array.isArray(parsed?.['@graph']) ? parsed['@graph'] : [parsed];
+        const carNode = nodes.find((node) => node?.['@type'] === 'Car');
+        if (carNode) return carNode;
+      } catch {
+        // Ignore malformed structured-data blocks.
+      }
+    }
+    return null;
+  });
+
+  if (!car) return {};
+  const carData = car as Record<string, unknown>;
+
+  const firstNumber = (value: unknown): number | undefined => {
+    const match = String(value ?? '').match(/([\d.]+)/);
+    return match ? Number(match[1]) : undefined;
+  };
+  const names = (value: unknown): string[] => {
+    const items = Array.isArray(value) ? value : value ? [value] : [];
+    return items.map((item) => String(item?.name ?? item)).filter(Boolean);
+  };
+
+  const spec: ParsedSpec = {};
+  const description = String(carData.description ?? '');
+  const bodyType = Array.isArray(carData.bodyType) ? carData.bodyType[0] : carData.bodyType;
+  if (bodyType) spec.bodyType = String(bodyType);
+
+  const seating = description.match(/(\d+)\s*seater/i);
+  if (seating) spec.seatingCapacity = Number(seating[1]);
+
+  const groundClearance = description.match(/ground clearance[^0-9]{0,40}(\d+)\s*mm/i);
+  if (groundClearance) spec.groundClearanceMm = Number(groundClearance[1]);
+
+  const mileageRange = description.match(/mileage ranges from\s*([\d.]+)\s*kmpl\s*to\s*([\d.]+)/i);
+  if (mileageRange) spec.mileageCombined = Number(mileageRange[2]);
+  else {
+    const mileage = description.match(/mileage[^0-9]{0,40}([\d.]+)\s*kmpl/i);
+    if (mileage) spec.mileageCombined = Number(mileage[1]);
+  }
+
+  const engineValues = names(carData.vehicleEngine)
+    .map(firstNumber)
+    .filter((value): value is number => value !== undefined);
+  const uniqueEngineValues = [...new Set(engineValues)];
+  if (uniqueEngineValues.length === 1) spec.engineCc = uniqueEngineValues[0];
+
+  const fuelTypes = names(carData.fuelType);
+  if (fuelTypes.length > 0) spec.engineFuel = fuelTypes.join(', ');
+
+  const transmissions = names(carData.vehicleTransmission);
+  if (transmissions.length > 0) spec.transmission = transmissions.join(', ');
+
+  const driveTypes = names(carData.driveWheelConfiguration);
+  if (driveTypes.length > 0) spec.driveType = driveTypes.join(', ');
+
+  return spec;
 }
 
 // ─── Extract variants from model page ───────────────────────────────────────
@@ -430,10 +578,7 @@ async function main() {
       vehicleType: { in: ['car', 'suv'] },
       ...(args.brand
         ? {
-            OR: [
-              { slug: args.brand },
-              { name: { equals: args.brand, mode: 'insensitive' } },
-            ],
+            OR: [{ slug: args.brand }, { name: { equals: args.brand, mode: 'insensitive' } }],
           }
         : {}),
     },
@@ -462,6 +607,7 @@ async function main() {
   let totalModels = 0;
   let totalVariantsTested = 0;
   let totalUpserted = 0;
+  let totalModelFallbackUpserted = 0;
   let totalFailed = 0;
 
   for (const make of dbMakes) {
@@ -469,6 +615,14 @@ async function main() {
 
     for (const model of make.models) {
       if (!model.sourceUrl) continue;
+
+      const dbVariants = model.generations.flatMap((g) => g.variants).map((v) => ({ ...v }));
+      const missingSpecVariants = dbVariants.filter((variant) => !variant.spec);
+      const modelHasSpec = dbVariants.some((variant) => variant.spec);
+
+      if (args.missingModels && modelHasSpec) continue;
+      if (!args.force && missingSpecVariants.length === 0) continue;
+
       totalModels++;
 
       const modelUrl = model.sourceUrl.replace(/\/$/, '') + '/';
@@ -477,17 +631,17 @@ async function main() {
       const extractedVariants = await extractVariantUrls(page, modelUrl);
       if (extractedVariants.length === 0) {
         console.log(`      ⚠️  Could not find variant links on model page`);
+        const upserted = await upsertModelFallbackSpecs(page, modelUrl, missingSpecVariants, args);
+        totalUpserted += upserted;
+        totalModelFallbackUpserted += upserted;
         await sleep(200);
         continue;
       }
 
       console.log(`      🔗 Found ${extractedVariants.length} variant links`);
 
-      const dbVariants = model.generations
-        .flatMap((g) => g.variants)
-        .map((v) => ({ ...v }));
-
       const claimedIds = new Set<string>();
+      let modelUpserted = 0;
 
       for (const ev of extractedVariants) {
         totalVariantsTested++;
@@ -538,7 +692,9 @@ async function main() {
           }
 
           if (args.dryRun) {
-            console.log(`      📋 [DRY] ${dbVariant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`);
+            console.log(
+              `      📋 [DRY] ${dbVariant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`,
+            );
           } else {
             await prisma.vehicleCatalogVariantSpec.upsert({
               where: { variantId: dbVariant.id },
@@ -549,12 +705,19 @@ async function main() {
           }
 
           totalUpserted++;
+          modelUpserted++;
         } catch (e) {
           console.log(`      ❌ Error scraping ${dbVariant.name}: ${e}`);
           totalFailed++;
         }
 
         await sleep(500);
+      }
+
+      if (modelUpserted === 0 && missingSpecVariants.length > 0) {
+        const upserted = await upsertModelFallbackSpecs(page, modelUrl, missingSpecVariants, args);
+        totalUpserted += upserted;
+        totalModelFallbackUpserted += upserted;
       }
 
       await sleep(1000);
@@ -574,7 +737,48 @@ async function main() {
   console.log(`   Models processed: ${totalModels}`);
   console.log(`   Variants tested:  ${totalVariantsTested}`);
   console.log(`   Specs upserted:   ${totalUpserted}`);
+  console.log(`   Model fallbacks:  ${totalModelFallbackUpserted}`);
   console.log(`   Failed scrapes:   ${totalFailed}`);
+}
+
+async function upsertModelFallbackSpecs(
+  page: Page,
+  modelUrl: string,
+  variants: Array<{ id: string; name: string }>,
+  args: ReturnType<typeof parseArgs>,
+): Promise<number> {
+  const rawSpecs = await scrapeModelSpecs(page, modelUrl);
+  let parsed = parseRawSpecs(rawSpecs);
+  let sourceName = 'carwale-model-page';
+
+  if (!hasData(parsed)) {
+    parsed = await scrapeModelJsonLdSpecs(page, modelUrl);
+    sourceName = 'carwale-jsonld';
+  }
+
+  if (!hasData(parsed)) {
+    console.log(`      ⚠️  No model-level spec data`);
+    return 0;
+  }
+
+  let upserted = 0;
+  for (const variant of variants) {
+    if (args.dryRun) {
+      console.log(
+        `      📋 [DRY model] ${variant.name}: ${JSON.stringify(parsed).substring(0, 100)}…`,
+      );
+    } else {
+      await prisma.vehicleCatalogVariantSpec.upsert({
+        where: { variantId: variant.id },
+        update: { ...parsed, sourceName },
+        create: { variantId: variant.id, ...parsed, sourceName },
+      });
+      console.log(`      ✅ Model spec applied to ${variant.name}`);
+    }
+    upserted++;
+  }
+
+  return upserted;
 }
 
 function sleep(ms: number) {
@@ -587,6 +791,7 @@ function parseArgs() {
     brand: brandArg?.split('=')[1],
     dryRun: process.argv.includes('--dry-run'),
     force: process.argv.includes('--force'),
+    missingModels: process.argv.includes('--missing-models'),
   };
 }
 
