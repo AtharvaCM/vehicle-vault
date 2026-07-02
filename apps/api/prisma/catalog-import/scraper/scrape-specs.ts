@@ -17,6 +17,8 @@
 import puppeteer, { type Page } from 'puppeteer';
 import { PrismaClient } from '@prisma/client';
 
+import { isPseudoCatalogVariant } from '../pseudo-variants';
+
 const prisma = new PrismaClient();
 
 // CarWale data-itemid → our internal field mapping.
@@ -616,7 +618,10 @@ async function main() {
     for (const model of make.models) {
       if (!model.sourceUrl) continue;
 
-      const dbVariants = model.generations.flatMap((g) => g.variants).map((v) => ({ ...v }));
+      const dbVariants = model.generations
+        .flatMap((g) => g.variants)
+        .filter((variant) => !isPseudoCatalogVariant(variant.name))
+        .map((v) => ({ ...v }));
       const missingSpecVariants = dbVariants.filter((variant) => !variant.spec);
       const modelHasSpec = dbVariants.some((variant) => variant.spec);
 

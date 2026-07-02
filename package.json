@@ -13,6 +13,7 @@
     "db:seed": "pnpm --filter @vehicle-vault/api run prisma:seed",
     "catalog:audit": "pnpm --filter @vehicle-vault/api run catalog:audit",
     "catalog:backfill-specs": "pnpm --filter @vehicle-vault/api run catalog:backfill-specs",
+    "catalog:cleanup-pseudo-variants": "pnpm --filter @vehicle-vault/api run catalog:cleanup-pseudo-variants",
     "catalog:import:all": "pnpm --filter @vehicle-vault/api run catalog:import:all",
     "catalog:import:ather-india": "pnpm --filter @vehicle-vault/api run catalog:import:ather-india",
     "catalog:import:bajaj-india": "pnpm --filter @vehicle-vault/api run catalog:import:bajaj-india",

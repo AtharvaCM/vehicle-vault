@@ -54,6 +54,7 @@
     "catalog:import:yamaha-india": "ts-node --project tsconfig.json --transpile-only prisma/import-catalog.ts --source=yamaha-india",
     "catalog:sync-aliases": "ts-node --project tsconfig.json --transpile-only prisma/sync-catalog-aliases.ts",
     "catalog:backfill-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/backfill-missing-specs-from-siblings.ts",
+    "catalog:cleanup-pseudo-variants": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/cleanup-pseudo-variants.ts",
     "catalog:diff": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/diff-snapshots.ts",
     "catalog:scrape": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-carwale.ts",
     "catalog:seed-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/upsert-specs.ts",

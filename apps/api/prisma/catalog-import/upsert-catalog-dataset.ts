@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 
+import { isPseudoCatalogVariant } from './pseudo-variants';
 import type { CatalogDataset } from './types';
 
 type CatalogWriter = PrismaClient | Prisma.TransactionClient;
@@ -93,6 +94,8 @@ export async function upsertCatalogDataset(
         recordsUpserted += 1;
 
         for (const variant of generation.variants) {
+          if (isPseudoCatalogVariant(variant.name)) continue;
+
           const variantRecord = await prisma.vehicleCatalogVariant.upsert({
             where: {
               generationId_slug: {

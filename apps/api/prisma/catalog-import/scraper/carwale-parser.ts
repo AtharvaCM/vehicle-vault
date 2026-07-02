@@ -1,5 +1,7 @@
 import * as cheerio from 'cheerio';
 
+import { isPseudoCatalogVariant } from '../pseudo-variants';
+
 /**
  * Fetches a URL with a delay to be respectful to the server.
  */
@@ -251,6 +253,7 @@ export function parseVariantList(html: string): ScrapedVariant[] {
       // Try to extract a clean variant name
       const variantName = text.replace(/^.*?\s+/, '').trim(); // Strip brand+model prefix
       if (!variantName || variantName.length <= 1) return;
+      if (isPseudoCatalogVariant(variantName)) return;
       if (variantName.length > 60) return; // editorial prose, not a variant
       if (variantName.includes('Price') || variantName.includes('Rs.')) return;
       // Editorial prose markers
@@ -266,9 +269,7 @@ export function parseVariantList(html: string): ScrapedVariant[] {
       if (/\bnews$/i.test(variantName)) return; // "X News" link to news page
       if (/^news$/i.test(variantName)) return;
       // Slugs that obviously aren't variants
-      if (
-        ['news', 'reviews', 'overview', 'gallery', 'expert-reviews'].includes(variantSlug)
-      )
+      if (['news', 'reviews', 'overview', 'gallery', 'expert-reviews'].includes(variantSlug))
         return;
 
       seen.add(variantSlug);
