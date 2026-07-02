@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.10.0...v1.11.0) (2026-07-02)
+
+
+### Features
+
+* **catalog:** add premium motorcycle sources ([79bc221](https://github.com/AtharvaCM/vehicle-vault/commit/79bc221c0f10b6e238c0102588ca3b194b6e5c79))
+
 # [1.10.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.9.0...v1.10.0) (2026-07-01)
 
 
