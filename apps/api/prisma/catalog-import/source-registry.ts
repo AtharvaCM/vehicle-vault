@@ -9,7 +9,10 @@ import { hondaCarsIndiaSnapshot } from './sources/honda-cars-india.snapshot';
 import { hondaIndiaSnapshot } from './sources/honda-india.snapshot';
 import { hyundaiIndiaSnapshot } from './sources/hyundai-india.snapshot';
 import { isuzuIndiaSnapshot } from './sources/isuzu-india.snapshot';
+import { bmwMotorradIndiaSnapshot } from './sources/bmw-motorrad-india.snapshot';
+import { jawaYezdiIndiaSnapshot } from './sources/jawa-yezdi-india.snapshot';
 import { jeepIndiaSnapshot } from './sources/jeep-india.snapshot';
+import { kawasakiIndiaSnapshot } from './sources/kawasaki-india.snapshot';
 import { kiaIndiaSnapshot } from './sources/kia-india.snapshot';
 import { ktmIndiaSnapshot } from './sources/ktm-india.snapshot';
 import { mahindraIndiaSnapshot } from './sources/mahindra-india.snapshot';
@@ -23,6 +26,7 @@ import { skodaIndiaSnapshot } from './sources/skoda-india.snapshot';
 import { suzukiIndiaSnapshot } from './sources/suzuki-india.snapshot';
 import { tataIndiaSnapshot } from './sources/tata-india.snapshot';
 import { toyotaIndiaSnapshot } from './sources/toyota-india.snapshot';
+import { triumphIndiaSnapshot } from './sources/triumph-india.snapshot';
 import { tvsIndiaSnapshot } from './sources/tvs-india.snapshot';
 import { volkswagenIndiaSnapshot } from './sources/volkswagen-india.snapshot';
 import { yamahaIndiaSnapshot } from './sources/yamaha-india.snapshot';
@@ -30,6 +34,7 @@ import { yamahaIndiaSnapshot } from './sources/yamaha-india.snapshot';
 export const catalogImportSources = {
   'ather-india': atherIndiaSnapshot,
   'bajaj-india': bajajIndiaSnapshot,
+  'bmw-motorrad-india': bmwMotorradIndiaSnapshot,
   'byd-india': bydIndiaSnapshot,
   'citroen-india': citroenIndiaSnapshot,
   'force-motors-india': forceMotorsIndiaSnapshot,
@@ -38,7 +43,9 @@ export const catalogImportSources = {
   'honda-india': hondaIndiaSnapshot,
   'hyundai-india': hyundaiIndiaSnapshot,
   'isuzu-india': isuzuIndiaSnapshot,
+  'jawa-yezdi-india': jawaYezdiIndiaSnapshot,
   'jeep-india': jeepIndiaSnapshot,
+  'kawasaki-india': kawasakiIndiaSnapshot,
   'kia-india': kiaIndiaSnapshot,
   'ktm-india': ktmIndiaSnapshot,
   'mahindra-india': mahindraIndiaSnapshot,
@@ -52,6 +59,7 @@ export const catalogImportSources = {
   'suzuki-india': suzukiIndiaSnapshot,
   'tata-india': tataIndiaSnapshot,
   'toyota-india': toyotaIndiaSnapshot,
+  'triumph-india': triumphIndiaSnapshot,
   'tvs-india': tvsIndiaSnapshot,
   'volkswagen-india': volkswagenIndiaSnapshot,
   'yamaha-india': yamahaIndiaSnapshot,
