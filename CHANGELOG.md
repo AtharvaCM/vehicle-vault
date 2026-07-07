@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.13.1...v1.13.2) (2026-07-07)
+
+
+### Bug Fixes
+
+* **api:** enable RLS on tables added after initial RLS migration ([67f4696](https://github.com/AtharvaCM/vehicle-vault/commit/67f4696dc9273991eb9168851ee24c704b6f8dab))
+
 ## [1.13.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.13.0...v1.13.1) (2026-07-02)
 
 
