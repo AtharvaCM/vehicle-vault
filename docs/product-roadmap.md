@@ -308,21 +308,23 @@ Goal: Provide deep visibility into ownership costs and facilitate resale value.
 
 These are intentionally deferred so the product does not sprawl too early.
 
+_(Pruned 2026-07-24: shared vehicle access, AI-assisted service suggestions, usage-aware reminder suggestions, service-schedule intelligence, and resale report generation all shipped — see Completed sections above.)_
+
 ### Product Enhancements
 
-- Shared vehicle access for families or teams
+- Native mobile app
+- Additional VehicleDocument kinds: registration certificate, PUC, road tax (enum slots exist, unshipped)
 
 ### Smart Features
 
-- AI-assisted service entry suggestions
-- Usage-aware reminder suggestions
-- Vehicle-specific service schedule intelligence
+- Push / SMS notification channels (email only today)
+- Unify the three maintenance-interval sources (hardcoded alert map, per-variant `ServiceInterval`, service-schedule catalog)
 
 ### Ecosystem and Scale
 
 - Insurance or registration integrations
 - Service center integrations
-- Resale history/report generation
+- Deeper resale-market intelligence (valuation data beyond the PDF report)
 - Public API access
 
 ## Guardrails for Future Planning
@@ -332,7 +334,7 @@ When updating this roadmap:
 - move shipped work to `Completed` immediately after it lands
 - do not list placeholders as completed
 - keep `Recommended Next Milestones` short and ordered
-- treat OCR, AI, notifications, and integrations as explicitly deferred until the core ownership workflow is solid
+- treat external integrations (insurers, service centers, public API) as explicitly deferred until the core ownership workflow is solid
 - prefer features that strengthen the ownership timeline over flashy additions
 
 ## Product Direction

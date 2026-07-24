@@ -1,14 +1,16 @@
 # Tech Stack
 
+As deployed today (verified against the repo, 2026-07). Aspirational entries are marked _(future)_.
+
 ## Frontend
 
-- Vite
-- React
+- Vite 6
+- React 19
 - TypeScript
-- TanStack Router
+- TanStack Router (code-defined routes)
 - TanStack Query
-- Tailwind CSS
-- shadcn/ui (or similar)
+- Tailwind CSS + shadcn/ui (Radix)
+- react-hook-form + Zod (shared schemas)
 
 ### Why
 
@@ -21,9 +23,9 @@
 
 ## Backend
 
-- NestJS
+- NestJS 10
 - TypeScript
-- REST APIs
+- REST APIs (`{success, data}` envelope, Swagger at `/api/docs`)
 
 ### Why
 
@@ -35,74 +37,62 @@
 
 ## Database
 
-- PostgreSQL
+- PostgreSQL (Supabase, Supavisor pooler)
 - Prisma ORM
-
-### Why
-
-- Strong relational model
-- Easy querying
-- Reliable
+- RLS enabled deny-by-default (closes PostgREST exposure; app connects as `postgres`)
 
 ---
 
 ## Storage
 
-- AWS S3 / Cloudflare R2 / Supabase Storage
+- Supabase Storage (local-FS backend for CI/dev via `ATTACHMENT_STORAGE_BACKEND=local`)
 
-Used for:
+Used for: receipt uploads, documents, claim/loan attachments.
 
-- Receipt uploads
-- Documents
+---
+
+## AI
+
+- Google Gemini (`@google/generative-ai`) — document extraction (fuel receipts, maintenance invoices, insurance policies, claim docs, loan docs). Gated on `GEMINI_API_KEY`.
 
 ---
 
 ## Authentication
 
-- JWT (access + refresh tokens)
+- JWT (access + refresh tokens), Google + GitHub OAuth, email verification via SMTP
 
 ---
 
 ## Background Jobs
 
-- NestJS Scheduler (initial)
-- BullMQ + Redis (future)
-
-Used for:
-
-- Reminder processing
-- Notifications
+- NestJS Scheduler (cron) — alert engine, daily at 06:00, disabled in dev
+- BullMQ + Redis _(future, not installed)_
 
 ---
 
 ## Notifications
 
-- Email (Resend/Postmark)
+- Email via SMTP (nodemailer); DB notification row is canonical, email is fan-out
+- Push / SMS _(future)_
 
 ---
 
 ## Hosting
 
-Frontend:
-
-- Vercel / Netlify
-
-Backend:
-
-- Railway / Render / VPS
-
-Database:
-
-- Managed PostgreSQL
+- Frontend: Vercel
+- Backend: Docker image on GHCR → Portainer stack behind nginx (`vehiclevault.middle-earth.in/api`); migrations run on container start
+- Database: Supabase managed PostgreSQL
 
 ---
 
 ## Dev Tooling
 
-- Bun (package manager)
-- ESLint
-- Prettier
-- Husky (optional)
+- pnpm workspaces (monorepo)
+- ESLint, Prettier
+- Husky + commitlint (Conventional Commits, enforced)
+- semantic-release (auto version + CHANGELOG on `main`)
+- Vitest (unit), Playwright (web e2e smoke)
+- GitHub Actions: quality, e2e-smoke, release, api-image, commitlint
 
 ---
 
