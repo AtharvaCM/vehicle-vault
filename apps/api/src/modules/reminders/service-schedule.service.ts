@@ -5,6 +5,10 @@ import { FuelType, ReminderStatus, VehicleType } from '@vehicle-vault/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditService } from '../audit/audit.service';
+import {
+  MaintenanceIntervalResolver,
+  type IntervalVehicleShape,
+} from '../vehicles/maintenance-interval.resolver';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import {
@@ -41,14 +45,12 @@ export class ServiceScheduleService {
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
+    private readonly intervalResolver: MaintenanceIntervalResolver,
   ) {}
 
   async getSuggestions(userId: string, vehicleId: string): Promise<ServiceScheduleSuggestion[]> {
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
-    const items = filterCatalogForVehicle(
-      vehicle.fuelType as FuelType,
-      vehicle.vehicleType as VehicleType,
-    );
+    const items = await this.itemsForVehicle(vehicle);
     const existing = await this.prisma.reminder.findMany({
       where: {
         vehicleId,
@@ -70,10 +72,9 @@ export class ServiceScheduleService {
     await this.access.assertEditor(userId, vehicleId);
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
     const unique = Array.from(new Set(slugs));
-    const items = filterCatalogForVehicle(
-      vehicle.fuelType as FuelType,
-      vehicle.vehicleType as VehicleType,
-    ).filter((item) => unique.includes(item.slug));
+    const items = (await this.itemsForVehicle(vehicle)).filter((item) =>
+      unique.includes(item.slug),
+    );
 
     const unknown = unique.filter((slug) => !items.some((item) => item.slug === slug));
     if (unknown.length > 0) {
@@ -120,6 +121,33 @@ export class ServiceScheduleService {
     });
 
     return { created };
+  }
+
+  /**
+   * Catalog items for this vehicle, with generic intervals replaced by
+   * per-variant `ServiceInterval` data when the vehicle is linked to a
+   * catalog variant. Curated defaults stay untouched otherwise.
+   */
+  private async itemsForVehicle(
+    vehicle: IntervalVehicleShape & { fuelType: string; vehicleType: string },
+  ): Promise<ServiceScheduleItem[]> {
+    const items = filterCatalogForVehicle(
+      vehicle.fuelType as FuelType,
+      vehicle.vehicleType as VehicleType,
+    );
+    if (!vehicle.catalogVariantId) return items;
+
+    const intervals = await this.intervalResolver.resolveForVehicle(vehicle);
+    return items.map((item) => {
+      if (!item.category) return item;
+      const resolved = intervals[item.category];
+      if (!resolved || resolved.source !== 'variant') return item;
+      return {
+        ...item,
+        intervalKm: resolved.km ?? item.intervalKm,
+        intervalMonths: resolved.months ?? item.intervalMonths,
+      };
+    });
   }
 
   private toSuggestion(

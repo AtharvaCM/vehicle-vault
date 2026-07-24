@@ -4,22 +4,10 @@ import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
-import { MaintenanceCategory } from '@prisma/client';
+import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
 
 const DOCUMENT_EXPIRY_WINDOW_DAYS = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-// Smart maintenance intervals (in km)
-const MAINTENANCE_INTERVALS: Partial<Record<MaintenanceCategory, number>> = {
-  periodic_service: 10000,
-  engine_oil: 7500,
-  oil_filter: 7500,
-  air_filter: 15000,
-  brake_pads: 30000,
-  tyre_rotation: 10000,
-  wheel_alignment: 10000,
-  coolant: 40000,
-};
 
 @Injectable()
 export class MaintenanceAlertService {
@@ -30,6 +18,7 @@ export class MaintenanceAlertService {
     private readonly vehicleInsightsService: VehicleInsightsService,
     private readonly notifyService: NotifyService,
     private readonly vehicleDocumentsService: VehicleDocumentsService,
+    private readonly intervalResolver: MaintenanceIntervalResolver,
   ) {}
 
   /**
@@ -55,13 +44,18 @@ export class MaintenanceAlertService {
     );
     const currentOdo = insights.currentOdometerPredicted;
 
-    // 2. Check each category for due service
-    for (const [category, interval] of Object.entries(MAINTENANCE_INTERVALS)) {
+    // 2. Check each category for due service. Intervals come from the
+    // resolver: per-variant catalog data when the vehicle is linked,
+    // type/fuel-gated defaults otherwise (km-based alerting only —
+    // month-based intervals surface through the forecast, not alerts).
+    const intervals = await this.intervalResolver.resolveForVehicle(vehicle);
+    for (const [category, interval] of Object.entries(intervals)) {
+      if (interval.km == null) continue;
       const lastRecord = vehicle.maintenanceRecords.find((r) => r.category === category);
       const lastOdo = lastRecord ? lastRecord.odometer : vehicle.odometer || 0;
 
       const distanceSinceLast = currentOdo - lastOdo;
-      const remainingDistance = interval - distanceSinceLast;
+      const remainingDistance = interval.km - distanceSinceLast;
 
       // Alert if due within 500km or already overdue
       if (remainingDistance <= 500) {

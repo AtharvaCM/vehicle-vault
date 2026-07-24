@@ -1,33 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MaintenanceCategory, VehicleType, type MaintenanceSuggestion } from '@vehicle-vault/shared';
+import { MaintenanceCategory, type MaintenanceSuggestion } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { MaintenanceIntervalResolver } from './maintenance-interval.resolver';
 import { VehicleAccessService } from './vehicle-access.service';
 import { VehicleInsightsService } from './vehicle-insights.service';
-
-interface ServiceInterval {
-  km: number;
-  months: number;
-}
-
-const DEFAULT_INTERVALS: Partial<Record<MaintenanceCategory, ServiceInterval>> = {
-  [MaintenanceCategory.EngineOil]: { km: 7500, months: 6 },
-  [MaintenanceCategory.PeriodicService]: { km: 10000, months: 12 },
-  [MaintenanceCategory.BrakePads]: { km: 30000, months: 24 },
-  [MaintenanceCategory.TyreRotation]: { km: 10000, months: 12 },
-  [MaintenanceCategory.AirFilter]: { km: 15000, months: 12 },
-  [MaintenanceCategory.Coolant]: { km: 30000, months: 24 },
-  [MaintenanceCategory.ChainService]: { km: 500, months: 1 }, // motorcycle drive chain only
-  [MaintenanceCategory.TimingBelt]: { km: 120000, months: 60 }, // car/SUV/van/truck only
-};
-
-const MOTORCYCLE_ONLY_CATEGORIES = new Set<MaintenanceCategory>([
-  MaintenanceCategory.ChainService,
-]);
-
-const NON_MOTORCYCLE_CATEGORIES = new Set<MaintenanceCategory>([
-  MaintenanceCategory.TimingBelt,
-]);
 
 @Injectable()
 export class MaintenanceForecastService {
@@ -35,13 +12,14 @@ export class MaintenanceForecastService {
     private readonly prisma: PrismaService,
     private readonly insightsService: VehicleInsightsService,
     private readonly access: VehicleAccessService,
+    private readonly intervalResolver: MaintenanceIntervalResolver,
   ) {}
 
   async getUpcomingSuggestions(userId: string, vehicleId: string): Promise<MaintenanceSuggestion[]> {
     await this.access.assert(userId, vehicleId);
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      select: { id: true, odometer: true, createdAt: true, catalogVariantId: true, make: true, model: true, vehicleType: true },
+      select: { id: true, odometer: true, createdAt: true, catalogVariantId: true, make: true, model: true, vehicleType: true, fuelType: true },
     });
 
     if (!vehicle) {
@@ -58,38 +36,12 @@ export class MaintenanceForecastService {
     const suggestions: MaintenanceSuggestion[] = [];
     const now = new Date();
 
-    // 1. Fetch catalog-specific intervals if available
-    const catalogIntervals = vehicle.catalogVariantId
-      ? await this.prisma.serviceInterval.findMany({
-          where: { variantId: vehicle.catalogVariantId },
-        })
-      : [];
+    // Intervals come from the shared resolver: per-variant catalog data when
+    // linked, type/fuel-gated defaults otherwise.
+    const intervalsToCheck = await this.intervalResolver.resolveForVehicle(vehicle);
 
-    // 2. Build the final intervals to check, starting with defaults
-    const intervalsToCheck: Record<MaintenanceCategory, ServiceInterval> = {
-      ...(DEFAULT_INTERVALS as Record<MaintenanceCategory, ServiceInterval>),
-    };
-
-    // Override with catalog-specific ones
-    for (const ci of catalogIntervals) {
-      if (ci.intervalKm || ci.intervalMonths) {
-        intervalsToCheck[ci.category as MaintenanceCategory] = {
-          km: ci.intervalKm ?? 999999, // default to large if null
-          months: ci.intervalMonths ?? 999,
-        };
-      }
-    }
-
-    const isMotorcycle = vehicle.vehicleType === VehicleType.Motorcycle;
-
-    // 3. For each category, find the latest record and evaluate
+    // For each category, find the latest record and evaluate
     for (const [category, interval] of Object.entries(intervalsToCheck)) {
-      if (MOTORCYCLE_ONLY_CATEGORIES.has(category as MaintenanceCategory) && !isMotorcycle) {
-        continue;
-      }
-      if (NON_MOTORCYCLE_CATEGORIES.has(category as MaintenanceCategory) && isMotorcycle) {
-        continue;
-      }
       const latestRecord = await this.prisma.maintenanceRecord.findFirst({
         where: { vehicleId, category: category as MaintenanceCategory },
         orderBy: { serviceDate: 'desc' },
@@ -101,16 +53,16 @@ export class MaintenanceForecastService {
       const kmSinceLast = insights.currentOdometerPredicted - lastOdo;
       const monthsSinceLast = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
 
-      const odoProgress = kmSinceLast / interval.km;
-      const timeProgress = monthsSinceLast / interval.months;
+      const odoProgress = interval.km != null ? kmSinceLast / interval.km : 0;
+      const timeProgress = interval.months != null ? monthsSinceLast / interval.months : 0;
 
       const maxProgress = Math.max(odoProgress, timeProgress);
 
       if (maxProgress >= 0.8) {
         const priority = maxProgress >= 1.0 ? 'high' : maxProgress >= 0.9 ? 'medium' : 'low';
-        
+
         let reason = '';
-        if (odoProgress >= timeProgress) {
+        if (odoProgress >= timeProgress && interval.km != null) {
           reason = `Last ${category.replace('_', ' ')} was ${Math.round(kmSinceLast)}km ago. Recommended every ${interval.km}km.`;
         } else {
           reason = `Last ${category.replace('_', ' ')} was ${Math.round(monthsSinceLast)} months ago. Recommended every ${interval.months} months.`;
@@ -120,8 +72,11 @@ export class MaintenanceForecastService {
           category: category as MaintenanceCategory,
           reason,
           priority,
-          estimatedOdometerDue: lastOdo + interval.km,
-          estimatedDateDue: new Date(lastDate.getTime() + interval.months * 30.44 * 24 * 60 * 60 * 1000).toISOString(),
+          estimatedOdometerDue: interval.km != null ? lastOdo + interval.km : undefined,
+          estimatedDateDue:
+            interval.months != null
+              ? new Date(lastDate.getTime() + interval.months * 30.44 * 24 * 60 * 60 * 1000).toISOString()
+              : undefined,
           vehicleId,
           vehicleLabel: `${vehicle.make} ${vehicle.model}`,
         });

@@ -1,4 +1,4 @@
-import { FuelType, ReminderType, VehicleType } from '@vehicle-vault/shared';
+import { FuelType, MaintenanceCategory, ReminderType, VehicleType } from '@vehicle-vault/shared';
 
 /**
  * Static catalog of generic recommended service intervals. Not bound to a
@@ -20,6 +20,12 @@ export interface ServiceScheduleItem {
   intervalMonths?: number;
   appliesToFuel?: FuelType[];
   appliesToVehicle?: VehicleType[];
+  /**
+   * MaintenanceCategory this item corresponds to, when one exists. Lets
+   * MaintenanceIntervalResolver override the generic interval with
+   * per-variant catalog data for linked vehicles.
+   */
+  category?: MaintenanceCategory;
 }
 
 const ALL_NON_ELECTRIC: FuelType[] = [
@@ -33,6 +39,7 @@ const ALL_NON_ELECTRIC: FuelType[] = [
 export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
   {
     slug: 'engine_oil_change',
+    category: MaintenanceCategory.EngineOil,
     type: ReminderType.Service,
     title: 'Engine oil change',
     intervalKm: 10000,
@@ -42,6 +49,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
   },
   {
     slug: 'tyre_rotation',
+    category: MaintenanceCategory.TyreRotation,
     type: ReminderType.TyreRotation,
     title: 'Tyre rotation',
     intervalKm: 10000,
@@ -49,6 +57,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
   },
   {
     slug: 'brake_inspection',
+    category: MaintenanceCategory.BrakePads,
     type: ReminderType.Service,
     title: 'Brake pad inspection',
     intervalKm: 20000,
@@ -57,6 +66,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
   },
   {
     slug: 'coolant_flush',
+    category: MaintenanceCategory.Coolant,
     type: ReminderType.Service,
     title: 'Coolant flush',
     intervalKm: 40000,
@@ -65,6 +75,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
   },
   {
     slug: 'air_filter',
+    category: MaintenanceCategory.AirFilter,
     type: ReminderType.Service,
     title: 'Air filter replacement',
     intervalKm: 20000,
@@ -100,6 +111,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
   },
   {
     slug: 'chain_lube',
+    category: MaintenanceCategory.ChainService,
     type: ReminderType.Service,
     title: 'Chain clean & lube',
     intervalKm: 500,

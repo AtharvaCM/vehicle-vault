@@ -6,6 +6,7 @@ import { VehicleAccessService } from './vehicle-access.service';
 import { VehicleCatalogLinkerService } from './vehicle-catalog-linker.service';
 import { VehicleInsightsService } from './vehicle-insights.service';
 import { MaintenanceForecastService } from './maintenance-forecast.service';
+import { MaintenanceIntervalResolver } from './maintenance-interval.resolver';
 import { VehiclesService } from './vehicles.service';
 
 @Module({
@@ -17,6 +18,7 @@ import { VehiclesService } from './vehicles.service';
     VehicleCatalogLinkerService,
     VehicleInsightsService,
     MaintenanceForecastService,
+    MaintenanceIntervalResolver,
   ],
   exports: [
     VehiclesService,
@@ -24,6 +26,7 @@ import { VehiclesService } from './vehicles.service';
     VehicleCatalogLinkerService,
     VehicleInsightsService,
     MaintenanceForecastService,
+    MaintenanceIntervalResolver,
   ],
 })
 export class VehiclesModule {}
