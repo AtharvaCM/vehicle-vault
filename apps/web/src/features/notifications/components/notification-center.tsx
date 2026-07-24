@@ -15,8 +15,8 @@ import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
-  type Notification,
 } from '../hooks/use-notifications';
+import type { Notification } from '../types/notification';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils/cn';
@@ -35,18 +35,7 @@ export function NotificationCenter() {
       await markRead.mutateAsync(notif.id);
     }
     if (notif.link) {
-      // Handle navigation path
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const route = notif.link.split('?')[0] as any;
-      const search = notif.link.includes('?')
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({ tab: new URLSearchParams(notif.link.split('?')[1]).get('tab') } as any)
-        : {};
-
-      // Simpler approach for now using window context if router is complex
-      // but let's try standard navigate
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await navigate({ to: route as any, search: search as any });
+      await navigate({ href: notif.link });
     }
   };
 

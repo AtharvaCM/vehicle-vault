@@ -116,6 +116,10 @@ export const queryKeys = {
     invites: (vehicleId: string) =>
       [...queryKeys.vehicleSharing.all(), 'invites', vehicleId] as const,
   },
+  notifications: {
+    all: () => ['notifications'] as const,
+    list: () => [...queryKeys.notifications.all(), 'list'] as const,
+  },
   audit: {
     all: () => ['audit'] as const,
     me: (resourceType?: string) =>
