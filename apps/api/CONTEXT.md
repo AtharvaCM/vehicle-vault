@@ -48,7 +48,7 @@ A typed alert category — `maintenance-due`, `maintenance-overdue`, `reminder-d
 The per-**AlertKind** producer of notification content (title, message, link, urgency) and dedup identity. Wired via `ALERT_TEMPLATES` DI multi-provider behind **NotifyService**.
 
 **Channel**:
-An external delivery adapter for a **Notification** (`email` today; `push`/`sms` future). The DB row is the canonical record; channels are out-of-band fan-out (`Promise.allSettled`, failures logged not thrown).
+An external delivery adapter for a **Notification** (`email` and `push` today; `sms` future). The DB row is the canonical record; channels are out-of-band fan-out (`Promise.allSettled`, failures logged not thrown). Push is web-push/VAPID (`PushSubscriptionsService`, gated on `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`); one **PushSubscription** row per browser endpoint, pruned automatically on 404/410.
 
 **NotifyService**:
 `raise(userId, vehicleId, kind, payload)` — resolves template, computes dedup key, upserts the row, and fans out to channels. The single entry point for raising any alert.

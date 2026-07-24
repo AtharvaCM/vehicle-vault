@@ -509,6 +509,7 @@ model User {
   auditEventsOwned                AuditEvent[]              @relation("AuditOwner")
   vehicleMemberships              VehicleMember[]
   vehicleInvitesSent              VehicleInvite[]           @relation("VehicleInviteAuthor")
+  pushSubscriptions               PushSubscription[]
 }
 
 enum Role {
@@ -836,6 +837,23 @@ model Warranty {
   attachments    Attachment[]
 
   @@index([vehicleId])
+}
+
+// One browser push endpoint per row. A user may have several (laptop,
+// phone). Endpoints are pruned when the push service reports them gone
+// (404/410) — device bookkeeping, not an audited resource.
+model PushSubscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?   @db.VarChar(255)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Registration certificate, PUC certificate, and road tax. These three

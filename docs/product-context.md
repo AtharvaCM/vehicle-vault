@@ -47,7 +47,7 @@ Live at `https://vehicle-vault-eight.vercel.app` (web) + `https://vehiclevault.m
 
 ## Open product directions (from roadmap "Later", deduped against shipped reality)
 
-Still genuinely open: service-center/ecosystem integrations, native mobile, richer social/community features, deeper resale-market intelligence, push/SMS notification channels (email only today). (Registration/PUC/road-tax document kinds shipped 2026-07.)
+Still genuinely open: service-center/ecosystem integrations, native mobile, richer social/community features, deeper resale-market intelligence, SMS notification channel. (Registration/PUC/road-tax document kinds and the web-push channel shipped 2026-07.)
 
 ## Known product-doc debt
 

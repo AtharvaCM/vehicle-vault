@@ -61,6 +61,7 @@ export const DEFAULT_EXEMPT_MODELS = new Set<string>([
   'ServiceInterval',
   'AttachmentExtraction',
   'MaintenanceLineItem',
+  'PushSubscription',
 ]);
 
 export class AuditCoverageScope {

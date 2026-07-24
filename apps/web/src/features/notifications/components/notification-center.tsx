@@ -1,5 +1,7 @@
 import {
   Bell,
+  BellOff,
+  BellRing,
   CheckCheck,
   Info,
   AlertTriangle,
@@ -16,7 +18,9 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '../hooks/use-notifications';
+import { usePushNotifications } from '../hooks/use-push-notifications';
 import type { Notification } from '../types/notification';
+import { appToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils/cn';
@@ -26,6 +30,21 @@ export function NotificationCenter() {
   const { data, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+  const push = usePushNotifications();
+
+  async function handlePushToggle() {
+    if (push.status === 'on') {
+      await push.disable();
+      appToast.success({ title: 'Push disabled', description: 'This device will no longer get alerts.' });
+      return;
+    }
+    const enabled = await push.enable();
+    if (enabled) {
+      appToast.success({ title: 'Push enabled', description: 'Alerts will reach this device even when the tab is closed.' });
+    } else if (push.status !== 'denied') {
+      appToast.error({ title: 'Could not enable push', description: 'Check browser permissions and try again.' });
+    }
+  }
 
   const notifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;
@@ -75,6 +94,30 @@ export function NotificationCenter() {
       >
         <div className="flex items-center justify-between p-4 pb-2">
           <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
+          <div className="flex items-center gap-1">
+          {(push.status === 'on' || push.status === 'off' || push.status === 'denied') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-[11px] font-semibold text-slate-500 hover:text-primary hover:bg-primary/5 px-2"
+              onClick={handlePushToggle}
+              disabled={push.status === 'denied'}
+              title={
+                push.status === 'denied'
+                  ? 'Notifications are blocked in your browser settings'
+                  : push.status === 'on'
+                    ? 'Disable push on this device'
+                    : 'Get alerts on this device even when the tab is closed'
+              }
+            >
+              {push.status === 'on' ? (
+                <BellRing className="mr-1.5 h-3.5 w-3.5 text-emerald-500" />
+              ) : (
+                <BellOff className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              {push.status === 'on' ? 'Push on' : 'Enable push'}
+            </Button>
+          )}
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -87,6 +130,7 @@ export function NotificationCenter() {
               Mark all as read
             </Button>
           )}
+          </div>
         </div>
 
         <div className="h-px bg-slate-100/80" />

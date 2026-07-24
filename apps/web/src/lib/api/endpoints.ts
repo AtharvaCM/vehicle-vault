@@ -135,5 +135,7 @@ export const endpoints = {
     markRead: (id: string) => `/notifications/${id}/read`,
     markAllRead: () => '/notifications/read-all',
     delete: (id: string) => `/notifications/${id}`,
+    pushPublicKey: () => '/notifications/push/public-key',
+    pushSubscribe: () => '/notifications/push/subscribe',
   },
 } as const;

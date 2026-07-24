@@ -166,6 +166,18 @@ export class AppConfigService {
     return this.configService.get<string>('app.geminiModel') ?? 'gemini-2.5-flash';
   }
 
+  get vapidPublicKey(): string | undefined {
+    return this.configService.get<string>('VAPID_PUBLIC_KEY');
+  }
+
+  get vapidPrivateKey(): string | undefined {
+    return this.configService.get<string>('VAPID_PRIVATE_KEY');
+  }
+
+  get vapidSubject(): string {
+    return this.configService.get<string>('VAPID_SUBJECT') ?? 'mailto:no-reply@vehiclevault.app';
+  }
+
   get maintenanceAlertCron() {
     return this.configService.get<string>('MAINTENANCE_ALERT_CRON') ?? '0 6 * * *';
   }

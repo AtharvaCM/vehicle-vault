@@ -8,6 +8,8 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotifyService } from './notify.service';
 import { EmailChannel } from './channels/email.channel';
+import { PushChannel } from './channels/push.channel';
+import { PushSubscriptionsService } from './push-subscriptions.service';
 import { DocumentExpiringTemplate } from './templates/document-expiring.template';
 import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
 import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
@@ -34,6 +36,8 @@ import {
     ReminderOverdueTemplate,
     DocumentExpiringTemplate,
     EmailChannel,
+    PushSubscriptionsService,
+    PushChannel,
     {
       provide: ALERT_TEMPLATES,
       useFactory: (
@@ -59,8 +63,8 @@ import {
     },
     {
       provide: NOTIFICATION_CHANNELS,
-      useFactory: (email: EmailChannel): Channel[] => [email],
-      inject: [EmailChannel],
+      useFactory: (email: EmailChannel, push: PushChannel): Channel[] => [email, push],
+      inject: [EmailChannel, PushChannel],
     },
   ],
   exports: [NotificationsService, MaintenanceAlertService, NotifyService],
