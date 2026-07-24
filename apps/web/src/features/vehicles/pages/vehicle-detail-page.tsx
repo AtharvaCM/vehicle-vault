@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { CarFront, ChevronRight, ClipboardList, Fuel, Gauge, LayoutGrid, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
@@ -50,21 +50,34 @@ import { downloadResaleReportPdf } from '../api/download-resale-report';
 import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
+import {
+  defaultVehicleDetailTab,
+  type VehicleDetailSearch,
+  type VehicleDetailTab,
+} from '../types/vehicle-detail-search';
 import { getVehicleServiceInsights } from '../utils/get-vehicle-service-insights';
 
 type VehicleDetailPageProps = {
+  onSearchStateChange: (next: Partial<VehicleDetailSearch>) => void;
+  searchState: VehicleDetailSearch;
   vehicleId: string;
 };
 
-export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
+export function VehicleDetailPage({
+  onSearchStateChange,
+  searchState,
+  vehicleId,
+}: VehicleDetailPageProps) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
   const auditQuery = useVehicleAudit(vehicleId);
-  const { role: currentUserRole } = useCurrentUserRole(vehicleId);
+  const { role: currentUserRole, isLoading: isRoleLoading } = useCurrentUserRole(vehicleId);
   const isOwner = currentUserRole === 'owner';
+  const selectedTab = searchState.tab ?? defaultVehicleDetailTab;
+  const visibleTab = selectedTab === 'loans' && !isOwner ? defaultVehicleDetailTab : selectedTab;
   const deleteVehicleMutation = useDeleteVehicle();
   const vehicle = vehicleQuery.data ?? null;
   const serviceInsights = useMemo(
@@ -77,6 +90,12 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
         : null,
     [maintenanceQuery.data, vehicle],
   );
+
+  useEffect(() => {
+    if (selectedTab === 'loans' && !isRoleLoading && !isOwner) {
+      onSearchStateChange({ tab: defaultVehicleDetailTab });
+    }
+  }, [isOwner, isRoleLoading, onSearchStateChange, selectedTab]);
 
   async function handleDeleteVehicle() {
     try {
@@ -260,10 +279,7 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                         const vehicle = vehicleQuery.data;
                         if (!vehicle) return;
                         try {
-                          await downloadServiceHistoryPdf(
-                            vehicle.id,
-                            vehicle.registrationNumber,
-                          );
+                          await downloadServiceHistoryPdf(vehicle.id, vehicle.registrationNumber);
                           appToast.success({
                             title: 'Service history downloaded',
                             description: 'Saved as a PDF you can share or print.',
@@ -291,7 +307,10 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
                         if (input === null) return;
                         const trimmed = input.trim();
                         const askingPrice = trimmed === '' ? undefined : Number(trimmed);
-                        if (askingPrice != null && (!Number.isFinite(askingPrice) || askingPrice < 0)) {
+                        if (
+                          askingPrice != null &&
+                          (!Number.isFinite(askingPrice) || askingPrice < 0)
+                        ) {
                           appToast.error({
                             title: 'Invalid asking price',
                             description: 'Enter a positive number or leave blank.',
@@ -349,7 +368,11 @@ export function VehicleDetailPage({ vehicleId }: VehicleDetailPageProps) {
           </div>
         ) : null}
 
-        <Tabs className="space-y-8" defaultValue="overview">
+        <Tabs
+          className="space-y-8"
+          onValueChange={(tab) => onSearchStateChange({ tab: tab as VehicleDetailTab })}
+          value={visibleTab}
+        >
           <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-slate-100/80 p-1 shadow-inner">
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
