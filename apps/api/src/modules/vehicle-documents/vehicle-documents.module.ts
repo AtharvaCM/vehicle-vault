@@ -4,6 +4,11 @@ import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
 import { ExtractionRegistry } from '../extraction/extraction-registry.service';
 import { VehiclesModule } from '../vehicles/vehicles.module';
+import {
+  PucAdapter,
+  RegistrationAdapter,
+  RoadTaxAdapter,
+} from './adapters/compliance.adapter';
 import { InsuranceAdapter } from './adapters/insurance.adapter';
 import { WarrantyAdapter } from './adapters/warranty.adapter';
 import { InsurancePolicyExtractionSpec } from './extractions/insurance-policy.extraction';
@@ -18,14 +23,20 @@ import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types'
     VehicleDocumentsService,
     InsuranceAdapter,
     WarrantyAdapter,
+    RegistrationAdapter,
+    PucAdapter,
+    RoadTaxAdapter,
     InsurancePolicyExtractionSpec,
     {
       provide: VEHICLE_DOCUMENT_ADAPTERS,
       useFactory: (
         insurance: InsuranceAdapter,
         warranty: WarrantyAdapter,
-      ): VehicleDocumentAdapter[] => [insurance, warranty],
-      inject: [InsuranceAdapter, WarrantyAdapter],
+        registration: RegistrationAdapter,
+        puc: PucAdapter,
+        roadTax: RoadTaxAdapter,
+      ): VehicleDocumentAdapter[] => [insurance, warranty, registration, puc, roadTax],
+      inject: [InsuranceAdapter, WarrantyAdapter, RegistrationAdapter, PucAdapter, RoadTaxAdapter],
     },
   ],
   exports: [VehicleDocumentsService],

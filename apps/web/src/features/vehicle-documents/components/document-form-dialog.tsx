@@ -33,6 +33,12 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { useCreateVehicleDocument, useUpdateVehicleDocument } from '../hooks/use-documents';
+import {
+  complianceNumberLabels,
+  documentKindNouns,
+  documentKindTitles,
+  isComplianceKind,
+} from '../utils/document-kind-labels';
 import { appToast } from '@/lib/toast';
 
 interface DocumentFormDialogProps {
@@ -100,6 +106,9 @@ function buildDefaults(
       type: (doc.details?.type as string) ?? 'Manufacturer',
       warrantyNumber: doc.number ?? '',
       endOdometer: (doc.details?.endOdometer as number) ?? undefined,
+      // Compliance-specific (registration / PUC / road tax)
+      number: doc.number ?? '',
+      amount: (doc.details?.amount as number) ?? undefined,
     };
   }
 
@@ -114,6 +123,7 @@ function buildDefaults(
     notes: '',
     policyNumber: '',
     type: 'Manufacturer',
+    number: '',
   };
 
   if (initial) {
@@ -158,14 +168,19 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
 
   function cleanPayload(data: CreateVehicleDocumentInput) {
     const cleanData = { ...data };
-    if (cleanData.kind === 'insurance') {
+    if (cleanData.kind !== 'warranty') {
       delete (cleanData as any).type;
       delete (cleanData as any).warrantyNumber;
       delete (cleanData as any).endOdometer;
-    } else {
+    }
+    if (cleanData.kind !== 'insurance') {
       delete (cleanData as any).policyNumber;
       delete (cleanData as any).premiumAmount;
       delete (cleanData as any).insuredValue;
+    }
+    if (!isComplianceKind(cleanData.kind)) {
+      delete (cleanData as any).number;
+      delete (cleanData as any).amount;
     }
     return cleanData;
   }
@@ -176,15 +191,15 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
 
       if (isEditing && editingDocument) {
         await updateMutation.mutateAsync({ id: editingDocument.id, data: cleanData as any });
-        appToast.success({ 
-          title: `${cleanData.kind === 'insurance' ? 'Policy' : 'Warranty'} updated`, 
-          description: 'Changes saved successfully.' 
+        appToast.success({
+          title: `${documentKindNouns[cleanData.kind]} updated`,
+          description: 'Changes saved successfully.'
         });
       } else {
         await createMutation.mutateAsync(cleanData);
-        appToast.success({ 
-          title: `${cleanData.kind === 'insurance' ? 'Policy' : 'Warranty'} added`, 
-          description: 'Details saved successfully.' 
+        appToast.success({
+          title: `${documentKindNouns[cleanData.kind]} added`,
+          description: 'Details saved successfully.'
         });
       }
       reset();
@@ -198,11 +213,13 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit' : 'Add'} {selectedKind === 'insurance' ? 'Insurance Policy' : 'Warranty Coverage'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit' : 'Add'} {documentKindTitles[selectedKind]}</DialogTitle>
           <DialogDescription>
-            {selectedKind === 'insurance' 
+            {selectedKind === 'insurance'
               ? "Enter your vehicle's insurance details to receive renewal reminders."
-              : "Record your manufacturer or extended warranty details."}
+              : selectedKind === 'warranty'
+                ? 'Record your manufacturer or extended warranty details.'
+                : 'Track this document to get an alert before it expires.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -225,6 +242,9 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
                     <SelectContent>
                       <SelectItem value="insurance">Insurance Policy</SelectItem>
                       <SelectItem value="warranty">Warranty Coverage</SelectItem>
+                      <SelectItem value="registration">Registration Certificate</SelectItem>
+                      <SelectItem value="puc">PUC Certificate</SelectItem>
+                      <SelectItem value="road_tax">Road Tax</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -254,17 +274,42 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
             </FormField>
           )}
 
-          <FormField label={selectedKind === 'insurance' ? 'Provider Name' : 'Provider/Brand'} htmlFor="provider" error={errors.provider?.message}>
-            <Input {...register('provider')} placeholder={selectedKind === 'insurance' ? "e.g. HDFC ERGO, ICICI Lombard" : "e.g. Hyundai, GoMechanic"} />
+          <FormField
+            label={
+              isComplianceKind(selectedKind)
+                ? 'Issuing Authority'
+                : selectedKind === 'insurance'
+                  ? 'Provider Name'
+                  : 'Provider/Brand'
+            }
+            htmlFor="provider"
+            error={errors.provider?.message}
+          >
+            <Input
+              {...register('provider')}
+              placeholder={
+                isComplianceKind(selectedKind)
+                  ? 'e.g. RTO Pune (MH-12), PUC Center'
+                  : selectedKind === 'insurance'
+                    ? 'e.g. HDFC ERGO, ICICI Lombard'
+                    : 'e.g. Hyundai, GoMechanic'
+              }
+            />
           </FormField>
 
-          {selectedKind === 'insurance' ? (
+          {selectedKind === 'insurance' && (
             <FormField label="Policy Number" htmlFor="policyNumber" error={(errors as any).policyNumber?.message}>
               <Input {...register('policyNumber' as any)} placeholder="e.g. 2314/5678/9012" />
             </FormField>
-          ) : (
+          )}
+          {selectedKind === 'warranty' && (
             <FormField label="Warranty # / Certificate ID" htmlFor="warrantyNumber" error={(errors as any).warrantyNumber?.message}>
               <Input {...register('warrantyNumber' as any)} placeholder="Optional" />
+            </FormField>
+          )}
+          {isComplianceKind(selectedKind) && (
+            <FormField label={complianceNumberLabels[selectedKind]} htmlFor="number" error={(errors as any).number?.message}>
+              <Input {...register('number' as any)} placeholder="Optional" />
             </FormField>
           )}
 
@@ -273,33 +318,43 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
               <Input type="date" {...register('startDate')} />
             </FormField>
             <FormField label="End Date" htmlFor="endDate" error={errors.endDate?.message}>
-              <Input type="date" {...register('endDate')} placeholder={selectedKind === 'warranty' ? 'Optional' : undefined} />
+              <Input type="date" {...register('endDate')} placeholder={selectedKind === 'insurance' ? undefined : 'Optional'} />
             </FormField>
           </div>
 
-          {selectedKind === 'insurance' ? (
+          {selectedKind === 'insurance' && (
             <div className="grid grid-cols-2 gap-4">
               <FormField label="Premium Amount (₹)" htmlFor="premiumAmount" error={(errors as any).premiumAmount?.message}>
-                <Input 
-                  type="number" 
-                  {...register('premiumAmount' as any, { valueAsNumber: true })} 
-                  placeholder="Optional" 
+                <Input
+                  type="number"
+                  {...register('premiumAmount' as any, { valueAsNumber: true })}
+                  placeholder="Optional"
                 />
               </FormField>
               <FormField label="Insured Value (IDV) (₹)" htmlFor="insuredValue" error={(errors as any).insuredValue?.message}>
-                <Input 
-                  type="number" 
-                  {...register('insuredValue' as any, { valueAsNumber: true })} 
-                  placeholder="Optional" 
+                <Input
+                  type="number"
+                  {...register('insuredValue' as any, { valueAsNumber: true })}
+                  placeholder="Optional"
                 />
               </FormField>
             </div>
-          ) : (
+          )}
+          {selectedKind === 'warranty' && (
             <FormField label="End Odometer (km)" htmlFor="endOdometer" error={(errors as any).endOdometer?.message}>
-              <Input 
-                type="number" 
-                {...register('endOdometer' as any, { valueAsNumber: true })} 
-                placeholder="e.g. 100000" 
+              <Input
+                type="number"
+                {...register('endOdometer' as any, { valueAsNumber: true })}
+                placeholder="e.g. 100000"
+              />
+            </FormField>
+          )}
+          {isComplianceKind(selectedKind) && (
+            <FormField label="Amount Paid (₹)" htmlFor="amount" error={(errors as any).amount?.message}>
+              <Input
+                type="number"
+                {...register('amount' as any, { valueAsNumber: true })}
+                placeholder="Optional"
               />
             </FormField>
           )}
@@ -311,7 +366,7 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Saving...' : `${isEditing ? 'Save Changes' : `Add ${selectedKind === 'insurance' ? 'Policy' : 'Warranty'}`}`}
+              {isSaving ? 'Saving...' : isEditing ? 'Save Changes' : `Add ${documentKindNouns[selectedKind]}`}
             </Button>
           </DialogFooter>
         </form>

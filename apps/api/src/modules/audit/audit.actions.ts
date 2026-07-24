@@ -33,6 +33,21 @@ export const AUDIT_ACTIONS = {
     updated: 'warranty.updated',
     deleted: 'warranty.deleted',
   },
+  registration: {
+    created: 'registration.created',
+    updated: 'registration.updated',
+    deleted: 'registration.deleted',
+  },
+  puc: {
+    created: 'puc.created',
+    updated: 'puc.updated',
+    deleted: 'puc.deleted',
+  },
+  roadTax: {
+    created: 'road_tax.created',
+    updated: 'road_tax.updated',
+    deleted: 'road_tax.deleted',
+  },
   claim: {
     created: 'claim.created',
     updated: 'claim.updated',

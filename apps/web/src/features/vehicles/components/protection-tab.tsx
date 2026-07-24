@@ -1,4 +1,4 @@
-import { ShieldCheck, Plus, Car, ReceiptText, Scan, Loader2 } from 'lucide-react';
+import { ShieldCheck, Plus, Car, ReceiptText, Scan, Loader2, FileBadge } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useVehicleDocuments } from '../../vehicle-documents/hooks/use-documents';
@@ -45,6 +45,9 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const allDocuments = documentsQuery.data || [];
   const policies = allDocuments.filter(d => d.kind === 'insurance');
   const warranties = allDocuments.filter(d => d.kind === 'warranty');
+  const complianceDocuments = allDocuments.filter(
+    d => d.kind === 'registration' || d.kind === 'puc' || d.kind === 'road_tax',
+  );
   const claims = claimsQuery.data || [];
 
   function openDialog(kind: VehicleDocumentKind) {
@@ -259,6 +262,38 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
             )}
           </div>
         </section>
+
+        {/* Registration & Compliance Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileBadge className="h-5 w-5 text-primary" />
+              <h3 className="text-xl font-bold text-slate-900">Registration &amp; Compliance</h3>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Document
+            </Button>
+          </div>
+
+          <div className="grid gap-4">
+            {complianceDocuments.length > 0 ? (
+              complianceDocuments.map((doc) => (
+                <DocumentCard key={doc.id} document={doc} vehicleId={vehicleId} onEdit={handleEdit} />
+              ))
+            ) : (
+              <EmptyState
+                title="No compliance documents"
+                description="Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due."
+                action={
+                  <Button variant="secondary" onClick={() => openDialog('puc')}>
+                    Add PUC certificate
+                  </Button>
+                }
+              />
+            )}
+          </div>
+        </section>
       </div>
 
       <aside className="space-y-6">
@@ -275,6 +310,10 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <p className="font-bold text-slate-700 mb-1">Warranty</p>
                   <p>Warranties often have date AND odometer limits. We track whichever comes first to keep you informed.</p>
+               </div>
+               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <p className="font-bold text-slate-700 mb-1">PUC &amp; Road Tax</p>
+                  <p>PUC certificates typically last 6–12 months and are mandatory. Road tax is often one-time (lifetime) — leave the end date blank for those.</p>
                </div>
             </CardContent>
          </Card>

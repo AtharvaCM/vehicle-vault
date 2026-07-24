@@ -22,8 +22,16 @@ export function daysBucket(daysUntilExpiry: number): string {
   return 'future';
 }
 
-function kindLabel(kind: 'insurance' | 'warranty'): string {
-  return kind === 'insurance' ? 'Insurance' : 'Warranty';
+const KIND_LABELS: Record<string, string> = {
+  insurance: 'Insurance',
+  warranty: 'Warranty',
+  registration: 'Registration',
+  puc: 'PUC Certificate',
+  road_tax: 'Road Tax',
+};
+
+function kindLabel(kind: string): string {
+  return KIND_LABELS[kind] ?? 'Document';
 }
 
 @Injectable()

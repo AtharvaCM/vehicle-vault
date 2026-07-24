@@ -19,6 +19,9 @@ import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types'
 const KIND_TO_RESOURCE_TYPE: Record<VehicleDocumentKind, AuditResourceType> = {
   insurance: AuditResourceType.insurance_policy,
   warranty: AuditResourceType.warranty,
+  registration: AuditResourceType.compliance_document,
+  puc: AuditResourceType.compliance_document,
+  road_tax: AuditResourceType.compliance_document,
 };
 
 const KIND_TO_AUDIT_NAMESPACE: Record<
@@ -27,6 +30,9 @@ const KIND_TO_AUDIT_NAMESPACE: Record<
 > = {
   insurance: AUDIT_ACTIONS.insurance,
   warranty: AUDIT_ACTIONS.warranty,
+  registration: AUDIT_ACTIONS.registration,
+  puc: AUDIT_ACTIONS.puc,
+  road_tax: AUDIT_ACTIONS.roadTax,
 };
 
 const NOT_FOUND_MESSAGE = 'Vehicle document not found';

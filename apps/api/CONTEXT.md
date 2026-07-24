@@ -23,7 +23,7 @@ A car or two-wheeler in a **User**'s garage. Root of most aggregates. Ownership 
 A **User**'s role on a **Vehicle**: `owner`, `editor`, or `viewer` (ranked). Enforced everywhere by **VehicleAccessService** (`assert`/`assertEditor`/`assertOwner`; throws NotFound to prevent id probing). Sharing happens via **VehicleInvite** (hashed token, expiry, accept/revoke) and ownership transfer.
 
 **VehicleDocument**:
-A time-bounded record of coverage or registration on a **Vehicle**. Has a provider, a validity window (`startDate`–`endDate`), and a `kind` (currently `insurance`, `warranty`; future: `registration`, `puc`, `road_tax`). Persisted per-kind in dedicated tables (`InsurancePolicy`, `Warranty`); unified behind one service via per-kind adapters (`VEHICLE_DOCUMENT_ADAPTERS` DI multi-provider). See ADR-0001.
+A time-bounded record of coverage or registration on a **Vehicle**. Has a provider, a validity window (`startDate`–`endDate`), and a `kind`: `insurance`, `warranty`, `registration`, `puc`, `road_tax`. Unified behind one service via per-kind adapters (`VEHICLE_DOCUMENT_ADAPTERS` DI multi-provider). Insurance and warranty persist in dedicated tables (`InsurancePolicy`, `Warranty`); the three **compliance kinds** (registration certificate, PUC, road tax) share one `ComplianceDocument` table discriminated by kind, since their field shape is identical (issuing authority, number, validity window, amount). A null `endDate` means never expires (e.g. lifetime road tax). See ADR-0001.
 _Avoid_: Policy (insurance-only), Coverage (warranty-only).
 
 **MaintenanceRecord**:

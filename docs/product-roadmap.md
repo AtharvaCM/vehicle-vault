@@ -313,7 +313,6 @@ _(Pruned 2026-07-24: shared vehicle access, AI-assisted service suggestions, usa
 ### Product Enhancements
 
 - Native mobile app
-- Additional VehicleDocument kinds: registration certificate, PUC, road tax (enum slots exist, unshipped)
 
 ### Smart Features
 
