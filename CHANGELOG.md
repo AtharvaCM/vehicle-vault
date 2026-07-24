@@ -1,3 +1,12 @@
+# [1.14.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.13.2...v1.14.0) (2026-07-24)
+
+
+### Features
+
+* add registration, PUC, and road tax vehicle document kinds ([32b92d6](https://github.com/AtharvaCM/vehicle-vault/commit/32b92d6bccfd38d47669c58eecfc012316dc516b))
+* web push notification channel ([16ed3d1](https://github.com/AtharvaCM/vehicle-vault/commit/16ed3d168175280328b9042c674997c161812afa))
+* **web:** persist vehicle detail tab in URL search params ([636a1e9](https://github.com/AtharvaCM/vehicle-vault/commit/636a1e9afdb6801286db29b3697627a66f02bb71))
+
 ## [1.13.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.13.1...v1.13.2) (2026-07-07)
 
 
