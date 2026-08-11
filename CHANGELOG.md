@@ -1,3 +1,12 @@
+## [1.14.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.0...v1.14.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **auth:** do not fail registration when the verification email cannot be sent ([29946b5](https://github.com/AtharvaCM/vehicle-vault/commit/29946b5cf7e41a90d93c88c77bd6d12615f9d45d))
+* **lint:** unblock the CI quality gate ([e9e8133](https://github.com/AtharvaCM/vehicle-vault/commit/e9e81334b1cf50f276fbe8dc205259e256621faa))
+* **web:** read DATABASE_URL from the environment in the import e2e spec ([253aa5f](https://github.com/AtharvaCM/vehicle-vault/commit/253aa5f3a81f36bc1f4c78f5a66a058ba3c4cbdc))
+
 # [1.14.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.13.2...v1.14.0) (2026-07-24)
 
 
