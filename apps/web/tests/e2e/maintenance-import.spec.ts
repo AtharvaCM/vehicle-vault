@@ -1,62 +1,16 @@
-import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { registerAndSignIn } from './helpers/auth';
+import { prisma } from './helpers/test-db';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const apiWorkspacePath = path.resolve(__dirname, '../../../api');
-const apiEnvPath = path.join(apiWorkspacePath, '.env');
-const requireFromApi = createRequire(import.meta.url);
-const { PrismaClient } = requireFromApi(
-  path.join(apiWorkspacePath, 'node_modules/@prisma/client'),
-);
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: resolveDatabaseUrl(),
-    },
-  },
-});
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-}
-
-// CI exports DATABASE_URL from the workflow and never writes apps/api/.env;
-// local runs have the file and usually not the variable.
-function resolveDatabaseUrl() {
-  return process.env.DATABASE_URL?.trim() || readEnvValue(apiEnvPath, 'DATABASE_URL');
-}
-
-function readEnvValue(filePath: string, key: string) {
-  const contents = fs.readFileSync(filePath, 'utf8');
-
-  for (const rawLine of contents.split(/\r?\n/)) {
-    const line = rawLine.trim();
-
-    if (!line || line.startsWith('#')) {
-      continue;
-    }
-
-    const separatorIndex = line.indexOf('=');
-
-    if (separatorIndex === -1) {
-      continue;
-    }
-
-    const currentKey = line.slice(0, separatorIndex).trim();
-
-    if (currentKey !== key) {
-      continue;
-    }
-
-    return line.slice(separatorIndex + 1).trim();
-  }
-
-  throw new Error(`Missing ${key} in ${filePath}`);
 }
 
 async function selectSearchableOption(
@@ -87,18 +41,6 @@ async function selectDropdownOption(page: Page, fieldLabel: RegExp, optionLabel:
   await expect(page.getByLabel(fieldLabel)).toContainText(optionLabel);
 }
 
-async function markUserEmailVerified(email: string) {
-  await prisma.user.update({
-    where: {
-      email: email.toLowerCase(),
-    },
-    data: {
-      emailVerified: true,
-      emailVerificationTokenHash: null,
-    },
-  });
-}
-
 async function registerAndCreateVehicle(page: Page) {
   const suffix = uniqueSuffix();
   const name = `E2E Import User ${suffix}`;
@@ -107,23 +49,7 @@ async function registerAndCreateVehicle(page: Page) {
   const registrationNumber = `MH14VV${suffix.slice(-4)}`;
   const nickname = `Import Garage ${suffix.slice(-4)}`;
 
-  await page.goto('/register');
-
-  await page.getByLabel(/^name$/i).fill(name);
-  await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/^password$/i).fill(password);
-  await page.getByRole('button', { name: /create account/i }).click();
-
-  await expect(page.getByRole('heading', { name: /verify your email/i })).toBeVisible();
-  await markUserEmailVerified(email);
-
-  await page.getByRole('button', { name: /sign out/i }).click();
-  await expect(page).toHaveURL(/\/login$/);
-  await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/^password$/i).fill(password);
-  await page.getByRole('button', { name: /sign in/i }).click();
-
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await registerAndSignIn(page, { email, name, password });
 
   await page.getByRole('link', { name: /add vehicle/i }).first().click();
   await expect(page).toHaveURL(/\/vehicles\/new$/);
@@ -162,7 +88,7 @@ async function registerAndCreateVehicle(page: Page) {
   await variantOptionsResponse;
 
   await selectSearchableOption(page, 'vehicle-variant', 'Search variants...', 'SX', 'SX');
-  await page.getByLabel(/odometer/i).fill('15200');
+  await page.getByLabel('Odometer', { exact: true }).fill('15200');
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 

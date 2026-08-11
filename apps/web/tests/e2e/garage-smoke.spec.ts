@@ -3,6 +3,9 @@ import { fileURLToPath } from 'node:url';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { registerAndSignIn } from './helpers/auth';
+import { prisma } from './helpers/test-db';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,14 +55,8 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   const updatedReminderTitle = `Insurance renewed ${suffix.slice(-4)}`;
   const receiptPath = path.join(__dirname, 'fixtures', 'sample-receipt.pdf');
 
-  await page.goto('/register');
+  await registerAndSignIn(page, { email, name, password });
 
-  await page.getByLabel(/^name$/i).fill(name);
-  await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/^password$/i).fill(password);
-  await page.getByRole('button', { name: /create account/i }).click();
-
-  await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 
   await page.getByRole('button', { name: new RegExp(name) }).click();
@@ -109,7 +106,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await selectSearchableOption(page, 'vehicle-model', 'Search models...', 'Creta', 'Creta');
   await variantOptionsResponse;
   await selectSearchableOption(page, 'vehicle-variant', 'Search variants...', 'SX', 'SX');
-  await page.getByLabel(/odometer/i).fill('15200');
+  await page.getByLabel('Odometer', { exact: true }).fill('15200');
   await page.getByLabel(/nickname/i).fill(initialNickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 
@@ -125,7 +122,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page.locator('#vehicle-model')).toContainText('Creta');
   await expect(page.locator('#vehicle-variant')).toContainText('SX');
   await page.getByLabel(/nickname/i).fill(updatedNickname);
-  await page.getByLabel(/odometer/i).fill('16250');
+  await page.getByLabel('Odometer', { exact: true }).fill('16250');
   await page.getByRole('button', { name: /save changes/i }).click();
 
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
@@ -186,4 +183,8 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
   await expect(page.getByRole('heading', { level: 1, name: updatedReminderTitle })).toBeVisible();
+});
+
+test.afterAll(async () => {
+  await prisma.$disconnect();
 });
