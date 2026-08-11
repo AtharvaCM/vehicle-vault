@@ -192,6 +192,30 @@ describe('AuthService', () => {
     });
   });
 
+  it('still registers when the verification email cannot be delivered', async () => {
+    prisma.user.create = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      createdAt,
+      updatedAt: createdAt,
+    });
+    jwtService.signAsync.mockResolvedValueOnce('access-token');
+    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
+    mailService.sendVerificationEmail.mockRejectedValueOnce(
+      new ServiceUnavailableException('Email delivery is not configured.'),
+    );
+
+    const result = await service.register({
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      password: 'password123',
+    });
+
+    expect(result.accessToken).toBe('access-token');
+    expect(result.user.emailVerified).toBe(false);
+  });
+
   it('returns conflict for duplicate emails on register', async () => {
     prisma.user.create = vi.fn().mockRejectedValue(
       new PrismaClientKnownRequestError('duplicate', {

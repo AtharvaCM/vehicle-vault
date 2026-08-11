@@ -2,6 +2,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import {
   ConflictException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -72,6 +73,8 @@ const PASSWORD_RESET_UNAVAILABLE_MESSAGE = 'Password reset is unavailable right 
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -106,11 +109,22 @@ export class AuthService {
 
       const { url } = await this.tokenService.issueEmailVerification(user.id);
 
-      await this.mailService.sendVerificationEmail({
-        email: user.email,
-        name: user.name,
-        verificationUrl: url,
-      });
+      // Best-effort: the user row is already committed, so a mail failure here
+      // would strand the address behind the P2002 conflict below with no way to
+      // re-register. The account stays unverified and the verify screen's resend
+      // action can issue a fresh token once delivery recovers.
+      try {
+        await this.mailService.sendVerificationEmail({
+          email: user.email,
+          name: user.name,
+          verificationUrl: url,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to send verification email to ${user.email} during registration`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
 
       return this.buildAuthResponse(this.toUser(user));
     } catch (error) {
