@@ -51,7 +51,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
   const [loanToEdit, setLoanToEdit] = useState<VehicleLoan | null>(null);
   const [loanToDelete, setLoanToDelete] = useState<VehicleLoan | null>(null);
 
-  const loans = query.data ?? [];
+  const loans = useMemo(() => query.data ?? [], [query.data]);
 
   const totals = useMemo(
     () =>
