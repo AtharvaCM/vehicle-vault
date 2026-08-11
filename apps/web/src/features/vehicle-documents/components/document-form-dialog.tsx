@@ -286,6 +286,7 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
             error={errors.provider?.message}
           >
             <Input
+              id="provider"
               {...register('provider')}
               placeholder={
                 isComplianceKind(selectedKind)
@@ -299,26 +300,26 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
 
           {selectedKind === 'insurance' && (
             <FormField label="Policy Number" htmlFor="policyNumber" error={(errors as any).policyNumber?.message}>
-              <Input {...register('policyNumber' as any)} placeholder="e.g. 2314/5678/9012" />
+              <Input id="policyNumber" {...register('policyNumber' as any)} placeholder="e.g. 2314/5678/9012" />
             </FormField>
           )}
           {selectedKind === 'warranty' && (
             <FormField label="Warranty # / Certificate ID" htmlFor="warrantyNumber" error={(errors as any).warrantyNumber?.message}>
-              <Input {...register('warrantyNumber' as any)} placeholder="Optional" />
+              <Input id="warrantyNumber" {...register('warrantyNumber' as any)} placeholder="Optional" />
             </FormField>
           )}
           {isComplianceKind(selectedKind) && (
             <FormField label={complianceNumberLabels[selectedKind]} htmlFor="number" error={(errors as any).number?.message}>
-              <Input {...register('number' as any)} placeholder="Optional" />
+              <Input id="number" {...register('number' as any)} placeholder="Optional" />
             </FormField>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Start Date" htmlFor="startDate" error={errors.startDate?.message}>
-              <Input type="date" {...register('startDate')} />
+              <Input id="startDate" type="date" {...register('startDate')} />
             </FormField>
             <FormField label="End Date" htmlFor="endDate" error={errors.endDate?.message}>
-              <Input type="date" {...register('endDate')} placeholder={selectedKind === 'insurance' ? undefined : 'Optional'} />
+              <Input id="endDate" type="date" {...register('endDate')} placeholder={selectedKind === 'insurance' ? undefined : 'Optional'} />
             </FormField>
           </div>
 
@@ -327,14 +328,24 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
               <FormField label="Premium Amount (₹)" htmlFor="premiumAmount" error={(errors as any).premiumAmount?.message}>
                 <Input
                   type="number"
-                  {...register('premiumAmount' as any, { valueAsNumber: true })}
+                  id="premiumAmount"
+                {...register('premiumAmount' as any, {
+                  // An empty optional number input yields NaN under valueAsNumber,
+                  // which the schema rejects — send null instead.
+                  setValueAs: (value) => (value === '' || value === null ? null : Number(value)),
+                })}
                   placeholder="Optional"
                 />
               </FormField>
               <FormField label="Insured Value (IDV) (₹)" htmlFor="insuredValue" error={(errors as any).insuredValue?.message}>
                 <Input
                   type="number"
-                  {...register('insuredValue' as any, { valueAsNumber: true })}
+                  id="insuredValue"
+                {...register('insuredValue' as any, {
+                  // An empty optional number input yields NaN under valueAsNumber,
+                  // which the schema rejects — send null instead.
+                  setValueAs: (value) => (value === '' || value === null ? null : Number(value)),
+                })}
                   placeholder="Optional"
                 />
               </FormField>
@@ -344,7 +355,12 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
             <FormField label="End Odometer (km)" htmlFor="endOdometer" error={(errors as any).endOdometer?.message}>
               <Input
                 type="number"
-                {...register('endOdometer' as any, { valueAsNumber: true })}
+                id="endOdometer"
+                {...register('endOdometer' as any, {
+                  // An empty optional number input yields NaN under valueAsNumber,
+                  // which the schema rejects — send null instead.
+                  setValueAs: (value) => (value === '' || value === null ? null : Number(value)),
+                })}
                 placeholder="e.g. 100000"
               />
             </FormField>
@@ -353,14 +369,19 @@ export function DocumentFormDialog({ isOpen, onClose, vehicleId, defaultKind = '
             <FormField label="Amount Paid (₹)" htmlFor="amount" error={(errors as any).amount?.message}>
               <Input
                 type="number"
-                {...register('amount' as any, { valueAsNumber: true })}
+                id="amount"
+                {...register('amount' as any, {
+                  // An empty optional number input yields NaN under valueAsNumber,
+                  // which the schema rejects — send null instead.
+                  setValueAs: (value) => (value === '' || value === null ? null : Number(value)),
+                })}
                 placeholder="Optional"
               />
             </FormField>
           )}
 
           <FormField label="Notes" htmlFor="notes" error={errors.notes?.message}>
-            <Input {...register('notes')} placeholder={selectedKind === 'insurance' ? "Any additional details..." : "Optional comments..."} />
+            <Input id="notes" {...register('notes')} placeholder={selectedKind === 'insurance' ? "Any additional details..." : "Optional comments..."} />
           </FormField>
 
           <DialogFooter className="pt-4">
