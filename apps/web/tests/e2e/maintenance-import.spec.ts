@@ -16,13 +16,19 @@ const { PrismaClient } = requireFromApi(
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: readEnvValue(apiEnvPath, 'DATABASE_URL'),
+      url: resolveDatabaseUrl(),
     },
   },
 });
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+}
+
+// CI exports DATABASE_URL from the workflow and never writes apps/api/.env;
+// local runs have the file and usually not the variable.
+function resolveDatabaseUrl() {
+  return process.env.DATABASE_URL?.trim() || readEnvValue(apiEnvPath, 'DATABASE_URL');
 }
 
 function readEnvValue(filePath: string, key: string) {
