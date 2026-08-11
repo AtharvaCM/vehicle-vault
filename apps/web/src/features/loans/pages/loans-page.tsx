@@ -62,8 +62,8 @@ export function LoansPage() {
   const scanMutation = useScanLoanDocument();
   const scanStatus = useLoanScanStatus();
 
-  const vehicles = vehiclesQuery.data ?? [];
-  const loans = loansQuery.data ?? [];
+  const vehicles = useMemo(() => vehiclesQuery.data ?? [], [vehiclesQuery.data]);
+  const loans = useMemo(() => loansQuery.data ?? [], [loansQuery.data]);
 
   const vehicleLabelById = useMemo(
     () =>
