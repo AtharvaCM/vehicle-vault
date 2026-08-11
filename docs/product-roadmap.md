@@ -1,6 +1,6 @@
 # Product Roadmap
 
-Last updated: 2026-06-05
+Last updated: 2026-08-11
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
@@ -13,13 +13,13 @@ Vehicle Vault is a feature-rich authenticated maintenance platform with:
 - Prisma + PostgreSQL persistence
 - cloud-backed attachment binaries via Supabase Storage
 - dashboard summary aggregation
-- Gemini 1.5 Flash-backed Receipt OCR
+- Gemini-backed **DocumentExtraction** over uploaded receipts, invoices, and documents
 - Integrated Fuel Log tracking and cost analytics
 - Automated Maintenance Alerts (Cron-based) for service, reminders, and insurance expiries
 - Mandatory Email Verification for account security
 - "Quick Fill" presets for common service/reminder tasks
 - Specialized "Protection" dashboard for Insurance and Warranty tracking
-- Vehicle loan tracking with amortization, prepayments, foreclosure, attachments, and Gemini-backed sanction-letter OCR
+- Vehicle loan tracking with amortization, prepayments, foreclosure, attachments, and Gemini-backed sanction-letter extraction
 - regression coverage across unit, integration, and Playwright smoke flows
 
 The product already supports the core ownership loop:
@@ -109,7 +109,7 @@ The product already supports the core ownership loop:
 - Maintenance-detail attachment summary, upload guidance, and clearer action feedback
 - Open / download an attachment
 - Delete attachment metadata and stored object with confirmation
-- Gemini 1.5 Flash integration for automated receipt parsing (OCR)
+- Gemini integration for automated receipt parsing (**DocumentExtraction**)
 
 ### Fuel Tracking & Analytics
 
@@ -125,6 +125,7 @@ The product already supports the core ownership loop:
 - Configurable Cron-based alert delivery (MAINTENANCE_ALERT_CRON)
 - Onboarding notifications for new vehicles
 - Status-based badge system and "Mark all as read" functionality
+- **Web push channel:** second delivery channel behind `NOTIFICATION_CHANNELS`, best-effort fan-out on top of the canonical `Notification` row. `PushSubscription` model (RLS, cascade on user delete), VAPID-signed sends with auto-prune on 404/410, `/notifications/push` subscribe/unsubscribe/public-key endpoints, `/sw.js` service worker with focus-or-open click handling, and an enable/disable toggle in the notification center. No-ops entirely until VAPID keys are configured.
 
 ### Dashboard and Product Cohesion
 
@@ -151,6 +152,7 @@ The product already supports the core ownership loop:
 - Success and error toast coverage across the core auth, vehicle, maintenance, reminder, and attachment mutation flows
 - Unsaved-changes protection across core vehicle, maintenance, and reminder create/edit forms
 - URL-backed search, filter, and sort state across vehicles, maintenance, and reminder list views
+- URL-backed active tab on vehicle detail pages (shareable and reload-safe)
 - "Quick Fill" presets for common maintenance (Oil, Brakes) and reminders (Insurance, Tax)
 
 ### Responsive and Accessibility
@@ -168,6 +170,7 @@ The product already supports the core ownership loop:
 - Premium "Smart Suggestions" UI in the maintenance form with Quick Apply
 - Global "Smart Feed" aggregation on the main dashboard
 - Specialized Tyre Health Tracker with 4-wheel visualization
+- **Unified maintenance intervals:** `MaintenanceIntervalResolver` is the single source of truth — per-variant catalog `ServiceInterval` rows first, conservative type/fuel-gated defaults second. Replaced the alert engine's hardcoded km map (which disagreed with the forecast defaults) and the forecast service's private defaults; EVs no longer get oil-change alerts, and service-schedule suggestions use variant-specific intervals when the vehicle is catalog-linked.
 
 ### Insurance & Warranty Management (Milestone 5)
 - Store core insurance policy details (Provider, Policy #, Premium, Dates)
@@ -175,6 +178,7 @@ The product already supports the core ownership loop:
 - Integrated "Protection" tab on vehicle detail pages with status indicators (Active/Expiring/Expired)
 - Automated proactive alerts 7 days before insurance expiry via in-app notification and email
 - Centralized insurance/warranty history and current status visibility
+- **India compliance documents:** registration, PUC, and road tax kinds behind the existing `VehicleDocument` adapter seam (ADR-0001) — one `ComplianceDocument` table discriminated by kind, shared field shape (issuing authority, number, validity window, amount), null end date for lifetime road tax, audit actions with number redaction, and a "Registration & Compliance" section on the protection tab.
 
 ### Export and Portability
 
@@ -288,7 +292,7 @@ Goal: Reflect financed purchases in true cost of ownership instead of assuming c
 - **Domain model:** `VehicleLoan` (principal, annual rate, tenure, cached EMI, currency, status, closedAt, notes) + `LoanPrepayment` (date, amount, notes). `LoanStatus` enum (active/closed). New `AuditResourceType` values (`vehicle_loan`, `loan_prepayment`) with `accountNumber` redaction. `Attachment` extended with `vehicleLoanId` as a 5th polymorphic owner and the `attachment_owner_exclusive` CHECK constraint widened to 5-of-5. Three Prisma migrations applied to Supabase.
 - **Amortization engine:** Server-side EMI computation (`P*r*(1+r)^n / ((1+r)^n - 1)`, zero-rate linear fallback) and month-by-month schedule that honors prepayments (fixed-EMI / shorter-tenure strategy) and foreclosure (truncates schedule at `closedAt` with outstanding treated as lump-sum paid). Powers `summarize()` (totals, monthsRemaining, outstanding, interestPaidToDate, prepaidToDate, endDate) and `accruedInRange()` (per-window interest + principal for analytics).
 - **API:** `VehicleLoansModule` with CRUD (`GET/POST/PATCH/DELETE /vehicle-loans`), per-vehicle list (`/vehicle-loans/vehicle/:id`), amortization series (`GET /:id/schedule`), prepayment add/remove (`POST/DELETE /:id/prepayments[/:prepaymentId]`), and foreclosure (`POST /:id/foreclose`). Audit-logged inside each transaction.
-- **Document OCR:** `LoanDocumentExtractionSpec` (Gemini, registered via `onModuleInit`) with `POST /vehicle-loans/scan` + `/scan/status`. Extracts lender, account number, principal, annual rate, tenure (months), start date, EMI, currency, notes from sanction letters / agreements. Robust `normalize()` clamps rate to 0–100, validates positive integers, normalizes bare-date strings to ISO.
+- **Document extraction:** `LoanDocumentExtractionSpec` (Gemini, registered via `onModuleInit`) with `POST /vehicle-loans/scan` + `/scan/status`. Extracts lender, account number, principal, annual rate, tenure (months), start date, EMI, currency, notes from sanction letters / agreements. Robust `normalize()` clamps rate to 0–100, validates positive integers, normalizes bare-date strings to ISO.
 - **Attachments:** `AttachmentsService.listByVehicleLoan` + `uploadLoanAttachments`. `getStoredAttachmentById` OR-matches loan and maintenance owners so the existing `DELETE /attachments/:id` endpoint works for both. Routes: `GET/POST /vehicle-loans/:loanId/attachments`.
 - **Analytics integration:** `AnalyticsService.getCostSplit`, `getCostTrend`, and `getTco` load loans + prepayments and credit loan interest into the per-window buckets and lifetime TCO. Response types gain `loanInterest`, `loanPrincipal`, `loanPrincipalPaid`, `loanOutstanding`. Dashboard summary gains a `loans` block (active count, monthly EMI, outstanding, interest paid, prepaid, next EMI date).
 - **Web (Loans feature):** Global `/loans` page with summary stats and per-loan cards. `LoanDetailDialog` includes an amortization chart (Recharts `ComposedChart`, stacked principal + interest + prepayment area + balance line on a secondary axis), prepayment add/remove, foreclose flow, and document upload/list/remove. Add Loan dialog auto-shows a "Scan document" button when `/scan/status` reports available, then prefills the form via key-remount with the extracted draft. Edit-loan dialog reuses the same form.
@@ -309,6 +313,7 @@ Goal: Provide deep visibility into ownership costs and facilitate resale value.
 These are intentionally deferred so the product does not sprawl too early.
 
 _(Pruned 2026-07-24: shared vehicle access, AI-assisted service suggestions, usage-aware reminder suggestions, service-schedule intelligence, and resale report generation all shipped — see Completed sections above.)_
+_(Pruned 2026-08-11: web push notification channel and maintenance-interval unification shipped — see Completed sections above.)_
 
 ### Product Enhancements
 
@@ -316,8 +321,7 @@ _(Pruned 2026-07-24: shared vehicle access, AI-assisted service suggestions, usa
 
 ### Smart Features
 
-- Push / SMS notification channels (email only today)
-- Unify the three maintenance-interval sources (hardcoded alert map, per-variant `ServiceInterval`, service-schedule catalog)
+- SMS notification channel (email + web push shipped)
 
 ### Ecosystem and Scale
 
