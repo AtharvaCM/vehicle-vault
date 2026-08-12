@@ -32,10 +32,10 @@ Live at `https://vehicle-vault-eight.vercel.app` (web) + `https://vehiclevault.m
 
 | Doc | Status |
 |---|---|
-| `docs/product-roadmap.md` | **Authoritative** for feature state (self-tracks repo reality), but its "Later" section is unpruned — lists items (AI service suggestions, usage-aware reminders, shared access, resale report) that already shipped and are marked Complete elsewhere in the same file. |
+| `docs/product-roadmap.md` | **Authoritative** for feature state (self-tracks repo reality). "Later" pruned 2026-08-11. |
 | `docs/problem-statement.md`, `docs/user-personas-and-stories.md` | Evergreen, trustworthy. |
-| `docs/mvp-definition.md` | **Historical only.** Its non-goals (OCR, AI recommendations, advanced analytics) all shipped. Do not use for scoping. |
-| `docs/tech-stack.md` | **Stale in specifics** — says Bun (actually pnpm), Resend/Postmark (actually SMTP), Railway/Render (actually Vercel + GHCR/Portainer), BullMQ/Redis planned (actually NestJS cron only), multi-option storage (actually Supabase Storage). Trust README + `.github/workflows` + `CONTEXT.md`s instead. |
+| `docs/archive/mvp-definition.md` | **Archived 2026-08-12.** Historical record of the original MVP scope; several of its non-goals are now core features. Never use for scoping. |
+| `docs/tech-stack.md` | **Trustworthy**, re-verified against the repo 2026-08-12. Cross-check `package.json` + `.github/workflows` when a version matters. |
 | `CHANGELOG.md` | Ground truth for what shipped and when (semantic-release generated). |
 | `apps/api/CONTEXT.md` | Canonical domain glossary. Use its terms; "Policy", "OCR", "scan" are deprecated vocabulary. |
 
@@ -51,5 +51,4 @@ Still genuinely open: service-center/ecosystem integrations, native mobile, rich
 
 ## Known product-doc debt
 
-- Prune `product-roadmap.md` "Later" section of shipped items.
-- Archive or rewrite `mvp-definition.md`; correct `tech-stack.md`.
+- The India vehicle catalog — the largest ongoing engineering investment and a de-facto moat — has no roadmap entry and no owner in any product doc.

@@ -1,6 +1,6 @@
 # MVP Definition
 
-> **Historical document.** The product shipped far past this scope in 1.0.0 (2026-05-30) — several listed non-goals (AI document extraction, AI recommendations, advanced analytics) are now core features. Do not use this for scoping; see `docs/product-context.md` and `docs/product-roadmap.md`.
+> **Archived 2026-08-12.** Kept as a record of the original MVP scope, not as guidance. The product shipped far past it in 1.0.0 (2026-05-30) — several listed non-goals (AI document extraction, AI recommendations, advanced analytics) are now core features, and the success criteria below were never instrumented. Do not use this for scoping; see `docs/product-context.md` and `docs/product-roadmap.md`.
 
 ## Objective
 
