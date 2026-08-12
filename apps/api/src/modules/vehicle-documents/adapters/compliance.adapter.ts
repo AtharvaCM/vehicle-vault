@@ -133,14 +133,35 @@ abstract class ComplianceAdapter implements VehicleDocumentAdapter {
 @Injectable()
 export class RegistrationAdapter extends ComplianceAdapter {
   readonly kind = 'registration' as const;
+
+  // Explicit constructor required: without one, TypeScript emits no
+  // design:paramtypes for the subclass and Nest constructs it with no
+  // arguments, leaving `prisma` undefined.
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 }
 
 @Injectable()
 export class PucAdapter extends ComplianceAdapter {
   readonly kind = 'puc' as const;
+
+  // Explicit constructor required: without one, TypeScript emits no
+  // design:paramtypes for the subclass and Nest constructs it with no
+  // arguments, leaving `prisma` undefined.
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 }
 
 @Injectable()
 export class RoadTaxAdapter extends ComplianceAdapter {
   readonly kind = 'road_tax' as const;
+
+  // Explicit constructor required: without one, TypeScript emits no
+  // design:paramtypes for the subclass and Nest constructs it with no
+  // arguments, leaving `prisma` undefined.
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 }

@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+import { registerAndSignIn } from './helpers/auth';
+import { prisma } from './helpers/test-db';
+import { createCatalogVehicle } from './helpers/vehicle-form';
+
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
@@ -12,38 +16,24 @@ test('user can manage insurance and warranty documents via unified route', async
   const registrationNumber = `MH12DC${suffix.slice(-4)}`;
 
   // ── 1. Register & Setup Vehicle ────────────────────────────────────
-  await page.goto('/register');
-  await page.getByLabel(/^name$/i).fill(name);
-  await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/^password$/i).fill(password);
-  await page.getByRole('button', { name: /create account/i }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await registerAndSignIn(page, { email, name, password });
 
-  await page.getByRole('link', { name: /add vehicle/i }).first().click();
-  await page.getByLabel(/registration number/i).fill(registrationNumber);
-  await page.getByLabel(/^make$/i).fill('Test Make');
-  await page.getByLabel(/^model$/i).fill('Test Model');
-  await page.getByLabel(/^variant$/i).fill('Test Variant');
-  await page.getByLabel(/^year$/i).fill('2024');
-  await page.getByLabel(/odometer/i).fill('1000');
-
-  await page.getByLabel(/^vehicle type$/i).click();
-  await page.getByRole('option', { name: 'SUV' }).click();
-
-  await page.getByLabel(/^fuel type$/i).click();
-  await page.getByRole('option', { name: 'Petrol' }).click();
-
-  await page.getByRole('button', { name: /save vehicle/i }).click();
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
+  await createCatalogVehicle(page, {
+    nickname: `Docs Garage ${suffix.slice(-4)}`,
+    odometer: '1000',
+    registrationNumber,
+  });
 
   // ── 2. Go to Protection Tab ────────────────────────────────────────
   await page.getByRole('tab', { name: /protection/i }).click();
 
   // ── 3. Create Insurance ────────────────────────────────────────────
-  await page.getByRole('button', { name: /add policy/i }).click();
+  await page.getByRole('button', { name: 'Add Policy', exact: true }).click();
   await expect(page.getByRole('heading', { name: /add insurance policy/i })).toBeVisible();
   await page.getByLabel(/provider name/i).fill('Test Insurance Corp');
   await page.getByLabel(/policy number/i).fill('INS12345');
+  await page.getByLabel(/start date/i).fill('2026-01-01');
+  await page.getByLabel(/end date/i).fill('2027-01-01');
   await page.getByLabel(/premium amount/i).fill('15000');
   await page.getByRole('button', { name: /add policy/i }).click();
 
@@ -52,10 +42,11 @@ test('user can manage insurance and warranty documents via unified route', async
   await expect(page.getByText('#INS12345')).toBeVisible();
 
   // ── 4. Create Warranty ─────────────────────────────────────────────
-  await page.getByRole('button', { name: /add warranty/i }).click();
+  await page.getByRole('button', { name: 'Add Warranty', exact: true }).click();
   await expect(page.getByRole('heading', { name: /add warranty coverage/i })).toBeVisible();
   await page.getByLabel(/provider\/brand/i).fill('Test Motors Warranty');
   await page.getByLabel(/warranty #/i).fill('WAR98765');
+  await page.getByLabel(/start date/i).fill('2026-01-01');
   await page.getByLabel(/end odometer/i).fill('100000');
   await page.getByRole('button', { name: /add warranty/i }).click();
 
@@ -98,4 +89,8 @@ test('user can manage insurance and warranty documents via unified route', async
   const updatedInsuranceCard = page.locator('[class*="border-slate"]').filter({ hasText: 'Updated Insurance Corp' });
   await updatedInsuranceCard.getByRole('button').nth(1).click();
   await expect(page.getByText('Updated Insurance Corp')).not.toBeVisible();
+});
+
+test.afterAll(async () => {
+  await prisma.$disconnect();
 });
