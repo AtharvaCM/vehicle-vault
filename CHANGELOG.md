@@ -1,3 +1,11 @@
+## [1.14.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.1...v1.14.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* **api:** inject PrismaService into the compliance document adapters ([6e56b2c](https://github.com/AtharvaCM/vehicle-vault/commit/6e56b2c86f67cbb772652d2dd77eb0b432bec65d))
+* **web:** make the document form submittable and its labels associated ([04d5b6a](https://github.com/AtharvaCM/vehicle-vault/commit/04d5b6a886fee58f6ac4ae610b70c0fdbd3a0727))
+
 ## [1.14.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.0...v1.14.1) (2026-08-11)
 
 
