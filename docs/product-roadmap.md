@@ -1,6 +1,6 @@
 # Product Roadmap
 
-Last updated: 2026-08-11
+Last updated: 2026-08-13
 
 This roadmap is meant to track the actual state of the repository, not an aspirational feature list. If a slice is shipped in code, it should move to `Completed`. If it is only scaffolded or discussed, it should stay in `Next` or `Later`.
 
@@ -60,19 +60,24 @@ The product already supports the core ownership loop:
 - Create vehicle
 - List vehicles
 - View vehicle detail
-- Backend-owned make/model/variant catalog for vehicle entry, seeded for India and keyed by market code for future expansion
-- Catalog internals now support model generations, year-aware variant offerings, and import-run tracking for future market expansion
-- Approved India catalog ingestion now includes Hyundai, Maruti Suzuki, Tata, Mahindra, Honda Cars, Kia, Toyota, Renault, Volkswagen, Skoda, Royal Enfield, Bajaj, Hero, TVS, and Yamaha source snapshots through the shared import pipeline
-- The approved India catalog now includes a broader set of still-common legacy generations across high-volume models and motorcycles, instead of only current flagship lineups
-- Catalog aliases now map messy real-world labels like `i20 Sportz`, `Polo GT TSI`, `Old Swift ZXI`, and `FZ V3` back onto the canonical make/model/generation/variant rows used by the app
-- Internal catalog review tooling now stages import snapshots, shows diffs against published source data, and requires an explicit publish step before trusted catalog rows are updated
-- Catalog reviewers can now archive source variants missing from the latest snapshot as historical, instead of deleting them or leaving them unresolved in the diff
-- Catalog reviewers can now attach provenance notes and manual year-range/current-status corrections to published source offerings, and those overrides persist across future imports
+- Catalog-backed make/model/variant entry, keyed by market code — see **Vehicle Catalog (India)** below for the pipeline behind it
 - Odometer history and service-trend visibility on vehicle detail pages
 - Edit vehicle
 - Delete vehicle with confirmation
 - Bulk delete actions for vehicles list views
 - Search and sort on the vehicles list
+
+### Vehicle Catalog (India)
+
+The largest sustained investment in the repo — releases 1.6.0 through 1.13.1 were almost entirely catalog work — and the hardest part of the product to rebuild from scratch. Treat it as a product surface, not as seed data.
+
+**Data.** 31 source snapshots (~1.1 MB) under `apps/api/prisma/catalog-import/sources/`, covering India's mainstream four-wheeler and two-wheeler brands including EV-only makers. Thirteen Prisma models back it: make / model / generation / variant / variant-spec, an alias table per level, variant offerings plus manual overrides, and import runs with their snapshots.
+
+**Ingestion.** A CarWale scraper CLI with its own parser, separate car and bike spec scrapers, and a spec upsert path. One `catalog:import:<source>` script per source plus `catalog:import:all`.
+
+**Review.** Imports stage rather than overwrite: an import run diffs against published source data, and a reviewer publishes, archives variants missing from the latest snapshot as historical, or attaches provenance notes and year-range/current-status overrides that survive future imports. Surfaced in Settings via the catalog import review card.
+
+**Consumption.** Vehicles auto-link to catalog rows; aliases map messy real-world labels (`i20 Sportz`, `Polo GT TSI`, `FZ V3`) onto canonical rows; per-variant `ServiceInterval` rows are the first source consulted by `MaintenanceIntervalResolver`, so a linked vehicle gets factory-accurate service intervals in forecasts, alerts, and suggestions.
 
 ### Maintenance Records
 
@@ -314,6 +319,14 @@ These are intentionally deferred so the product does not sprawl too early.
 
 _(Pruned 2026-07-24: shared vehicle access, AI-assisted service suggestions, usage-aware reminder suggestions, service-schedule intelligence, and resale report generation all shipped — see Completed sections above.)_
 _(Pruned 2026-08-11: web push notification channel and maintenance-interval unification shipped — see Completed sections above.)_
+
+### Vehicle Catalog
+
+- **Freshness is invisible.** 17 of the 31 source snapshots carry no `capturedAt`, and nothing surfaces how stale a source is. A user picking a 2026 variant cannot tell whether that row was captured last week or in March.
+- **Re-scraping is manual.** Imports run from a developer machine on demand; there is no schedule, no drift alert, and no record of when a source was last refreshed against its origin.
+- **No coverage metrics.** Nothing reports which makes/models/variants are missing specs, how many vehicles fail to auto-link, or which aliases users needed that did not exist.
+- **Provenance and licensing are undocumented.** The data is scraped from a third party; the terms under which it is stored and served have not been written down anywhere.
+- **Spec completeness is uneven.** Gaps are filled by a backfill-from-siblings heuristic, and nothing distinguishes a scraped spec from an inferred one at read time.
 
 ### Product Enhancements
 
