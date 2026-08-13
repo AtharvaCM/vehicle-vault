@@ -1,3 +1,10 @@
+## [1.14.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.2...v1.14.3) (2026-08-13)
+
+
+### Bug Fixes
+
+* **web:** surface failed protection queries instead of an empty garage ([d77fc43](https://github.com/AtharvaCM/vehicle-vault/commit/d77fc4313a5f580dd599d4ec442fea7696618a81))
+
 ## [1.14.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.1...v1.14.2) (2026-08-12)
 
 
