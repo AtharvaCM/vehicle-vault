@@ -13,7 +13,9 @@ import { useVehicleClaims } from '../../claims/hooks/use-claims';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
 import { type Claim, type InsurancePolicyExtractionDraft, type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
@@ -40,6 +42,26 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
 
   if (documentsQuery.isPending) {
     return <LoadingState title="Loading protection details" description="Checking policy and warranty status..." />;
+  }
+
+  // Without this branch a failed request falls through to `|| []`, and the tab
+  // reports "no insurance policies" to someone whose policies simply failed to
+  // load — the same reassuring empty state a brand-new vehicle shows.
+  if (documentsQuery.isError) {
+    return (
+      <ErrorState
+        action={
+          <Button onClick={() => documentsQuery.refetch()} variant="secondary">
+            Retry
+          </Button>
+        }
+        description={getApiErrorMessage(
+          documentsQuery.error,
+          "We couldn't load this vehicle's documents. Your policies and warranties are safe — this is a display problem.",
+        )}
+        title="Unable to load protection details"
+      />
+    );
   }
 
   const allDocuments = documentsQuery.data || [];
@@ -202,6 +224,19 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
           <div className="grid gap-4">
             {claimsQuery.isPending ? (
               <p className="text-xs text-slate-400">Loading claims…</p>
+            ) : claimsQuery.isError ? (
+              <ErrorState
+                action={
+                  <Button onClick={() => claimsQuery.refetch()} variant="secondary">
+                    Retry
+                  </Button>
+                }
+                description={getApiErrorMessage(
+                  claimsQuery.error,
+                  "We couldn't load claims for this vehicle.",
+                )}
+                title="Unable to load claims"
+              />
             ) : claims.length > 0 ? (
               claims.map((claim) => (
                 <ClaimCard
