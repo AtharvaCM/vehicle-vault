@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { Plus, Scan, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/shared/error-state';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { appToast } from '@/lib/toast';
 
@@ -188,13 +190,28 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
         </div>
       </div>
 
-      <FuelLogList
-        logs={logsQuery.data || []}
-        isLoading={logsQuery.isLoading}
-        onAdd={() => setIsFormOpen(true)}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      {logsQuery.isError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => logsQuery.refetch()} variant="secondary">
+              Retry
+            </Button>
+          }
+          description={getApiErrorMessage(
+            logsQuery.error,
+            "We couldn't load fuel logs for this vehicle. Your entries are safe — this is a display problem.",
+          )}
+          title="Unable to load fuel logs"
+        />
+      ) : (
+        <FuelLogList
+          logs={logsQuery.data || []}
+          isLoading={logsQuery.isLoading}
+          onAdd={() => setIsFormOpen(true)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
 
       <FuelImportDialog vehicleId={vehicleId} open={isImportOpen} onOpenChange={setIsImportOpen} />
 

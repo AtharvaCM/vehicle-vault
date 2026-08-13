@@ -17,6 +17,8 @@ import { format } from 'date-fns';
 import type { Claim, ClaimExtractionSuggestion } from '@vehicle-vault/shared';
 
 import { Button } from '@/components/ui/button';
+import { InlineError } from '@/components/shared/inline-error';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { Input } from '@/components/ui/input';
 import { appToast } from '@/lib/toast';
 
@@ -184,6 +186,13 @@ export function ClaimAttachmentsSection({
         <div className="space-y-3 pt-2">
           {attachmentsQuery.isPending ? (
             <p className="text-xs text-slate-400">Loading…</p>
+          ) : attachmentsQuery.isError ? (
+            <InlineError
+              message={getApiErrorMessage(
+                attachmentsQuery.error,
+                "Couldn't load attachments for this claim — they have not been deleted.",
+              )}
+            />
           ) : (
             <>
               {attachments.length > 0 ? (

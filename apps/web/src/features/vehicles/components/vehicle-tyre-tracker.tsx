@@ -10,6 +10,9 @@ import type { ReactNode } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/shared/error-state';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { cn } from '@/lib/utils/cn';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
@@ -71,6 +74,25 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
     () => records.filter((r) => TYRE_CATEGORIES.includes(r.category as MaintenanceCategory)),
     [records],
   );
+
+  // Tyre history is derived entirely from maintenance records; without this the
+  // panel reports "no rotations logged" whenever the records request fails.
+  if (maintenanceQuery.isError) {
+    return (
+      <ErrorState
+        action={
+          <Button onClick={() => maintenanceQuery.refetch()} variant="secondary">
+            Retry
+          </Button>
+        }
+        description={getApiErrorMessage(
+          maintenanceQuery.error,
+          "We couldn't load this vehicle's service history, so tyre status is unavailable.",
+        )}
+        title="Unable to load tyre history"
+      />
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
