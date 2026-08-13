@@ -19,6 +19,9 @@ services:
       JWT_EXPIRES_IN: 7d
       JWT_REFRESH_SECRET: REPLACE_WITH_STRONG_REFRESH_JWT_SECRET
       JWT_REFRESH_EXPIRES_IN: 30d
+      # Optional: unset means no error-reporting client is created.
+      # GlitchTip DSN (Sentry protocol).
+      SENTRY_DSN: ''
     ports:
       - '3001:3001'
     healthcheck:

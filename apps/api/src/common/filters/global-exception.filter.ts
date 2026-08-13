@@ -7,6 +7,8 @@ import {
   type ArgumentsHost,
 } from '@nestjs/common';
 
+import * as Sentry from '@sentry/node';
+
 import type { ApiErrorResponse } from '../types/api-response.type';
 
 @Catch()
@@ -35,6 +37,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (normalized.status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(normalized.error.message, normalized.stack);
+      // 5xx only: 4xx are the client being told "no", not a fault to page over.
+      // No-op unless SENTRY_DSN is configured (see src/instrument.ts).
+      Sentry.captureException(exception, {
+        tags: { path: request.url },
+      });
     }
 
     response.status(normalized.status).json(payload);

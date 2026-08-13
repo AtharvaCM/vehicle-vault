@@ -1,0 +1,76 @@
+# GlitchTip — self-hosted error reporting, Sentry-protocol compatible.
+#
+# Deploy as its own Portainer stack, then create a project in the UI and paste
+# its DSN into SENTRY_DSN (API stack) and VITE_SENTRY_DSN (Vercel env).
+#
+# Check the upstream compose file before deploying — image tags and required
+# settings move: https://glitchtip.com/documentation/install
+#
+# Note it runs its own Postgres rather than sharing the app's Supabase database:
+# a monitoring system that dies with the thing it monitors is not monitoring.
+services:
+  glitchtip-postgres:
+    image: postgres:17
+    container_name: glitchtip-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: REPLACE_WITH_DB_PASSWORD
+    volumes:
+      - glitchtip-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U glitchtip -d glitchtip']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  glitchtip-redis:
+    image: redis:7
+    container_name: glitchtip-redis
+    restart: unless-stopped
+
+  glitchtip-web:
+    image: glitchtip/glitchtip:latest
+    container_name: glitchtip-web
+    restart: unless-stopped
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+    environment: &glitchtip-env
+      DATABASE_URL: postgres://glitchtip:REPLACE_WITH_DB_PASSWORD@glitchtip-postgres:5432/glitchtip
+      REDIS_URL: redis://glitchtip-redis:6379/0
+      SECRET_KEY: REPLACE_WITH_LONG_RANDOM_STRING
+      PORT: 8000
+      # Public URL this instance is reached on — used in links inside alert emails.
+      GLITCHTIP_DOMAIN: https://glitchtip.middle-earth.in
+      DEFAULT_FROM_EMAIL: alerts@vehiclevault.middle-earth.in
+      # Alerting is the whole point: without a mail route, errors arrive nowhere.
+      EMAIL_URL: REPLACE_WITH_SMTP_URL
+      # Single small project — keep the worker from ballooning.
+      CELERY_WORKER_AUTOSCALE: '1,3'
+    ports:
+      - '8000:8000'
+
+  glitchtip-worker:
+    image: glitchtip/glitchtip:latest
+    container_name: glitchtip-worker
+    restart: unless-stopped
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+    command: ./bin/run-celery-with-beat.sh
+    environment: *glitchtip-env
+
+  glitchtip-migrate:
+    image: glitchtip/glitchtip:latest
+    container_name: glitchtip-migrate
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+    command: ./manage.py migrate
+    environment: *glitchtip-env
+    restart: 'no'
+
+volumes:
+  glitchtip-pg-data:

@@ -1,5 +1,7 @@
 export type AppEnv = {
   apiBaseUrl: string;
+  /** Empty string means error reporting stays off. */
+  sentryDsn: string;
 };
 
 let cachedEnv: AppEnv | null = null;
@@ -7,14 +9,17 @@ let cachedEnv: AppEnv | null = null;
 type AppEnvSource = {
   PROD?: boolean;
   VITE_API_BASE_URL?: string;
+  VITE_SENTRY_DSN?: string;
 };
 
 export function resolveAppEnv(env: AppEnvSource): AppEnv {
   const configuredApiBaseUrl = env.VITE_API_BASE_URL?.trim().replace(/\/$/, '') ?? '';
+  const sentryDsn = env.VITE_SENTRY_DSN?.trim() ?? '';
 
   if (configuredApiBaseUrl) {
     return {
       apiBaseUrl: configuredApiBaseUrl,
+      sentryDsn,
     };
   }
 
@@ -26,6 +31,7 @@ export function resolveAppEnv(env: AppEnvSource): AppEnv {
 
   return {
     apiBaseUrl: 'http://localhost:3001/api',
+    sentryDsn,
   };
 }
 
