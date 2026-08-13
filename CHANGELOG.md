@@ -1,3 +1,10 @@
+## [1.14.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.3...v1.14.4) (2026-08-13)
+
+
+### Bug Fixes
+
+* **web:** surface failed queries in five more sections ([d09d944](https://github.com/AtharvaCM/vehicle-vault/commit/d09d944c06371986c0dba5a04cfefbe19e1ee492))
+
 ## [1.14.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.2...v1.14.3) (2026-08-13)
 
 
