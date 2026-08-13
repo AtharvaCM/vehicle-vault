@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.4...v1.15.0) (2026-08-13)
+
+
+### Features
+
+* report errors to GlitchTip behind an opt-in DSN ([754cb82](https://github.com/AtharvaCM/vehicle-vault/commit/754cb825832435f783aa8ac8a54d1cd381da480c))
+
 ## [1.14.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.3...v1.14.4) (2026-08-13)
 
 
