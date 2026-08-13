@@ -12,7 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { InlineError } from '@/components/shared/inline-error';
 import { useVehicleDocuments } from '@/features/vehicle-documents/hooks/use-documents';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { useUpdateClaim, useVehicleClaims } from '../hooks/use-claims';
@@ -55,6 +57,7 @@ export function MaintenanceClaimLinkCard({
   const unlinkedClaims = claims.filter((c) => c.maintenanceRecordId === null);
 
   const isPending = claimsQuery.isPending || documentsQuery.isPending;
+  const isError = claimsQuery.isError || documentsQuery.isError;
 
   async function handleLink() {
     if (!maintenanceRecordId || pickerValue === '__none') return;
@@ -113,6 +116,13 @@ export function MaintenanceClaimLinkCard({
       <CardContent className="space-y-4 text-sm">
         {isPending ? (
           <p className="text-xs text-slate-400">Loading claims…</p>
+        ) : isError ? (
+          <InlineError
+            message={getApiErrorMessage(
+              claimsQuery.error ?? documentsQuery.error,
+              "Couldn't load claims or policies for this vehicle, so linking is unavailable.",
+            )}
+          />
         ) : linkedClaim ? (
           <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3 space-y-2">
             <div className="flex items-start justify-between gap-3">

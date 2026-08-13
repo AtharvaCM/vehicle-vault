@@ -48,10 +48,13 @@ jobs:
       - name: Run unit and service tests
         run: pnpm test
 
+  # Deliberately independent of `quality`. It used to declare `needs: quality`,
+  # which saved runner minutes but meant a lint failure silently *skipped* the
+  # whole suite — that is how a broken eslint rule kept e2e from running for two
+  # and a half months, hiding a production bug the smoke flow would have caught.
   e2e-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: quality
 
     services:
       postgres:

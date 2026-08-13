@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatFileSize } from '@/features/attachments/utils/format-file-size';
 import { resolveAttachmentUrl } from '@/features/attachments/utils/resolve-attachment-url';
+import { InlineError } from '@/components/shared/inline-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
@@ -62,6 +63,13 @@ export function LoanAttachmentsSection({ loanId }: Props) {
 
       {query.isLoading ? (
         <p className="text-xs text-muted-foreground">Loading…</p>
+      ) : query.isError ? (
+        <InlineError
+          message={getApiErrorMessage(
+            query.error,
+            "Couldn't load attachments for this loan — they have not been deleted.",
+          )}
+        />
       ) : attachments.length ? (
         <ul className="divide-y divide-border text-sm">
           {attachments.map((att) => (
