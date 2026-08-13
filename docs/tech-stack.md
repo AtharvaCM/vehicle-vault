@@ -1,12 +1,12 @@
 # Tech Stack
 
-As deployed today (verified against the repo, 2026-07). Aspirational entries are marked _(future)_.
+As deployed today (verified against the repo, 2026-08-12). Aspirational entries are marked _(future)_.
 
 ## Frontend
 
 - Vite 6
 - React 19
-- TypeScript
+- TypeScript 5.8
 - TanStack Router (code-defined routes)
 - TanStack Query
 - Tailwind CSS + shadcn/ui (Radix)
@@ -23,8 +23,8 @@ As deployed today (verified against the repo, 2026-07). Aspirational entries are
 
 ## Backend
 
-- NestJS 10
-- TypeScript
+- NestJS 11
+- TypeScript 5.8
 - REST APIs (`{success, data}` envelope, Swagger at `/api/docs`)
 
 ### Why
@@ -38,7 +38,7 @@ As deployed today (verified against the repo, 2026-07). Aspirational entries are
 ## Database
 
 - PostgreSQL (Supabase, Supavisor pooler)
-- Prisma ORM
+- Prisma 6
 - RLS enabled deny-by-default (closes PostgREST exposure; app connects as `postgres`)
 
 ---
@@ -72,8 +72,10 @@ Used for: receipt uploads, documents, claim/loan attachments.
 
 ## Notifications
 
-- Email via SMTP (nodemailer); DB notification row is canonical, email is fan-out
-- Push / SMS _(future)_
+- The DB notification row is canonical; each channel is best-effort fan-out on top of it. Channels are registered through the `NOTIFICATION_CHANNELS` DI token (`notifications.module.ts`)
+- Email via SMTP (nodemailer)
+- Web push via VAPID (`web-push`), `PushSubscription` rows per browser; no-ops until `VAPID_*` is configured
+- SMS _(future)_
 
 ---
 
