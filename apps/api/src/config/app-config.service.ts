@@ -166,6 +166,14 @@ export class AppConfigService {
     return this.configService.get<string>('app.geminiModel') ?? 'gemini-2.5-flash';
   }
 
+  /**
+   * Error reporting is off unless a DSN is set. GlitchTip speaks the Sentry
+   * protocol, so this is the same knob for either backend.
+   */
+  get sentryDsn(): string | undefined {
+    return this.configService.get<string>('SENTRY_DSN');
+  }
+
   get vapidPublicKey(): string | undefined {
     return this.configService.get<string>('VAPID_PUBLIC_KEY');
   }

@@ -1,6 +1,6 @@
 # Tech Stack
 
-As deployed today (verified against the repo, 2026-08-12). Aspirational entries are marked _(future)_.
+As deployed today (verified against the repo, 2026-08-13). Aspirational entries are marked _(future)_.
 
 ## Frontend
 
@@ -76,6 +76,16 @@ Used for: receipt uploads, documents, claim/loan attachments.
 - Email via SMTP (nodemailer)
 - Web push via VAPID (`web-push`), `PushSubscription` rows per browser; no-ops until `VAPID_*` is configured
 - SMS _(future)_
+
+---
+
+## Error Reporting
+
+- Sentry SDKs (`@sentry/node`, `@sentry/react`) reporting to **GlitchTip**, which speaks the Sentry protocol — the DSN decides the backend, the code does not care
+- Entirely opt-in: no `SENTRY_DSN` / `VITE_SENTRY_DSN` means no client is constructed and every SDK call is a no-op, so local and CI runs report nothing
+- API reports 5xx only, from `GlobalExceptionFilter`; 4xx are the client being told "no", not a fault
+- Errors only — tracing and session replay are off. Replay would capture registration numbers, policy numbers, and document scans
+- `sendDefaultPii: false` on both sides: request bodies and user identifiers are never attached automatically
 
 ---
 

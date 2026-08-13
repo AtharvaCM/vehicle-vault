@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+// Side-effect import: initialises error reporting before any app module loads.
+import './instrument';
 
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

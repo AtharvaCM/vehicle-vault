@@ -11,6 +11,7 @@ describe('resolveAppEnv', () => {
       }),
     ).toEqual({
       apiBaseUrl: 'https://vehiclevault.middle-earth.in/api',
+      sentryDsn: '',
     });
   });
 
@@ -21,7 +22,18 @@ describe('resolveAppEnv', () => {
       }),
     ).toEqual({
       apiBaseUrl: 'http://localhost:3001/api',
+      sentryDsn: '',
     });
+  });
+
+  it('carries the error-reporting DSN through when one is configured', () => {
+    expect(
+      resolveAppEnv({
+        PROD: true,
+        VITE_API_BASE_URL: 'https://vehiclevault.middle-earth.in/api',
+        VITE_SENTRY_DSN: '  https://key@glitchtip.example.com/1  ',
+      }).sentryDsn,
+    ).toBe('https://key@glitchtip.example.com/1');
   });
 
   it('throws when the production build is missing an API base URL', () => {
