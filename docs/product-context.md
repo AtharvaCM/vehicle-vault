@@ -51,4 +51,4 @@ Still genuinely open: service-center/ecosystem integrations, native mobile, rich
 
 ## Known product-doc debt
 
-- The India vehicle catalog — the largest ongoing engineering investment and a de-facto moat — has no roadmap entry and no owner in any product doc.
+- The India vehicle catalog now has a roadmap section (2026-08-13), but still no named owner and no freshness/coverage reporting — see the roadmap's Later > Vehicle Catalog entries.
