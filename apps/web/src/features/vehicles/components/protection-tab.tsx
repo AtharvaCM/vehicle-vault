@@ -1,6 +1,6 @@
 import { ShieldCheck, Plus, Car, ReceiptText, Scan, Loader2, FileBadge } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { forwardRef, useRef, useState } from 'react';
 import { useVehicleDocuments } from '../../vehicle-documents/hooks/use-documents';
 import { DocumentCard } from '../../vehicle-documents/components/document-card';
 import {
@@ -11,6 +11,12 @@ import { ClaimCard } from '../../claims/components/claim-card';
 import { ClaimFormDialog } from '../../claims/components/claim-form-dialog';
 import { useVehicleClaims } from '../../claims/hooks/use-claims';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
@@ -18,7 +24,59 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
-import { type Claim, type InsurancePolicyExtractionDraft, type VehicleDocument, type VehicleDocumentKind } from '@vehicle-vault/shared';
+import {
+  documentKindNouns,
+  documentKindTitles,
+  isComplianceKind,
+} from '../../vehicle-documents/utils/document-kind-labels';
+import {
+  complianceDocumentKinds,
+  type Claim,
+  type VehicleDocument,
+  type VehicleDocumentExtractionDraft,
+  type VehicleDocumentKind,
+} from '@vehicle-vault/shared';
+
+type ScanButtonProps = {
+  available: boolean | undefined;
+  isScanning: boolean;
+  label: string;
+  onClick?: () => void;
+};
+
+/**
+ * The dot on the icon reports whether extraction is configured server-side, so
+ * a user who clicks and gets nothing knows it is the backend, not their file.
+ * Forwards its ref so it can be a DropdownMenu trigger.
+ */
+const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanButton(
+  { available, isScanning, label, onClick, ...triggerProps },
+  ref,
+) {
+  return (
+    <Button
+      ref={ref}
+      size="sm"
+      variant="outline"
+      onClick={onClick}
+      disabled={isScanning}
+      title={available ? 'AI Ready' : 'AI Plugin Missing'}
+      {...triggerProps}
+    >
+      {isScanning ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <span className="relative mr-2 inline-flex">
+          <Scan className="h-4 w-4" />
+          <span
+            className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
+          />
+        </span>
+      )}
+      {isScanning ? 'Analyzing…' : label}
+    </Button>
+  );
+});
 
 interface ProtectionTabProps {
   vehicleId: string;
@@ -31,14 +89,19 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [defaultKind, setDefaultKind] = useState<VehicleDocumentKind>('insurance');
   const [editingDocument, setEditingDocument] = useState<VehicleDocument | null>(null);
-  const [scannedDraft, setScannedDraft] = useState<InsurancePolicyExtractionDraft | null>(null);
+  const [scannedDraft, setScannedDraft] = useState<VehicleDocumentExtractionDraft | null>(null);
+  // Which kind the file picker is currently collecting a scan for. The endpoint
+  // needs it up front so the prompt can narrow to that document type.
+  const [scanKind, setScanKind] = useState<VehicleDocumentKind>('insurance');
 
   const [isClaimDialogOpen, setIsClaimDialogOpen] = useState(false);
   const [editingClaim, setEditingClaim] = useState<Claim | null>(null);
 
   const scanInputRef = useRef<HTMLInputElement>(null);
   const scanMutation = useScanVehicleDocument();
-  const scanStatusQuery = useQuery(useScanStatusQuery(vehicleId, 'insurance'));
+  const insuranceScanStatus = useQuery(useScanStatusQuery(vehicleId, 'insurance'));
+  const warrantyScanStatus = useQuery(useScanStatusQuery(vehicleId, 'warranty'));
+  const complianceScanStatus = useQuery(useScanStatusQuery(vehicleId, 'registration'));
 
   if (documentsQuery.isPending) {
     return <LoadingState title="Loading protection details" description="Checking policy and warranty status..." />;
@@ -92,14 +155,15 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
     setIsDialogOpen(false);
   }
 
-  function triggerScan() {
-    if (scanStatusQuery.data?.available === false) {
+  function triggerScan(kind: VehicleDocumentKind, available: boolean | undefined) {
+    if (available === false) {
       appToast.error({
         title: 'AI scan unavailable',
         description: 'Set GEMINI_API_KEY in the backend .env to enable document scanning.',
       });
       return;
     }
+    setScanKind(kind);
     scanInputRef.current?.click();
   }
 
@@ -109,13 +173,13 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
     if (!file) return;
 
     try {
-      const result = await scanMutation.mutateAsync({ vehicleId, kind: 'insurance', file });
+      const result = await scanMutation.mutateAsync({ vehicleId, kind: scanKind, file });
       setScannedDraft(result.data);
       setEditingDocument(null);
-      setDefaultKind('insurance');
+      setDefaultKind(scanKind);
       setIsDialogOpen(true);
       appToast.success({
-        title: 'Policy scanned',
+        title: `${documentKindNouns[scanKind]} scanned`,
         description: 'Review the AI-filled fields and save.',
       });
     } catch (error) {
@@ -157,25 +221,12 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                 onChange={handleScanFile}
                 className="hidden"
               />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={triggerScan}
-                disabled={scanMutation.isPending}
-                title={scanStatusQuery.data?.available ? 'AI Ready' : 'AI Plugin Missing'}
-              >
-                {scanMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <span className="relative mr-2 inline-flex">
-                    <Scan className="h-4 w-4" />
-                    <span
-                      className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${scanStatusQuery.data?.available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
-                    />
-                  </span>
-                )}
-                {scanMutation.isPending ? 'Analyzing…' : 'Scan Policy'}
-              </Button>
+              <ScanButton
+                available={insuranceScanStatus.data?.available}
+                isScanning={scanMutation.isPending && scanKind === 'insurance'}
+                label="Scan Policy"
+                onClick={() => triggerScan('insurance', insuranceScanStatus.data?.available)}
+              />
               <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Policy
@@ -273,10 +324,18 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <Car className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Warranty Coverage</h3>
             </div>
-            <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Warranty
-            </Button>
+            <div className="flex items-center gap-2">
+              <ScanButton
+                available={warrantyScanStatus.data?.available}
+                isScanning={scanMutation.isPending && scanKind === 'warranty'}
+                label="Scan Warranty"
+                onClick={() => triggerScan('warranty', warrantyScanStatus.data?.available)}
+              />
+              <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Warranty
+              </Button>
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -305,10 +364,34 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <FileBadge className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Registration &amp; Compliance</h3>
             </div>
-            <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Document
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Three document types share this section, and the prompt is
+                  narrowed per type — so the user picks which one they are
+                  scanning rather than the model guessing from the page. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <ScanButton
+                    available={complianceScanStatus.data?.available}
+                    isScanning={scanMutation.isPending && isComplianceKind(scanKind)}
+                    label="Scan"
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {complianceDocumentKinds.map((kind) => (
+                    <DropdownMenuItem
+                      key={kind}
+                      onClick={() => triggerScan(kind, complianceScanStatus.data?.available)}
+                    >
+                      {documentKindTitles[kind]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Document
+              </Button>
+            </div>
           </div>
 
           <div className="grid gap-4">

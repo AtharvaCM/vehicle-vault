@@ -11,7 +11,9 @@ import {
 } from './adapters/compliance.adapter';
 import { InsuranceAdapter } from './adapters/insurance.adapter';
 import { WarrantyAdapter } from './adapters/warranty.adapter';
+import { ComplianceDocumentExtractionSpec } from './extractions/compliance-document.extraction';
 import { InsurancePolicyExtractionSpec } from './extractions/insurance-policy.extraction';
+import { WarrantyDocumentExtractionSpec } from './extractions/warranty-document.extraction';
 import { VehicleDocumentsController } from './vehicle-documents.controller';
 import { VehicleDocumentsService } from './vehicle-documents.service';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
@@ -27,6 +29,8 @@ import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types'
     PucAdapter,
     RoadTaxAdapter,
     InsurancePolicyExtractionSpec,
+    WarrantyDocumentExtractionSpec,
+    ComplianceDocumentExtractionSpec,
     {
       provide: VEHICLE_DOCUMENT_ADAPTERS,
       useFactory: (
@@ -45,9 +49,13 @@ export class VehicleDocumentsModule implements OnModuleInit {
   constructor(
     private readonly registry: ExtractionRegistry,
     private readonly insurancePolicySpec: InsurancePolicyExtractionSpec,
+    private readonly warrantyDocumentSpec: WarrantyDocumentExtractionSpec,
+    private readonly complianceDocumentSpec: ComplianceDocumentExtractionSpec,
   ) {}
 
   onModuleInit(): void {
     this.registry.register(this.insurancePolicySpec);
+    this.registry.register(this.warrantyDocumentSpec);
+    this.registry.register(this.complianceDocumentSpec);
   }
 }

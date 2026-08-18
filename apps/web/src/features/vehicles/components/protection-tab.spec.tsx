@@ -48,6 +48,18 @@ describe('ProtectionTab', () => {
     expect(screen.queryByText('No insurance policies')).not.toBeInTheDocument();
   });
 
+  it('offers a scan for every document kind, not just insurance', () => {
+    documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
+    claimsQuery.current = { isPending: false, isError: false, data: [] };
+
+    render(<ProtectionTab vehicleId="vehicle-1" />);
+
+    expect(screen.getByRole('button', { name: /scan policy/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /scan warranty/i })).toBeInTheDocument();
+    // Compliance covers three kinds, so its scan is a menu rather than one button.
+    expect(screen.getByRole('button', { name: 'Scan' })).toBeInTheDocument();
+  });
+
   it('reports a failed claims request without hiding the documents that loaded', () => {
     documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
     claimsQuery.current = {

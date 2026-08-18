@@ -55,12 +55,20 @@ interface DocumentFormDialogProps {
    */
   initialValues?: Partial<{
     provider: string;
-    policyNumber: string;
     startDate: string;
     endDate: string;
+    notes: string;
+    // Insurance
+    policyNumber: string;
     premiumAmount: number;
     insuredValue: number;
-    notes: string;
+    // Warranty
+    warrantyNumber: string;
+    type: string;
+    endOdometer: number;
+    // Compliance (registration / PUC / road tax)
+    number: string;
+    amount: number;
   }>;
 }
 
@@ -128,12 +136,25 @@ function buildDefaults(
 
   if (initial) {
     if (initial.provider) base.provider = initial.provider;
-    if (initial.policyNumber) base.policyNumber = initial.policyNumber;
     if (initial.startDate) base.startDate = toDateInputValue(initial.startDate);
     if (initial.endDate) base.endDate = toDateInputValue(initial.endDate);
+    if (initial.notes) base.notes = initial.notes;
+
+    if (initial.policyNumber) base.policyNumber = initial.policyNumber;
     if (typeof initial.premiumAmount === 'number') base.premiumAmount = initial.premiumAmount;
     if (typeof initial.insuredValue === 'number') base.insuredValue = initial.insuredValue;
-    if (initial.notes) base.notes = initial.notes;
+
+    if (initial.warrantyNumber) base.warrantyNumber = initial.warrantyNumber;
+    if (initial.type) base.type = initial.type;
+    if (typeof initial.endOdometer === 'number') base.endOdometer = initial.endOdometer;
+
+    if (initial.number) base.number = initial.number;
+    if (typeof initial.amount === 'number') base.amount = initial.amount;
+
+    // A scan that finds no expiry means the document has none (lifetime road
+    // tax, an RC with no printed validity). Keep the field empty rather than
+    // letting the "one year from now" default masquerade as extracted data.
+    if (!initial.endDate) base.endDate = '';
   }
 
   return base;
