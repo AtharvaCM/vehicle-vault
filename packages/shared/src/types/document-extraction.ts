@@ -12,6 +12,11 @@ export const ExtractionKindSchema = z.enum([
   'insurance_policy',
   'claim_document',
   'loan_document',
+  'warranty_document',
+  // One kind for registration / PUC / road tax: they share a field shape, so a
+  // kind each would mean three near-identical prompts to keep in sync. The
+  // target kind rides along in the extraction context instead.
+  'compliance_document',
 ]);
 
 export type ExtractionKind = z.infer<typeof ExtractionKindSchema>;
@@ -58,6 +63,45 @@ export const InsurancePolicyExtractionDraftSchema = z.object({
 export type InsurancePolicyExtractionDraft = z.infer<
   typeof InsurancePolicyExtractionDraftSchema
 >;
+
+/**
+ * Draft hydrated into the warranty form after a scan. Warranties are bounded by
+ * whichever of date or odometer arrives first, so both are captured.
+ */
+export const WarrantyExtractionDraftSchema = z.object({
+  provider: z.string().max(120).optional(),
+  warrantyNumber: z.string().max(80).optional(),
+  type: z.string().max(60).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  endOdometer: z.number().int().min(0).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export type WarrantyExtractionDraft = z.infer<typeof WarrantyExtractionDraftSchema>;
+
+/**
+ * Draft hydrated into the compliance form (registration certificate, PUC
+ * certificate, road tax receipt) after a scan.
+ */
+export const ComplianceExtractionDraftSchema = z.object({
+  provider: z.string().max(120).optional(),
+  number: z.string().max(80).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  amount: z.number().min(0).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export type ComplianceExtractionDraft = z.infer<typeof ComplianceExtractionDraftSchema>;
+
+/**
+ * Anything a vehicle-document scan can hand back. The form reads whichever
+ * fields are present for the kind being edited.
+ */
+export type VehicleDocumentExtractionDraft = InsurancePolicyExtractionDraft &
+  WarrantyExtractionDraft &
+  ComplianceExtractionDraft;
 
 /**
  * Draft hydrated into the fuel-log form after a successful receipt scan.

@@ -17,7 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import {
   VehicleDocumentKindSchema,
   type CreateVehicleDocumentInput,
-  type InsurancePolicyExtractionDraft,
+  type VehicleDocumentExtractionDraft,
   type UpdateVehicleDocumentInput,
   type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
@@ -41,6 +41,12 @@ const SCAN_ALLOWED_MIME_TYPES = new Set([
 
 const DOCUMENT_KIND_TO_EXTRACTION_KIND = {
   insurance: 'insurance_policy',
+  warranty: 'warranty_document',
+  // The three compliance kinds share one spec; the prompt narrows on the
+  // documentKind hint passed through the extraction context below.
+  registration: 'compliance_document',
+  puc: 'compliance_document',
+  road_tax: 'compliance_document',
 } as const satisfies Partial<Record<VehicleDocumentKind, string>>;
 
 @Controller('vehicles/:vehicleId/documents')
@@ -115,10 +121,11 @@ export class VehicleDocumentsController {
 
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
-    return this.extractionService.extract<InsurancePolicyExtractionDraft>(
+    return this.extractionService.extract<VehicleDocumentExtractionDraft>(
       extractionKind,
       [{ buffer: file.buffer, mimeType: file.mimetype, name: file.originalname }],
       {
+        documentKind: parsedKind,
         registrationNumber: vehicle.registrationNumber,
         make: vehicle.make,
         model: vehicle.model,

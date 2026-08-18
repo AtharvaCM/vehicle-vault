@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import type {
   ExtractionResult,
-  InsurancePolicyExtractionDraft,
+  VehicleDocumentExtractionDraft,
   VehicleDocumentKind,
 } from '@vehicle-vault/shared';
 
@@ -14,14 +14,15 @@ type ScanInput = {
   file: File;
 };
 
-export type InsurancePolicyScanResult = ExtractionResult<InsurancePolicyExtractionDraft>;
+/** One result type for every document kind — the draft carries whichever fields the kind uses. */
+export type VehicleDocumentScanResult = ExtractionResult<VehicleDocumentExtractionDraft>;
 
-async function scanVehicleDocument(input: ScanInput): Promise<InsurancePolicyScanResult> {
+async function scanVehicleDocument(input: ScanInput): Promise<VehicleDocumentScanResult> {
   const formData = new FormData();
   formData.append('file', input.file);
 
   const response = await apiClient.post<
-    ApiSuccessResponse<InsurancePolicyScanResult>,
+    ApiSuccessResponse<VehicleDocumentScanResult>,
     FormData
   >(endpoints.vehicleDocuments.scan(input.vehicleId), formData, {
     query: { kind: input.kind },
