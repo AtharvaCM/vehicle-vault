@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.15.0...v1.16.0) (2026-08-18)
+
+
+### Features
+
+* scan and prefill warranty and compliance documents ([28e4761](https://github.com/AtharvaCM/vehicle-vault/commit/28e4761d626bc859ccacb95b6cf52ff70ca805e6))
+
 # [1.15.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.14.4...v1.15.0) (2026-08-13)
 
 
