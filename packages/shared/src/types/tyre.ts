@@ -56,7 +56,11 @@ export interface TyreCondition {
   treadDepthMm: number | null;
   /** Age in years derived from the DOT code, null when the code is unknown. */
   ageYears: number | null;
-  /** Distance covered on this tyre since it was fitted. */
+  /**
+   * Distance covered on this tyre since it was fitted. Null for a spare, which
+   * covers none of the vehicle's mileage while it is carried — and null rather
+   * than zero because a spare may have run before being demoted.
+   */
   kmOnTyre: number | null;
   /** Projected remaining life from the observed wear rate; null without two readings. */
   estimatedKmRemaining: number | null;

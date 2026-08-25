@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  TyrePosition,
   TREAD_DEPTH_LEGAL_MM,
   TREAD_DEPTH_REPLACE_MM,
   TREAD_DEPTH_WARN_MM,
@@ -7,7 +8,6 @@ import {
   TYRE_AGE_WARN_YEARS,
   type TyreCondition,
   type TyreConditionLevel,
-  type TyrePosition,
 } from '@vehicle-vault/shared';
 
 const MS_PER_YEAR = 1000 * 60 * 60 * 24 * 365.25;
@@ -51,7 +51,7 @@ export class TyreConditionResolver {
     const latest = tyre.inspections.at(0) ?? null;
     const treadDepthMm = latest?.treadDepthMm ?? null;
     const ageYears = this.ageInYears(tyre, now);
-    const kmOnTyre = Math.max(0, vehicleOdometer - tyre.fittedOdometer);
+    const kmOnTyre = this.distanceOnTyre(tyre, vehicleOdometer);
 
     const tread = this.gradeTread(treadDepthMm);
     const age = this.gradeAge(ageYears);
@@ -69,6 +69,21 @@ export class TyreConditionResolver {
       estimatedKmRemaining: this.estimateRemaining(tyre, vehicleOdometer),
       lastInspectedAt: latest?.inspectedAt.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Distance is measured against the vehicle's odometer, which only tracks a
+   * tyre that is actually on the road. A tyre carried as the spare covers none
+   * of it — reporting the vehicle's mileage against it would claim wear that
+   * never happened.
+   *
+   * Null rather than zero: a spare may well have run before it was demoted, and
+   * this model cannot tell. Unknown is the truthful answer, and it keeps the
+   * spare out of any wear arithmetic downstream.
+   */
+  private distanceOnTyre(tyre: TyreConditionInput, vehicleOdometer: number): number | null {
+    if (tyre.position === TyrePosition.Spare) return null;
+    return Math.max(0, vehicleOdometer - tyre.fittedOdometer);
   }
 
   /** The worst corner decides the vehicle. Four healthy tyres and one bald one is not "healthy". */
@@ -194,7 +209,13 @@ export class TyreConditionResolver {
     vehicleOdometer: number,
   ): number | null {
     if (tyre.expectedLifeKm == null) return null;
-    const used = Math.max(0, vehicleOdometer - tyre.fittedOdometer);
+
+    // Same reasoning as distanceOnTyre: a spare has not consumed its life by
+    // riding in the boot, so there is no distance to subtract and no honest
+    // projection to make.
+    const used = this.distanceOnTyre(tyre, vehicleOdometer);
+    if (used == null) return null;
+
     return Math.max(0, tyre.expectedLifeKm - used);
   }
 }

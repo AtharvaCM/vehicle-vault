@@ -190,4 +190,51 @@ describe('TyreConditionResolver', () => {
     expect(resolver.worstLevel([healthy, healthy])).toBe('healthy');
     expect(resolver.worstLevel([])).toBe('unknown');
   });
+
+  it('does not charge the vehicle mileage against a carried spare', () => {
+    const condition = resolver.resolve(
+      makeTyre({ position: TyrePosition.Spare, fittedOdometer: 0 }),
+      6908,
+      NOW,
+    );
+
+    // The spare rode in the boot for those 6,908 km. Reporting them against it
+    // would claim wear that never happened.
+    expect(condition.kmOnTyre).toBeNull();
+  });
+
+  it('still counts distance for a tyre that is actually on the road', () => {
+    const condition = resolver.resolve(
+      makeTyre({ position: TyrePosition.RearRight, fittedOdometer: 1_000 }),
+      6908,
+      NOW,
+    );
+
+    expect(condition.kmOnTyre).toBe(5908);
+  });
+
+  it('does not consume a spare\'s expected life while it is carried', () => {
+    const condition = resolver.resolve(
+      makeTyre({ position: TyrePosition.Spare, fittedOdometer: 0, expectedLifeKm: 45_000 }),
+      40_000,
+      NOW,
+    );
+
+    // Distance-based projection is meaningless for a tyre that has not rolled;
+    // a road tyre in the same state would report 5,000 km left.
+    expect(condition.estimatedKmRemaining).toBeNull();
+  });
+
+  it('still grades a spare on age, which is how spares actually fail', () => {
+    const condition = resolver.resolve(
+      makeTyre({ position: TyrePosition.Spare, dotWeek: 10, dotYear: 2019 }),
+      6908,
+      NOW,
+    );
+
+    // Spares almost never wear out — they age out unnoticed and get discovered
+    // at the roadside.
+    expect(condition.level).toBe('replace');
+    expect(condition.reason).toBe('age');
+  });
 });
