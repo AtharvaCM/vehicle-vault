@@ -1,3 +1,18 @@
+# [1.17.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.16.0...v1.17.0) (2026-08-25)
+
+
+### Bug Fixes
+
+* **api:** stop charging vehicle mileage against a carried spare ([b6e1fe2](https://github.com/AtharvaCM/vehicle-vault/commit/b6e1fe2de6de69492724cf25cdce6de831d6a917))
+* **web:** stop the tyre tab inventing service history ([dba832d](https://github.com/AtharvaCM/vehicle-vault/commit/dba832d1c5345518a6b8ba0bbc067cca9998a842))
+
+
+### Features
+
+* **api:** serve resolved service intervals to clients ([e3201fc](https://github.com/AtharvaCM/vehicle-vault/commit/e3201fcfa50397b2a44a3f7e7930870242c2664e))
+* track tyres by measurement instead of inferring them ([43605a7](https://github.com/AtharvaCM/vehicle-vault/commit/43605a77ce0df679816e8f4b5c9de1af1f902aeb))
+* **web:** add tyre and inspection forms ([23ff52b](https://github.com/AtharvaCM/vehicle-vault/commit/23ff52b2b8ed5a0d2119ab6616c786855fe26b7a))
+
 # [1.16.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.15.0...v1.16.0) (2026-08-18)
 
 
