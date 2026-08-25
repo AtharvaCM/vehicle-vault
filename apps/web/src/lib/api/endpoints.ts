@@ -22,11 +22,21 @@ export const endpoints = {
     detail: (vehicleId: string) => `/vehicles/${vehicleId}`,
     insights: (vehicleId: string) => `/vehicles/${vehicleId}/insights`,
     forecast: (vehicleId: string) => `/vehicles/${vehicleId}/forecast`,
+    intervals: (vehicleId: string) => `/vehicles/${vehicleId}/intervals`,
     serviceHistoryPdf: (vehicleId: string) => `/vehicles/${vehicleId}/service-history.pdf`,
     resaleReportPdf: (vehicleId: string, askingPrice?: number) =>
       askingPrice != null && askingPrice >= 0
         ? `/vehicles/${vehicleId}/resale-report.pdf?askingPrice=${askingPrice}`
         : `/vehicles/${vehicleId}/resale-report.pdf`,
+  },
+  tyres: {
+    list: (vehicleId: string) => `/vehicles/${vehicleId}/tyres`,
+    create: (vehicleId: string) => `/vehicles/${vehicleId}/tyres`,
+    condition: (vehicleId: string) => `/vehicles/${vehicleId}/tyres/condition`,
+    inspections: (vehicleId: string) => `/vehicles/${vehicleId}/tyre-inspections`,
+    createInspection: (vehicleId: string) => `/vehicles/${vehicleId}/tyre-inspections`,
+    update: (tyreId: string) => `/tyres/${tyreId}`,
+    remove: (tyreId: string) => `/tyres/${tyreId}`,
   },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',

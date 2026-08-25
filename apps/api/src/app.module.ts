@@ -25,6 +25,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { ExtractionModule } from './modules/extraction/extraction.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { TyresModule } from './modules/tyres/tyres.module';
 import { VehicleLoansModule } from './modules/vehicle-loans/vehicle-loans.module';
 import { VehicleSharingModule } from './modules/vehicle-sharing/vehicle-sharing.module';
 
@@ -55,6 +56,7 @@ import { VehicleSharingModule } from './modules/vehicle-sharing/vehicle-sharing.
     ReportsModule,
     AuditModule,
     AdminModule,
+    TyresModule,
     VehicleLoansModule,
     VehicleSharingModule,
   ],

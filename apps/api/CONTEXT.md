@@ -54,8 +54,10 @@ An external delivery adapter for a **Notification** (`email` and `push` today; `
 `raise(userId, vehicleId, kind, payload)` — resolves template, computes dedup key, upserts the row, and fans out to channels. The single entry point for raising any alert.
 
 **AlertEngine** (`MaintenanceAlertService`):
-The cron orchestrator that runs per-vehicle, reads current predicted odometer (`VehicleInsightsService`), and calls **NotifyService.raise** for each crossed threshold (hardcoded per-category km intervals, reminders within 500 km of `dueOdometer`, documents expiring within 7 days via `VehicleDocumentsService.findExpiring`). Owns *when* to alert, not *what* the alert looks like.
-_Caution_: three overlapping "maintenance interval" sources exist — the hardcoded `MAINTENANCE_INTERVALS` map here, the per-variant `ServiceInterval` table, and `reminders/service-schedule-catalog.ts`. Not yet unified.
+The cron orchestrator that runs per-vehicle, reads current predicted odometer (`VehicleInsightsService`), and calls **NotifyService.raise** for each crossed threshold (intervals from `MaintenanceIntervalResolver`, reminders within 500 km of `dueOdometer`, documents expiring within 7 days via `VehicleDocumentsService.findExpiring`). Owns *when* to alert, not *what* the alert looks like.
+
+**Service intervals** — `vehicles/maintenance-interval.resolver.ts` is the single source of truth for "how often does this vehicle need X". It gates categories by vehicle type and fuel, and prefers per-variant `ServiceInterval` rows over its default table. `MaintenanceAlertService` and `MaintenanceForecastService` both consume it, and it is served to clients at `GET /vehicles/:vehicleId/intervals` so the web app never restates an interval locally — a client that picks its own number will disagree with the alert engine about the same vehicle.
+_Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic intervals for the reminder-suggestion flow, and some of its figures differ from the resolver's. It is scoped to "what reminders could I create", not "is this service due", but the two should be reconciled.
 
 **Token**:
 A credential issued to a **User** for a specific purpose: email verification, password reset, or refresh session. **TokenService** owns issue/consume/rotate/revoke lifecycle for all purposes, regardless of whether the bits are a JWT (refresh) or a SHA-256 hash of random bytes (verification, reset). Timing-safe comparisons. See ADR-0002.

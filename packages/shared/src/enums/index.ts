@@ -7,6 +7,7 @@ export * from './maintenance-line-item-kind.enum';
 export * from './maintenance-record-status.enum';
 export * from './maintenance-source.enum';
 export * from './reminder-status.enum';
+export * from './tyre-position.enum';
 export * from './reminder-type.enum';
 export * from './vehicle-catalog-market.enum';
 export * from './vehicle-type.enum';

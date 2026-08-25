@@ -9,6 +9,15 @@ export const queryKeys = {
     detail: (vehicleId: string) => [...queryKeys.vehicles.all(), 'detail', vehicleId] as const,
     fuelLogs: (vehicleId: string) =>
       [...queryKeys.vehicles.detail(vehicleId), 'fuel-logs'] as const,
+    intervals: (vehicleId: string) =>
+      [...queryKeys.vehicles.detail(vehicleId), 'intervals'] as const,
+  },
+  tyres: {
+    all: (vehicleId: string) => ['vehicles', 'detail', vehicleId, 'tyres'] as const,
+    condition: (vehicleId: string) =>
+      [...queryKeys.tyres.all(vehicleId), 'condition'] as const,
+    inspections: (vehicleId: string) =>
+      [...queryKeys.tyres.all(vehicleId), 'inspections'] as const,
   },
   vehicleCatalog: {
     all: () => ['vehicleCatalog'] as const,
