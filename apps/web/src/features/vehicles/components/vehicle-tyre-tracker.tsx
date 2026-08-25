@@ -1,5 +1,15 @@
-import { useMemo } from 'react';
-import { RotateCw, Settings2, ShieldCheck, AlertCircle, Clock, HelpCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  RotateCw,
+  Settings2,
+  ShieldCheck,
+  AlertCircle,
+  Clock,
+  HelpCircle,
+  Plus,
+  ClipboardCheck,
+  Gauge,
+} from 'lucide-react';
 import {
   TyrePosition,
   type MaintenanceRecord,
@@ -13,13 +23,16 @@ import type { ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState, EmptyStateAction } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { cn } from '@/lib/utils/cn';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
-import { useVehicleTyreCondition } from '../../tyres/hooks/use-tyres';
+import { TyreFormDialog } from '../../tyres/components/tyre-form-dialog';
+import { TyreInspectionDialog } from '../../tyres/components/tyre-inspection-dialog';
+import { useVehicleTyreCondition, useVehicleTyres } from '../../tyres/hooks/use-tyres';
 import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
 
@@ -43,6 +56,9 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   // service-interval inference: tread depth and manufacture age are the facts
   // that decide whether a tyre is safe, and neither can be derived from dates.
   const conditionQuery = useVehicleTyreCondition(vehicle?.id ?? '');
+  const tyresQuery = useVehicleTyres(vehicle?.id ?? '');
+
+  const [openDialog, setOpenDialog] = useState<'tyre' | 'inspection' | null>(null);
 
   const insights = useMemo(
     () => getTyreInsights({ vehicle, records, intervals: intervalsQuery.data }),
@@ -99,14 +115,28 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                     : 'Derived from logged service history. Add tyres to track tread and age.'}
                 </CardDescription>
               </div>
-              <Badge
-                variant="outline"
-                className="bg-white font-bold tracking-tight uppercase text-[10px] shrink-0"
-              >
-                {hasMeasurements
-                  ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
-                  : STATUS_COPY[serviceStatus].label}
-              </Badge>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="bg-white font-bold tracking-tight uppercase text-[10px]"
+                >
+                  {hasMeasurements
+                    ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
+                    : STATUS_COPY[serviceStatus].label}
+                </Badge>
+                <Button onClick={() => setOpenDialog('tyre')} size="sm" variant="secondary">
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Add tyre
+                </Button>
+                <Button
+                  onClick={() => setOpenDialog('inspection')}
+                  size="sm"
+                  variant="secondary"
+                >
+                  <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
+                  Log inspection
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-8 sm:p-12">
@@ -149,7 +179,18 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               <CornerCard key={tyre.tyreId} tyre={tyre} />
             ))}
           </div>
-        ) : null}
+        ) : (
+          <EmptyState
+            action={
+              <EmptyStateAction onClick={() => setOpenDialog('tyre')} size="sm">
+                Add a tyre
+              </EmptyStateAction>
+            }
+            description="Tread depth and manufacture date decide whether a tyre is safe, and neither can be inferred from service dates. Add your tyres to track them per corner."
+            icon={Gauge}
+            title="No tyres tracked yet"
+          />
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <MetricCard
@@ -219,6 +260,24 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           </Card>
         ) : null}
       </div>
+
+      {vehicle ? (
+        <>
+          <TyreFormDialog
+            isOpen={openDialog === 'tyre'}
+            onClose={() => setOpenDialog(null)}
+            vehicleId={vehicle.id}
+            vehicleOdometer={vehicle.odometer}
+          />
+          <TyreInspectionDialog
+            isOpen={openDialog === 'inspection'}
+            onClose={() => setOpenDialog(null)}
+            tyres={tyresQuery.data ?? []}
+            vehicleId={vehicle.id}
+            vehicleOdometer={vehicle.odometer}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import {
   FuelType,
   MaintenanceCategory,
@@ -16,6 +16,9 @@ vi.mock('../hooks/use-vehicle-intervals', () => ({
 }));
 vi.mock('../../tyres/hooks/use-tyres', () => ({
   useVehicleTyreCondition: () => conditionQuery.current,
+  useVehicleTyres: () => ({ data: [] }),
+  useCreateTyre: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateTyreInspections: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
@@ -233,5 +236,33 @@ describe('VehicleTyreTracker', () => {
 
     // Roadworthiness is a different class of claim from a service interval.
     expect(screen.getAllByText('Not roadworthy').length).toBeGreaterThan(0);
+  });
+
+  it('opens and closes the add-tyre dialog from the header action', () => {
+    renderTracker(settled([]));
+
+    fireEvent.click(screen.getByRole('button', { name: /add tyre/i }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: 'Add a tyre' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens the inspection dialog and explains that tyres come first', () => {
+    renderTracker(settled([]));
+
+    fireEvent.click(screen.getByRole('button', { name: /log inspection/i }));
+
+    // No tyres tracked in this fixture, so the dialog has nothing to measure.
+    expect(screen.getByText(/no tyres are being tracked/i)).toBeInTheDocument();
+  });
+
+  it('offers adding a tyre from the empty state as well as the header', () => {
+    renderTracker(settled([]));
+
+    fireEvent.click(screen.getByRole('button', { name: /add a tyre/i }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });
