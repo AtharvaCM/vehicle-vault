@@ -224,6 +224,68 @@ describe('getTyreInsights', () => {
     ]);
   });
 
+  it('applies the interval the API resolved, not a locally chosen one', () => {
+    // A variant whose manufacturer specifies 15,000 km must not be graded
+    // against a client-side 10,000.
+    const { rotation } = getTyreInsights({
+      vehicle: { ...newVehicle, odometer: 12_000 },
+      records: [],
+      intervals: {
+        [MaintenanceCategory.TyreRotation]: { km: 15_000, months: 12, source: 'variant' },
+      },
+      now: NOW,
+    });
+
+    expect(rotation.intervalKm).toBe(15_000);
+    expect(rotation.intervalSource).toBe('variant');
+    expect(rotation.status).toBe('due');
+  });
+
+  it('lets the workshop next-due outrank even a variant interval', () => {
+    const records = [makeRecord({ odometer: 5000, nextDueOdometer: 25_000 })];
+
+    const { rotation } = getTyreInsights({
+      vehicle: newVehicle,
+      records,
+      intervals: {
+        [MaintenanceCategory.TyreRotation]: { km: 15_000, months: 12, source: 'variant' },
+      },
+      now: NOW,
+    });
+
+    expect(rotation.intervalKm).toBe(20_000);
+    expect(rotation.intervalSource).toBe('workshop');
+  });
+
+  it('falls back to conservative figures while the intervals request is in flight', () => {
+    const { rotation } = getTyreInsights({ vehicle: newVehicle, records: [], now: NOW });
+
+    expect(rotation.intervalKm).toBe(10_000);
+    expect(rotation.intervalSource).toBe('fallback');
+  });
+
+  it('takes the months leg from the resolved interval', () => {
+    const garageQueen: Vehicle = {
+      ...newVehicle,
+      odometer: 500,
+      purchaseDate: '2025-01-01T00:00:00.000Z',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    };
+
+    // 24-month interval: ~19 months elapsed is due, not overdue.
+    const { rotation } = getTyreInsights({
+      vehicle: garageQueen,
+      records: [],
+      intervals: {
+        [MaintenanceCategory.TyreRotation]: { km: 10_000, months: 24, source: 'variant' },
+      },
+      now: NOW,
+    });
+
+    expect(rotation.intervalMonths).toBe(24);
+    expect(rotation.status).toBe('due');
+  });
+
   it('returns an unknown verdict when the vehicle has not loaded', () => {
     const { rotation, alignment } = getTyreInsights({ vehicle: null, records: [], now: NOW });
 

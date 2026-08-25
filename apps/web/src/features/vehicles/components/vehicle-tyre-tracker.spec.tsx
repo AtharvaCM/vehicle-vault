@@ -5,7 +5,13 @@ import {
   MaintenanceRecordStatus,
   VehicleType,
 } from '@vehicle-vault/shared';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const intervalsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+
+vi.mock('../hooks/use-vehicle-intervals', () => ({
+  useVehicleIntervals: () => intervalsQuery.current,
+}));
 
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
 
@@ -45,6 +51,16 @@ function renderTracker(query: QueryStub, vehicle: Vehicle | null = newVirtus) {
 }
 
 describe('VehicleTyreTracker', () => {
+  beforeEach(() => {
+    // The API resolves 10,000 km / 12 months for both tyre categories.
+    intervalsQuery.current = {
+      data: {
+        [MaintenanceCategory.TyreRotation]: { km: 10_000, months: 12, source: 'default' },
+        [MaintenanceCategory.WheelAlignment]: { km: 10_000, months: 12, source: 'default' },
+      },
+    };
+  });
+
   it('does not call a new vehicle overdue when nothing has been logged', () => {
     renderTracker(settled([]));
 

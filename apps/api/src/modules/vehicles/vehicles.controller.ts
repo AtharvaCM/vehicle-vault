@@ -35,6 +35,17 @@ export class VehiclesController {
     return this.maintenanceForecastService.getUpcomingSuggestions(user.id, params.vehicleId);
   }
 
+  @Get(':vehicleId/intervals')
+  @ApiOperation({ summary: 'Get resolved service intervals for a vehicle' })
+  async getVehicleServiceIntervals(
+    @CurrentUser() user: AuthUser,
+    @Param() params: VehicleIdParamDto,
+  ) {
+    return successResponse(
+      await this.vehiclesService.getServiceIntervals(user.id, params.vehicleId),
+    );
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all vehicles' })
   async listVehicles(@CurrentUser() user: AuthUser, @Query() query: PaginationQueryDto) {

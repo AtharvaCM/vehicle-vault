@@ -75,6 +75,10 @@ describe('VehiclesService', () => {
     resolveCatalogLink: vi.fn().mockResolvedValue({ variantId: null, generationId: null }),
   };
 
+  const intervalResolver = {
+    resolveForVehicle: vi.fn().mockResolvedValue({}),
+  };
+
   let service: VehiclesService;
 
   beforeEach(() => {
@@ -97,6 +101,7 @@ describe('VehiclesService', () => {
       auditService as never,
       accessService as never,
       catalogLinker as never,
+      intervalResolver as never,
     );
   });
 
@@ -281,5 +286,28 @@ describe('VehiclesService', () => {
     expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-1.pdf');
     expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-2.jpg');
     expect(result).toEqual({ id: 'vehicle-1', deleted: true });
+  });
+
+  it('resolves service intervals from the vehicle, so clients need no interval of their own', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue({
+      ...vehicleRecord,
+      catalogVariantId: 'variant-1',
+      vehicleType: 'car',
+      fuelType: 'petrol',
+    });
+    intervalResolver.resolveForVehicle.mockResolvedValue({
+      tyre_rotation: { km: 15000, months: 12, source: 'variant' },
+    });
+
+    const intervals = await service.getServiceIntervals('user-1', 'vehicle-1');
+
+    // Access is enforced by going through getVehicleById.
+    expect(accessService.assert).toHaveBeenCalledWith('user-1', 'vehicle-1', 'viewer');
+    expect(intervalResolver.resolveForVehicle).toHaveBeenCalledWith({
+      catalogVariantId: 'variant-1',
+      vehicleType: 'car',
+      fuelType: 'petrol',
+    });
+    expect(intervals).toEqual({ tyre_rotation: { km: 15000, months: 12, source: 'variant' } });
   });
 });

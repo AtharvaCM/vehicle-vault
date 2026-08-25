@@ -9,6 +9,8 @@ export const queryKeys = {
     detail: (vehicleId: string) => [...queryKeys.vehicles.all(), 'detail', vehicleId] as const,
     fuelLogs: (vehicleId: string) =>
       [...queryKeys.vehicles.detail(vehicleId), 'fuel-logs'] as const,
+    intervals: (vehicleId: string) =>
+      [...queryKeys.vehicles.detail(vehicleId), 'intervals'] as const,
   },
   vehicleCatalog: {
     all: () => ['vehicleCatalog'] as const,

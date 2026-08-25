@@ -14,6 +14,7 @@ import {
   type CreateVehicleInput,
   type UpdateVehicleInput,
   type Vehicle,
+  type VehicleServiceIntervalMap,
 } from '@vehicle-vault/shared';
 
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
@@ -24,6 +25,7 @@ import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditResourceType } from '@prisma/client';
 import type { CreateVehicleDto } from './dto/create-vehicle.dto';
 import type { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { MaintenanceIntervalResolver } from './maintenance-interval.resolver';
 import { VehicleAccessService } from './vehicle-access.service';
 import { VehicleCatalogLinkerService } from './vehicle-catalog-linker.service';
 
@@ -35,6 +37,7 @@ export class VehiclesService {
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
     private readonly catalogLinker: VehicleCatalogLinkerService,
+    private readonly intervalResolver: MaintenanceIntervalResolver,
   ) {}
 
   async getAllVehicles(userId: string) {
@@ -83,6 +86,24 @@ export class VehiclesService {
 
   async ensureVehicleExists(userId: string, vehicleId: string) {
     return this.getVehicleById(userId, vehicleId);
+  }
+
+  /**
+   * Resolved service intervals for one vehicle, so clients can render "due" and
+   * "overdue" from the same numbers the alert and forecast engines use rather
+   * than restating their own.
+   */
+  async getServiceIntervals(
+    userId: string,
+    vehicleId: string,
+  ): Promise<VehicleServiceIntervalMap> {
+    const vehicle = await this.getVehicleById(userId, vehicleId);
+
+    return this.intervalResolver.resolveForVehicle({
+      catalogVariantId: vehicle.catalogVariantId,
+      vehicleType: vehicle.vehicleType,
+      fuelType: vehicle.fuelType,
+    });
   }
 
   async createVehicle(userId: string, payload: CreateVehicleDto) {

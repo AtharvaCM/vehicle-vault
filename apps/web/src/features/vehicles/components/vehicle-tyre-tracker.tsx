@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { cn } from '@/lib/utils/cn';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
+import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
 
 interface VehicleTyreTrackerProps {
@@ -26,7 +27,15 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
     [maintenanceQuery.data],
   );
 
-  const insights = useMemo(() => getTyreInsights({ vehicle, records }), [vehicle, records]);
+  // The API resolves these per vehicle, using catalog data when the vehicle is
+  // linked to a variant. Deciding an interval here instead would put this tab
+  // and the alert engine into open disagreement about the same vehicle.
+  const intervalsQuery = useVehicleIntervals(vehicle?.id ?? '');
+
+  const insights = useMemo(
+    () => getTyreInsights({ vehicle, records, intervals: intervalsQuery.data }),
+    [vehicle, records, intervalsQuery.data],
+  );
 
   // Tyre history is derived entirely from maintenance records; without this the
   // panel reports "no rotations logged" whenever the records request fails.
@@ -185,6 +194,14 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
 
 const TYRE_RECORD_PREVIEW = 5;
 
+/** Says where the interval came from, so a vehicle-specific figure is visibly not a guess. */
+const INTERVAL_SOURCE_NOTE: Record<TyreMetric['intervalSource'], string | null> = {
+  workshop: ' • per workshop',
+  variant: ' • per manufacturer',
+  default: null,
+  fallback: null,
+};
+
 const STATUS_COPY: Record<TyreStatus, { label: string; icon: typeof ShieldCheck }> = {
   healthy: { label: 'Healthy', icon: ShieldCheck },
   due: { label: 'Due soon', icon: Clock },
@@ -297,7 +314,7 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
             {metric.kmRemaining >= 0
               ? `${metric.kmRemaining.toLocaleString()} km to go`
               : `${Math.abs(metric.kmRemaining).toLocaleString()} km past due`}
-            {metric.usesRecordNextDue ? ' • per workshop' : null}
+            {INTERVAL_SOURCE_NOTE[metric.intervalSource]}
           </p>
         ) : null}
       </div>

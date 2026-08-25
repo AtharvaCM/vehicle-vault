@@ -1,18 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { FuelType, MaintenanceCategory, VehicleType } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  MaintenanceCategory,
+  VehicleType,
+  type VehicleServiceInterval,
+  type VehicleServiceIntervalMap,
+} from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 
-export interface ResolvedInterval {
-  /** Kilometres between services; null when only time-based. */
-  km: number | null;
-  /** Months between services; null when only distance-based. */
-  months: number | null;
-  /** Where the interval came from — per-variant catalog data or the default table. */
-  source: 'variant' | 'default';
-}
-
-export type ResolvedIntervalMap = Partial<Record<MaintenanceCategory, ResolvedInterval>>;
+/**
+ * The shape is defined in `@vehicle-vault/shared` because it crosses the wire —
+ * these aliases keep the existing internal names working.
+ */
+export type ResolvedInterval = VehicleServiceInterval;
+export type ResolvedIntervalMap = VehicleServiceIntervalMap;
 
 /**
  * The single source of truth for "how often does this vehicle need X".
@@ -79,6 +81,11 @@ export class MaintenanceIntervalResolver {
         if (row.intervalKm == null && row.intervalMonths == null) continue;
         const category = row.category as MaintenanceCategory;
         if (!this.appliesTo(category, vehicle)) continue;
+        // A variant row replaces the default outright rather than merging with
+        // it, so a manufacturer can express a genuinely time-only or
+        // distance-only interval. A null here means "no limit on this
+        // dimension", not "unspecified" — the two are indistinguishable in the
+        // schema, and this reading is the one the seed data is written against.
         resolved[category] = {
           km: row.intervalKm,
           months: row.intervalMonths,

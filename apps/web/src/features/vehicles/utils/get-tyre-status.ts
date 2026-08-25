@@ -1,4 +1,8 @@
-import { MaintenanceCategory, MaintenanceRecordStatus } from '@vehicle-vault/shared';
+import {
+  MaintenanceCategory,
+  MaintenanceRecordStatus,
+  type VehicleServiceIntervalMap,
+} from '@vehicle-vault/shared';
 
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
 
@@ -37,8 +41,10 @@ export interface TyreMetric {
   /** The interval actually applied — the workshop's own figure when it supplied one. */
   intervalKm: number;
   intervalMonths: number;
-  /** True when `intervalKm` came from the record's `nextDueOdometer` rather than the default. */
+  /** True when `intervalKm` came from the record's `nextDueOdometer` rather than the resolved interval. */
   usesRecordNextDue: boolean;
+  /** Where the applied interval came from, so the UI can say when it is vehicle-specific. */
+  intervalSource: 'workshop' | 'variant' | 'default' | 'fallback';
   origin: TyreBaselineOrigin;
   lastRecord: MaintenanceRecord | null;
 }
@@ -53,17 +59,15 @@ export interface TyreInsights {
 }
 
 /**
- * Default intervals, kept deliberately identical to the API's
- * `MaintenanceIntervalResolver` (apps/api/src/modules/vehicles/maintenance-interval.resolver.ts).
- *
- * These are a stopgap. The resolver is the documented single source of truth and
- * is variant-aware; once it is exposed over HTTP these constants should be
- * deleted and the resolved interval passed in instead. Until then, diverging
- * from the resolver here puts the UI and the alert engine into open
- * disagreement about the same vehicle.
+ * Last-resort figures used only when the intervals request has not resolved, so
+ * the card can render a number instead of blanking. The authority is
+ * `MaintenanceIntervalResolver`, served from `GET /vehicles/:id/intervals`;
+ * these must never be treated as the source of truth, because a client that
+ * decides its own interval will disagree with the alert engine about the same
+ * vehicle.
  */
-export const TYRE_DEFAULT_INTERVAL_KM = 10_000;
-export const TYRE_DEFAULT_INTERVAL_MONTHS = 12;
+export const TYRE_FALLBACK_INTERVAL_KM = 10_000;
+export const TYRE_FALLBACK_INTERVAL_MONTHS = 12;
 
 /**
  * Matches `MaintenanceForecastService`'s banding so the tab and the server agree
@@ -84,12 +88,19 @@ export const TYRE_CATEGORIES: MaintenanceCategory[] = [
 interface GetTyreInsightsArgs {
   vehicle: Vehicle | null;
   records: MaintenanceRecord[];
+  /**
+   * Resolved from `GET /vehicles/:id/intervals`. Undefined only while that
+   * request is in flight; passing nothing falls back to conservative figures
+   * rather than blocking the whole panel on a second request.
+   */
+  intervals?: VehicleServiceIntervalMap;
   now?: Date;
 }
 
 export function getTyreInsights({
   vehicle,
   records,
+  intervals,
   now = new Date(),
 }: GetTyreInsightsArgs): TyreInsights {
   const confirmed = records.filter(isUsableRecord);
@@ -98,8 +109,8 @@ export function getTyreInsights({
     .sort((left, right) => Date.parse(right.serviceDate) - Date.parse(left.serviceDate));
 
   return {
-    rotation: buildMetric(MaintenanceCategory.TyreRotation, vehicle, confirmed, now),
-    alignment: buildMetric(MaintenanceCategory.WheelAlignment, vehicle, confirmed, now),
+    rotation: buildMetric(MaintenanceCategory.TyreRotation, vehicle, confirmed, intervals, now),
+    alignment: buildMetric(MaintenanceCategory.WheelAlignment, vehicle, confirmed, intervals, now),
     lastReplacement:
       pickBaselineRecord(confirmed, MaintenanceCategory.TyreReplacement) ?? null,
     records: tyreRecords,
@@ -141,6 +152,7 @@ function buildMetric(
   category: MaintenanceCategory,
   vehicle: Vehicle | null,
   records: MaintenanceRecord[],
+  intervals: VehicleServiceIntervalMap | undefined,
   now: Date,
 ): TyreMetric {
   const empty: TyreMetric = {
@@ -149,9 +161,10 @@ function buildMetric(
     kmSince: null,
     monthsSince: null,
     kmRemaining: null,
-    intervalKm: TYRE_DEFAULT_INTERVAL_KM,
-    intervalMonths: TYRE_DEFAULT_INTERVAL_MONTHS,
+    intervalKm: TYRE_FALLBACK_INTERVAL_KM,
+    intervalMonths: TYRE_FALLBACK_INTERVAL_MONTHS,
     usesRecordNextDue: false,
+    intervalSource: 'fallback',
     origin: 'none',
     lastRecord: null,
   };
@@ -174,7 +187,7 @@ function buildMetric(
     ? Math.max(0, (now.getTime() - Date.parse(baseline.date)) / MS_PER_MONTH)
     : null;
 
-  const interval = resolveInterval(lastRecord);
+  const interval = resolveInterval(category, lastRecord, intervals);
   const kmRemaining = interval.km - kmSince;
 
   return {
@@ -188,6 +201,7 @@ function buildMetric(
     intervalKm: interval.km,
     intervalMonths: interval.months,
     usesRecordNextDue: interval.fromRecord,
+    intervalSource: interval.source,
     origin: baseline.origin,
     lastRecord,
   };
@@ -232,24 +246,37 @@ interface ResolvedTyreInterval {
   km: number;
   months: number;
   fromRecord: boolean;
+  source: TyreMetric['intervalSource'];
 }
 
 /**
- * The workshop that did the work knows this vehicle better than a generic
- * default does, so its stated next-due wins when present.
+ * Precedence: the workshop that serviced this vehicle knows it better than any
+ * catalog, which in turn knows it better than a generic default.
  */
-function resolveInterval(lastRecord: MaintenanceRecord | null): ResolvedTyreInterval {
+function resolveInterval(
+  category: MaintenanceCategory,
+  lastRecord: MaintenanceRecord | null,
+  intervals: VehicleServiceIntervalMap | undefined,
+): ResolvedTyreInterval {
+  const resolved = intervals?.[category];
+  const months = resolved?.months ?? TYRE_FALLBACK_INTERVAL_MONTHS;
+
   const stated =
     lastRecord?.nextDueOdometer != null ? lastRecord.nextDueOdometer - lastRecord.odometer : null;
 
   if (stated != null && stated > 0) {
-    return { km: stated, months: TYRE_DEFAULT_INTERVAL_MONTHS, fromRecord: true };
+    return { km: stated, months, fromRecord: true, source: 'workshop' };
+  }
+
+  if (resolved?.km != null) {
+    return { km: resolved.km, months, fromRecord: false, source: resolved.source };
   }
 
   return {
-    km: TYRE_DEFAULT_INTERVAL_KM,
-    months: TYRE_DEFAULT_INTERVAL_MONTHS,
+    km: TYRE_FALLBACK_INTERVAL_KM,
+    months,
     fromRecord: false,
+    source: resolved ? 'default' : 'fallback',
   };
 }
 

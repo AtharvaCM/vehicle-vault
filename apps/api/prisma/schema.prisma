@@ -776,6 +776,10 @@ model ServiceInterval {
   updatedAt      DateTime              @updatedAt
   variant        VehicleCatalogVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
+  // One interval per category per variant. Without this, a duplicated row makes
+  // the resolved interval depend on findMany ordering, so the same vehicle can
+  // report different "due" thresholds between requests.
+  @@unique([variantId, category])
   @@index([variantId])
 }
 
