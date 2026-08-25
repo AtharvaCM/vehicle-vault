@@ -154,12 +154,79 @@ model Vehicle {
   loans               VehicleLoan[]
   members             VehicleMember[]
   invites             VehicleInvite[]
+  tyres               Tyre[]
+  tyreInspections     TyreInspection[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
   @@index([catalogVariantId])
   @@index([catalogGenerationId])
+}
+
+enum TyrePosition {
+  front_left
+  front_right
+  rear_left
+  rear_right
+  spare
+}
+
+/// A physical tyre, tracked from fitment to removal.
+///
+/// Modelled per-tyre rather than per-set because the facts that decide whether
+/// a tyre is safe — tread depth and manufacture date — differ corner to corner.
+/// A front tyre on a FWD car wears roughly twice as fast as a rear one.
+model Tyre {
+  id              String           @id @default(uuid()) @db.Uuid
+  vehicleId       String           @db.Uuid
+  position        TyrePosition
+  brand           String?          @db.VarChar(80)
+  model           String?          @db.VarChar(80)
+  /// Sidewall size code, e.g. "205/55 R16".
+  size            String?          @db.VarChar(40)
+  /// DOT week/year stamped on the sidewall. Rubber degrades on a calendar
+  /// regardless of distance, so this is the only way to catch an unused tyre
+  /// that has aged out.
+  dotWeek         Int?
+  dotYear         Int?
+  fittedDate      DateTime
+  fittedOdometer  Int
+  /// Set when the tyre comes off. A null here means currently fitted, which is
+  /// what makes the position index meaningful.
+  removedDate     DateTime?
+  removedOdometer Int?
+  expectedLifeKm  Int?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  vehicle         Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  inspections     TyreInspection[]
+
+  @@index([vehicleId, removedDate])
+  @@index([vehicleId, position])
+}
+
+/// One measurement of one tyre at one moment. Several rows sharing an
+/// `inspectedAt` and `odometer` form a single walk-around of the vehicle.
+model TyreInspection {
+  id           String   @id @default(uuid()) @db.Uuid
+  tyreId       String   @db.Uuid
+  /// Denormalised so a vehicle's whole inspection history is one query.
+  vehicleId    String   @db.Uuid
+  inspectedAt  DateTime
+  odometer     Int
+  /// Millimetres of remaining tread. 1.6 mm is the legal minimum in India.
+  treadDepthMm Decimal? @db.Decimal(4, 2)
+  pressurePsi  Decimal? @db.Decimal(5, 2)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tyre         Tyre     @relation(fields: [tyreId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, inspectedAt(sort: Desc)])
+  @@index([tyreId, inspectedAt(sort: Desc)])
 }
 
 enum VehicleRole {

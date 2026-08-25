@@ -3,14 +3,19 @@ import {
   FuelType,
   MaintenanceCategory,
   MaintenanceRecordStatus,
+  TyrePosition,
   VehicleType,
 } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const intervalsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const conditionQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 
 vi.mock('../hooks/use-vehicle-intervals', () => ({
   useVehicleIntervals: () => intervalsQuery.current,
+}));
+vi.mock('../../tyres/hooks/use-tyres', () => ({
+  useVehicleTyreCondition: () => conditionQuery.current,
 }));
 
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
@@ -59,6 +64,8 @@ describe('VehicleTyreTracker', () => {
         [MaintenanceCategory.WheelAlignment]: { km: 10_000, months: 12, source: 'default' },
       },
     };
+    // No tyres tracked by default; the measured path is opted into per test.
+    conditionQuery.current = { data: undefined };
   });
 
   it('does not call a new vehicle overdue when nothing has been logged', () => {
@@ -150,5 +157,81 @@ describe('VehicleTyreTracker', () => {
     expect(screen.getByText('puncture')).toBeInTheDocument();
     // An unconfirmed scan must not appear as completed work.
     expect(screen.queryByText('tyre rotation')).not.toBeInTheDocument();
+  });
+
+  it('shows measured per-corner condition once tyres are tracked', () => {
+    conditionQuery.current = {
+      data: {
+        vehicleId: 'vehicle-1',
+        overall: 'illegal',
+        tyres: [
+          {
+            tyreId: 't-fl',
+            position: TyrePosition.FrontLeft,
+            level: 'illegal',
+            reason: 'tread',
+            summary: '1.4 mm tread — below the 1.6 mm legal minimum. Not roadworthy.',
+            treadDepthMm: 1.4,
+            ageYears: 2.1,
+            kmOnTyre: 41_000,
+            estimatedKmRemaining: 0,
+            lastInspectedAt: '2026-08-20T00:00:00.000Z',
+          },
+          {
+            tyreId: 't-rl',
+            position: TyrePosition.RearLeft,
+            level: 'healthy',
+            reason: 'none',
+            summary: '6.2 mm remaining.',
+            treadDepthMm: 6.2,
+            ageYears: 2.1,
+            kmOnTyre: 41_000,
+            estimatedKmRemaining: 28_000,
+            lastInspectedAt: '2026-08-20T00:00:00.000Z',
+          },
+        ],
+      },
+    };
+
+    renderTracker(settled([]));
+
+    // The four glyphs finally mean something: corners differ because the
+    // measurements differ, not because of a made-up front/rear split.
+    expect(screen.getByText('Front left')).toBeInTheDocument();
+    expect(screen.getByText('1.4 mm')).toBeInTheDocument();
+    expect(screen.getByText('6.2 mm')).toBeInTheDocument();
+    expect(screen.getByText('~28,000 km left at current wear')).toBeInTheDocument();
+
+    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
+    expect(diagram).toHaveAccessibleName(/front left: 1.4 mm tread/i);
+    expect(diagram).toHaveAccessibleName(/rear left: 6.2 mm remaining/i);
+  });
+
+  it('says not roadworthy rather than overdue when tread is below the legal limit', () => {
+    conditionQuery.current = {
+      data: {
+        vehicleId: 'vehicle-1',
+        overall: 'illegal',
+        tyres: [
+          {
+            tyreId: 't-fl',
+            position: TyrePosition.FrontLeft,
+            level: 'illegal',
+            reason: 'tread',
+            summary: '1.4 mm tread — below the 1.6 mm legal minimum. Not roadworthy.',
+            treadDepthMm: 1.4,
+            ageYears: null,
+            kmOnTyre: 41_000,
+            estimatedKmRemaining: 0,
+            lastInspectedAt: '2026-08-20T00:00:00.000Z',
+          },
+        ],
+      },
+    };
+
+    renderTracker(settled([]));
+
+    // Roadworthiness is a different class of claim from a service interval.
+    expect(screen.getAllByText('Not roadworthy').length).toBeGreaterThan(0);
   });
 });

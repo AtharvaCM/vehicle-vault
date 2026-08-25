@@ -29,6 +29,15 @@ export const endpoints = {
         ? `/vehicles/${vehicleId}/resale-report.pdf?askingPrice=${askingPrice}`
         : `/vehicles/${vehicleId}/resale-report.pdf`,
   },
+  tyres: {
+    list: (vehicleId: string) => `/vehicles/${vehicleId}/tyres`,
+    create: (vehicleId: string) => `/vehicles/${vehicleId}/tyres`,
+    condition: (vehicleId: string) => `/vehicles/${vehicleId}/tyres/condition`,
+    inspections: (vehicleId: string) => `/vehicles/${vehicleId}/tyre-inspections`,
+    createInspection: (vehicleId: string) => `/vehicles/${vehicleId}/tyre-inspections`,
+    update: (tyreId: string) => `/tyres/${tyreId}`,
+    remove: (tyreId: string) => `/tyres/${tyreId}`,
+  },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',
     models: '/vehicle-catalog/models',

@@ -1,6 +1,12 @@
 import { useMemo } from 'react';
 import { RotateCw, Settings2, ShieldCheck, AlertCircle, Clock, HelpCircle } from 'lucide-react';
-import type { MaintenanceRecord, Vehicle } from '@vehicle-vault/shared';
+import {
+  TyrePosition,
+  type MaintenanceRecord,
+  type TyreCondition,
+  type TyreConditionLevel,
+  type Vehicle,
+} from '@vehicle-vault/shared';
 import { formatDistanceToNow } from 'date-fns';
 import type { ReactNode } from 'react';
 
@@ -13,6 +19,7 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { cn } from '@/lib/utils/cn';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
+import { useVehicleTyreCondition } from '../../tyres/hooks/use-tyres';
 import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
 
@@ -31,6 +38,11 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   // linked to a variant. Deciding an interval here instead would put this tab
   // and the alert engine into open disagreement about the same vehicle.
   const intervalsQuery = useVehicleIntervals(vehicle?.id ?? '');
+
+  // Measured per-corner condition. Where this exists it outranks every
+  // service-interval inference: tread depth and manufacture age are the facts
+  // that decide whether a tyre is safe, and neither can be derived from dates.
+  const conditionQuery = useVehicleTyreCondition(vehicle?.id ?? '');
 
   const insights = useMemo(
     () => getTyreInsights({ vehicle, records, intervals: intervalsQuery.data }),
@@ -68,7 +80,10 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
     );
   }
 
-  const overallStatus = mergeStatus(insights.rotation.status, insights.alignment.status);
+  const measured = conditionQuery.data?.tyres ?? [];
+  const hasMeasurements = measured.length > 0;
+  const serviceStatus = mergeStatus(insights.rotation.status, insights.alignment.status);
+  const byPosition = new Map(measured.map((tyre) => [tyre.position, tyre]));
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
@@ -79,20 +94,24 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               <div>
                 <CardTitle className="text-lg font-bold">Wheel &amp; Tyre Geometry</CardTitle>
                 <CardDescription>
-                  Derived from logged service history. Tread and pressure are not measured.
+                  {hasMeasurements
+                    ? 'Per-corner condition from recorded tread depth and tyre age.'
+                    : 'Derived from logged service history. Add tyres to track tread and age.'}
                 </CardDescription>
               </div>
               <Badge
                 variant="outline"
                 className="bg-white font-bold tracking-tight uppercase text-[10px] shrink-0"
               >
-                {STATUS_COPY[overallStatus].label}
+                {hasMeasurements
+                  ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
+                  : STATUS_COPY[serviceStatus].label}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="p-8 sm:p-12">
             <div
-              aria-label={`Wheel diagram. Tyre rotation: ${STATUS_COPY[insights.rotation.status].label}. Wheel alignment: ${STATUS_COPY[insights.alignment.status].label}. Individual tyre condition is not tracked.`}
+              aria-label={describeDiagram(insights, measured, hasMeasurements)}
               className="relative mx-auto flex aspect-[1/2] w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-slate-200 bg-slate-50/30"
               role="img"
             >
@@ -101,15 +120,19 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-slate-200" />
 
               {/*
-                All four corners share one status. Rotation is a four-wheel
-                operation and alignment is axle geometry, so neither describes an
-                individual tyre — and no per-corner tread data exists to colour
-                them separately.
+                Each corner now shows its own measured condition. Without
+                measurements they fall back to one shared service-derived status,
+                because rotation is a four-wheel operation and alignment is axle
+                geometry — neither describes an individual tyre.
               */}
-              <TyreGlyph position="top-left" status={overallStatus} />
-              <TyreGlyph position="top-right" status={overallStatus} />
-              <TyreGlyph position="bottom-left" status={overallStatus} />
-              <TyreGlyph position="bottom-right" status={overallStatus} />
+              {DIAGRAM_CORNERS.map(({ corner, position }) => (
+                <TyreGlyph
+                  key={corner}
+                  corner={corner}
+                  measured={byPosition.get(position) ?? null}
+                  status={hasMeasurements ? null : serviceStatus}
+                />
+              ))}
 
               <div className="w-1/2 h-2/3 border border-slate-200/50 rounded-2xl flex items-center justify-center">
                 <div className="text-[10px] font-black text-slate-300 uppercase rotate-90">
@@ -119,6 +142,14 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
             </div>
           </CardContent>
         </Card>
+
+        {hasMeasurements ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {measured.map((tyre) => (
+              <CornerCard key={tyre.tyreId} tyre={tyre} />
+            ))}
+          </div>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <MetricCard
@@ -202,6 +233,87 @@ const INTERVAL_SOURCE_NOTE: Record<TyreMetric['intervalSource'], string | null> 
   fallback: null,
 };
 
+/** Screen position -> the tyre actually fitted there. The spare has no corner on the diagram. */
+const DIAGRAM_CORNERS = [
+  { corner: 'top-left' as const, position: TyrePosition.FrontLeft },
+  { corner: 'top-right' as const, position: TyrePosition.FrontRight },
+  { corner: 'bottom-left' as const, position: TyrePosition.RearLeft },
+  { corner: 'bottom-right' as const, position: TyrePosition.RearRight },
+];
+
+const CONDITION_COPY: Record<
+  TyreConditionLevel,
+  { label: string; icon: typeof ShieldCheck; border: string; icons: string; card: string }
+> = {
+  illegal: {
+    label: 'Not roadworthy',
+    icon: AlertCircle,
+    border: 'border-rose-600',
+    icons: 'text-rose-500',
+    card: 'bg-rose-50 border-rose-200',
+  },
+  replace: {
+    label: 'Replace',
+    icon: AlertCircle,
+    border: 'border-rose-500/60',
+    icons: 'text-rose-500',
+    card: 'bg-rose-50 border-rose-100',
+  },
+  warn: {
+    label: 'Wearing',
+    icon: Clock,
+    border: 'border-orange-500/60',
+    icons: 'text-orange-500',
+    card: 'bg-orange-50 border-orange-100',
+  },
+  healthy: {
+    label: 'Healthy',
+    icon: ShieldCheck,
+    border: 'border-emerald-500/50',
+    icons: 'text-emerald-500',
+    card: 'bg-emerald-50 border-emerald-100',
+  },
+  unknown: {
+    label: 'Not measured',
+    icon: HelpCircle,
+    border: 'border-slate-400/40 border-dashed',
+    icons: 'text-slate-400',
+    card: 'bg-slate-50 border-slate-200',
+  },
+};
+
+const POSITION_LABEL: Record<TyrePosition, string> = {
+  [TyrePosition.FrontLeft]: 'Front left',
+  [TyrePosition.FrontRight]: 'Front right',
+  [TyrePosition.RearLeft]: 'Rear left',
+  [TyrePosition.RearRight]: 'Rear right',
+  [TyrePosition.Spare]: 'Spare',
+};
+
+/**
+ * The diagram is the whole point of the tab, so its text alternative has to
+ * carry the same information rather than just naming a colour.
+ */
+function describeDiagram(
+  insights: ReturnType<typeof getTyreInsights>,
+  measured: TyreCondition[],
+  hasMeasurements: boolean,
+): string {
+  if (!hasMeasurements) {
+    return (
+      `Wheel diagram. Tyre rotation: ${STATUS_COPY[insights.rotation.status].label}. ` +
+      `Wheel alignment: ${STATUS_COPY[insights.alignment.status].label}. ` +
+      'Individual tyre condition is not tracked.'
+    );
+  }
+
+  const corners = measured
+    .map((tyre) => `${POSITION_LABEL[tyre.position]}: ${tyre.summary}`)
+    .join(' ');
+
+  return `Wheel diagram showing measured tyre condition. ${corners}`;
+}
+
 const STATUS_COPY: Record<TyreStatus, { label: string; icon: typeof ShieldCheck }> = {
   healthy: { label: 'Healthy', icon: ShieldCheck },
   due: { label: 'Due soon', icon: Clock },
@@ -220,48 +332,105 @@ function formatCategory(category: string) {
 }
 
 interface TyreGlyphProps {
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  status: TyreStatus;
+  corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  /** Measured condition when the tyre is tracked. */
+  measured: TyreCondition | null;
+  /** Service-derived fallback, used only when nothing is measured. */
+  status: TyreStatus | null;
 }
 
-function TyreGlyph({ position, status }: TyreGlyphProps) {
+function TyreGlyph({ corner, measured, status }: TyreGlyphProps) {
   const posClasses = {
     'top-left': '-top-4 -left-8 sm:-left-10',
     'top-right': '-top-4 -right-8 sm:-right-10',
     'bottom-left': '-bottom-4 -left-8 sm:-left-10',
     'bottom-right': '-bottom-4 -right-8 sm:-right-10',
-  }[position];
+  }[corner];
 
-  const statusClasses = {
-    healthy: 'border-emerald-500/50',
-    due: 'border-orange-500/50',
-    overdue: 'border-rose-500/50',
-    unknown: 'border-slate-400/40 border-dashed',
-  }[status];
+  const appearance = measured
+    ? CONDITION_COPY[measured.level]
+    : CONDITION_COPY[status ? SERVICE_TO_CONDITION[status] : 'unknown'];
 
-  const iconClasses = {
-    healthy: 'text-emerald-500',
-    due: 'text-orange-500',
-    overdue: 'text-rose-500',
-    unknown: 'text-slate-400',
-  }[status];
-
-  const Icon = STATUS_COPY[status].icon;
+  const Icon = appearance.icon;
 
   return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        'absolute flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2 bg-slate-900 shadow-premium-md',
-        posClasses,
-        statusClasses,
-      )}
-    >
-      {/* Decorative tread lines — the app does not measure tread depth. */}
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="h-px w-full bg-slate-800" />
-      ))}
-      <Icon className={cn('absolute h-3 w-3', iconClasses)} />
+    // The wrapper carries the positioning so the depth label can sit outside the
+    // tread box, which clips its own overflow.
+    <div aria-hidden="true" className={cn('absolute flex flex-col items-center', posClasses)}>
+      <div
+        className={cn(
+          'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2 bg-slate-900 shadow-premium-md',
+          appearance.border,
+        )}
+      >
+        {/* Decorative tread lines; the depth figure below is the measured one. */}
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="h-px w-full bg-slate-800" />
+        ))}
+        <Icon className={cn('absolute h-3 w-3', appearance.icons)} />
+      </div>
+      {measured?.treadDepthMm != null ? (
+        <span className="mt-1 text-[9px] font-black tabular-nums text-slate-500">
+          {measured.treadDepthMm.toFixed(1)}mm
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/** Maps a service-schedule verdict onto the condition palette when nothing is measured. */
+const SERVICE_TO_CONDITION: Record<TyreStatus, TyreConditionLevel> = {
+  healthy: 'healthy',
+  due: 'warn',
+  overdue: 'replace',
+  unknown: 'unknown',
+};
+
+interface CornerCardProps {
+  tyre: TyreCondition;
+}
+
+/** One measured corner: what it reads, why that matters, and how long it has left. */
+function CornerCard({ tyre }: CornerCardProps) {
+  const appearance = CONDITION_COPY[tyre.level];
+  const Icon = appearance.icon;
+
+  return (
+    <div className={cn('rounded-2xl border p-5 shadow-premium-sm', appearance.card)}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className={cn('rounded-xl bg-white p-2 shadow-sm', appearance.icons)}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <Badge
+          variant="outline"
+          className="bg-white text-[9px] font-black uppercase tracking-wider"
+        >
+          {appearance.label}
+        </Badge>
+      </div>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+        {POSITION_LABEL[tyre.position]}
+      </p>
+      <p className="mt-1 text-2xl font-black tracking-tighter tabular-nums text-slate-900">
+        {tyre.treadDepthMm != null ? `${tyre.treadDepthMm.toFixed(1)} mm` : '—'}
+      </p>
+      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600">{tyre.summary}</p>
+      <div className="mt-2 space-y-0.5">
+        {tyre.estimatedKmRemaining != null ? (
+          <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+            ~{tyre.estimatedKmRemaining.toLocaleString()} km left at current wear
+          </p>
+        ) : null}
+        {tyre.lastInspectedAt ? (
+          <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+            Checked {formatDistanceToNow(new Date(tyre.lastInspectedAt), { addSuffix: true })}
+          </p>
+        ) : (
+          <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+            Never inspected
+          </p>
+        )}
+      </div>
     </div>
   );
 }
