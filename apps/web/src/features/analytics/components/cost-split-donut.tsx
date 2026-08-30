@@ -20,6 +20,7 @@ const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
 const BUCKET_COLORS: Record<string, string> = {
   Fuel: '#f59e0b',
   Maintenance: '#6366f1',
+  Accessories: '#0ea5e9',
   Insurance: '#10b981',
   'Loan interest': '#ec4899',
 };
@@ -56,6 +57,7 @@ export function CostSplitDonut({ vehicleId, defaultRange = '1y' }: Props) {
     return [
       { name: 'Fuel', value: Number(b.fuel) },
       { name: 'Maintenance', value: Number(b.maintenance) },
+      { name: 'Accessories', value: Number(b.accessories) },
       { name: 'Insurance', value: Number(b.insurance) },
       { name: 'Loan interest', value: Number(b.loanInterest) },
     ].filter((d) => d.value > 0);

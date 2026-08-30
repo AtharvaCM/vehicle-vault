@@ -13,3 +13,4 @@ export * from './analytics.schema';
 export * from './vehicle-loan.schema';
 export * from './vehicle-sharing.schema';
 export * from './tyre.schema';
+export * from './accessory.schema';

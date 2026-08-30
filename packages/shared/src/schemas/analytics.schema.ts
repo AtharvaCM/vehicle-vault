@@ -11,6 +11,8 @@ const decimalString = z.string().regex(/^\d+(\.\d+)?$/);
 export const CostSplitBucketSchema = z.object({
   fuel: decimalString,
   maintenance: decimalString,
+  /** Accessories are their own bucket so they never distort the maintenance figure. */
+  accessories: decimalString,
   insurance: decimalString,
   loanInterest: decimalString,
   total: decimalString,
@@ -36,6 +38,7 @@ export const CostTrendPointSchema = z.object({
   period: z.string().regex(/^\d{4}-\d{2}$/),
   fuel: decimalString,
   maintenance: decimalString,
+  accessories: decimalString,
   insurance: decimalString,
   loanInterest: decimalString,
   loanPrincipal: decimalString,
@@ -66,6 +69,7 @@ export const TcoResponseSchema = z.object({
   totals: z.object({
     maintenance: decimalString,
     fuel: decimalString,
+    accessories: decimalString,
     insurance: decimalString,
     insurerReimbursed: decimalString,
     loanInterest: decimalString,

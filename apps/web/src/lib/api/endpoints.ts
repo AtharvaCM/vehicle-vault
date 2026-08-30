@@ -38,6 +38,12 @@ export const endpoints = {
     update: (tyreId: string) => `/tyres/${tyreId}`,
     remove: (tyreId: string) => `/tyres/${tyreId}`,
   },
+  accessories: {
+    list: (vehicleId: string) => `/vehicles/${vehicleId}/accessories`,
+    create: (vehicleId: string) => `/vehicles/${vehicleId}/accessories`,
+    update: (accessoryId: string) => `/accessories/${accessoryId}`,
+    remove: (accessoryId: string) => `/accessories/${accessoryId}`,
+  },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',
     models: '/vehicle-catalog/models',

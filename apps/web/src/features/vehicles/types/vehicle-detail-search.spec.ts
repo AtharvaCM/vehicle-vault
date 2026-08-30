@@ -13,6 +13,14 @@ describe('normalizeVehicleDetailSearch', () => {
     expect(normalizeVehicleDetailSearch({ tab: 'overview' })).toEqual({});
   });
 
+  it('keeps the accessories tab so a deep link survives a reload', () => {
+    // validateSearch silently drops an unregistered tab, which makes a working
+    // TabsTrigger bounce the user to Overview on refresh.
+    expect(normalizeVehicleDetailSearch({ tab: 'accessories' })).toEqual({
+      tab: 'accessories',
+    });
+  });
+
   it('drops unsupported tabs', () => {
     expect(normalizeVehicleDetailSearch({ tab: 'unknown' })).toEqual({});
   });

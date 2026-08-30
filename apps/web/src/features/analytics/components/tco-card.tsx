@@ -48,6 +48,7 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
 
   const loanInterestPaid = Number(tco.totals.loanInterest);
   const loanOutstanding = Number(tco.totals.loanOutstanding);
+  const accessories = Number(tco.totals.accessories);
 
   const figures: { label: string; value: string; emphasis?: boolean }[] = [
     {
@@ -57,6 +58,9 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
     },
     { label: 'Maintenance', value: inr.format(Number(tco.totals.maintenance)) },
     { label: 'Fuel', value: inr.format(Number(tco.totals.fuel)) },
+    ...(accessories > 0
+      ? [{ label: 'Accessories', value: inr.format(accessories) }]
+      : []),
     { label: 'Insurance', value: inr.format(Number(tco.totals.insurance)) },
     ...(loanInterestPaid > 0
       ? [{ label: 'Loan interest paid', value: inr.format(loanInterestPaid) }]

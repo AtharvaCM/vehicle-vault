@@ -5,6 +5,7 @@ export const vehicleDetailTabs = [
   'reminders',
   'fuel',
   'tyres',
+  'accessories',
   'protection',
   'loans',
   'members',

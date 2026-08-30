@@ -69,7 +69,8 @@ export class AnalyticsService {
       ? { id: options.vehicleId, members: { some: { userId } } }
       : { members: { some: { userId } } };
 
-    const [fuelAgg, maintenanceAgg, claimsAgg, policies, loans] = await Promise.all([
+    const [fuelAgg, maintenanceAgg, accessoriesAgg, claimsAgg, policies, loans] =
+      await Promise.all([
       this.prisma.fuelLog.aggregate({
         _sum: { totalCost: true },
         where: {
@@ -81,6 +82,13 @@ export class AnalyticsService {
         _sum: { totalCost: true },
         where: {
           serviceDate: { gte: from, lte: to },
+          vehicle: vehicleFilter,
+        },
+      }),
+      this.prisma.accessory.aggregate({
+        _sum: { cost: true },
+        where: {
+          purchaseDate: { gte: from, lte: to },
           vehicle: vehicleFilter,
         },
       }),
@@ -118,6 +126,7 @@ export class AnalyticsService {
 
     const fuel = fuelAgg._sum.totalCost ?? new Prisma.Decimal(0);
     const maintenanceGross = maintenanceAgg._sum.totalCost ?? new Prisma.Decimal(0);
+    const accessories = accessoriesAgg._sum.cost ?? new Prisma.Decimal(0);
     const insurerPaid = claimsAgg._sum.insurerPaidAmount ?? new Prisma.Decimal(0);
     const maintenance = maintenanceGross.minus(insurerPaid);
 
@@ -145,7 +154,11 @@ export class AnalyticsService {
       return acc.plus(interest);
     }, new Prisma.Decimal(0));
 
-    const total = fuel.plus(maintenance).plus(insurance).plus(loanInterest);
+    const total = fuel
+      .plus(maintenance)
+      .plus(accessories)
+      .plus(insurance)
+      .plus(loanInterest);
 
     return {
       currency: 'INR',
@@ -154,6 +167,7 @@ export class AnalyticsService {
       buckets: {
         fuel: fuel.toFixed(2),
         maintenance: maintenance.toFixed(2),
+        accessories: accessories.toFixed(2),
         insurance: insurance.toFixed(2),
         loanInterest: loanInterest.toFixed(2),
         total: total.toFixed(2),
@@ -164,7 +178,7 @@ export class AnalyticsService {
   /**
    * Monthly cost trend over the requested range.
    *
-   * Per-month buckets contain fuel, maintenance (net of insurer-paid),
+   * Per-month buckets contain fuel, maintenance (net of insurer-paid), accessories,
    * insurance (pro-rated across the month's overlap with each policy),
    * total cost, kilometres driven, and cost-per-km.
    *
@@ -192,7 +206,8 @@ export class AnalyticsService {
       ? { id: options.vehicleId, members: { some: { userId } } }
       : { members: { some: { userId } } };
 
-    const [fuelLogs, maintenanceRecords, claimRows, policies, loans] = await Promise.all([
+    const [fuelLogs, maintenanceRecords, accessoryRows, claimRows, policies, loans] =
+      await Promise.all([
       this.prisma.fuelLog.findMany({
         where: { date: { gte: from, lte: to }, vehicle: vehicleFilter },
         select: { date: true, totalCost: true, odometer: true, vehicleId: true },
@@ -201,6 +216,10 @@ export class AnalyticsService {
       this.prisma.maintenanceRecord.findMany({
         where: { serviceDate: { gte: from, lte: to }, vehicle: vehicleFilter },
         select: { id: true, serviceDate: true, totalCost: true },
+      }),
+      this.prisma.accessory.findMany({
+        where: { purchaseDate: { gte: from, lte: to }, vehicle: vehicleFilter },
+        select: { purchaseDate: true, cost: true },
       }),
       this.prisma.claim.findMany({
         where: {
@@ -240,6 +259,7 @@ export class AnalyticsService {
     type Bucket = {
       fuel: Prisma.Decimal;
       maintenance: Prisma.Decimal;
+      accessories: Prisma.Decimal;
       insurerPaid: Prisma.Decimal;
       insurance: Prisma.Decimal;
       loanInterest: Prisma.Decimal;
@@ -253,6 +273,7 @@ export class AnalyticsService {
         b = {
           fuel: new Prisma.Decimal(0),
           maintenance: new Prisma.Decimal(0),
+          accessories: new Prisma.Decimal(0),
           insurerPaid: new Prisma.Decimal(0),
           insurance: new Prisma.Decimal(0),
           loanInterest: new Prisma.Decimal(0),
@@ -323,6 +344,13 @@ export class AnalyticsService {
       }
     }
 
+    // Accessories land whole in the month they were bought — unlike insurance
+    // there is nothing to pro-rate, the money left the account once.
+    for (const accessory of accessoryRows) {
+      const key = monthKey(accessory.purchaseDate);
+      ensure(key).accessories = ensure(key).accessories.plus(accessory.cost);
+    }
+
     // Insurance pro-rated per month overlap.
     for (const p of policies) {
       if (!p.premiumAmount) continue;
@@ -342,12 +370,17 @@ export class AnalyticsService {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([period, b]) => {
         const maintenanceNet = b.maintenance.minus(b.insurerPaid);
-        const total = b.fuel.plus(maintenanceNet).plus(b.insurance).plus(b.loanInterest);
+        const total = b.fuel
+          .plus(maintenanceNet)
+          .plus(b.accessories)
+          .plus(b.insurance)
+          .plus(b.loanInterest);
         const costPerKm = b.km > 0 ? total.div(b.km).toFixed(2) : null;
         return {
           period,
           fuel: b.fuel.toFixed(2),
           maintenance: maintenanceNet.toFixed(2),
+          accessories: b.accessories.toFixed(2),
           insurance: b.insurance.toFixed(2),
           loanInterest: b.loanInterest.toFixed(2),
           loanPrincipal: b.loanPrincipal.toFixed(2),
@@ -369,7 +402,7 @@ export class AnalyticsService {
   /**
    * Total cost of ownership for a single vehicle.
    *
-   * Aggregates lifetime spend (no time window) across maintenance, fuel,
+   * Aggregates lifetime spend (no time window) across maintenance, fuel, accessories,
    * and insurance, subtracts insurer-paid amounts, then derives ₹/km and
    * ₹/month using the purchase metadata captured on the vehicle. When
    * `purchasePrice` is set, the TCO field includes it on top of the net
@@ -384,13 +417,26 @@ export class AnalyticsService {
     });
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
-    const [maintenanceAgg, fuelAgg, claimsAgg, policies, firstFuel, lastFuel, loans] = await Promise.all([
+    const [
+      maintenanceAgg,
+      fuelAgg,
+      accessoriesAgg,
+      claimsAgg,
+      policies,
+      firstFuel,
+      lastFuel,
+      loans,
+    ] = await Promise.all([
       this.prisma.maintenanceRecord.aggregate({
         _sum: { totalCost: true },
         where: { vehicleId },
       }),
       this.prisma.fuelLog.aggregate({
         _sum: { totalCost: true },
+        where: { vehicleId },
+      }),
+      this.prisma.accessory.aggregate({
+        _sum: { cost: true },
         where: { vehicleId },
       }),
       this.prisma.claim.aggregate({
@@ -426,6 +472,7 @@ export class AnalyticsService {
 
     const maintenance = maintenanceAgg._sum.totalCost ?? new Prisma.Decimal(0);
     const fuel = fuelAgg._sum.totalCost ?? new Prisma.Decimal(0);
+    const accessories = accessoriesAgg._sum.cost ?? new Prisma.Decimal(0);
     const insurerReimbursed = claimsAgg._sum.insurerPaidAmount ?? new Prisma.Decimal(0);
     const insurance = policies.reduce(
       (acc, p) => (p.premiumAmount ? acc.plus(p.premiumAmount) : acc),
@@ -456,6 +503,7 @@ export class AnalyticsService {
 
     const netSpend = maintenance
       .plus(fuel)
+      .plus(accessories)
       .plus(insurance)
       .plus(loanTotals.interestPaid)
       .minus(insurerReimbursed);
@@ -493,6 +541,7 @@ export class AnalyticsService {
       totals: {
         maintenance: maintenance.toFixed(2),
         fuel: fuel.toFixed(2),
+        accessories: accessories.toFixed(2),
         insurance: insurance.toFixed(2),
         insurerReimbursed: insurerReimbursed.toFixed(2),
         loanInterest: loanTotals.interestPaid.toFixed(2),

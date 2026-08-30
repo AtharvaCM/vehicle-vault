@@ -32,6 +32,8 @@ export const REDACTED_FIELDS: Record<AuditResourceType, ReadonlySet<string>> = {
   // Document numbers follow the insurance/warranty precedent.
   [AuditResourceType.compliance_document]: new Set(['number']),
   [AuditResourceType.tyre]: new Set(),
+  // Nothing on an accessory is personal: a product name, a brand, a price.
+  [AuditResourceType.accessory]: new Set(),
 };
 
 const REDACTED_SENTINEL = '[redacted]';

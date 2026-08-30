@@ -11,7 +11,8 @@ export type AlertKind =
   | 'maintenance-overdue'
   | 'reminder-due'
   | 'reminder-overdue'
-  | 'document-expiring';
+  | 'document-expiring'
+  | 'accessory-warranty-expiring';
 
 export type MaintenanceDuePayload = {
   vehicleId: string;
@@ -47,12 +48,29 @@ export type DocumentExpiringPayload = {
   daysUntilExpiry: number;
 };
 
+/**
+ * Structural rather than tied to the Prisma row, so the notifications module
+ * takes no dependency on the accessories schema. Dates stay Date objects here
+ * because the template formats them; the wire type carries ISO strings.
+ */
+export type AccessoryWarrantyExpiringPayload = {
+  accessory: {
+    id: string;
+    vehicleId: string;
+    name: string;
+    brand: string | null;
+    warrantyExpiresAt: Date | null;
+  };
+  daysUntilExpiry: number;
+};
+
 export type AlertPayloads = {
   'maintenance-due': MaintenanceDuePayload;
   'maintenance-overdue': MaintenanceOverduePayload;
   'reminder-due': ReminderDuePayload;
   'reminder-overdue': ReminderOverduePayload;
   'document-expiring': DocumentExpiringPayload;
+  'accessory-warranty-expiring': AccessoryWarrantyExpiringPayload;
 };
 
 export type NotificationUrgency = 'info' | 'warning' | 'success' | 'error';
