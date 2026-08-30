@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../common/prisma/prisma.module';
+import { AccessoriesModule } from '../accessories/accessories.module';
 import { VehicleDocumentsModule } from '../vehicle-documents/vehicle-documents.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { MaintenanceAlertService } from './maintenance-alert.service';
@@ -10,6 +11,7 @@ import { NotifyService } from './notify.service';
 import { EmailChannel } from './channels/email.channel';
 import { PushChannel } from './channels/push.channel';
 import { PushSubscriptionsService } from './push-subscriptions.service';
+import { AccessoryWarrantyExpiringTemplate } from './templates/accessory-warranty-expiring.template';
 import { DocumentExpiringTemplate } from './templates/document-expiring.template';
 import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
 import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
@@ -24,7 +26,7 @@ import {
 } from './types';
 
 @Module({
-  imports: [PrismaModule, VehiclesModule, VehicleDocumentsModule],
+  imports: [PrismaModule, VehiclesModule, VehicleDocumentsModule, AccessoriesModule],
   controllers: [NotificationsController],
   providers: [
     NotificationsService,
@@ -35,6 +37,7 @@ import {
     ReminderDueTemplate,
     ReminderOverdueTemplate,
     DocumentExpiringTemplate,
+    AccessoryWarrantyExpiringTemplate,
     EmailChannel,
     PushSubscriptionsService,
     PushChannel,
@@ -46,12 +49,14 @@ import {
         reminderDue: ReminderDueTemplate,
         reminderOverdue: ReminderOverdueTemplate,
         documentExpiring: DocumentExpiringTemplate,
+        accessoryWarrantyExpiring: AccessoryWarrantyExpiringTemplate,
       ): AlertTemplate<AlertKind>[] => [
         maintenanceDue,
         maintenanceOverdue,
         reminderDue,
         reminderOverdue,
         documentExpiring,
+        accessoryWarrantyExpiring,
       ],
       inject: [
         MaintenanceDueTemplate,
@@ -59,6 +64,7 @@ import {
         ReminderDueTemplate,
         ReminderOverdueTemplate,
         DocumentExpiringTemplate,
+        AccessoryWarrantyExpiringTemplate,
       ],
     },
     {

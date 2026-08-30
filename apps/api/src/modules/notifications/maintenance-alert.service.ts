@@ -3,8 +3,10 @@ import { Cron } from '@nestjs/schedule';
 import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
+import { AccessoriesService } from '../accessories/accessories.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
+import { ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS } from '@vehicle-vault/shared';
 
 const DOCUMENT_EXPIRY_WINDOW_DAYS = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -19,6 +21,7 @@ export class MaintenanceAlertService {
     private readonly notifyService: NotifyService,
     private readonly vehicleDocumentsService: VehicleDocumentsService,
     private readonly intervalResolver: MaintenanceIntervalResolver,
+    private readonly accessoriesService: AccessoriesService,
   ) {}
 
   /**
@@ -117,6 +120,29 @@ export class MaintenanceAlertService {
         document: doc,
         daysUntilExpiry,
       });
+    }
+
+    // 5. Accessory warranty expiry. Same shape as document expiry: a calendar
+    // date on a record, bucketed by the same template helper so the two alerts
+    // dedupe on the same rhythm.
+    const expiringWarranties = await this.accessoriesService.findExpiringWarranties(
+      vehicle.userId,
+      ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
+    );
+
+    for (const accessory of expiringWarranties) {
+      if (accessory.vehicleId !== vehicleId) continue;
+      if (!accessory.warrantyExpiresAt) continue;
+      const daysUntilExpiry = Math.max(
+        0,
+        Math.ceil((accessory.warrantyExpiresAt.getTime() - today.getTime()) / MS_PER_DAY),
+      );
+      await this.notifyService.raise(
+        vehicle.userId,
+        accessory.vehicleId,
+        'accessory-warranty-expiring',
+        { accessory, daysUntilExpiry },
+      );
     }
   }
 
