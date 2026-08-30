@@ -1,3 +1,13 @@
+## [1.17.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.0...v1.17.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **api:** straighten rotated photos before extracting them ([173c305](https://github.com/AtharvaCM/vehicle-vault/commit/173c30585c9274b54893bd10c3e490fc93a9c1f6))
+* **api:** teach invoice extraction to read odometer and service date ([49c5ea6](https://github.com/AtharvaCM/vehicle-vault/commit/49c5ea6f47373c854fadf18600e700cebeb3e9c1))
+* **web:** show the service date the draft will actually receive ([9b642d0](https://github.com/AtharvaCM/vehicle-vault/commit/9b642d05d43ccb92a64f7247160a12f1c7b9ea0b))
+* **web:** stop swallowing OCR failures on the upload-first draft ([9ce898a](https://github.com/AtharvaCM/vehicle-vault/commit/9ce898aae69787d1fda3b59d976073f944304f80))
+
 # [1.17.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.16.0...v1.17.0) (2026-08-25)
 
 
