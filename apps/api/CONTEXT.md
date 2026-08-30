@@ -29,6 +29,10 @@ _Avoid_: Policy (insurance-only), Coverage (warranty-only).
 **MaintenanceRecord**:
 A single completed service visit. Has line items, costs, odometer, `status` (draft/confirmed), optional extraction-backed attachment, optional 1:1 **Claim** link. **Not** a **VehicleDocument** — different shape (line items, currency math) and different behaviour (forecasting, extraction ingestion). See ADR-0001.
 
+**Accessory**:
+Something bought for a **Vehicle** and optionally fitted to it — mats, a dashcam, alloys. Has a purchase date and cost, an optional fitted/removed lifecycle (`removedDate` null with a `fittedDate` present means currently fitted), and an optional `warrantyExpiresAt` that the **AlertEngine** treats like a document expiry. **Not** a **MaintenanceRecord**: a purchase has no service date and no odometer reading at time of service, and counting it as maintenance corrupts the ₹/km figure maintenance history exists to produce. Its `category` is free text on purpose — a premature enum is what pushed accessories into `MaintenanceCategory` before this table existed. Not transferable between vehicles.
+_Avoid_: part (a **MaintenanceLineItem** kind), upgrade, mod.
+
 **Claim**:
 An insurance claim on a **Vehicle**, tied to an **InsurancePolicy**, optionally linked 1:1 to the **MaintenanceRecord** that repaired the damage. Has its own attachments and extraction kind.
 
@@ -84,12 +88,13 @@ A **global, cross-user** self-learning table mapping normalized part names → s
 
 ## Module map
 
-auth (register/login/refresh/OAuth/verify/reset), users, admin (user directory, force-logout, admin-email role reconciliation on boot), vehicles (CRUD, insights/forecast, catalog linking), vehicle-sharing (members/invites/transfer), vehicle-catalog (browse + import-run admin), maintenance (+ drafts, bulk, CSV), maintenance-parts, reminders (+ service-schedule), fuel-logs (+ scan), vehicle-documents (insurance/warranty adapters + scan), claims (+ claim-attachments), vehicle-loans (+ amortization, scan), attachments (polymorphic, extract/apply/reconciliation), notifications (NotifyService + AlertEngine + EmailChannel), audit, analytics (cost-split/cost-trend/TCO), dashboard, reports (service-history + resale PDFs), exports (account dump), extraction (`@Global` engine), health.
+auth (register/login/refresh/OAuth/verify/reset), users, admin (user directory, force-logout, admin-email role reconciliation on boot), vehicles (CRUD, insights/forecast, catalog linking), vehicle-sharing (members/invites/transfer), vehicle-catalog (browse + import-run admin), maintenance (+ drafts, bulk, CSV), maintenance-parts, reminders (+ service-schedule), fuel-logs (+ scan), vehicle-documents (insurance/warranty adapters + scan), claims (+ claim-attachments), vehicle-loans (+ amortization, scan), accessories (purchases + warranty expiry), attachments (polymorphic, extract/apply/reconciliation), notifications (NotifyService + AlertEngine + EmailChannel), audit, analytics (cost-split/cost-trend/TCO), dashboard, reports (service-history + resale PDFs), exports (account dump), extraction (`@Global` engine), health.
 
 ## Relationships
 
-- A **Vehicle** has many **VehicleMembers**, **VehicleDocuments**, **MaintenanceRecords**, **Reminders**, **FuelLogs**, **Claims**, **VehicleLoans**.
+- A **Vehicle** has many **VehicleMembers**, **VehicleDocuments**, **MaintenanceRecords**, **Reminders**, **FuelLogs**, **Claims**, **VehicleLoans**, **Tyres**, **Accessories**.
 - The **AlertEngine** reads **VehicleDocumentsService.findExpiring(withinDays)** (adapters implement `findExpiringBetween`) to produce expiry **Notifications**. It does not query document tables directly.
+- The **AlertEngine** also reads **AccessoriesService.findExpiringWarranties(withinDays)** for the `accessory-warranty-expiring` kind. Accessory warranties raise **Notifications**, never **Reminders** — `Reminder` carries no pointer to a source record, and a date-only Reminder raises no alert at all.
 - An **Attachment** has exactly one owner of five — **MaintenanceRecord**, **InsurancePolicy**, **Warranty**, **Claim**, or **VehicleLoan** — enforced by CHECK constraint `attachment_owner_exclusive`.
 
 ## Flagged ambiguities

@@ -11,7 +11,7 @@ Only env var: `VITE_API_BASE_URL` (`src/lib/env/env.ts`). Throws in PROD build i
 ## Language
 
 **Feature slice**:
-A self-contained directory under `src/features/<name>/` with the subfolder convention `api/`, `hooks/`, `components/`, `pages/`, `schemas/`, `types/`, `utils/`. All new domain code goes inside a slice, not in shared dirs. Current slices: auth, dashboard, vehicles, maintenance, reminders, fuel-logs, loans, attachments, claims, analytics, vehicle-documents, vehicle-sharing, audit, notifications, admin, settings.
+A self-contained directory under `src/features/<name>/` with the subfolder convention `api/`, `hooks/`, `components/`, `pages/`, `schemas/`, `types/`, `utils/`. All new domain code goes inside a slice, not in shared dirs. Current slices: auth, dashboard, vehicles, maintenance, reminders, fuel-logs, loans, accessories, attachments, claims, analytics, vehicle-documents, vehicle-sharing, audit, notifications, admin, settings.
 
 **ApiClient** (`src/lib/api/api-client.ts`):
 The single fetch wrapper. Injects `Authorization: Bearer` via a module-level token resolver; on 401 performs one deduped refresh-and-retry, then calls `onUnauthorized`. Configured once by **AuthProvider** via `configureApiClient(...)` — a module singleton, not React context. Never call `fetch` directly.
