@@ -215,6 +215,11 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
 }
 
 function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction }) {
+  // The API applies the same fallback when it writes the draft, so the preview has to
+  // match it. Providers routinely return only a document date, and showing "Not detected"
+  // for a date that will in fact be applied reads as a failed extraction.
+  const serviceDate = extraction.serviceDate ?? extraction.documentDate;
+
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -225,7 +230,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
         <ExtractionField label="Invoice / job card" value={extraction.invoiceNumber} />
         <ExtractionField
           label="Service date"
-          value={extraction.serviceDate ? formatDate(extraction.serviceDate) : undefined}
+          value={serviceDate ? formatDate(serviceDate) : undefined}
         />
         <ExtractionField
           label="Odometer"
