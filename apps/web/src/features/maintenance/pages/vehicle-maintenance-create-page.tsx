@@ -97,22 +97,40 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       const attachments = await uploadAttachments(draftRecord.id, files);
       const canExtract = extractionStatusQuery.data?.available !== false;
 
+      // A failed extraction must not lose the draft or the uploads, but it must not pass
+      // for a successful one either: the draft still opens, with the reason surfaced.
+      let extractionError: unknown = null;
+
       if (canExtract) {
         const attachmentIds = attachments.map((attachment) => attachment.id);
 
-        if (attachmentIds.length > 1) {
-          await extractAttachments(draftRecord.id, attachmentIds).catch(() => undefined);
-        } else if (attachmentIds[0]) {
-          await extractAttachment(attachmentIds[0]).catch(() => undefined);
+        try {
+          if (attachmentIds.length > 1) {
+            await extractAttachments(draftRecord.id, attachmentIds);
+          } else if (attachmentIds[0]) {
+            await extractAttachment(attachmentIds[0]);
+          }
+        } catch (error) {
+          extractionError = error;
         }
       }
 
-      appToast.success({
-        title: 'Draft created from documents',
-        description: canExtract
-          ? 'Your files were uploaded and OCR suggestions are ready for review.'
-          : 'Your files were uploaded. OCR is unavailable, so finish the draft manually.',
-      });
+      if (extractionError) {
+        appToast.error({
+          title: 'Draft created, but OCR failed',
+          description: getApiErrorMessage(
+            extractionError,
+            'Your files were uploaded but could not be analyzed. Retry OCR from the document review card, or fill the draft manually.',
+          ),
+        });
+      } else {
+        appToast.success({
+          title: 'Draft created from documents',
+          description: canExtract
+            ? 'Your files were uploaded and OCR suggestions are ready for review.'
+            : 'Your files were uploaded. OCR is unavailable, so finish the draft manually.',
+        });
+      }
 
       await navigate({
         to: '/maintenance-records/$recordId/edit',
