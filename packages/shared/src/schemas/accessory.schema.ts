@@ -27,63 +27,76 @@ const accessoryFields = z.object({
 });
 
 /**
- * An accessory can be bought and never fitted, but it cannot come off something
- * it was never on. Both predicates take every field as optional so the same rule
- * can guard the partial update shape.
+ * The fitment rules, expressed over a WHOLE accessory rather than over whichever
+ * fields a caller happened to send.
+ *
+ * They cannot live as `.refine`s on the update schema. A patch is validated in
+ * isolation, so `{ removedDate }` alone would look like a removal with no
+ * fitment and be rejected even when the stored row has one, while
+ * `{ fittedDate: null }` alone would sail past the rule it violates. A partial
+ * update has to be checked against the row it will produce, which only the
+ * service can assemble — see `assertCoherentAccessory`.
  */
-function hasCoherentFitment(value: { fittedDate?: string | null; removedDate?: string | null }) {
-  return value.removedDate == null || value.fittedDate != null;
-}
-
-function hasCoherentRemovalDate(value: { fittedDate?: string | null; removedDate?: string | null }) {
-  return (
-    value.removedDate == null ||
-    value.fittedDate == null ||
-    Date.parse(value.removedDate) >= Date.parse(value.fittedDate)
-  );
-}
-
-function hasCoherentRemovalOdometer(value: {
+export type AccessoryCoherenceView = {
+  fittedDate?: string | null;
   fittedOdometer?: number | null;
+  removedDate?: string | null;
   removedOdometer?: number | null;
-}) {
-  return (
-    value.removedOdometer == null ||
-    value.fittedOdometer == null ||
-    value.removedOdometer >= value.fittedOdometer
-  );
+};
+
+export type AccessoryCoherenceIssue = { message: string; path: string[] };
+
+export function findAccessoryCoherenceIssues(
+  value: AccessoryCoherenceView,
+): AccessoryCoherenceIssue[] {
+  const issues: AccessoryCoherenceIssue[] = [];
+
+  // An accessory can be bought and never fitted, but it cannot come off
+  // something it was never on.
+  if (value.removedDate != null && value.fittedDate == null) {
+    issues.push({ message: 'removedDate requires a fittedDate', path: ['removedDate'] });
+  }
+
+  if (
+    value.removedDate != null &&
+    value.fittedDate != null &&
+    Date.parse(value.removedDate) < Date.parse(value.fittedDate)
+  ) {
+    issues.push({
+      message: 'removedDate cannot be earlier than fittedDate',
+      path: ['removedDate'],
+    });
+  }
+
+  if (
+    value.removedOdometer != null &&
+    value.fittedOdometer != null &&
+    value.removedOdometer < value.fittedOdometer
+  ) {
+    issues.push({
+      message: 'removedOdometer cannot be lower than fittedOdometer',
+      path: ['removedOdometer'],
+    });
+  }
+
+  return issues;
 }
 
-export const AccessoryCreateSchema = accessoryFields
-  .refine(hasCoherentFitment, {
-    message: 'removedDate requires a fittedDate',
-    path: ['removedDate'],
-  })
-  .refine(hasCoherentRemovalDate, {
-    message: 'removedDate cannot be earlier than fittedDate',
-    path: ['removedDate'],
-  })
-  .refine(hasCoherentRemovalOdometer, {
-    message: 'removedOdometer cannot be lower than fittedOdometer',
-    path: ['removedOdometer'],
-  });
+/** A create carries the whole accessory, so the rules can be applied directly. */
+export const AccessoryCreateSchema = accessoryFields.superRefine((value, ctx) => {
+  for (const issue of findAccessoryCoherenceIssues(value)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: issue.message, path: issue.path });
+  }
+});
 
+/**
+ * Shape only. The fitment rules are deliberately absent: they need the merged
+ * row, not the patch, and the service applies them once it has one.
+ */
 export const AccessoryUpdateSchema = accessoryFields
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one accessory field must be provided for update',
-  })
-  .refine(hasCoherentFitment, {
-    message: 'removedDate requires a fittedDate',
-    path: ['removedDate'],
-  })
-  .refine(hasCoherentRemovalDate, {
-    message: 'removedDate cannot be earlier than fittedDate',
-    path: ['removedDate'],
-  })
-  .refine(hasCoherentRemovalOdometer, {
-    message: 'removedOdometer cannot be lower than fittedOdometer',
-    path: ['removedOdometer'],
   });
 
 export const AccessorySchema = accessoryFields.extend({

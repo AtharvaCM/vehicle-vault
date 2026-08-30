@@ -16,7 +16,9 @@ export const accessoryFormSchema = z
     brand: z.string().trim().max(80, 'Brand can be at most 80 characters').optional(),
     category: z.string().trim().max(60, 'Category can be at most 60 characters').optional(),
     purchaseDate: z.string().trim().min(1, 'Purchase date is required'),
-    cost: z.number().nonnegative('Cost cannot be negative'),
+    cost: z
+      .number({ invalid_type_error: 'Enter what it cost' })
+      .nonnegative('Cost cannot be negative'),
     fittedDate: z.string().trim().optional(),
     fittedOdometer: z.number().int().nonnegative('Odometer cannot be negative').optional(),
     removedDate: z.string().trim().optional(),

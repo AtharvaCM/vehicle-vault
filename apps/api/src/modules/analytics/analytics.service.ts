@@ -178,7 +178,7 @@ export class AnalyticsService {
   /**
    * Monthly cost trend over the requested range.
    *
-   * Per-month buckets contain fuel, maintenance (net of insurer-paid),
+   * Per-month buckets contain fuel, maintenance (net of insurer-paid), accessories,
    * insurance (pro-rated across the month's overlap with each policy),
    * total cost, kilometres driven, and cost-per-km.
    *
@@ -402,7 +402,7 @@ export class AnalyticsService {
   /**
    * Total cost of ownership for a single vehicle.
    *
-   * Aggregates lifetime spend (no time window) across maintenance, fuel,
+   * Aggregates lifetime spend (no time window) across maintenance, fuel, accessories,
    * and insurance, subtracts insurer-paid amounts, then derives ₹/km and
    * ₹/month using the purchase metadata captured on the vehicle. When
    * `purchasePrice` is set, the TCO field includes it on top of the net

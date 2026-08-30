@@ -157,6 +157,54 @@ describe('AccessoriesService', () => {
     expect(data).not.toHaveProperty('brand');
   });
 
+  it('accepts a patch that only marks an already-fitted accessory removed', async () => {
+    // The coherence rules describe a whole accessory. Validating the patch alone
+    // rejected this — the documented "mark it removed" flow — because fittedDate
+    // was absent from the payload rather than absent from the row.
+    (prisma.accessory.findUnique as Mock).mockResolvedValue(row);
+
+    await service.updateAccessory('user-1', 'accessory-1', {
+      removedDate: '2026-08-01T00:00:00.000Z',
+    });
+
+    expect(txAccessory.update).toHaveBeenCalled();
+  });
+
+  it('refuses a patch that clears the fitment out from under a removal', async () => {
+    // The mirror image: checked against the patch alone this slipped through and
+    // wrote removed-but-never-fitted, the state the rule exists to forbid.
+    (prisma.accessory.findUnique as Mock).mockResolvedValue({
+      ...row,
+      removedDate: new Date('2026-08-01T00:00:00.000Z'),
+      removedOdometer: 6000,
+    });
+
+    await expect(
+      service.updateAccessory('user-1', 'accessory-1', { fittedDate: null }),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(txAccessory.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses a removal odometer below the stored fitted odometer', async () => {
+    (prisma.accessory.findUnique as Mock).mockResolvedValue(row);
+
+    await expect(
+      service.updateAccessory('user-1', 'accessory-1', { removedOdometer: 4000 }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('orders still-fitted accessories first despite Postgres sorting NULLs last', async () => {
+    (prisma.accessory.findMany as Mock).mockResolvedValue([]);
+
+    await service.listForVehicle('user-1', 'vehicle-1');
+
+    expect(prisma.accessory.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ removedDate: { sort: 'asc', nulls: 'first' } }, { purchaseDate: 'desc' }],
+      }),
+    );
+  });
+
   it('gates item routes on the editor role resolved from the row', async () => {
     (prisma.accessory.findUnique as Mock).mockResolvedValue(row);
 

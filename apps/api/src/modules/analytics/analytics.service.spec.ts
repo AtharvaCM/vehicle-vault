@@ -129,6 +129,44 @@ describe('AnalyticsService.getCostTrend', () => {
     (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
+  it('buckets accessory spend into its purchase month and feeds cost-per-km', async () => {
+    (prisma.fuelLog.findMany as Mock).mockResolvedValue([
+      {
+        date: new Date('2026-01-05T00:00:00.000Z'),
+        totalCost: new Prisma.Decimal('0.00'),
+        odometer: 1000,
+        vehicleId: 'v1',
+      },
+      {
+        date: new Date('2026-01-20T00:00:00.000Z'),
+        totalCost: new Prisma.Decimal('0.00'),
+        odometer: 1500, // +500km in Jan
+        vehicleId: 'v1',
+      },
+    ]);
+    (prisma.maintenanceRecord.findMany as Mock).mockResolvedValue([]);
+    (prisma.claim.findMany as Mock).mockResolvedValue([]);
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    (prisma.accessory.findMany as Mock).mockResolvedValue([
+      { purchaseDate: new Date('2026-01-12T00:00:00.000Z'), cost: new Prisma.Decimal('5000.00') },
+    ]);
+
+    const result = await service.getCostTrend('user-1', {
+      from: new Date('2026-01-01T00:00:00.000Z'),
+      to: new Date('2026-02-28T23:59:59.999Z'),
+    });
+
+    const jan = result.points.find((point) => point.period === '2026-01');
+    const feb = result.points.find((point) => point.period === '2026-02');
+
+    expect(jan?.accessories).toBe('5000.00');
+    expect(jan?.maintenance).toBe('0.00');
+    expect(jan?.total).toBe('5000.00');
+    expect(jan?.costPerKm).toBe('10.00'); // 5000 / 500km
+    // A month with no accessories must still initialise the bucket, not blow up.
+    expect(feb?.accessories).toBe('0.00');
+  });
+
   it('buckets fuel cost and km by month and computes cost-per-km', async () => {
     (prisma.fuelLog.findMany as Mock).mockResolvedValue([
       {
@@ -212,6 +250,33 @@ describe('AnalyticsService.getTco', () => {
     service = new AnalyticsService(prisma as never);
     stubEmptyAccessories(prisma);
     (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
+  });
+
+  it('reports accessories separately and counts them in lifetime spend', async () => {
+    (prisma.vehicle.findFirst as Mock).mockResolvedValue({
+      id: 'v1',
+      odometer: 10000,
+      purchaseDate: null,
+      purchasePrice: null,
+      purchaseOdometer: 0,
+    });
+    (prisma.maintenanceRecord.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('40000.00') },
+    });
+    (prisma.fuelLog.aggregate as Mock).mockResolvedValue({ _sum: { totalCost: null } });
+    (prisma.claim.aggregate as Mock).mockResolvedValue({ _sum: { insurerPaidAmount: null } });
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    (prisma.fuelLog.findFirst as Mock).mockResolvedValue(null);
+    (prisma.accessory.aggregate as Mock).mockResolvedValue({
+      _sum: { cost: new Prisma.Decimal('15000.00') },
+    });
+
+    const result = await service.getTco('user-1', 'v1');
+
+    expect(result.totals.accessories).toBe('15000.00');
+    // Maintenance must not absorb the accessory spend — the separation is the point.
+    expect(result.totals.maintenance).toBe('40000.00');
+    expect(result.totals.netSpend).toBe('55000.00');
   });
 
   it('computes lifetime spend, TCO with purchase price, cost-per-km, and cost-per-month', async () => {

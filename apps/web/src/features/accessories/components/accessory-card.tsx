@@ -14,11 +14,25 @@ interface AccessoryCardProps {
   isDeleting?: boolean;
 }
 
-/** Days from now, negative once the date is past. */
+/**
+ * Days from today, negative once the date is past.
+ *
+ * Both sides are compared at UTC midnight. Mixing local midnight with the
+ * UTC-midnight instant the API sends puts every result a day out east of
+ * Greenwich, which in IST means a warranty that ended yesterday still reads as
+ * current.
+ */
 function daysUntil(iso: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((Date.parse(iso) - today.getTime()) / (24 * 60 * 60 * 1000));
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(iso);
+  const targetUtc = Date.UTC(
+    target.getUTCFullYear(),
+    target.getUTCMonth(),
+    target.getUTCDate(),
+  );
+
+  return Math.round((targetUtc - todayUtc) / (24 * 60 * 60 * 1000));
 }
 
 export function AccessoryCard({
@@ -70,12 +84,22 @@ export function AccessoryCard({
           {accessory.removedDate ? (
             <div>
               <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Removed</dt>
-              <dd className="mt-1 text-slate-900">{formatDate(accessory.removedDate)}</dd>
+              <dd className="mt-1 text-slate-900">
+                {formatDate(accessory.removedDate)}
+                {accessory.removedOdometer != null
+                  ? ` · ${accessory.removedOdometer.toLocaleString('en-IN')} km`
+                  : ''}
+              </dd>
             </div>
           ) : accessory.fittedDate ? (
             <div>
               <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Fitted</dt>
-              <dd className="mt-1 text-slate-900">{formatDate(accessory.fittedDate)}</dd>
+              <dd className="mt-1 text-slate-900">
+                {formatDate(accessory.fittedDate)}
+                {accessory.fittedOdometer != null
+                  ? ` · ${accessory.fittedOdometer.toLocaleString('en-IN')} km`
+                  : ''}
+              </dd>
             </div>
           ) : null}
         </dl>

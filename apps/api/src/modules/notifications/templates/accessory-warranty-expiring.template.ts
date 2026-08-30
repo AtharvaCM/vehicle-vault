@@ -8,6 +8,18 @@ import type {
 import { daysBucket } from './document-expiring.template';
 
 /**
+ * Notification.title is VARCHAR(120) and an accessory name may itself be 120
+ * characters, so the name is trimmed to what is left after the fixed prefix
+ * rather than letting the insert throw.
+ */
+const TITLE_PREFIX = 'Warranty Expiring Soon: ';
+const TITLE_NAME_BUDGET = 120 - TITLE_PREFIX.length;
+
+function truncate(value: string, max: number): string {
+  return value.length <= max ? value : `${value.slice(0, max - 1)}\u2026`;
+}
+
+/**
  * An accessory warranty is a date-based expiry like a document's, so it reuses
  * the document bucketing rather than inventing a second dedup rhythm — the two
  * alerts should feel like one behaviour.
@@ -37,7 +49,7 @@ export class AccessoryWarrantyExpiringTemplate
     const item = accessory.brand ? `${accessory.brand} ${accessory.name}` : accessory.name;
 
     return {
-      title: `Warranty Expiring Soon: ${accessory.name}`,
+      title: `${TITLE_PREFIX}${truncate(accessory.name, TITLE_NAME_BUDGET)}`,
       message: `The warranty on your ${item} expires in ${formattedDays} day${
         formattedDays === 1 ? '' : 's'
       } on ${expiryDate}. Raise any claim before it runs out.`,

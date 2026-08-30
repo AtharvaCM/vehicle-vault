@@ -186,7 +186,11 @@ export function AccessoryFormDialog({
                 min={0}
                 step="0.01"
                 type="number"
-                {...register('cost', { valueAsNumber: true })}
+                {...register('cost', {
+                  // valueAsNumber turns a cleared field into NaN, which surfaces
+                  // zod's raw "expected number, received nan" at the user.
+                  setValueAs: (value) => (value === '' ? Number.NaN : Number(value)),
+                })}
               />
             </FormField>
           </div>

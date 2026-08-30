@@ -35,6 +35,18 @@ describe('AccessoryWarrantyExpiringTemplate', () => {
     expect(rendered.link).toBe('/vehicles/vehicle-1?tab=accessories');
   });
 
+  it('keeps the title inside the 120-char Notification.title column', () => {
+    // The schema allows a 120-char name and the prefix is another 24, so an
+    // untrimmed title overflows the column and the insert throws.
+    const rendered = template.render({
+      accessory: { ...accessory, name: 'x'.repeat(120) },
+      daysUntilExpiry: 2,
+    });
+
+    expect(rendered.title.length).toBeLessThanOrEqual(120);
+    expect(rendered.title.endsWith('\u2026')).toBe(true);
+  });
+
   it('falls back to the bare name when there is no brand', () => {
     const rendered = template.render({
       accessory: { ...accessory, brand: null },
