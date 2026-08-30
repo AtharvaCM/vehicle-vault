@@ -483,7 +483,7 @@ export class MaintenanceService {
       maintenanceRecordId: lineItem.maintenanceRecordId,
       kind: lineItem.kind as MaintenanceLineItemKind,
       name: lineItem.name,
-      normalizedCategory: lineItem.normalizedCategory as MaintenanceCategory | undefined,
+      normalizedCategory: (lineItem.normalizedCategory as MaintenanceCategory | null) ?? undefined,
       quantity: lineItem.quantity !== null ? Number(lineItem.quantity) : undefined,
       unit: lineItem.unit ?? undefined,
       unitPrice: lineItem.unitPrice !== null ? Number(lineItem.unitPrice) : undefined,

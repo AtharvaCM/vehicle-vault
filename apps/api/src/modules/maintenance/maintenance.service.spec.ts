@@ -153,6 +153,27 @@ describe('MaintenanceService', () => {
     );
   });
 
+  it('serializes an uncategorized line item as undefined rather than null', async () => {
+    // Prisma returns null for the unset column. Emitting that null violates the shared
+    // schema, which marks the field optional and not nullable — and it fails validation
+    // in the edit form, blocking a save on any line item without a mapped category.
+    prisma.$transaction = vi.fn().mockResolvedValue([
+      [
+        {
+          ...record,
+          lineItems: [{ ...record.lineItems[0], normalizedCategory: null }],
+        },
+      ],
+      1,
+    ]);
+
+    const result = await service.listForVehicle('user-1', 'vehicle-1', { page: 1, limit: 20 });
+    const lineItem = result.data[0]!.lineItems![0]!;
+
+    expect(lineItem.normalizedCategory).toBeUndefined();
+    expect('normalizedCategory' in lineItem && lineItem.normalizedCategory === null).toBe(false);
+  });
+
   it('creates a maintenance record with database-safe date and decimal values', async () => {
     prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
 
