@@ -67,20 +67,23 @@ export class MaintenanceInvoiceExtractionSpec
       },
       invoiceNumber: {
         type: SchemaType.STRING,
-        description: 'Invoice number, bill number, or job card number',
+        description:
+          'Document reference number. When several are printed, prefer the tax invoice number over a repair order, job card, or estimate number.',
       },
       documentDate: {
         type: SchemaType.STRING,
-        description: 'Document date in ISO 8601 format if available',
+        description:
+          'Date printed on the document, in ISO 8601 format. Dealer invoices often print it as DD-MMM-YY, for example "09 - Aug - 26" means 2026-08-09.',
       },
       serviceDate: {
         type: SchemaType.STRING,
         description:
-          'Service completion date in ISO 8601 format if distinct from document date',
+          'Date the work was carried out, in ISO 8601 format. Always fill this: when the document shows no separate service date, repeat the document date here.',
       },
       odometer: {
         type: SchemaType.INTEGER,
-        description: 'Vehicle odometer reading as an integer if present',
+        description:
+          'Odometer reading at the time of service, as an integer without separators. Workshops label it "Kms In", "Kms Out", "KM Reading", "Mileage", or "Odometer"; when both an in and an out reading are printed, use the in reading.',
       },
       totalCost: {
         type: SchemaType.NUMBER,
@@ -133,6 +136,10 @@ export class MaintenanceInvoiceExtractionSpec
       'Return only JSON that matches the provided schema.',
       'Treat multiple files as pages of the same document in the order provided.',
       'Merge header fields, totals, taxes, and line items into one coherent result.',
+      'Pages are often photographs taken sideways, upside down, or at an angle; read the text at whatever orientation it appears in rather than skipping it.',
+      'Always return serviceDate: use the service or job completion date when one is shown, otherwise repeat the document date.',
+      'Always look for the odometer reading, which workshops label Kms In, Kms Out, KM Reading, Mileage, or Odometer; prefer the in reading and return it as a plain integer.',
+      'When several reference numbers are printed, return the tax invoice number as invoiceNumber rather than the repair order or job card number.',
       'Use the best matching line item kind from this set:',
       maintenanceLineItemKinds.join(', '),
       'Use the best matching normalizedCategory from this set when obvious:',
