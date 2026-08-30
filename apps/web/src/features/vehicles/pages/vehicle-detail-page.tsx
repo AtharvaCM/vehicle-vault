@@ -42,6 +42,7 @@ import { VehicleSpecsCard } from '../components/vehicle-specs-card';
 import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { VehicleTyreTracker } from '../components/vehicle-tyre-tracker';
+import { AccessoriesTab } from '@/features/accessories/components/accessories-tab';
 import { ProtectionTab } from '../components/protection-tab';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
@@ -412,6 +413,12 @@ export function VehicleDetailPage({
             </TabsTrigger>
             <TabsTrigger
               className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+              value="accessories"
+            >
+              Accessories
+            </TabsTrigger>
+            <TabsTrigger
+              className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
               value="protection"
             >
               Protection
@@ -582,6 +589,9 @@ export function VehicleDetailPage({
           </TabsContent>
           <TabsContent value="tyres" className="animate-in fade-in duration-500">
             <VehicleTyreTracker maintenanceQuery={maintenanceQuery} vehicle={vehicle} />
+          </TabsContent>
+          <TabsContent value="accessories" className="animate-in fade-in duration-500">
+            <AccessoriesTab vehicleId={vehicleId} />
           </TabsContent>
           <TabsContent value="protection" className="animate-in fade-in duration-500">
             <ProtectionTab vehicleId={vehicleId} />
