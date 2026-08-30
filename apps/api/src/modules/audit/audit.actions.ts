@@ -58,6 +58,13 @@ export const AUDIT_ACTIONS = {
     updated: 'fuel.updated',
     deleted: 'fuel.deleted',
   },
+  tyre: {
+    created: 'tyre.created',
+    updated: 'tyre.updated',
+    deleted: 'tyre.deleted',
+    // A reading is recorded against the tyre it measures, not a type of its own.
+    inspected: 'tyre.inspected',
+  },
   loan: {
     created: 'loan.created',
     updated: 'loan.updated',

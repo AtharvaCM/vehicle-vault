@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { AuditResourceType, Prisma } from '@prisma/client';
 import {
   TyreCreateSchema,
   TyreInspectionCreateSchema,
@@ -14,6 +14,8 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { AuditService } from '../audit/audit.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { TyreConditionResolver } from './tyre-condition.resolver';
@@ -34,6 +36,7 @@ export class TyresService {
     private readonly vehiclesService: VehiclesService,
     private readonly access: VehicleAccessService,
     private readonly conditionResolver: TyreConditionResolver,
+    private readonly auditService: AuditService,
   ) {}
 
   async listForVehicle(userId: string, vehicleId: string): Promise<Tyre[]> {
@@ -61,16 +64,35 @@ export class TyresService {
     // rotation or replacement does not leave two tyres claiming one position.
     const created = await this.prisma.$transaction(async (tx) => {
       if (input.removedDate == null) {
+        const retiring = await tx.tyre.findMany({
+          where: { vehicleId, position: input.position, removedDate: null },
+        });
+        const removal = {
+          removedDate: new Date(input.fittedDate),
+          removedOdometer: input.fittedOdometer,
+        };
+
         await tx.tyre.updateMany({
           where: { vehicleId, position: input.position, removedDate: null },
-          data: {
-            removedDate: new Date(input.fittedDate),
-            removedOdometer: input.fittedOdometer,
-          },
+          data: removal,
         });
+
+        // The retirement is a separate change to a separate tyre, so it gets
+        // its own event rather than hiding inside the new tyre's payload.
+        for (const retired of retiring) {
+          await this.auditService.track(tx, {
+            actorUserId: userId,
+            ownerUserId: userId,
+            action: AUDIT_ACTIONS.tyre.updated,
+            resourceType: AuditResourceType.tyre,
+            resourceId: retired.id,
+            before: retired as unknown as Record<string, unknown>,
+            after: { ...retired, ...removal } as unknown as Record<string, unknown>,
+          });
+        }
       }
 
-      return tx.tyre.create({
+      const tyre = await tx.tyre.create({
         data: {
           vehicleId,
           position: input.position,
@@ -87,6 +109,17 @@ export class TyresService {
           notes: input.notes ?? null,
         },
       });
+
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.tyre.created,
+        resourceType: AuditResourceType.tyre,
+        resourceId: tyre.id,
+        after: tyre as unknown as Record<string, unknown>,
+      });
+
+      return tyre;
     });
 
     return this.toTyre(created);
@@ -96,30 +129,44 @@ export class TyresService {
     const existing = await this.getOwnedTyre(userId, tyreId, 'editor');
     const input: UpdateTyreInput = TyreUpdateSchema.parse(payload);
 
-    const updated = await this.prisma.tyre.update({
-      where: { id: existing.id },
-      data: {
-        ...(input.position !== undefined ? { position: input.position } : {}),
-        ...(input.brand !== undefined ? { brand: input.brand ?? null } : {}),
-        ...(input.model !== undefined ? { model: input.model ?? null } : {}),
-        ...(input.size !== undefined ? { size: input.size ?? null } : {}),
-        ...(input.dotWeek !== undefined ? { dotWeek: input.dotWeek ?? null } : {}),
-        ...(input.dotYear !== undefined ? { dotYear: input.dotYear ?? null } : {}),
-        ...(input.fittedDate !== undefined ? { fittedDate: new Date(input.fittedDate) } : {}),
-        ...(input.fittedOdometer !== undefined
-          ? { fittedOdometer: input.fittedOdometer }
-          : {}),
-        ...(input.removedDate !== undefined
-          ? { removedDate: input.removedDate ? new Date(input.removedDate) : null }
-          : {}),
-        ...(input.removedOdometer !== undefined
-          ? { removedOdometer: input.removedOdometer ?? null }
-          : {}),
-        ...(input.expectedLifeKm !== undefined
-          ? { expectedLifeKm: input.expectedLifeKm ?? null }
-          : {}),
-        ...(input.notes !== undefined ? { notes: input.notes ?? null } : {}),
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row = await tx.tyre.update({
+        where: { id: existing.id },
+        data: {
+          ...(input.position !== undefined ? { position: input.position } : {}),
+          ...(input.brand !== undefined ? { brand: input.brand ?? null } : {}),
+          ...(input.model !== undefined ? { model: input.model ?? null } : {}),
+          ...(input.size !== undefined ? { size: input.size ?? null } : {}),
+          ...(input.dotWeek !== undefined ? { dotWeek: input.dotWeek ?? null } : {}),
+          ...(input.dotYear !== undefined ? { dotYear: input.dotYear ?? null } : {}),
+          ...(input.fittedDate !== undefined ? { fittedDate: new Date(input.fittedDate) } : {}),
+          ...(input.fittedOdometer !== undefined
+            ? { fittedOdometer: input.fittedOdometer }
+            : {}),
+          ...(input.removedDate !== undefined
+            ? { removedDate: input.removedDate ? new Date(input.removedDate) : null }
+            : {}),
+          ...(input.removedOdometer !== undefined
+            ? { removedOdometer: input.removedOdometer ?? null }
+            : {}),
+          ...(input.expectedLifeKm !== undefined
+            ? { expectedLifeKm: input.expectedLifeKm ?? null }
+            : {}),
+          ...(input.notes !== undefined ? { notes: input.notes ?? null } : {}),
+        },
+      });
+
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.tyre.updated,
+        resourceType: AuditResourceType.tyre,
+        resourceId: row.id,
+        before: existing as unknown as Record<string, unknown>,
+        after: row as unknown as Record<string, unknown>,
+      });
+
+      return row;
     });
 
     return this.toTyre(updated);
@@ -127,7 +174,18 @@ export class TyresService {
 
   async deleteTyre(userId: string, tyreId: string): Promise<{ id: string }> {
     const existing = await this.getOwnedTyre(userId, tyreId, 'editor');
-    await this.prisma.tyre.delete({ where: { id: existing.id } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.tyre.delete({ where: { id: existing.id } });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.tyre.deleted,
+        resourceType: AuditResourceType.tyre,
+        resourceId: existing.id,
+        before: existing as unknown as Record<string, unknown>,
+      });
+    });
+
     return { id: existing.id };
   }
 
@@ -159,16 +217,30 @@ export class TyresService {
       throw new NotFoundException(`Tyre ${input.tyreId} was not found on this vehicle`);
     }
 
-    const created = await this.prisma.tyreInspection.create({
-      data: {
-        tyreId: tyre.id,
-        vehicleId,
-        inspectedAt: new Date(input.inspectedAt),
-        odometer: input.odometer,
-        treadDepthMm: input.treadDepthMm ?? null,
-        pressurePsi: input.pressurePsi ?? null,
-        notes: input.notes ?? null,
-      },
+    const created = await this.prisma.$transaction(async (tx) => {
+      const inspection = await tx.tyreInspection.create({
+        data: {
+          tyreId: tyre.id,
+          vehicleId,
+          inspectedAt: new Date(input.inspectedAt),
+          odometer: input.odometer,
+          treadDepthMm: input.treadDepthMm ?? null,
+          pressurePsi: input.pressurePsi ?? null,
+          notes: input.notes ?? null,
+        },
+      });
+
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.tyre.inspected,
+        // A reading has no audit identity of its own — it belongs to the tyre.
+        resourceType: AuditResourceType.tyre,
+        resourceId: tyre.id,
+        after: inspection as unknown as Record<string, unknown>,
+      });
+
+      return inspection;
     });
 
     return this.toInspection(created);
