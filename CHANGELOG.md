@@ -1,3 +1,18 @@
+# [1.18.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.4...v1.18.0) (2026-08-30)
+
+
+### Bug Fixes
+
+* **accessories:** apply fitment rules to the row a patch produces ([f064435](https://github.com/AtharvaCM/vehicle-vault/commit/f064435a0be2591aa689363354c2b6b491d60cb2))
+
+
+### Features
+
+* **api:** alert on an accessory warranty about to expire ([e10084c](https://github.com/AtharvaCM/vehicle-vault/commit/e10084caa07fe61c7cee313474d91aeaaf737e7f))
+* **api:** give accessories a home of their own ([7ad1098](https://github.com/AtharvaCM/vehicle-vault/commit/7ad1098ce4fcc277dff4cd0b6f4d10cb92a48490))
+* **api:** track accessory spend as its own cost series ([0caec76](https://github.com/AtharvaCM/vehicle-vault/commit/0caec76aaf53b349f0195474ce77efe2fb89cc1f))
+* **web:** add the accessories tab to a vehicle ([0ce8a0e](https://github.com/AtharvaCM/vehicle-vault/commit/0ce8a0e9f2bc35fcfa73af78cd6d9282f06351d3))
+
 ## [1.17.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.3...v1.17.4) (2026-08-30)
 
 
