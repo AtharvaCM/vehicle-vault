@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.18.0...v1.18.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **api:** show accessory events in the vehicle audit feed ([a035e5b](https://github.com/AtharvaCM/vehicle-vault/commit/a035e5b0e09226c38c80c9b4f38b9f5cb1bb9324))
+
 # [1.18.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.4...v1.18.0) (2026-08-30)
 
 
