@@ -1,3 +1,10 @@
+## [1.17.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.2...v1.17.3) (2026-08-30)
+
+
+### Bug Fixes
+
+* **api:** serialize an uncategorized line item as undefined, not null ([93fcfdf](https://github.com/AtharvaCM/vehicle-vault/commit/93fcfdf6e0e973f0a860613e5e841154fba1c58e))
+
 ## [1.17.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.1...v1.17.2) (2026-08-30)
 
 
