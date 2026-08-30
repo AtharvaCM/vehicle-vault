@@ -6,6 +6,43 @@ import { MaintenanceInvoiceExtractionSpec } from './maintenance-invoice.extracti
 describe('MaintenanceInvoiceExtractionSpec.normalize', () => {
   const spec = new MaintenanceInvoiceExtractionSpec();
 
+  it('stores a signed discount as a positive magnitude', () => {
+    // The kind carries the sign: a discount is subtracted from the total downstream,
+    // so a negative lineTotal here makes the whole record fail validation on apply.
+    const result = spec.normalize({
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Discount,
+          name: 'Discount',
+          lineTotal: -11.83,
+          unitPrice: -11.83,
+        },
+      ],
+    });
+
+    expect(result.lineItems?.[0]).toMatchObject({
+      kind: MaintenanceLineItemKind.Discount,
+      lineTotal: 11.83,
+      unitPrice: 11.83,
+    });
+  });
+
+  it('leaves positive amounts untouched', () => {
+    const result = spec.normalize({
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Part,
+          name: 'Oil filter',
+          quantity: 2,
+          unitPrice: 250,
+          lineTotal: 500,
+        },
+      ],
+    });
+
+    expect(result.lineItems?.[0]).toMatchObject({ quantity: 2, unitPrice: 250, lineTotal: 500 });
+  });
+
   it('passes through valid header fields', () => {
     const result = spec.normalize({
       confidence: 0.91,

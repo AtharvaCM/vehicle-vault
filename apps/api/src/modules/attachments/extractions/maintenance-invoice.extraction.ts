@@ -146,6 +146,7 @@ export class MaintenanceInvoiceExtractionSpec
       maintenanceCategories.join(', '),
       'If a field is not present, omit it.',
       'Keep line items concise and only include actual maintenance-related entries.',
+      'Report every amount as a positive magnitude: a discount is a discount line item with a positive lineTotal, never a negative number.',
     ].join(' ');
   }
 
@@ -185,10 +186,10 @@ function normalizeLineItem(
     kind,
     name,
     normalizedCategory: normalizeCategory(raw.normalizedCategory),
-    quantity: normalizeNumber(raw.quantity),
+    quantity: normalizeAmount(raw.quantity),
     unit: normalizeString(raw.unit),
-    unitPrice: normalizeNumber(raw.unitPrice),
-    lineTotal: normalizeNumber(raw.lineTotal),
+    unitPrice: normalizeAmount(raw.unitPrice),
+    lineTotal: normalizeAmount(raw.lineTotal),
     brand: normalizeString(raw.brand),
     partNumber: normalizeString(raw.partNumber),
     notes: normalizeString(raw.notes),
@@ -221,6 +222,16 @@ function normalizeInteger(value: number | undefined) {
 function normalizeNumber(value: number | undefined) {
   if (typeof value !== 'number' || Number.isNaN(value)) return undefined;
   return Number(value);
+}
+
+/**
+ * Line item amounts are magnitudes; the kind carries the sign. A discount is stored
+ * positive and subtracted from the total downstream, so a provider that helpfully
+ * returns "-11.83" produces a record that fails validation and can never be applied.
+ */
+function normalizeAmount(value: number | undefined) {
+  const normalized = normalizeNumber(value);
+  return normalized === undefined ? undefined : Math.abs(normalized);
 }
 
 function normalizeString(value: string | undefined) {
