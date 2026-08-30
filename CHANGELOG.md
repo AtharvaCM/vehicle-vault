@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.1...v1.17.2) (2026-08-30)
+
+
+### Bug Fixes
+
+* **api:** store extracted discounts as positive magnitudes ([0d2f6df](https://github.com/AtharvaCM/vehicle-vault/commit/0d2f6df578d56dce4d2f254b16d0cb649dda6a45))
+
 ## [1.17.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.0...v1.17.1) (2026-08-30)
 
 
