@@ -156,6 +156,7 @@ model Vehicle {
   invites             VehicleInvite[]
   tyres               Tyre[]
   tyreInspections     TyreInspection[]
+  accessories         Accessory[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
@@ -170,6 +171,46 @@ enum TyrePosition {
   rear_left
   rear_right
   spare
+}
+
+/// Something bought for a vehicle and optionally fitted to it — floor mats, a
+/// dashcam, a roof rail, a set of alloys.
+///
+/// Deliberately not a MaintenanceRecord. An accessory is a purchase with its own
+/// warranty and its own fitted/removed lifecycle, and a service record forces two
+/// facts it does not have: a service date and an odometer reading at the time of
+/// service. Folding accessory spend into maintenance also corrupts per-km running
+/// cost, which is the number the maintenance history exists to produce.
+model Accessory {
+  id                String    @id @default(uuid()) @db.Uuid
+  vehicleId         String    @db.Uuid
+  name              String    @db.VarChar(120)
+  brand             String?   @db.VarChar(80)
+  /// Free text on purpose. A premature enum is what pushed accessories into
+  /// MaintenanceCategory in the first place; distil one from real values later.
+  category          String?   @db.VarChar(60)
+  purchaseDate      DateTime
+  cost              Decimal   @db.Decimal(12, 2)
+  currencyCode      String    @default("INR") @db.VarChar(3)
+  /// Null while the item is owned but not yet on the vehicle — an accessory can
+  /// be bought months before it is fitted, or never fitted at all.
+  fittedDate        DateTime?
+  fittedOdometer    Int?
+  /// Set when the item comes off. Null with a fittedDate present means currently
+  /// fitted, which is what makes "what is on this vehicle" answerable.
+  removedDate       DateTime?
+  removedOdometer   Int?
+  /// Warranty on the item itself. Runs on the calendar regardless of distance,
+  /// so it is the accessory equivalent of a document expiry.
+  warrantyExpiresAt DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  vehicle           Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, purchaseDate(sort: Desc)])
+  @@index([vehicleId, removedDate])
+  @@index([vehicleId, warrantyExpiresAt])
 }
 
 /// A physical tyre, tracked from fitment to removal.
@@ -605,6 +646,7 @@ enum AuditResourceType {
   vehicle_member
   vehicle_invite
   compliance_document
+  accessory
 }
 
 model AuditEvent {

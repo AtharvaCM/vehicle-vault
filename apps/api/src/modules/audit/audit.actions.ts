@@ -53,6 +53,11 @@ export const AUDIT_ACTIONS = {
     updated: 'claim.updated',
     deleted: 'claim.deleted',
   },
+  accessory: {
+    created: 'accessory.created',
+    updated: 'accessory.updated',
+    deleted: 'accessory.deleted',
+  },
   fuel: {
     created: 'fuel.created',
     updated: 'fuel.updated',

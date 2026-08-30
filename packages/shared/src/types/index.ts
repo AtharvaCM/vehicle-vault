@@ -17,3 +17,4 @@ export * from './analytics';
 export * from './document-extraction';
 export * from './vehicle-loan';
 export * from './tyre';
+export * from './accessory';
