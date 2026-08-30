@@ -1,3 +1,10 @@
+## [1.17.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.3...v1.17.4) (2026-08-30)
+
+
+### Bug Fixes
+
+* **api:** audit tyre mutations so creating a tyre is not a 500 ([41be501](https://github.com/AtharvaCM/vehicle-vault/commit/41be501ddb054bdf2644779c7e7e3dafa5cfc231))
+
 ## [1.17.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.17.2...v1.17.3) (2026-08-30)
 
 
