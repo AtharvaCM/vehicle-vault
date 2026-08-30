@@ -28,7 +28,8 @@ export type AuditQueryFilters = {
  *   user is either the actor or the resource owner.
  * - `listForVehicle(userId, vehicleId, filters)` returns events whose
  *   resource is the vehicle itself, plus events whose resource is owned
- *   by that vehicle (maintenance, reminders, documents, claims, fuel).
+ *   by that vehicle (maintenance, reminders, documents, claims, fuel,
+ *   tyres — inspection readings ride their tyre's resource id).
  *
  * The owner-scoping relies on the denormalised `ownerUserId` column, so
  * neither method needs a 7-way join. See ADR-0004.
@@ -53,17 +54,19 @@ export class AuditQueryService {
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
     // All descendant resource ids belonging to this vehicle.
-    const [maintenance, reminders, insurance, warranties, claims, fuelLogs] = await Promise.all([
-      this.prisma.maintenanceRecord.findMany({ where: { vehicleId }, select: { id: true } }),
-      this.prisma.reminder.findMany({ where: { vehicleId }, select: { id: true } }),
-      this.prisma.insurancePolicy.findMany({ where: { vehicleId }, select: { id: true } }),
-      this.prisma.warranty.findMany({ where: { vehicleId }, select: { id: true } }),
-      this.prisma.claim.findMany({
-        where: { insurancePolicy: { vehicleId } },
-        select: { id: true },
-      }),
-      this.prisma.fuelLog.findMany({ where: { vehicleId }, select: { id: true } }),
-    ]);
+    const [maintenance, reminders, insurance, warranties, claims, fuelLogs, tyres] =
+      await Promise.all([
+        this.prisma.maintenanceRecord.findMany({ where: { vehicleId }, select: { id: true } }),
+        this.prisma.reminder.findMany({ where: { vehicleId }, select: { id: true } }),
+        this.prisma.insurancePolicy.findMany({ where: { vehicleId }, select: { id: true } }),
+        this.prisma.warranty.findMany({ where: { vehicleId }, select: { id: true } }),
+        this.prisma.claim.findMany({
+          where: { insurancePolicy: { vehicleId } },
+          select: { id: true },
+        }),
+        this.prisma.fuelLog.findMany({ where: { vehicleId }, select: { id: true } }),
+        this.prisma.tyre.findMany({ where: { vehicleId }, select: { id: true } }),
+      ]);
 
     const idsByType: [AuditResourceType, string[]][] = [
       [AuditResourceType.vehicle, [vehicleId]],
@@ -73,6 +76,7 @@ export class AuditQueryService {
       [AuditResourceType.warranty, warranties.map((r) => r.id)],
       [AuditResourceType.claim, claims.map((r) => r.id)],
       [AuditResourceType.fuel_log, fuelLogs.map((r) => r.id)],
+      [AuditResourceType.tyre, tyres.map((r) => r.id)],
     ];
 
     const where: Prisma.AuditEventWhereInput = {

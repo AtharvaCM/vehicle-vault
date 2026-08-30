@@ -646,6 +646,7 @@ enum AuditResourceType {
   vehicle_member
   vehicle_invite
   compliance_document
+  tyre
   accessory
 }
 
