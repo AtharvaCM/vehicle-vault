@@ -31,6 +31,7 @@ export const REDACTED_FIELDS: Record<AuditResourceType, ReadonlySet<string>> = {
   [AuditResourceType.vehicle_invite]: new Set(['tokenHash']),
   // Document numbers follow the insurance/warranty precedent.
   [AuditResourceType.compliance_document]: new Set(['number']),
+  [AuditResourceType.tyre]: new Set(),
 };
 
 const REDACTED_SENTINEL = '[redacted]';
