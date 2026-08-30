@@ -14,6 +14,7 @@ function prismaMock() {
     claim: { findMany: vi.fn() },
     fuelLog: { findMany: vi.fn() },
     tyre: { findMany: vi.fn() },
+    accessory: { findMany: vi.fn() },
   };
 }
 
@@ -101,6 +102,7 @@ describe('AuditQueryService.listForVehicle', () => {
     prisma.claim.findMany.mockResolvedValue([]);
     prisma.fuelLog.findMany.mockResolvedValue([{ id: 'f1' }]);
     prisma.tyre.findMany.mockResolvedValue([{ id: 't1' }]);
+    prisma.accessory.findMany.mockResolvedValue([{ id: 'a1' }]);
     prisma.auditEvent.findMany.mockResolvedValue([]);
 
     await service.listForVehicle('user-1', 'v1', {});
@@ -114,6 +116,7 @@ describe('AuditQueryService.listForVehicle', () => {
         { resourceType: AuditResourceType.insurance_policy, resourceId: { in: ['p1'] } },
         { resourceType: AuditResourceType.fuel_log, resourceId: { in: ['f1'] } },
         { resourceType: AuditResourceType.tyre, resourceId: { in: ['t1'] } },
+        { resourceType: AuditResourceType.accessory, resourceId: { in: ['a1'] } },
       ]),
     );
   });
