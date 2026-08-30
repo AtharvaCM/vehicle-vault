@@ -13,7 +13,17 @@ function makePrismaMock() {
     claim: { aggregate: vi.fn(), findMany: vi.fn() },
     insurancePolicy: { findMany: vi.fn() },
     vehicleLoan: { findMany: vi.fn() },
+    accessory: { aggregate: vi.fn(), findMany: vi.fn() },
   };
+}
+
+/**
+ * Accessories are a bucket every aggregation now reads, so default them to empty
+ * in each suite. A test that cares about accessories overrides these.
+ */
+function stubEmptyAccessories(prisma: ReturnType<typeof makePrismaMock>) {
+  (prisma.accessory.aggregate as Mock).mockResolvedValue({ _sum: { cost: null } });
+  (prisma.accessory.findMany as Mock).mockResolvedValue([]);
 }
 
 describe('AnalyticsService.getCostSplit', () => {
@@ -23,6 +33,7 @@ describe('AnalyticsService.getCostSplit', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     service = new AnalyticsService(prisma as never);
+    stubEmptyAccessories(prisma);
     (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
@@ -78,6 +89,26 @@ describe('AnalyticsService.getCostSplit', () => {
     expect(Number(result.buckets.insurance)).toBeLessThan(1100);
   });
 
+  it('keeps accessory spend in its own bucket without touching maintenance', async () => {
+    // The whole reason accessories are a separate table: a bought item must not
+    // inflate the maintenance figure that per-km running cost is derived from.
+    (prisma.fuelLog.aggregate as Mock).mockResolvedValue({ _sum: { totalCost: null } });
+    (prisma.maintenanceRecord.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('5000.00') },
+    });
+    (prisma.claim.aggregate as Mock).mockResolvedValue({ _sum: { insurerPaidAmount: null } });
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    (prisma.accessory.aggregate as Mock).mockResolvedValue({
+      _sum: { cost: new Prisma.Decimal('15000.00') },
+    });
+
+    const result = await service.getCostSplit('user-1', {});
+
+    expect(result.buckets.accessories).toBe('15000.00');
+    expect(result.buckets.maintenance).toBe('5000.00');
+    expect(result.buckets.total).toBe('20000.00');
+  });
+
   it('throws NotFound when vehicleId is not owned by user', async () => {
     (prisma.vehicle.findFirst as Mock).mockResolvedValue(null);
 
@@ -94,6 +125,7 @@ describe('AnalyticsService.getCostTrend', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     service = new AnalyticsService(prisma as never);
+    stubEmptyAccessories(prisma);
     (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
@@ -178,6 +210,7 @@ describe('AnalyticsService.getTco', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     service = new AnalyticsService(prisma as never);
+    stubEmptyAccessories(prisma);
     (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
   });
 
