@@ -871,10 +871,10 @@ export class AttachmentsService {
           )
             ? (jsonItem.normalizedCategory as MaintenanceCategory)
             : undefined,
-        quantity: typeof jsonItem.quantity === 'number' ? jsonItem.quantity : undefined,
+        quantity: toAmountMagnitude(jsonItem.quantity),
         unit: typeof jsonItem.unit === 'string' ? jsonItem.unit : undefined,
-        unitPrice: typeof jsonItem.unitPrice === 'number' ? jsonItem.unitPrice : undefined,
-        lineTotal: typeof jsonItem.lineTotal === 'number' ? jsonItem.lineTotal : undefined,
+        unitPrice: toAmountMagnitude(jsonItem.unitPrice),
+        lineTotal: toAmountMagnitude(jsonItem.lineTotal),
         brand: typeof jsonItem.brand === 'string' ? jsonItem.brand : undefined,
         partNumber: typeof jsonItem.partNumber === 'string' ? jsonItem.partNumber : undefined,
         notes: typeof jsonItem.notes === 'string' ? jsonItem.notes : undefined,
@@ -891,4 +891,14 @@ export class AttachmentsService {
   private getErrorMessage(error: unknown) {
     return error instanceof Error ? error.message : 'Extraction failed.';
   }
+}
+
+/**
+ * Line item amounts are magnitudes; the kind carries the sign. Extractions stored
+ * before that was enforced can hold a negative discount, which fails validation on
+ * the way into a maintenance record — so rows already on disk are coerced on read
+ * rather than being left permanently unapplicable.
+ */
+function toAmountMagnitude(value: Prisma.JsonValue | undefined) {
+  return typeof value === 'number' && !Number.isNaN(value) ? Math.abs(value) : undefined;
 }
