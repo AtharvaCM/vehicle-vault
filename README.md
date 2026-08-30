@@ -51,6 +51,8 @@ JWT_SECRET=vehicle-vault-dev-secret
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=vehicle-vault-dev-refresh-secret
 JWT_REFRESH_EXPIRES_IN=30d
+GEMINI_API_KEY=your-gemini-api-key-from-ai-studio
+GEMINI_MODEL=gemini-2.5-flash
 SMTP_URL=
 SMTP_HOST=
 SMTP_PORT=587
@@ -86,7 +88,8 @@ For a new local or hosted environment:
 4. Set SMTP delivery with either `SMTP_URL` or the `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` fields, plus `MAIL_FROM`.
 5. Set `FRONTEND_ORIGIN` to the stable browser origin.
 6. Optionally set `FRONTEND_ORIGIN_PATTERN` if you need preview browser URLs.
-7. Run:
+7. Set `GEMINI_API_KEY` to enable AI document extraction. Without it the extraction endpoints report the provider as unavailable and scanning is disabled.
+8. Run:
 
 ```bash
 pnpm db:generate
@@ -127,6 +130,7 @@ For your Portainer-based home server deployment:
 - fallback: use `apps/api/Dockerfile` plus `deploy/portainer/api-stack.yml` for host-path builds
 - keep `DATABASE_URL` and `DIRECT_URL` pointed at the Supabase pooler connection
 - set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` for attachment binaries
+- set `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) so document scanning works on the deployed API
 - set a strong production `JWT_SECRET`
 - set a separate strong production `JWT_REFRESH_SECRET`
 - set SMTP delivery with `SMTP_URL` or the host/port/user/pass fields plus `MAIL_FROM`
