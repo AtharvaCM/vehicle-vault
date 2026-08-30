@@ -29,7 +29,8 @@ export type AuditQueryFilters = {
  * - `listForVehicle(userId, vehicleId, filters)` returns events whose
  *   resource is the vehicle itself, plus events whose resource is owned
  *   by that vehicle (maintenance, reminders, documents, claims, fuel,
- *   tyres — inspection readings ride their tyre's resource id).
+ *   tyres — inspection readings ride their tyre's resource id —
+ *   and accessories).
  *
  * The owner-scoping relies on the denormalised `ownerUserId` column, so
  * neither method needs a 7-way join. See ADR-0004.
@@ -54,7 +55,7 @@ export class AuditQueryService {
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
     // All descendant resource ids belonging to this vehicle.
-    const [maintenance, reminders, insurance, warranties, claims, fuelLogs, tyres] =
+    const [maintenance, reminders, insurance, warranties, claims, fuelLogs, tyres, accessories] =
       await Promise.all([
         this.prisma.maintenanceRecord.findMany({ where: { vehicleId }, select: { id: true } }),
         this.prisma.reminder.findMany({ where: { vehicleId }, select: { id: true } }),
@@ -66,6 +67,7 @@ export class AuditQueryService {
         }),
         this.prisma.fuelLog.findMany({ where: { vehicleId }, select: { id: true } }),
         this.prisma.tyre.findMany({ where: { vehicleId }, select: { id: true } }),
+        this.prisma.accessory.findMany({ where: { vehicleId }, select: { id: true } }),
       ]);
 
     const idsByType: [AuditResourceType, string[]][] = [
@@ -77,6 +79,7 @@ export class AuditQueryService {
       [AuditResourceType.claim, claims.map((r) => r.id)],
       [AuditResourceType.fuel_log, fuelLogs.map((r) => r.id)],
       [AuditResourceType.tyre, tyres.map((r) => r.id)],
+      [AuditResourceType.accessory, accessories.map((r) => r.id)],
     ];
 
     const where: Prisma.AuditEventWhereInput = {
