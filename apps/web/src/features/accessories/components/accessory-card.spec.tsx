@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { AccessoryCard } from './accessory-card';
 
@@ -25,47 +25,47 @@ const base = {
 const noop = () => undefined;
 const noopAsync = async () => undefined;
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-describe('AccessoryCard warranty wording', () => {
-  it('reads as ended the day after expiry, in IST', () => {
-    // The regression: comparing a local-midnight "today" against the UTC-midnight
-    // instant the API sends put every IST result a day high, so a warranty that
-    // ended yesterday still claimed to be current.
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-07-05T18:45:00.000Z')); // 2026-07-06 00:15 IST
-
-    render(
-      <AccessoryCard
-        accessory={{ ...base, warrantyExpiresAt: '2026-07-05T00:00:00.000Z' }}
-        onDelete={noopAsync}
-        onEdit={noop}
-      />,
-    );
-
-    expect(screen.getByText(/Warranty ended/)).toBeTruthy();
-  });
-
-  it('still reads as current on the expiry day itself', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-07-05T18:45:00.000Z')); // 2026-07-06 00:15 IST
-
-    render(
-      <AccessoryCard
-        accessory={{ ...base, warrantyExpiresAt: '2026-07-06T00:00:00.000Z' }}
-        onDelete={noopAsync}
-        onEdit={noop}
-      />,
-    );
-
-    expect(screen.getByText(/Warranty until/)).toBeTruthy();
-  });
-
+describe('AccessoryCard', () => {
   it('shows the odometer reading captured at fitment', () => {
     render(<AccessoryCard accessory={base} onDelete={noopAsync} onEdit={noop} />);
 
     expect(screen.getByText(/5,120 km/)).toBeTruthy();
+  });
+
+  it('marks a still-fitted accessory as fitted', () => {
+    // Scoped to the badge: "Fitted" is also a field label in the card body.
+    const { container } = render(
+      <AccessoryCard accessory={base} onDelete={noopAsync} onEdit={noop} />,
+    );
+
+    expect(container.querySelector('[data-slot="badge"]')?.textContent).toBe('Fitted');
+  });
+
+  it('marks an accessory that was bought but never installed', () => {
+    const { container } = render(
+      <AccessoryCard
+        accessory={{ ...base, fittedDate: null, fittedOdometer: null }}
+        onDelete={noopAsync}
+        onEdit={noop}
+      />,
+    );
+
+    expect(container.querySelector('[data-slot="badge"]')?.textContent).toBe('Not fitted');
+  });
+
+  it('marks a removed accessory as removed', () => {
+    const { container } = render(
+      <AccessoryCard
+        accessory={{
+          ...base,
+          removedDate: '2026-08-01T00:00:00.000Z',
+          removedOdometer: 6000,
+        }}
+        onDelete={noopAsync}
+        onEdit={noop}
+      />,
+    );
+
+    expect(container.querySelector('[data-slot="badge"]')?.textContent).toBe('Removed');
   });
 });

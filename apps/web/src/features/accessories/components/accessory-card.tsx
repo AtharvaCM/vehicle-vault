@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 
+import { daysUntilExpiry } from '../utils/warranty-status';
+
 interface AccessoryCardProps {
   accessory: Accessory;
   onEdit: (accessory: Accessory) => void;
@@ -14,26 +16,6 @@ interface AccessoryCardProps {
   isDeleting?: boolean;
 }
 
-/**
- * Days from today, negative once the date is past.
- *
- * Both sides are compared at UTC midnight. Mixing local midnight with the
- * UTC-midnight instant the API sends puts every result a day out east of
- * Greenwich, which in IST means a warranty that ended yesterday still reads as
- * current.
- */
-function daysUntil(iso: string): number {
-  const now = new Date();
-  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  const target = new Date(iso);
-  const targetUtc = Date.UTC(
-    target.getUTCFullYear(),
-    target.getUTCMonth(),
-    target.getUTCDate(),
-  );
-
-  return Math.round((targetUtc - todayUtc) / (24 * 60 * 60 * 1000));
-}
 
 export function AccessoryCard({
   accessory,
@@ -44,7 +26,7 @@ export function AccessoryCard({
   const isRemoved = accessory.removedDate != null;
   const isFitted = !isRemoved && accessory.fittedDate != null;
   const warrantyDays = accessory.warrantyExpiresAt
-    ? daysUntil(accessory.warrantyExpiresAt)
+    ? daysUntilExpiry(accessory.warrantyExpiresAt, new Date())
     : null;
 
   return (
