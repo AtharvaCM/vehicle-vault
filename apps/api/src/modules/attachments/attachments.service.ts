@@ -51,6 +51,7 @@ import {
   buildStoredAttachmentPath,
   convertHeicToJpegIfNeeded,
 } from './utils/attachment-upload.util';
+import { normalizeExtractionImageOrientation } from './utils/image-orientation.util';
 
 const attachmentInclude = {
   extraction: true,
@@ -254,11 +255,11 @@ export class AttachmentsService {
       const result = await this.extractionService.extract<MaintenanceInvoiceExtractionDraft>(
         MAINTENANCE_EXTRACTION_KIND,
         [
-          {
+          normalizeExtractionImageOrientation({
             buffer: fileBuffer,
             mimeType: attachment.mimeType,
             name: attachment.originalFileName,
-          },
+          }),
         ],
       );
       const extracted = toPersistable(result);
@@ -362,11 +363,13 @@ export class AttachmentsService {
 
     try {
       const documents = await Promise.all(
-        orderedAttachments.map(async (attachment) => ({
-          buffer: await this.storageService.downloadObject(attachment.fileName),
-          mimeType: attachment.mimeType,
-          name: attachment.originalFileName,
-        })),
+        orderedAttachments.map(async (attachment) =>
+          normalizeExtractionImageOrientation({
+            buffer: await this.storageService.downloadObject(attachment.fileName),
+            mimeType: attachment.mimeType,
+            name: attachment.originalFileName,
+          }),
+        ),
       );
 
       const result = await this.extractionService.extract<MaintenanceInvoiceExtractionDraft>(
