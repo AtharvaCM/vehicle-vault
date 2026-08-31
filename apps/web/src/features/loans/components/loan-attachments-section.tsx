@@ -3,9 +3,10 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatFileSize } from '@/features/attachments/utils/format-file-size';
-import { resolveAttachmentUrl } from '@/features/attachments/utils/resolve-attachment-url';
 import { InlineError } from '@/components/shared/inline-error';
+import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { appToast } from '@/lib/toast';
 
 import {
@@ -43,6 +44,14 @@ export function LoanAttachmentsSection({ loanId }: Props) {
     }
   };
 
+  const handleOpen = async (attachmentId: string) => {
+    try {
+      await openApiFileInNewTab(endpoints.attachments.file(attachmentId));
+    } catch (error) {
+      appToast.error({ title: getApiErrorMessage(error, 'Could not open attachment') });
+    }
+  };
+
   const handleDelete = async (attachmentId: string) => {
     try {
       await del.mutateAsync(attachmentId);
@@ -74,18 +83,17 @@ export function LoanAttachmentsSection({ loanId }: Props) {
         <ul className="divide-y divide-border text-sm">
           {attachments.map((att) => (
             <li key={att.id} className="flex items-center justify-between gap-2 py-2">
-              <a
-                href={resolveAttachmentUrl(att.url)}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-w-0 flex-1 flex-col hover:underline"
+              <button
+                type="button"
+                onClick={() => handleOpen(att.id)}
+                className="flex min-w-0 flex-1 flex-col text-left hover:underline"
               >
                 <span className="truncate font-medium">{att.originalFileName}</span>
                 <span className="text-xs text-muted-foreground">
                   {att.kind} · {formatFileSize(att.size)} ·{' '}
                   {new Date(att.uploadedAt).toLocaleDateString()}
                 </span>
-              </a>
+              </button>
               <Button
                 size="sm"
                 variant="ghost"

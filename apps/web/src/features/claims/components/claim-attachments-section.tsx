@@ -19,10 +19,11 @@ import type { Claim, ClaimExtractionSuggestion } from '@vehicle-vault/shared';
 import { Button } from '@/components/ui/button';
 import { InlineError } from '@/components/shared/inline-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { Input } from '@/components/ui/input';
 import { appToast } from '@/lib/toast';
 
-import { getClaimAttachmentFileUrl } from '../api/claim-attachments';
+import { getClaimAttachmentFilePath } from '../api/claim-attachments';
 import {
   useClaimAttachments,
   useClaimExtractionStatus,
@@ -93,6 +94,14 @@ export function ClaimAttachmentsSection({
       });
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  async function handleOpen(attachmentId: string) {
+    try {
+      await openApiFileInNewTab(getClaimAttachmentFilePath(attachmentId));
+    } catch (error) {
+      appToast.error({ title: getApiErrorMessage(error, 'Could not open attachment') });
     }
   }
 
@@ -233,15 +242,14 @@ export function ClaimAttachmentsSection({
                               )}
                             </button>
                           ) : null}
-                          <a
-                            href={getClaimAttachmentFileUrl(att.id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => handleOpen(att.id)}
                             className="text-slate-500 hover:text-slate-900"
                             aria-label="Download attachment"
                           >
                             <Download className="h-4 w-4" />
-                          </a>
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(att.id)}
