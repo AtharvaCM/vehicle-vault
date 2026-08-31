@@ -1,11 +1,14 @@
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Badge } from '@/components/ui/badge';
+import { endpoints } from '@/lib/api/endpoints';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { openApiFileInNewTab } from '@/lib/api/open-api-file';
+import { appToast } from '@/lib/toast';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { Attachment } from '../types/attachment';
 import { formatFileSize } from '../utils/format-file-size';
 import { getAttachmentKindLabel } from '../utils/get-attachment-kind-label';
-import { resolveAttachmentUrl } from '../utils/resolve-attachment-url';
 
 type AttachmentItemProps = {
   attachment: Attachment;
@@ -14,6 +17,14 @@ type AttachmentItemProps = {
 };
 
 export function AttachmentItem({ attachment, isDeleting = false, onDelete }: AttachmentItemProps) {
+  const handleOpen = async () => {
+    try {
+      await openApiFileInNewTab(endpoints.attachments.file(attachment.id));
+    } catch (error) {
+      appToast.error({ title: getApiErrorMessage(error, 'Could not open attachment') });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-2">
@@ -50,14 +61,13 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
       </div>
 
       <div className="flex gap-2">
-        <a
+        <button
           className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-50"
-          href={resolveAttachmentUrl(attachment.url)}
-          rel="noreferrer"
-          target="_blank"
+          onClick={handleOpen}
+          type="button"
         >
           View file
-        </a>
+        </button>
         <ConfirmActionDialog
           confirmLabel="Delete attachment"
           description={`This removes ${attachment.originalFileName} from this service entry. If available, the stored file is deleted too.`}

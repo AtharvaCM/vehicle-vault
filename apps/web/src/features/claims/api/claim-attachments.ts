@@ -25,8 +25,8 @@ export async function deleteClaimAttachment(attachmentId: string) {
   );
 }
 
-export function getClaimAttachmentFileUrl(attachmentId: string) {
-  return `/api/claim-attachments/${attachmentId}/file`;
+export function getClaimAttachmentFilePath(attachmentId: string) {
+  return `claim-attachments/${attachmentId}/file`;
 }
 
 export async function getClaimExtractionStatus() {
