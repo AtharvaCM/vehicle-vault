@@ -1,3 +1,10 @@
+## [1.18.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.18.1...v1.18.2) (2026-08-31)
+
+
+### Bug Fixes
+
+* **web:** open attachment files through the authenticated API client ([b2f8ada](https://github.com/AtharvaCM/vehicle-vault/commit/b2f8adad4249beaeeb88152966446df797c7aa09))
+
 ## [1.18.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.18.0...v1.18.1) (2026-08-30)
 
 
