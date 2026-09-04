@@ -42,4 +42,19 @@ describe('NotificationsService', () => {
       expect('document-expiring:doc-1:7d'.startsWith(where.dedupKey.startsWith)).toBe(true);
     });
   });
+
+  describe('markReadForReminder', () => {
+    it('marks both the due and overdue notification for the reminder read', async () => {
+      await service.markReadForReminder('user-1', 'reminder-1');
+
+      expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          dedupKey: { in: ['reminder-due:reminder-1', 'reminder-overdue:reminder-1'] },
+          isRead: false,
+        },
+        data: { isRead: true },
+      });
+    });
+  });
 });

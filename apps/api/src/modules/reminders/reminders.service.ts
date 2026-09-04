@@ -12,16 +12,13 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { NotificationsService } from '../notifications/notifications.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import type { UpdateReminderDto } from './dto/update-reminder.dto';
-import {
-  computeUsageCadence,
-  projectDueDate,
-  type UsageCadence,
-} from './usage-projection';
+import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-projection';
 
 const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
 
@@ -49,6 +46,7 @@ export class RemindersService {
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getAllReminders(userId: string) {
@@ -209,6 +207,9 @@ export class RemindersService {
         after: updated as unknown as Record<string, unknown>,
       });
     });
+    // Keeps the bell in step with the attention queue for this action — the
+    // reminder just left the queue, so any due/overdue alert for it is moot.
+    await this.notificationsService.markReadForReminder(userId, reminderId);
 
     return this.getReminderById(userId, reminderId);
   }
@@ -316,11 +317,7 @@ export class RemindersService {
       reminder.dueOdometer !== undefined &&
       reminder.completedAt === null
     ) {
-      const projected = projectDueDate(
-        reminder.vehicle.odometer,
-        reminder.dueOdometer,
-        cadence,
-      );
+      const projected = projectDueDate(reminder.vehicle.odometer, reminder.dueOdometer, cadence);
       usageProjection = {
         projectedDueDate: projected.toISOString(),
         kmPerDay: Number(cadence.kmPerDay.toFixed(2)),
@@ -366,7 +363,11 @@ export class RemindersService {
       grouped.set(log.vehicleId, list);
     }
     for (const [vehicleId, samples] of grouped.entries()) {
-      const cadence = computeUsageCadence(samples, new Date(), USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS);
+      const cadence = computeUsageCadence(
+        samples,
+        new Date(),
+        USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS,
+      );
       if (cadence) map.set(vehicleId, cadence);
     }
     return map;

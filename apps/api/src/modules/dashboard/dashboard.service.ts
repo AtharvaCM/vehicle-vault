@@ -26,6 +26,7 @@ import { AttachmentsService } from '../attachments/attachments.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../reminders/reminders.service';
+import { isMoreRecentDocument } from '../vehicle-documents/document-recency';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
 import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -623,23 +624,12 @@ export class DashboardService {
     for (const document of documents) {
       const key = `${document.vehicleId}:${document.kind}`;
       const current = latest.get(key);
-      if (!current || this.isMoreRecentDocument(document, current)) {
+      if (!current || isMoreRecentDocument(document, current)) {
         latest.set(key, document);
       }
     }
 
     return latest;
-  }
-
-  private isMoreRecentDocument(candidate: VehicleDocument, current: VehicleDocument): boolean {
-    const startDifference = candidate.startDate.getTime() - current.startDate.getTime();
-    if (startDifference !== 0) return startDifference > 0;
-
-    return this.endDateRank(candidate) > this.endDateRank(current);
-  }
-
-  private endDateRank(document: VehicleDocument): number {
-    return document.endDate === null ? Number.POSITIVE_INFINITY : document.endDate.getTime();
   }
 
   /**
