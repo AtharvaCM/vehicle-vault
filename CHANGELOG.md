@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.21.0...v1.22.0) (2026-09-04)
+
+
+### Features
+
+* **notifications:** reconcile the bell with the dashboard queue ([#66](https://github.com/AtharvaCM/vehicle-vault/issues/66)) ([a938414](https://github.com/AtharvaCM/vehicle-vault/commit/a938414819635789ff18472b33b866d3ea0ea328))
+
 # [1.21.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.20.1...v1.21.0) (2026-09-04)
 
 
