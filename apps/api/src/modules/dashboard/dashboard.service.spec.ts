@@ -147,9 +147,14 @@ describe('DashboardService', () => {
   };
   const vehicleDocumentsService = {
     listForUser: vi.fn(),
+    assertViewable: vi.fn(),
+  };
+  const notificationsService = {
+    markReadForDocument: vi.fn(),
   };
   const prisma = {
     fuelLog: { count: vi.fn() },
+    documentDismissal: { findMany: vi.fn(), upsert: vi.fn() },
   };
 
   let service: DashboardService;
@@ -166,6 +171,7 @@ describe('DashboardService', () => {
     vehicleLoansService.listForUser.mockResolvedValue([]);
     vehicleDocumentsService.listForUser.mockResolvedValue([]);
     prisma.fuelLog.count.mockResolvedValue(0);
+    prisma.documentDismissal.findMany.mockResolvedValue([]);
     service = new DashboardService(
       vehiclesService as never,
       maintenanceService as never,
@@ -175,6 +181,7 @@ describe('DashboardService', () => {
       vehicleLoansService as never,
       vehicleDocumentsService as never,
       prisma as never,
+      notificationsService as never,
     );
   });
 
@@ -537,7 +544,11 @@ describe('DashboardService', () => {
       vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
       remindersService.getAllReminders.mockResolvedValue(
         Array.from({ length: 30 }, (_, index) =>
-          makeReminder({ id: `reminder-${index}`, title: `Task ${index}`, dueDate: daysFromNow(2) }),
+          makeReminder({
+            id: `reminder-${index}`,
+            title: `Task ${index}`,
+            dueDate: daysFromNow(2),
+          }),
         ),
       );
 
@@ -569,6 +580,48 @@ describe('DashboardService', () => {
         'km-near',
         'km-far',
       ]);
+    });
+
+    it('excludes a this_month document row the user snoozed', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({ id: 'doc-snoozed', endDate: new Date(daysFromNow(20)) }),
+      ]);
+      prisma.documentDismissal.findMany.mockResolvedValue([{ documentId: 'doc-snoozed' }]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention).toEqual([]);
+      expect(prisma.documentDismissal.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', dismissedUntil: { gt: NOW } },
+        select: { documentId: true },
+      });
+    });
+
+    it('still surfaces a document row once it turns overdue, even with a live snooze', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({ id: 'doc-snoozed', endDate: new Date(daysFromNow(-1)) }),
+      ]);
+      prisma.documentDismissal.findMany.mockResolvedValue([{ documentId: 'doc-snoozed' }]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention).toHaveLength(1);
+      expect(result.attention[0]).toMatchObject({ id: 'doc-snoozed', urgency: 'overdue' });
+    });
+
+    it('does not let one snoozed document hide another, unrelated document', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({ id: 'doc-snoozed', kind: 'insurance', endDate: new Date(daysFromNow(20)) }),
+        makeDocument({ id: 'doc-visible', kind: 'puc', endDate: new Date(daysFromNow(3)) }),
+      ]);
+      prisma.documentDismissal.findMany.mockResolvedValue([{ documentId: 'doc-snoozed' }]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention.map((item) => item.id)).toEqual(['doc-visible']);
     });
   });
 
@@ -715,9 +768,7 @@ describe('DashboardService', () => {
   describe('hasSpend', () => {
     it('(i) is false with no records, fuel logs or active loans', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
-      vehicleLoansService.listForUser.mockResolvedValue([
-        makeLoan({ status: LoanStatus.Closed }),
-      ]);
+      vehicleLoansService.listForUser.mockResolvedValue([makeLoan({ status: LoanStatus.Closed })]);
 
       const result = await service.getSummary('user-1');
 
@@ -731,6 +782,48 @@ describe('DashboardService', () => {
       const result = await service.getSummary('user-1');
 
       expect(result.hasSpend).toBe(true);
+    });
+  });
+
+  describe('snoozeDocumentAttention', () => {
+    it('validates viewer access, upserts a 14-day dismissal and marks the notification read', async () => {
+      vehicleDocumentsService.assertViewable.mockResolvedValue(makeDocument({ id: 'doc-1' }));
+      // Mirrors the service's own (local-timezone) day arithmetic rather than
+      // hardcoding an ISO string, which broke a date test here before.
+      const expectedDismissedUntil = new Date(NOW);
+      expectedDismissedUntil.setDate(expectedDismissedUntil.getDate() + 14);
+
+      await service.snoozeDocumentAttention('user-1', 'insurance', 'doc-1');
+
+      expect(vehicleDocumentsService.assertViewable).toHaveBeenCalledWith(
+        'user-1',
+        'insurance',
+        'doc-1',
+      );
+      expect(prisma.documentDismissal.upsert).toHaveBeenCalledWith({
+        where: { userId_documentId: { userId: 'user-1', documentId: 'doc-1' } },
+        create: {
+          userId: 'user-1',
+          documentId: 'doc-1',
+          documentKind: 'insurance',
+          dismissedUntil: expectedDismissedUntil,
+        },
+        update: {
+          documentKind: 'insurance',
+          dismissedUntil: expectedDismissedUntil,
+        },
+      });
+      expect(notificationsService.markReadForDocument).toHaveBeenCalledWith('user-1', 'doc-1');
+    });
+
+    it('propagates NotFoundException from the access check without touching the dismissal table', async () => {
+      vehicleDocumentsService.assertViewable.mockRejectedValue(new Error('not found'));
+
+      await expect(
+        service.snoozeDocumentAttention('user-1', 'insurance', 'missing'),
+      ).rejects.toThrow('not found');
+      expect(prisma.documentDismissal.upsert).not.toHaveBeenCalled();
+      expect(notificationsService.markReadForDocument).not.toHaveBeenCalled();
     });
   });
 });

@@ -618,6 +618,7 @@ model User {
   vehicleMemberships              VehicleMember[]
   vehicleInvitesSent              VehicleInvite[]           @relation("VehicleInviteAuthor")
   pushSubscriptions               PushSubscription[]
+  documentDismissals              DocumentDismissal[]
 }
 
 enum Role {
@@ -996,6 +997,25 @@ model ComplianceDocument {
 
   @@index([vehicleId, kind])
   @@index([vehicleId, endDate])
+}
+
+// One row per (user, document) the user has snoozed off their dashboard
+// attention queue. Never shown for `overdue`/`today` urgency regardless of
+// this row — snoozing only defers the heads-up window, it can't hide a
+// document that is actually due. `documentId` points at whichever table
+// `documentKind` names (InsurancePolicy / Warranty / ComplianceDocument);
+// there is no FK since the target table is chosen at read time.
+model DocumentDismissal {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  documentKind   String   @db.VarChar(20)
+  documentId     String   @db.Uuid
+  dismissedUntil DateTime
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@index([userId, dismissedUntil])
 }
 
 model VehicleLoan {

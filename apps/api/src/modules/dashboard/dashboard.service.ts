@@ -24,6 +24,7 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AttachmentsService } from '../attachments/attachments.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../reminders/reminders.service';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
 import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
@@ -40,6 +41,13 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const DOCUMENT_OVERDUE_WINDOW_DAYS = 90;
 /** Odometer-only reminders enter the queue once the vehicle is within this many km of the target. */
 const ODOMETER_ATTENTION_KM = 1000;
+/**
+ * How long a snoozed document row stays out of the queue. Only ever applied
+ * to `this_week`/`this_month` urgency — an `overdue`/`today` row always
+ * shows regardless of a live snooze, so this can't hide a document that is
+ * actually due.
+ */
+const DOCUMENT_DISMISS_SNOOZE_DAYS = 14;
 const THIS_WEEK_MAX_DAYS = 7;
 const THIS_MONTH_MAX_DAYS = 30;
 
@@ -85,6 +93,7 @@ export class DashboardService {
     private readonly vehicleLoansService: VehicleLoansService,
     private readonly vehicleDocumentsService: VehicleDocumentsService,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getSummary(userId: string): Promise<DashboardSummary> {
@@ -92,16 +101,29 @@ export class DashboardService {
     const now = new Date();
     const today = this.toUtcDay(now);
 
-    const [vehicles, maintenanceRecords, reminders, attachments, loans, documents, fuelLogCount] =
-      await Promise.all([
-        this.vehiclesService.getAllVehicles(userId),
-        this.maintenanceService.getAllRecords(userId),
-        this.remindersService.getAllReminders(userId),
-        this.attachmentsService.listAllAttachments(userId),
-        this.vehicleLoansService.listForUser(userId),
-        this.vehicleDocumentsService.listForUser(userId),
-        this.prisma.fuelLog.count({ where: { vehicle: { members: { some: { userId } } } } }),
-      ]);
+    const [
+      vehicles,
+      maintenanceRecords,
+      reminders,
+      attachments,
+      loans,
+      documents,
+      fuelLogCount,
+      dismissals,
+    ] = await Promise.all([
+      this.vehiclesService.getAllVehicles(userId),
+      this.maintenanceService.getAllRecords(userId),
+      this.remindersService.getAllReminders(userId),
+      this.attachmentsService.listAllAttachments(userId),
+      this.vehicleLoansService.listForUser(userId),
+      this.vehicleDocumentsService.listForUser(userId),
+      this.prisma.fuelLog.count({ where: { vehicle: { members: { some: { userId } } } } }),
+      this.prisma.documentDismissal.findMany({
+        where: { userId, dismissedUntil: { gt: now } },
+        select: { documentId: true },
+      }),
+    ]);
+    const dismissedDocumentIds = new Set(dismissals.map((d) => d.documentId));
 
     // Fetch individual vehicle insights
     const allForecasts = await Promise.all(
@@ -148,6 +170,7 @@ export class DashboardService {
       latestDocuments,
       activeLoans,
       today,
+      dismissedDocumentIds,
     });
     const vehicleHealth = this.buildVehicleHealth({
       vehicles,
@@ -220,6 +243,32 @@ export class DashboardService {
     };
   }
 
+  /**
+   * Snoozes a `this_week`/`this_month` document row out of the attention
+   * queue for {@link DOCUMENT_DISMISS_SNOOZE_DAYS}, and marks its matching
+   * `document-expiring` notification(s) read so the bell agrees with the
+   * queue for this action. Any viewer on the vehicle may snooze — it is a
+   * per-user preference, not a mutation of the document itself.
+   */
+  async snoozeDocumentAttention(
+    userId: string,
+    kind: VehicleDocumentKind,
+    documentId: string,
+  ): Promise<void> {
+    const document = await this.vehicleDocumentsService.assertViewable(userId, kind, documentId);
+
+    const dismissedUntil = new Date();
+    dismissedUntil.setDate(dismissedUntil.getDate() + DOCUMENT_DISMISS_SNOOZE_DAYS);
+
+    await this.prisma.documentDismissal.upsert({
+      where: { userId_documentId: { userId, documentId: document.id } },
+      create: { userId, documentId: document.id, documentKind: kind, dismissedUntil },
+      update: { documentKind: kind, dismissedUntil },
+    });
+
+    await this.notificationsService.markReadForDocument(userId, document.id);
+  }
+
   // ---------------------------------------------------------------------------
   // Attention queue
   // ---------------------------------------------------------------------------
@@ -230,8 +279,10 @@ export class DashboardService {
     latestDocuments: Map<string, VehicleDocument>;
     activeLoans: VehicleLoan[];
     today: number;
+    dismissedDocumentIds: ReadonlySet<string>;
   }): DashboardAttentionItem[] {
-    const { vehicleById, reminders, latestDocuments, activeLoans, today } = input;
+    const { vehicleById, reminders, latestDocuments, activeLoans, today, dismissedDocumentIds } =
+      input;
     const items: DashboardAttentionItem[] = [];
 
     for (const reminder of reminders) {
@@ -271,6 +322,10 @@ export class DashboardService {
       const daysUntilDue = this.daysUntil(today, document.endDate);
       const urgency = this.documentUrgency(daysUntilDue);
       if (!urgency) continue;
+      // A snooze only defers the heads-up window; it never hides a document
+      // that has actually come due.
+      const snoozeEligible = urgency !== 'overdue' && urgency !== 'today';
+      if (snoozeEligible && dismissedDocumentIds.has(document.id)) continue;
 
       items.push({
         ...this.attentionVehicleFields(vehicle),
@@ -504,7 +559,11 @@ export class DashboardService {
       const daysUntilDue = this.daysUntil(today, document.endDate);
       statuses[document.kind] = {
         state:
-          daysUntilDue < 0 ? 'expired' : daysUntilDue <= THIS_MONTH_MAX_DAYS ? 'expiring' : 'active',
+          daysUntilDue < 0
+            ? 'expired'
+            : daysUntilDue <= THIS_MONTH_MAX_DAYS
+              ? 'expiring'
+              : 'active',
         endDate: document.endDate.toISOString(),
       };
     }

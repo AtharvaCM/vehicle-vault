@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Check } from 'lucide-react';
+import { BellOff, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -64,15 +64,33 @@ function MetaDot() {
   return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />;
 }
 
+/**
+ * A document row can be snoozed once it's merely a heads-up (`this_week` /
+ * `this_month`); an `overdue`/`today` row is actually due, so the API
+ * ignores any live snooze for it and the button doesn't offer one.
+ */
+function isSnoozeEligible(item: DashboardAttentionItem): boolean {
+  return (
+    item.kind === 'document' && (item.urgency === 'this_week' || item.urgency === 'this_month')
+  );
+}
+
 type AttentionRowProps = {
   item: DashboardAttentionItem;
   /** Hidden for single-vehicle garages, where the chip would only repeat itself. */
   showVehicle: boolean;
-  isCompleting: boolean;
+  isPending: boolean;
   onComplete: (item: DashboardAttentionItem) => void;
+  onSnooze: (item: DashboardAttentionItem) => void;
 };
 
-export function AttentionRow({ item, showVehicle, isCompleting, onComplete }: AttentionRowProps) {
+export function AttentionRow({
+  item,
+  showVehicle,
+  isPending,
+  onComplete,
+  onSnooze,
+}: AttentionRowProps) {
   const relative = formatRelativeDue(item);
   const meta: ReactNode[] = [];
 
@@ -131,7 +149,7 @@ export function AttentionRow({ item, showVehicle, isCompleting, onComplete }: At
     <div
       className={cn(
         'relative flex min-h-14 gap-3 px-5 py-3',
-        isCompleting && 'pointer-events-none opacity-50',
+        isPending && 'pointer-events-none opacity-50',
       )}
       data-testid="attention-row"
     >
@@ -167,12 +185,12 @@ export function AttentionRow({ item, showVehicle, isCompleting, onComplete }: At
         </div>
       </AttentionItemLink>
 
-      <div className="flex shrink-0 items-start">
+      <div className="flex shrink-0 items-start gap-2">
         {item.kind === 'reminder' && item.currentUserRole !== 'viewer' ? (
           <Button
             aria-label={`Mark ${item.title} done`}
             className="h-10 sm:h-8"
-            disabled={isCompleting}
+            disabled={isPending}
             onClick={() => onComplete(item)}
             size="sm"
             type="button"
@@ -183,14 +201,34 @@ export function AttentionRow({ item, showVehicle, isCompleting, onComplete }: At
           </Button>
         ) : null}
         {item.kind === 'document' ? (
-          <Link
-            className={buttonVariants({ size: 'sm', variant: 'outline', className: 'h-10 sm:h-8' })}
-            params={{ vehicleId: item.vehicleId }}
-            search={{ tab: 'protection' }}
-            to="/vehicles/$vehicleId"
-          >
-            Renew
-          </Link>
+          <>
+            {isSnoozeEligible(item) ? (
+              <Button
+                aria-label={`Snooze ${item.title}`}
+                className="h-10 sm:h-8"
+                disabled={isPending}
+                onClick={() => onSnooze(item)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <BellOff aria-hidden="true" />
+                Snooze
+              </Button>
+            ) : null}
+            <Link
+              className={buttonVariants({
+                size: 'sm',
+                variant: 'outline',
+                className: 'h-10 sm:h-8',
+              })}
+              params={{ vehicleId: item.vehicleId }}
+              search={{ tab: 'protection' }}
+              to="/vehicles/$vehicleId"
+            >
+              Renew
+            </Link>
+          </>
         ) : null}
         {item.kind === 'loan_emi' ? (
           <Link

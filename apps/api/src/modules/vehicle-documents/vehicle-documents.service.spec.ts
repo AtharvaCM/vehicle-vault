@@ -93,12 +93,8 @@ describe('VehicleDocumentsService', () => {
 
   describe('listForVehicle', () => {
     it('flattens all adapter results when kind is omitted', async () => {
-      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([
-        insuranceDoc(),
-      ]);
-      (warranty.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([
-        warrantyDoc(),
-      ]);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
+      (warranty.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
 
       const result = await service.listForVehicle('user-1', 'veh-1');
 
@@ -107,9 +103,7 @@ describe('VehicleDocumentsService', () => {
     });
 
     it('routes to the requested adapter only when kind is provided', async () => {
-      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([
-        insuranceDoc(),
-      ]);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
 
       const result = await service.listForVehicle('user-1', 'veh-1', 'insurance');
 
@@ -232,6 +226,43 @@ describe('VehicleDocumentsService', () => {
     });
   });
 
+  describe('assertViewable', () => {
+    it('resolves the document on viewer-level access, not editor', async () => {
+      (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: insuranceDoc(),
+        vehicleUserId: 'someone-else',
+      });
+
+      const result = await service.assertViewable('user-1', 'insurance', 'pol-1');
+
+      expect(accessService.assert).toHaveBeenCalledWith('user-1', 'veh-1');
+      expect(accessService.assertEditor).not.toHaveBeenCalled();
+      expect(result.id).toBe('pol-1');
+    });
+
+    it('rejects with NotFoundException when the adapter cannot find the row', async () => {
+      (warranty.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+      await expect(service.assertViewable('user-1', 'warranty', 'missing')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('rejects when the user has no membership on the owning vehicle', async () => {
+      (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: insuranceDoc(),
+        vehicleUserId: 'someone-else',
+      });
+      accessService.assert.mockRejectedValueOnce(
+        new NotFoundException('Vehicle veh-1 was not found'),
+      );
+
+      await expect(service.assertViewable('user-1', 'insurance', 'pol-1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('findExpiring', () => {
     it('queries every adapter with a midnight-anchored range and flattens results', async () => {
       const fakeNow = new Date('2026-05-16T15:30:00.000Z');
@@ -241,9 +272,7 @@ describe('VehicleDocumentsService', () => {
       (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
         insuranceDoc(),
       ]);
-      (warranty.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
-        warrantyDoc(),
-      ]);
+      (warranty.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
 
       const result = await service.findExpiring('user-1', 7);
 
@@ -253,16 +282,16 @@ describe('VehicleDocumentsService', () => {
       expect(insArgs).toBe('user-1');
 
       // `from` is today's midnight in the local TZ; `until` is 7 days later at 23:59:59.999.
-      const fromArg = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock.calls[0][1] as Date;
-      const untilArg = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock.calls[0][2] as Date;
+      const fromArg = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock
+        .calls[0][1] as Date;
+      const untilArg = (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mock
+        .calls[0][2] as Date;
       expect(fromArg.getHours()).toBe(0);
       expect(fromArg.getMinutes()).toBe(0);
       expect(untilArg.getHours()).toBe(23);
       expect(untilArg.getMinutes()).toBe(59);
       // Range spans 7 full days plus the trailing 23:59:59.999 of day 7.
-      expect(
-        Math.floor((untilArg.getTime() - fromArg.getTime()) / (24 * 60 * 60 * 1000)),
-      ).toBe(7);
+      expect(Math.floor((untilArg.getTime() - fromArg.getTime()) / (24 * 60 * 60 * 1000))).toBe(7);
 
       expect(warranty.findExpiringBetween).toHaveBeenCalledTimes(1);
       expect(result.map((d) => d.kind).sort()).toEqual(['insurance', 'warranty']);

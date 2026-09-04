@@ -33,6 +33,23 @@ export class NotificationsService {
     });
   }
 
+  /**
+   * Marks every unread `document-expiring` notification for this document
+   * read, across all of its dedup windows (see `DocumentExpiringTemplate.dedupKey`
+   * — one row per 7d/30d bucket the document has crossed).
+   */
+  async markReadForDocument(userId: string, documentId: string) {
+    return this.prisma.notification.updateMany({
+      where: {
+        userId,
+        kind: 'document-expiring',
+        dedupKey: { startsWith: `document-expiring:${documentId}:` },
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+  }
+
   async create(data: {
     userId: string;
     vehicleId?: string;
