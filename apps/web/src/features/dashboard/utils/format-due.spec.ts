@@ -4,6 +4,7 @@ import {
   calendarDaysUntil,
   formatKm,
   formatOdometerDue,
+  formatRelativeAgo,
   formatRelativeDue,
   urgencyLabel,
 } from './format-due';
@@ -47,9 +48,7 @@ describe('formatRelativeDue', () => {
     expect(formatRelativeDue({ kind: 'document', daysUntilDue: -45, dueDate })).toBe(
       'Expired 02 Apr 2026',
     );
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 0, dueDate })).toBe(
-      'Expires today',
-    );
+    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 0, dueDate })).toBe('Expires today');
     expect(formatRelativeDue({ kind: 'document', daysUntilDue: 1, dueDate })).toBe(
       'Expires tomorrow',
     );
@@ -60,12 +59,8 @@ describe('formatRelativeDue', () => {
 
   it('describes loan EMIs like dated reminders', () => {
     expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 0, dueDate })).toBe('Due today');
-    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 1, dueDate })).toBe(
-      'Due tomorrow',
-    );
-    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 5, dueDate })).toBe(
-      'Due in 5 days',
-    );
+    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 1, dueDate })).toBe('Due tomorrow');
+    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 5, dueDate })).toBe('Due in 5 days');
   });
 
   it('falls back to the odometer for odometer-only reminders', () => {
@@ -88,7 +83,12 @@ describe('formatRelativeDue', () => {
       }),
     ).toBe('Due at 45,000 km · 1,200 km past due');
     expect(
-      formatRelativeDue({ kind: 'reminder', daysUntilDue: null, dueDate: null, dueOdometer: 45000 }),
+      formatRelativeDue({
+        kind: 'reminder',
+        daysUntilDue: null,
+        dueDate: null,
+        dueOdometer: 45000,
+      }),
     ).toBe('Due at 45,000 km');
   });
 
@@ -126,6 +126,47 @@ describe('calendarDaysUntil', () => {
     expect(calendarDaysUntil('2026-04-05T23:59:00.000Z', '2026-04-02T00:01:00.000Z')).toBe(3);
     expect(calendarDaysUntil('2026-03-30T00:00:00.000Z', '2026-04-02T12:00:00.000Z')).toBe(-3);
     expect(calendarDaysUntil('2026-04-02T01:00:00.000Z', '2026-04-02T23:00:00.000Z')).toBe(0);
+  });
+});
+
+describe('formatRelativeAgo', () => {
+  const today = new Date('2026-04-02T00:00:00.000Z');
+
+  function daysAgoIso(days: number): string {
+    return new Date(today.getTime() - days * 86_400_000).toISOString();
+  }
+
+  it('names today and yesterday', () => {
+    expect(formatRelativeAgo(daysAgoIso(0), today)).toBe('today');
+    expect(formatRelativeAgo(daysAgoIso(1), today)).toBe('yesterday');
+  });
+
+  it('counts single days up to a week', () => {
+    expect(formatRelativeAgo(daysAgoIso(3), today)).toBe('3 days ago');
+    expect(formatRelativeAgo(daysAgoIso(6), today)).toBe('6 days ago');
+  });
+
+  it('switches to whole weeks from 7 days', () => {
+    expect(formatRelativeAgo(daysAgoIso(7), today)).toBe('1 week ago');
+    expect(formatRelativeAgo(daysAgoIso(13), today)).toBe('1 week ago');
+    expect(formatRelativeAgo(daysAgoIso(14), today)).toBe('2 weeks ago');
+    expect(formatRelativeAgo(daysAgoIso(29), today)).toBe('4 weeks ago');
+  });
+
+  it('switches to whole months from 30 days', () => {
+    expect(formatRelativeAgo(daysAgoIso(30), today)).toBe('1 month ago');
+    expect(formatRelativeAgo(daysAgoIso(60), today)).toBe('2 months ago');
+    expect(formatRelativeAgo(daysAgoIso(364), today)).toBe('12 months ago');
+  });
+
+  it('switches to whole years from 365 days', () => {
+    expect(formatRelativeAgo(daysAgoIso(365), today)).toBe('1 year ago');
+    expect(formatRelativeAgo(daysAgoIso(800), today)).toBe('2 years ago');
+  });
+
+  it('treats a future timestamp as today rather than going negative', () => {
+    const tomorrow = new Date(today.getTime() + 86_400_000).toISOString();
+    expect(formatRelativeAgo(tomorrow, today)).toBe('today');
   });
 });
 

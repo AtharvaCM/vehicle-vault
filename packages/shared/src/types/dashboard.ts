@@ -156,6 +156,13 @@ export type DashboardVehicleHealth = {
   registrationNumber: string;
   vehicleType: VehicleType;
   odometer: number;
+  /**
+   * ISO datetime the odometer reading was last touched: the later of the
+   * vehicle's own `updatedAt` and its latest fuel log's `date`. Every
+   * odometer-driven reminder status and smart suggestion trusts `odometer`
+   * to be current, so the dashboard surfaces this to nudge a stale reading.
+   */
+  odometerUpdatedAt: string;
   currentUserRole: VehicleRole;
   /** `overdue` when overdueCount > 0, else `due_soon` when dueSoonCount > 0, else `ok`. */
   status: DashboardVehicleStatus;

@@ -37,6 +37,7 @@ export function makeVehicle(
     registrationNumber: 'MH12AB1234',
     vehicleType: VehicleType.Car,
     odometer: 45200,
+    odometerUpdatedAt: '2026-03-20T00:00:00.000Z',
     currentUserRole: 'owner',
     status: 'ok',
     overdueCount: 0,

@@ -16,8 +16,8 @@ export function formatKm(value: number) {
   return `${Math.round(value).toLocaleString('en-IN')} km`;
 }
 
-function pluralDays(count: number) {
-  return `${count} day${count === 1 ? '' : 's'}`;
+function pluralize(count: number, unit: string) {
+  return `${count} ${unit}${count === 1 ? '' : 's'}`;
 }
 
 function toUtcDay(value: string | Date) {
@@ -53,7 +53,7 @@ function formatDocumentDue(days: number, dueDate: string) {
   }
 
   if (days < 0) {
-    return `Expired ${pluralDays(-days)} ago`;
+    return `Expired ${pluralize(-days, 'day')} ago`;
   }
 
   if (days === 0) {
@@ -77,7 +77,7 @@ function formatReminderDue(days: number, dueDate: string) {
   }
 
   if (days < 0) {
-    return `${pluralDays(-days)} overdue`;
+    return `${pluralize(-days, 'day')} overdue`;
   }
 
   if (days === 0) {
@@ -123,6 +123,19 @@ export function formatRelativeDue({
   }
 
   return formatReminderDue(daysUntilDue, dueDate);
+}
+
+/** "today" / "yesterday" / "N days/weeks/months/years ago", from a past ISO datetime. */
+export function formatRelativeAgo(dateIso: string, today: Date = new Date()) {
+  const daysAgo = Math.max(0, -calendarDaysUntil(dateIso, today));
+
+  if (daysAgo === 0) return 'today';
+  if (daysAgo === 1) return 'yesterday';
+  if (daysAgo < 7) return `${pluralize(daysAgo, 'day')} ago`;
+  if (daysAgo < 30) return `${pluralize(Math.floor(daysAgo / 7), 'week')} ago`;
+  if (daysAgo < 365) return `${pluralize(Math.floor(daysAgo / 30), 'month')} ago`;
+
+  return `${pluralize(Math.floor(daysAgo / 365), 'year')} ago`;
 }
 
 export function urgencyLabel(urgency: DashboardUrgency) {
