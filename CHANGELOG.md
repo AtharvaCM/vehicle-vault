@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.23.0...v1.23.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **api:** add tax/inspection/emission to the reminder type enum ([#72](https://github.com/AtharvaCM/vehicle-vault/issues/72)) ([734d9d6](https://github.com/AtharvaCM/vehicle-vault/commit/734d9d6a6668ddd4c337a92bb5164f0082c80381))
+
 # [1.23.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.22.1...v1.23.0) (2026-09-04)
 
 
