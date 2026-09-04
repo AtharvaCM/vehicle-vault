@@ -82,6 +82,9 @@ enum ReminderType {
   puc
   tyre_rotation
   battery
+  tax
+  inspection
+  emission
   custom
 }
 
