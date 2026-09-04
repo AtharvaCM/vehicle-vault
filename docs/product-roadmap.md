@@ -178,6 +178,7 @@ The largest sustained investment in the repo — releases 1.6.0 through 1.13.1 w
 - **Unified maintenance intervals:** `MaintenanceIntervalResolver` is the single source of truth — per-variant catalog `ServiceInterval` rows first, conservative type/fuel-gated defaults second. Replaced the alert engine's hardcoded km map (which disagreed with the forecast defaults) and the forecast service's private defaults; EVs no longer get oil-change alerts, and service-schedule suggestions use variant-specific intervals when the vehicle is catalog-linked.
 
 ### Insurance & Warranty Management (Milestone 5)
+
 - Store core insurance policy details (Provider, Policy #, Premium, Dates)
 - Track manufacturer and extended warranty coverage (date and odometer based)
 - Integrated "Protection" tab on vehicle detail pages with status indicators (Active/Expiring/Expired)
