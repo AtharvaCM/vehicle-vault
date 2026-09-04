@@ -12,6 +12,8 @@ export const endpoints = {
   },
   dashboard: {
     summary: '/dashboard/summary',
+    snoozeDocument: (kind: string, id: string) =>
+      `/dashboard/attention/documents/${kind}/${id}/snooze`,
   },
   exports: {
     account: '/exports/account',
@@ -136,13 +138,10 @@ export const endpoints = {
   },
   vehicleSharing: {
     members: (vehicleId: string) => `/vehicles/${vehicleId}/members`,
-    member: (vehicleId: string, memberId: string) =>
-      `/vehicles/${vehicleId}/members/${memberId}`,
+    member: (vehicleId: string, memberId: string) => `/vehicles/${vehicleId}/members/${memberId}`,
     invites: (vehicleId: string) => `/vehicles/${vehicleId}/invites`,
-    invite: (vehicleId: string, inviteId: string) =>
-      `/vehicles/${vehicleId}/invites/${inviteId}`,
-    transferOwnership: (vehicleId: string) =>
-      `/vehicles/${vehicleId}/transfer-ownership`,
+    invite: (vehicleId: string, inviteId: string) => `/vehicles/${vehicleId}/invites/${inviteId}`,
+    transferOwnership: (vehicleId: string) => `/vehicles/${vehicleId}/transfer-ownership`,
     accept: () => `/vehicle-invites/accept`,
   },
   notifications: {

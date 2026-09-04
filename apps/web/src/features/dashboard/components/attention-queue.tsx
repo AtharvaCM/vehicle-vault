@@ -17,7 +17,12 @@ import { useCompleteReminder } from '@/features/reminders/hooks/use-complete-rem
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
-import type { DashboardAttentionItem, DashboardSummary, DashboardUrgency } from '../types/dashboard';
+import { useSnoozeDocument } from '../hooks/use-snooze-document';
+import type {
+  DashboardAttentionItem,
+  DashboardSummary,
+  DashboardUrgency,
+} from '../types/dashboard';
 import type { DashboardFocus, DashboardSearch } from '../types/dashboard-search';
 import { urgencyLabel } from '../utils/format-due';
 import { AttentionRow } from './attention-row';
@@ -41,16 +46,23 @@ type AttentionQueueProps = {
   onSearchStateChange: (next: Partial<DashboardSearch>) => void;
 };
 
-export function AttentionQueue({ summary, queue, focus, onSearchStateChange }: AttentionQueueProps) {
+export function AttentionQueue({
+  summary,
+  queue,
+  focus,
+  onSearchStateChange,
+}: AttentionQueueProps) {
   const completeReminder = useCompleteReminder();
+  const snoozeDocument = useSnoozeDocument();
   const [expanded, setExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState('');
 
   const counts = summary.attentionCounts;
   const urgentCount = counts.overdue + counts.today + counts.thisWeek;
   const showVehicle = summary.vehicles.length > 1;
-  // The mutation hook only exposes its latest call, and a completed row stays rendered until
-  // the summary refetch drops it — so track in-flight and just-completed ids locally.
+  // Each mutation hook only exposes its latest call, and a completed/snoozed row stays rendered
+  // until the summary refetch drops it — so track in-flight and just-settled ids locally, shared
+  // across both actions since row ids never collide across kinds.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(() => new Set());
   const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(() => new Set());
   const visibleRows = expanded ? queue : queue.slice(0, INITIAL_ROW_LIMIT);
@@ -97,6 +109,39 @@ export function AttentionQueue({ summary, queue, focus, onSearchStateChange }: A
     });
   }
 
+  function handleSnooze(item: DashboardAttentionItem) {
+    if (item.kind !== 'document' || !item.documentKind) return;
+    const documentKind = item.documentKind;
+
+    setPendingIds((previous) => new Set(previous).add(item.id));
+    snoozeDocument.mutate(
+      { documentKind, documentId: item.id },
+      {
+        onSuccess: () => {
+          setCompletedIds((previous) => new Set(previous).add(item.id));
+          appToast.success({
+            title: 'Snoozed',
+            description: `${item.title} · ${item.vehicleName}`,
+          });
+          setAnnouncement(`${item.title} · ${item.vehicleName} snoozed.`);
+        },
+        onError: (error) => {
+          appToast.error({
+            title: 'Unable to snooze',
+            description: getApiErrorMessage(error),
+          });
+        },
+        onSettled: () => {
+          setPendingIds((previous) => {
+            const next = new Set(previous);
+            next.delete(item.id);
+            return next;
+          });
+        },
+      },
+    );
+  }
+
   function renderBody() {
     if (queue.length > 0) {
       return (
@@ -110,10 +155,11 @@ export function AttentionQueue({ summary, queue, focus, onSearchStateChange }: A
                 <div className="divide-y divide-slate-100">
                   {group.items.map((item) => (
                     <AttentionRow
-                      isCompleting={pendingIds.has(item.id) || completedIds.has(item.id)}
+                      isPending={pendingIds.has(item.id) || completedIds.has(item.id)}
                       item={item}
                       key={item.id}
                       onComplete={handleComplete}
+                      onSnooze={handleSnooze}
                       showVehicle={showVehicle}
                     />
                   ))}

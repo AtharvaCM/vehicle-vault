@@ -29,9 +29,14 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 const mutate = vi.fn();
+const snoozeMutate = vi.fn();
 
 vi.mock('@/features/reminders/hooks/use-complete-reminder', () => ({
   useCompleteReminder: () => ({ mutate, isPending: false, variables: undefined }),
+}));
+
+vi.mock('../hooks/use-snooze-document', () => ({
+  useSnoozeDocument: () => ({ mutate: snoozeMutate, isPending: false, variables: undefined }),
 }));
 
 vi.mock('@/lib/toast', () => ({
@@ -46,6 +51,10 @@ type MutateOptions = {
 
 function lastMutateOptions(): MutateOptions {
   return mutate.mock.calls.at(-1)?.[1] as MutateOptions;
+}
+
+function lastSnoozeMutateOptions(): MutateOptions {
+  return snoozeMutate.mock.calls.at(-1)?.[1] as MutateOptions;
 }
 
 const twoVehicles = [
@@ -73,6 +82,15 @@ const expiringDoc = makeAttentionItem({
   vehicleName: 'Weekend bike',
   registrationNumber: 'MH12ZZ0001',
 });
+const overdueDoc = makeAttentionItem({
+  id: 'doc-insurance-overdue',
+  kind: 'document',
+  documentKind: 'insurance',
+  title: 'Insurance policy',
+  urgency: 'overdue',
+  daysUntilDue: -2,
+  dueDate: '2026-03-18T00:00:00.000Z',
+});
 
 describe('AttentionQueue', () => {
   it('renders group labels and rows with their actions', () => {
@@ -98,6 +116,25 @@ describe('AttentionQueue', () => {
     expect(screen.getByText('Expires in 4 days')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark Brake pads done' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Renew' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Snooze PUC certificate' })).toBeInTheDocument();
+  });
+
+  it('hides Snooze once a document is actually overdue', () => {
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[overdueDoc]}
+        summary={makeSummary({
+          attention: [overdueDoc],
+          attentionTotal: 1,
+          attentionCounts: makeAttentionCounts({ overdue: 1, total: 1 }),
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Insurance policy', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Renew' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /snooze/i })).not.toBeInTheDocument();
   });
 
   it('hides Done for viewers', () => {
@@ -201,6 +238,93 @@ describe('AttentionQueue', () => {
     expect(done).toBeEnabled();
     expect(appToast.error).toHaveBeenCalledWith({
       title: 'Unable to complete reminder',
+      description: 'boom',
+    });
+  });
+
+  it('snoozes a document with its kind and id when Snooze is clicked', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[expiringDoc]}
+        summary={makeSummary({
+          attention: [expiringDoc],
+          attentionTotal: 1,
+          attentionCounts: makeAttentionCounts({ thisWeek: 1, total: 1 }),
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Snooze PUC certificate' }));
+
+    expect(snoozeMutate).toHaveBeenCalledTimes(1);
+    expect(snoozeMutate).toHaveBeenCalledWith(
+      { documentKind: 'puc', documentId: 'doc-puc' },
+      expect.any(Object),
+    );
+  });
+
+  it('keeps the row disabled after a snooze succeeds and announces it', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[expiringDoc]}
+        summary={makeSummary({
+          attention: [expiringDoc],
+          attentionTotal: 1,
+          attentionCounts: makeAttentionCounts({ thisWeek: 1, total: 1 }),
+        })}
+      />,
+    );
+
+    const snooze = screen.getByRole('button', { name: 'Snooze PUC certificate' });
+    await user.click(snooze);
+
+    expect(snooze).toBeDisabled();
+
+    act(() => {
+      lastSnoozeMutateOptions().onSuccess();
+      lastSnoozeMutateOptions().onSettled();
+    });
+
+    expect(snooze).toBeDisabled();
+    expect(appToast.success).toHaveBeenCalledWith({
+      title: 'Snoozed',
+      description: 'PUC certificate · Weekend bike',
+    });
+    expect(screen.getByText('PUC certificate · Weekend bike snoozed.')).toBeInTheDocument();
+  });
+
+  it('re-enables the row and reports the error when snoozing fails', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[expiringDoc]}
+        summary={makeSummary({
+          attention: [expiringDoc],
+          attentionTotal: 1,
+          attentionCounts: makeAttentionCounts({ thisWeek: 1, total: 1 }),
+        })}
+      />,
+    );
+
+    const snooze = screen.getByRole('button', { name: 'Snooze PUC certificate' });
+    await user.click(snooze);
+
+    act(() => {
+      lastSnoozeMutateOptions().onError(new Error('boom'));
+      lastSnoozeMutateOptions().onSettled();
+    });
+
+    expect(snooze).toBeEnabled();
+    expect(appToast.error).toHaveBeenCalledWith({
+      title: 'Unable to snooze',
       description: 'boom',
     });
   });
@@ -313,6 +437,8 @@ describe('AttentionQueue', () => {
     await user.click(screen.getByRole('button', { name: 'Show all 10' }));
 
     expect(screen.getAllByTestId('attention-row')).toHaveLength(10);
-    expect(within(screen.getByRole('region', { name: 'This week' })).getAllByTestId('attention-row')).toHaveLength(10);
+    expect(
+      within(screen.getByRole('region', { name: 'This week' })).getAllByTestId('attention-row'),
+    ).toHaveLength(10);
   });
 });

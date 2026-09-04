@@ -132,6 +132,22 @@ export class VehicleDocumentsService {
   }
 
   /**
+   * Resolves a (kind, id) pair to its document and confirms the user has at
+   * least viewer access to the owning vehicle. Throws NotFound for an
+   * unknown document (or a non-member probing an id) and never requires
+   * editor access — callers that only read or record a per-user preference
+   * against the document, rather than mutate it, use this instead of the
+   * `editor`-gated path `update`/`remove` take.
+   */
+  async assertViewable(
+    userId: string,
+    kind: VehicleDocumentKind,
+    id: string,
+  ): Promise<VehicleDocument> {
+    return this.findOwned(userId, id, kind, 'viewer');
+  }
+
+  /**
    * Return every document owned by the user whose validity window ends
    * within the next `withinDays`. The range starts at the current
    * day's midnight (caller-local) so a cron that fires at 06:00 produces
@@ -154,9 +170,7 @@ export class VehicleDocumentsService {
     until.setHours(23, 59, 59, 999);
 
     const targets = kind ? [this.requireAdapter(kind)] : this.adapters;
-    const lists = await Promise.all(
-      targets.map((a) => a.findExpiringBetween(userId, from, until)),
-    );
+    const lists = await Promise.all(targets.map((a) => a.findExpiringBetween(userId, from, until)));
     return lists.flat();
   }
 

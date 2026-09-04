@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AttachmentsModule } from '../attachments/attachments.module';
 import { MaintenanceModule } from '../maintenance/maintenance.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { RemindersModule } from '../reminders/reminders.module';
 import { VehicleDocumentsModule } from '../vehicle-documents/vehicle-documents.module';
 import { VehicleLoansModule } from '../vehicle-loans/vehicle-loans.module';
@@ -17,6 +18,7 @@ import { DashboardService } from './dashboard.service';
     AttachmentsModule,
     VehicleLoansModule,
     VehicleDocumentsModule,
+    NotificationsModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService],
