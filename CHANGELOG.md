@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.20.1...v1.21.0) (2026-09-04)
+
+
+### Features
+
+* **dashboard:** nudge a stale odometer on the vehicle health card ([#65](https://github.com/AtharvaCM/vehicle-vault/issues/65)) ([44901e3](https://github.com/AtharvaCM/vehicle-vault/commit/44901e3a2245d1f5ac7017300659c43f83d03be2))
+
 ## [1.20.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.20.0...v1.20.1) (2026-09-04)
 
 
