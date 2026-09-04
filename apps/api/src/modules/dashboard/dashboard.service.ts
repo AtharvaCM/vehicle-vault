@@ -110,6 +110,7 @@ export class DashboardService {
       documents,
       fuelLogCount,
       dismissals,
+      fuelLogLatestDates,
     ] = await Promise.all([
       this.vehiclesService.getAllVehicles(userId),
       this.maintenanceService.getAllRecords(userId),
@@ -122,8 +123,18 @@ export class DashboardService {
         where: { userId, dismissedUntil: { gt: now } },
         select: { documentId: true },
       }),
+      this.prisma.fuelLog.groupBy({
+        by: ['vehicleId'],
+        where: { vehicle: { members: { some: { userId } } } },
+        _max: { date: true },
+      }),
     ]);
     const dismissedDocumentIds = new Set(dismissals.map((d) => d.documentId));
+    const latestFuelLogDateByVehicle = new Map(
+      fuelLogLatestDates
+        .filter((row) => row._max.date !== null)
+        .map((row) => [row.vehicleId, row._max.date as Date]),
+    );
 
     // Fetch individual vehicle insights
     const allForecasts = await Promise.all(
@@ -177,6 +188,7 @@ export class DashboardService {
       attention,
       latestDocuments,
       maintenanceRecords,
+      latestFuelLogDateByVehicle,
       today,
     });
 
@@ -463,9 +475,17 @@ export class DashboardService {
     attention: DashboardAttentionItem[];
     latestDocuments: Map<string, VehicleDocument>;
     maintenanceRecords: MaintenanceRecord[];
+    latestFuelLogDateByVehicle: Map<string, Date>;
     today: number;
   }): DashboardVehicleHealth[] {
-    const { vehicles, attention, latestDocuments, maintenanceRecords, today } = input;
+    const {
+      vehicles,
+      attention,
+      latestDocuments,
+      maintenanceRecords,
+      latestFuelLogDateByVehicle,
+      today,
+    } = input;
 
     const attentionByVehicle = new Map<string, DashboardAttentionItem[]>();
     for (const item of attention) {
@@ -502,6 +522,11 @@ export class DashboardService {
         const dueSoonCount = items.length - overdueCount;
         const status: DashboardVehicleStatus =
           overdueCount > 0 ? 'overdue' : dueSoonCount > 0 ? 'due_soon' : 'ok';
+        const latestFuelLogDate = latestFuelLogDateByVehicle.get(vehicle.id);
+        const odometerUpdatedAt =
+          latestFuelLogDate && latestFuelLogDate.getTime() > new Date(vehicle.updatedAt).getTime()
+            ? latestFuelLogDate.toISOString()
+            : vehicle.updatedAt;
 
         return {
           id: vehicle.id,
@@ -509,6 +534,7 @@ export class DashboardService {
           registrationNumber: vehicle.registrationNumber,
           vehicleType: vehicle.vehicleType,
           odometer: vehicle.odometer,
+          odometerUpdatedAt,
           currentUserRole: vehicle.currentUserRole ?? VehicleRole.Owner,
           status,
           overdueCount,

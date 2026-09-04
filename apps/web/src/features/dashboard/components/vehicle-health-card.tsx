@@ -18,7 +18,12 @@ import { formatDate } from '@/lib/utils/format-date';
 import type { DashboardVehicleHealth } from '../types/dashboard';
 import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
-import { formatKm, formatOdometerMeta, formatRelativeDue } from '../utils/format-due';
+import {
+  formatKm,
+  formatOdometerMeta,
+  formatRelativeAgo,
+  formatRelativeDue,
+} from '../utils/format-due';
 
 const FOUR_WHEELER_TYPES: readonly string[] = [
   VehicleType.Car,
@@ -85,9 +90,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
       : vehicle.nextDue.kind === 'document'
         ? 'protection'
         : 'reminders';
-  const kmSinceService = vehicle.lastService
-    ? vehicle.odometer - vehicle.lastService.odometer
-    : 0;
+  const kmSinceService = vehicle.lastService ? vehicle.odometer - vehicle.lastService.odometer : 0;
 
   return (
     <Card
@@ -187,6 +190,15 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           ) : (
             <span className="text-slate-400">No service logged</span>
           )}
+        </MicroRow>
+        <MicroRow label="Odometer">
+          <Link
+            className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            params={{ vehicleId: vehicle.id }}
+            to="/vehicles/$vehicleId/edit"
+          >
+            Updated {formatRelativeAgo(vehicle.odometerUpdatedAt, today)} · Update
+          </Link>
         </MicroRow>
       </div>
 

@@ -153,7 +153,7 @@ describe('DashboardService', () => {
     markReadForDocument: vi.fn(),
   };
   const prisma = {
-    fuelLog: { count: vi.fn() },
+    fuelLog: { count: vi.fn(), groupBy: vi.fn() },
     documentDismissal: { findMany: vi.fn(), upsert: vi.fn() },
   };
 
@@ -171,6 +171,7 @@ describe('DashboardService', () => {
     vehicleLoansService.listForUser.mockResolvedValue([]);
     vehicleDocumentsService.listForUser.mockResolvedValue([]);
     prisma.fuelLog.count.mockResolvedValue(0);
+    prisma.fuelLog.groupBy.mockResolvedValue([]);
     prisma.documentDismissal.findMany.mockResolvedValue([]);
     service = new DashboardService(
       vehiclesService as never,
@@ -761,6 +762,80 @@ describe('DashboardService', () => {
       expect(result.vehicles[0]?.documents.puc).toEqual({
         state: 'expiring',
         endDate: daysFromNow(2),
+      });
+    });
+
+    describe('odometerUpdatedAt', () => {
+      it('falls back to the vehicle updatedAt when it has no fuel logs', async () => {
+        vehiclesService.getAllVehicles.mockResolvedValue([
+          makeVehicle({ updatedAt: '2026-01-15T00:00:00.000Z' }),
+        ]);
+
+        const result = await service.getSummary('user-1');
+
+        expect(result.vehicles[0]?.odometerUpdatedAt).toBe('2026-01-15T00:00:00.000Z');
+        expect(prisma.fuelLog.groupBy).toHaveBeenCalledWith({
+          by: ['vehicleId'],
+          where: { vehicle: { members: { some: { userId: 'user-1' } } } },
+          _max: { date: true },
+        });
+      });
+
+      it('prefers a fuel log date more recent than the vehicle updatedAt', async () => {
+        vehiclesService.getAllVehicles.mockResolvedValue([
+          makeVehicle({ id: 'vehicle-1', updatedAt: '2026-01-15T00:00:00.000Z' }),
+        ]);
+        prisma.fuelLog.groupBy.mockResolvedValue([
+          { vehicleId: 'vehicle-1', _max: { date: new Date('2026-03-10T00:00:00.000Z') } },
+        ]);
+
+        const result = await service.getSummary('user-1');
+
+        expect(result.vehicles[0]?.odometerUpdatedAt).toBe('2026-03-10T00:00:00.000Z');
+      });
+
+      it('keeps the vehicle updatedAt when it is more recent than the latest fuel log', async () => {
+        // e.g. the vehicle's nickname was edited after fuel was last logged.
+        vehiclesService.getAllVehicles.mockResolvedValue([
+          makeVehicle({ id: 'vehicle-1', updatedAt: '2026-03-19T00:00:00.000Z' }),
+        ]);
+        prisma.fuelLog.groupBy.mockResolvedValue([
+          { vehicleId: 'vehicle-1', _max: { date: new Date('2026-01-01T00:00:00.000Z') } },
+        ]);
+
+        const result = await service.getSummary('user-1');
+
+        expect(result.vehicles[0]?.odometerUpdatedAt).toBe('2026-03-19T00:00:00.000Z');
+      });
+
+      it('ignores a groupBy row with a null max date', async () => {
+        vehiclesService.getAllVehicles.mockResolvedValue([
+          makeVehicle({ id: 'vehicle-1', updatedAt: '2026-01-15T00:00:00.000Z' }),
+        ]);
+        prisma.fuelLog.groupBy.mockResolvedValue([
+          { vehicleId: 'vehicle-1', _max: { date: null } },
+        ]);
+
+        const result = await service.getSummary('user-1');
+
+        expect(result.vehicles[0]?.odometerUpdatedAt).toBe('2026-01-15T00:00:00.000Z');
+      });
+
+      it('does not cross-apply one vehicle fuel log date to another vehicle', async () => {
+        vehiclesService.getAllVehicles.mockResolvedValue([
+          makeVehicle({ id: 'vehicle-1', updatedAt: '2026-01-15T00:00:00.000Z' }),
+          makeVehicle({ id: 'vehicle-2', updatedAt: '2026-01-20T00:00:00.000Z' }),
+        ]);
+        prisma.fuelLog.groupBy.mockResolvedValue([
+          { vehicleId: 'vehicle-1', _max: { date: new Date('2026-03-10T00:00:00.000Z') } },
+        ]);
+
+        const result = await service.getSummary('user-1');
+
+        const vehicle1 = result.vehicles.find((v) => v.id === 'vehicle-1');
+        const vehicle2 = result.vehicles.find((v) => v.id === 'vehicle-2');
+        expect(vehicle1?.odometerUpdatedAt).toBe('2026-03-10T00:00:00.000Z');
+        expect(vehicle2?.odometerUpdatedAt).toBe('2026-01-20T00:00:00.000Z');
       });
     });
   });

@@ -160,6 +160,31 @@ describe('VehicleHealthCard', () => {
     ).toHaveAttribute('href', '/maintenance-records/$recordId');
   });
 
+  it('nudges to update a stale odometer, linking to the edit page', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({ odometerUpdatedAt: '2026-03-20T00:00:00.000Z' })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Updated 1 week ago · Update' })).toHaveAttribute(
+      'href',
+      '/vehicles/$vehicleId/edit',
+    );
+  });
+
+  it('shows "today" right after the odometer is touched', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({ odometerUpdatedAt: today.toISOString() })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Updated today · Update' })).toBeInTheDocument();
+  });
+
   it('hides the write actions for viewers but keeps the shared badge and menu', () => {
     renderWithProviders(
       <VehicleHealthCard today={today} vehicle={makeVehicle({ currentUserRole: 'viewer' })} />,
@@ -168,7 +193,9 @@ describe('VehicleHealthCard', () => {
     expect(screen.queryByRole('link', { name: /log service for/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /add reminder for/i })).not.toBeInTheDocument();
     expect(screen.getByText('Shared · viewer')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'More actions for Daily driver' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'More actions for Daily driver' }),
+    ).toBeInTheDocument();
   });
 
   it('shows the write actions for owners', () => {
