@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.23.1...v1.23.2) (2026-09-04)
+
+
+### Bug Fixes
+
+* **web:** add favicon.ico ([d6ac5db](https://github.com/AtharvaCM/vehicle-vault/commit/d6ac5db8d6916e958176dd57788a61bc92bb07b1))
+
 ## [1.23.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.23.0...v1.23.1) (2026-09-04)
 
 
