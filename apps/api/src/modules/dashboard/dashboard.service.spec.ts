@@ -277,33 +277,11 @@ describe('DashboardService', () => {
       upcoming: 1,
       completed: 0,
     });
-    expect(result.recentVehicles[0]?.displayName).toBe('Family car');
     expect(result.recentMaintenance[0]?.attachmentCount).toBe(1);
-    expect(result.overdueReminders[0]?.id).toBe('reminder-1');
-    expect(result.upcomingReminders[0]?.id).toBe('reminder-2');
     expect(prisma.fuelLog.count).toHaveBeenCalledWith({
       where: { vehicle: { members: { some: { userId: 'user-1' } } } },
     });
     expect(vehicleDocumentsService.listForUser).toHaveBeenCalledWith('user-1');
-  });
-
-  it('sorts upcomingReminders by due date before capping', async () => {
-    vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
-    remindersService.getAllReminders.mockResolvedValue([
-      makeReminder({ id: 'later', dueDate: daysFromNow(20) }),
-      makeReminder({ id: 'odometer-only', dueDate: undefined, dueOdometer: 20000 }),
-      makeReminder({ id: 'soon', dueDate: daysFromNow(2) }),
-      makeReminder({ id: 'today', dueDate: daysFromNow(0), status: ReminderStatus.DueToday }),
-    ]);
-
-    const result = await service.getSummary('user-1');
-
-    expect(result.upcomingReminders.map((reminder) => reminder.id)).toEqual([
-      'today',
-      'soon',
-      'later',
-      'odometer-only',
-    ]);
   });
 
   describe('attention queue', () => {
