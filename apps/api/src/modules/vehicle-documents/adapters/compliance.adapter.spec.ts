@@ -78,6 +78,19 @@ describe('ComplianceAdapter', () => {
     });
   });
 
+  it('listForUser scopes to its own kind and the user membership with no date filter', async () => {
+    prisma.complianceDocument.findMany.mockResolvedValue([baseRow]);
+
+    const result = await adapter.listForUser('user-1');
+
+    expect(prisma.complianceDocument.findMany).toHaveBeenCalledWith({
+      where: { kind: 'puc', vehicle: { members: { some: { userId: 'user-1' } } } },
+      orderBy: { startDate: 'desc' },
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.kind).toBe('puc');
+  });
+
   it('findForOwnerCheck rejects a row of a different kind', async () => {
     prisma.complianceDocument.findUnique.mockResolvedValue({
       ...baseRow,

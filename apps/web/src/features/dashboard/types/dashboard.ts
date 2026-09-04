@@ -1,7 +1,18 @@
 export type {
+  DashboardAttentionCounts,
+  DashboardAttentionItem,
+  DashboardAttentionKind,
+  DashboardDocumentState,
+  DashboardLoanSummary,
   DashboardMaintenanceSummary,
   DashboardReminderCounts,
   DashboardReminderSummary,
   DashboardSummary,
+  DashboardUrgency,
+  DashboardVehicleDocumentStatus,
+  DashboardVehicleHealth,
+  DashboardVehicleLastService,
+  DashboardVehicleNextDue,
+  DashboardVehicleStatus,
   DashboardVehicleSummary,
 } from '@vehicle-vault/shared';

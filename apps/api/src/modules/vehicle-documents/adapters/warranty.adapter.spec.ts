@@ -103,6 +103,21 @@ describe('WarrantyAdapter', () => {
     });
   });
 
+  describe('listForUser', () => {
+    it('scopes to the user via vehicle membership and keeps never-expiring warranties', async () => {
+      prisma.warranty.findMany.mockResolvedValue([{ ...baseRow, endDate: null }]);
+
+      const result = await adapter.listForUser('user-1');
+
+      expect(prisma.warranty.findMany).toHaveBeenCalledWith({
+        where: { vehicle: { members: { some: { userId: 'user-1' } } } },
+        orderBy: { startDate: 'desc' },
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0]?.endDate).toBeNull();
+    });
+  });
+
   describe('create', () => {
     it('writes the prisma row with vehicleId scope and nullish fallbacks', async () => {
       prisma.warranty.create.mockResolvedValue(baseRow);

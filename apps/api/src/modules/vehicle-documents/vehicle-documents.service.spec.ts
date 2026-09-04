@@ -9,6 +9,7 @@ function makeAdapter(kind: VehicleDocumentKind): VehicleDocumentAdapter {
   return {
     kind,
     listForVehicle: vi.fn(),
+    listForUser: vi.fn(),
     findForOwnerCheck: vi.fn(),
     activeAt: vi.fn(),
     findExpiringBetween: vi.fn(),
@@ -115,6 +116,20 @@ describe('VehicleDocumentsService', () => {
       expect(warranty.listForVehicle).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
       expect(result[0]?.kind).toBe('insurance');
+    });
+  });
+
+  describe('listForUser', () => {
+    it('asks every adapter for the user and flattens results without touching vehicles', async () => {
+      (insurance.listForUser as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
+      (warranty.listForUser as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
+
+      const result = await service.listForUser('user-1');
+
+      expect(insurance.listForUser).toHaveBeenCalledWith('user-1');
+      expect(warranty.listForUser).toHaveBeenCalledWith('user-1');
+      expect(vehiclesService.ensureVehicleExists).not.toHaveBeenCalled();
+      expect(result.map((d) => d.kind).sort()).toEqual(['insurance', 'warranty']);
     });
   });
 

@@ -145,6 +145,21 @@ describe('InsuranceAdapter', () => {
     });
   });
 
+  describe('listForUser', () => {
+    it('scopes to the user via vehicle membership with no date filter', async () => {
+      prisma.insurancePolicy.findMany.mockResolvedValue([rowWithDecimals()]);
+
+      const result = await adapter.listForUser('user-1');
+
+      expect(prisma.insurancePolicy.findMany).toHaveBeenCalledWith({
+        where: { vehicle: { members: { some: { userId: 'user-1' } } } },
+        orderBy: { endDate: 'desc' },
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0]?.kind).toBe('insurance');
+    });
+  });
+
   describe('findForOwnerCheck', () => {
     it('returns the document and the owning user id', async () => {
       prisma.insurancePolicy.findUnique.mockResolvedValue({
