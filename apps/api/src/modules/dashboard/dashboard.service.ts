@@ -5,7 +5,6 @@ import {
   VehicleRole,
   type DashboardAttentionCounts,
   type DashboardAttentionItem,
-  type DashboardReminderSummary,
   type DashboardSummary,
   type DashboardUrgency,
   type DashboardVehicleDocumentStatus,
@@ -216,14 +215,6 @@ export class DashboardService {
           .length,
       },
       insights: flattenedInsights,
-      recentVehicles: vehicles.slice(0, DASHBOARD_LIST_LIMIT).map((vehicle) => ({
-        id: vehicle.id,
-        displayName: this.displayNameFor(vehicle),
-        registrationNumber: vehicle.registrationNumber,
-        vehicleType: vehicle.vehicleType,
-        odometer: vehicle.odometer,
-        updatedAt: vehicle.updatedAt,
-      })),
       recentMaintenance: maintenanceRecords.slice(0, DASHBOARD_LIST_LIMIT).map((record) => ({
         id: record.id,
         vehicleId: record.vehicleId,
@@ -234,19 +225,6 @@ export class DashboardService {
         workshopName: record.workshopName,
         attachmentCount: attachmentCountByRecordId[record.id] ?? 0,
       })),
-      upcomingReminders: reminders
-        .filter(
-          (reminder) =>
-            reminder.status === ReminderStatus.DueToday ||
-            reminder.status === ReminderStatus.Upcoming,
-        )
-        .sort((left, right) => this.compareByDueDate(left, right))
-        .slice(0, DASHBOARD_LIST_LIMIT)
-        .map((reminder) => this.toReminderSummary(reminder, vehicleLabelById)),
-      overdueReminders: reminders
-        .filter((reminder) => reminder.status === ReminderStatus.Overdue)
-        .slice(0, DASHBOARD_LIST_LIMIT)
-        .map((reminder) => this.toReminderSummary(reminder, vehicleLabelById)),
       attention: attention.slice(0, DASHBOARD_ATTENTION_LIMIT),
       attentionTotal: attention.length,
       attentionCounts: this.buildAttentionCounts(attention, vehicleHealth),
@@ -666,32 +644,6 @@ export class DashboardService {
 
   private displayNameFor(vehicle: Pick<Vehicle, 'nickname' | 'make' | 'model'>): string {
     return vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
-  }
-
-  private toReminderSummary(
-    reminder: Reminder,
-    vehicleLabelById: Record<string, string>,
-  ): DashboardReminderSummary {
-    return {
-      id: reminder.id,
-      vehicleId: reminder.vehicleId,
-      vehicleLabel: vehicleLabelById[reminder.vehicleId] ?? 'Unknown vehicle',
-      title: reminder.title,
-      type: reminder.type,
-      status: reminder.status,
-      dueDate: reminder.dueDate,
-      dueOdometer: reminder.dueOdometer,
-      updatedAt: reminder.updatedAt,
-    };
-  }
-
-  /** Soonest due date first; odometer-only reminders (no dueDate) keep their relative order at the end. */
-  private compareByDueDate(left: Reminder, right: Reminder): number {
-    const leftDue = left.dueDate ? this.toUtcDay(left.dueDate) : Number.POSITIVE_INFINITY;
-    const rightDue = right.dueDate ? this.toUtcDay(right.dueDate) : Number.POSITIVE_INFINITY;
-    if (leftDue === rightDue) return 0;
-
-    return leftDue < rightDue ? -1 : 1;
   }
 
   /** Whole UTC calendar days from `today` (a `toUtcDay` value) to `value`; negative when past. */

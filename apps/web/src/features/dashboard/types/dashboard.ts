@@ -6,7 +6,6 @@ export type {
   DashboardLoanSummary,
   DashboardMaintenanceSummary,
   DashboardReminderCounts,
-  DashboardReminderSummary,
   DashboardSummary,
   DashboardUrgency,
   DashboardVehicleDocumentStatus,
@@ -14,5 +13,4 @@ export type {
   DashboardVehicleLastService,
   DashboardVehicleNextDue,
   DashboardVehicleStatus,
-  DashboardVehicleSummary,
 } from '@vehicle-vault/shared';

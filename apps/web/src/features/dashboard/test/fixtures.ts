@@ -81,10 +81,7 @@ export function makeSummary(overrides: Partial<DashboardSummary> = {}): Dashboar
     totalMaintenanceRecords: 0,
     totalAttachments: 0,
     reminderCounts: makeReminderCounts(),
-    recentVehicles: [],
     recentMaintenance: [],
-    upcomingReminders: [],
-    overdueReminders: [],
     insights: [],
     loans: {
       activeCount: 0,

@@ -15,20 +15,6 @@ export type DashboardReminderCounts = {
   completed: number;
 };
 
-/**
- * @deprecated Superseded by {@link DashboardVehicleHealth} (`DashboardSummary.vehicles`),
- * which covers every vehicle with a health verdict instead of the five newest.
- * Kept for one release so older clients keep working.
- */
-export type DashboardVehicleSummary = {
-  id: string;
-  displayName: string;
-  registrationNumber: string;
-  vehicleType: VehicleType;
-  odometer: number;
-  updatedAt: string;
-};
-
 export type DashboardMaintenanceSummary = {
   id: string;
   vehicleId: string;
@@ -38,18 +24,6 @@ export type DashboardMaintenanceSummary = {
   totalCost: number;
   workshopName?: string;
   attachmentCount: number;
-};
-
-export type DashboardReminderSummary = {
-  id: string;
-  vehicleId: string;
-  vehicleLabel: string;
-  title: string;
-  type: ReminderType;
-  status: ReminderStatus;
-  dueDate?: string;
-  dueOdometer?: number;
-  updatedAt: string;
 };
 
 export type DashboardLoanSummary = {
@@ -186,13 +160,7 @@ export type DashboardSummary = {
   totalMaintenanceRecords: number;
   totalAttachments: number;
   reminderCounts: DashboardReminderCounts;
-  /** @deprecated Use `vehicles`. */
-  recentVehicles: DashboardVehicleSummary[];
   recentMaintenance: DashboardMaintenanceSummary[];
-  /** Due-today + upcoming reminders, soonest first, capped. Prefer `attention`. */
-  upcomingReminders: DashboardReminderSummary[];
-  /** Overdue reminders, capped. Prefer `attention`. */
-  overdueReminders: DashboardReminderSummary[];
   insights: MaintenanceSuggestion[];
   loans: DashboardLoanSummary;
   /**
