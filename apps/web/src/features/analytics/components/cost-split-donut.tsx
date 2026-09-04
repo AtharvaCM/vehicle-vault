@@ -6,9 +6,10 @@ import { PieChart as PieIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-import { costSplitQueryOptions, type CostSplitParams } from '../api/get-cost-split';
+import { costSplitQueryOptions } from '../api/get-cost-split';
+import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
 
-type RangePreset = '30d' | '90d' | '1y' | 'all';
+type RangePreset = Extract<CostRangePreset, '30d' | '90d' | '1y' | 'all'>;
 
 const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
   { value: '30d', label: '30d' },
@@ -19,10 +20,10 @@ const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
 
 const BUCKET_COLORS: Record<string, string> = {
   Fuel: '#f59e0b',
-  Maintenance: '#6366f1',
+  Maintenance: '#0f172a',
   Accessories: '#0ea5e9',
   Insurance: '#10b981',
-  'Loan interest': '#ec4899',
+  'Loan interest': '#f43f5e',
 };
 
 const inrFormatter = new Intl.NumberFormat('en-IN', {
@@ -30,16 +31,6 @@ const inrFormatter = new Intl.NumberFormat('en-IN', {
   currency: 'INR',
   maximumFractionDigits: 0,
 });
-
-function rangeToParams(range: RangePreset): CostSplitParams {
-  if (range === 'all') return {};
-  const to = new Date();
-  const from = new Date(to);
-  if (range === '30d') from.setDate(from.getDate() - 30);
-  if (range === '90d') from.setDate(from.getDate() - 90);
-  if (range === '1y') from.setFullYear(from.getFullYear() - 1);
-  return { from: from.toISOString(), to: to.toISOString() };
-}
 
 type Props = {
   vehicleId?: string;
@@ -70,12 +61,12 @@ export function CostSplitDonut({ vehicleId, defaultRange = '1y' }: Props) {
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <PieIcon className="h-4 w-4 text-indigo-600" />
+            <PieIcon className="h-4 w-4 text-slate-500" />
             Cost split
           </CardTitle>
           <CardDescription>Where your money went</CardDescription>
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {RANGE_OPTIONS.map((option) => (
             <Button
               key={option.value}

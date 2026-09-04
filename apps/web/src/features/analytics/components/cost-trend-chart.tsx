@@ -15,9 +15,10 @@ import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-import { costTrendQueryOptions, type CostTrendParams } from '../api/get-cost-trend';
+import { costTrendQueryOptions } from '../api/get-cost-trend';
+import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
 
-type RangePreset = '6m' | '1y' | '2y' | 'all';
+type RangePreset = Extract<CostRangePreset, '6m' | '1y' | '2y' | 'all'>;
 
 const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
   { value: '6m', label: '6m' },
@@ -31,16 +32,6 @@ const inr = new Intl.NumberFormat('en-IN', {
   currency: 'INR',
   maximumFractionDigits: 0,
 });
-
-function rangeToParams(range: RangePreset): CostTrendParams {
-  if (range === 'all') return {};
-  const to = new Date();
-  const from = new Date(to);
-  if (range === '6m') from.setMonth(from.getMonth() - 6);
-  if (range === '1y') from.setFullYear(from.getFullYear() - 1);
-  if (range === '2y') from.setFullYear(from.getFullYear() - 2);
-  return { from: from.toISOString(), to: to.toISOString() };
-}
 
 type Mode = 'total' | 'costPerKm';
 
@@ -79,7 +70,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-indigo-600" />
+            <TrendingUp className="h-4 w-4 text-slate-500" />
             Ownership trend
           </CardTitle>
           <CardDescription>
@@ -89,7 +80,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             <Button
               type="button"
               size="sm"
@@ -107,7 +98,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
               ₹/km
             </Button>
           </div>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {RANGE_OPTIONS.map((option) => (
               <Button
                 key={option.value}
@@ -163,7 +154,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
                       type="monotone"
                       dataKey="maintenance"
                       name="Maintenance"
-                      stroke="#6366f1"
+                      stroke="#0f172a"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -187,7 +178,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
                       type="monotone"
                       dataKey="loanInterest"
                       name="Loan interest"
-                      stroke="#ec4899"
+                      stroke="#f43f5e"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -195,7 +186,8 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
                       type="monotone"
                       dataKey="total"
                       name="Total"
-                      stroke="#0f172a"
+                      stroke="#64748b"
+                      strokeDasharray="4 4"
                       strokeWidth={2}
                       dot
                     />

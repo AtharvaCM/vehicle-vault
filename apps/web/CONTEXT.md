@@ -26,7 +26,7 @@ Hierarchical `queryKeys.<domain>.<selector>(...)` factory; every key builds on `
 `{success, data, meta?}` on success; `{success:false, error:{code,message,details?}}` on failure. `api/` functions unwrap `.data`; errors become `ApiError` (carries `status` + body); user-facing text via `getApiErrorMessage()`.
 
 **Search state**:
-URL search params validated by a `normalize*Search` function in the feature's `types/`, used as the route's `validateSearch`. Pages are controlled: they receive `searchState` + `onSearchStateChange` (navigate with `replace: true`; defaults stripped from the URL). Examples: `vehicle-list-search.ts`, `maintenance-list-search.ts`, `vehicle-detail-search.ts` (tab state).
+URL search params validated by a `normalize*Search` function in the feature's `types/`, used as the route's `validateSearch`. Pages are controlled: they receive `searchState` + `onSearchStateChange` (navigate with `replace: true`; defaults stripped from the URL). Examples: `vehicle-list-search.ts`, `maintenance-list-search.ts`, `vehicle-detail-search.ts` (tab state), `dashboard-search.ts` (attention-queue focus filter; the route re-normalises `useSearch()` output because TanStack's search is non-strict and leaks unknown raw params).
 
 **Query-state UI**:
 The standard triad `LoadingState` / `EmptyState` / `ErrorState` from `src/components/shared/` for every query-backed view. Forms use `FormField`; mutation errors go to `appToast.error(getApiErrorMessage(e))`.

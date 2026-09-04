@@ -18,6 +18,13 @@ export interface VehicleDocumentAdapter {
   listForVehicle(vehicleId: string): Promise<VehicleDocument[]>;
 
   /**
+   * Every document of this kind across every vehicle the user is a member of,
+   * with no date filter. Used by the dashboard to build cross-vehicle rollups
+   * in a single query per kind instead of `listForVehicle` per vehicle.
+   */
+  listForUser(userId: string): Promise<VehicleDocument[]>;
+
+  /**
    * Returns the document and its owning user id so the service can enforce
    * the ownership invariant uniformly across kinds.
    */

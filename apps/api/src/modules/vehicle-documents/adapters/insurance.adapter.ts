@@ -28,6 +28,14 @@ export class InsuranceAdapter implements VehicleDocumentAdapter {
     return rows.map((row) => this.toDocument(row));
   }
 
+  async listForUser(userId: string): Promise<VehicleDocument[]> {
+    const rows = await this.prisma.insurancePolicy.findMany({
+      where: { vehicle: { members: { some: { userId } } } },
+      orderBy: { endDate: 'desc' },
+    });
+    return rows.map((row) => this.toDocument(row));
+  }
+
   async findForOwnerCheck(
     id: string,
   ): Promise<{ document: VehicleDocument; vehicleUserId: string } | null> {

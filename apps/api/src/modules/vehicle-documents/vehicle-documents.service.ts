@@ -63,6 +63,17 @@ export class VehicleDocumentsService {
     return lists.flat();
   }
 
+  /**
+   * Every document of every kind across every vehicle the user can see, with
+   * no date filter. One query per adapter, regardless of how many vehicles
+   * the user has — callers that need per-vehicle rollups (the dashboard)
+   * group the flat list themselves instead of looping `listForVehicle`.
+   */
+  async listForUser(userId: string): Promise<VehicleDocument[]> {
+    const lists = await Promise.all(this.adapters.map((a) => a.listForUser(userId)));
+    return lists.flat();
+  }
+
   async create(
     userId: string,
     vehicleId: string,
