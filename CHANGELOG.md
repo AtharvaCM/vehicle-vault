@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.19.0...v1.20.0) (2026-09-04)
+
+
+### Features
+
+* **dashboard:** let users snooze expiring documents off the attention queue ([#63](https://github.com/AtharvaCM/vehicle-vault/issues/63)) ([3257de8](https://github.com/AtharvaCM/vehicle-vault/commit/3257de8540dd3b14f960ea5208f2e0feedd3f696))
+
 # [1.19.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.18.2...v1.19.0) (2026-09-04)
 
 
