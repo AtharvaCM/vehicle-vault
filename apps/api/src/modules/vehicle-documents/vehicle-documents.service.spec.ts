@@ -68,6 +68,9 @@ describe('VehicleDocumentsService', () => {
     assertOwner: vi.fn().mockResolvedValue('owner'),
     resolve: vi.fn(),
   };
+  const notificationsService = {
+    markReadForDocument: vi.fn().mockResolvedValue(undefined),
+  };
 
   let insurance: VehicleDocumentAdapter;
   let warranty: VehicleDocumentAdapter;
@@ -80,14 +83,18 @@ describe('VehicleDocumentsService', () => {
     accessService.assert.mockResolvedValue('owner');
     accessService.assertEditor.mockResolvedValue('owner');
     accessService.assertOwner.mockResolvedValue('owner');
+    notificationsService.markReadForDocument.mockResolvedValue(undefined);
     insurance = makeAdapter('insurance');
     warranty = makeAdapter('warranty');
+    (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (warranty.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     service = new VehicleDocumentsService(
       vehiclesService as never,
       [insurance, warranty],
       prisma as never,
       auditService as never,
       accessService as never,
+      notificationsService as never,
     );
   });
 
@@ -156,6 +163,84 @@ describe('VehicleDocumentsService', () => {
           endDate: new Date(),
         }),
       ).rejects.toThrow();
+    });
+
+    it('marks a superseded policy of the same kind read, but not the new one', async () => {
+      const oldPolicy = insuranceDoc({
+        id: 'old-pol',
+        startDate: new Date('2025-01-01T00:00:00.000Z'),
+        endDate: new Date('2026-01-01T00:00:00.000Z'),
+      });
+      const newPolicy = insuranceDoc({
+        id: 'new-pol',
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2027-01-01T00:00:00.000Z'),
+      });
+      (insurance.create as ReturnType<typeof vi.fn>).mockResolvedValue(newPolicy);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([
+        oldPolicy,
+        newPolicy,
+      ]);
+
+      await service.create('user-1', 'veh-1', {
+        kind: 'insurance',
+        provider: 'Acme',
+        policyNumber: 'POL-2',
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2027-01-01T00:00:00.000Z'),
+      });
+
+      expect(notificationsService.markReadForDocument).toHaveBeenCalledExactlyOnceWith(
+        'user-1',
+        'old-pol',
+      );
+    });
+
+    it('marks nothing read when the new document is the only one of its kind', async () => {
+      const onlyPolicy = insuranceDoc({ id: 'only-pol' });
+      (insurance.create as ReturnType<typeof vi.fn>).mockResolvedValue(onlyPolicy);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([onlyPolicy]);
+
+      await service.create('user-1', 'veh-1', {
+        kind: 'insurance',
+        provider: 'Acme',
+        policyNumber: 'POL-1',
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2027-01-01T00:00:00.000Z'),
+      });
+
+      expect(notificationsService.markReadForDocument).not.toHaveBeenCalled();
+    });
+
+    it('never marks a still-current document read, even if it was not the row just created', async () => {
+      // An out-of-order backfill: the new row is older than what is already on file,
+      // so the existing document stays the record of truth and keeps its alerts.
+      const current = insuranceDoc({
+        id: 'current-pol',
+        startDate: new Date('2026-06-01T00:00:00.000Z'),
+      });
+      const backfilled = insuranceDoc({
+        id: 'backfilled-pol',
+        startDate: new Date('2024-01-01T00:00:00.000Z'),
+      });
+      (insurance.create as ReturnType<typeof vi.fn>).mockResolvedValue(backfilled);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([
+        current,
+        backfilled,
+      ]);
+
+      await service.create('user-1', 'veh-1', {
+        kind: 'insurance',
+        provider: 'Acme',
+        policyNumber: 'POL-OLD',
+        startDate: new Date('2024-01-01T00:00:00.000Z'),
+        endDate: new Date('2025-01-01T00:00:00.000Z'),
+      });
+
+      expect(notificationsService.markReadForDocument).not.toHaveBeenCalledWith(
+        'user-1',
+        'current-pol',
+      );
     });
   });
 

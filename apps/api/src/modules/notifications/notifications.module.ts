@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AccessoriesModule } from '../accessories/accessories.module';
@@ -26,7 +26,14 @@ import {
 } from './types';
 
 @Module({
-  imports: [PrismaModule, VehiclesModule, VehicleDocumentsModule, AccessoriesModule],
+  // VehicleDocumentsModule needs NotificationsService back (marking a superseded
+  // document's alerts read on renewal), so this edge must be a forwardRef.
+  imports: [
+    PrismaModule,
+    VehiclesModule,
+    forwardRef(() => VehicleDocumentsModule),
+    AccessoriesModule,
+  ],
   controllers: [NotificationsController],
   providers: [
     NotificationsService,

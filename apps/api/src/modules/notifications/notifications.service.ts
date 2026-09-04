@@ -50,6 +50,23 @@ export class NotificationsService {
     });
   }
 
+  /**
+   * Marks any unread `reminder-due` and `reminder-overdue` notification for
+   * this reminder read. Both templates dedupe on the bare reminder id (see
+   * `ReminderDueTemplate`/`ReminderOverdueTemplate.dedupKey`, no bucket
+   * suffix), so an exact match on both possible keys is enough.
+   */
+  async markReadForReminder(userId: string, reminderId: string) {
+    return this.prisma.notification.updateMany({
+      where: {
+        userId,
+        dedupKey: { in: [`reminder-due:${reminderId}`, `reminder-overdue:${reminderId}`] },
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+  }
+
   async create(data: {
     userId: string;
     vehicleId?: string;

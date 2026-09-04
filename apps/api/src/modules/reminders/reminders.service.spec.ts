@@ -44,6 +44,10 @@ describe('RemindersService', () => {
     track: vi.fn().mockResolvedValue(undefined),
   };
 
+  const notificationsService = {
+    markReadForReminder: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: RemindersService;
 
   beforeEach(() => {
@@ -55,6 +59,7 @@ describe('RemindersService', () => {
       odometer: 12000,
     });
     auditService.track.mockResolvedValue(undefined);
+    notificationsService.markReadForReminder.mockResolvedValue(undefined);
     prisma.fuelLog.findMany.mockResolvedValue([]);
     prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
       if (typeof arg === 'function') {
@@ -67,6 +72,7 @@ describe('RemindersService', () => {
       vehiclesService as never,
       auditService as never,
       { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
+      notificationsService as never,
     );
   });
 
@@ -195,6 +201,7 @@ describe('RemindersService', () => {
         completedAt: expect.any(Date),
       }),
     });
+    expect(notificationsService.markReadForReminder).toHaveBeenCalledWith('user-1', 'reminder-3');
   });
 
   it('filters and paginates reminders by status', async () => {

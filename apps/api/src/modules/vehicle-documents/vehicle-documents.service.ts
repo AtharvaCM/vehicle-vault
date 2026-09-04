@@ -12,8 +12,10 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import { NotificationsService } from '../notifications/notifications.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
+import { pickLatestDocument } from './document-recency';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
 
 const KIND_TO_RESOURCE_TYPE: Record<VehicleDocumentKind, AuditResourceType> = {
@@ -48,6 +50,7 @@ export class VehicleDocumentsService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
+    private readonly notificationsService: NotificationsService,
   ) {
     this.adapterByKind = new Map(adapters.map((a) => [a.kind, a]));
   }
@@ -93,7 +96,32 @@ export class VehicleDocumentsService {
       resourceId: created.id,
       after: created as unknown as Record<string, unknown>,
     });
+    await this.markSupersededNotificationsRead(userId, vehicleId, adapter);
     return created;
+  }
+
+  /**
+   * After adding a document, whichever one of this (vehicle, kind) is no
+   * longer the record of truth — the row(s) this create just superseded, per
+   * the same recency rule the dashboard uses to pick what to show — stop
+   * being alertable: their expiry notifications, if any, are moot. Keeps the
+   * bell from nagging about a policy the user just renewed.
+   */
+  private async markSupersededNotificationsRead(
+    userId: string,
+    vehicleId: string,
+    adapter: VehicleDocumentAdapter,
+  ): Promise<void> {
+    const documents = await adapter.listForVehicle(vehicleId);
+    const current = pickLatestDocument(documents);
+    if (!current) return;
+
+    const superseded = documents.filter((document) => document.id !== current.id);
+    await Promise.all(
+      superseded.map((document) =>
+        this.notificationsService.markReadForDocument(userId, document.id),
+      ),
+    );
   }
 
   async update(
