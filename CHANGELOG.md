@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.18.2...v1.19.0) (2026-09-04)
+
+
+### Features
+
+* **dashboard:** triage-first dashboard with attention queue and vehicle health ([#62](https://github.com/AtharvaCM/vehicle-vault/issues/62)) ([3c6e474](https://github.com/AtharvaCM/vehicle-vault/commit/3c6e47482e06c328453d9507650262bffa9742d0))
+
 ## [1.18.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.18.1...v1.18.2) (2026-08-31)
 
 
