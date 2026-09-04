@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.22.0...v1.22.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **dashboard:** headline names every urgent vehicle past the attention cap ([#69](https://github.com/AtharvaCM/vehicle-vault/issues/69)) ([05c37cd](https://github.com/AtharvaCM/vehicle-vault/commit/05c37cd60253553e53db6460cb56c171a2afb485))
+
 # [1.22.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.21.0...v1.22.0) (2026-09-04)
 
 
