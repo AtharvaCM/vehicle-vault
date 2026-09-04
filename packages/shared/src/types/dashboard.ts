@@ -92,6 +92,13 @@ export type DashboardAttentionCounts = {
   documentsExpiring30d: number;
   /** Vehicles whose `status` is not `ok`. */
   vehiclesNeedingAttention: number;
+  /**
+   * Distinct vehicles among overdue/today/thisWeek items (thisMonth excluded,
+   * matching the headline's own definition of "urgent"). Computed from the
+   * uncapped attention list, so it stays accurate once `attention` is capped
+   * at 25 and can no longer be trusted to name every urgent vehicle itself.
+   */
+  urgentVehicles: number;
   /** overdue + today + thisWeek + thisMonth. */
   total: number;
 };

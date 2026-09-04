@@ -7,7 +7,13 @@ import { queryKeys } from '@/lib/query/query-keys';
 
 import type { DashboardAttentionCounts, DashboardSummary } from '../types/dashboard';
 
-type RollupFields = 'attention' | 'attentionTotal' | 'attentionCounts' | 'vehicles' | 'vehiclesTotal' | 'hasSpend';
+type RollupFields =
+  | 'attention'
+  | 'attentionTotal'
+  | 'attentionCounts'
+  | 'vehicles'
+  | 'vehiclesTotal'
+  | 'hasSpend';
 
 /** What an API that predates the dashboard rollups still sends. */
 export type LegacyDashboardSummary = Omit<DashboardSummary, RollupFields> &
@@ -20,6 +26,7 @@ const EMPTY_ATTENTION_COUNTS: DashboardAttentionCounts = {
   thisMonth: 0,
   documentsExpiring30d: 0,
   vehiclesNeedingAttention: 0,
+  urgentVehicles: 0,
   total: 0,
 };
 
