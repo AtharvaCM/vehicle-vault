@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.20.0...v1.20.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **api:** reconcile prisma migration drift with schema.prisma ([1e215da](https://github.com/AtharvaCM/vehicle-vault/commit/1e215da8a79b5d62d72e285f43c6b438e2af2c78))
+
 # [1.20.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.19.0...v1.20.0) (2026-09-04)
 
 
