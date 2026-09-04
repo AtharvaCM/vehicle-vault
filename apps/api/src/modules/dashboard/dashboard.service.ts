@@ -433,6 +433,9 @@ export class DashboardService {
     const today = attention.filter((item) => item.urgency === 'today').length;
     const thisWeek = attention.filter((item) => item.urgency === 'this_week').length;
     const thisMonth = attention.filter((item) => item.urgency === 'this_month').length;
+    const urgentVehicles = new Set(
+      attention.filter((item) => item.urgency !== 'this_month').map((item) => item.vehicleId),
+    ).size;
 
     return {
       overdue,
@@ -441,6 +444,7 @@ export class DashboardService {
       thisMonth,
       documentsExpiring30d: attention.filter((item) => item.kind === 'document').length,
       vehiclesNeedingAttention: vehicleHealth.filter((vehicle) => vehicle.status !== 'ok').length,
+      urgentVehicles,
       total: overdue + today + thisWeek + thisMonth,
     };
   }

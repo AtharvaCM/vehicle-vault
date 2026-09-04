@@ -347,6 +347,7 @@ describe('DashboardService', () => {
         thisMonth: 0,
         documentsExpiring30d: 0,
         vehiclesNeedingAttention: 1,
+        urgentVehicles: 1,
         total: 3,
       });
     });
@@ -538,6 +539,56 @@ describe('DashboardService', () => {
       expect(result.attentionCounts.thisWeek).toBe(30);
       expect(result.attentionCounts.total).toBe(30);
       expect(result.vehicles[0]?.dueSoonCount).toBe(30);
+    });
+
+    it('(g2) counts urgentVehicles from the uncapped list, past what the capped queue can show', async () => {
+      // 26 vehicles, one overdue reminder each: the capped queue holds 25, so a
+      // count derived from `attention` alone would undercount by one vehicle.
+      vehiclesService.getAllVehicles.mockResolvedValue(
+        Array.from({ length: 26 }, (_, index) => makeVehicle({ id: `vehicle-${index}` })),
+      );
+      remindersService.getAllReminders.mockResolvedValue(
+        Array.from({ length: 26 }, (_, index) =>
+          makeReminder({
+            id: `reminder-${index}`,
+            vehicleId: `vehicle-${index}`,
+            dueDate: daysFromNow(-1),
+            status: ReminderStatus.Overdue,
+          }),
+        ),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention).toHaveLength(25);
+      expect(result.attentionCounts.urgentVehicles).toBe(26);
+    });
+
+    it('urgentVehicles excludes this_month items and de-duplicates a vehicle with several urgent rows', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        makeVehicle({ id: 'vehicle-1' }),
+        makeVehicle({ id: 'vehicle-2' }),
+      ]);
+      remindersService.getAllReminders.mockResolvedValue([
+        makeReminder({
+          id: 'v1-overdue',
+          vehicleId: 'vehicle-1',
+          dueDate: daysFromNow(-1),
+          status: ReminderStatus.Overdue,
+        }),
+        makeReminder({
+          id: 'v1-today',
+          vehicleId: 'vehicle-1',
+          dueDate: daysFromNow(0),
+          status: ReminderStatus.DueToday,
+        }),
+        makeReminder({ id: 'v2-this-month', vehicleId: 'vehicle-2', dueDate: daysFromNow(20) }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      // Only vehicle-1 has an overdue/today/this_week item; vehicle-2's is this_month.
+      expect(result.attentionCounts.urgentVehicles).toBe(1);
     });
 
     it('orders a bucket by days until due, then odometer-only items by km, then title', async () => {

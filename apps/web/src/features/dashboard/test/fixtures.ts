@@ -62,6 +62,7 @@ export function makeAttentionCounts(
     thisMonth: 0,
     documentsExpiring30d: 0,
     vehiclesNeedingAttention: 0,
+    urgentVehicles: 0,
     total: 0,
     ...overrides,
   };

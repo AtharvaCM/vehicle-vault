@@ -12,21 +12,30 @@ describe('dashboardHeadline', () => {
           makeAttentionItem({ id: 'b', urgency: 'today', vehicleId: 'v2' }),
           makeAttentionItem({ id: 'c', urgency: 'this_month', vehicleId: 'v3' }),
         ],
-        attentionCounts: makeAttentionCounts({ overdue: 1, today: 1, thisMonth: 1, total: 3 }),
+        attentionCounts: makeAttentionCounts({
+          overdue: 1,
+          today: 1,
+          thisMonth: 1,
+          urgentVehicles: 2,
+          total: 3,
+        }),
       }),
     ).toBe('2 things need your attention. Across 2 vehicles.');
   });
 
-  it('omits the vehicle count when the capped list cannot cover every urgent item', () => {
+  it('trusts attentionCounts.urgentVehicles even when the capped list cannot cover every urgent item', () => {
     expect(
       dashboardHeadline({
+        // Only 2 of the 30 urgent items made the capped list, both on the same
+        // vehicle — a count derived from this list alone would say 1, or (the
+        // old behaviour) refuse to guess and omit the vehicle count entirely.
         attention: [
           makeAttentionItem({ id: 'a', urgency: 'overdue', vehicleId: 'v1' }),
-          makeAttentionItem({ id: 'b', urgency: 'overdue', vehicleId: 'v2' }),
+          makeAttentionItem({ id: 'b', urgency: 'overdue', vehicleId: 'v1' }),
         ],
-        attentionCounts: makeAttentionCounts({ overdue: 30, total: 30 }),
+        attentionCounts: makeAttentionCounts({ overdue: 30, urgentVehicles: 15, total: 30 }),
       }),
-    ).toBe('30 things need your attention.');
+    ).toBe('30 things need your attention. Across 15 vehicles.');
   });
 
   it('uses singular wording and omits the vehicle count for a single vehicle', () => {
