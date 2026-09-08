@@ -18,6 +18,8 @@ import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import type { UpdateReminderDto } from './dto/update-reminder.dto';
+import { extractSlugFromNotes } from './catalog-marker';
+import { ServiceScheduleService } from './service-schedule.service';
 import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-projection';
 
 const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
@@ -47,6 +49,7 @@ export class RemindersService {
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
     private readonly notificationsService: NotificationsService,
+    private readonly serviceScheduleService: ServiceScheduleService,
   ) {}
 
   async getAllReminders(userId: string) {
@@ -192,6 +195,17 @@ export class RemindersService {
     await this.access.assertEditor(userId, before.vehicleId);
     const now = new Date();
 
+    // Resolved before the transaction opens: it reads the catalog, the vehicle
+    // and the vehicle's tyre observations, and none of that belongs inside a
+    // write transaction. Null for a hand-written reminder, which does not recur.
+    const next = await this.serviceScheduleService.buildNextOccurrence(
+      userId,
+      before.vehicleId,
+      extractSlugFromNotes(before.notes),
+      now,
+      reminderId,
+    );
+
     await this.prisma.$transaction(async (tx) => {
       const updated = await tx.reminder.update({
         where: { id: reminderId },
@@ -206,6 +220,18 @@ export class RemindersService {
         before: before as unknown as Record<string, unknown>,
         after: updated as unknown as Record<string, unknown>,
       });
+
+      if (next) {
+        const scheduled = await tx.reminder.create({ data: next });
+        await this.auditService.track(tx, {
+          actorUserId: userId,
+          ownerUserId: userId,
+          action: AUDIT_ACTIONS.reminder.created,
+          resourceType: AuditResourceType.reminder,
+          resourceId: scheduled.id,
+          after: scheduled as unknown as Record<string, unknown>,
+        });
+      }
     });
     // Keeps the bell in step with the attention queue for this action — the
     // reminder just left the queue, so any due/overdue alert for it is moot.

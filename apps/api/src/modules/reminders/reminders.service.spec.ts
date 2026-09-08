@@ -47,6 +47,7 @@ describe('RemindersService', () => {
   const notificationsService = {
     markReadForReminder: vi.fn().mockResolvedValue(undefined),
   };
+  const serviceScheduleService = { buildNextOccurrence: vi.fn() };
 
   let service: RemindersService;
 
@@ -67,12 +68,14 @@ describe('RemindersService', () => {
       }
       return Array.isArray(arg) ? arg : undefined;
     });
+    serviceScheduleService.buildNextOccurrence.mockResolvedValue(null);
     service = new RemindersService(
       prisma as never,
       vehiclesService as never,
       auditService as never,
       { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
       notificationsService as never,
+      serviceScheduleService as never,
     );
   });
 
@@ -202,6 +205,101 @@ describe('RemindersService', () => {
       }),
     });
     expect(notificationsService.markReadForReminder).toHaveBeenCalledWith('user-1', 'reminder-3');
+  });
+
+  describe('recurring reminders', () => {
+    const catalogReminder = {
+      id: 'reminder-4',
+      vehicleId: 'vehicle-1',
+      title: 'Engine oil change',
+      type: ReminderType.Service,
+      dueDate: null,
+      dueOdometer: 15000,
+      status: ReminderStatus.Upcoming,
+      completedAt: null,
+      notes: 'Every 10 000 km.\n[catalog:engine_oil_change]',
+      createdAt,
+      updatedAt: createdAt,
+      vehicle: { odometer: 12000 },
+    };
+
+    beforeEach(() => {
+      prisma.reminder.findFirst = vi.fn().mockResolvedValue(catalogReminder);
+      prisma.reminder.update = vi.fn().mockResolvedValue(undefined);
+      prisma.reminder.create = vi.fn().mockResolvedValue({ id: 'reminder-next' });
+    });
+
+    it('schedules the next occurrence when a catalog reminder is completed', async () => {
+      // The gap this closes: an interval that stopped meaning anything the
+      // first time somebody acted on it.
+      serviceScheduleService.buildNextOccurrence.mockResolvedValue({
+        vehicleId: 'vehicle-1',
+        title: 'Engine oil change',
+        type: ReminderType.Service,
+        dueOdometer: 22000,
+        dueDate: null,
+        notes: '[catalog:engine_oil_change]',
+        status: ReminderStatus.Upcoming,
+      });
+
+      await service.completeReminder('user-1', 'reminder-4');
+
+      expect(serviceScheduleService.buildNextOccurrence).toHaveBeenCalledWith(
+        'user-1',
+        'vehicle-1',
+        'engine_oil_change',
+        expect.any(Date),
+        // The reminder being completed, so it is not counted as already
+        // covering its own slug.
+        'reminder-4',
+      );
+      expect(prisma.reminder.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ dueOdometer: 22000 }),
+      });
+    });
+
+    it('records the scheduled reminder as its own audited creation', async () => {
+      serviceScheduleService.buildNextOccurrence.mockResolvedValue({
+        vehicleId: 'vehicle-1',
+        title: 'Engine oil change',
+        type: ReminderType.Service,
+        dueOdometer: 22000,
+        dueDate: null,
+        notes: '[catalog:engine_oil_change]',
+        status: ReminderStatus.Upcoming,
+      });
+
+      await service.completeReminder('user-1', 'reminder-4');
+
+      const actions = auditService.track.mock.calls.map(
+        ([, event]) => (event as { action: string }).action,
+      );
+      expect(actions).toEqual(['reminder.completed', 'reminder.created']);
+    });
+
+    it('creates nothing when the reminder does not recur', async () => {
+      serviceScheduleService.buildNextOccurrence.mockResolvedValue(null);
+
+      await service.completeReminder('user-1', 'reminder-4');
+
+      expect(prisma.reminder.create).not.toHaveBeenCalled();
+    });
+
+    it('passes a null slug on for a hand-written reminder', async () => {
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValue({ ...catalogReminder, notes: 'Ask about the rattle' });
+
+      await service.completeReminder('user-1', 'reminder-4');
+
+      expect(serviceScheduleService.buildNextOccurrence).toHaveBeenCalledWith(
+        'user-1',
+        'vehicle-1',
+        null,
+        expect.any(Date),
+        'reminder-4',
+      );
+    });
   });
 
   it('filters and paginates reminders by status', async () => {

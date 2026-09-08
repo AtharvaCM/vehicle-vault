@@ -255,6 +255,42 @@ describe('MaintenanceAlertService tyre checks', () => {
     ]);
   });
 
+  it('leaves the tyre walk-around reminder to the measurements', async () => {
+    // Both would otherwise nag about one thing and disagree about it: the
+    // reminder goes overdue when nobody ticked a box, `tyre-uninspected` when
+    // nobody actually looked. Only the second is true about the tyres.
+    prisma.reminder.findMany.mockResolvedValue([
+      {
+        id: 'rem-1',
+        vehicleId: 'v1',
+        title: 'Tyre tread & pressure check',
+        dueOdometer: 35_000,
+        notes: 'Measure tread depth at each corner.\n[catalog:tyre_inspection]',
+      },
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(kindsRaised()).not.toContain('reminder-due');
+    expect(kindsRaised()).not.toContain('reminder-overdue');
+  });
+
+  it('still alerts on every other overdue reminder', async () => {
+    prisma.reminder.findMany.mockResolvedValue([
+      {
+        id: 'rem-2',
+        vehicleId: 'v1',
+        title: 'Rotate tyres',
+        dueOdometer: 35_000,
+        notes: '[catalog:tyre_rotation]',
+      },
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(kindsRaised()).toContain('reminder-overdue');
+  });
+
   it('has nothing to ask of a vehicle carrying only a spare', async () => {
     // No road tyre means no distance to measure staleness against, and the
     // "untracked" wording would be a lie — tyres are recorded.

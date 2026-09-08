@@ -11,6 +11,10 @@ import { AccessoriesService } from '../accessories/accessories.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
 import { TyresService, type VehicleTyreAlertState } from '../tyres/tyres.service';
+// Pure functions, not a provider: importing them does not make the
+// notifications module depend on the reminders module, which would close a
+// cycle (reminders → notifications → tyres).
+import { extractSlugFromNotes, TYRE_INSPECTION_SLUG } from '../reminders/catalog-marker';
 import {
   ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
   SERVICE_HISTORY_PROMPT_KM,
@@ -125,6 +129,14 @@ export class MaintenanceAlertService {
 
     for (const reminder of reminders) {
       if (!reminder.dueOdometer) continue;
+
+      // The tyre walk-around is alerted from measurements, not from this row.
+      // Both would otherwise nag about one thing, and they would disagree: a
+      // reminder goes overdue when nobody ticked a box, while `tyre-uninspected`
+      // goes stale when nobody actually looked. Only the second is true about
+      // the tyres. Someone who inspects and forgets to tick is left alone;
+      // someone who ticks without inspecting is not.
+      if (extractSlugFromNotes(reminder.notes) === TYRE_INSPECTION_SLUG) continue;
 
       const remainingDistance = reminder.dueOdometer - currentOdo;
 
