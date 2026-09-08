@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuditResourceType, Prisma } from '@prisma/client';
 import {
   MaintenanceCategory,
+  MaintenanceRecordStatus,
   ServiceBaselineStatus,
   ServiceBaselineUpsertSchema,
   type ServiceBaseline,
@@ -53,11 +54,15 @@ export class ServiceBaselineService {
 
     const [baselines, records] = await Promise.all([
       this.prisma.serviceBaseline.findMany({ where: { vehicleId } }),
-      // Ordered and unfiltered to match MaintenanceAlertService exactly. If the
-      // engine would measure from a row, this view has to show that row, or the
-      // screen explaining a reminder disagrees with the reminder.
+      // Ordered and filtered to match MaintenanceAlertService exactly — same
+      // `status: confirmed`, same `odometer: desc`. If the engine would measure
+      // from a row, this view has to show that row, or the screen explaining a
+      // reminder disagrees with the reminder. Drafts are excluded on both sides
+      // because an unconfirmed record is not evidence the service happened;
+      // showing one here as `source: 'record'` would tell the owner their brake
+      // pads are logged while the engine still counts them as never done.
       this.prisma.maintenanceRecord.findMany({
-        where: { vehicleId },
+        where: { vehicleId, status: MaintenanceRecordStatus.Confirmed },
         select: { category: true, odometer: true, serviceDate: true },
         orderBy: { odometer: 'desc' },
       }),

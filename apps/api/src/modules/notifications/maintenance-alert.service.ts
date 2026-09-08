@@ -22,6 +22,7 @@ import {
   TYRE_INSPECTION_INTERVAL_MONTHS,
   TYRE_TRACKING_PROMPT_KM,
   VEHICLE_AGE_PROMPT_YEARS,
+  MaintenanceRecordStatus,
   type MaintenanceCategory,
 } from '@vehicle-vault/shared';
 
@@ -60,6 +61,14 @@ export class MaintenanceAlertService {
       where: { id: vehicleId },
       include: {
         maintenanceRecords: {
+          // Confirmed only. A draft is an unconfirmed intention — typically a
+          // record hydrated from a document extraction that nobody has agreed
+          // to yet — and counting it as "this service was done" silences the
+          // very reminder the user still needs. Filtered in the query rather
+          // than after the fact so the engine cannot accidentally measure from
+          // a row it should not see, and so the daily sweep over every vehicle
+          // stops loading drafts it would only throw away.
+          where: { status: MaintenanceRecordStatus.Confirmed },
           orderBy: { odometer: 'desc' },
         },
         // Loaded with the vehicle rather than fetched per category: this runs
@@ -259,10 +268,14 @@ export class MaintenanceAlertService {
   }
 
   /**
-   * Fires only when the app has been told nothing at all: no service records, no
-   * baselines, and enough distance or years for that silence to be misleading.
-   * A vehicle with a single logged service is already telling us something and
-   * is left alone.
+   * Fires only when the app has been told nothing at all: no confirmed service
+   * records, no baselines, and enough distance or years for that silence to be
+   * misleading. A vehicle with a single logged service is already telling us
+   * something and is left alone.
+   *
+   * `maintenanceRecords` arrives already filtered to confirmed rows, so a
+   * vehicle whose only history is an unconfirmed draft still gets asked. That
+   * is the point: nobody has yet agreed the draft describes a real service.
    */
   private async runServiceHistoryPrompt(
     vehicle: {
