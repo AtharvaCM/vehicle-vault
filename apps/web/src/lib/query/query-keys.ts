@@ -20,6 +20,9 @@ export const queryKeys = {
   accessories: {
     all: (vehicleId: string) => ['vehicles', 'detail', vehicleId, 'accessories'] as const,
   },
+  serviceBaseline: {
+    coverage: (vehicleId: string) => ['vehicles', 'detail', vehicleId, 'service-baseline'] as const,
+  },
   vehicleCatalog: {
     all: () => ['vehicleCatalog'] as const,
     importRuns: () => [...queryKeys.vehicleCatalog.all(), 'importRuns'] as const,

@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AccessoriesModule } from '../accessories/accessories.module';
+import { TyresModule } from '../tyres/tyres.module';
 import { VehicleDocumentsModule } from '../vehicle-documents/vehicle-documents.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { MaintenanceAlertService } from './maintenance-alert.service';
@@ -17,6 +18,10 @@ import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
 import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
 import { ReminderDueTemplate } from './templates/reminder-due.template';
 import { ReminderOverdueTemplate } from './templates/reminder-overdue.template';
+import { ServiceBaselineUnknownTemplate } from './templates/service-baseline-unknown.template';
+import { TyreAgedTemplate } from './templates/tyre-aged.template';
+import { TyreUninspectedTemplate } from './templates/tyre-uninspected.template';
+import { TyreWornTemplate } from './templates/tyre-worn.template';
 import {
   ALERT_TEMPLATES,
   NOTIFICATION_CHANNELS,
@@ -24,6 +29,25 @@ import {
   type AlertTemplate,
   type Channel,
 } from './types';
+
+/**
+ * One list, used as both the provider registration and the multi-provider's
+ * `inject`. Naming each template in three separate places is how a registered
+ * template ends up missing from the factory it feeds, and `NotifyService.raise`
+ * only discovers that at runtime, on the alert nobody received.
+ */
+export const ALERT_TEMPLATE_PROVIDERS = [
+  MaintenanceDueTemplate,
+  MaintenanceOverdueTemplate,
+  ReminderDueTemplate,
+  ReminderOverdueTemplate,
+  DocumentExpiringTemplate,
+  AccessoryWarrantyExpiringTemplate,
+  TyreWornTemplate,
+  TyreAgedTemplate,
+  TyreUninspectedTemplate,
+  ServiceBaselineUnknownTemplate,
+];
 
 @Module({
   // VehicleDocumentsModule needs NotificationsService back (marking a superseded
@@ -33,46 +57,21 @@ import {
     VehiclesModule,
     forwardRef(() => VehicleDocumentsModule),
     AccessoriesModule,
+    TyresModule,
   ],
   controllers: [NotificationsController],
   providers: [
     NotificationsService,
     MaintenanceAlertService,
     NotifyService,
-    MaintenanceDueTemplate,
-    MaintenanceOverdueTemplate,
-    ReminderDueTemplate,
-    ReminderOverdueTemplate,
-    DocumentExpiringTemplate,
-    AccessoryWarrantyExpiringTemplate,
+    ...ALERT_TEMPLATE_PROVIDERS,
     EmailChannel,
     PushSubscriptionsService,
     PushChannel,
     {
       provide: ALERT_TEMPLATES,
-      useFactory: (
-        maintenanceDue: MaintenanceDueTemplate,
-        maintenanceOverdue: MaintenanceOverdueTemplate,
-        reminderDue: ReminderDueTemplate,
-        reminderOverdue: ReminderOverdueTemplate,
-        documentExpiring: DocumentExpiringTemplate,
-        accessoryWarrantyExpiring: AccessoryWarrantyExpiringTemplate,
-      ): AlertTemplate<AlertKind>[] => [
-        maintenanceDue,
-        maintenanceOverdue,
-        reminderDue,
-        reminderOverdue,
-        documentExpiring,
-        accessoryWarrantyExpiring,
-      ],
-      inject: [
-        MaintenanceDueTemplate,
-        MaintenanceOverdueTemplate,
-        ReminderDueTemplate,
-        ReminderOverdueTemplate,
-        DocumentExpiringTemplate,
-        AccessoryWarrantyExpiringTemplate,
-      ],
+      useFactory: (...templates: AlertTemplate<AlertKind>[]) => templates,
+      inject: ALERT_TEMPLATE_PROVIDERS,
     },
     {
       provide: NOTIFICATION_CHANNELS,

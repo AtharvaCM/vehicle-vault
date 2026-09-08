@@ -42,11 +42,16 @@ A financing record on a **Vehicle**: amortization schedule (EMI math in `vehicle
 **Reminder**:
 A future-dated to-do tied to a **Vehicle**, optionally with `dueOdometer`. Drives both UI surfaces and the alert engine. Service-schedule suggestions come from `ServiceScheduleService` + `service-schedule-catalog.ts`.
 
+A reminder created from the catalog **recurs**: completing it schedules the next occurrence (`ServiceScheduleService.buildNextOccurrence`). Catalog origin is recorded as a `[catalog:<slug>]` marker in `notes` — `Reminder` has no column for it, and the helpers that read it live in `reminders/catalog-marker.ts` as pure functions so the **AlertEngine** can use them without the notifications module depending on the reminders module. A hand-written reminder states no interval and is never turned into a repeating one. A successor that would be born already due is not created at all: it would repeat what the completed row said, and completing that one would produce another.
+
+**Schedule anchor**:
+What a proposed interval is counted from. Usually "now, at the current odometer" — but for the tyre walk-around it is the last **tyre observation**, so scheduling a check 4 000 km after the last one proposes it in 1 000 km rather than 5 000. Anchors are per-slug and resolved once, so previewing a suggestion and applying it produce the same reminder. The same argument applies to every category with a **ServiceBaseline** or a logged service behind it; generalising it is the obvious next step.
+
 **Notification**:
 A user-facing message persisted per **User** with a `kind` and a `dedupKey`. Uniqueness for unread notifications enforced by partial unique index on `(userId, dedupKey) WHERE isRead = false`; a dedup collision returns the existing unread row rather than throwing. See ADR-0003.
 
 **AlertKind**:
-A typed alert category — `maintenance-due`, `maintenance-overdue`, `reminder-due`, `reminder-overdue`, `document-expiring`. Each kind has an **AlertTemplate** that owns content rendering and `dedupKey` computation.
+A typed alert category — `maintenance-due`, `maintenance-overdue`, `reminder-due`, `reminder-overdue`, `document-expiring`, `accessory-warranty-expiring`, `tyre-worn`, `tyre-aged`, `tyre-uninspected`, `service-baseline-unknown`. Enumerated at runtime as `ALERT_KINDS` so a kind with no registered template fails a test rather than a cron run. Each kind has an **AlertTemplate** that owns content rendering and `dedupKey` computation.
 
 **AlertTemplate**:
 The per-**AlertKind** producer of notification content (title, message, link, urgency) and dedup identity. Wired via `ALERT_TEMPLATES` DI multi-provider behind **NotifyService**.
@@ -58,10 +63,29 @@ An external delivery adapter for a **Notification** (`email` and `push` today; `
 `raise(userId, vehicleId, kind, payload)` — resolves template, computes dedup key, upserts the row, and fans out to channels. The single entry point for raising any alert.
 
 **AlertEngine** (`MaintenanceAlertService`):
-The cron orchestrator that runs per-vehicle, reads current predicted odometer (`VehicleInsightsService`), and calls **NotifyService.raise** for each crossed threshold (intervals from `MaintenanceIntervalResolver`, reminders within 500 km of `dueOdometer`, documents expiring within 7 days via `VehicleDocumentsService.findExpiring`). Owns _when_ to alert, not _what_ the alert looks like.
+The cron orchestrator that runs per-vehicle, reads current predicted odometer (`VehicleInsightsService`), and calls **NotifyService.raise** for each crossed threshold (intervals from `MaintenanceIntervalResolver`, reminders within 500 km of `dueOdometer`, documents expiring within 7 days via `VehicleDocumentsService.findExpiring`, tyre verdicts from `TyresService.getAlertState`, last-done odometers from **ServiceBaseline** rows loaded with the vehicle). Owns _when_ to alert, not _what_ the alert looks like.
+
+**Tyre observation**:
+The last time anyone had eyes on a **Tyre** — its newest **TyreInspection**, or its `fittedDate`/`fittedOdometer` when it has never been measured. `TyresService.getAlertState` reports the _oldest_ observation across a vehicle's road tyres (the spare is graded but excluded, since it covers none of the vehicle's mileage), and the **AlertEngine** raises `tyre-uninspected` once that observation is older than `TYRE_INSPECTION_INTERVAL_KM` / `_MONTHS`. The distinction this encodes: a tyre nobody has measured is **unknown**, not healthy, and unknown is a thing to say out loud rather than a reason to stay quiet.
+
+**ServiceBaseline**:
+What was known about one **MaintenanceCategory** on a **Vehicle** when it entered the vault — an odometer reading, a date, or an explicit `unknown`. Unique per `[vehicleId, category]`; a CHECK constraint keeps `known` carrying a figure and `unknown` carrying none.
+
+Three states, not two, and the third is the absence of a row:
+
+| State                          | Engine behaviour                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| A **MaintenanceRecord** exists | measured from the record — always wins over a baseline, which was a recollection |
+| `known` with an odometer       | measured from the baseline                                                       |
+| `known` with only a date       | no km alerting; the forecast owns month-based intervals                          |
+| `unknown`                      | raises `service-baseline-unknown`, scope `category`                              |
+| **no row**                     | the historical fallback: measured from `Vehicle.odometer`                        |
+
+That last row is the behaviour this table exists to retire, and it is kept deliberately. Before **ServiceBaseline**, a category with no record was measured from the odometer at the moment the vehicle was added — silently asserting everything had just been done, so a bike added at 40 000 km was treated as having had its brake pads changed at 40 000 km. Every vehicle predating the table is in the no-row state, and reading it as `unknown` would greet each existing garage with one notification per service category. Users move out of it by answering, through `PUT /vehicles/:vehicleId/service-baseline`.
+_Not_ a **MaintenanceRecord**: a baseline is what someone remembers, carries no cost, no line items and no attachment, and never contributes to ₹/km.
 
 **Service intervals** — `vehicles/maintenance-interval.resolver.ts` is the single source of truth for "how often does this vehicle need X". It gates categories by vehicle type and fuel, and prefers per-variant `ServiceInterval` rows over its default table. `MaintenanceAlertService` and `MaintenanceForecastService` both consume it, and it is served to clients at `GET /vehicles/:vehicleId/intervals` so the web app never restates an interval locally — a client that picks its own number will disagree with the alert engine about the same vehicle.
-_Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic intervals for the reminder-suggestion flow, and some of its figures differ from the resolver's. It is scoped to "what reminders could I create", not "is this service due", but the two should be reconciled.
+_Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic intervals for the reminder-suggestion flow, and some of its figures differ from the resolver's. It is scoped to "what reminders could I create", not "is this service due", but the two should be reconciled. Its `tyre_inspection` item is the exception that reads from shared constants (`TYRE_INSPECTION_INTERVAL_KM` / `_MONTHS`) rather than restating a number, because the **AlertEngine** grades the same cadence and the two must not drift.
 
 **Token**:
 A credential issued to a **User** for a specific purpose: email verification, password reset, or refresh session. **TokenService** owns issue/consume/rotate/revoke lifecycle for all purposes, regardless of whether the bits are a JWT (refresh) or a SHA-256 hash of random bytes (verification, reset). Timing-safe comparisons. See ADR-0002.
@@ -88,13 +112,16 @@ A **global, cross-user** self-learning table mapping normalized part names → s
 
 ## Module map
 
-auth (register/login/refresh/OAuth/verify/reset), users, admin (user directory, force-logout, admin-email role reconciliation on boot), vehicles (CRUD, insights/forecast, catalog linking), vehicle-sharing (members/invites/transfer), vehicle-catalog (browse + import-run admin), maintenance (+ drafts, bulk, CSV), maintenance-parts, reminders (+ service-schedule), fuel-logs (+ scan), vehicle-documents (insurance/warranty adapters + scan), claims (+ claim-attachments), vehicle-loans (+ amortization, scan), accessories (purchases + warranty expiry), attachments (polymorphic, extract/apply/reconciliation), notifications (NotifyService + AlertEngine + EmailChannel), audit, analytics (cost-split/cost-trend/TCO), dashboard, reports (service-history + resale PDFs), exports (account dump), extraction (`@Global` engine), health.
+auth (register/login/refresh/OAuth/verify/reset), users, admin (user directory, force-logout, admin-email role reconciliation on boot), vehicles (CRUD, insights/forecast, catalog linking), vehicle-sharing (members/invites/transfer), vehicle-catalog (browse + import-run admin), maintenance (+ drafts, bulk, CSV), maintenance-parts, reminders (+ service-schedule), service-baseline (per-category history capture + coverage), fuel-logs (+ scan), vehicle-documents (insurance/warranty adapters + scan), claims (+ claim-attachments), vehicle-loans (+ amortization, scan), accessories (purchases + warranty expiry), attachments (polymorphic, extract/apply/reconciliation), notifications (NotifyService + AlertEngine + EmailChannel), audit, analytics (cost-split/cost-trend/TCO), dashboard, reports (service-history + resale PDFs), exports (account dump), extraction (`@Global` engine), health.
 
 ## Relationships
 
-- A **Vehicle** has many **VehicleMembers**, **VehicleDocuments**, **MaintenanceRecords**, **Reminders**, **FuelLogs**, **Claims**, **VehicleLoans**, **Tyres**, **Accessories**.
+- A **Vehicle** has many **VehicleMembers**, **VehicleDocuments**, **MaintenanceRecords**, **Reminders**, **FuelLogs**, **Claims**, **VehicleLoans**, **Tyres**, **Accessories**, **ServiceBaselines**.
+- The **AlertEngine** reads **ServiceBaseline** rows through the vehicle's own `include` rather than a service call — it runs once per vehicle across the whole table, and a baseline is a small child row of the vehicle already being read. `ServiceBaselineService.getCoverage` serves the same facts to clients, deliberately matching the engine's record lookup (unfiltered, ordered by odometer) so the screen explaining a reminder cannot disagree with the reminder.
 - The **AlertEngine** reads **VehicleDocumentsService.findExpiring(withinDays)** (adapters implement `findExpiringBetween`) to produce expiry **Notifications**. It does not query document tables directly.
 - The **AlertEngine** also reads **AccessoriesService.findExpiringWarranties(withinDays)** for the `accessory-warranty-expiring` kind. Accessory warranties raise **Notifications**, never **Reminders** — `Reminder` carries no pointer to a source record, and a date-only Reminder raises no alert at all.
+- The **AlertEngine** skips `reminder-due` / `reminder-overdue` for a **Reminder** carrying the `tyre_inspection` catalog slug. Both signals would otherwise nag about one thing and disagree about it: a reminder goes overdue when nobody ticked a box, `tyre-uninspected` when nobody actually looked, and only the second is true about the tyres. Someone who inspects and forgets to tick is left alone; someone who ticks without inspecting is not.
+- The **AlertEngine** reads **TyresService.getAlertState(userId, vehicleId)** for the three tyre kinds. Grading stays in **TyreConditionResolver** and reaches the notification as a rendered verdict, so the same numbers back the alert and the vehicle page — the engine never re-derives "is this tyre finished". Graded against `Vehicle.odometer`, not the predicted reading: a forecast must not be what declares a tyre worn.
 - An **Attachment** has exactly one owner of five — **MaintenanceRecord**, **InsurancePolicy**, **Warranty**, **Claim**, or **VehicleLoan** — enforced by CHECK constraint `attachment_owner_exclusive`.
 
 ## Flagged ambiguities

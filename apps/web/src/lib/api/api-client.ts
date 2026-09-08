@@ -22,7 +22,7 @@ export type ApiErrorResponse = {
 
 type QueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, QueryValue>;
-type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 type ApiRequestOptions<TBody = unknown> = {
   body?: TBody;
@@ -210,6 +210,11 @@ export const apiClient = {
     body?: TBody,
     options?: Omit<ApiRequestOptions<TBody>, 'body' | 'method' | 'path'>,
   ) => request<TResponse, TBody>({ ...options, body, method: 'POST', path }),
+  put: <TResponse, TBody>(
+    path: string,
+    body?: TBody,
+    options?: Omit<ApiRequestOptions<TBody>, 'body' | 'method' | 'path'>,
+  ) => request<TResponse, TBody>({ ...options, body, method: 'PUT', path }),
   patch: <TResponse, TBody>(
     path: string,
     body?: TBody,

@@ -3,12 +3,13 @@ import { AuditResourceType, Prisma } from '@prisma/client';
 import {
   TyreCreateSchema,
   TyreInspectionCreateSchema,
+  TyrePosition,
   TyreUpdateSchema,
   type CreateTyreInput,
   type CreateTyreInspectionInput,
   type Tyre,
+  type TyreCondition,
   type TyreInspection,
-  type TyrePosition,
   type UpdateTyreInput,
   type VehicleTyreCondition,
 } from '@vehicle-vault/shared';
@@ -25,9 +26,33 @@ import type { UpdateTyreDto } from './dto/update-tyre.dto';
 
 type TyreRow = Prisma.TyreGetPayload<Record<string, never>>;
 type TyreInspectionRow = Prisma.TyreInspectionGetPayload<Record<string, never>>;
+type FittedTyreRow = Prisma.TyreGetPayload<{ include: { inspections: true } }>;
 
 /** How many readings feed the wear-rate projection. Older ones reflect a different driving pattern. */
 const WEAR_RATE_SAMPLE = 5;
+
+/** The last time anyone had eyes on a tyre, and the odometer when they did. */
+export interface TyreObservation {
+  at: Date;
+  odometer: number;
+}
+
+/**
+ * Everything the alert engine needs to decide whether a vehicle's tyres are
+ * worth saying something about. The engine owns *when* to alert; the grading
+ * and the freshness arithmetic belong here, next to the data.
+ */
+export interface VehicleTyreAlertState {
+  vehicleOdometer: number;
+  /** Currently fitted tyres, graded. Empty when the vehicle tracks no tyres at all. */
+  conditions: TyreCondition[];
+  /**
+   * The least recently observed road tyre, or null when none is tracked. Null
+   * is the "we cannot see this vehicle's tyres" case, which is a different
+   * statement from "they were fine when last measured".
+   */
+  lastObservation: TyreObservation | null;
+}
 
 @Injectable()
 export class TyresService {
@@ -246,8 +271,38 @@ export class TyresService {
    */
   async getVehicleCondition(userId: string, vehicleId: string): Promise<VehicleTyreCondition> {
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    const tyres = await this.findFittedTyres(vehicleId);
+    const conditions = this.grade(tyres, vehicle.odometer);
 
-    const tyres = await this.prisma.tyre.findMany({
+    return {
+      vehicleId,
+      overall: this.conditionResolver.worstLevel(conditions),
+      tyres: conditions,
+    };
+  }
+
+  /**
+   * The same verdict {@link getVehicleCondition} serves to the vehicle page,
+   * plus how stale the evidence behind it is — the alert engine needs both, and
+   * reading them from one place keeps a notification from ever disagreeing with
+   * the screen the user opens after tapping it.
+   *
+   * Graded against `vehicle.odometer` rather than the forecast's predicted
+   * reading on purpose: a projection must not be what declares a tyre worn.
+   */
+  async getAlertState(userId: string, vehicleId: string): Promise<VehicleTyreAlertState> {
+    const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    const tyres = await this.findFittedTyres(vehicleId);
+
+    return {
+      vehicleOdometer: vehicle.odometer,
+      conditions: this.grade(tyres, vehicle.odometer),
+      lastObservation: this.oldestObservation(tyres),
+    };
+  }
+
+  private findFittedTyres(vehicleId: string): Promise<FittedTyreRow[]> {
+    return this.prisma.tyre.findMany({
       where: { vehicleId, removedDate: null },
       orderBy: { position: 'asc' },
       include: {
@@ -257,8 +312,10 @@ export class TyresService {
         },
       },
     });
+  }
 
-    const conditions = tyres.map((tyre) =>
+  private grade(tyres: FittedTyreRow[], vehicleOdometer: number): TyreCondition[] {
+    return tyres.map((tyre) =>
       this.conditionResolver.resolve(
         {
           id: tyre.id,
@@ -273,15 +330,39 @@ export class TyresService {
             treadDepthMm: this.toNumber(inspection.treadDepthMm),
           })),
         },
-        vehicle.odometer,
+        vehicleOdometer,
       ),
     );
+  }
 
-    return {
-      vehicleId,
-      overall: this.conditionResolver.worstLevel(conditions),
-      tyres: conditions,
-    };
+  /**
+   * The least recently observed road tyre. Fitting counts as an observation —
+   * someone had the wheel in their hands that day — so a freshly fitted set is
+   * not reported as unmeasured. The oldest corner decides the vehicle, mirroring
+   * the rule {@link TyreConditionResolver.worstLevel} applies to condition.
+   *
+   * The spare is left out. It is graded for tread and age like any other tyre,
+   * but it covers none of the vehicle's mileage, so letting it drive a
+   * distance-based "go and look" nudge would pin a diligently checked vehicle to
+   * stale forever and say nothing true about what it is rolling on.
+   */
+  private oldestObservation(tyres: FittedTyreRow[]): TyreObservation | null {
+    let oldest: TyreObservation | null = null;
+
+    for (const tyre of tyres) {
+      if (tyre.position === TyrePosition.Spare) continue;
+
+      const newest = tyre.inspections.at(0);
+      const observation: TyreObservation = newest
+        ? { at: newest.inspectedAt, odometer: newest.odometer }
+        : { at: tyre.fittedDate, odometer: tyre.fittedOdometer };
+
+      if (oldest == null || observation.at.getTime() < oldest.at.getTime()) {
+        oldest = observation;
+      }
+    }
+
+    return oldest;
   }
 
   private async getOwnedTyre(userId: string, tyreId: string, role: 'editor' | 'viewer') {

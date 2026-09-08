@@ -46,6 +46,10 @@ export const endpoints = {
     update: (accessoryId: string) => `/accessories/${accessoryId}`,
     remove: (accessoryId: string) => `/accessories/${accessoryId}`,
   },
+  serviceBaseline: {
+    coverage: (vehicleId: string) => `/vehicles/${vehicleId}/service-baseline`,
+    upsert: (vehicleId: string) => `/vehicles/${vehicleId}/service-baseline`,
+  },
   vehicleCatalog: {
     makes: '/vehicle-catalog/makes',
     models: '/vehicle-catalog/models',

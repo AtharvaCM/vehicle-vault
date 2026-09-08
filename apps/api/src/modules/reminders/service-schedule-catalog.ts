@@ -1,4 +1,13 @@
-import { FuelType, MaintenanceCategory, ReminderType, VehicleType } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  MaintenanceCategory,
+  ReminderType,
+  TYRE_INSPECTION_INTERVAL_KM,
+  TYRE_INSPECTION_INTERVAL_MONTHS,
+  VehicleType,
+} from '@vehicle-vault/shared';
+
+import { TYRE_INSPECTION_SLUG } from './catalog-marker';
 
 /**
  * Static catalog of generic recommended service intervals. Not bound to a
@@ -54,6 +63,21 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
     title: 'Tyre rotation',
     intervalKm: 10000,
     notes: 'Even tread wear extends tyre life.',
+  },
+  {
+    /**
+     * Deliberately separate from `tyre_rotation`. A rotation is work done to the
+     * tyres; this is a measurement of them, and it is the only catalog item
+     * whose whole point is to produce a reading rather than a repair. Tread is
+     * unknowable between measurements, so the cadence is what turns "I happened
+     * to look today" into something the app can ask for.
+     */
+    slug: TYRE_INSPECTION_SLUG,
+    type: ReminderType.Inspection,
+    title: 'Tyre tread & pressure check',
+    intervalKm: TYRE_INSPECTION_INTERVAL_KM,
+    intervalMonths: TYRE_INSPECTION_INTERVAL_MONTHS,
+    notes: 'Measure tread depth at each corner and check pressures, then log the readings.',
   },
   {
     slug: 'brake_inspection',

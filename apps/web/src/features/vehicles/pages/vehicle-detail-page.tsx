@@ -43,6 +43,7 @@ import { ServiceTrendCard } from '../components/service-trend-card';
 import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { VehicleTyreTracker } from '../components/vehicle-tyre-tracker';
 import { AccessoriesTab } from '@/features/accessories/components/accessories-tab';
+import { ServiceHistoryCard } from '@/features/service-baseline/components/service-history-card';
 import { ProtectionTab } from '../components/protection-tab';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
@@ -489,6 +490,9 @@ export function VehicleDetailPage({
           </TabsContent>
 
           <TabsContent value="maintenance" className="animate-in fade-in duration-500">
+            <div className="mb-6">
+              <ServiceHistoryCard vehicleId={vehicleId} />
+            </div>
             <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
               <MaintenancePanel
                 maintenanceQuery={maintenanceQuery}

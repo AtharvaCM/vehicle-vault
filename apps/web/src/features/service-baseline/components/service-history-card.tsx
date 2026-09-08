@@ -1,0 +1,201 @@
+import { useEffect, useMemo, useState } from 'react';
+import { HelpCircle } from 'lucide-react';
+import { ServiceBaselineStatus, type VehicleServiceBaselineEntry } from '@vehicle-vault/shared';
+
+import { ErrorState } from '@/components/shared/error-state';
+import { LoadingState } from '@/components/shared/loading-state';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
+
+import {
+  useServiceBaselineCoverage,
+  useUpsertServiceBaseline,
+} from '../hooks/use-service-baseline';
+import {
+  buildBaselineEntries,
+  deriveDrafts,
+  isEditable,
+  type BaselineDrafts,
+} from '../utils/baseline-drafts';
+
+interface ServiceHistoryCardProps {
+  vehicleId: string;
+}
+
+export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
+  const coverageQuery = useServiceBaselineCoverage(vehicleId);
+  const upsertMutation = useUpsertServiceBaseline(vehicleId);
+  const [drafts, setDrafts] = useState<BaselineDrafts>({});
+
+  const entries = useMemo(() => coverageQuery.data?.entries ?? [], [coverageQuery.data]);
+
+  // Re-seeded whenever the server view changes, so a save leaves the inputs
+  // showing what was actually stored rather than what was typed.
+  useEffect(() => {
+    setDrafts(deriveDrafts(entries));
+  }, [entries]);
+
+  const pending = useMemo(() => buildBaselineEntries(entries, drafts), [entries, drafts]);
+
+  function setDraft(category: string, status: ServiceBaselineStatus, odometer: string) {
+    setDrafts((current) => ({ ...current, [category]: { status, odometer } }));
+  }
+
+  function handleOdometerChange(category: string, value: string) {
+    setDraft(category, ServiceBaselineStatus.Known, value);
+  }
+
+  function toggleUnknown(category: string) {
+    setDrafts((current) => {
+      const draft = current[category];
+      const nowUnknown = draft?.status !== ServiceBaselineStatus.Unknown;
+
+      return {
+        ...current,
+        [category]: nowUnknown
+          ? { status: ServiceBaselineStatus.Unknown, odometer: '' }
+          : { status: 'unset', odometer: '' },
+      };
+    });
+  }
+
+  async function handleSave() {
+    try {
+      await upsertMutation.mutateAsync({ entries: pending });
+      appToast.success({
+        title: 'Service history updated',
+        description: `Saved ${pending.length} ${pending.length === 1 ? 'category' : 'categories'}.`,
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Could not save service history',
+        description: getApiErrorMessage(error),
+      });
+    }
+  }
+
+  if (coverageQuery.isPending) {
+    return (
+      <LoadingState
+        description="Checking what is already known about this vehicle."
+        title="Service history baseline"
+      />
+    );
+  }
+
+  if (coverageQuery.isError) {
+    return (
+      <ErrorState
+        action={
+          <Button onClick={() => void coverageQuery.refetch()} variant="outline">
+            Try again
+          </Button>
+        }
+        description={getApiErrorMessage(coverageQuery.error)}
+        title="Could not load service history"
+      />
+    );
+  }
+
+  const unanswered = coverageQuery.data?.unansweredCount ?? 0;
+
+  return (
+    <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-lg font-bold">Service history baseline</CardTitle>
+          {unanswered > 0 ? <Badge variant="secondary">{unanswered} unanswered</Badge> : null}
+        </div>
+        <CardDescription>
+          What was already done when this vehicle joined the vault. Reminders are timed from these
+          figures — a category with nothing on file is measured from the day you added the vehicle,
+          which quietly assumes it had just been done. Saying “I don’t know” is a real answer here,
+          and a more useful one than leaving it blank.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {entries.map((entry) => (
+          <BaselineRow
+            key={entry.category}
+            entry={entry}
+            draft={drafts[entry.category]}
+            onOdometerChange={(value) => handleOdometerChange(entry.category, value)}
+            onToggleUnknown={() => toggleUnknown(entry.category)}
+          />
+        ))}
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <p className="text-xs text-slate-500">
+            {pending.length === 0
+              ? 'No changes to save'
+              : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
+          </p>
+          <Button
+            disabled={pending.length === 0 || upsertMutation.isPending}
+            onClick={() => void handleSave()}
+          >
+            {upsertMutation.isPending ? 'Saving…' : 'Save history'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface BaselineRowProps {
+  entry: VehicleServiceBaselineEntry;
+  draft: BaselineDrafts[string] | undefined;
+  onOdometerChange: (value: string) => void;
+  onToggleUnknown: () => void;
+}
+
+function BaselineRow({ entry, draft, onOdometerChange, onToggleUnknown }: BaselineRowProps) {
+  const label = formatMaintenanceCategory(entry.category);
+
+  if (!isEditable(entry)) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-slate-50/60 px-3 py-2">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-xs text-slate-500">
+          Logged service at {entry.lastDoneOdometer?.toLocaleString('en-IN')} km
+        </span>
+      </div>
+    );
+  }
+
+  const isUnknown = draft?.status === ServiceBaselineStatus.Unknown;
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200/60 px-3 py-2">
+      <span className="min-w-[8rem] flex-1 text-sm font-medium text-slate-700">{label}</span>
+
+      <div className="flex items-center gap-2">
+        <Input
+          aria-label={`${label} last done at odometer`}
+          className="w-32"
+          disabled={isUnknown}
+          inputMode="numeric"
+          onChange={(event) => onOdometerChange(event.target.value)}
+          placeholder="Last done at km"
+          value={isUnknown ? '' : (draft?.odometer ?? '')}
+        />
+        <Button
+          aria-pressed={isUnknown}
+          onClick={onToggleUnknown}
+          size="sm"
+          type="button"
+          variant={isUnknown ? 'default' : 'outline'}
+        >
+          <HelpCircle className="mr-1 h-3.5 w-3.5" />
+          Don’t know
+        </Button>
+      </div>
+    </div>
+  );
+}
