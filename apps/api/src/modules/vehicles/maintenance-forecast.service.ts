@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MaintenanceCategory, type MaintenanceSuggestion } from '@vehicle-vault/shared';
+import {
+  MaintenanceCategory,
+  MaintenanceRecordStatus,
+  type MaintenanceSuggestion,
+} from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MaintenanceIntervalResolver } from './maintenance-interval.resolver';
@@ -54,8 +58,16 @@ export class MaintenanceForecastService {
 
     // For each category, find the latest record and evaluate
     for (const [category, interval] of Object.entries(intervalsToCheck)) {
+      // Confirmed only, matching MaintenanceAlertService: a draft is an
+      // unconfirmed intention, so letting one answer "when was this last done"
+      // would push the suggestion out by a whole interval on the strength of a
+      // record nobody has agreed to.
       const latestRecord = await this.prisma.maintenanceRecord.findFirst({
-        where: { vehicleId, category: category as MaintenanceCategory },
+        where: {
+          vehicleId,
+          category: category as MaintenanceCategory,
+          status: MaintenanceRecordStatus.Confirmed,
+        },
         orderBy: { serviceDate: 'desc' },
       });
 
