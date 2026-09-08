@@ -35,7 +35,7 @@ import {
  * template ends up missing from the factory it feeds, and `NotifyService.raise`
  * only discovers that at runtime, on the alert nobody received.
  */
-const ALERT_TEMPLATE_PROVIDERS = [
+export const ALERT_TEMPLATE_PROVIDERS = [
   MaintenanceDueTemplate,
   MaintenanceOverdueTemplate,
   ReminderDueTemplate,

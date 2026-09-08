@@ -4,18 +4,26 @@ import type { TyreConditionLevel, TyrePosition, VehicleDocument } from '@vehicle
 /**
  * Every typed alert flowing through {@link NotifyService}.
  *
+ * Declared as a value so the set is enumerable at runtime: a kind with no
+ * registered **AlertTemplate** only fails inside `NotifyService.raise`, which
+ * the cron catches per vehicle and logs — the alert simply never arrives. The
+ * companion test walks this list against the registered templates.
+ *
  * Keep `AlertPayloads` in lockstep when adding a kind.
  */
-export type AlertKind =
-  | 'maintenance-due'
-  | 'maintenance-overdue'
-  | 'reminder-due'
-  | 'reminder-overdue'
-  | 'document-expiring'
-  | 'accessory-warranty-expiring'
-  | 'tyre-worn'
-  | 'tyre-aged'
-  | 'tyre-uninspected';
+export const ALERT_KINDS = [
+  'maintenance-due',
+  'maintenance-overdue',
+  'reminder-due',
+  'reminder-overdue',
+  'document-expiring',
+  'accessory-warranty-expiring',
+  'tyre-worn',
+  'tyre-aged',
+  'tyre-uninspected',
+] as const;
+
+export type AlertKind = (typeof ALERT_KINDS)[number];
 
 export type MaintenanceDuePayload = {
   vehicleId: string;
