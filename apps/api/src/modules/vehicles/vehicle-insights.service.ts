@@ -31,7 +31,17 @@ export class VehicleInsightsService {
       throw new NotFoundException('Vehicle not found');
     }
 
-    // Get all odometer readings from maintenance and fuel logs
+    // Get all odometer readings from maintenance and fuel logs.
+    //
+    // Deliberately not filtered to confirmed records, unlike the alert engine,
+    // the reports, and analytics. This asks how fast the vehicle accumulates
+    // kilometres, not whether a service happened, and a draft's odometer is a
+    // real reading taken on a real date either way — the vehicle's own reading
+    // when the draft was opened, or the figure printed on the invoice being
+    // extracted. Dropping it would throw away evidence about mileage to punish
+    // a row for saying nothing about mileage. Readings that are actually
+    // unknown are excluded below by the `odometer > 0` filter, which is the
+    // check this regression cares about.
     const [maintenanceRecords, fuelLogs] = await Promise.all([
       this.prisma.maintenanceRecord.findMany({
         where: { vehicleId },

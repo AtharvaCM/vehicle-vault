@@ -1,5 +1,10 @@
 import { Prisma } from '@prisma/client';
-import { FuelType, VehicleType, MaintenanceCategory } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  MaintenanceRecordStatus,
+  VehicleType,
+  MaintenanceCategory,
+} from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ResaleReportService } from './resale-report.service';
@@ -134,5 +139,21 @@ describe('ResaleReportService.buildPdf', () => {
 
     const result = await service.buildPdf('user-1', 'vehicle-1');
     expect(result.buffer.slice(0, 5).toString()).toBe('%PDF-');
+  });
+
+  it('asks only for confirmed records, so a buyer never reads a draft as history', async () => {
+    // The maintenance log is the strongest claim this report makes on the
+    // seller's behalf, and its heading counts the rows. Asserted on the query
+    // rather than the rendered log because pdfkit compresses its content
+    // streams, so the printed rows are not greppable in the buffer.
+    prisma.vehicle.findFirst.mockResolvedValue(makeVehicle());
+
+    await service.buildPdf('user-1', 'vehicle-1');
+
+    expect(prisma.maintenanceRecord.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { vehicleId: 'vehicle-1', status: MaintenanceRecordStatus.Confirmed },
+      }),
+    );
   });
 });
