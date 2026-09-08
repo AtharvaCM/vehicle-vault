@@ -1,3 +1,13 @@
+# [1.24.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.23.2...v1.24.0) (2026-09-08)
+
+
+### Features
+
+* **api:** alert on worn, aged, and unchecked tyres ([b4a0bd4](https://github.com/AtharvaCM/vehicle-vault/commit/b4a0bd48f7d9a0f118cb119bdd4fe9f6c13c9751))
+* **api:** make the service schedule an actual cadence ([103cb0b](https://github.com/AtharvaCM/vehicle-vault/commit/103cb0b240c3e3fdb8af2ab0a37d1a6652093acf))
+* **api:** record what a vehicle's service history actually is ([e667378](https://github.com/AtharvaCM/vehicle-vault/commit/e66737856e12340dc17634abfde2b9037b746948))
+* **web:** capture a vehicle's service history baseline ([95a4681](https://github.com/AtharvaCM/vehicle-vault/commit/95a4681c1a35435b1fa7d7b8ab2ce6c2bcdfd8c5))
+
 ## [1.23.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.23.1...v1.23.2) (2026-09-04)
 
 
