@@ -1,3 +1,10 @@
+## [1.24.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.0...v1.24.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* **alerts:** ignore drafts when timing services ([3ba1a8b](https://github.com/AtharvaCM/vehicle-vault/commit/3ba1a8b99ceb06f4a31dd53aaa36d11027ed7c5a))
+
 # [1.24.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.23.2...v1.24.0) (2026-09-08)
 
 
