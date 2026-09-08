@@ -231,6 +231,10 @@ export class VehiclesService {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id: vehicleId },
       include: {
+        // Every record, drafts included. This feeds nothing but the storage
+        // cleanup below, and the rows are about to be cascade-deleted whatever
+        // their status — filtering to confirmed would leave a draft's uploaded
+        // receipts orphaned in the bucket with no row left to reach them from.
         maintenanceRecords: {
           select: {
             attachments: {
