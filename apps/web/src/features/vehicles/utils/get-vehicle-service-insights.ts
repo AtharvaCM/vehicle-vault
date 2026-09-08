@@ -1,3 +1,5 @@
+import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
+
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
 
 import type { Vehicle } from '../types/vehicle';
@@ -33,7 +35,15 @@ export function getVehicleServiceInsights({
   records,
   now = new Date(),
 }: GetVehicleServiceInsightsArgs): VehicleServiceInsights {
-  const sortedRecords = [...records].sort(
+  // Drafts are dropped for the same reason MaintenanceAlertService ignores
+  // them: an unconfirmed record is an intention, not a service that happened.
+  // Counting one here would put "last serviced 500 km ago" on the card while
+  // the reminder for that very category is firing. `status` is optional on the
+  // wire, and a record without one is a confirmed record.
+  const confirmedRecords = records.filter(
+    (record) => record.status !== MaintenanceRecordStatus.Draft,
+  );
+  const sortedRecords = [...confirmedRecords].sort(
     (left, right) => Date.parse(left.serviceDate) - Date.parse(right.serviceDate),
   );
   const latestService = sortedRecords.at(-1) ?? null;

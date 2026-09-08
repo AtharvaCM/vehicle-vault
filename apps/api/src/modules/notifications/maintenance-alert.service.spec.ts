@@ -1,5 +1,5 @@
 import { ServiceBaselineStatus } from '@prisma/client';
-import { TyrePosition, type TyreCondition } from '@vehicle-vault/shared';
+import { MaintenanceRecordStatus, TyrePosition, type TyreCondition } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MaintenanceAlertService } from './maintenance-alert.service';
@@ -12,7 +12,13 @@ const VEHICLE = {
   userId: 'u1',
   year: 2024,
   odometer: 40_000,
-  maintenanceRecords: [] as { category: string; odometer: number }[],
+  // `status` is optional for the same reason the column has a default: a record
+  // without one is confirmed. Only the draft tests say it out loud.
+  maintenanceRecords: [] as {
+    category: string;
+    odometer: number;
+    status?: MaintenanceRecordStatus;
+  }[],
   serviceBaselines: [] as {
     category: string;
     status: ServiceBaselineStatus;
@@ -482,6 +488,107 @@ describe('MaintenanceAlertService service baselines', () => {
 
     expect(alertsOfKind('service-baseline-unknown')).toEqual([
       expect.objectContaining({ scope: 'vehicle', odometer: 800 }),
+    ]);
+  });
+});
+
+describe('MaintenanceAlertService draft maintenance records', () => {
+  let service: MaintenanceAlertService;
+
+  const BRAKE_PADS = { brake_pads: { km: 30_000, months: 24, source: 'default' } };
+
+  const vehicle = (overrides: Partial<typeof VEHICLE>) => ({ ...VEHICLE, ...overrides });
+
+  /**
+   * Resolves the vehicle the way Prisma would: by applying the `where` the
+   * engine puts on its `maintenanceRecords` include. A plain `mockResolvedValue`
+   * hands back rows the database was never asked for, so these assertions would
+   * still pass with the status filter deleted.
+   */
+  const findUniqueHonouringInclude = (row: typeof VEHICLE) => {
+    prisma.vehicle.findUnique.mockImplementation((args: unknown) => {
+      const wanted = (
+        args as { include?: { maintenanceRecords?: { where?: { status?: string } } } }
+      ).include?.maintenanceRecords?.where?.status;
+
+      return Promise.resolve({
+        ...row,
+        maintenanceRecords: wanted
+          ? row.maintenanceRecords.filter(
+              (record) => (record.status ?? MaintenanceRecordStatus.Confirmed) === wanted,
+            )
+          : row.maintenanceRecords,
+      });
+    });
+  };
+
+  beforeEach(() => {
+    service = buildService();
+    intervals.resolveForVehicle.mockResolvedValue(BRAKE_PADS);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('does not let a draft silence an overdue service', async () => {
+    // The owner said at onboarding that the pads were last done at 5 000 km and
+    // the bike is at 40 000, so this is 5 000 km overdue. A draft sitting at
+    // 38 000 — an extraction nobody has confirmed — used to make that reminder
+    // disappear, because the engine read it as "this service was done".
+    findUniqueHonouringInclude(
+      vehicle({
+        maintenanceRecords: [
+          { category: 'brake_pads', odometer: 38_000, status: MaintenanceRecordStatus.Draft },
+        ],
+        serviceBaselines: [
+          { category: 'brake_pads', status: ServiceBaselineStatus.known, lastDoneOdometer: 5_000 },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('maintenance-overdue')).toEqual([
+      expect.objectContaining({ category: 'brake_pads', remainingDistanceKm: -5_000 }),
+    ]);
+  });
+
+  it('still lets the same record silence it once it is confirmed', async () => {
+    // The other half of the pair: confirming the draft is what turns it into a
+    // measurement, and then it supersedes the baseline as it always did.
+    findUniqueHonouringInclude(
+      vehicle({
+        maintenanceRecords: [
+          { category: 'brake_pads', odometer: 38_000, status: MaintenanceRecordStatus.Confirmed },
+        ],
+        serviceBaselines: [
+          { category: 'brake_pads', status: ServiceBaselineStatus.known, lastDoneOdometer: 5_000 },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('maintenance-overdue')).toEqual([]);
+    expect(alertsOfKind('maintenance-due')).toEqual([]);
+  });
+
+  it('does not count a draft as the history that stops the service prompt', async () => {
+    // Nobody has agreed this draft describes a real service, so the vehicle is
+    // still one the app has been told nothing about.
+    findUniqueHonouringInclude(
+      vehicle({
+        maintenanceRecords: [
+          { category: 'engine_oil', odometer: 30_000, status: MaintenanceRecordStatus.Draft },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([
+      expect.objectContaining({ scope: 'vehicle' }),
     ]);
   });
 });
