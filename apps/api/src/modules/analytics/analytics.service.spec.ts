@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AnalyticsService } from './analytics.service';
@@ -350,5 +351,168 @@ describe('AnalyticsService.getTco', () => {
   it('throws NotFound when vehicle is not owned', async () => {
     (prisma.vehicle.findFirst as Mock).mockResolvedValue(null);
     await expect(service.getTco('user-1', 'v-missing')).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('AnalyticsService draft maintenance records', () => {
+  let prisma: ReturnType<typeof makePrismaMock>;
+  let service: AnalyticsService;
+
+  type Row = { totalCost: Prisma.Decimal; status?: MaintenanceRecordStatus };
+  type ClaimRow = {
+    insurerPaidAmount: Prisma.Decimal;
+    serviceDate: Date;
+    recordStatus?: MaintenanceRecordStatus;
+  };
+
+  /**
+   * Resolves fixtures the way Prisma would: by applying the `status` the
+   * service puts on its `where`. A plain `mockResolvedValue` hands back rows the
+   * database was never asked for, so these assertions would still pass with the
+   * draft filter deleted. A row without a `status` is confirmed, matching the
+   * column default.
+   */
+  const visible = <T extends { status?: MaintenanceRecordStatus }>(
+    rows: T[],
+    wanted: string | undefined,
+  ) =>
+    wanted
+      ? rows.filter((row) => (row.status ?? MaintenanceRecordStatus.Confirmed) === wanted)
+      : rows;
+
+  const sum = (values: Prisma.Decimal[]) =>
+    values.reduce((total, value) => total.plus(value), new Prisma.Decimal(0));
+
+  const stubMaintenance = (rows: Row[]) => {
+    const filter = (args: unknown) =>
+      visible(rows, (args as { where?: { status?: string } }).where?.status);
+
+    (prisma.maintenanceRecord.aggregate as Mock).mockImplementation((args: unknown) =>
+      Promise.resolve({ _sum: { totalCost: sum(filter(args).map((row) => row.totalCost)) } }),
+    );
+    (prisma.maintenanceRecord.findMany as Mock).mockImplementation((args: unknown) =>
+      Promise.resolve(
+        filter(args).map((row, index) => ({
+          id: `r${index}`,
+          serviceDate: new Date('2026-01-15T00:00:00.000Z'),
+          totalCost: row.totalCost,
+        })),
+      ),
+    );
+  };
+
+  /** Claims reach maintenance through a nested `where`, so read the status there. */
+  const stubClaims = (rows: ClaimRow[]) => {
+    const filter = (args: unknown) =>
+      visible(
+        rows.map(({ recordStatus, ...rest }) => ({ ...rest, status: recordStatus })),
+        (args as { where?: { maintenanceRecord?: { status?: string } } }).where?.maintenanceRecord
+          ?.status,
+      );
+
+    (prisma.claim.aggregate as Mock).mockImplementation((args: unknown) =>
+      Promise.resolve({
+        _sum: { insurerPaidAmount: sum(filter(args).map((row) => row.insurerPaidAmount)) },
+      }),
+    );
+    (prisma.claim.findMany as Mock).mockImplementation((args: unknown) =>
+      Promise.resolve(
+        filter(args).map((row) => ({
+          insurerPaidAmount: row.insurerPaidAmount,
+          maintenanceRecord: { serviceDate: row.serviceDate },
+        })),
+      ),
+    );
+  };
+
+  beforeEach(() => {
+    prisma = makePrismaMock();
+    service = new AnalyticsService(prisma as never);
+    stubEmptyAccessories(prisma);
+    (prisma.vehicleLoan.findMany as Mock).mockResolvedValue([]);
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    (prisma.fuelLog.aggregate as Mock).mockResolvedValue({ _sum: { totalCost: null } });
+    (prisma.fuelLog.findMany as Mock).mockResolvedValue([]);
+    (prisma.fuelLog.findFirst as Mock).mockResolvedValue(null);
+    stubClaims([]);
+  });
+
+  it('keeps a scanned-but-unconfirmed invoice out of the cost split', async () => {
+    // A receipt was scanned and applied: the extraction wrote ₹12 000 onto the
+    // record but left it a draft, so nobody has agreed that money was spent.
+    // Only the ₹5 000 service the owner actually logged is spend.
+    stubMaintenance([
+      { totalCost: new Prisma.Decimal('5000.00') },
+      { totalCost: new Prisma.Decimal('12000.00'), status: MaintenanceRecordStatus.Draft },
+    ]);
+
+    const result = await service.getCostSplit('user-1', {
+      from: new Date('2026-01-01T00:00:00.000Z'),
+      to: new Date('2026-01-31T23:59:59.999Z'),
+    });
+
+    expect(result.buckets.maintenance).toBe('5000.00');
+    expect(result.buckets.total).toBe('5000.00');
+  });
+
+  it('does not net a draft-linked claim payout against confirmed spend', async () => {
+    // The half that would break if only the maintenance side were filtered: the
+    // maintenance bucket is gross minus insurer-paid, so subtracting a payout
+    // claimed against an excluded draft would report less than was spent.
+    stubMaintenance([
+      { totalCost: new Prisma.Decimal('5000.00') },
+      { totalCost: new Prisma.Decimal('12000.00'), status: MaintenanceRecordStatus.Draft },
+    ]);
+    stubClaims([
+      {
+        insurerPaidAmount: new Prisma.Decimal('8000.00'),
+        serviceDate: new Date('2026-01-15T00:00:00.000Z'),
+        recordStatus: MaintenanceRecordStatus.Draft,
+      },
+    ]);
+
+    const result = await service.getCostSplit('user-1', {
+      from: new Date('2026-01-01T00:00:00.000Z'),
+      to: new Date('2026-01-31T23:59:59.999Z'),
+    });
+
+    // Not 5000 - 8000 = -3000.
+    expect(result.buckets.maintenance).toBe('5000.00');
+  });
+
+  it('keeps a draft out of the monthly cost trend', async () => {
+    stubMaintenance([
+      { totalCost: new Prisma.Decimal('5000.00') },
+      { totalCost: new Prisma.Decimal('12000.00'), status: MaintenanceRecordStatus.Draft },
+    ]);
+
+    const result = await service.getCostTrend('user-1', {
+      from: new Date('2026-01-01T00:00:00.000Z'),
+      to: new Date('2026-01-31T23:59:59.999Z'),
+    });
+
+    expect(result.points.find((point) => point.period === '2026-01')?.maintenance).toBe('5000.00');
+  });
+
+  it('keeps a draft out of lifetime spend and cost-per-km', async () => {
+    // TCO is the figure an owner quotes about their vehicle, and ₹/km divides
+    // straight through it — an unreviewed extraction would move both.
+    (prisma.vehicle.findFirst as Mock).mockResolvedValue({
+      id: 'v1',
+      odometer: 10000,
+      purchaseDate: null,
+      purchasePrice: null,
+      purchaseOdometer: 0,
+    });
+    stubMaintenance([
+      { totalCost: new Prisma.Decimal('40000.00') },
+      { totalCost: new Prisma.Decimal('12000.00'), status: MaintenanceRecordStatus.Draft },
+    ]);
+
+    const result = await service.getTco('user-1', 'v1');
+
+    expect(result.totals.maintenance).toBe('40000.00');
+    expect(result.totals.netSpend).toBe('40000.00');
+    expect(result.derived.costPerKm).toBe('4.00');
   });
 });

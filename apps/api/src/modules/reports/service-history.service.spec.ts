@@ -1,5 +1,10 @@
 import { Prisma } from '@prisma/client';
-import { FuelType, VehicleType, MaintenanceCategory } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  MaintenanceRecordStatus,
+  VehicleType,
+  MaintenanceCategory,
+} from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ServiceHistoryService } from './service-history.service';
@@ -75,5 +80,42 @@ describe('ServiceHistoryService.buildPdf', () => {
   it('throws NotFound when vehicle is not owned by user', async () => {
     prisma.vehicle.findFirst.mockResolvedValue(null);
     await expect(service.buildPdf('user-1', 'v-missing')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('asks only for confirmed records, so drafts never print as history', async () => {
+    // A draft is an unconfirmed intention — usually an extraction nobody has
+    // reviewed — and this document is filed as what the vehicle's history is.
+    // Asserted on the query rather than the rendered log because pdfkit
+    // compresses its content streams, so the printed rows are not greppable in
+    // the buffer. The record count and the lifetime maintenance total are
+    // derived from these same rows, so the filter decides all three.
+    prisma.vehicle.findFirst.mockResolvedValue({
+      id: 'vehicle-1',
+      userId: 'user-1',
+      make: 'Hyundai',
+      model: 'Creta',
+      variant: 'SX',
+      year: 2022,
+      registrationNumber: 'MH12 AB 1234',
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.Car,
+      odometer: 25000,
+      nickname: null,
+      purchaseDate: null,
+      purchasePrice: null,
+      purchaseOdometer: 0,
+    });
+    prisma.maintenanceRecord.findMany.mockResolvedValue([]);
+    prisma.fuelLog.findMany.mockResolvedValue([]);
+    prisma.insurancePolicy.findMany.mockResolvedValue([]);
+    prisma.claim.findMany.mockResolvedValue([]);
+
+    await service.buildPdf('user-1', 'vehicle-1');
+
+    expect(prisma.maintenanceRecord.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { vehicleId: 'vehicle-1', status: MaintenanceRecordStatus.Confirmed },
+      }),
+    );
   });
 });

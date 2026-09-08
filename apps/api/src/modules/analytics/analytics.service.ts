@@ -1,16 +1,33 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type {
-  CostSplitResponse,
-  CostTrendPoint,
-  CostTrendResponse,
-  TcoResponse,
+import {
+  MaintenanceRecordStatus,
+  type CostSplitResponse,
+  type CostTrendPoint,
+  type CostTrendResponse,
+  type TcoResponse,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { accruedInRange, summarize, type LoanParams } from '../vehicle-loans/amortization';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Every maintenance figure on this service is confirmed-only, matching
+ * MaintenanceAlertService. A draft is an unconfirmed intention — typically a
+ * record hydrated from a document extraction — and `AttachmentsService`
+ * writes the invoice's `totalCost` onto the row while leaving it a draft, so a
+ * scanned receipt nobody has reviewed carries its full amount. Counting it
+ * would report money the owner has not agreed was spent, and inflate ₹/km and
+ * TCO on the strength of a guess made by an extraction provider.
+ *
+ * Spread into the claim joins as well as the maintenance rows: the maintenance
+ * bucket is gross minus insurer-paid, so dropping a draft's cost while still
+ * subtracting the payout claimed against it would push the bucket below what
+ * was actually spent, and can drive it negative.
+ */
+const CONFIRMED_MAINTENANCE = { status: MaintenanceRecordStatus.Confirmed } as const;
 
 function monthKey(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -83,6 +100,7 @@ export class AnalyticsService {
           where: {
             serviceDate: { gte: from, lte: to },
             vehicle: vehicleFilter,
+            ...CONFIRMED_MAINTENANCE,
           },
         }),
         this.prisma.accessory.aggregate({
@@ -99,6 +117,7 @@ export class AnalyticsService {
             maintenanceRecord: {
               serviceDate: { gte: from, lte: to },
               vehicle: vehicleFilter,
+              ...CONFIRMED_MAINTENANCE,
             },
           },
         }),
@@ -211,7 +230,11 @@ export class AnalyticsService {
           orderBy: { date: 'asc' },
         }),
         this.prisma.maintenanceRecord.findMany({
-          where: { serviceDate: { gte: from, lte: to }, vehicle: vehicleFilter },
+          where: {
+            serviceDate: { gte: from, lte: to },
+            vehicle: vehicleFilter,
+            ...CONFIRMED_MAINTENANCE,
+          },
           select: { id: true, serviceDate: true, totalCost: true },
         }),
         this.prisma.accessory.findMany({
@@ -224,6 +247,7 @@ export class AnalyticsService {
             maintenanceRecord: {
               serviceDate: { gte: from, lte: to },
               vehicle: vehicleFilter,
+              ...CONFIRMED_MAINTENANCE,
             },
           },
           select: {
@@ -426,7 +450,7 @@ export class AnalyticsService {
     ] = await Promise.all([
       this.prisma.maintenanceRecord.aggregate({
         _sum: { totalCost: true },
-        where: { vehicleId },
+        where: { vehicleId, ...CONFIRMED_MAINTENANCE },
       }),
       this.prisma.fuelLog.aggregate({
         _sum: { totalCost: true },
@@ -438,7 +462,7 @@ export class AnalyticsService {
       }),
       this.prisma.claim.aggregate({
         _sum: { insurerPaidAmount: true },
-        where: { maintenanceRecord: { vehicleId } },
+        where: { maintenanceRecord: { vehicleId, ...CONFIRMED_MAINTENANCE } },
       }),
       this.prisma.insurancePolicy.findMany({
         where: { vehicleId, premiumAmount: { not: null } },

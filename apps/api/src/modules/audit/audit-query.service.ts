@@ -54,7 +54,10 @@ export class AuditQueryService {
     });
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
-    // All descendant resource ids belonging to this vehicle.
+    // All descendant resource ids belonging to this vehicle. Unfiltered by
+    // status on purpose: the trail exists to show what happened to a row, and a
+    // draft has a creation event, edits, and possibly a deletion like any other.
+    // Hiding those would make the audit log lie about work that really occurred.
     const [maintenance, reminders, insurance, warranties, claims, fuelLogs, tyres, accessories] =
       await Promise.all([
         this.prisma.maintenanceRecord.findMany({ where: { vehicleId }, select: { id: true } }),

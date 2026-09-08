@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
 import PDFDocument from 'pdfkit';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -30,8 +31,13 @@ export class ResaleReportService {
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
     const [maintenance, fuelLogs, policies, claims, loans, reminders] = await Promise.all([
+      // Confirmed only, as in ServiceHistoryService. This log is the strongest
+      // claim the report makes on the seller's behalf, and it is read by the one
+      // person who cannot check it: a buyer sees "Maintenance log (7)" with no
+      // way to tell an unconfirmed extraction from a service the owner stands
+      // behind. A draft here would sell the vehicle on history nobody confirmed.
       this.prisma.maintenanceRecord.findMany({
-        where: { vehicleId },
+        where: { vehicleId, status: MaintenanceRecordStatus.Confirmed },
         orderBy: { serviceDate: 'desc' },
       }),
       this.prisma.fuelLog.findMany({

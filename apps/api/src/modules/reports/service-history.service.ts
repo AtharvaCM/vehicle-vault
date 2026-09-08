@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
 import PDFDocument from 'pdfkit';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -21,8 +22,15 @@ export class ServiceHistoryService {
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 
     const [maintenance, fuelLogs, policies, claims] = await Promise.all([
+      // Confirmed only. A draft is an unconfirmed intention — typically a record
+      // hydrated from a document extraction that nobody has agreed to yet — and
+      // this document is filed as what the vehicle's history *is*. Printing one
+      // asserts a service happened; it also lands in the "Maintenance records"
+      // count and the lifetime maintenance total, so an unreviewed extraction
+      // would overstate both. `applyExtraction` writes the invoice's `totalCost`
+      // onto the row while leaving it a draft, so the money is real-looking.
       this.prisma.maintenanceRecord.findMany({
-        where: { vehicleId },
+        where: { vehicleId, status: MaintenanceRecordStatus.Confirmed },
         orderBy: { serviceDate: 'desc' },
       }),
       this.prisma.fuelLog.findMany({
