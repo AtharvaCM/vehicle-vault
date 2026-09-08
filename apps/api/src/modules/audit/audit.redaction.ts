@@ -34,6 +34,9 @@ export const REDACTED_FIELDS: Record<AuditResourceType, ReadonlySet<string>> = {
   [AuditResourceType.tyre]: new Set(),
   // Nothing on an accessory is personal: a product name, a brand, a price.
   [AuditResourceType.accessory]: new Set(),
+  // An odometer reading and a service date, both of which the vehicle already
+  // carries in the clear.
+  [AuditResourceType.service_baseline]: new Set(),
 };
 
 const REDACTED_SENTINEL = '[redacted]';

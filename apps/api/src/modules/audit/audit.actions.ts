@@ -58,6 +58,10 @@ export const AUDIT_ACTIONS = {
     updated: 'accessory.updated',
     deleted: 'accessory.deleted',
   },
+  serviceBaseline: {
+    created: 'service_baseline.created',
+    updated: 'service_baseline.updated',
+  },
   fuel: {
     created: 'fuel.created',
     updated: 'fuel.updated',

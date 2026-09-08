@@ -1,3 +1,4 @@
+import { ServiceBaselineStatus } from '@prisma/client';
 import { TyrePosition, type TyreCondition } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,7 +12,12 @@ const VEHICLE = {
   userId: 'u1',
   year: 2024,
   odometer: 40_000,
-  maintenanceRecords: [],
+  maintenanceRecords: [] as { category: string; odometer: number }[],
+  serviceBaselines: [] as {
+    category: string;
+    status: ServiceBaselineStatus;
+    lastDoneOdometer: number | null;
+  }[],
 };
 
 function condition(overrides: Partial<TyreCondition>): TyreCondition {
@@ -30,56 +36,68 @@ function condition(overrides: Partial<TyreCondition>): TyreCondition {
   };
 }
 
+const prisma = {
+  vehicle: { findUnique: vi.fn() },
+  reminder: { findMany: vi.fn() },
+};
+const insights = { getOdometerInsights: vi.fn() };
+const notify = { raise: vi.fn() };
+const documents = { findExpiring: vi.fn() };
+const intervals = { resolveForVehicle: vi.fn() };
+const accessories = { findExpiringWarranties: vi.fn() };
+const tyres = { getAlertState: vi.fn() };
+
+const alertState = (overrides: Partial<VehicleTyreAlertState>): VehicleTyreAlertState => ({
+  vehicleOdometer: 40_000,
+  conditions: [],
+  lastObservation: { at: new Date('2026-09-01T00:00:00.000Z'), odometer: 39_800 },
+  ...overrides,
+});
+
+/** Raised alerts of one kind, so an unrelated engine change cannot quietly pass a test. */
+const alertsOfKind = (kind: string) =>
+  notify.raise.mock.calls
+    .filter(([, , raised]) => raised === kind)
+    .map(([, , , payload]) => payload);
+
+const kindsRaised = () => notify.raise.mock.calls.map(([, , kind]) => kind);
+
+function buildService(): MaintenanceAlertService {
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+  vi.setSystemTime(NOW);
+
+  prisma.vehicle.findUnique.mockResolvedValue(VEHICLE);
+  prisma.reminder.findMany.mockResolvedValue([]);
+  insights.getOdometerInsights.mockResolvedValue({ currentOdometerPredicted: 40_000 });
+  intervals.resolveForVehicle.mockResolvedValue({});
+  documents.findExpiring.mockResolvedValue([]);
+  accessories.findExpiringWarranties.mockResolvedValue([]);
+  tyres.getAlertState.mockResolvedValue(alertState({}));
+
+  return new MaintenanceAlertService(
+    prisma as never,
+    insights as never,
+    notify as never,
+    documents as never,
+    intervals as never,
+    accessories as never,
+    tyres as never,
+  );
+}
+
 describe('MaintenanceAlertService tyre checks', () => {
   let service: MaintenanceAlertService;
 
-  const prisma = {
-    vehicle: { findUnique: vi.fn() },
-    reminder: { findMany: vi.fn() },
-  };
-  const insights = { getOdometerInsights: vi.fn() };
-  const notify = { raise: vi.fn() };
-  const documents = { findExpiring: vi.fn() };
-  const intervals = { resolveForVehicle: vi.fn() };
-  const accessories = { findExpiringWarranties: vi.fn() };
-  const tyres = { getAlertState: vi.fn() };
-
-  /** Only the tyre alerts, so an unrelated engine change cannot quietly pass these. */
   const tyreAlerts = () =>
     notify.raise.mock.calls
       .filter(([, , kind]) => String(kind).startsWith('tyre-'))
       .map(([, , kind, payload]) => ({ kind, payload }));
 
-  const alertState = (overrides: Partial<VehicleTyreAlertState>): VehicleTyreAlertState => ({
-    vehicleOdometer: 40_000,
-    conditions: [],
-    lastObservation: { at: new Date('2026-09-01T00:00:00.000Z'), odometer: 39_800 },
-    ...overrides,
-  });
-
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(NOW);
-
-    prisma.vehicle.findUnique.mockResolvedValue(VEHICLE);
-    prisma.reminder.findMany.mockResolvedValue([]);
-    insights.getOdometerInsights.mockResolvedValue({ currentOdometerPredicted: 40_000 });
+    service = buildService();
     // Emptied so the tyre assertions below are not entangled with service-interval maths.
     intervals.resolveForVehicle.mockResolvedValue({});
-    documents.findExpiring.mockResolvedValue([]);
-    accessories.findExpiringWarranties.mockResolvedValue([]);
-    tyres.getAlertState.mockResolvedValue(alertState({}));
-
-    service = new MaintenanceAlertService(
-      prisma as never,
-      insights as never,
-      notify as never,
-      documents as never,
-      intervals as never,
-      accessories as never,
-      tyres as never,
-    );
   });
 
   afterEach(() => {
@@ -250,5 +268,184 @@ describe('MaintenanceAlertService tyre checks', () => {
     await service.runAlertChecks('v1');
 
     expect(tyreAlerts()).toEqual([]);
+  });
+});
+
+describe('MaintenanceAlertService service baselines', () => {
+  let service: MaintenanceAlertService;
+
+  /** Brake pads: a long interval, so the arithmetic below is unambiguous. */
+  const BRAKE_PADS = { brake_pads: { km: 30_000, months: 24, source: 'default' } };
+
+  const vehicle = (overrides: Partial<typeof VEHICLE>) => ({ ...VEHICLE, ...overrides });
+
+  beforeEach(() => {
+    service = buildService();
+    intervals.resolveForVehicle.mockResolvedValue(BRAKE_PADS);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('measures the interval from a baseline reading', async () => {
+    // 5 000 km when the pads were last done, 40 000 now, 30 000 km interval:
+    // 5 000 km overdue. Before the baseline table there was no way to say this.
+    prisma.vehicle.findUnique.mockResolvedValue(
+      vehicle({
+        serviceBaselines: [
+          {
+            category: 'brake_pads',
+            status: ServiceBaselineStatus.known,
+            lastDoneOdometer: 5_000,
+          },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('maintenance-overdue')).toEqual([
+      expect.objectContaining({ category: 'brake_pads', remainingDistanceKm: -5_000 }),
+    ]);
+  });
+
+  it('lets a logged service supersede the baseline', async () => {
+    // The baseline was a recollection; the record is a measurement.
+    prisma.vehicle.findUnique.mockResolvedValue(
+      vehicle({
+        maintenanceRecords: [{ category: 'brake_pads', odometer: 38_000 }],
+        serviceBaselines: [
+          {
+            category: 'brake_pads',
+            status: ServiceBaselineStatus.known,
+            lastDoneOdometer: 5_000,
+          },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('maintenance-overdue')).toEqual([]);
+    expect(alertsOfKind('maintenance-due')).toEqual([]);
+  });
+
+  it('asks rather than guesses when the owner has said they do not know', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue(
+      vehicle({
+        serviceBaselines: [
+          {
+            category: 'brake_pads',
+            status: ServiceBaselineStatus.unknown,
+            lastDoneOdometer: null,
+          },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([
+      expect.objectContaining({ scope: 'category', category: 'brake_pads', intervalKm: 30_000 }),
+    ]);
+    // No due/overdue alert alongside it: there is no figure to have computed one from.
+    expect(alertsOfKind('maintenance-due')).toEqual([]);
+    expect(alertsOfKind('maintenance-overdue')).toEqual([]);
+  });
+
+  it('stays quiet on a baseline that knows only a date', async () => {
+    // Distance arithmetic cannot use it, and turning that date into an odometer
+    // via the mileage forecast would let a projection declare a service overdue.
+    prisma.vehicle.findUnique.mockResolvedValue(
+      vehicle({
+        serviceBaselines: [
+          {
+            category: 'brake_pads',
+            status: ServiceBaselineStatus.known,
+            lastDoneOdometer: null,
+          },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(kindsRaised()).not.toContain('maintenance-overdue');
+    expect(kindsRaised()).not.toContain('service-baseline-unknown');
+  });
+
+  it('keeps the old fallback for a vehicle nobody has been asked about', async () => {
+    // Every vehicle predating this table is in this state. The fallback still
+    // measures from the odometer on the vehicle — which quietly assumes
+    // everything had just been done — but it must not turn into a per-category
+    // alert, or the release greets each existing garage with a wall of them.
+    prisma.vehicle.findUnique.mockResolvedValue(vehicle({}));
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('maintenance-overdue')).toEqual([]);
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([
+      expect.objectContaining({ scope: 'vehicle' }),
+    ]);
+  });
+
+  it('prompts once for the whole vehicle rather than once per category', async () => {
+    intervals.resolveForVehicle.mockResolvedValue({
+      ...BRAKE_PADS,
+      engine_oil: { km: 7_500, months: 6, source: 'default' },
+      coolant: { km: 40_000, months: 24, source: 'default' },
+    });
+    prisma.vehicle.findUnique.mockResolvedValue(vehicle({}));
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toHaveLength(1);
+  });
+
+  it('stops prompting once the vehicle has any history at all', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue(
+      vehicle({ maintenanceRecords: [{ category: 'engine_oil', odometer: 30_000 }] }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([]);
+  });
+
+  it('stops prompting once any baseline has been answered', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue(
+      vehicle({
+        serviceBaselines: [
+          {
+            category: 'engine_oil',
+            status: ServiceBaselineStatus.unknown,
+            lastDoneOdometer: null,
+          },
+        ],
+      }),
+    );
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([]);
+  });
+
+  it('leaves a young, barely used vehicle alone', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue(vehicle({ odometer: 800, year: 2026 }));
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([]);
+  });
+
+  it('still asks an old low-mileage vehicle, because wear items age on the calendar', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue(vehicle({ odometer: 800, year: 2015 }));
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('service-baseline-unknown')).toEqual([
+      expect.objectContaining({ scope: 'vehicle', odometer: 800 }),
+    ]);
   });
 });

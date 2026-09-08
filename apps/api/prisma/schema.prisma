@@ -160,12 +160,51 @@ model Vehicle {
   tyres               Tyre[]
   tyreInspections     TyreInspection[]
   accessories         Accessory[]
+  serviceBaselines    ServiceBaseline[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
   @@index([catalogVariantId])
   @@index([catalogGenerationId])
+}
+
+enum ServiceBaselineStatus {
+  known
+  unknown
+}
+
+/// What was known about one service category on a Vehicle at the moment it
+/// entered the vault.
+///
+/// Exists because a used vehicle arrives carrying history the app cannot see,
+/// and the alert engine's only previous option was to measure every interval
+/// from the odometer at the moment the vehicle was added — which silently
+/// asserts that everything had just been done. A bike added at 40 000 km was
+/// treated as having had its brake pads changed at 40 000 km.
+///
+/// The absence of a row is a third state, distinct from both of these, and the
+/// engine reads it that way: nobody has been asked yet, so the old fallback
+/// stands and nothing is claimed. `unknown` is the state a user has to opt into
+/// by saying so, and it is the one that produces an alert.
+model ServiceBaseline {
+  id        String                @id @default(uuid()) @db.Uuid
+  vehicleId String                @db.Uuid
+  category  MaintenanceCategory
+  status    ServiceBaselineStatus
+  /// Odometer at which this category was last done before the vault knew the
+  /// vehicle. Null when the status is `unknown`, and also when the owner
+  /// remembers the date but not the reading — the CHECK constraint requires one
+  /// of the two, not both.
+  lastDoneOdometer Int?
+  lastDoneDate     DateTime?
+  notes            String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  vehicle          Vehicle               @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, category])
+  @@index([vehicleId])
 }
 
 enum TyrePosition {
@@ -652,6 +691,7 @@ enum AuditResourceType {
   compliance_document
   tyre
   accessory
+  service_baseline
 }
 
 model AuditEvent {

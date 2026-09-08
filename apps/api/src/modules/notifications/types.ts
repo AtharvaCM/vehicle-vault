@@ -21,6 +21,7 @@ export const ALERT_KINDS = [
   'tyre-worn',
   'tyre-aged',
   'tyre-uninspected',
+  'service-baseline-unknown',
 ] as const;
 
 export type AlertKind = (typeof ALERT_KINDS)[number];
@@ -120,6 +121,29 @@ export type TyreUninspectedPayload = {
   | { reason: 'stale'; kmSinceLastCheck: number; daysSinceLastCheck: number }
 );
 
+/**
+ * The app cannot time a reminder because it does not know when something was
+ * last done. Split by scope because the two are asking for different things:
+ * `vehicle` wants a history that has never been started, `category` chases the
+ * one item whose owner has explicitly said they do not know.
+ *
+ * Never raised for a category merely missing a baseline row. Every vehicle in
+ * the database predates this table, and treating "not asked" as "unknown" would
+ * greet each of them with a notification per service category.
+ */
+export type ServiceBaselineUnknownPayload = {
+  vehicleId: string;
+  odometer: number;
+} & (
+  | { scope: 'vehicle' }
+  | {
+      scope: 'category';
+      category: string;
+      /** The interval this category would have been measured against, in km. */
+      intervalKm: number;
+    }
+);
+
 export type AlertPayloads = {
   'maintenance-due': MaintenanceDuePayload;
   'maintenance-overdue': MaintenanceOverduePayload;
@@ -130,6 +154,7 @@ export type AlertPayloads = {
   'tyre-worn': TyreWornPayload;
   'tyre-aged': TyreAgedPayload;
   'tyre-uninspected': TyreUninspectedPayload;
+  'service-baseline-unknown': ServiceBaselineUnknownPayload;
 };
 
 export type NotificationUrgency = 'info' | 'warning' | 'success' | 'error';

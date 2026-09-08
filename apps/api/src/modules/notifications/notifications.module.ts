@@ -18,6 +18,7 @@ import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
 import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
 import { ReminderDueTemplate } from './templates/reminder-due.template';
 import { ReminderOverdueTemplate } from './templates/reminder-overdue.template';
+import { ServiceBaselineUnknownTemplate } from './templates/service-baseline-unknown.template';
 import { TyreAgedTemplate } from './templates/tyre-aged.template';
 import { TyreUninspectedTemplate } from './templates/tyre-uninspected.template';
 import { TyreWornTemplate } from './templates/tyre-worn.template';
@@ -45,6 +46,7 @@ export const ALERT_TEMPLATE_PROVIDERS = [
   TyreWornTemplate,
   TyreAgedTemplate,
   TyreUninspectedTemplate,
+  ServiceBaselineUnknownTemplate,
 ];
 
 @Module({
