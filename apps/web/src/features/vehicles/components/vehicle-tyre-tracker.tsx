@@ -128,11 +128,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Add tyre
                 </Button>
-                <Button
-                  onClick={() => setOpenDialog('inspection')}
-                  size="sm"
-                  variant="secondary"
-                >
+                <Button onClick={() => setOpenDialog('inspection')} size="sm" variant="secondary">
                   <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
                   Log inspection
                 </Button>
@@ -534,7 +530,8 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
         <p className="mt-1 text-[11px] font-medium text-slate-500">{describeBaseline(metric)}</p>
         {metric.lastRecord ? (
           <p className="mt-2 text-[9px] font-bold uppercase tracking-tighter text-slate-400">
-            Last: {formatDistanceToNow(new Date(metric.lastRecord.serviceDate), { addSuffix: true })}
+            Last:{' '}
+            {formatDistanceToNow(new Date(metric.lastRecord.serviceDate), { addSuffix: true })}
           </p>
         ) : null}
         {metric.status !== 'unknown' && metric.kmRemaining !== null ? (

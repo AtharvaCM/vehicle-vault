@@ -112,9 +112,7 @@ describe('VehiclesService', () => {
 
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result).toEqual({
-      data: [
-        expect.objectContaining({ id: 'vehicle-1', registrationNumber: 'MH12AB1234' }),
-      ],
+      data: [expect.objectContaining({ id: 'vehicle-1', registrationNumber: 'MH12AB1234' })],
       meta: { page: 1, limit: 20, total: 1 },
     });
   });
@@ -260,7 +258,9 @@ describe('VehiclesService', () => {
   });
 
   it('returns not found when the user has no membership on the vehicle', async () => {
-    accessService.assert.mockRejectedValueOnce(new NotFoundException('Vehicle vehicle-404 was not found'));
+    accessService.assert.mockRejectedValueOnce(
+      new NotFoundException('Vehicle vehicle-404 was not found'),
+    );
 
     await expect(service.getVehicleById('user-1', 'vehicle-404')).rejects.toBeInstanceOf(
       NotFoundException,

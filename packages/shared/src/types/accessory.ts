@@ -1,10 +1,6 @@
 import type { z } from 'zod';
 
-import type {
-  AccessoryCreateSchema,
-  AccessorySchema,
-  AccessoryUpdateSchema,
-} from '../schemas';
+import type { AccessoryCreateSchema, AccessorySchema, AccessoryUpdateSchema } from '../schemas';
 
 export type CreateAccessoryInput = z.infer<typeof AccessoryCreateSchema>;
 export type UpdateAccessoryInput = z.infer<typeof AccessoryUpdateSchema>;

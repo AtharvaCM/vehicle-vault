@@ -195,7 +195,10 @@ export class FuelLogsService {
     vehicleId: string,
     candidateOdometer: number,
   ) {
-    const vehicle = await tx.vehicle.findUnique({ where: { id: vehicleId }, select: { odometer: true } });
+    const vehicle = await tx.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: { odometer: true },
+    });
     if (vehicle && candidateOdometer > vehicle.odometer) {
       await tx.vehicle.update({ where: { id: vehicleId }, data: { odometer: candidateOdometer } });
     }

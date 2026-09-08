@@ -35,14 +35,23 @@ export function NotificationCenter() {
   async function handlePushToggle() {
     if (push.status === 'on') {
       await push.disable();
-      appToast.success({ title: 'Push disabled', description: 'This device will no longer get alerts.' });
+      appToast.success({
+        title: 'Push disabled',
+        description: 'This device will no longer get alerts.',
+      });
       return;
     }
     const enabled = await push.enable();
     if (enabled) {
-      appToast.success({ title: 'Push enabled', description: 'Alerts will reach this device even when the tab is closed.' });
+      appToast.success({
+        title: 'Push enabled',
+        description: 'Alerts will reach this device even when the tab is closed.',
+      });
     } else if (push.status !== 'denied') {
-      appToast.error({ title: 'Could not enable push', description: 'Check browser permissions and try again.' });
+      appToast.error({
+        title: 'Could not enable push',
+        description: 'Check browser permissions and try again.',
+      });
     }
   }
 
@@ -95,41 +104,41 @@ export function NotificationCenter() {
         <div className="flex items-center justify-between p-4 pb-2">
           <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
           <div className="flex items-center gap-1">
-          {(push.status === 'on' || push.status === 'off' || push.status === 'denied') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-[11px] font-semibold text-slate-500 hover:text-primary hover:bg-primary/5 px-2"
-              onClick={handlePushToggle}
-              disabled={push.status === 'denied'}
-              title={
-                push.status === 'denied'
-                  ? 'Notifications are blocked in your browser settings'
-                  : push.status === 'on'
-                    ? 'Disable push on this device'
-                    : 'Get alerts on this device even when the tab is closed'
-              }
-            >
-              {push.status === 'on' ? (
-                <BellRing className="mr-1.5 h-3.5 w-3.5 text-emerald-500" />
-              ) : (
-                <BellOff className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {push.status === 'on' ? 'Push on' : 'Enable push'}
-            </Button>
-          )}
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/5 px-2"
-              onClick={() => markAllRead.mutate()}
-              disabled={markAllRead.isPending}
-            >
-              <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
-              Mark all as read
-            </Button>
-          )}
+            {(push.status === 'on' || push.status === 'off' || push.status === 'denied') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-[11px] font-semibold text-slate-500 hover:text-primary hover:bg-primary/5 px-2"
+                onClick={handlePushToggle}
+                disabled={push.status === 'denied'}
+                title={
+                  push.status === 'denied'
+                    ? 'Notifications are blocked in your browser settings'
+                    : push.status === 'on'
+                      ? 'Disable push on this device'
+                      : 'Get alerts on this device even when the tab is closed'
+                }
+              >
+                {push.status === 'on' ? (
+                  <BellRing className="mr-1.5 h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <BellOff className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {push.status === 'on' ? 'Push on' : 'Enable push'}
+              </Button>
+            )}
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/5 px-2"
+                onClick={() => markAllRead.mutate()}
+                disabled={markAllRead.isPending}
+              >
+                <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
+                Mark all as read
+              </Button>
+            )}
           </div>
         </div>
 

@@ -55,11 +55,7 @@ describe('NotifyService', () => {
     vi.clearAllMocks();
     (okChannel.deliver as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
     (failingChannel.deliver as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
-    service = new NotifyService(
-      prisma as never,
-      [template] as never,
-      [okChannel],
-    );
+    service = new NotifyService(prisma as never, [template] as never, [okChannel]);
   });
 
   it('renders via template, persists Notification with kind + dedupKey, and dispatches channels', async () => {
@@ -122,11 +118,7 @@ describe('NotifyService', () => {
       new Error('SMS gateway down'),
     );
 
-    service = new NotifyService(
-      prisma as never,
-      [template] as never,
-      [okChannel, failingChannel],
-    );
+    service = new NotifyService(prisma as never, [template] as never, [okChannel, failingChannel]);
 
     const result = await service.raise('user-1', 'veh-1', 'maintenance-due', {
       vehicleId: 'veh-1',

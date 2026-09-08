@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SchemaType } from '@google/generative-ai';
 import type { ClaimExtractionSuggestion } from '@vehicle-vault/shared';
 
-import type {
-  ExtractionContext,
-  ExtractionFile,
-  ExtractionSpec,
-} from '../../extraction/types';
+import type { ExtractionContext, ExtractionFile, ExtractionSpec } from '../../extraction/types';
 
 type RawClaimExtraction = {
   confidence?: number;
@@ -20,9 +16,7 @@ type RawClaimExtraction = {
 };
 
 @Injectable()
-export class ClaimDocumentExtractionSpec
-  implements ExtractionSpec<ClaimExtractionSuggestion>
-{
+export class ClaimDocumentExtractionSpec implements ExtractionSpec<ClaimExtractionSuggestion> {
   readonly kind = 'claim_document' as const;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,13 +45,11 @@ export class ClaimDocumentExtractionSpec
       },
       filedDate: {
         type: SchemaType.STRING,
-        description:
-          'Date the claim was filed (ISO 8601). Often the document or intimation date.',
+        description: 'Date the claim was filed (ISO 8601). Often the document or intimation date.',
       },
       settledDate: {
         type: SchemaType.STRING,
-        description:
-          'Date the claim was settled / paid out (ISO 8601). Only if explicitly stated.',
+        description: 'Date the claim was settled / paid out (ISO 8601). Only if explicitly stated.',
       },
       vendorName: {
         type: SchemaType.STRING,

@@ -61,10 +61,7 @@ describe('VehicleAccessService', () => {
   });
 
   it('listAccessibleVehicleIds filters by minimum role', async () => {
-    prisma.vehicleMember.findMany.mockResolvedValueOnce([
-      { vehicleId: 'v1' },
-      { vehicleId: 'v2' },
-    ]);
+    prisma.vehicleMember.findMany.mockResolvedValueOnce([{ vehicleId: 'v1' }, { vehicleId: 'v2' }]);
     const ids = await access.listAccessibleVehicleIds('u', VehicleRole.editor);
     expect(ids).toEqual(['v1', 'v2']);
     expect(prisma.vehicleMember.findMany).toHaveBeenCalledWith({

@@ -146,7 +146,6 @@ export class MaintenanceAlertService {
     }
   }
 
-
   /**
    * Trigger checks for ALL vehicles.
    * This is called automatically every day at 6:00 AM.

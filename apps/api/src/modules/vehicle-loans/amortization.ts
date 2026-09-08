@@ -67,9 +67,9 @@ export function buildSchedule(params: LoanParams): AmortizationMonth[] {
   const emi = computeEmi(params);
   const schedule: AmortizationMonth[] = [];
   let balance = params.principal;
-  const prepayments = (params.prepayments ?? []).slice().sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
+  const prepayments = (params.prepayments ?? [])
+    .slice()
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
   let prepaymentCursor = 0;
 
   for (let i = 0; i < params.tenureMonths; i += 1) {
@@ -152,18 +152,15 @@ export function summarize(params: LoanParams, asOf: Date = new Date()): LoanSumm
 
   // Foreclosure: any outstanding at closedAt counts as paid in full;
   // interest beyond closedAt is excluded.
-  let outstanding = lastRow
-    ? lastRow.balance
-    : params.principal;
+  let outstanding = lastRow ? lastRow.balance : params.principal;
   if (params.closedAt && params.closedAt.getTime() <= asOf.getTime()) {
     outstanding = ZERO;
   }
 
   // Project remaining months from current state.
   const remainingSchedule = schedule.filter((row) => row.date.getTime() > asOf.getTime());
-  const monthsRemaining = params.closedAt && params.closedAt.getTime() <= asOf.getTime()
-    ? 0
-    : remainingSchedule.length;
+  const monthsRemaining =
+    params.closedAt && params.closedAt.getTime() <= asOf.getTime() ? 0 : remainingSchedule.length;
 
   const totalInterest = schedule.reduce((acc, row) => acc.plus(row.interest), ZERO);
   const totalPayable = totalInterest.plus(params.principal);

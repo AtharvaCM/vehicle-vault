@@ -24,9 +24,7 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
         <div>
           <CardTitle className="text-base">{loan.lender}</CardTitle>
-          {vehicleLabel ? (
-            <p className="text-xs text-muted-foreground">{vehicleLabel}</p>
-          ) : null}
+          {vehicleLabel ? <p className="text-xs text-muted-foreground">{vehicleLabel}</p> : null}
         </div>
         <span
           className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -86,8 +84,8 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
         </div>
         {loan.prepaidToDate > 0 ? (
           <p className="text-[11px] text-muted-foreground">
-            {loan.prepayments.length} prepayment{loan.prepayments.length === 1 ? '' : 's'} ·{' '}
-            saved interest baked in
+            {loan.prepayments.length} prepayment{loan.prepayments.length === 1 ? '' : 's'} · saved
+            interest baked in
           </p>
         ) : null}
       </CardContent>

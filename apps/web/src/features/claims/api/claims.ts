@@ -1,14 +1,8 @@
 import { apiClient, type ApiSuccessResponse } from '@/lib/api/api-client';
-import {
-  type Claim,
-  type CreateClaimInput,
-  type UpdateClaimInput,
-} from '@vehicle-vault/shared';
+import { type Claim, type CreateClaimInput, type UpdateClaimInput } from '@vehicle-vault/shared';
 
 export async function listClaimsForVehicle(vehicleId: string) {
-  const response = await apiClient.get<ApiSuccessResponse<Claim[]>>(
-    `vehicles/${vehicleId}/claims`,
-  );
+  const response = await apiClient.get<ApiSuccessResponse<Claim[]>>(`vehicles/${vehicleId}/claims`);
   return response.data;
 }
 

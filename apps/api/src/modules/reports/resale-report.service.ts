@@ -81,9 +81,7 @@ export class ResaleReportService {
         tenureMonths: loan.tenureMonths,
         startDate: loan.startDate,
         closedAt: loan.closedAt,
-        prepayments: loan.prepayments.map(
-          (p): Prepayment => ({ date: p.date, amount: p.amount }),
-        ),
+        prepayments: loan.prepayments.map((p): Prepayment => ({ date: p.date, amount: p.amount })),
       };
       return { loan, summary: summarize(params, today) };
     });
@@ -137,10 +135,7 @@ export class ResaleReportService {
     if (loanSummaries.length === 0) {
       doc.fillColor('#16a34a').text('No active or closed loan on file.').fillColor('#000');
     } else if (activeLoans.length === 0) {
-      doc
-        .fillColor('#16a34a')
-        .text('All loans on this vehicle are closed.')
-        .fillColor('#000');
+      doc.fillColor('#16a34a').text('All loans on this vehicle are closed.').fillColor('#000');
       doc.moveDown(0.3);
       for (const { loan } of loanSummaries) {
         doc
@@ -153,7 +148,9 @@ export class ResaleReportService {
     } else {
       doc
         .fillColor('#b45309')
-        .text(`${activeLoans.length} active loan${activeLoans.length > 1 ? 's' : ''} on this vehicle. Outstanding amount must be settled at transfer.`)
+        .text(
+          `${activeLoans.length} active loan${activeLoans.length > 1 ? 's' : ''} on this vehicle. Outstanding amount must be settled at transfer.`,
+        )
         .fillColor('#000');
       doc.moveDown(0.3);
       for (const { loan, summary } of activeLoans) {
@@ -194,7 +191,12 @@ export class ResaleReportService {
     doc.font('Helvetica-Bold').fontSize(13).text('Open service items');
     doc.moveDown(0.3);
     if (reminders.length === 0) {
-      doc.font('Helvetica').fontSize(10).fillColor('#16a34a').text('No pending or overdue reminders.').fillColor('#000');
+      doc
+        .font('Helvetica')
+        .fontSize(10)
+        .fillColor('#16a34a')
+        .text('No pending or overdue reminders.')
+        .fillColor('#000');
     } else {
       doc.font('Helvetica-Bold').fontSize(9);
       const headers = ['Status', 'Title', 'Type', 'Due'];
@@ -221,7 +223,11 @@ export class ResaleReportService {
     const loanClosed = loanSummaries.length > 0 && activeLoans.length === 0;
     const checklist: [string, boolean, string][] = [
       ['Registration certificate (RC)', true, 'Required for transfer'],
-      ['Active insurance policy', !!activePolicy, activePolicy ? `Valid until ${fmtDate(activePolicy.endDate)}` : 'Renew before transfer'],
+      [
+        'Active insurance policy',
+        !!activePolicy,
+        activePolicy ? `Valid until ${fmtDate(activePolicy.endDate)}` : 'Renew before transfer',
+      ],
       ['Pollution under control (PUC)', true, 'Provide latest certificate'],
       [
         'Loan NOC',

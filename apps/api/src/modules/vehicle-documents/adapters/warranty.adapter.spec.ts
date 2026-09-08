@@ -53,12 +53,12 @@ describe('WarrantyAdapter', () => {
     });
 
     it('preserves nullable endDate and warrantyNumber in the unified shape', () => {
-      expect(
-        adapter.toDocument({ ...baseRow, endDate: null, warrantyNumber: null }),
-      ).toMatchObject({
-        endDate: null,
-        number: null,
-      });
+      expect(adapter.toDocument({ ...baseRow, endDate: null, warrantyNumber: null })).toMatchObject(
+        {
+          endDate: null,
+          number: null,
+        },
+      );
     });
   });
 

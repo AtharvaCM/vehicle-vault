@@ -34,9 +34,7 @@ const KIND_GUIDANCE: Record<string, string> = {
 };
 
 @Injectable()
-export class ComplianceDocumentExtractionSpec
-  implements ExtractionSpec<ComplianceExtractionDraft>
-{
+export class ComplianceDocumentExtractionSpec implements ExtractionSpec<ComplianceExtractionDraft> {
   readonly kind = 'compliance_document' as const;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

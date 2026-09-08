@@ -37,9 +37,8 @@ export async function getClaimExtractionStatus() {
 }
 
 export async function extractClaimAttachment(attachmentId: string) {
-  const response = await apiClient.post<
-    ApiSuccessResponse<ClaimExtractionSuggestion>,
-    undefined
-  >(`claim-attachments/${attachmentId}/extract`);
+  const response = await apiClient.post<ApiSuccessResponse<ClaimExtractionSuggestion>, undefined>(
+    `claim-attachments/${attachmentId}/extract`,
+  );
   return response.data;
 }

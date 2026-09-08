@@ -29,7 +29,12 @@ describe('splitAttention', () => {
   it('keeps urgent items in the queue and this_month items in coming up', () => {
     const result = splitAttention(attention);
 
-    expect(result.queue.map((item) => item.id)).toEqual(['r-overdue', 'r-today', 'r-week', 'd-week']);
+    expect(result.queue.map((item) => item.id)).toEqual([
+      'r-overdue',
+      'r-today',
+      'r-week',
+      'd-week',
+    ]);
     expect(result.comingUp.map((item) => item.id)).toEqual(['d-month', 'r-month']);
   });
 

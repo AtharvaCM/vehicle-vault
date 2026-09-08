@@ -2,17 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { invalidateAudit } from '@/lib/query/invalidate-audit';
 import { queryKeys } from '@/lib/query/query-keys';
-import {
-  type CreateClaimInput,
-  type UpdateClaimInput,
-} from '@vehicle-vault/shared';
+import { type CreateClaimInput, type UpdateClaimInput } from '@vehicle-vault/shared';
 
-import {
-  createClaim,
-  deleteClaim,
-  listClaimsForVehicle,
-  updateClaim,
-} from '../api/claims';
+import { createClaim, deleteClaim, listClaimsForVehicle, updateClaim } from '../api/claims';
 
 export function useVehicleClaims(vehicleId: string) {
   return useQuery({

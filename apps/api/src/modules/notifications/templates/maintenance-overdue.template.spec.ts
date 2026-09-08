@@ -42,8 +42,7 @@ describe('MaintenanceOverdueTemplate', () => {
         }),
       ).toEqual({
         title: 'Overdue Service: Engine Oil',
-        message:
-          'Your Engine Oil is overdue by approx. 424 km. Please schedule service soon.',
+        message: 'Your Engine Oil is overdue by approx. 424 km. Please schedule service soon.',
         type: 'error',
         link: '/vehicles/veh-1?tab=maintenance',
       });

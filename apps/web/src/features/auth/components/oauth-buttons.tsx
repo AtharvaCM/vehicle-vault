@@ -32,11 +32,7 @@ export function OAuthButtons() {
       </div>
       <div className="space-y-2">
         {providers.map((provider) => (
-          <a
-            key={provider}
-            href={providerHref(provider)}
-            className="block"
-          >
+          <a key={provider} href={providerHref(provider)} className="block">
             <Button type="button" variant="outline" className="w-full">
               {LABEL[provider]}
             </Button>

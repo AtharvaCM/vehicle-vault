@@ -68,10 +68,7 @@ describe('VehicleCatalogLinkerService', () => {
     });
     expect(prisma.vehicleCatalogMake.findMany).toHaveBeenCalledWith({
       where: {
-        OR: [
-          { slug: 'hyundai' },
-          { name: { equals: 'Hyundai', mode: 'insensitive' } },
-        ],
+        OR: [{ slug: 'hyundai' }, { name: { equals: 'Hyundai', mode: 'insensitive' } }],
       },
       select: { id: true },
     });

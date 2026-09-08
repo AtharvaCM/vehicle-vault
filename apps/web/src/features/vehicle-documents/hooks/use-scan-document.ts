@@ -21,14 +21,15 @@ async function scanVehicleDocument(input: ScanInput): Promise<VehicleDocumentSca
   const formData = new FormData();
   formData.append('file', input.file);
 
-  const response = await apiClient.post<
-    ApiSuccessResponse<VehicleDocumentScanResult>,
-    FormData
-  >(endpoints.vehicleDocuments.scan(input.vehicleId), formData, {
-    query: { kind: input.kind },
-    // Do NOT set Content-Type — fetch must auto-generate the multipart boundary.
-    // apiClient already skips Content-Type for FormData bodies.
-  });
+  const response = await apiClient.post<ApiSuccessResponse<VehicleDocumentScanResult>, FormData>(
+    endpoints.vehicleDocuments.scan(input.vehicleId),
+    formData,
+    {
+      query: { kind: input.kind },
+      // Do NOT set Content-Type — fetch must auto-generate the multipart boundary.
+      // apiClient already skips Content-Type for FormData bodies.
+    },
+  );
 
   return response.data;
 }

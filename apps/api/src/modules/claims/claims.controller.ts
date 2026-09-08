@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import type { CreateClaimInput, UpdateClaimInput } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
@@ -20,10 +11,7 @@ export class ClaimsController {
   constructor(private readonly claimsService: ClaimsService) {}
 
   @Get('vehicles/:vehicleId/claims')
-  async listForVehicle(
-    @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
-  ) {
+  async listForVehicle(@CurrentUser('id') userId: string, @Param('vehicleId') vehicleId: string) {
     return this.claimsService.listForVehicle(userId, vehicleId);
   }
 
@@ -46,10 +34,7 @@ export class ClaimsController {
   }
 
   @Delete('claims/:id')
-  async remove(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     await this.claimsService.remove(userId, id);
     return { removed: true };
   }

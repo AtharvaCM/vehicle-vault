@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type {
-  AlertTemplate,
-  ReminderOverduePayload,
-  RenderedNotification,
-} from '../types';
+import type { AlertTemplate, ReminderOverduePayload, RenderedNotification } from '../types';
 
 @Injectable()
 export class ReminderOverdueTemplate implements AlertTemplate<'reminder-overdue'> {

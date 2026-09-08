@@ -176,8 +176,7 @@ function printChange(source: string, changes: BrandChange[]): void {
   console.log('─'.repeat(60));
   for (const bc of changes) {
     console.log(`  ${bc.brand} (${bc.vehicleType})`);
-    if (bc.addedModels.length > 0)
-      console.log(`    + models:      ${bc.addedModels.join(', ')}`);
+    if (bc.addedModels.length > 0) console.log(`    + models:      ${bc.addedModels.join(', ')}`);
     if (bc.removedModels.length > 0)
       console.log(`    - models:      ${bc.removedModels.join(', ')}`);
     for (const mc of bc.modelChanges) {

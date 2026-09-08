@@ -140,8 +140,8 @@ export function AccessoryFormDialog({
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit accessory' : 'Add an accessory'}</DialogTitle>
           <DialogDescription>
-            Something bought for this vehicle — mats, a dashcam, alloys. Kept apart from
-            service history so it does not distort your running cost.
+            Something bought for this vehicle — mats, a dashcam, alloys. Kept apart from service
+            history so it does not distort your running cost.
           </DialogDescription>
         </DialogHeader>
 
@@ -160,11 +160,7 @@ export function AccessoryFormDialog({
               htmlFor="accessory-category"
               label="Category"
             >
-              <Input
-                id="accessory-category"
-                placeholder="Electronics"
-                {...register('category')}
-              />
+              <Input id="accessory-category" placeholder="Electronics" {...register('category')} />
             </FormField>
           </div>
 
@@ -174,11 +170,7 @@ export function AccessoryFormDialog({
               htmlFor="accessory-purchase-date"
               label="Purchase date"
             >
-              <Input
-                id="accessory-purchase-date"
-                type="date"
-                {...register('purchaseDate')}
-              />
+              <Input id="accessory-purchase-date" type="date" {...register('purchaseDate')} />
             </FormField>
             <FormField error={errors.cost?.message} htmlFor="accessory-cost" label="Cost">
               <Input

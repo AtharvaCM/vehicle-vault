@@ -69,7 +69,13 @@ export function VehiclePickerMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button aria-haspopup="menu" className={className} size={size} type="button" variant={variant}>
+        <Button
+          aria-haspopup="menu"
+          className={className}
+          size={size}
+          type="button"
+          variant={variant}
+        >
           <Icon aria-hidden="true" />
           {label}
           <ChevronDown aria-hidden="true" className="opacity-60" />
@@ -78,7 +84,10 @@ export function VehiclePickerMenu({
       <DropdownMenuContent align="end" className="min-w-[14rem]">
         {sortedVehicles.map((vehicle) => (
           <DropdownMenuItem asChild key={vehicle.id}>
-            <Link {...buildLink(vehicle.id)} className="flex cursor-pointer flex-col items-start gap-0.5">
+            <Link
+              {...buildLink(vehicle.id)}
+              className="flex cursor-pointer flex-col items-start gap-0.5"
+            >
               <span className="text-sm font-medium text-slate-900">{vehicle.displayName}</span>
               <span className="text-[11px] tabular-nums text-slate-500">
                 {vehicle.registrationNumber}

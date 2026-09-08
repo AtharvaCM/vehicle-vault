@@ -7,9 +7,10 @@ export type OAuthProvider = 'google' | 'github';
 
 export async function getOAuthProviders(): Promise<OAuthProvider[]> {
   try {
-    const response = await apiClient.get<ApiSuccessResponse<{ providers: OAuthProvider[] }>>(
-      '/auth/oauth/providers',
-    );
+    const response =
+      await apiClient.get<ApiSuccessResponse<{ providers: OAuthProvider[] }>>(
+        '/auth/oauth/providers',
+      );
     return response.data.providers;
   } catch {
     return [];

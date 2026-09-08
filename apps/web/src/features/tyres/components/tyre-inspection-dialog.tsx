@@ -128,16 +128,16 @@ export function TyreInspectionDialog({
         <DialogHeader>
           <DialogTitle>Log a tyre inspection</DialogTitle>
           <DialogDescription>
-            Record tread depth and pressure for each tyre. Leave a corner blank if
-            you did not measure it.
+            Record tread depth and pressure for each tyre. Leave a corner blank if you did not
+            measure it.
           </DialogDescription>
         </DialogHeader>
 
         {fitted.length === 0 ? (
           <div className="grid gap-4">
             <p className="text-sm text-muted-foreground">
-              No tyres are being tracked for this vehicle yet. Add a tyre first, then
-              you can record readings against it.
+              No tyres are being tracked for this vehicle yet. Add a tyre first, then you can record
+              readings against it.
             </p>
             <DialogFooter>
               <Button onClick={onClose} type="button" variant="secondary">
@@ -155,11 +155,7 @@ export function TyreInspectionDialog({
               >
                 <Input id="inspection-date" type="date" {...register('inspectedAt')} />
               </FormField>
-              <FormField
-                error={errors.odometer?.message}
-                htmlFor="inspection-odo"
-                label="Odometer"
-              >
+              <FormField error={errors.odometer?.message} htmlFor="inspection-odo" label="Odometer">
                 <Input
                   id="inspection-odo"
                   min={0}

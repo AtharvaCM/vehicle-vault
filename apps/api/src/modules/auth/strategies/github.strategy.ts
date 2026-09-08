@@ -14,7 +14,9 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     super({
       clientID: appConfigService.oauthGithubClientId ?? 'unset',
       clientSecret: appConfigService.oauthGithubClientSecret ?? 'unset',
-      callbackURL: appConfigService.oauthGithubCallbackUrl ?? 'http://localhost:3000/api/auth/oauth/github/callback',
+      callbackURL:
+        appConfigService.oauthGithubCallbackUrl ??
+        'http://localhost:3000/api/auth/oauth/github/callback',
       scope: ['user:email'],
     });
   }
@@ -38,10 +40,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       email: primary?.value ?? null,
       emailVerified: Boolean(primary && primary.verified !== false),
       name:
-        profile.displayName ||
-        profile.username ||
-        primary?.value?.split('@')[0] ||
-        'GitHub user',
+        profile.displayName || profile.username || primary?.value?.split('@')[0] || 'GitHub user',
     };
     done(null, normalised);
   }

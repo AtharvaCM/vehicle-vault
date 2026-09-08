@@ -284,10 +284,10 @@ export function createSuggestedMaintenanceImportMapping(headers: string[]) {
 
   const hasLineItemSignals = Boolean(
     mapping.itemName ||
-      mapping.itemKind ||
-      mapping.itemCategory ||
-      mapping.itemQuantity ||
-      mapping.itemUnitPrice,
+    mapping.itemKind ||
+    mapping.itemCategory ||
+    mapping.itemQuantity ||
+    mapping.itemUnitPrice,
   );
 
   if (hasLineItemSignals) {

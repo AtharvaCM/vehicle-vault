@@ -32,10 +32,7 @@ export type TrackInput = {
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async track(
-    tx: Prisma.TransactionClient | PrismaService,
-    input: TrackInput,
-  ): Promise<void> {
+  async track(tx: Prisma.TransactionClient | PrismaService, input: TrackInput): Promise<void> {
     const before = redact(input.resourceType ?? null, input.before ?? null);
     const after = redact(input.resourceType ?? null, input.after ?? null);
     const changedFields = diffChangedFields(before, after);

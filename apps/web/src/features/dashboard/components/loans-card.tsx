@@ -53,7 +53,9 @@ export function LoansCard({ loans, today = new Date() }: LoansCardProps) {
             <div className="mt-1 text-xl font-semibold tabular-nums text-slate-900">
               {tile.value}
             </div>
-            {tile.hint ? <div className="mt-0.5 text-[12px] text-slate-500">{tile.hint}</div> : null}
+            {tile.hint ? (
+              <div className="mt-0.5 text-[12px] text-slate-500">{tile.hint}</div>
+            ) : null}
           </div>
         ))}
       </div>

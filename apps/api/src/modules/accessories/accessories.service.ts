@@ -105,9 +105,7 @@ export class AccessoriesService {
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.brand !== undefined ? { brand: input.brand ?? null } : {}),
       ...(input.category !== undefined ? { category: input.category ?? null } : {}),
-      ...(input.purchaseDate !== undefined
-        ? { purchaseDate: new Date(input.purchaseDate) }
-        : {}),
+      ...(input.purchaseDate !== undefined ? { purchaseDate: new Date(input.purchaseDate) } : {}),
       ...(input.cost !== undefined ? { cost: new Prisma.Decimal(input.cost) } : {}),
       ...(input.currencyCode !== undefined ? { currencyCode: input.currencyCode } : {}),
       ...(input.fittedDate !== undefined
@@ -124,9 +122,7 @@ export class AccessoriesService {
         : {}),
       ...(input.warrantyExpiresAt !== undefined
         ? {
-            warrantyExpiresAt: input.warrantyExpiresAt
-              ? new Date(input.warrantyExpiresAt)
-              : null,
+            warrantyExpiresAt: input.warrantyExpiresAt ? new Date(input.warrantyExpiresAt) : null,
           }
         : {}),
       ...(input.notes !== undefined ? { notes: input.notes ?? null } : {}),

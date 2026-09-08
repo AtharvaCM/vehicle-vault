@@ -31,9 +31,7 @@ export class ExtractionService {
   ): Promise<ExtractionResult<T>> {
     const spec = this.registry.get<T>(kind);
     if (!spec) {
-      throw new NotFoundException(
-        `No ExtractionSpec registered for kind "${kind}".`,
-      );
+      throw new NotFoundException(`No ExtractionSpec registered for kind "${kind}".`);
     }
 
     const prompt = spec.buildPrompt(files, context);

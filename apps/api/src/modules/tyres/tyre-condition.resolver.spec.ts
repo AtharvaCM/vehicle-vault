@@ -1,10 +1,7 @@
 import { TyrePosition } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  TyreConditionResolver,
-  type TyreConditionInput,
-} from './tyre-condition.resolver';
+import { TyreConditionResolver, type TyreConditionInput } from './tyre-condition.resolver';
 
 const NOW = new Date('2026-08-25T00:00:00.000Z');
 
@@ -29,11 +26,7 @@ describe('TyreConditionResolver', () => {
   });
 
   it('reports unknown when nothing has been measured', () => {
-    const condition = resolver.resolve(
-      makeTyre({ dotWeek: null, dotYear: null }),
-      6908,
-      NOW,
-    );
+    const condition = resolver.resolve(makeTyre({ dotWeek: null, dotYear: null }), 6908, NOW);
 
     expect(condition.level).toBe('unknown');
     expect(condition.treadDepthMm).toBeNull();
@@ -213,7 +206,7 @@ describe('TyreConditionResolver', () => {
     expect(condition.kmOnTyre).toBe(5908);
   });
 
-  it('does not consume a spare\'s expected life while it is carried', () => {
+  it("does not consume a spare's expected life while it is carried", () => {
     const condition = resolver.resolve(
       makeTyre({ position: TyrePosition.Spare, fittedOdometer: 0, expectedLifeKm: 45_000 }),
       40_000,

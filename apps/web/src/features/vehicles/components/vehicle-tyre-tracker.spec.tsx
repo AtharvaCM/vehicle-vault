@@ -50,12 +50,7 @@ function settled(data: MaintenanceRecord[]): QueryStub {
 }
 
 function renderTracker(query: QueryStub, vehicle: Vehicle | null = newVirtus) {
-  return render(
-    <VehicleTyreTracker
-      maintenanceQuery={query as never}
-      vehicle={vehicle}
-    />,
-  );
+  return render(<VehicleTyreTracker maintenanceQuery={query as never} vehicle={vehicle} />);
 }
 
 describe('VehicleTyreTracker', () => {
@@ -93,9 +88,7 @@ describe('VehicleTyreTracker', () => {
 
     expect(screen.queryByText(/overdue/i)).not.toBeInTheDocument();
     expect(screen.getAllByText('Not tracked').length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText('since purchase — earlier history unknown'),
-    ).toHaveLength(2);
+    expect(screen.getAllByText('since purchase — earlier history unknown')).toHaveLength(2);
   });
 
   it('shows a loading state instead of a verdict built from an empty record set', () => {

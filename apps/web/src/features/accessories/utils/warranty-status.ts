@@ -13,11 +13,7 @@
 export function daysUntilExpiry(expiryIso: string, today: Date): number {
   const todayUtcDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
   const expiry = new Date(expiryIso);
-  const expiryUtcDay = Date.UTC(
-    expiry.getUTCFullYear(),
-    expiry.getUTCMonth(),
-    expiry.getUTCDate(),
-  );
+  const expiryUtcDay = Date.UTC(expiry.getUTCFullYear(), expiry.getUTCMonth(), expiry.getUTCDate());
 
   return Math.round((expiryUtcDay - todayUtcDay) / (24 * 60 * 60 * 1000));
 }

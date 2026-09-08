@@ -137,7 +137,11 @@ export function LoanForm({
       </div>
 
       <FormField htmlFor="loan-notes" label="Notes" error={form.formState.errors.notes?.message}>
-        <Textarea id="loan-notes" {...form.register('notes')} placeholder="Co-borrower, EMI date…" />
+        <Textarea
+          id="loan-notes"
+          {...form.register('notes')}
+          placeholder="Co-borrower, EMI date…"
+        />
       </FormField>
 
       <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">

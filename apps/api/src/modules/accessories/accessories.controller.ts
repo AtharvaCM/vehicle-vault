@@ -19,9 +19,7 @@ export class AccessoriesController {
   @Get('vehicles/:vehicleId/accessories')
   @ApiOperation({ summary: 'List accessories bought for a vehicle, fitted and removed' })
   async listAccessories(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {
-    return successResponse(
-      await this.accessoriesService.listForVehicle(user.id, params.vehicleId),
-    );
+    return successResponse(await this.accessoriesService.listForVehicle(user.id, params.vehicleId));
   }
 
   @Post('vehicles/:vehicleId/accessories')
@@ -50,10 +48,7 @@ export class AccessoriesController {
 
   @Delete('accessories/:accessoryId')
   @ApiOperation({ summary: 'Delete an accessory' })
-  async deleteAccessory(
-    @CurrentUser() user: AuthUser,
-    @Param() params: AccessoryIdParamDto,
-  ) {
+  async deleteAccessory(@CurrentUser() user: AuthUser, @Param() params: AccessoryIdParamDto) {
     return successResponse(
       await this.accessoriesService.deleteAccessory(user.id, params.accessoryId),
     );

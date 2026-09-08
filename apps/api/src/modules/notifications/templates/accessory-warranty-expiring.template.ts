@@ -25,9 +25,7 @@ function truncate(value: string, max: number): string {
  * alerts should feel like one behaviour.
  */
 @Injectable()
-export class AccessoryWarrantyExpiringTemplate
-  implements AlertTemplate<'accessory-warranty-expiring'>
-{
+export class AccessoryWarrantyExpiringTemplate implements AlertTemplate<'accessory-warranty-expiring'> {
   readonly kind = 'accessory-warranty-expiring' as const;
 
   dedupKey(payload: AccessoryWarrantyExpiringPayload): string {

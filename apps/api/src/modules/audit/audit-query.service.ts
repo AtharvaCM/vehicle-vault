@@ -161,10 +161,7 @@ export class AuditQueryService {
   private decodeCursor(value: string): AuditCursor {
     try {
       const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
-      if (
-        typeof parsed?.occurredAt !== 'string' ||
-        typeof parsed?.id !== 'string'
-      ) {
+      if (typeof parsed?.occurredAt !== 'string' || typeof parsed?.id !== 'string') {
         throw new Error('Invalid cursor shape');
       }
       return { occurredAt: parsed.occurredAt, id: parsed.id };

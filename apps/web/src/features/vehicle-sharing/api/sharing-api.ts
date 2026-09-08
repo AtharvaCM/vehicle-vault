@@ -68,17 +68,16 @@ export async function removeMember(vehicleId: string, memberId: string): Promise
   await apiClient.delete<void>(endpoints.vehicleSharing.member(vehicleId, memberId));
 }
 
-export async function transferOwnership(
-  vehicleId: string,
-  memberId: string,
-): Promise<void> {
+export async function transferOwnership(vehicleId: string, memberId: string): Promise<void> {
   await apiClient.post<void, { memberId: string }>(
     endpoints.vehicleSharing.transferOwnership(vehicleId),
     { memberId },
   );
 }
 
-export async function acceptInvite(token: string): Promise<{ vehicleId: string; role: VehicleRole }> {
+export async function acceptInvite(
+  token: string,
+): Promise<{ vehicleId: string; role: VehicleRole }> {
   return apiClient.post<{ vehicleId: string; role: VehicleRole }, { token: string }>(
     endpoints.vehicleSharing.accept(),
     { token },

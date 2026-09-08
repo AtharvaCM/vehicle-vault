@@ -66,11 +66,7 @@ abstract class ComplianceAdapter implements VehicleDocumentAdapter {
     return rows.map((row) => this.toDocument(row));
   }
 
-  async findExpiringBetween(
-    userId: string,
-    from: Date,
-    until: Date,
-  ): Promise<VehicleDocument[]> {
+  async findExpiringBetween(userId: string, from: Date, until: Date): Promise<VehicleDocument[]> {
     // Documents with a null endDate (e.g. lifetime road tax) never expire.
     const rows = await this.prisma.complianceDocument.findMany({
       where: {

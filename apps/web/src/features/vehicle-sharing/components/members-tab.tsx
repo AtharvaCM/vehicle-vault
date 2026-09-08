@@ -84,9 +84,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
               isSelf={member.isSelf}
             />
           ))}
-          {members.length === 0 ? (
-            <p className="text-sm text-slate-500">No members yet.</p>
-          ) : null}
+          {members.length === 0 ? <p className="text-sm text-slate-500">No members yet.</p> : null}
         </CardContent>
       </Card>
 
@@ -363,4 +361,3 @@ function PendingInvitesCard({
     </Card>
   );
 }
-

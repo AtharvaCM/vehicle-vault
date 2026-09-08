@@ -9,10 +9,10 @@ import { apiClient } from '@/lib/api/api-client';
 import { endpoints } from '@/lib/api/endpoints';
 
 export async function addPrepayment(loanId: string, input: CreateLoanPrepaymentInput) {
-  const response = await apiClient.post<
-    ApiSuccessResponse<VehicleLoan>,
-    CreateLoanPrepaymentInput
-  >(endpoints.vehicleLoans.addPrepayment(loanId), input);
+  const response = await apiClient.post<ApiSuccessResponse<VehicleLoan>, CreateLoanPrepaymentInput>(
+    endpoints.vehicleLoans.addPrepayment(loanId),
+    input,
+  );
   return response.data;
 }
 

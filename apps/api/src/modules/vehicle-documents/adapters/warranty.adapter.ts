@@ -58,11 +58,7 @@ export class WarrantyAdapter implements VehicleDocumentAdapter {
     return rows.map((row) => this.toDocument(row));
   }
 
-  async findExpiringBetween(
-    userId: string,
-    from: Date,
-    until: Date,
-  ): Promise<VehicleDocument[]> {
+  async findExpiringBetween(userId: string, from: Date, until: Date): Promise<VehicleDocument[]> {
     // Warranties with a null endDate never expire, so they're excluded here.
     const rows = await this.prisma.warranty.findMany({
       where: {

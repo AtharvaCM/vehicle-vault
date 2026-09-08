@@ -70,15 +70,15 @@ describe('VehicleMembersService', () => {
       createdAt: new Date(),
       user: { email: 'o@x.test', name: 'O' },
     });
-    await expect(
-      service.updateRole('u1', 'v1', 'm1', VehicleRole.editor),
-    ).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.updateRole('u1', 'v1', 'm1', VehicleRole.editor)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('updateRole rejects promotion to owner role', async () => {
-    await expect(
-      service.updateRole('u1', 'v1', 'm1', VehicleRole.owner),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.updateRole('u1', 'v1', 'm1', VehicleRole.owner)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('remove rejects owner removal', async () => {
@@ -88,9 +88,7 @@ describe('VehicleMembersService', () => {
       userId: 'u-owner',
       role: VehicleRole.owner,
     });
-    await expect(service.remove('u-owner', 'v1', 'm1')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(service.remove('u-owner', 'v1', 'm1')).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('remove allows self-leave for non-owner', async () => {
@@ -108,8 +106,18 @@ describe('VehicleMembersService', () => {
 
   it('transferOwnership swaps roles and updates Vehicle.userId', async () => {
     prisma.vehicleMember.findFirst
-      .mockResolvedValueOnce({ id: 'm-target', vehicleId: 'v1', userId: 'u2', role: VehicleRole.editor })
-      .mockResolvedValueOnce({ id: 'm-self', vehicleId: 'v1', userId: 'u1', role: VehicleRole.owner });
+      .mockResolvedValueOnce({
+        id: 'm-target',
+        vehicleId: 'v1',
+        userId: 'u2',
+        role: VehicleRole.editor,
+      })
+      .mockResolvedValueOnce({
+        id: 'm-self',
+        vehicleId: 'v1',
+        userId: 'u1',
+        role: VehicleRole.owner,
+      });
     prisma.vehicleMember.update.mockResolvedValue({});
     prisma.vehicle.update.mockResolvedValue({});
     await service.transferOwnership('u1', 'v1', 'm-target');

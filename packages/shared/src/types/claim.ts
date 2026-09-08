@@ -45,13 +45,10 @@ export const CreateClaimSchema = z
     message: 'Insurer paid amount cannot exceed gross amount.',
     path: ['insurerPaidAmount'],
   })
-  .refine(
-    (value) => value.status !== 'settled' || value.settledDate !== undefined,
-    {
-      message: 'Settled claims must have a settledDate.',
-      path: ['settledDate'],
-    },
-  );
+  .refine((value) => value.status !== 'settled' || value.settledDate !== undefined, {
+    message: 'Settled claims must have a settledDate.',
+    path: ['settledDate'],
+  });
 
 export type CreateClaimInput = z.infer<typeof CreateClaimSchema>;
 

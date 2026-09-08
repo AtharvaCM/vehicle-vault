@@ -1,926 +1,798 @@
 import type { CatalogImportSource } from '../types';
 
 export const jeepIndiaSnapshot: CatalogImportSource = {
-  "marketCode": "IN",
-  "sourceKey": "jeep-india",
-  "sourceUrl": "https://www.carwale.com/jeep-cars/",
-  "capturedAt": "2026-06-05",
-  "dataset": [
+  marketCode: 'IN',
+  sourceKey: 'jeep-india',
+  sourceUrl: 'https://www.carwale.com/jeep-cars/',
+  capturedAt: '2026-06-05',
+  dataset: [
     {
-      "marketCode": "IN",
-      "vehicleType": "car",
-      "name": "Jeep",
-      "sourceUrl": "https://www.carwale.com/jeep-cars/",
-      "models": [
+      marketCode: 'IN',
+      vehicleType: 'car',
+      name: 'Jeep',
+      sourceUrl: 'https://www.carwale.com/jeep-cars/',
+      models: [
         {
-          "name": "Avenger",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/avenger/",
-          "generations": [
+          name: 'Avenger',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/avenger/',
+          generations: [
             {
-              "name": "Avenger (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Avenger (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Willys",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/willys/",
-          "generations": [
+          name: 'Willys',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/willys/',
+          generations: [
             {
-              "name": "Willys (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Willys (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Diesel",
-                  "offerings": [
+                  name: 'Diesel',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Kaiser",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/kaiser/",
-          "generations": [
+          name: 'Kaiser',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/kaiser/',
+          generations: [
             {
-              "name": "Kaiser (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kaiser (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "CJ-5",
-                  "offerings": [
+                  name: 'CJ-5',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Renegade",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/renegade/",
-          "generations": [
+          name: 'Renegade',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/renegade/',
+          generations: [
             {
-              "name": "Renegade (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Renegade (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     {
-      "marketCode": "IN",
-      "vehicleType": "suv",
-      "name": "Jeep",
-      "sourceUrl": "https://www.carwale.com/jeep-cars/",
-      "models": [
+      marketCode: 'IN',
+      vehicleType: 'suv',
+      name: 'Jeep',
+      sourceUrl: 'https://www.carwale.com/jeep-cars/',
+      models: [
         {
-          "name": "Wrangler",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/wrangler/",
-          "generations": [
+          name: 'Wrangler',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/wrangler/',
+          generations: [
             {
-              "name": "Wrangler (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Wrangler (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Unlimited",
-                  "offerings": [
+                  name: 'Unlimited',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Rubicon",
-                  "offerings": [
+                  name: 'Rubicon',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Willys 41 Special Edition",
-                  "offerings": [
+                  name: 'Willys 41 Special Edition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Compass",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/compass/",
-          "generations": [
+          name: 'Compass',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/compass/',
+          generations: [
             {
-              "name": "Compass (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Compass (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Sport",
-                  "offerings": [
+                  name: 'Sport',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Longitude",
-                  "offerings": [
+                  name: 'Longitude',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Longitude (O)",
-                  "offerings": [
+                  name: 'Longitude (O)',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Trail Edition",
-                  "offerings": [
+                  name: 'Trail Edition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Limited (O)",
-                  "offerings": [
+                  name: 'Limited (O)',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Model S (O)",
-                  "offerings": [
+                  name: 'Model S (O)',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Track Edition",
-                  "offerings": [
+                  name: 'Track Edition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Compass Videos",
-                  "offerings": [
+                  name: 'Compass Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Meridian",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/meridian/",
-          "generations": [
+          name: 'Meridian',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/meridian/',
+          generations: [
             {
-              "name": "Meridian (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Meridian (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Longitude",
-                  "offerings": [
+                  name: 'Longitude',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Longitude Plus",
-                  "offerings": [
+                  name: 'Longitude Plus',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Limited (O)",
-                  "offerings": [
+                  name: 'Limited (O)',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Trail Edition",
-                  "offerings": [
+                  name: 'Trail Edition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Overland",
-                  "offerings": [
+                  name: 'Overland',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Track Edition",
-                  "offerings": [
+                  name: 'Track Edition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Meridian Videos",
-                  "offerings": [
+                  name: 'Meridian Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Grand Cherokee",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/grand-cherokee/",
-          "generations": [
+          name: 'Grand Cherokee',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/grand-cherokee/',
+          generations: [
             {
-              "name": "Grand Cherokee (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Grand Cherokee (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Cherokee Limited (O)",
-                  "offerings": [
+                  name: 'Cherokee Limited (O)',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Cherokee Signature Edition",
-                  "offerings": [
+                  name: 'Cherokee Signature Edition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Grand Cherokee Videos",
-                  "offerings": [
+                  name: 'Grand Cherokee Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Grand Cherokee [2016-2020]",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/grandcherokee-2016-2020/",
-          "generations": [
+          name: 'Grand Cherokee [2016-2020]',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/grandcherokee-2016-2020/',
+          generations: [
             {
-              "name": "Grand Cherokee [2016-2020] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Grand Cherokee [2016-2020] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Wrangler [2021-2024]",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/wrangler-2021-2024/",
-          "generations": [
+          name: 'Wrangler [2021-2024]',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/wrangler-2021-2024/',
+          generations: [
             {
-              "name": "Wrangler [2021-2024] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Wrangler [2021-2024] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Videos",
-                  "offerings": [
+                  name: 'Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Compass [2017-2021]",
-          "sourceUrl": "https://www.carwale.com/jeep-cars/compass-2017-2021/",
-          "generations": [
+          name: 'Compass [2017-2021]',
+          sourceUrl: 'https://www.carwale.com/jeep-cars/compass-2017-2021/',
+          generations: [
             {
-              "name": "Compass [2017-2021] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Compass [2017-2021] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Videos",
-                  "offerings": [
+                  name: 'Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };

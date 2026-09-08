@@ -3,11 +3,7 @@ import { createHash } from 'node:crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  EMAIL_VERIFICATION_TTL_MS,
-  PASSWORD_RESET_TTL_MS,
-  TokenService,
-} from './token.service';
+import { EMAIL_VERIFICATION_TTL_MS, PASSWORD_RESET_TTL_MS, TokenService } from './token.service';
 
 function hash(token: string) {
   return createHash('sha256').update(token).digest('hex');
@@ -53,11 +49,7 @@ describe('TokenService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
-    service = new TokenService(
-      prisma as never,
-      appConfigService as never,
-      jwtService as never,
-    );
+    service = new TokenService(prisma as never, appConfigService as never, jwtService as never);
   });
 
   describe('issueEmailVerification', () => {
@@ -70,9 +62,7 @@ describe('TokenService', () => {
       const { token, url } = await service.issueEmailVerification('user-1');
 
       expect(token).toMatch(/^[a-f0-9]{64}$/);
-      expect(url).toBe(
-        `https://vehicle-vault-eight.vercel.app/verify-email?token=${token}`,
-      );
+      expect(url).toBe(`https://vehicle-vault-eight.vercel.app/verify-email?token=${token}`);
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         data: {
@@ -192,9 +182,7 @@ describe('TokenService', () => {
       const { token, url, expiresAt } = await service.issuePasswordReset('user-1');
 
       expect(token).toMatch(/^[a-f0-9]{64}$/);
-      expect(url).toBe(
-        `https://vehicle-vault-eight.vercel.app/reset-password?token=${token}`,
-      );
+      expect(url).toBe(`https://vehicle-vault-eight.vercel.app/reset-password?token=${token}`);
       expect(expiresAt).toEqual(new Date(now.getTime() + PASSWORD_RESET_TTL_MS));
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
@@ -464,9 +452,7 @@ describe('TokenService', () => {
     });
 
     it('returns false for differing hex digests of the same length', () => {
-      expect(
-        (service as WithHelper).timingSafeCompare(hash('a'), hash('b')),
-      ).toBe(false);
+      expect((service as WithHelper).timingSafeCompare(hash('a'), hash('b'))).toBe(false);
     });
 
     it('returns false for digests of differing lengths without throwing', () => {

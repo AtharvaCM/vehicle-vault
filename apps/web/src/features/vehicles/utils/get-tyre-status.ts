@@ -111,8 +111,7 @@ export function getTyreInsights({
   return {
     rotation: buildMetric(MaintenanceCategory.TyreRotation, vehicle, confirmed, intervals, now),
     alignment: buildMetric(MaintenanceCategory.WheelAlignment, vehicle, confirmed, intervals, now),
-    lastReplacement:
-      pickBaselineRecord(confirmed, MaintenanceCategory.TyreReplacement) ?? null,
+    lastReplacement: pickBaselineRecord(confirmed, MaintenanceCategory.TyreReplacement) ?? null,
     records: tyreRecords,
   };
 }
@@ -194,7 +193,8 @@ function buildMetric(
     category,
     // A used vehicle with no logged service for this category tells us how far
     // it has run since purchase, but nothing about when it was last serviced.
-    status: baseline.origin === 'purchase' ? 'unknown' : gradeStatus(kmSince, monthsSince, interval),
+    status:
+      baseline.origin === 'purchase' ? 'unknown' : gradeStatus(kmSince, monthsSince, interval),
     kmSince,
     monthsSince,
     kmRemaining,
@@ -213,10 +213,7 @@ interface ResolvedBaseline {
   origin: TyreBaselineOrigin;
 }
 
-function resolveBaseline(
-  vehicle: Vehicle,
-  lastRecord: MaintenanceRecord | null,
-): ResolvedBaseline {
+function resolveBaseline(vehicle: Vehicle, lastRecord: MaintenanceRecord | null): ResolvedBaseline {
   if (lastRecord) {
     return { odometer: lastRecord.odometer, date: lastRecord.serviceDate, origin: 'record' };
   }

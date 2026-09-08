@@ -179,10 +179,7 @@ export class TyreConditionResolver {
    *
    * Needs two readings that actually differ in both distance and depth.
    */
-  private estimateRemaining(
-    tyre: TyreConditionInput,
-    vehicleOdometer: number,
-  ): number | null {
+  private estimateRemaining(tyre: TyreConditionInput, vehicleOdometer: number): number | null {
     const measured = tyre.inspections.filter((i) => i.treadDepthMm != null);
     if (measured.length < 2) return this.estimateFromExpectedLife(tyre, vehicleOdometer);
 

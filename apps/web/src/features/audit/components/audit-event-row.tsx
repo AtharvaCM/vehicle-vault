@@ -63,7 +63,10 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <time className="whitespace-nowrap text-xs tabular-nums text-slate-400" dateTime={event.occurredAt}>
+          <time
+            className="whitespace-nowrap text-xs tabular-nums text-slate-400"
+            dateTime={event.occurredAt}
+          >
             {formatDate(event.occurredAt, { dateStyle: 'medium', timeStyle: 'short' })}
           </time>
           {hasDetail ? (

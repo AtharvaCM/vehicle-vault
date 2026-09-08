@@ -122,7 +122,9 @@ export class OAuthService {
   }
 
   private async createUserAndLink(profile: OAuthProfile) {
-    const email = profile.email?.toLowerCase() ?? `${profile.provider}-${profile.providerAccountId}@oauth.local`;
+    const email =
+      profile.email?.toLowerCase() ??
+      `${profile.provider}-${profile.providerAccountId}@oauth.local`;
     return this.prisma.user.create({
       data: {
         name: profile.name || 'Vehicle Vault User',

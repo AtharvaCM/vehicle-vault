@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  accessoryFormSchema,
-  toDateInputValue,
-  toIsoDate,
-} from './accessory-form.schema';
+import { accessoryFormSchema, toDateInputValue, toIsoDate } from './accessory-form.schema';
 
 const base = {
   name: 'Dashcam',

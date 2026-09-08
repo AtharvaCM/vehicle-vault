@@ -66,8 +66,7 @@ export class ClaimAttachmentsService {
   getExtractionStatus() {
     return {
       available:
-        this.extractionService.isAvailable &&
-        this.extractionService.hasKind(CLAIM_EXTRACTION_KIND),
+        this.extractionService.isAvailable && this.extractionService.hasKind(CLAIM_EXTRACTION_KIND),
     };
   }
 

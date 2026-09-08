@@ -15,21 +15,12 @@ describe('computeUsageCadence', () => {
   });
 
   it('returns null when odometer does not advance', () => {
-    expect(
-      computeUsageCadence(
-        [sample(60, 5000, asOf), sample(10, 5000, asOf)],
-        asOf,
-      ),
-    ).toBeNull();
+    expect(computeUsageCadence([sample(60, 5000, asOf), sample(10, 5000, asOf)], asOf)).toBeNull();
   });
 
   it('returns null when only old samples exist outside the window', () => {
     expect(
-      computeUsageCadence(
-        [sample(400, 1000, asOf), sample(380, 2000, asOf)],
-        asOf,
-        180,
-      ),
+      computeUsageCadence([sample(400, 1000, asOf), sample(380, 2000, asOf)], asOf, 180),
     ).toBeNull();
   });
 
@@ -50,20 +41,13 @@ describe('computeUsageCadence', () => {
   });
 
   it('marks medium confidence with 3 samples / 30+ days', () => {
-    const samples = [
-      sample(50, 10000, asOf),
-      sample(25, 11000, asOf),
-      sample(5, 12000, asOf),
-    ];
+    const samples = [sample(50, 10000, asOf), sample(25, 11000, asOf), sample(5, 12000, asOf)];
     const cadence = computeUsageCadence(samples, asOf);
     expect(cadence!.confidence).toBe('medium');
   });
 
   it('marks low confidence for sparse recent samples', () => {
-    const cadence = computeUsageCadence(
-      [sample(10, 10000, asOf), sample(2, 10300, asOf)],
-      asOf,
-    );
+    const cadence = computeUsageCadence([sample(10, 10000, asOf), sample(2, 10300, asOf)], asOf);
     expect(cadence!.confidence).toBe('low');
   });
 });

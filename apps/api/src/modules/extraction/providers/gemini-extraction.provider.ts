@@ -34,9 +34,7 @@ export class GeminiExtractionProvider implements ExtractionProvider {
     }
 
     if (args.files.length === 0) {
-      throw new InternalServerErrorException(
-        'DocumentExtraction requires at least one file.',
-      );
+      throw new InternalServerErrorException('DocumentExtraction requires at least one file.');
     }
 
     const model = this.genAI.getGenerativeModel({
@@ -68,9 +66,7 @@ export class GeminiExtractionProvider implements ExtractionProvider {
       return { raw: JSON.parse(text) };
     } catch (error) {
       console.error('Gemini extraction error:', error);
-      throw new InternalServerErrorException(
-        'Failed to extract document with AI provider.',
-      );
+      throw new InternalServerErrorException('Failed to extract document with AI provider.');
     }
   }
 }

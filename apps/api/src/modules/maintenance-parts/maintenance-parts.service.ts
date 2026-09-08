@@ -68,10 +68,7 @@ export class MaintenancePartsService {
    *
    * Safe to call from any tx; uses the passed-in client when provided.
    */
-  async recordObservation(
-    input: CatalogPartInput,
-    tx?: Prisma.TransactionClient,
-  ): Promise<void> {
+  async recordObservation(input: CatalogPartInput, tx?: Prisma.TransactionClient): Promise<void> {
     const client = tx ?? this.prisma;
     const nameNormalized = normalizeName(input.name);
     if (!nameNormalized) return;
@@ -121,16 +118,14 @@ function normalizeName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-function toSuggestion(
-  row: {
-    id: string;
-    displayName: string;
-    partNumber: string | null;
-    brand: string | null;
-    suggestedCategory: MaintenanceCategory;
-    occurrences: number;
-  },
-): CatalogSuggestion {
+function toSuggestion(row: {
+  id: string;
+  displayName: string;
+  partNumber: string | null;
+  brand: string | null;
+  suggestedCategory: MaintenanceCategory;
+  occurrences: number;
+}): CatalogSuggestion {
   return {
     id: row.id,
     displayName: row.displayName,

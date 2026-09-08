@@ -187,10 +187,7 @@ export class VehicleInvitesService {
     });
   }
 
-  async accept(
-    userId: string,
-    token: string,
-  ): Promise<{ vehicleId: string; role: VehicleRole }> {
+  async accept(userId: string, token: string): Promise<{ vehicleId: string; role: VehicleRole }> {
     const tokenHash = hashToken(token);
     const invite = await this.prisma.vehicleInvite.findUnique({
       where: { tokenHash },
@@ -293,4 +290,3 @@ function computeInviteStatus(invite: Prisma.VehicleInviteGetPayload<true>): Invi
   if (invite.expiresAt.getTime() <= Date.now()) return 'expired';
   return 'pending';
 }
-

@@ -1,1886 +1,1620 @@
 import type { CatalogImportSource } from '../types';
 
 export const skodaIndiaSnapshot: CatalogImportSource = {
-  "marketCode": "IN",
-  "sourceKey": "skoda-india",
-  "sourceUrl": "https://www.carwale.com/skoda-cars/",
-  "capturedAt": "2026-06-05",
-  "dataset": [
+  marketCode: 'IN',
+  sourceKey: 'skoda-india',
+  sourceUrl: 'https://www.carwale.com/skoda-cars/',
+  capturedAt: '2026-06-05',
+  dataset: [
     {
-      "marketCode": "IN",
-      "vehicleType": "car",
-      "name": "Skoda",
-      "sourceUrl": "https://www.carwale.com/skoda-cars/",
-      "models": [
+      marketCode: 'IN',
+      vehicleType: 'car',
+      name: 'Skoda',
+      sourceUrl: 'https://www.carwale.com/skoda-cars/',
+      models: [
         {
-          "name": "Kylaq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/kylaq/",
-          "generations": [
+          name: 'Kylaq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/kylaq/',
+          generations: [
             {
-              "name": "Kylaq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kylaq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Classic",
-                  "offerings": [
+                  name: 'Classic',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Classic Plus",
-                  "offerings": [
+                  name: 'Classic Plus',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Signature",
-                  "offerings": [
+                  name: 'Signature',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Signature Plus",
-                  "offerings": [
+                  name: 'Signature Plus',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Prestige",
-                  "offerings": [
+                  name: 'Prestige',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Prestige Plus",
-                  "offerings": [
+                  name: 'Prestige Plus',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Sportline",
-                  "offerings": [
+                  name: 'Sportline',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kylaq Videos",
-                  "offerings": [
+                  name: 'Kylaq Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "New Superb",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/new-superb/",
-          "generations": [
+          name: 'New Superb',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/new-superb/',
+          generations: [
             {
-              "name": "New Superb (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'New Superb (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "with New Superb",
-                  "offerings": [
+                  name: 'with New Superb',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Jaipur",
-                  "offerings": [
+                  name: 'Jaipur',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Epiq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/epiq/",
-          "generations": [
+          name: 'Epiq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/epiq/',
+          generations: [
             {
-              "name": "Epiq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Epiq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Epiq Range Details",
-                  "offerings": [
+                  name: 'Epiq Range Details',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Jaipur",
-                  "offerings": [
+                  name: 'Jaipur',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Peaq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/peaq/",
-          "generations": [
+          name: 'Peaq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/peaq/',
+          generations: [
             {
-              "name": "Peaq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Peaq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Elroq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/elroq/",
-          "generations": [
+          name: 'Elroq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/elroq/',
+          generations: [
             {
-              "name": "Elroq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Elroq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Enyaq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/enyaq/",
-          "generations": [
+          name: 'Enyaq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/enyaq/',
+          generations: [
             {
-              "name": "Enyaq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Enyaq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Enyaq Videos",
-                  "offerings": [
+                  name: 'Enyaq Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Jaipur",
-                  "offerings": [
+                  name: 'Jaipur',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Slavia",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/slavia/",
-          "generations": [
+          name: 'Slavia',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/slavia/',
+          generations: [
             {
-              "name": "Slavia (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Slavia (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Classic",
-                  "offerings": [
+                  name: 'Classic',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Signature",
-                  "offerings": [
+                  name: 'Signature',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Prestige",
-                  "offerings": [
+                  name: 'Prestige',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Sportline",
-                  "offerings": [
+                  name: 'Sportline',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Monte Carlo",
-                  "offerings": [
+                  name: 'Monte Carlo',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Octavia RS",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/octaviars/",
-          "generations": [
+          name: 'Octavia RS',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/octaviars/',
+          generations: [
             {
-              "name": "Octavia RS (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Octavia RS (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "RS 2.0 TSI",
-                  "offerings": [
+                  name: 'RS 2.0 TSI',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Slavia [2023-2024]",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/slavia-2023-2024/",
-          "generations": [
+          name: 'Slavia [2023-2024]',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/slavia-2023-2024/',
+          generations: [
             {
-              "name": "Slavia [2023-2024] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Slavia [2023-2024] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Videos",
-                  "offerings": [
+                  name: 'Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Rapid TSI",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/rapid-tsi/",
-          "generations": [
+          name: 'Rapid TSI',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/rapid-tsi/',
+          generations: [
             {
-              "name": "Rapid TSI (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Rapid TSI (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "TSI Rider",
-                  "offerings": [
+                  name: 'TSI Rider',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Rider Plus",
-                  "offerings": [
+                  name: 'TSI Rider Plus',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Ambition",
-                  "offerings": [
+                  name: 'TSI Ambition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Onyx",
-                  "offerings": [
+                  name: 'TSI Onyx',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Style",
-                  "offerings": [
+                  name: 'TSI Style',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Matte",
-                  "offerings": [
+                  name: 'TSI Matte',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Monte Carlo",
-                  "offerings": [
+                  name: 'TSI Monte Carlo',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "TSI Active",
-                  "offerings": [
+                  name: 'TSI Active',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Rapid TSI Videos",
-                  "offerings": [
+                  name: 'Rapid TSI Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Octavia",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/octavia/",
-          "generations": [
+          name: 'Octavia',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/octavia/',
+          generations: [
             {
-              "name": "Octavia (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Octavia (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Style",
-                  "offerings": [
+                  name: 'Style',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "L&K",
-                  "offerings": [
+                  name: 'L&K',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Videos",
-                  "offerings": [
+                  name: 'Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Kamiq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/kamiq/",
-          "generations": [
+          name: 'Kamiq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/kamiq/',
+          generations: [
             {
-              "name": "Kamiq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kamiq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Superb [2024]",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/superb-2024/",
-          "generations": [
+          name: 'Superb [2024]',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/superb-2024/',
+          generations: [
             {
-              "name": "Superb [2024] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Superb [2024] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Videos",
-                  "offerings": [
+                  name: 'Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Yeti",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/yeti/",
-          "generations": [
+          name: 'Yeti',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/yeti/',
+          generations: [
             {
-              "name": "Yeti (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Yeti (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Style",
-                  "offerings": [
+                  name: 'Style',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "diesel"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['diesel'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Laura",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/laura/",
-          "generations": [
+          name: 'Laura',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/laura/',
+          generations: [
             {
-              "name": "Laura (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Laura (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Classic",
-                  "offerings": [
+                  name: 'Classic',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Active",
-                  "offerings": [
+                  name: 'Active',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ambiente",
-                  "offerings": [
+                  name: 'Ambiente',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ambition",
-                  "offerings": [
+                  name: 'Ambition',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Elegance",
-                  "offerings": [
+                  name: 'Elegance',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "RS",
-                  "offerings": [
+                  name: 'RS',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "L&K",
-                  "offerings": [
+                  name: 'L&K',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Fabia Scout",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/fabia-scout/",
-          "generations": [
+          name: 'Fabia Scout',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/fabia-scout/',
+          generations: [
             {
-              "name": "Fabia Scout (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Fabia Scout (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Scout Scout",
-                  "offerings": [
+                  name: 'Scout Scout',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Karoq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/karoq/",
-          "generations": [
+          name: 'Karoq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/karoq/',
+          generations: [
             {
-              "name": "Karoq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Karoq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "1.5 TSI",
-                  "offerings": [
+                  name: '1.5 TSI',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Karoq Videos",
-                  "offerings": [
+                  name: 'Karoq Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     {
-      "marketCode": "IN",
-      "vehicleType": "suv",
-      "name": "Skoda",
-      "sourceUrl": "https://www.carwale.com/skoda-cars/",
-      "models": [
+      marketCode: 'IN',
+      vehicleType: 'suv',
+      name: 'Skoda',
+      sourceUrl: 'https://www.carwale.com/skoda-cars/',
+      models: [
         {
-          "name": "Kodiaq RS",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/kodiaq-rs/",
-          "generations": [
+          name: 'Kodiaq RS',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/kodiaq-rs/',
+          generations: [
             {
-              "name": "Kodiaq RS (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kodiaq RS (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Kushaq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/kushaq/",
-          "generations": [
+          name: 'Kushaq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/kushaq/',
+          generations: [
             {
-              "name": "Kushaq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kushaq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Classic Plus",
-                  "offerings": [
+                  name: 'Classic Plus',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Signature",
-                  "offerings": [
+                  name: 'Signature',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Sportline",
-                  "offerings": [
+                  name: 'Sportline',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Prestige",
-                  "offerings": [
+                  name: 'Prestige',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Monte Carlo",
-                  "offerings": [
+                  name: 'Monte Carlo',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kushaq Videos",
-                  "offerings": [
+                  name: 'Kushaq Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Kodiaq",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/kodiaq/",
-          "generations": [
+          name: 'Kodiaq',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/kodiaq/',
+          generations: [
             {
-              "name": "Kodiaq (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kodiaq (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Lounge",
-                  "offerings": [
+                  name: 'Lounge',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Sportline",
-                  "offerings": [
+                  name: 'Sportline',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Selection L&K",
-                  "offerings": [
+                  name: 'Selection L&K',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kodiaq Videos",
-                  "offerings": [
+                  name: 'Kodiaq Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Delhi",
-                  "offerings": [
+                  name: 'Delhi',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Hyderabad",
-                  "offerings": [
+                  name: 'Hyderabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Bangalore",
-                  "offerings": [
+                  name: 'Bangalore',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Mumbai",
-                  "offerings": [
+                  name: 'Mumbai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Ahmedabad",
-                  "offerings": [
+                  name: 'Ahmedabad',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Kolkata",
-                  "offerings": [
+                  name: 'Kolkata',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Chennai",
-                  "offerings": [
+                  name: 'Chennai',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Pune",
-                  "offerings": [
+                  name: 'Pune',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
                 },
                 {
-                  "name": "Lucknow",
-                  "offerings": [
+                  name: 'Lucknow',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Kushaq [2024-2026]",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/old-generation-kushaq-2024/",
-          "generations": [
+          name: 'Kushaq [2024-2026]',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/old-generation-kushaq-2024/',
+          generations: [
             {
-              "name": "Kushaq [2024-2026] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kushaq [2024-2026] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Standard",
-                  "offerings": [
+                  name: 'Standard',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
-          "name": "Kodiaq [2022-2025]",
-          "sourceUrl": "https://www.carwale.com/skoda-cars/kodiaq-2022-2025/",
-          "generations": [
+          name: 'Kodiaq [2022-2025]',
+          sourceUrl: 'https://www.carwale.com/skoda-cars/kodiaq-2022-2025/',
+          generations: [
             {
-              "name": "Kodiaq [2022-2025] (current)",
-              "isCurrent": true,
-              "variants": [
+              name: 'Kodiaq [2022-2025] (current)',
+              isCurrent: true,
+              variants: [
                 {
-                  "name": "Videos",
-                  "offerings": [
+                  name: 'Videos',
+                  offerings: [
                     {
-                      "fuelTypes": [
-                        "petrol"
-                      ],
-                      "yearStart": 2020,
-                      "isCurrent": true
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+                      fuelTypes: ['petrol'],
+                      yearStart: 2020,
+                      isCurrent: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };

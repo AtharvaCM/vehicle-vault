@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type {
-  AlertTemplate,
-  MaintenanceOverduePayload,
-  RenderedNotification,
-} from '../types';
+import type { AlertTemplate, MaintenanceOverduePayload, RenderedNotification } from '../types';
 
 function formatCategoryLabel(category: string): string {
   return category

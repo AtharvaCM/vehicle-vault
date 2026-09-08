@@ -77,10 +77,7 @@ export class ClaimsService {
     const input = UpdateClaimSchema.parse(payload);
     const owned = await this.findOwned(userId, id);
 
-    if (
-      input.maintenanceRecordId !== undefined &&
-      input.maintenanceRecordId !== null
-    ) {
+    if (input.maintenanceRecordId !== undefined && input.maintenanceRecordId !== null) {
       await this.ensureMaintenanceRecordBelongsToVehicle(
         input.maintenanceRecordId,
         owned.insurancePolicy.vehicleId,
@@ -158,9 +155,7 @@ export class ClaimsService {
       select: { vehicleId: true },
     });
     if (!policy || policy.vehicleId !== vehicleId) {
-      throw new BadRequestException(
-        'Insurance policy does not belong to this vehicle.',
-      );
+      throw new BadRequestException('Insurance policy does not belong to this vehicle.');
     }
   }
 
@@ -173,9 +168,7 @@ export class ClaimsService {
       select: { vehicleId: true },
     });
     if (!record || record.vehicleId !== vehicleId) {
-      throw new BadRequestException(
-        'Maintenance record does not belong to this vehicle.',
-      );
+      throw new BadRequestException('Maintenance record does not belong to this vehicle.');
     }
   }
 }

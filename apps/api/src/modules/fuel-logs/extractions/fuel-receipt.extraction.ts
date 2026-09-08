@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SchemaType } from '@google/generative-ai';
 import type { FuelReceiptExtractionDraft } from '@vehicle-vault/shared';
 
-import type {
-  ExtractionContext,
-  ExtractionFile,
-  ExtractionSpec,
-} from '../../extraction/types';
+import type { ExtractionContext, ExtractionFile, ExtractionSpec } from '../../extraction/types';
 
 type RawFuelReceipt = {
   confidence?: number;
@@ -18,9 +14,7 @@ type RawFuelReceipt = {
 };
 
 @Injectable()
-export class FuelReceiptExtractionSpec
-  implements ExtractionSpec<FuelReceiptExtractionDraft>
-{
+export class FuelReceiptExtractionSpec implements ExtractionSpec<FuelReceiptExtractionDraft> {
   readonly kind = 'fuel_receipt' as const;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

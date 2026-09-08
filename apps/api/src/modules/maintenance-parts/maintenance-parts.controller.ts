@@ -13,10 +13,7 @@ export class MaintenancePartsController {
    * list so the UI can render both "use this category" and "did you mean…".
    */
   @Get('suggest')
-  async suggest(
-    @Query('name') name?: string,
-    @Query('partNumber') partNumber?: string,
-  ) {
+  async suggest(@Query('name') name?: string, @Query('partNumber') partNumber?: string) {
     const trimmedName = name?.trim() ?? '';
     if (!trimmedName) {
       return successResponse({ best: null, matches: [] });

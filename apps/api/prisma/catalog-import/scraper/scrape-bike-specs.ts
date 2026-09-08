@@ -156,7 +156,9 @@ function parse(raw: RawSpecData): ParsedSpec {
   if (raw._engineType) {
     const cyl = raw._engineType.match(/(\d+)\s*Cylinder/i);
     if (cyl) s.engineCyl = +cyl[1];
-    const cool = raw._engineType.match(/(liquid|oil(?:\s*&\s*[a-z]+)?|air(?:\s*&\s*[a-z]+)?)[-\s]?cooled/i);
+    const cool = raw._engineType.match(
+      /(liquid|oil(?:\s*&\s*[a-z]+)?|air(?:\s*&\s*[a-z]+)?)[-\s]?cooled/i,
+    );
     if (cool) s.coolingType = `${cool[1].toLowerCase().replace(/\s+/g, ' ')}-cooled`;
     s.engineType = raw._engineType.trim();
   }
@@ -234,10 +236,7 @@ async function main() {
       vehicleType: 'motorcycle',
       ...(args.brand
         ? {
-            OR: [
-              { slug: args.brand },
-              { name: { equals: args.brand, mode: 'insensitive' } },
-            ],
+            OR: [{ slug: args.brand }, { name: { equals: args.brand, mode: 'insensitive' } }],
           }
         : {}),
     },
@@ -309,8 +308,12 @@ async function main() {
     }
   }
 
-  try { await page.close(); } catch {}
-  try { await browser.close(); } catch {}
+  try {
+    await page.close();
+  } catch {}
+  try {
+    await browser.close();
+  } catch {}
   await prisma.$disconnect();
 
   console.log(`\n${'═'.repeat(50)}`);
