@@ -1,3 +1,10 @@
+## [1.24.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.1...v1.24.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **api:** ignore drafts in reports and cost analytics ([d467ef8](https://github.com/AtharvaCM/vehicle-vault/commit/d467ef8d897782d11f222d41aa2c1f1bd820bafd))
+
 ## [1.24.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.0...v1.24.1) (2026-09-08)
 
 
