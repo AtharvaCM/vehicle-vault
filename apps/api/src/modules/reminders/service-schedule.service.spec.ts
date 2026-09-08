@@ -70,9 +70,7 @@ describe('ServiceScheduleService', () => {
       fuelType: FuelType.Petrol,
       vehicleType: VehicleType.Car,
     });
-    prisma.reminder.findMany.mockResolvedValue([
-      { title: 'Engine oil change', notes: null },
-    ]);
+    prisma.reminder.findMany.mockResolvedValue([{ title: 'Engine oil change', notes: null }]);
 
     const suggestions = await service.getSuggestions('u1', 'v1');
     const oil = suggestions.find((s) => s.slug === 'engine_oil_change')!;
@@ -116,8 +114,8 @@ describe('ServiceScheduleService', () => {
       vehicleType: VehicleType.Car,
     });
 
-    await expect(service.applySuggestions('u1', 'v1', ['engine_oil_change'])).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.applySuggestions('u1', 'v1', ['engine_oil_change']),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

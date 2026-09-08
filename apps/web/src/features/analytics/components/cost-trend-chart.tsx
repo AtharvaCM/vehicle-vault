@@ -74,9 +74,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
             Ownership trend
           </CardTitle>
           <CardDescription>
-            {mode === 'total'
-              ? 'Monthly spend by category'
-              : 'Cost per kilometre driven'}
+            {mode === 'total' ? 'Monthly spend by category' : 'Cost per kilometre driven'}
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">

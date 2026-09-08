@@ -49,9 +49,7 @@ export function SpendSection() {
       <SpendHeading />
       <details
         className="group rounded-xl border border-slate-200/60 bg-white/70 shadow-premium-sm"
-        onToggle={(event: SyntheticEvent<HTMLDetailsElement>) =>
-          setOpen(event.currentTarget.open)
-        }
+        onToggle={(event: SyntheticEvent<HTMLDetailsElement>) => setOpen(event.currentTarget.open)}
         open={open}
       >
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-slate-700 [&::-webkit-details-marker]:hidden">

@@ -129,8 +129,8 @@ export class VehicleLoansService {
             dto.closedAt === undefined
               ? undefined
               : dto.closedAt === null
-              ? null
-              : new Date(dto.closedAt),
+                ? null
+                : new Date(dto.closedAt),
           notes: dto.notes,
         },
         include: loanInclude,
@@ -229,11 +229,7 @@ export class VehicleLoansService {
     return this.toVehicleLoan(next);
   }
 
-  async forecloseLoan(
-    userId: string,
-    loanId: string,
-    dto: ForecloseLoanDto,
-  ): Promise<VehicleLoan> {
+  async forecloseLoan(userId: string, loanId: string, dto: ForecloseLoanDto): Promise<VehicleLoan> {
     const before = await this.getOwnedLoan(userId, loanId);
     if (before.status === LoanStatus.Closed) {
       throw new BadRequestException('Loan is already closed');

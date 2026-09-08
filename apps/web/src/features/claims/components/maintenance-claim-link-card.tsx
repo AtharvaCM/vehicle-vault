@@ -193,11 +193,7 @@ export function MaintenanceClaimLinkCard({
                 className="w-full"
                 onClick={() => setShowCreateDialog(true)}
                 disabled={insurancePolicies.length === 0}
-                title={
-                  insurancePolicies.length === 0
-                    ? 'Add an insurance policy first'
-                    : undefined
-                }
+                title={insurancePolicies.length === 0 ? 'Add an insurance policy first' : undefined}
               >
                 <Plus className="h-4 w-4" /> Create new claim for this record
               </Button>

@@ -6,11 +6,7 @@ import {
   type MaintenanceInvoiceExtractionDraft,
 } from '@vehicle-vault/shared';
 
-import type {
-  ExtractionContext,
-  ExtractionFile,
-  ExtractionSpec,
-} from '../../extraction/types';
+import type { ExtractionContext, ExtractionFile, ExtractionSpec } from '../../extraction/types';
 
 type RawLineItem = {
   kind?: string;
@@ -43,9 +39,7 @@ const maintenanceCategories = Object.values(MaintenanceCategory);
 const maintenanceLineItemKinds = Object.values(MaintenanceLineItemKind);
 
 @Injectable()
-export class MaintenanceInvoiceExtractionSpec
-  implements ExtractionSpec<MaintenanceInvoiceExtractionDraft>
-{
+export class MaintenanceInvoiceExtractionSpec implements ExtractionSpec<MaintenanceInvoiceExtractionDraft> {
   readonly kind = 'maintenance_invoice' as const;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

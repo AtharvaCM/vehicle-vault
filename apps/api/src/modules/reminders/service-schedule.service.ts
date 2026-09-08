@@ -11,10 +11,7 @@ import {
 } from '../vehicles/maintenance-interval.resolver';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
-import {
-  filterCatalogForVehicle,
-  type ServiceScheduleItem,
-} from './service-schedule-catalog';
+import { filterCatalogForVehicle, type ServiceScheduleItem } from './service-schedule-catalog';
 
 export interface ServiceScheduleSuggestion {
   slug: string;
@@ -91,10 +88,8 @@ export class ServiceScheduleService {
 
     await this.prisma.$transaction(async (tx) => {
       for (const item of items) {
-        const dueOdometer =
-          item.intervalKm != null ? vehicle.odometer + item.intervalKm : null;
-        const dueDate =
-          item.intervalMonths != null ? addMonths(now, item.intervalMonths) : null;
+        const dueOdometer = item.intervalKm != null ? vehicle.odometer + item.intervalKm : null;
+        const dueDate = item.intervalMonths != null ? addMonths(now, item.intervalMonths) : null;
         if (dueOdometer == null && dueDate == null) continue;
 
         const reminder = await tx.reminder.create({
@@ -156,8 +151,7 @@ export class ServiceScheduleService {
     existingKeys: Set<string>,
   ): ServiceScheduleSuggestion {
     const alreadyScheduled =
-      existingKeys.has(item.title.trim().toLowerCase()) ||
-      existingKeys.has(`slug:${item.slug}`);
+      existingKeys.has(item.title.trim().toLowerCase()) || existingKeys.has(`slug:${item.slug}`);
     return {
       slug: item.slug,
       type: item.type,
@@ -165,8 +159,7 @@ export class ServiceScheduleService {
       notes: item.notes,
       intervalKm: item.intervalKm,
       intervalMonths: item.intervalMonths,
-      dueOdometer:
-        item.intervalKm != null ? currentOdometer + item.intervalKm : undefined,
+      dueOdometer: item.intervalKm != null ? currentOdometer + item.intervalKm : undefined,
       dueDate:
         item.intervalMonths != null
           ? addMonths(new Date(), item.intervalMonths).toISOString()

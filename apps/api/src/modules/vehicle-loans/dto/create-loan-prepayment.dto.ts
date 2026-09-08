@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsDateString,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-} from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class CreateLoanPrepaymentDto {
   @IsDateString()

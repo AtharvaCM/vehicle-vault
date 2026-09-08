@@ -135,10 +135,8 @@ function readExifSegmentOrientation(segment: Buffer): number | null {
   }
 
   const littleEndian = byteOrder === 'II';
-  const readUInt16 = (at: number) =>
-    littleEndian ? tiff.readUInt16LE(at) : tiff.readUInt16BE(at);
-  const readUInt32 = (at: number) =>
-    littleEndian ? tiff.readUInt32LE(at) : tiff.readUInt32BE(at);
+  const readUInt16 = (at: number) => (littleEndian ? tiff.readUInt16LE(at) : tiff.readUInt16BE(at));
+  const readUInt32 = (at: number) => (littleEndian ? tiff.readUInt32LE(at) : tiff.readUInt32BE(at));
 
   if (tiff.length < 8 || readUInt16(2) !== 42) {
     return null;

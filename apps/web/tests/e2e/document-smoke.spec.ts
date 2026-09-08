@@ -56,7 +56,9 @@ test('user can manage insurance and warranty documents via unified route', async
 
   // ── 5. Edit Insurance ──────────────────────────────────────────────
   // Click the pencil (edit) button on the insurance card
-  const insuranceCard = page.locator('[class*="border-slate"]').filter({ hasText: 'Test Insurance Corp' });
+  const insuranceCard = page
+    .locator('[class*="border-slate"]')
+    .filter({ hasText: 'Test Insurance Corp' });
   await insuranceCard.getByRole('button').first().click(); // Pencil is first, Trash is second
   await expect(page.getByRole('heading', { name: /edit insurance policy/i })).toBeVisible();
   // Change the provider name
@@ -68,7 +70,9 @@ test('user can manage insurance and warranty documents via unified route', async
   await expect(page.getByText('Updated Insurance Corp')).toBeVisible();
 
   // ── 6. Edit Warranty ───────────────────────────────────────────────
-  const warrantyCard = page.locator('[class*="border-slate"]').filter({ hasText: 'Test Motors Warranty' });
+  const warrantyCard = page
+    .locator('[class*="border-slate"]')
+    .filter({ hasText: 'Test Motors Warranty' });
   await warrantyCard.getByRole('button').first().click();
   await expect(page.getByRole('heading', { name: /edit warranty coverage/i })).toBeVisible();
   await page.getByLabel(/provider\/brand/i).clear();
@@ -81,12 +85,16 @@ test('user can manage insurance and warranty documents via unified route', async
   page.on('dialog', (dialog) => dialog.accept());
 
   // Delete warranty (the trash icon is the second button in the card)
-  const updatedWarrantyCard = page.locator('[class*="border-slate"]').filter({ hasText: 'Updated Motors Warranty' });
+  const updatedWarrantyCard = page
+    .locator('[class*="border-slate"]')
+    .filter({ hasText: 'Updated Motors Warranty' });
   await updatedWarrantyCard.getByRole('button').nth(1).click();
   await expect(page.getByText('Updated Motors Warranty')).not.toBeVisible();
 
   // Delete insurance
-  const updatedInsuranceCard = page.locator('[class*="border-slate"]').filter({ hasText: 'Updated Insurance Corp' });
+  const updatedInsuranceCard = page
+    .locator('[class*="border-slate"]')
+    .filter({ hasText: 'Updated Insurance Corp' });
   await updatedInsuranceCard.getByRole('button').nth(1).click();
   await expect(page.getByText('Updated Insurance Corp')).not.toBeVisible();
 });

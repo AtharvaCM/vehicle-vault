@@ -30,14 +30,14 @@ Live at `https://vehicle-vault-eight.vercel.app` (web) + `https://vehiclevault.m
 
 ## Which docs to trust
 
-| Doc | Status |
-|---|---|
-| `docs/product-roadmap.md` | **Authoritative** for feature state (self-tracks repo reality). "Later" pruned 2026-08-11. |
-| `docs/problem-statement.md`, `docs/user-personas-and-stories.md` | Evergreen, trustworthy. |
-| `docs/archive/mvp-definition.md` | **Archived 2026-08-12.** Historical record of the original MVP scope; several of its non-goals are now core features. Never use for scoping. |
-| `docs/tech-stack.md` | **Trustworthy**, re-verified against the repo 2026-08-12. Cross-check `package.json` + `.github/workflows` when a version matters. |
-| `CHANGELOG.md` | Ground truth for what shipped and when (semantic-release generated). |
-| `apps/api/CONTEXT.md` | Canonical domain glossary. Use its terms; "Policy", "OCR", "scan" are deprecated vocabulary. |
+| Doc                                                              | Status                                                                                                                                       |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/product-roadmap.md`                                        | **Authoritative** for feature state (self-tracks repo reality). "Later" pruned 2026-08-11.                                                   |
+| `docs/problem-statement.md`, `docs/user-personas-and-stories.md` | Evergreen, trustworthy.                                                                                                                      |
+| `docs/archive/mvp-definition.md`                                 | **Archived 2026-08-12.** Historical record of the original MVP scope; several of its non-goals are now core features. Never use for scoping. |
+| `docs/tech-stack.md`                                             | **Trustworthy**, re-verified against the repo 2026-08-12. Cross-check `package.json` + `.github/workflows` when a version matters.           |
+| `CHANGELOG.md`                                                   | Ground truth for what shipped and when (semantic-release generated).                                                                         |
+| `apps/api/CONTEXT.md`                                            | Canonical domain glossary. Use its terms; "Policy", "OCR", "scan" are deprecated vocabulary.                                                 |
 
 ## How work flows
 

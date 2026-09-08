@@ -25,7 +25,7 @@ export function VerifyEmailPage() {
       } catch (error) {
         setStatus('error');
         setErrorMessage(
-          error instanceof Error ? error.message : 'Failed to verify your email address.'
+          error instanceof Error ? error.message : 'Failed to verify your email address.',
         );
       }
     };
@@ -61,7 +61,7 @@ export function VerifyEmailPage() {
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50/50">
             <CheckCircle2 className="h-10 w-10 text-green-600" />
           </div>
-          
+
           <Link to="/login" className="w-full">
             <Button className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
               Continue to Login
@@ -83,7 +83,7 @@ export function VerifyEmailPage() {
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 ring-8 ring-red-50/50">
           <XCircle className="h-10 w-10 text-red-600" />
         </div>
-        
+
         <Link to="/login" className="w-full">
           <Button variant="outline" className="w-full h-11 rounded-xl">
             Back to Login

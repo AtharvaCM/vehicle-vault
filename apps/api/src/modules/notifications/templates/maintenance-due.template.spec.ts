@@ -64,8 +64,7 @@ describe('MaintenanceDueTemplate', () => {
         }),
       ).toEqual({
         title: 'Service Due Soon: Engine Oil',
-        message:
-          'Your Engine Oil is due in approx. 424 km. Time to plan a visit to the workshop.',
+        message: 'Your Engine Oil is due in approx. 424 km. Time to plan a visit to the workshop.',
         type: 'warning',
         link: '/vehicles/veh-1?tab=maintenance',
       });

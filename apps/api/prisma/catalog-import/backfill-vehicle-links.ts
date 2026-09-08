@@ -99,8 +99,7 @@ async function resolveCatalogLink(input: LinkInput): Promise<LinkResult> {
     candidateGens = current;
   }
 
-  const generationId =
-    candidateGens.length === 1 && candidateGens[0] ? candidateGens[0].id : null;
+  const generationId = candidateGens.length === 1 && candidateGens[0] ? candidateGens[0].id : null;
 
   const variants = await prisma.vehicleCatalogVariant.findMany({
     where: {
@@ -143,7 +142,9 @@ async function main() {
       fuelType: v.fuelType,
     });
     if (!variantId && !generationId) {
-      console.log(`  miss  ${v.vehicleType.padEnd(11)} ${v.make} ${v.model} ${v.year} (${v.fuelType})`);
+      console.log(
+        `  miss  ${v.vehicleType.padEnd(11)} ${v.make} ${v.model} ${v.year} (${v.fuelType})`,
+      );
       continue;
     }
     const tag = variantId ? 'VARIANT' : 'GEN    ';

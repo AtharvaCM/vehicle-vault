@@ -39,18 +39,16 @@ export class FuelLogsController {
     if (!file) {
       throw new BadRequestException('A "file" multipart field is required.');
     }
-    return this.extractionService.extract<FuelReceiptExtractionDraft>(
-      FUEL_EXTRACTION_KIND,
-      [{ buffer: file.buffer, mimeType: file.mimetype, name: file.originalname }],
-    );
+    return this.extractionService.extract<FuelReceiptExtractionDraft>(FUEL_EXTRACTION_KIND, [
+      { buffer: file.buffer, mimeType: file.mimetype, name: file.originalname },
+    ]);
   }
 
   @Get('scan/status')
   async getScanStatus() {
     return {
       available:
-        this.extractionService.isAvailable &&
-        this.extractionService.hasKind(FUEL_EXTRACTION_KIND),
+        this.extractionService.isAvailable && this.extractionService.hasKind(FUEL_EXTRACTION_KIND),
     };
   }
 

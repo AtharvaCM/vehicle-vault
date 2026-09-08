@@ -133,7 +133,10 @@ export class TokenService {
       throw new UnauthorizedException(INVALID_VERIFICATION_TOKEN_MESSAGE);
     }
 
-    if (!user.emailVerificationTokenExpiresAt || user.emailVerificationTokenExpiresAt < new Date()) {
+    if (
+      !user.emailVerificationTokenExpiresAt ||
+      user.emailVerificationTokenExpiresAt < new Date()
+    ) {
       throw new UnauthorizedException(INVALID_VERIFICATION_TOKEN_MESSAGE);
     }
 

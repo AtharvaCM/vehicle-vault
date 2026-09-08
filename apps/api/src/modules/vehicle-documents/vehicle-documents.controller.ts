@@ -183,9 +183,7 @@ function requireExtractionKind(kind: VehicleDocumentKind) {
   const extractionKind =
     DOCUMENT_KIND_TO_EXTRACTION_KIND[kind as keyof typeof DOCUMENT_KIND_TO_EXTRACTION_KIND];
   if (!extractionKind) {
-    throw new BadRequestException(
-      `Document scan is not supported for kind "${kind}" yet.`,
-    );
+    throw new BadRequestException(`Document scan is not supported for kind "${kind}" yet.`);
   }
   return extractionKind;
 }

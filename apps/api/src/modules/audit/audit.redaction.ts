@@ -69,7 +69,12 @@ function serializeValue(value: unknown): unknown {
   if (value === null || value === undefined) return value;
   if (value instanceof Date) return value.toISOString();
   // Prisma.Decimal exposes toFixed/toString — convert to string for safe JSON storage.
-  if (typeof value === 'object' && value !== null && 'toFixed' in value && typeof (value as { toFixed: unknown }).toFixed === 'function') {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'toFixed' in value &&
+    typeof (value as { toFixed: unknown }).toFixed === 'function'
+  ) {
     return (value as { toString: () => string }).toString();
   }
   return value;

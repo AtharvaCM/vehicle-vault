@@ -15,10 +15,7 @@ export async function listVehicleDocuments(vehicleId: string, kind?: VehicleDocu
   return response.data;
 }
 
-export async function createVehicleDocument(
-  vehicleId: string,
-  data: CreateVehicleDocumentInput,
-) {
+export async function createVehicleDocument(vehicleId: string, data: CreateVehicleDocumentInput) {
   const response = await apiClient.post<
     ApiSuccessResponse<VehicleDocument>,
     CreateVehicleDocumentInput

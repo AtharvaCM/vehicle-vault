@@ -51,7 +51,10 @@ async function registerAndCreateVehicle(page: Page) {
 
   await registerAndSignIn(page, { email, name, password });
 
-  await page.getByRole('link', { name: /add vehicle/i }).first().click();
+  await page
+    .getByRole('link', { name: /add vehicle/i })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/vehicles\/new$/);
 
   await page.getByLabel(/registration number/i).fill(registrationNumber);
@@ -105,7 +108,10 @@ test('user can import grouped maintenance CSV rows into a structured record', as
   await page.goto(`${vehicleUrl}/maintenance`);
   await expect(page.getByRole('heading', { name: `${nickname} Maintenance` })).toBeVisible();
 
-  await page.getByRole('button', { name: /import csv/i }).first().click();
+  await page
+    .getByRole('button', { name: /import csv/i })
+    .first()
+    .click();
   await expect(page.getByRole('dialog', { name: /import maintenance csv/i })).toBeVisible();
 
   await page.locator('#maintenance-import-upload').setInputFiles(csvPath);

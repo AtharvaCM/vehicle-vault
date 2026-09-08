@@ -26,11 +26,7 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { useCreateTyre } from '../hooks/use-tyres';
-import {
-  parseDotCode,
-  tyreFormSchema,
-  type TyreFormValues,
-} from '../schemas/tyre-form.schema';
+import { parseDotCode, tyreFormSchema, type TyreFormValues } from '../schemas/tyre-form.schema';
 import { POSITION_LABEL } from '../utils/tyre-labels';
 
 interface TyreFormDialogProps {
@@ -43,10 +39,7 @@ interface TyreFormDialogProps {
   defaultPosition?: TyrePosition;
 }
 
-function buildDefaults(
-  vehicleOdometer: number,
-  defaultPosition: TyrePosition,
-): TyreFormValues {
+function buildDefaults(vehicleOdometer: number, defaultPosition: TyrePosition): TyreFormValues {
   return {
     position: defaultPosition,
     brand: '',
@@ -126,8 +119,8 @@ export function TyreFormDialog({
         <DialogHeader>
           <DialogTitle>Add a tyre</DialogTitle>
           <DialogDescription>
-            Fitting a tyre to a corner retires whatever is already there, so a
-            replacement or rotation stays accurate.
+            Fitting a tyre to a corner retires whatever is already there, so a replacement or
+            rotation stays accurate.
           </DialogDescription>
         </DialogHeader>
 

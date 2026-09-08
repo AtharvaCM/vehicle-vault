@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type {
-  AlertTemplate,
-  DocumentExpiringPayload,
-  RenderedNotification,
-} from '../types';
+import type { AlertTemplate, DocumentExpiringPayload, RenderedNotification } from '../types';
 
 /**
  * Bucket a day count into a coarse window so duplicate alerts within the

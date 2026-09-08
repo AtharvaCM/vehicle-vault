@@ -28,11 +28,7 @@ import { Input } from '@/components/ui/input';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
-import {
-  useAddPrepayment,
-  useDeletePrepayment,
-  useForecloseLoan,
-} from '../hooks/use-loan-actions';
+import { useAddPrepayment, useDeletePrepayment, useForecloseLoan } from '../hooks/use-loan-actions';
 import { formatCurrencyInr } from '../utils/compute-emi';
 import { LoanAttachmentsSection } from './loan-attachments-section';
 import { LoanScheduleChart } from './loan-schedule-chart';
@@ -184,7 +180,10 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
             )}
 
             {!isClosed ? (
-              <form className="grid gap-3 pt-2 sm:grid-cols-[1fr_1fr_2fr_auto]" onSubmit={handleAddPrepayment}>
+              <form
+                className="grid gap-3 pt-2 sm:grid-cols-[1fr_1fr_2fr_auto]"
+                onSubmit={handleAddPrepayment}
+              >
                 <FormField
                   htmlFor="prep-date"
                   label="Date"

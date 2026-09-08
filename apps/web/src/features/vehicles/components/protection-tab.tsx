@@ -104,7 +104,12 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const complianceScanStatus = useQuery(useScanStatusQuery(vehicleId, 'registration'));
 
   if (documentsQuery.isPending) {
-    return <LoadingState title="Loading protection details" description="Checking policy and warranty status..." />;
+    return (
+      <LoadingState
+        title="Loading protection details"
+        description="Checking policy and warranty status..."
+      />
+    );
   }
 
   // Without this branch a failed request falls through to `|| []`, and the tab
@@ -128,10 +133,10 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   }
 
   const allDocuments = documentsQuery.data || [];
-  const policies = allDocuments.filter(d => d.kind === 'insurance');
-  const warranties = allDocuments.filter(d => d.kind === 'warranty');
+  const policies = allDocuments.filter((d) => d.kind === 'insurance');
+  const warranties = allDocuments.filter((d) => d.kind === 'warranty');
   const complianceDocuments = allDocuments.filter(
-    d => d.kind === 'registration' || d.kind === 'puc' || d.kind === 'road_tax',
+    (d) => d.kind === 'registration' || d.kind === 'puc' || d.kind === 'road_tax',
   );
   const claims = claimsQuery.data || [];
 
@@ -237,11 +242,16 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
           <div className="grid gap-4">
             {policies.length > 0 ? (
               policies.map((policy) => (
-                <DocumentCard key={policy.id} document={policy} vehicleId={vehicleId} onEdit={handleEdit} />
+                <DocumentCard
+                  key={policy.id}
+                  document={policy}
+                  vehicleId={vehicleId}
+                  onEdit={handleEdit}
+                />
               ))
             ) : (
-              <EmptyState 
-                title="No insurance policies" 
+              <EmptyState
+                title="No insurance policies"
                 description="Keep your motor insurance details handy for renewals and claims."
                 action={
                   <Button variant="secondary" onClick={() => openDialog('insurance')}>
@@ -341,11 +351,16 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
           <div className="grid gap-4">
             {warranties.length > 0 ? (
               warranties.map((warranty) => (
-                <DocumentCard key={warranty.id} document={warranty} vehicleId={vehicleId} onEdit={handleEdit} />
+                <DocumentCard
+                  key={warranty.id}
+                  document={warranty}
+                  vehicleId={vehicleId}
+                  onEdit={handleEdit}
+                />
               ))
             ) : (
-              <EmptyState 
-                title="No warranty info" 
+              <EmptyState
+                title="No warranty info"
                 description="Track your manufacturer or extended warranty coverage."
                 action={
                   <Button variant="secondary" onClick={() => openDialog('warranty')}>
@@ -397,7 +412,12 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
           <div className="grid gap-4">
             {complianceDocuments.length > 0 ? (
               complianceDocuments.map((doc) => (
-                <DocumentCard key={doc.id} document={doc} vehicleId={vehicleId} onEdit={handleEdit} />
+                <DocumentCard
+                  key={doc.id}
+                  document={doc}
+                  vehicleId={vehicleId}
+                  onEdit={handleEdit}
+                />
               ))
             ) : (
               <EmptyState
@@ -415,26 +435,35 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
       </div>
 
       <aside className="space-y-6">
-         <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm sticky top-24">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Document Guide</CardTitle>
-              <CardDescription>Managing your vehicle protection.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
-               <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
-                  <p className="font-bold text-primary mb-1">Insurance</p>
-                  <p>In India, Third Party insurance is mandatory. Comprehensive covers own damage. Keep your policy PDF in the attachments.</p>
-               </div>
-               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="font-bold text-slate-700 mb-1">Warranty</p>
-                  <p>Warranties often have date AND odometer limits. We track whichever comes first to keep you informed.</p>
-               </div>
-               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="font-bold text-slate-700 mb-1">PUC &amp; Road Tax</p>
-                  <p>PUC certificates typically last 6–12 months and are mandatory. Road tax is often one-time (lifetime) — leave the end date blank for those.</p>
-               </div>
-            </CardContent>
-         </Card>
+        <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm sticky top-24">
+          <CardHeader>
+            <CardTitle className="text-lg font-bold">Document Guide</CardTitle>
+            <CardDescription>Managing your vehicle protection.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
+              <p className="font-bold text-primary mb-1">Insurance</p>
+              <p>
+                In India, Third Party insurance is mandatory. Comprehensive covers own damage. Keep
+                your policy PDF in the attachments.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <p className="font-bold text-slate-700 mb-1">Warranty</p>
+              <p>
+                Warranties often have date AND odometer limits. We track whichever comes first to
+                keep you informed.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <p className="font-bold text-slate-700 mb-1">PUC &amp; Road Tax</p>
+              <p>
+                PUC certificates typically last 6–12 months and are mandatory. Road tax is often
+                one-time (lifetime) — leave the end date blank for those.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </aside>
 
       <DocumentFormDialog

@@ -69,60 +69,61 @@ export class AnalyticsService {
       ? { id: options.vehicleId, members: { some: { userId } } }
       : { members: { some: { userId } } };
 
-    const [fuelAgg, maintenanceAgg, accessoriesAgg, claimsAgg, policies, loans] =
-      await Promise.all([
-      this.prisma.fuelLog.aggregate({
-        _sum: { totalCost: true },
-        where: {
-          date: { gte: from, lte: to },
-          vehicle: vehicleFilter,
-        },
-      }),
-      this.prisma.maintenanceRecord.aggregate({
-        _sum: { totalCost: true },
-        where: {
-          serviceDate: { gte: from, lte: to },
-          vehicle: vehicleFilter,
-        },
-      }),
-      this.prisma.accessory.aggregate({
-        _sum: { cost: true },
-        where: {
-          purchaseDate: { gte: from, lte: to },
-          vehicle: vehicleFilter,
-        },
-      }),
-      this.prisma.claim.aggregate({
-        _sum: { insurerPaidAmount: true },
-        where: {
-          maintenanceRecordId: { not: null },
-          maintenanceRecord: {
+    const [fuelAgg, maintenanceAgg, accessoriesAgg, claimsAgg, policies, loans] = await Promise.all(
+      [
+        this.prisma.fuelLog.aggregate({
+          _sum: { totalCost: true },
+          where: {
+            date: { gte: from, lte: to },
+            vehicle: vehicleFilter,
+          },
+        }),
+        this.prisma.maintenanceRecord.aggregate({
+          _sum: { totalCost: true },
+          where: {
             serviceDate: { gte: from, lte: to },
             vehicle: vehicleFilter,
           },
-        },
-      }),
-      this.prisma.insurancePolicy.findMany({
-        where: {
-          vehicle: vehicleFilter,
-          startDate: { lte: to },
-          endDate: { gte: from },
-          premiumAmount: { not: null },
-        },
-        select: { startDate: true, endDate: true, premiumAmount: true },
-      }),
-      this.prisma.vehicleLoan.findMany({
-        where: { vehicle: vehicleFilter, startDate: { lte: to } },
-        select: {
-          principal: true,
-          interestRate: true,
-          tenureMonths: true,
-          startDate: true,
-          closedAt: true,
-          prepayments: { select: { date: true, amount: true } },
-        },
-      }),
-    ]);
+        }),
+        this.prisma.accessory.aggregate({
+          _sum: { cost: true },
+          where: {
+            purchaseDate: { gte: from, lte: to },
+            vehicle: vehicleFilter,
+          },
+        }),
+        this.prisma.claim.aggregate({
+          _sum: { insurerPaidAmount: true },
+          where: {
+            maintenanceRecordId: { not: null },
+            maintenanceRecord: {
+              serviceDate: { gte: from, lte: to },
+              vehicle: vehicleFilter,
+            },
+          },
+        }),
+        this.prisma.insurancePolicy.findMany({
+          where: {
+            vehicle: vehicleFilter,
+            startDate: { lte: to },
+            endDate: { gte: from },
+            premiumAmount: { not: null },
+          },
+          select: { startDate: true, endDate: true, premiumAmount: true },
+        }),
+        this.prisma.vehicleLoan.findMany({
+          where: { vehicle: vehicleFilter, startDate: { lte: to } },
+          select: {
+            principal: true,
+            interestRate: true,
+            tenureMonths: true,
+            startDate: true,
+            closedAt: true,
+            prepayments: { select: { date: true, amount: true } },
+          },
+        }),
+      ],
+    );
 
     const fuel = fuelAgg._sum.totalCost ?? new Prisma.Decimal(0);
     const maintenanceGross = maintenanceAgg._sum.totalCost ?? new Prisma.Decimal(0);
@@ -154,11 +155,7 @@ export class AnalyticsService {
       return acc.plus(interest);
     }, new Prisma.Decimal(0));
 
-    const total = fuel
-      .plus(maintenance)
-      .plus(accessories)
-      .plus(insurance)
-      .plus(loanInterest);
+    const total = fuel.plus(maintenance).plus(accessories).plus(insurance).plus(loanInterest);
 
     return {
       currency: 'INR',
@@ -208,53 +205,53 @@ export class AnalyticsService {
 
     const [fuelLogs, maintenanceRecords, accessoryRows, claimRows, policies, loans] =
       await Promise.all([
-      this.prisma.fuelLog.findMany({
-        where: { date: { gte: from, lte: to }, vehicle: vehicleFilter },
-        select: { date: true, totalCost: true, odometer: true, vehicleId: true },
-        orderBy: { date: 'asc' },
-      }),
-      this.prisma.maintenanceRecord.findMany({
-        where: { serviceDate: { gte: from, lte: to }, vehicle: vehicleFilter },
-        select: { id: true, serviceDate: true, totalCost: true },
-      }),
-      this.prisma.accessory.findMany({
-        where: { purchaseDate: { gte: from, lte: to }, vehicle: vehicleFilter },
-        select: { purchaseDate: true, cost: true },
-      }),
-      this.prisma.claim.findMany({
-        where: {
-          maintenanceRecordId: { not: null },
-          maintenanceRecord: {
-            serviceDate: { gte: from, lte: to },
-            vehicle: vehicleFilter,
+        this.prisma.fuelLog.findMany({
+          where: { date: { gte: from, lte: to }, vehicle: vehicleFilter },
+          select: { date: true, totalCost: true, odometer: true, vehicleId: true },
+          orderBy: { date: 'asc' },
+        }),
+        this.prisma.maintenanceRecord.findMany({
+          where: { serviceDate: { gte: from, lte: to }, vehicle: vehicleFilter },
+          select: { id: true, serviceDate: true, totalCost: true },
+        }),
+        this.prisma.accessory.findMany({
+          where: { purchaseDate: { gte: from, lte: to }, vehicle: vehicleFilter },
+          select: { purchaseDate: true, cost: true },
+        }),
+        this.prisma.claim.findMany({
+          where: {
+            maintenanceRecordId: { not: null },
+            maintenanceRecord: {
+              serviceDate: { gte: from, lte: to },
+              vehicle: vehicleFilter,
+            },
           },
-        },
-        select: {
-          insurerPaidAmount: true,
-          maintenanceRecord: { select: { serviceDate: true } },
-        },
-      }),
-      this.prisma.insurancePolicy.findMany({
-        where: {
-          vehicle: vehicleFilter,
-          startDate: { lte: to },
-          endDate: { gte: from },
-          premiumAmount: { not: null },
-        },
-        select: { startDate: true, endDate: true, premiumAmount: true },
-      }),
-      this.prisma.vehicleLoan.findMany({
-        where: { vehicle: vehicleFilter, startDate: { lte: to } },
-        select: {
-          principal: true,
-          interestRate: true,
-          tenureMonths: true,
-          startDate: true,
-          closedAt: true,
-          prepayments: { select: { date: true, amount: true } },
-        },
-      }),
-    ]);
+          select: {
+            insurerPaidAmount: true,
+            maintenanceRecord: { select: { serviceDate: true } },
+          },
+        }),
+        this.prisma.insurancePolicy.findMany({
+          where: {
+            vehicle: vehicleFilter,
+            startDate: { lte: to },
+            endDate: { gte: from },
+            premiumAmount: { not: null },
+          },
+          select: { startDate: true, endDate: true, premiumAmount: true },
+        }),
+        this.prisma.vehicleLoan.findMany({
+          where: { vehicle: vehicleFilter, startDate: { lte: to } },
+          select: {
+            principal: true,
+            interestRate: true,
+            tenureMonths: true,
+            startDate: true,
+            closedAt: true,
+            prepayments: { select: { date: true, amount: true } },
+          },
+        }),
+      ]);
 
     type Bucket = {
       fuel: Prisma.Decimal;
@@ -525,8 +522,7 @@ export class AnalyticsService {
       ownershipMonths = Math.max(0, months);
     }
 
-    const costPerKm =
-      kmSincePurchase > 0 ? netSpend.div(kmSincePurchase).toFixed(2) : null;
+    const costPerKm = kmSincePurchase > 0 ? netSpend.div(kmSincePurchase).toFixed(2) : null;
     const costPerMonth =
       ownershipMonths && ownershipMonths > 0 ? netSpend.div(ownershipMonths).toFixed(2) : null;
 

@@ -16,7 +16,6 @@ interface AccessoryCardProps {
   isDeleting?: boolean;
 }
 
-
 export function AccessoryCard({
   accessory,
   onEdit,
@@ -35,9 +34,7 @@ export function AccessoryCard({
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <CardTitle className="text-base">{accessory.name}</CardTitle>
-            {accessory.brand ? (
-              <p className="text-sm text-slate-500">{accessory.brand}</p>
-            ) : null}
+            {accessory.brand ? <p className="text-sm text-slate-500">{accessory.brand}</p> : null}
           </div>
           <Badge tone={isRemoved ? 'neutral' : isFitted ? 'accent' : 'warning'}>
             {isRemoved ? 'Removed' : isFitted ? 'Fitted' : 'Not fitted'}
@@ -100,9 +97,7 @@ export function AccessoryCard({
           </p>
         ) : null}
 
-        {accessory.notes ? (
-          <p className="text-sm text-slate-600">{accessory.notes}</p>
-        ) : null}
+        {accessory.notes ? <p className="text-sm text-slate-600">{accessory.notes}</p> : null}
 
         <div className="flex items-center gap-2">
           <Button onClick={() => onEdit(accessory)} size="sm" variant="secondary">

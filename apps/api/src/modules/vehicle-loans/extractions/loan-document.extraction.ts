@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SchemaType } from '@google/generative-ai';
 import type { LoanDocumentExtractionDraft } from '@vehicle-vault/shared';
 
-import type {
-  ExtractionContext,
-  ExtractionFile,
-  ExtractionSpec,
-} from '../../extraction/types';
+import type { ExtractionContext, ExtractionFile, ExtractionSpec } from '../../extraction/types';
 
 type RawLoanDocument = {
   confidence?: number;
@@ -22,9 +18,7 @@ type RawLoanDocument = {
 };
 
 @Injectable()
-export class LoanDocumentExtractionSpec
-  implements ExtractionSpec<LoanDocumentExtractionDraft>
-{
+export class LoanDocumentExtractionSpec implements ExtractionSpec<LoanDocumentExtractionDraft> {
   readonly kind = 'loan_document' as const;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,8 +49,7 @@ export class LoanDocumentExtractionSpec
       },
       tenureMonths: {
         type: SchemaType.INTEGER,
-        description:
-          'Total loan tenure in months. Convert years (e.g. 7y -> 84) before returning.',
+        description: 'Total loan tenure in months. Convert years (e.g. 7y -> 84) before returning.',
       },
       startDate: {
         type: SchemaType.STRING,

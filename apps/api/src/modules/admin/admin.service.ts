@@ -1,9 +1,6 @@
 import { AuditResourceType, Prisma } from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type {
-  AdminForceLogoutResponse,
-  AdminUserListResponse,
-} from '@vehicle-vault/shared';
+import type { AdminForceLogoutResponse, AdminUserListResponse } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
@@ -75,10 +72,7 @@ export class AdminService {
     };
   }
 
-  async forceLogout(
-    actorUserId: string,
-    targetUserId: string,
-  ): Promise<AdminForceLogoutResponse> {
+  async forceLogout(actorUserId: string, targetUserId: string): Promise<AdminForceLogoutResponse> {
     const target = await this.prisma.user.findUnique({
       where: { id: targetUserId },
       select: { id: true, refreshTokenHash: true },

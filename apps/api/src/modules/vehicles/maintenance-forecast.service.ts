@@ -15,11 +15,23 @@ export class MaintenanceForecastService {
     private readonly intervalResolver: MaintenanceIntervalResolver,
   ) {}
 
-  async getUpcomingSuggestions(userId: string, vehicleId: string): Promise<MaintenanceSuggestion[]> {
+  async getUpcomingSuggestions(
+    userId: string,
+    vehicleId: string,
+  ): Promise<MaintenanceSuggestion[]> {
     await this.access.assert(userId, vehicleId);
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      select: { id: true, odometer: true, createdAt: true, catalogVariantId: true, make: true, model: true, vehicleType: true, fuelType: true },
+      select: {
+        id: true,
+        odometer: true,
+        createdAt: true,
+        catalogVariantId: true,
+        make: true,
+        model: true,
+        vehicleType: true,
+        fuelType: true,
+      },
     });
 
     if (!vehicle) {
@@ -75,7 +87,9 @@ export class MaintenanceForecastService {
           estimatedOdometerDue: interval.km != null ? lastOdo + interval.km : undefined,
           estimatedDateDue:
             interval.months != null
-              ? new Date(lastDate.getTime() + interval.months * 30.44 * 24 * 60 * 60 * 1000).toISOString()
+              ? new Date(
+                  lastDate.getTime() + interval.months * 30.44 * 24 * 60 * 60 * 1000,
+                ).toISOString()
               : undefined,
           vehicleId,
           vehicleLabel: `${vehicle.make} ${vehicle.model}`,

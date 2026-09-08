@@ -70,18 +70,12 @@ export class ClaimAttachmentsController {
   }
 
   @Post('claim-attachments/:attachmentId/extract')
-  async extract(
-    @Param('attachmentId') attachmentId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
+  async extract(@Param('attachmentId') attachmentId: string, @CurrentUser() user: AuthUser) {
     return this.claimAttachmentsService.extractFromAttachment(user.id, attachmentId);
   }
 
   @Delete('claim-attachments/:attachmentId')
-  async remove(
-    @Param('attachmentId') attachmentId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
+  async remove(@Param('attachmentId') attachmentId: string, @CurrentUser() user: AuthUser) {
     return this.claimAttachmentsService.remove(user.id, attachmentId);
   }
 }

@@ -57,16 +57,16 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Claim
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Claim</p>
             <h4 className="font-black text-slate-900 leading-tight">
               {claim.claimNumber ? `#${claim.claimNumber}` : 'Claim (no number yet)'}
             </h4>
             <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               Filed {format(new Date(claim.filedDate), 'd MMM yyyy')}
-              {claim.settledDate ? ` · Settled ${format(new Date(claim.settledDate), 'd MMM yyyy')}` : ''}
+              {claim.settledDate
+                ? ` · Settled ${format(new Date(claim.settledDate), 'd MMM yyyy')}`
+                : ''}
             </p>
           </div>
           <Badge variant="outline" className={STATUS_CLASSES[claim.status]}>
@@ -79,9 +79,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
             <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
               Gross bill
             </p>
-            <p className="font-bold text-slate-900 tabular-nums">
-              {formatINR(claim.grossAmount)}
-            </p>
+            <p className="font-bold text-slate-900 tabular-nums">{formatINR(claim.grossAmount)}</p>
           </div>
           <div className="space-y-1">
             <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
@@ -113,7 +111,12 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
           </div>
           <div className="flex items-center gap-1">
             {onEdit ? (
-              <Button variant="ghost" size="icon" onClick={() => onEdit(claim)} aria-label="Edit claim">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(claim)}
+                aria-label="Edit claim"
+              >
                 <Pencil className="h-4 w-4" />
               </Button>
             ) : null}

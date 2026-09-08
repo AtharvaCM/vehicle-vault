@@ -72,7 +72,10 @@ describe('TyreInspectionDialog', () => {
   });
 
   it('excludes tyres that have already been removed', () => {
-    const removed = { ...makeTyre('t-old', TyrePosition.RearLeft), removedDate: '2025-01-01T00:00:00.000Z' };
+    const removed = {
+      ...makeTyre('t-old', TyrePosition.RearLeft),
+      removedDate: '2025-01-01T00:00:00.000Z',
+    };
     renderDialog([...fitted, removed]);
 
     expect(screen.queryByText('Rear left')).not.toBeInTheDocument();

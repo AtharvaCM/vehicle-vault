@@ -93,10 +93,7 @@ export class VehiclesService {
    * "overdue" from the same numbers the alert and forecast engines use rather
    * than restating their own.
    */
-  async getServiceIntervals(
-    userId: string,
-    vehicleId: string,
-  ): Promise<VehicleServiceIntervalMap> {
+  async getServiceIntervals(userId: string, vehicleId: string): Promise<VehicleServiceIntervalMap> {
     const vehicle = await this.getVehicleById(userId, vehicleId);
 
     return this.intervalResolver.resolveForVehicle({

@@ -61,10 +61,7 @@ export function AdminUsersPage() {
 
   return (
     <PageContainer>
-      <PageTitle
-        description="Search, audit, and force-log-out user accounts."
-        title="Users"
-      />
+      <PageTitle description="Search, audit, and force-log-out user accounts." title="Users" />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -79,9 +76,7 @@ export function AdminUsersPage() {
                 onChange={(event) => setSearchInput(event.target.value)}
               />
             </div>
-            {query.data ? (
-              <Badge variant="neutral">{total} total</Badge>
-            ) : null}
+            {query.data ? <Badge variant="neutral">{total} total</Badge> : null}
           </div>
         </CardHeader>
         <CardContent>
@@ -133,8 +128,7 @@ export function AdminUsersPage() {
                       confirmLabel="Force logout"
                       description={`Clears ${user.email}'s refresh token. They will need to log in again on their next session refresh.`}
                       isPending={
-                        forceLogoutMutation.isPending &&
-                        forceLogoutMutation.variables === user.id
+                        forceLogoutMutation.isPending && forceLogoutMutation.variables === user.id
                       }
                       onConfirm={() => forceLogoutMutation.mutate(user.id)}
                       title="Force this user to log out?"

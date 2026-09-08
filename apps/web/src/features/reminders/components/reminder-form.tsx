@@ -159,13 +159,19 @@ export function ReminderForm({
       </CardHeader>
       <CardContent>
         <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Quick fill</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Quick fill
+          </p>
           <div className="flex flex-wrap gap-2">
             {[
               { label: 'Insurance', title: 'Insurance Renewal', type: ReminderType.Insurance },
               { label: 'Road Tax', title: 'Road Tax Renewal', type: ReminderType.Tax },
               { label: 'Annual Service', title: 'Annual Service', type: ReminderType.Service },
-              { label: 'Emission Check', title: 'Emission/Pollution Check', type: ReminderType.Inspection },
+              {
+                label: 'Emission Check',
+                title: 'Emission/Pollution Check',
+                type: ReminderType.Inspection,
+              },
             ].map((preset) => (
               <Button
                 key={preset.label}

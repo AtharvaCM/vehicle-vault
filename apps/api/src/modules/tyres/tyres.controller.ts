@@ -37,9 +37,7 @@ export class TyresController {
   @Get('vehicles/:vehicleId/tyres/condition')
   @ApiOperation({ summary: 'Measured condition of the currently fitted tyres' })
   async getCondition(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {
-    return successResponse(
-      await this.tyresService.getVehicleCondition(user.id, params.vehicleId),
-    );
+    return successResponse(await this.tyresService.getVehicleCondition(user.id, params.vehicleId));
   }
 
   @Get('vehicles/:vehicleId/tyre-inspections')

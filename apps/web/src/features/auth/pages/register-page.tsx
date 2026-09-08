@@ -49,7 +49,11 @@ export function RegisterPage() {
       title="Create your account"
     >
       <div className="space-y-6">
-        <RegisterForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
+        <RegisterForm
+          isSubmitting={isSubmitting}
+          onSubmit={handleSubmit}
+          submitError={submitError}
+        />
         <OAuthButtons />
       </div>
     </AuthPageShell>

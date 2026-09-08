@@ -4,13 +4,7 @@ import { ListChecks, Sparkles } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -117,10 +111,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
               const disabled = item.alreadyScheduled;
               const checked = selected.has(item.slug);
               return (
-                <li
-                  key={item.slug}
-                  className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
-                >
+                <li key={item.slug} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
                   <input
                     type="checkbox"
                     className="mt-1 h-4 w-4 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
@@ -180,7 +171,9 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
               disabled={selected.size === 0 || applyMutation.isPending}
               onClick={() => applyMutation.mutate(Array.from(selected))}
             >
-              {applyMutation.isPending ? 'Adding…' : `Add ${selected.size} reminder${selected.size === 1 ? '' : 's'}`}
+              {applyMutation.isPending
+                ? 'Adding…'
+                : `Add ${selected.size} reminder${selected.size === 1 ? '' : 's'}`}
             </Button>
           </div>
         ) : null}

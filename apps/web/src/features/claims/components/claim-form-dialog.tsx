@@ -169,13 +169,17 @@ export function ClaimFormDialog({
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Insurance Claim' : 'Record Insurance Claim'}</DialogTitle>
           <DialogDescription>
-            Track the gross bill, what the insurer paid, and your out-of-pocket. Link the
-            related maintenance record when you have one.
+            Track the gross bill, what the insurer paid, and your out-of-pocket. Link the related
+            maintenance record when you have one.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <FormField label="Policy" htmlFor="insurancePolicyId" error={errors.insurancePolicyId?.message}>
+          <FormField
+            label="Policy"
+            htmlFor="insurancePolicyId"
+            error={errors.insurancePolicyId?.message}
+          >
             <Controller
               control={control}
               name="insurancePolicyId"
@@ -232,12 +236,20 @@ export function ClaimFormDialog({
             />
           </FormField>
 
-          <FormField label="Insurer Claim Number" htmlFor="claimNumber" error={errors.claimNumber?.message}>
+          <FormField
+            label="Insurer Claim Number"
+            htmlFor="claimNumber"
+            error={errors.claimNumber?.message}
+          >
             <Input {...register('claimNumber')} placeholder="Leave blank if not yet assigned" />
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Gross Bill (₹)" htmlFor="grossAmount" error={errors.grossAmount?.message}>
+            <FormField
+              label="Gross Bill (₹)"
+              htmlFor="grossAmount"
+              error={errors.grossAmount?.message}
+            >
               <Input
                 type="number"
                 step="0.01"
@@ -281,7 +293,11 @@ export function ClaimFormDialog({
             <FormField label="Filed Date" htmlFor="filedDate" error={errors.filedDate?.message}>
               <Input type="date" {...register('filedDate')} />
             </FormField>
-            <FormField label="Settled Date" htmlFor="settledDate" error={errors.settledDate?.message}>
+            <FormField
+              label="Settled Date"
+              htmlFor="settledDate"
+              error={errors.settledDate?.message}
+            >
               <Input
                 type="date"
                 {...register('settledDate')}

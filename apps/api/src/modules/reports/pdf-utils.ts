@@ -18,11 +18,7 @@ export function decimalToNumber(d: Prisma.Decimal | null | undefined): number {
   return Number(d.toString());
 }
 
-export function drawRow(
-  doc: PDFKit.PDFDocument,
-  cells: string[],
-  widths: number[],
-): void {
+export function drawRow(doc: PDFKit.PDFDocument, cells: string[], widths: number[]): void {
   const startX = doc.x;
   const startY = doc.y;
   let x = startX;
@@ -35,10 +31,7 @@ export function drawRow(
   doc.y = startY + 14;
 }
 
-export function drawKeyValue(
-  doc: PDFKit.PDFDocument,
-  rows: [string, string][],
-): void {
+export function drawKeyValue(doc: PDFKit.PDFDocument, rows: [string, string][]): void {
   for (const [k, v] of rows) {
     doc.text(`${k}: `, { continued: true }).font('Helvetica-Bold').text(v).font('Helvetica');
   }

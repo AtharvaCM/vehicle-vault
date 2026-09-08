@@ -64,11 +64,7 @@ describe('ClaimsService', () => {
       }
       return Array.isArray(arg) ? arg : undefined;
     });
-    service = new ClaimsService(
-      prisma as never,
-      vehiclesService as never,
-      auditService as never,
-    );
+    service = new ClaimsService(prisma as never, vehiclesService as never, auditService as never);
   });
 
   describe('listForVehicle', () => {
@@ -90,7 +86,9 @@ describe('ClaimsService', () => {
 
   describe('create', () => {
     it('rejects when the policy does not belong to the vehicle', async () => {
-      prisma.insurancePolicy.findUnique.mockResolvedValue({ vehicleId: '88888888-8888-4888-8888-888888888888' });
+      prisma.insurancePolicy.findUnique.mockResolvedValue({
+        vehicleId: '88888888-8888-4888-8888-888888888888',
+      });
 
       await expect(
         service.create(USER_ID, VEHICLE_ID, {
@@ -106,7 +104,9 @@ describe('ClaimsService', () => {
 
     it('rejects when the linked maintenance record does not belong to the vehicle', async () => {
       prisma.insurancePolicy.findUnique.mockResolvedValue({ vehicleId: VEHICLE_ID });
-      prisma.maintenanceRecord.findUnique.mockResolvedValue({ vehicleId: '88888888-8888-4888-8888-888888888888' });
+      prisma.maintenanceRecord.findUnique.mockResolvedValue({
+        vehicleId: '88888888-8888-4888-8888-888888888888',
+      });
 
       await expect(
         service.create(USER_ID, VEHICLE_ID, {
@@ -177,7 +177,10 @@ describe('ClaimsService', () => {
     it('rejects with NotFoundException when claim is not owned by the user', async () => {
       prisma.claim.findUnique.mockResolvedValue({
         ...claimRow(),
-        insurancePolicy: { vehicleId: VEHICLE_ID, vehicle: { userId: '99999999-9999-4999-8999-999999999999' } },
+        insurancePolicy: {
+          vehicleId: VEHICLE_ID,
+          vehicle: { userId: '99999999-9999-4999-8999-999999999999' },
+        },
       });
 
       await expect(
@@ -223,9 +226,7 @@ describe('ClaimsService', () => {
     it('throws NotFoundException when the claim is not owned', async () => {
       prisma.claim.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove(USER_ID, CLAIM_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(service.remove(USER_ID, CLAIM_ID)).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.claim.delete).not.toHaveBeenCalled();
     });
   });

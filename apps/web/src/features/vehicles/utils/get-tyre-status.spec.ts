@@ -109,9 +109,7 @@ describe('getTyreInsights', () => {
   });
 
   it('ignores draft records so an unconfirmed scan cannot reset the clock', () => {
-    const records = [
-      makeRecord({ odometer: 6000, status: MaintenanceRecordStatus.Draft }),
-    ];
+    const records = [makeRecord({ odometer: 6000, status: MaintenanceRecordStatus.Draft })];
 
     const { rotation, records: history } = getTyreInsights({
       vehicle: newVehicle,

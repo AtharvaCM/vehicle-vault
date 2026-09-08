@@ -14,7 +14,12 @@ const KIND_LABELS: Record<VehicleDocumentKind, string> = {
 };
 
 /** Kinds that count as a lapse when expired — warranty running out is not a compliance problem. */
-const EXPIRY_KINDS: readonly VehicleDocumentKind[] = ['insurance', 'puc', 'registration', 'road_tax'];
+const EXPIRY_KINDS: readonly VehicleDocumentKind[] = [
+  'insurance',
+  'puc',
+  'registration',
+  'road_tax',
+];
 const EXPIRING_KINDS: readonly VehicleDocumentKind[] = [
   'insurance',
   'puc',

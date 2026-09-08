@@ -39,13 +39,14 @@ export function EmailVerificationScreen() {
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 ring-8 ring-slate-50/50">
             <Mail className="h-10 w-10 text-slate-900" />
           </div>
-          
+
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
             Verify your email
           </h2>
           <p className="mt-3 text-slate-500">
-            We&apos;ve sent a verification link to <span className="font-semibold text-slate-900">{user?.email}</span>.
-            Please check your inbox to activate your account.
+            We&apos;ve sent a verification link to{' '}
+            <span className="font-semibold text-slate-900">{user?.email}</span>. Please check your
+            inbox to activate your account.
           </p>
         </div>
 
@@ -60,7 +61,11 @@ export function EmailVerificationScreen() {
             ) : hasSent ? (
               <CheckCircle2 className="h-4 w-4" />
             ) : null}
-            {isResending ? 'Sending...' : hasSent ? 'Check your email' : 'Resend verification email'}
+            {isResending
+              ? 'Sending...'
+              : hasSent
+                ? 'Check your email'
+                : 'Resend verification email'}
           </Button>
 
           <Button
@@ -74,7 +79,15 @@ export function EmailVerificationScreen() {
         </div>
 
         <div className="mt-8 border-t border-slate-100 pt-6 text-center text-sm text-slate-400">
-          <p>Need help? <a href="mailto:support@middle-earth.in" className="font-medium text-slate-900 hover:underline">Contact support</a></p>
+          <p>
+            Need help?{' '}
+            <a
+              href="mailto:support@middle-earth.in"
+              className="font-medium text-slate-900 hover:underline"
+            >
+              Contact support
+            </a>
+          </p>
         </div>
       </div>
     </div>

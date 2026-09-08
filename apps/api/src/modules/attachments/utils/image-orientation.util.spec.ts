@@ -37,12 +37,7 @@ function withExifOrientation(jpegBuffer: Buffer, orientation: number) {
   header.writeUInt16BE(0xffe1, 0);
   header.writeUInt16BE(payload.length + 2, 2);
 
-  return Buffer.concat([
-    jpegBuffer.subarray(0, 2),
-    header,
-    payload,
-    jpegBuffer.subarray(2),
-  ]);
+  return Buffer.concat([jpegBuffer.subarray(0, 2), header, payload, jpegBuffer.subarray(2)]);
 }
 
 describe('readJpegExifOrientation', () => {

@@ -43,9 +43,7 @@ export class VehicleAccessService {
       throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
     }
     if (ROLE_RANK[role] < ROLE_RANK[min]) {
-      throw new ForbiddenException(
-        `This action requires the '${min}' role on this vehicle.`,
-      );
+      throw new ForbiddenException(`This action requires the '${min}' role on this vehicle.`);
     }
     return role;
   }
@@ -73,7 +71,5 @@ export class VehicleAccessService {
 
 function rolesAtLeast(min: VehicleRole): VehicleRole[] {
   const minRank = ROLE_RANK[min];
-  return (Object.keys(ROLE_RANK) as VehicleRole[]).filter(
-    (role) => ROLE_RANK[role] >= minRank,
-  );
+  return (Object.keys(ROLE_RANK) as VehicleRole[]).filter((role) => ROLE_RANK[role] >= minRank);
 }

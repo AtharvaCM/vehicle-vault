@@ -46,7 +46,9 @@ describe('VehiclePickerMenu', () => {
         buildLink={buildLink}
         icon={Wrench}
         label="Log service"
-        vehicles={[{ id: 'vehicle-1', displayName: 'Daily driver', registrationNumber: 'MH12AB1234' }]}
+        vehicles={[
+          { id: 'vehicle-1', displayName: 'Daily driver', registrationNumber: 'MH12AB1234' },
+        ]}
       />,
     );
 

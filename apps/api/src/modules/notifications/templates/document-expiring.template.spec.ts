@@ -67,9 +67,9 @@ describe('DocumentExpiringTemplate', () => {
     });
 
     it('differs across documents even with matching day buckets', () => {
-      expect(
-        template.dedupKey({ document: baseInsurance, daysUntilExpiry: 5 }),
-      ).not.toBe(template.dedupKey({ document: baseWarranty, daysUntilExpiry: 5 }));
+      expect(template.dedupKey({ document: baseInsurance, daysUntilExpiry: 5 })).not.toBe(
+        template.dedupKey({ document: baseWarranty, daysUntilExpiry: 5 }),
+      );
     });
   });
 

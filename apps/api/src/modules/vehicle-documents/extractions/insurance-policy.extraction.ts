@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SchemaType } from '@google/generative-ai';
 import type { InsurancePolicyExtractionDraft } from '@vehicle-vault/shared';
 
-import type {
-  ExtractionContext,
-  ExtractionFile,
-  ExtractionSpec,
-} from '../../extraction/types';
+import type { ExtractionContext, ExtractionFile, ExtractionSpec } from '../../extraction/types';
 
 type RawInsuranceExtraction = {
   confidence?: number;
@@ -30,9 +26,7 @@ type RawInsuranceExtraction = {
 };
 
 @Injectable()
-export class InsurancePolicyExtractionSpec
-  implements ExtractionSpec<InsurancePolicyExtractionDraft>
-{
+export class InsurancePolicyExtractionSpec implements ExtractionSpec<InsurancePolicyExtractionDraft> {
   readonly kind = 'insurance_policy' as const;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

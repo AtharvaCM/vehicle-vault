@@ -50,11 +50,7 @@ export class TyresService {
     return tyres.map((tyre) => this.toTyre(tyre));
   }
 
-  async createForVehicle(
-    userId: string,
-    vehicleId: string,
-    payload: CreateTyreDto,
-  ): Promise<Tyre> {
+  async createForVehicle(userId: string, vehicleId: string, payload: CreateTyreDto): Promise<Tyre> {
     await this.access.assertEditor(userId, vehicleId);
     await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
@@ -140,9 +136,7 @@ export class TyresService {
           ...(input.dotWeek !== undefined ? { dotWeek: input.dotWeek ?? null } : {}),
           ...(input.dotYear !== undefined ? { dotYear: input.dotYear ?? null } : {}),
           ...(input.fittedDate !== undefined ? { fittedDate: new Date(input.fittedDate) } : {}),
-          ...(input.fittedOdometer !== undefined
-            ? { fittedOdometer: input.fittedOdometer }
-            : {}),
+          ...(input.fittedOdometer !== undefined ? { fittedOdometer: input.fittedOdometer } : {}),
           ...(input.removedDate !== undefined
             ? { removedDate: input.removedDate ? new Date(input.removedDate) : null }
             : {}),
@@ -250,10 +244,7 @@ export class TyresService {
    * The measured verdict for a vehicle's currently fitted tyres. Removed tyres
    * are excluded: they say nothing about what the car is running on now.
    */
-  async getVehicleCondition(
-    userId: string,
-    vehicleId: string,
-  ): Promise<VehicleTyreCondition> {
+  async getVehicleCondition(userId: string, vehicleId: string): Promise<VehicleTyreCondition> {
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
     const tyres = await this.prisma.tyre.findMany({

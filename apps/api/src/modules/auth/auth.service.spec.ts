@@ -476,9 +476,9 @@ describe('AuthService', () => {
   });
 
   it('delegates email verification to TokenService.consumeEmailVerification', async () => {
-    await expect(
-      service.verifyEmail({ token: 'verification-token' }),
-    ).resolves.toEqual({ verified: true });
+    await expect(service.verifyEmail({ token: 'verification-token' })).resolves.toEqual({
+      verified: true,
+    });
 
     expect(tokenService.consumeEmailVerification).toHaveBeenCalledWith('verification-token');
     expect(prisma.user.update).not.toHaveBeenCalled();
@@ -487,9 +487,9 @@ describe('AuthService', () => {
   it('returns accepted=true silently when resendVerification targets an unknown email', async () => {
     prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
-    await expect(
-      service.resendVerification({ email: 'unknown@example.com' }),
-    ).resolves.toEqual({ accepted: true });
+    await expect(service.resendVerification({ email: 'unknown@example.com' })).resolves.toEqual({
+      accepted: true,
+    });
 
     expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
     expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
@@ -505,9 +505,9 @@ describe('AuthService', () => {
       updatedAt: createdAt,
     });
 
-    await expect(
-      service.resendVerification({ email: 'atharva@example.com' }),
-    ).resolves.toEqual({ accepted: true });
+    await expect(service.resendVerification({ email: 'atharva@example.com' })).resolves.toEqual({
+      accepted: true,
+    });
 
     expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
     expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
@@ -523,9 +523,9 @@ describe('AuthService', () => {
       updatedAt: createdAt,
     });
 
-    await expect(
-      service.resendVerification({ email: ' ATHARVA@example.com ' }),
-    ).resolves.toEqual({ accepted: true });
+    await expect(service.resendVerification({ email: ' ATHARVA@example.com ' })).resolves.toEqual({
+      accepted: true,
+    });
 
     expect(tokenService.issueEmailVerification).toHaveBeenCalledWith('user-1');
     expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(

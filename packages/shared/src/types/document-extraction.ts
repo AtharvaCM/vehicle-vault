@@ -60,9 +60,7 @@ export const InsurancePolicyExtractionDraftSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
-export type InsurancePolicyExtractionDraft = z.infer<
-  typeof InsurancePolicyExtractionDraftSchema
->;
+export type InsurancePolicyExtractionDraft = z.infer<typeof InsurancePolicyExtractionDraftSchema>;
 
 /**
  * Draft hydrated into the warranty form after a scan. Warranties are bounded by

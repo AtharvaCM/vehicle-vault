@@ -120,7 +120,9 @@ export function LoanAttachmentsSection({ loanId }: Props) {
           className="max-w-sm cursor-pointer"
         />
         <Button onClick={handleUpload} disabled={!pendingFiles.length || upload.isPending}>
-          {upload.isPending ? 'Uploading…' : `Upload${pendingFiles.length ? ` ${pendingFiles.length}` : ''}`}
+          {upload.isPending
+            ? 'Uploading…'
+            : `Upload${pendingFiles.length ? ` ${pendingFiles.length}` : ''}`}
         </Button>
       </div>
     </section>

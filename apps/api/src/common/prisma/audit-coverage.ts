@@ -68,9 +68,7 @@ export class AuditCoverageScope {
   private readonly mutatedModels = new Set<string>();
   private auditWritten = false;
 
-  constructor(
-    private readonly exemptModels: ReadonlySet<string> = DEFAULT_EXEMPT_MODELS,
-  ) {}
+  constructor(private readonly exemptModels: ReadonlySet<string> = DEFAULT_EXEMPT_MODELS) {}
 
   recordOperation(model: string, operation: string): void {
     if (!isMutationOp(operation)) {
@@ -111,10 +109,7 @@ function toModelName(delegateKey: string): string {
  * members (`$queryRaw`, `$executeRaw`, symbols, etc.) pass through untouched —
  * only model delegates (object-valued string keys) are instrumented.
  */
-export function wrapTransactionForAudit<T extends object>(
-  tx: T,
-  scope: AuditCoverageScope,
-): T {
+export function wrapTransactionForAudit<T extends object>(tx: T, scope: AuditCoverageScope): T {
   return new Proxy(tx, {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);

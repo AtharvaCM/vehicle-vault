@@ -47,7 +47,12 @@ const RESOURCE_TYPE_LABELS: Record<AuditResourceType, string> = {
 
 function toneForVerb(verb: string): AuditActionTone {
   if (verb === 'deleted' || verb === 'login_failed') return 'danger';
-  if (verb === 'created' || verb === 'account_created' || verb === 'completed' || verb === 'uploaded') {
+  if (
+    verb === 'created' ||
+    verb === 'account_created' ||
+    verb === 'completed' ||
+    verb === 'uploaded'
+  ) {
     return 'accent';
   }
   if (

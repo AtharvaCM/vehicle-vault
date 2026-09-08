@@ -4,11 +4,11 @@ Three deepening opportunities, designed via `/improve-codebase-architecture`. De
 
 ## Overview
 
-| # | Module             | Replaces                                                                 | ADR  |
-| - | ------------------ | ------------------------------------------------------------------------ | ---- |
-| 1 | `VehicleDocument`  | `InsuranceService`, `WarrantyService`                                    | 0001 |
-| 3 | `TokenService`     | Token bits inside `AuthService`                                          | 0002 |
-| 4 | `NotifyService`    | `NotificationsService.create` + alert orchestration in `MaintenanceAlertService` | 0003 |
+| #   | Module            | Replaces                                                                         | ADR  |
+| --- | ----------------- | -------------------------------------------------------------------------------- | ---- |
+| 1   | `VehicleDocument` | `InsuranceService`, `WarrantyService`                                            | 0001 |
+| 3   | `TokenService`    | Token bits inside `AuthService`                                                  | 0002 |
+| 4   | `NotifyService`   | `NotificationsService.create` + alert orchestration in `MaintenanceAlertService` | 0003 |
 
 Sequencing: **#3 → #4 → #1**. TokenService is independent; NotifyService is needed by #1's expiry loop; VehicleDocument is the integrating change.
 
@@ -31,15 +31,15 @@ type IssuedToken = { token: string; url: string };
 class TokenService {
   // private: hash(t), generate(bytes=32), timingSafeCompare(a, b)
 
-  issueEmailVerification(userId: string): Promise<IssuedToken>     // 7-day TTL
-  consumeEmailVerification(token: string): Promise<User>           // throws on invalid/expired
+  issueEmailVerification(userId: string): Promise<IssuedToken>; // 7-day TTL
+  consumeEmailVerification(token: string): Promise<User>; // throws on invalid/expired
 
-  issuePasswordReset(userId: string): Promise<IssuedToken>         // 30-min TTL
-  consumePasswordReset(token: string): Promise<User>
+  issuePasswordReset(userId: string): Promise<IssuedToken>; // 30-min TTL
+  consumePasswordReset(token: string): Promise<User>;
 
-  rotateRefreshToken(user: AuthUser): Promise<string>              // signs JWT + persists hash
-  verifyRefreshToken(jwt: string): Promise<User>                   // JWT verify + timing-safe hash compare
-  revokeRefreshToken(userId: string): Promise<void>
+  rotateRefreshToken(user: AuthUser): Promise<string>; // signs JWT + persists hash
+  verifyRefreshToken(jwt: string): Promise<User>; // JWT verify + timing-safe hash compare
+  revokeRefreshToken(userId: string): Promise<void>;
 }
 ```
 
@@ -98,9 +98,13 @@ type AlertKind =
 interface AlertTemplate<TPayload> {
   kind: AlertKind;
   dedupKey(payload: TPayload): string;
-  render(payload: TPayload, ctx: UserContext): {
-    title: string; message: string;
-    type: 'info'|'warning'|'error'|'success';
+  render(
+    payload: TPayload,
+    ctx: UserContext,
+  ): {
+    title: string;
+    message: string;
+    type: 'info' | 'warning' | 'error' | 'success';
     link: string;
   };
 }
@@ -112,8 +116,10 @@ interface Channel {
 
 class NotifyService {
   raise<K extends AlertKind>(
-    userId: string, vehicleId: string | null,
-    kind: K, payload: PayloadFor<K>,
+    userId: string,
+    vehicleId: string | null,
+    kind: K,
+    payload: PayloadFor<K>,
   ): Promise<Notification>;
 }
 ```
@@ -183,8 +189,10 @@ Honesty: only one real channel today → "hypothetical seam" per LANGUAGE.md. Ea
   ```ts
   const expiring = await this.vehicleDocuments.findExpiring(vehicle.userId, 7);
   for (const doc of expiring) {
-    await this.notify.raise(vehicle.userId, doc.vehicleId, 'document-expiring',
-      { document: doc, daysUntilExpiry: 7 });
+    await this.notify.raise(vehicle.userId, doc.vehicleId, 'document-expiring', {
+      document: doc,
+      daysUntilExpiry: 7,
+    });
   }
   ```
 - **Edit web**: `apps/web/src/features/insurance/`, `apps/web/src/features/warranty/` — point to unified `/vehicles/:vehicleId/documents?kind=` route. Likely also collapse into `apps/web/src/features/vehicle-documents/`.
@@ -197,20 +205,24 @@ type VehicleDocumentKind = 'insurance' | 'warranty';
 // future: 'registration' | 'puc' | 'road_tax'
 
 type VehicleDocument = {
-  id: string; vehicleId: string; kind: VehicleDocumentKind;
-  provider: string; number: string | null;
-  startDate: Date; endDate: Date | null;
+  id: string;
+  vehicleId: string;
+  kind: VehicleDocumentKind;
+  provider: string;
+  number: string | null;
+  startDate: Date;
+  endDate: Date | null;
   notes: string | null;
-  details: Record<string, unknown>;   // kind-specific (premiumAmount, type, endOdometer)
+  details: Record<string, unknown>; // kind-specific (premiumAmount, type, endOdometer)
 };
 
 class VehicleDocumentsService {
-  create(userId, vehicleId, kind, payload): Promise<VehicleDocument>
-  update(userId, id, payload): Promise<VehicleDocument>
-  remove(userId, id): Promise<void>
-  listForVehicle(userId, vehicleId, kind?): Promise<VehicleDocument[]>
-  findExpiring(userId, withinDays, kind?): Promise<VehicleDocument[]>     // range query, replaces buggy 1-day slice
-  activeCoverageAt(vehicleId, date, kind?): Promise<VehicleDocument[]>
+  create(userId, vehicleId, kind, payload): Promise<VehicleDocument>;
+  update(userId, id, payload): Promise<VehicleDocument>;
+  remove(userId, id): Promise<void>;
+  listForVehicle(userId, vehicleId, kind?): Promise<VehicleDocument[]>;
+  findExpiring(userId, withinDays, kind?): Promise<VehicleDocument[]>; // range query, replaces buggy 1-day slice
+  activeCoverageAt(vehicleId, date, kind?): Promise<VehicleDocument[]>;
 }
 
 interface VehicleDocumentAdapter<TRow, TCreate, TUpdate> {

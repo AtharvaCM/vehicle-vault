@@ -7,9 +7,7 @@ import { endpoints } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/query/query-keys';
 
 export async function getVehicleTyres(vehicleId: string) {
-  const response = await apiClient.get<ApiSuccessResponse<Tyre[]>>(
-    endpoints.tyres.list(vehicleId),
-  );
+  const response = await apiClient.get<ApiSuccessResponse<Tyre[]>>(endpoints.tyres.list(vehicleId));
 
   return response.data;
 }

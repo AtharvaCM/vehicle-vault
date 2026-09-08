@@ -40,10 +40,7 @@ export class ServiceHistoryService {
       }),
     ]);
 
-    const totalMaintenance = maintenance.reduce(
-      (acc, r) => acc + decimalToNumber(r.totalCost),
-      0,
-    );
+    const totalMaintenance = maintenance.reduce((acc, r) => acc + decimalToNumber(r.totalCost), 0);
     const totalFuelCost = fuelLogs.reduce((acc, l) => acc + decimalToNumber(l.totalCost), 0);
     const totalFuelLitres = fuelLogs.reduce((acc, l) => acc + l.quantity, 0);
     const insurerReimbursed = claims.reduce(
@@ -67,10 +64,7 @@ export class ServiceHistoryService {
     });
 
     // Header
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(20)
-      .text('Vehicle Service History', { align: 'left' });
+    doc.font('Helvetica-Bold').fontSize(20).text('Vehicle Service History', { align: 'left' });
     doc.moveDown(0.2);
     doc
       .font('Helvetica')
@@ -99,9 +93,7 @@ export class ServiceHistoryService {
       ],
       [
         'Odometer at purchase',
-        vehicle.purchaseOdometer != null
-          ? `${intFmt.format(vehicle.purchaseOdometer)} km`
-          : '—',
+        vehicle.purchaseOdometer != null ? `${intFmt.format(vehicle.purchaseOdometer)} km` : '—',
       ],
     ];
     for (const [k, v] of lines) {
@@ -146,13 +138,17 @@ export class ServiceHistoryService {
       drawRow(doc, headers, widths);
       doc.font('Helvetica').fontSize(9);
       for (const record of maintenance) {
-        drawRow(doc, [
-          fmtDate(record.serviceDate),
-          record.category,
-          record.workshopName ?? '—',
-          `${intFmt.format(record.odometer)} km`,
-          inr.format(decimalToNumber(record.totalCost)),
-        ], widths);
+        drawRow(
+          doc,
+          [
+            fmtDate(record.serviceDate),
+            record.category,
+            record.workshopName ?? '—',
+            `${intFmt.format(record.odometer)} km`,
+            inr.format(decimalToNumber(record.totalCost)),
+          ],
+          widths,
+        );
         if (doc.y > 760) doc.addPage();
       }
     }
@@ -163,7 +159,12 @@ export class ServiceHistoryService {
     doc.font('Helvetica-Bold').fontSize(13).text('Insurance policies');
     doc.moveDown(0.3);
     if (policies.length === 0) {
-      doc.font('Helvetica').fontSize(10).fillColor('#64748b').text('No policies.').fillColor('#000');
+      doc
+        .font('Helvetica')
+        .fontSize(10)
+        .fillColor('#64748b')
+        .text('No policies.')
+        .fillColor('#000');
     } else {
       doc.font('Helvetica').fontSize(10);
       for (const policy of policies) {
@@ -184,7 +185,12 @@ export class ServiceHistoryService {
     doc.font('Helvetica-Bold').fontSize(13).text('Claims');
     doc.moveDown(0.3);
     if (claims.length === 0) {
-      doc.font('Helvetica').fontSize(10).fillColor('#64748b').text('No claims filed.').fillColor('#000');
+      doc
+        .font('Helvetica')
+        .fontSize(10)
+        .fillColor('#64748b')
+        .text('No claims filed.')
+        .fillColor('#000');
     } else {
       doc.font('Helvetica-Bold').fontSize(9);
       const headers = ['Filed', 'Status', 'Workshop', 'Gross', 'Insurer paid'];
@@ -192,13 +198,17 @@ export class ServiceHistoryService {
       drawRow(doc, headers, widths);
       doc.font('Helvetica').fontSize(9);
       for (const c of claims) {
-        drawRow(doc, [
-          fmtDate(c.filedDate),
-          c.status,
-          c.maintenanceRecord?.workshopName ?? '—',
-          inr.format(decimalToNumber(c.grossAmount)),
-          inr.format(decimalToNumber(c.insurerPaidAmount)),
-        ], widths);
+        drawRow(
+          doc,
+          [
+            fmtDate(c.filedDate),
+            c.status,
+            c.maintenanceRecord?.workshopName ?? '—',
+            inr.format(decimalToNumber(c.grossAmount)),
+            inr.format(decimalToNumber(c.insurerPaidAmount)),
+          ],
+          widths,
+        );
         if (doc.y > 760) doc.addPage();
       }
     }
@@ -221,4 +231,3 @@ export class ServiceHistoryService {
     return { buffer: Buffer.concat(chunks), fileName };
   }
 }
-

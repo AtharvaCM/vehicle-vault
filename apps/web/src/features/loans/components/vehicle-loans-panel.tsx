@@ -155,10 +155,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
         </div>
       )}
 
-      <Dialog
-        open={isCreateOpen}
-        onOpenChange={(open) => !open && setCreateOpen(false)}
-      >
+      <Dialog open={isCreateOpen} onOpenChange={(open) => !open && setCreateOpen(false)}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add loan to {vehicleLabel ?? 'vehicle'}</DialogTitle>
@@ -212,7 +209,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
       </Dialog>
 
       <LoanDetailDialog
-        loan={selectedLoan ? loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan : null}
+        loan={selectedLoan ? (loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan) : null}
         vehicleLabel={vehicleLabel}
         onOpenChange={(open) => !open && setSelectedLoan(null)}
       />

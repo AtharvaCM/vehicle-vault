@@ -297,20 +297,17 @@ export function LoansPage() {
       </Dialog>
 
       <LoanDetailDialog
-        loan={selectedLoan ? loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan : null}
+        loan={selectedLoan ? (loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan) : null}
         vehicleLabel={selectedLoan ? vehicleLabelById[selectedLoan.vehicleId] : undefined}
         onOpenChange={(open) => !open && setSelectedLoan(null)}
       />
 
-      <Dialog
-        open={loanToEdit !== null}
-        onOpenChange={(open) => !open && setLoanToEdit(null)}
-      >
+      <Dialog open={loanToEdit !== null} onOpenChange={(open) => !open && setLoanToEdit(null)}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit loan</DialogTitle>
             <DialogDescription>
-              {loanToEdit ? vehicleLabelById[loanToEdit.vehicleId] ?? '' : ''}
+              {loanToEdit ? (vehicleLabelById[loanToEdit.vehicleId] ?? '') : ''}
               {loanToEdit?.status === 'closed' ? ' · closed loan' : ''}
             </DialogDescription>
           </DialogHeader>

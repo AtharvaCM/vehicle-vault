@@ -58,9 +58,7 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
     },
     { label: 'Maintenance', value: inr.format(Number(tco.totals.maintenance)) },
     { label: 'Fuel', value: inr.format(Number(tco.totals.fuel)) },
-    ...(accessories > 0
-      ? [{ label: 'Accessories', value: inr.format(accessories) }]
-      : []),
+    ...(accessories > 0 ? [{ label: 'Accessories', value: inr.format(accessories) }] : []),
     { label: 'Insurance', value: inr.format(Number(tco.totals.insurance)) },
     ...(loanInterestPaid > 0
       ? [{ label: 'Loan interest paid', value: inr.format(loanInterestPaid) }]
@@ -106,12 +104,16 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
         <Metric
           label="₹ / month"
           value={tco.derived.costPerMonth ? inr.format(Number(tco.derived.costPerMonth)) : '—'}
-          hint={tco.ownershipMonths != null ? `${tco.ownershipMonths} months owned` : 'No purchase date'}
+          hint={
+            tco.ownershipMonths != null ? `${tco.ownershipMonths} months owned` : 'No purchase date'
+          }
         />
         <Metric
           label="Purchase price"
           value={tco.purchasePrice ? inr.format(Number(tco.purchasePrice)) : '—'}
-          hint={tco.purchaseDate ? new Date(tco.purchaseDate).toISOString().slice(0, 10) : 'Not set'}
+          hint={
+            tco.purchaseDate ? new Date(tco.purchaseDate).toISOString().slice(0, 10) : 'Not set'
+          }
         />
       </div>
 

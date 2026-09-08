@@ -14,10 +14,8 @@ export const queryKeys = {
   },
   tyres: {
     all: (vehicleId: string) => ['vehicles', 'detail', vehicleId, 'tyres'] as const,
-    condition: (vehicleId: string) =>
-      [...queryKeys.tyres.all(vehicleId), 'condition'] as const,
-    inspections: (vehicleId: string) =>
-      [...queryKeys.tyres.all(vehicleId), 'inspections'] as const,
+    condition: (vehicleId: string) => [...queryKeys.tyres.all(vehicleId), 'condition'] as const,
+    inspections: (vehicleId: string) => [...queryKeys.tyres.all(vehicleId), 'inspections'] as const,
   },
   accessories: {
     all: (vehicleId: string) => ['vehicles', 'detail', vehicleId, 'accessories'] as const,
@@ -80,7 +78,8 @@ export const queryKeys = {
   },
   vehicleDocuments: {
     all: () => ['vehicleDocuments'] as const,
-    byVehicle: (vehicleId: string, kind?: string) => [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId, kind ?? 'all'] as const,
+    byVehicle: (vehicleId: string, kind?: string) =>
+      [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId, kind ?? 'all'] as const,
   },
   analytics: {
     all: () => ['analytics'] as const,
@@ -109,8 +108,7 @@ export const queryKeys = {
       [...queryKeys.vehicleLoans.all(), 'vehicle', vehicleId] as const,
     detail: (id: string) => [...queryKeys.vehicleLoans.all(), 'detail', id] as const,
     schedule: (id: string) => [...queryKeys.vehicleLoans.all(), 'schedule', id] as const,
-    attachments: (id: string) =>
-      [...queryKeys.vehicleLoans.all(), 'attachments', id] as const,
+    attachments: (id: string) => [...queryKeys.vehicleLoans.all(), 'attachments', id] as const,
   },
   claims: {
     all: () => ['claims'] as const,
@@ -134,8 +132,7 @@ export const queryKeys = {
   },
   audit: {
     all: () => ['audit'] as const,
-    me: (resourceType?: string) =>
-      [...queryKeys.audit.all(), 'me', resourceType ?? 'all'] as const,
+    me: (resourceType?: string) => [...queryKeys.audit.all(), 'me', resourceType ?? 'all'] as const,
     byVehicle: (vehicleId: string) => [...queryKeys.audit.all(), 'vehicle', vehicleId] as const,
   },
 };

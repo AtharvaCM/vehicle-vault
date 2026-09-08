@@ -36,9 +36,11 @@ type PersistableExtraction = Omit<
   'attachmentId' | 'createdAt' | 'id' | 'status' | 'updatedAt'
 >;
 
-function toPersistable(
-  result: { provider: string; extractedAt: string; data: MaintenanceInvoiceExtractionDraft },
-): PersistableExtraction {
+function toPersistable(result: {
+  provider: string;
+  extractedAt: string;
+  data: MaintenanceInvoiceExtractionDraft;
+}): PersistableExtraction {
   return {
     provider: result.provider,
     extractedAt: result.extractedAt,
