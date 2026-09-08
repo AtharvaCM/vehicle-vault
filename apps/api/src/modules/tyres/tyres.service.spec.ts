@@ -8,6 +8,7 @@ import {
   wrapTransactionForAudit,
 } from '../../common/prisma/audit-coverage';
 import { AuditService } from '../audit/audit.service';
+import { TyreConditionResolver } from './tyre-condition.resolver';
 import { TyresService } from './tyres.service';
 
 /**
@@ -189,5 +190,123 @@ describe('TyresService audit coverage', () => {
         resourceId: 'tyre-1',
       }),
     ]);
+  });
+});
+
+describe('TyresService.getAlertState', () => {
+  let prisma: ReturnType<typeof makeFakePrisma>;
+  let service: TyresService;
+
+  const vehiclesService = { ensureVehicleExists: vi.fn() };
+  const access = { assertEditor: vi.fn() };
+
+  /** Grades with the real resolver: the alert engine consumes its verdicts verbatim. */
+  const fitted = (overrides: Partial<typeof TYRE_ROW> & { inspections?: unknown[] }) => ({
+    ...TYRE_ROW,
+    inspections: [],
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    prisma = makeFakePrisma();
+    vehiclesService.ensureVehicleExists.mockResolvedValue({ id: 'v1', odometer: 50_000 });
+    service = new TyresService(
+      prisma as never,
+      vehiclesService as never,
+      access as never,
+      new TyreConditionResolver(),
+      new AuditService(prisma as never),
+    );
+  });
+
+  it('reports no observation at all when the vehicle tracks no tyres', async () => {
+    // The "we cannot see this vehicle's tyres" case, which is a different
+    // statement from "they were fine when last measured".
+    prisma.tyre.findMany.mockResolvedValue([]);
+
+    const state = await service.getAlertState('u1', 'v1');
+
+    expect(state).toEqual({
+      vehicleOdometer: 50_000,
+      conditions: [],
+      lastObservation: null,
+    });
+  });
+
+  it('treats fitting as an observation, so a fresh set is not reported unmeasured', async () => {
+    prisma.tyre.findMany.mockResolvedValue([
+      fitted({ id: 'tyre-1', fittedDate: new Date('2026-08-01'), fittedOdometer: 49_000 }),
+    ]);
+
+    const state = await service.getAlertState('u1', 'v1');
+
+    expect(state.lastObservation).toEqual({ at: new Date('2026-08-01'), odometer: 49_000 });
+  });
+
+  it('lets the least recently observed corner decide the vehicle', async () => {
+    // Same rule worstLevel applies to condition: one neglected corner is the
+    // vehicle's answer, not the average of four.
+    prisma.tyre.findMany.mockResolvedValue([
+      fitted({
+        id: 'tyre-1',
+        position: TyrePosition.FrontLeft,
+        inspections: [{ inspectedAt: new Date('2026-09-01'), odometer: 49_800, treadDepthMm: 5 }],
+      }),
+      fitted({
+        id: 'tyre-2',
+        position: TyrePosition.RearLeft,
+        inspections: [{ inspectedAt: new Date('2026-03-01'), odometer: 44_000, treadDepthMm: 6 }],
+      }),
+    ]);
+
+    const state = await service.getAlertState('u1', 'v1');
+
+    expect(state.lastObservation).toEqual({ at: new Date('2026-03-01'), odometer: 44_000 });
+  });
+
+  it('prefers the newest reading on a tyre over the day it was fitted', async () => {
+    prisma.tyre.findMany.mockResolvedValue([
+      fitted({
+        fittedDate: new Date('2025-01-01'),
+        fittedOdometer: 20_000,
+        inspections: [
+          { inspectedAt: new Date('2026-06-01'), odometer: 47_000, treadDepthMm: 4.5 },
+          { inspectedAt: new Date('2025-06-01'), odometer: 30_000, treadDepthMm: 7 },
+        ],
+      }),
+    ]);
+
+    const state = await service.getAlertState('u1', 'v1');
+
+    expect(state.lastObservation).toEqual({ at: new Date('2026-06-01'), odometer: 47_000 });
+  });
+
+  it('grades the spare but keeps it out of the inspection clock', async () => {
+    // A spare covers none of the vehicle's mileage, so letting it drive a
+    // distance-based nudge would pin a diligently checked vehicle to stale.
+    prisma.tyre.findMany.mockResolvedValue([
+      fitted({
+        id: 'tyre-road',
+        position: TyrePosition.FrontLeft,
+        inspections: [{ inspectedAt: new Date('2026-09-01'), odometer: 49_900, treadDepthMm: 5 }],
+      }),
+      fitted({
+        id: 'tyre-spare',
+        position: TyrePosition.Spare,
+        dotWeek: 1,
+        dotYear: 2016,
+        fittedDate: new Date('2016-06-01'),
+        fittedOdometer: 0,
+      }),
+    ]);
+
+    const state = await service.getAlertState('u1', 'v1');
+
+    expect(state.lastObservation).toEqual({ at: new Date('2026-09-01'), odometer: 49_900 });
+    expect(state.conditions.map((condition) => condition.tyreId)).toEqual([
+      'tyre-road',
+      'tyre-spare',
+    ]);
+    expect(state.conditions[1]).toMatchObject({ level: 'replace', reason: 'age' });
   });
 });

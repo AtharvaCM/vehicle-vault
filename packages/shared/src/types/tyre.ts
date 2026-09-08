@@ -37,6 +37,27 @@ export const TYRE_AGE_REPLACE_YEARS = 6;
 export const TYRE_AGE_WARN_YEARS = 5;
 
 /**
+ * How often someone should actually look at a tyre.
+ *
+ * Tread wears continuously but is only ever *known* at a measurement, so an old
+ * reading is not evidence about the tyre today — it is evidence about the tyre
+ * several thousand kilometres ago. Past this distance (or this many months) the
+ * recorded condition has stopped meaning anything and the honest answer is
+ * "nobody has looked recently", not "healthy".
+ */
+export const TYRE_INSPECTION_INTERVAL_KM = 5000;
+export const TYRE_INSPECTION_INTERVAL_MONTHS = 6;
+
+/**
+ * Odometer above which a vehicle carrying no tyre records at all is worth
+ * prompting about. Below it the fitted set is almost certainly the original one
+ * and still young, so asking would be noise; above it the app is silent on a
+ * wear item precisely because it has no data, which is the failure mode this
+ * threshold exists to prevent.
+ */
+export const TYRE_TRACKING_PROMPT_KM = 10000;
+
+/**
  * Ordered worst-first. `illegal` is deliberately distinct from `replace`: one is
  * a roadworthiness statement, the other a maintenance recommendation.
  */

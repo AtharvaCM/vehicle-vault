@@ -46,7 +46,7 @@ A future-dated to-do tied to a **Vehicle**, optionally with `dueOdometer`. Drive
 A user-facing message persisted per **User** with a `kind` and a `dedupKey`. Uniqueness for unread notifications enforced by partial unique index on `(userId, dedupKey) WHERE isRead = false`; a dedup collision returns the existing unread row rather than throwing. See ADR-0003.
 
 **AlertKind**:
-A typed alert category — `maintenance-due`, `maintenance-overdue`, `reminder-due`, `reminder-overdue`, `document-expiring`. Each kind has an **AlertTemplate** that owns content rendering and `dedupKey` computation.
+A typed alert category — `maintenance-due`, `maintenance-overdue`, `reminder-due`, `reminder-overdue`, `document-expiring`, `accessory-warranty-expiring`, `tyre-worn`, `tyre-aged`, `tyre-uninspected`. Each kind has an **AlertTemplate** that owns content rendering and `dedupKey` computation.
 
 **AlertTemplate**:
 The per-**AlertKind** producer of notification content (title, message, link, urgency) and dedup identity. Wired via `ALERT_TEMPLATES` DI multi-provider behind **NotifyService**.
@@ -58,7 +58,10 @@ An external delivery adapter for a **Notification** (`email` and `push` today; `
 `raise(userId, vehicleId, kind, payload)` — resolves template, computes dedup key, upserts the row, and fans out to channels. The single entry point for raising any alert.
 
 **AlertEngine** (`MaintenanceAlertService`):
-The cron orchestrator that runs per-vehicle, reads current predicted odometer (`VehicleInsightsService`), and calls **NotifyService.raise** for each crossed threshold (intervals from `MaintenanceIntervalResolver`, reminders within 500 km of `dueOdometer`, documents expiring within 7 days via `VehicleDocumentsService.findExpiring`). Owns _when_ to alert, not _what_ the alert looks like.
+The cron orchestrator that runs per-vehicle, reads current predicted odometer (`VehicleInsightsService`), and calls **NotifyService.raise** for each crossed threshold (intervals from `MaintenanceIntervalResolver`, reminders within 500 km of `dueOdometer`, documents expiring within 7 days via `VehicleDocumentsService.findExpiring`, tyre verdicts from `TyresService.getAlertState`). Owns _when_ to alert, not _what_ the alert looks like.
+
+**Tyre observation**:
+The last time anyone had eyes on a **Tyre** — its newest **TyreInspection**, or its `fittedDate`/`fittedOdometer` when it has never been measured. `TyresService.getAlertState` reports the _oldest_ observation across a vehicle's road tyres (the spare is graded but excluded, since it covers none of the vehicle's mileage), and the **AlertEngine** raises `tyre-uninspected` once that observation is older than `TYRE_INSPECTION_INTERVAL_KM` / `_MONTHS`. The distinction this encodes: a tyre nobody has measured is **unknown**, not healthy, and unknown is a thing to say out loud rather than a reason to stay quiet.
 
 **Service intervals** — `vehicles/maintenance-interval.resolver.ts` is the single source of truth for "how often does this vehicle need X". It gates categories by vehicle type and fuel, and prefers per-variant `ServiceInterval` rows over its default table. `MaintenanceAlertService` and `MaintenanceForecastService` both consume it, and it is served to clients at `GET /vehicles/:vehicleId/intervals` so the web app never restates an interval locally — a client that picks its own number will disagree with the alert engine about the same vehicle.
 _Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic intervals for the reminder-suggestion flow, and some of its figures differ from the resolver's. It is scoped to "what reminders could I create", not "is this service due", but the two should be reconciled.
@@ -95,6 +98,7 @@ auth (register/login/refresh/OAuth/verify/reset), users, admin (user directory, 
 - A **Vehicle** has many **VehicleMembers**, **VehicleDocuments**, **MaintenanceRecords**, **Reminders**, **FuelLogs**, **Claims**, **VehicleLoans**, **Tyres**, **Accessories**.
 - The **AlertEngine** reads **VehicleDocumentsService.findExpiring(withinDays)** (adapters implement `findExpiringBetween`) to produce expiry **Notifications**. It does not query document tables directly.
 - The **AlertEngine** also reads **AccessoriesService.findExpiringWarranties(withinDays)** for the `accessory-warranty-expiring` kind. Accessory warranties raise **Notifications**, never **Reminders** — `Reminder` carries no pointer to a source record, and a date-only Reminder raises no alert at all.
+- The **AlertEngine** reads **TyresService.getAlertState(userId, vehicleId)** for the three tyre kinds. Grading stays in **TyreConditionResolver** and reaches the notification as a rendered verdict, so the same numbers back the alert and the vehicle page — the engine never re-derives "is this tyre finished". Graded against `Vehicle.odometer`, not the predicted reading: a forecast must not be what declares a tyre worn.
 - An **Attachment** has exactly one owner of five — **MaintenanceRecord**, **InsurancePolicy**, **Warranty**, **Claim**, or **VehicleLoan** — enforced by CHECK constraint `attachment_owner_exclusive`.
 
 ## Flagged ambiguities

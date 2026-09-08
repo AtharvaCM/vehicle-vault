@@ -6,10 +6,26 @@ import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.
 import { AccessoriesService } from '../accessories/accessories.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
-import { ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS } from '@vehicle-vault/shared';
+import { TyresService, type VehicleTyreAlertState } from '../tyres/tyres.service';
+import {
+  ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
+  TYRE_AGE_WARN_YEARS,
+  TYRE_INSPECTION_INTERVAL_KM,
+  TYRE_INSPECTION_INTERVAL_MONTHS,
+  TYRE_TRACKING_PROMPT_KM,
+} from '@vehicle-vault/shared';
 
 const DOCUMENT_EXPIRY_WINDOW_DAYS = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** The vehicle facts the tyre checks need, kept narrow so the tests can state them. */
+type TyreCheckVehicle = { id: string; userId: string; year: number };
+
+function monthsBefore(date: Date, months: number): Date {
+  const shifted = new Date(date);
+  shifted.setMonth(shifted.getMonth() - months);
+  return shifted;
+}
 
 @Injectable()
 export class MaintenanceAlertService {
@@ -22,6 +38,7 @@ export class MaintenanceAlertService {
     private readonly vehicleDocumentsService: VehicleDocumentsService,
     private readonly intervalResolver: MaintenanceIntervalResolver,
     private readonly accessoriesService: AccessoriesService,
+    private readonly tyresService: TyresService,
   ) {}
 
   /**
@@ -144,6 +161,106 @@ export class MaintenanceAlertService {
         { accessory, daysUntilExpiry },
       );
     }
+
+    // 6. Tyres. Tread and age are the two wear limits an odometer-driven service
+    // schedule cannot express — a tyre reaches the legal minimum between
+    // services, and rubber ages out whether or not the vehicle moves. The
+    // grading already existed for the vehicle page; without this call nothing
+    // reached the user unless they went looking.
+    await this.runTyreChecks(vehicle, new Date());
+  }
+
+  /**
+   * Condition alerts fire per tyre; the inspection prompt fires per vehicle.
+   * The resolver reports one verdict per tyre — the worse of tread and age — so
+   * a tyre raises at most one of `tyre-worn` / `tyre-aged` and a set of four
+   * cannot produce eight notifications in a morning.
+   */
+  private async runTyreChecks(vehicle: TyreCheckVehicle, now: Date) {
+    const state = await this.tyresService.getAlertState(vehicle.userId, vehicle.id);
+
+    for (const condition of state.conditions) {
+      // `unknown` means nothing has been measured, which the inspection prompt
+      // below answers. Calling it worn would invent a reading.
+      if (condition.level === 'healthy' || condition.level === 'unknown') continue;
+
+      if (condition.reason === 'tread') {
+        await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-worn', {
+          vehicleId: vehicle.id,
+          tyreId: condition.tyreId,
+          position: condition.position,
+          level: condition.level,
+          summary: condition.summary,
+          treadDepthMm: condition.treadDepthMm,
+        });
+      } else if (condition.reason === 'age' && condition.level !== 'illegal') {
+        await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-aged', {
+          vehicleId: vehicle.id,
+          tyreId: condition.tyreId,
+          position: condition.position,
+          level: condition.level,
+          summary: condition.summary,
+          ageYears: condition.ageYears,
+        });
+      }
+    }
+
+    await this.runTyreInspectionPrompt(vehicle, state, now);
+  }
+
+  private async runTyreInspectionPrompt(
+    vehicle: TyreCheckVehicle,
+    state: VehicleTyreAlertState,
+    now: Date,
+  ) {
+    if (state.conditions.length === 0) {
+      if (!this.shouldPromptTyreTracking(vehicle, state.vehicleOdometer, now)) return;
+
+      await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-uninspected', {
+        vehicleId: vehicle.id,
+        odometer: state.vehicleOdometer,
+        reason: 'untracked',
+      });
+      return;
+    }
+
+    // Tyres are tracked but none of them is on the road (a lone spare). There is
+    // no distance to measure staleness against and nothing useful to ask for.
+    if (state.lastObservation == null) return;
+
+    const kmSinceLastCheck = Math.max(0, state.vehicleOdometer - state.lastObservation.odometer);
+    const staleByDistance = kmSinceLastCheck >= TYRE_INSPECTION_INTERVAL_KM;
+    const staleByTime =
+      state.lastObservation.at <= monthsBefore(now, TYRE_INSPECTION_INTERVAL_MONTHS);
+    if (!staleByDistance && !staleByTime) return;
+
+    const daysSinceLastCheck = Math.max(
+      0,
+      Math.floor((now.getTime() - state.lastObservation.at.getTime()) / MS_PER_DAY),
+    );
+
+    await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-uninspected', {
+      vehicleId: vehicle.id,
+      odometer: state.vehicleOdometer,
+      reason: 'stale',
+      kmSinceLastCheck,
+      daysSinceLastCheck,
+    });
+  }
+
+  /**
+   * A vehicle with no tyre records is only worth prompting once its tyres could
+   * plausibly be a concern — enough distance covered, or old enough that the
+   * original set has aged regardless of use. Below both, the fitted set is
+   * almost certainly young and original, and asking is noise.
+   */
+  private shouldPromptTyreTracking(
+    vehicle: TyreCheckVehicle,
+    odometer: number,
+    now: Date,
+  ): boolean {
+    const vehicleAgeYears = now.getFullYear() - vehicle.year;
+    return odometer >= TYRE_TRACKING_PROMPT_KM || vehicleAgeYears >= TYRE_AGE_WARN_YEARS;
   }
 
   /**

@@ -1,5 +1,5 @@
 import type { Notification, User } from '@prisma/client';
-import type { VehicleDocument } from '@vehicle-vault/shared';
+import type { TyreConditionLevel, TyrePosition, VehicleDocument } from '@vehicle-vault/shared';
 
 /**
  * Every typed alert flowing through {@link NotifyService}.
@@ -12,7 +12,10 @@ export type AlertKind =
   | 'reminder-due'
   | 'reminder-overdue'
   | 'document-expiring'
-  | 'accessory-warranty-expiring';
+  | 'accessory-warranty-expiring'
+  | 'tyre-worn'
+  | 'tyre-aged'
+  | 'tyre-uninspected';
 
 export type MaintenanceDuePayload = {
   vehicleId: string;
@@ -64,6 +67,51 @@ export type AccessoryWarrantyExpiringPayload = {
   daysUntilExpiry: number;
 };
 
+/**
+ * Levels worth telling someone about. `healthy` needs no alert and `unknown`
+ * is the absence of a measurement, which {@link TyreUninspectedPayload} covers
+ * instead — a tyre nobody has measured is not a worn tyre.
+ */
+export type AlertableTyreLevel = Exclude<TyreConditionLevel, 'healthy' | 'unknown'>;
+
+/**
+ * Tread and manufacture age are graded by the tyres module; these payloads carry
+ * the verdict rather than the raw measurements so the notifications module never
+ * grows a second opinion about when a tyre is finished.
+ */
+export type TyreWornPayload = {
+  vehicleId: string;
+  tyreId: string;
+  position: TyrePosition;
+  level: AlertableTyreLevel;
+  /** The resolver's own justification, e.g. "1.4 mm tread — below the 1.6 mm legal minimum". */
+  summary: string;
+  treadDepthMm: number | null;
+};
+
+/** Age never makes a tyre illegal — that is a roadworthiness test on tread alone. */
+export type TyreAgedPayload = {
+  vehicleId: string;
+  tyreId: string;
+  position: TyrePosition;
+  level: Exclude<AlertableTyreLevel, 'illegal'>;
+  summary: string;
+  ageYears: number | null;
+};
+
+/**
+ * The app cannot see this vehicle's tyres. Split by cause because the two ask
+ * for different things: `untracked` wants the tyres entered at all, `stale`
+ * wants a fresh reading on tyres already recorded.
+ */
+export type TyreUninspectedPayload = {
+  vehicleId: string;
+  odometer: number;
+} & (
+  | { reason: 'untracked' }
+  | { reason: 'stale'; kmSinceLastCheck: number; daysSinceLastCheck: number }
+);
+
 export type AlertPayloads = {
   'maintenance-due': MaintenanceDuePayload;
   'maintenance-overdue': MaintenanceOverduePayload;
@@ -71,6 +119,9 @@ export type AlertPayloads = {
   'reminder-overdue': ReminderOverduePayload;
   'document-expiring': DocumentExpiringPayload;
   'accessory-warranty-expiring': AccessoryWarrantyExpiringPayload;
+  'tyre-worn': TyreWornPayload;
+  'tyre-aged': TyreAgedPayload;
+  'tyre-uninspected': TyreUninspectedPayload;
 };
 
 export type NotificationUrgency = 'info' | 'warning' | 'success' | 'error';
