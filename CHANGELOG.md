@@ -1,3 +1,10 @@
+## [1.24.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.2...v1.24.3) (2026-09-09)
+
+
+### Bug Fixes
+
+* **api:** enable RLS on DocumentDismissal ([2261509](https://github.com/AtharvaCM/vehicle-vault/commit/22615098cf3f0dd5e83135c71d3a94040c466904))
+
 ## [1.24.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.1...v1.24.2) (2026-09-08)
 
 
