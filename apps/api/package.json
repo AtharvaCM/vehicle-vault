@@ -18,6 +18,7 @@
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "prisma:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
+    "prisma:check-rls": "ts-node --project tsconfig.json --transpile-only prisma/check-rls.ts",
     "prisma:studio": "prisma studio --schema prisma/schema.prisma",
     "prisma:seed": "ts-node --project tsconfig.json --transpile-only prisma/seed.ts",
     "prisma:seed:demo": "ts-node --project tsconfig.json --transpile-only prisma/seed-demo.ts",
