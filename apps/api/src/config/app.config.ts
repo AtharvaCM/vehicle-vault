@@ -98,6 +98,7 @@ export const appConfig = registerAs('app', () => ({
   port: resolvePort(process.env.PORT),
   frontendOrigins: resolveFrontendOrigins(process.env.FRONTEND_ORIGIN),
   frontendOriginPattern: resolveFrontendOriginPattern(process.env.FRONTEND_ORIGIN_PATTERN),
+  apiPublicUrl: resolveOptionalString(process.env.API_PUBLIC_URL),
   adminEmails: resolveAdminEmails(process.env.ADMIN_EMAILS),
   attachmentStorageBackend:
     resolveAttachmentStorageBackend(process.env.ATTACHMENT_STORAGE_BACKEND) ??

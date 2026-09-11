@@ -12,6 +12,7 @@ import { appToast } from '@/lib/toast';
 
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
 import { useReconcileAttachments } from '../hooks/use-reconcile-attachments';
+import { AlertEmailCard } from '../components/alert-email-card';
 import { CatalogImportReviewCard } from '../components/catalog-import-review-card';
 
 export function SettingsPage() {
@@ -167,6 +168,8 @@ export function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+        <AlertEmailCard />
+
         <Card>
           <CardHeader>
             <CardTitle>Activity log</CardTitle>

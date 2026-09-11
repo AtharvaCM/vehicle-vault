@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Patch, Param, Delete, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UpdateAlertEmailPreferenceDto } from './dto/alert-email-preference.dto';
 import { SubscribePushDto, UnsubscribePushDto } from './dto/push-subscription.dto';
+import { AlertEmailPreferenceService } from './alert-email-preference.service';
 import { NotificationsService } from './notifications.service';
 import { PushSubscriptionsService } from './push-subscriptions.service';
 
@@ -11,7 +13,28 @@ export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly pushSubscriptions: PushSubscriptionsService,
+    private readonly alertEmailPreference: AlertEmailPreferenceService,
   ) {}
+
+  @Get('email-preference')
+  async getEmailPreference(@CurrentUser('id') userId: string) {
+    return this.alertEmailPreference.get(userId);
+  }
+
+  /**
+   * The signed-in counterpart to the unsubscribe link. Both directions are
+   * here, so Settings can turn alert email back on and off again without the
+   * user having to hunt for an old email to click.
+   */
+  @Patch('email-preference')
+  async updateEmailPreference(
+    @CurrentUser('id') userId: string,
+    @Body() body: UpdateAlertEmailPreferenceDto,
+  ) {
+    return body.muted
+      ? this.alertEmailPreference.mute(userId, { actorUserId: userId })
+      : this.alertEmailPreference.unmute(userId, { actorUserId: userId });
+  }
 
   @Get('push/public-key')
   getPushPublicKey() {

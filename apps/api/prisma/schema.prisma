@@ -649,6 +649,11 @@ model User {
   emailVerified                   Boolean                   @default(false)
   emailVerificationTokenHash      String?                   @db.Char(64)
   emailVerificationTokenExpiresAt DateTime?
+  /// When this user last silenced alert email. Null means alert email is on.
+  /// A timestamp rather than a boolean so the audit trail and the row agree
+  /// about when it happened; only alert mail reads it — verification, password
+  /// reset, and invites are transactional and always send.
+  alertEmailsMutedAt              DateTime?
   role                            Role                      @default(user)
   allowedCatalogSources           String[]                  @default([])
   publishedCatalogImportRuns      VehicleCatalogImportRun[] @relation("CatalogImportPublishes")

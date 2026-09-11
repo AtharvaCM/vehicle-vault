@@ -101,6 +101,14 @@ export const AUDIT_ACTIONS = {
   admin: {
     forceLogout: 'admin.force_logout',
   },
+  notification: {
+    // The mute is recorded against the user, not a notification: it changes
+    // what we are allowed to send them, and both directions are auditable
+    // because "I never asked for this" and "I never turned it off" are the two
+    // complaints this feature exists to answer.
+    alertEmailMuted: 'notification.alert_email_muted',
+    alertEmailUnmuted: 'notification.alert_email_unmuted',
+  },
   vehicleMember: {
     added: 'vehicle_member.added',
     roleChanged: 'vehicle_member.role_changed',
