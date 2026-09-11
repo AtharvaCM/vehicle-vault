@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.25.1...v1.26.0) (2026-09-11)
+
+
+### Features
+
+* **notifications:** gate alert email on verification, add one-click unsubscribe ([bc227e8](https://github.com/AtharvaCM/vehicle-vault/commit/bc227e8b7f9a7c376a7e6e85bb16c8850a39a9c1))
+
 ## [1.25.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.25.0...v1.25.1) (2026-09-11)
 
 
