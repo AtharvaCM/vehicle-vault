@@ -156,5 +156,6 @@ export const endpoints = {
     delete: (id: string) => `/notifications/${id}`,
     pushPublicKey: () => '/notifications/push/public-key',
     pushSubscribe: () => '/notifications/push/subscribe',
+    emailPreference: () => '/notifications/email-preference',
   },
 } as const;

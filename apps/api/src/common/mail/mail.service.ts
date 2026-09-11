@@ -108,10 +108,17 @@ export class MailService {
     });
   }
 
+  /**
+   * The one bulk mail this app sends, and so the only one carrying an opt-out.
+   * `unsubscribeUrl` is required rather than optional: an alert whose footer
+   * link is missing is the thing this parameter exists to prevent, and a
+   * caller with no URL to pass should not be sending the alert at all.
+   */
   async sendMaintenanceAlert(input: {
     alertTitle: string;
     email: string;
     message: string;
+    unsubscribeUrl: string;
     userName: string;
     vehicleName: string;
   }) {
@@ -133,6 +140,10 @@ export class MailService {
             This is an automated intelligence alert from your Vehicle Vault companion. 
             You received this because your driving trends indicate a service milestone is approaching.
           </p>
+          <p style="font-size: 12px; color: #94a3b8; margin: 12px 0 0; line-height: 18px;">
+            <a href="${escapeAttribute(input.unsubscribeUrl)}" style="color: #64748b;">Unsubscribe from alert emails</a>
+            — this stops alert email only. You will still see alerts in the app.
+          </p>
         </div>
       </div>
     `;
@@ -140,8 +151,23 @@ export class MailService {
     return this.sendMail({
       to: input.email,
       subject: `⚠️ Maintenance Alert: ${input.vehicleName} - ${input.alertTitle}`,
-      text: `Maintenance Alert for ${input.vehicleName}: ${input.alertTitle}\n\n${input.message}`,
+      text: [
+        `Maintenance Alert for ${input.vehicleName}: ${input.alertTitle}`,
+        '',
+        input.message,
+        '',
+        `Unsubscribe from alert emails: ${input.unsubscribeUrl}`,
+        'This stops alert email only. You will still see alerts in the app.',
+      ].join('\n'),
       html,
+      // RFC 2369 gives the mail client the link; RFC 8058 lets it act on the
+      // link itself with a POST, which is what Gmail's one-click control does.
+      // Without the -Post header that control is hidden and the recipient is
+      // left with the footer link alone.
+      headers: {
+        'List-Unsubscribe': `<${input.unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     });
   }
 
@@ -179,7 +205,13 @@ export class MailService {
     });
   }
 
-  private async sendMail(input: { html: string; subject: string; text: string; to: string }) {
+  private async sendMail(input: {
+    headers?: Record<string, string>;
+    html: string;
+    subject: string;
+    text: string;
+    to: string;
+  }) {
     if (!this.transporter || !this.appConfigService.mailFrom) {
       throw new ServiceUnavailableException('Email delivery is not configured.');
     }
@@ -192,6 +224,7 @@ export class MailService {
         subject: input.subject,
         text: input.text,
         html: input.html,
+        ...(input.headers ? { headers: input.headers } : {}),
       });
     } catch (error) {
       this.logger.error(

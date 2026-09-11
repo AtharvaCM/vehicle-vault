@@ -2,9 +2,11 @@ import { Module, forwardRef } from '@nestjs/common';
 
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AccessoriesModule } from '../accessories/accessories.module';
+import { AuditModule } from '../audit/audit.module';
 import { TyresModule } from '../tyres/tyres.module';
 import { VehicleDocumentsModule } from '../vehicle-documents/vehicle-documents.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
+import { AlertEmailPreferenceService } from './alert-email-preference.service';
 import { MaintenanceAlertService } from './maintenance-alert.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
@@ -12,6 +14,8 @@ import { NotifyService } from './notify.service';
 import { EmailChannel } from './channels/email.channel';
 import { PushChannel } from './channels/push.channel';
 import { PushSubscriptionsService } from './push-subscriptions.service';
+import { UnsubscribeController } from './unsubscribe.controller';
+import { UnsubscribeTokenService } from './unsubscribe-token.service';
 import { AccessoryWarrantyExpiringTemplate } from './templates/accessory-warranty-expiring.template';
 import { DocumentExpiringTemplate } from './templates/document-expiring.template';
 import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
@@ -58,10 +62,13 @@ export const ALERT_TEMPLATE_PROVIDERS = [
     forwardRef(() => VehicleDocumentsModule),
     AccessoriesModule,
     TyresModule,
+    AuditModule,
   ],
-  controllers: [NotificationsController],
+  controllers: [NotificationsController, UnsubscribeController],
   providers: [
     NotificationsService,
+    AlertEmailPreferenceService,
+    UnsubscribeTokenService,
     MaintenanceAlertService,
     NotifyService,
     ...ALERT_TEMPLATE_PROVIDERS,

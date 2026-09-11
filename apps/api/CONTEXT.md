@@ -61,6 +61,13 @@ The per-**AlertKind** producer of notification content (title, message, link, ur
 **Channel**:
 An external delivery adapter for a **Notification** (`email` and `push` today; `sms` future). The DB row is the canonical record; channels are out-of-band fan-out (`Promise.allSettled`, failures logged not thrown). Push is web-push/VAPID (`PushSubscriptionsService`, gated on `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`); one **PushSubscription** row per browser endpoint, pruned automatically on 404/410.
 
+**Alert email gate**:
+Alert mail is the one thing this app sends in bulk, and `EmailChannel` withholds it in three cases: an address nobody has verified (`User.emailVerified`), a user who has silenced it (`User.alertEmailsMutedAt`), and a missing `API_PUBLIC_URL`, which would mean mailing an unsubscribe link that leads nowhere. Each one fails closed and none of them touches the **Notification** row or the push Channel — an alert the user should not be emailed is still an alert, and hiding the record would hide the thing from the person who asked to be told about it.
+
+The opt-out is a stateless HMAC token (`UnsubscribeTokenService`) carried both in the mail body and in `List-Unsubscribe` / `List-Unsubscribe-Post` (RFC 2369 and RFC 8058 one-click). Stateless rather than a row like the password-reset token because the link must still work in a year-old email; there is nothing to revoke, since the token can only ever reduce what we send. `UnsubscribeController` serves it unauthenticated at `/notifications/unsubscribe` — HTML for a browser on GET, an empty 200 for the mail client on POST — and is the only endpoint in the API that returns a page. `AlertEmailPreferenceService` owns both directions and writes an **AuditEvent** for each, with a null actor when the change came from a link: the token proves control of the mailbox, not of a session.
+
+Scoped to alert mail. Verification, password-reset, and invite mail are transactional — each answers something the recipient just did — and ignore the mute entirely.
+
 **NotifyService**:
 `raise(userId, vehicleId, kind, payload)` — resolves template, computes dedup key, upserts the row, and fans out to channels. The single entry point for raising any alert.
 

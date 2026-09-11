@@ -24,6 +24,21 @@ export class AppConfigService {
     return this.configService.get<RegExp | null>('app.frontendOriginPattern') ?? null;
   }
 
+  /**
+   * Where this API answers from on the public internet, including the `/api`
+   * prefix — e.g. `https://vehiclevault.example/api`. Distinct from
+   * `frontendOrigin`: the web app is deployed separately and cannot serve the
+   * endpoints a mail client needs to reach.
+   *
+   * Null when unset, and alert email is withheld rather than sent without a
+   * working unsubscribe link. Nothing sensible can be derived here — the two
+   * origins have no relationship — so guessing would mean mailing an opt-out
+   * that leads nowhere.
+   */
+  get apiPublicUrl() {
+    return this.configService.get<string | null>('app.apiPublicUrl') ?? null;
+  }
+
   get adminEmails() {
     return this.configService.get<string[]>('app.adminEmails') ?? [];
   }
