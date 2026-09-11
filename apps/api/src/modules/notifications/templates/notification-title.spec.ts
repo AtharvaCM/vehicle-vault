@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  NOTIFICATION_TITLE_MAX_LENGTH,
-  prefixedTitle,
-  truncate,
-} from './notification-title';
+import { NOTIFICATION_TITLE_MAX_LENGTH, prefixedTitle, truncate } from './notification-title';
 
 describe('truncate', () => {
   it('leaves a value that already fits untouched', () => {
