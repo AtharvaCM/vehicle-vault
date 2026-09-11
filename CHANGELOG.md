@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.25.0...v1.25.1) (2026-09-11)
+
+
+### Bug Fixes
+
+* **alerts:** keep notification titles inside the column ([bc5dab8](https://github.com/AtharvaCM/vehicle-vault/commit/bc5dab876c024c6c43df974dc176cad31cf1839f))
+
 # [1.25.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.3...v1.25.0) (2026-09-11)
 
 
