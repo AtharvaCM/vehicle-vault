@@ -73,5 +73,20 @@ describe('ReminderOverdueTemplate', () => {
     it('does not pluralise a single day', () => {
       expect(template.render(datePayload({ daysUntilDue: -1 })).message).toContain('1 day ago');
     });
+
+    it('keeps the title inside the 120-char Notification.title column', () => {
+      // Reminder.title is itself VARCHAR(120) and the prefix is another 18.
+      for (const payload of [
+        odometerPayload({ title: 'x'.repeat(120) }),
+        datePayload({ title: 'x'.repeat(120) }),
+      ]) {
+        const rendered = template.render(payload);
+
+        expect(rendered.title.length).toBeLessThanOrEqual(120);
+        expect(rendered.title.startsWith('Overdue Reminder: ')).toBe(true);
+        expect(rendered.title.endsWith('\u2026')).toBe(true);
+        expect(rendered.message).toContain('x'.repeat(120));
+      }
+    });
   });
 });

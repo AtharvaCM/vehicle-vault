@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { prefixedTitle } from './notification-title';
 import type { AlertTemplate, DocumentExpiringPayload, RenderedNotification } from '../types';
 
 /**
@@ -52,7 +53,7 @@ export class DocumentExpiringTemplate implements AlertTemplate<'document-expirin
     const identifier = document.number ? ` (${document.number})` : '';
 
     return {
-      title: `${label} Expiring Soon: ${document.provider}`,
+      title: prefixedTitle(`${label} Expiring Soon: `, document.provider),
       message: `Your ${label.toLowerCase()} with ${document.provider}${identifier} is expiring in ${formattedDays} day${formattedDays === 1 ? '' : 's'} on ${expiryDate}. Please ensure you renew it in time.`,
       type: 'warning',
       link: `/vehicles/${document.vehicleId}?tab=protection`,

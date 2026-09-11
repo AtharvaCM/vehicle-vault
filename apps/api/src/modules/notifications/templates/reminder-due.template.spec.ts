@@ -89,5 +89,23 @@ describe('ReminderDueTemplate', () => {
     it('does not pluralise a single day', () => {
       expect(template.render(datePayload({ daysUntilDue: 1 })).message).toContain('in 1 day on');
     });
+
+    it('keeps the title inside the 120-char Notification.title column', () => {
+      // Reminder.title is itself VARCHAR(120) and the prefix is another 19, so
+      // an untrimmed title overflows the column — and the cron's per-vehicle
+      // catch would drop every remaining alert for that vehicle with it.
+      for (const payload of [
+        odometerPayload({ title: 'x'.repeat(120) }),
+        datePayload({ title: 'x'.repeat(120) }),
+      ]) {
+        const rendered = template.render(payload);
+
+        expect(rendered.title.length).toBeLessThanOrEqual(120);
+        expect(rendered.title.startsWith('Reminder Due Soon: ')).toBe(true);
+        expect(rendered.title.endsWith('\u2026')).toBe(true);
+        // The message column is TEXT, so the title still reads in full there.
+        expect(rendered.message).toContain('x'.repeat(120));
+      }
+    });
   });
 });

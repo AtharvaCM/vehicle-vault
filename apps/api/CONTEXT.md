@@ -56,7 +56,7 @@ A user-facing message persisted per **User** with a `kind` and a `dedupKey`. Uni
 A typed alert category — `maintenance-due`, `maintenance-overdue`, `reminder-due`, `reminder-overdue`, `document-expiring`, `accessory-warranty-expiring`, `tyre-worn`, `tyre-aged`, `tyre-uninspected`, `service-baseline-unknown`. Enumerated at runtime as `ALERT_KINDS` so a kind with no registered template fails a test rather than a cron run. Each kind has an **AlertTemplate** that owns content rendering and `dedupKey` computation.
 
 **AlertTemplate**:
-The per-**AlertKind** producer of notification content (title, message, link, urgency) and dedup identity. Wired via `ALERT_TEMPLATES` DI multi-provider behind **NotifyService**.
+The per-**AlertKind** producer of notification content (title, message, link, urgency) and dedup identity. Wired via `ALERT_TEMPLATES` DI multi-provider behind **NotifyService**. A title that prefixes fixed wording onto user-supplied text builds it with `prefixedTitle` from `templates/notification-title.ts`: `Notification.title` is VARCHAR(120) and the interpolated value can fill that on its own, so an untrimmed title throws on insert — and `runDailyChecks` catches per vehicle, losing that vehicle's remaining alerts for the run. `message` is TEXT and carries the value whole.
 
 **Channel**:
 An external delivery adapter for a **Notification** (`email` and `push` today; `sms` future). The DB row is the canonical record; channels are out-of-band fan-out (`Promise.allSettled`, failures logged not thrown). Push is web-push/VAPID (`PushSubscriptionsService`, gated on `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`); one **PushSubscription** row per browser endpoint, pruned automatically on 404/410.

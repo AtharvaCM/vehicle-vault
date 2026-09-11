@@ -6,18 +6,9 @@ import type {
   RenderedNotification,
 } from '../types';
 import { daysBucket } from './document-expiring.template';
+import { prefixedTitle } from './notification-title';
 
-/**
- * Notification.title is VARCHAR(120) and an accessory name may itself be 120
- * characters, so the name is trimmed to what is left after the fixed prefix
- * rather than letting the insert throw.
- */
 const TITLE_PREFIX = 'Warranty Expiring Soon: ';
-const TITLE_NAME_BUDGET = 120 - TITLE_PREFIX.length;
-
-function truncate(value: string, max: number): string {
-  return value.length <= max ? value : `${value.slice(0, max - 1)}\u2026`;
-}
 
 /**
  * An accessory warranty is a date-based expiry like a document's, so it reuses
@@ -47,7 +38,7 @@ export class AccessoryWarrantyExpiringTemplate implements AlertTemplate<'accesso
     const item = accessory.brand ? `${accessory.brand} ${accessory.name}` : accessory.name;
 
     return {
-      title: `${TITLE_PREFIX}${truncate(accessory.name, TITLE_NAME_BUDGET)}`,
+      title: prefixedTitle(TITLE_PREFIX, accessory.name),
       message: `The warranty on your ${item} expires in ${formattedDays} day${
         formattedDays === 1 ? '' : 's'
       } on ${expiryDate}. Raise any claim before it runs out.`,
