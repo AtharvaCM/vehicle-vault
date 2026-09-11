@@ -102,5 +102,18 @@ describe('DocumentExpiringTemplate', () => {
       const rendered = template.render({ document: baseInsurance, daysUntilExpiry: 1 });
       expect(rendered.message).toContain('expiring in 1 day on');
     });
+
+    it('keeps the title inside the 120-char Notification.title column', () => {
+      // ComplianceDocument.provider is VARCHAR(120) on its own, and "PUC
+      // Certificate" is the longest label the prefix can carry.
+      const rendered = template.render({
+        document: { ...baseInsurance, kind: 'puc', provider: 'x'.repeat(120) },
+        daysUntilExpiry: 3,
+      });
+
+      expect(rendered.title.length).toBeLessThanOrEqual(120);
+      expect(rendered.title.startsWith('PUC Certificate Expiring Soon: ')).toBe(true);
+      expect(rendered.title.endsWith('\u2026')).toBe(true);
+    });
   });
 });

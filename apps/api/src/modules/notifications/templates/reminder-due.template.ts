@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
+import { prefixedTitle } from './notification-title';
 import type { AlertTemplate, ReminderDuePayload, RenderedNotification } from '../types';
+
+const TITLE_PREFIX = 'Reminder Due Soon: ';
 
 @Injectable()
 export class ReminderDueTemplate implements AlertTemplate<'reminder-due'> {
@@ -14,7 +17,7 @@ export class ReminderDueTemplate implements AlertTemplate<'reminder-due'> {
     const remainingKm = Math.round(payload.remainingDistanceKm);
 
     return {
-      title: `Reminder Due Soon: ${payload.title}`,
+      title: prefixedTitle(TITLE_PREFIX, payload.title),
       message: `Your vehicle is approaching ${payload.dueOdometer}km (approx. ${remainingKm}km left) for "${payload.title}".`,
       type: 'warning',
       link: `/vehicles/${payload.vehicleId}?tab=reminders`,

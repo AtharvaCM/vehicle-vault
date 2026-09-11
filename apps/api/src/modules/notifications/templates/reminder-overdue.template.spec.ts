@@ -48,5 +48,21 @@ describe('ReminderOverdueTemplate', () => {
         link: '/vehicles/veh-1?tab=reminders',
       });
     });
+
+    it('keeps the title inside the 120-char Notification.title column', () => {
+      // Reminder.title is itself VARCHAR(120) and the prefix is another 18.
+      const rendered = template.render({
+        reminderId: 'rem-9',
+        vehicleId: 'veh-1',
+        title: 'x'.repeat(120),
+        dueOdometer: 25000,
+        remainingDistanceKm: -120,
+      });
+
+      expect(rendered.title.length).toBeLessThanOrEqual(120);
+      expect(rendered.title.startsWith('Overdue Reminder: ')).toBe(true);
+      expect(rendered.title.endsWith('\u2026')).toBe(true);
+      expect(rendered.message).toContain('x'.repeat(120));
+    });
   });
 });
