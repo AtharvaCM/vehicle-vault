@@ -39,21 +39,41 @@ export type MaintenanceOverduePayload = {
   remainingDistanceKm: number;
 };
 
-export type ReminderDuePayload = {
-  reminderId: string;
-  vehicleId: string;
-  title: string;
-  dueOdometer: number;
-  remainingDistanceKm: number;
-};
+/**
+ * A reminder can be timed two ways and the copy for each is genuinely
+ * different: one talks in kilometres, the other in calendar days. Modelled as
+ * a union rather than four optional fields so a date reminder cannot carry an
+ * odometer the template would then be tempted to mention — a reminder created
+ * with only a renewal date has no km to quote, and inventing one from the
+ * mileage forecast is exactly what the engine refuses to do elsewhere.
+ */
+export type ReminderAlertBasis =
+  | {
+      basis: 'odometer';
+      dueOdometer: number;
+      /** Negative when the vehicle is already past the mark. */
+      remainingDistanceKm: number;
+    }
+  | {
+      basis: 'date';
+      dueDate: Date;
+      /** Whole UTC calendar days; 0 is due today, negative is past due. */
+      daysUntilDue: number;
+    };
 
-export type ReminderOverduePayload = {
+/**
+ * `reminder-due` and `reminder-overdue` carry the same facts and differ only in
+ * the verdict the engine reached, so they share one payload shape.
+ */
+export type ReminderAlertPayload = {
   reminderId: string;
   vehicleId: string;
   title: string;
-  dueOdometer: number;
-  remainingDistanceKm: number;
-};
+} & ReminderAlertBasis;
+
+export type ReminderDuePayload = ReminderAlertPayload;
+
+export type ReminderOverduePayload = ReminderAlertPayload;
 
 export type DocumentExpiringPayload = {
   document: VehicleDocument;
