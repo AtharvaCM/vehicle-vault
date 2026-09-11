@@ -15,6 +15,7 @@ import { TyresService, type VehicleTyreAlertState } from '../tyres/tyres.service
 // notifications module depend on the reminders module, which would close a
 // cycle (reminders → notifications → tyres).
 import { extractSlugFromNotes, TYRE_INSPECTION_SLUG } from '../reminders/catalog-marker';
+import type { ReminderAlertBasis } from './types';
 import {
   ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
   SERVICE_HISTORY_PROMPT_KM,
@@ -27,6 +28,14 @@ import {
 } from '@vehicle-vault/shared';
 
 const DOCUMENT_EXPIRY_WINDOW_DAYS = 7;
+/**
+ * A dated reminder gets the same heads-up as an expiring document, because to
+ * the person receiving it they are the same nudge: something falls due on a
+ * calendar day and there is still time to act.
+ */
+const REMINDER_DUE_WINDOW_DAYS = DOCUMENT_EXPIRY_WINDOW_DAYS;
+/** How close an odometer target must be before it is worth saying anything. */
+const ODOMETER_ALERT_WINDOW_KM = 500;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** The vehicle facts the tyre checks need, kept narrow so the tests can state them. */
@@ -36,6 +45,21 @@ function monthsBefore(date: Date, months: number): Date {
   const shifted = new Date(date);
   shifted.setMonth(shifted.getMonth() - months);
   return shifted;
+}
+
+/**
+ * Whole UTC calendar days from today to `target`; negative once it is past.
+ *
+ * UTC rather than the host's midnight, mirroring
+ * `RemindersService.toUtcDayTimestamp`: a reminder's due day is a UTC day
+ * throughout the app, and an engine that counted it in local days would
+ * disagree with the status shown on the reminder itself.
+ */
+function daysUntilUtcDay(now: Date, target: Date): number {
+  const startOfUtcDay = (value: Date) =>
+    Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
+
+  return Math.round((startOfUtcDay(target) - startOfUtcDay(now)) / MS_PER_DAY);
 }
 
 @Injectable()
@@ -80,6 +104,10 @@ export class MaintenanceAlertService {
 
     if (!vehicle) return;
 
+    // One clock for the whole run, so two checks cannot land on different sides
+    // of midnight and disagree about what is due.
+    const now = new Date();
+
     // 1. Get current predicted odometer
     const insights = await this.vehicleInsightsService.getOdometerInsights(
       vehicle.userId,
@@ -111,8 +139,8 @@ export class MaintenanceAlertService {
       const distanceSinceLast = currentOdo - lastOdo;
       const remainingDistance = interval.km - distanceSinceLast;
 
-      // Alert if due within 500km or already overdue
-      if (remainingDistance <= 500) {
+      // Alert if due within the odometer window or already overdue
+      if (remainingDistance <= ODOMETER_ALERT_WINDOW_KM) {
         const kind = remainingDistance < 0 ? 'maintenance-overdue' : 'maintenance-due';
         await this.notifyService.raise(vehicle.userId, vehicle.id, kind, {
           vehicleId: vehicle.id,
@@ -125,20 +153,22 @@ export class MaintenanceAlertService {
     // 2b. A vehicle nobody has told us anything about. Raised once for the whole
     // vehicle rather than once per category, because every category is in the
     // same state and ten notifications would say one thing.
-    await this.runServiceHistoryPrompt(vehicle, new Date());
+    await this.runServiceHistoryPrompt(vehicle, now);
 
-    // 3. Check specific Reminders with dueOdometer
+    // 3. Reminders the owner set themselves. Both timings are checked here: an
+    // odometer mark the vehicle is approaching, and a due date the calendar has
+    // reached. Date-only reminders — every renewal, and every month-based item
+    // the service schedule produces — used to be excluded by the query and so
+    // reached nobody.
     const reminders = await this.prisma.reminder.findMany({
       where: {
         vehicleId,
         status: { not: 'completed' },
-        dueOdometer: { not: null },
+        OR: [{ dueOdometer: { not: null } }, { dueDate: { not: null } }],
       },
     });
 
     for (const reminder of reminders) {
-      if (!reminder.dueOdometer) continue;
-
       // The tyre walk-around is alerted from measurements, not from this row.
       // Both would otherwise nag about one thing, and they would disagree: a
       // reminder goes overdue when nobody ticked a box, while `tyre-uninspected`
@@ -147,18 +177,22 @@ export class MaintenanceAlertService {
       // someone who ticks without inspecting is not.
       if (extractSlugFromNotes(reminder.notes) === TYRE_INSPECTION_SLUG) continue;
 
-      const remainingDistance = reminder.dueOdometer - currentOdo;
+      const signal = this.resolveReminderSignal(reminder, currentOdo, now);
+      if (!signal) continue;
 
-      // Alert if due within 500km or already overdue
-      if (remainingDistance <= 500) {
-        const kind = remainingDistance < 0 ? 'reminder-overdue' : 'reminder-due';
-        await this.notifyService.raise(vehicle.userId, vehicle.id, kind, {
-          reminderId: reminder.id,
-          vehicleId: vehicle.id,
-          title: reminder.title,
-          dueOdometer: reminder.dueOdometer,
-          remainingDistanceKm: remainingDistance,
-        });
+      const payload = {
+        reminderId: reminder.id,
+        vehicleId: vehicle.id,
+        title: reminder.title,
+        ...signal.basis,
+      };
+
+      // Spelled out per kind rather than passed as a variable: `raise` is
+      // generic over the kind, and a union would widen the payload it accepts.
+      if (signal.kind === 'reminder-overdue') {
+        await this.notifyService.raise(vehicle.userId, vehicle.id, 'reminder-overdue', payload);
+      } else {
+        await this.notifyService.raise(vehicle.userId, vehicle.id, 'reminder-due', payload);
       }
     }
 
@@ -170,7 +204,7 @@ export class MaintenanceAlertService {
       DOCUMENT_EXPIRY_WINDOW_DAYS,
     );
 
-    const today = new Date();
+    const today = new Date(now);
     today.setHours(0, 0, 0, 0);
 
     for (const doc of expiring) {
@@ -214,7 +248,52 @@ export class MaintenanceAlertService {
     // services, and rubber ages out whether or not the vehicle moves. The
     // grading already existed for the vehicle page; without this call nothing
     // reached the user unless they went looking.
-    await this.runTyreChecks(vehicle, new Date());
+    await this.runTyreChecks(vehicle, now);
+  }
+
+  /**
+   * Whether a reminder is worth telling its owner about, and on what grounds.
+   *
+   * A reminder may be timed by distance, by date, or by both, and each timing
+   * produces at most one verdict: due once it is inside its window, overdue
+   * once it is past. Both timings together still produce a single notification
+   * — one task should not arrive twice in a morning — and overdue wins, since
+   * "you have already missed this" is the truer of the two sentences.
+   *
+   * When both timings are merely due, the odometer one is reported. Neither is
+   * more urgent in any comparable unit (500 km and 6 days do not rank against
+   * each other), so the tie goes to the wording that shipped first.
+   */
+  private resolveReminderSignal(
+    reminder: { dueOdometer: number | null; dueDate: Date | null },
+    currentOdometer: number,
+    now: Date,
+  ): { kind: 'reminder-due' | 'reminder-overdue'; basis: ReminderAlertBasis } | null {
+    const signals: { kind: 'reminder-due' | 'reminder-overdue'; basis: ReminderAlertBasis }[] = [];
+
+    if (reminder.dueOdometer != null) {
+      const remainingDistanceKm = reminder.dueOdometer - currentOdometer;
+      if (remainingDistanceKm <= ODOMETER_ALERT_WINDOW_KM) {
+        signals.push({
+          kind: remainingDistanceKm < 0 ? 'reminder-overdue' : 'reminder-due',
+          basis: { basis: 'odometer', dueOdometer: reminder.dueOdometer, remainingDistanceKm },
+        });
+      }
+    }
+
+    if (reminder.dueDate != null) {
+      const daysUntilDue = daysUntilUtcDay(now, reminder.dueDate);
+      // Due *today* is due, not overdue — the same boundary the reminder's own
+      // status uses, so a notification cannot contradict the row it came from.
+      if (daysUntilDue <= REMINDER_DUE_WINDOW_DAYS) {
+        signals.push({
+          kind: daysUntilDue < 0 ? 'reminder-overdue' : 'reminder-due',
+          basis: { basis: 'date', dueDate: reminder.dueDate, daysUntilDue },
+        });
+      }
+    }
+
+    return signals.find((signal) => signal.kind === 'reminder-overdue') ?? signals[0] ?? null;
   }
 
   /**
