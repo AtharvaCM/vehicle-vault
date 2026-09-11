@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.3...v1.25.0) (2026-09-11)
+
+
+### Features
+
+* **notifications:** alert on date-based reminders ([fc4242b](https://github.com/AtharvaCM/vehicle-vault/commit/fc4242b85036e8c611f3b44a8cb49ce0f4b6c729))
+
 ## [1.24.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.24.2...v1.24.3) (2026-09-09)
 
 

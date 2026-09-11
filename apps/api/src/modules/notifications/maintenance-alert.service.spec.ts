@@ -3,6 +3,7 @@ import { MaintenanceRecordStatus, TyrePosition, type TyreCondition } from '@vehi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MaintenanceAlertService } from './maintenance-alert.service';
+import { ReminderDueTemplate } from './templates/reminder-due.template';
 import type { VehicleTyreAlertState } from '../tyres/tyres.service';
 
 const NOW = new Date('2026-09-08T06:00:00.000Z');
@@ -590,5 +591,228 @@ describe('MaintenanceAlertService draft maintenance records', () => {
     expect(alertsOfKind('service-baseline-unknown')).toEqual([
       expect.objectContaining({ scope: 'vehicle' }),
     ]);
+  });
+});
+
+describe('MaintenanceAlertService date reminders', () => {
+  let service: MaintenanceAlertService;
+
+  /** NOW is 2026-09-08, so the seven-day window closes on the 15th. */
+  const reminder = (overrides: Record<string, unknown> = {}) => ({
+    id: 'rem-1',
+    vehicleId: 'v1',
+    title: 'Insurance renewal',
+    dueDate: new Date('2026-09-11T00:00:00.000Z'),
+    dueOdometer: null,
+    notes: null,
+    ...overrides,
+  });
+
+  /**
+   * Resolves reminders the way Prisma would, applying the `where` the engine
+   * actually sends. A plain `mockResolvedValue` hands back rows the database
+   * was never asked for, so a date-only assertion would still pass with the
+   * `dueDate` clause deleted from the query.
+   */
+  type ReminderWhere = {
+    status?: { not?: string };
+    dueDate?: { not?: null };
+    dueOdometer?: { not?: null };
+    OR?: { dueDate?: { not?: null }; dueOdometer?: { not?: null } }[];
+  };
+
+  const findManyHonouringWhere = (rows: ReturnType<typeof reminder>[]) => {
+    const matchesTiming = (row: ReturnType<typeof reminder>, clause: ReminderWhere) => {
+      if ('dueDate' in clause && row.dueDate == null) return false;
+      if ('dueOdometer' in clause && row.dueOdometer == null) return false;
+      return true;
+    };
+
+    prisma.reminder.findMany.mockImplementation((args: unknown) => {
+      const where = ((args as { where?: ReminderWhere }).where ?? {}) as ReminderWhere;
+
+      return Promise.resolve(
+        rows.filter((row) => {
+          const status = (row as { status?: string }).status ?? 'upcoming';
+          if (where.status?.not === status) return false;
+          if (where.OR) return where.OR.some((clause) => matchesTiming(row, clause));
+          return matchesTiming(row, where);
+        }),
+      );
+    });
+  };
+
+  const reminderAlerts = () =>
+    notify.raise.mock.calls
+      .filter(([, , kind]) => kind === 'reminder-due' || kind === 'reminder-overdue')
+      .map(([, , kind, payload]) => ({ kind, payload }));
+
+  beforeEach(() => {
+    service = buildService();
+    intervals.resolveForVehicle.mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('alerts on a date-only reminder inside the seven-day window', async () => {
+    // The case the engine was blind to: no dueOdometer, so the old query never
+    // returned the row and no email or push ever went out.
+    findManyHonouringWhere([reminder()]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      {
+        kind: 'reminder-due',
+        payload: expect.objectContaining({
+          reminderId: 'rem-1',
+          basis: 'date',
+          daysUntilDue: 3,
+          dueDate: new Date('2026-09-11T00:00:00.000Z'),
+        }),
+      },
+    ]);
+  });
+
+  it('counts the last day of the window as due and the first day past it as nothing', async () => {
+    findManyHonouringWhere([
+      reminder({ id: 'inside', dueDate: new Date('2026-09-15T00:00:00.000Z') }),
+      reminder({ id: 'outside', dueDate: new Date('2026-09-16T00:00:00.000Z') }),
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      { kind: 'reminder-due', payload: expect.objectContaining({ reminderId: 'inside' }) },
+    ]);
+  });
+
+  it('treats a reminder due today as due, not overdue', async () => {
+    // Same boundary as `RemindersService.getDueDateStatus`, so the notification
+    // cannot contradict the status shown on the reminder itself.
+    findManyHonouringWhere([reminder({ dueDate: new Date('2026-09-08T00:00:00.000Z') })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      { kind: 'reminder-due', payload: expect.objectContaining({ daysUntilDue: 0 }) },
+    ]);
+  });
+
+  it('raises overdue, and only overdue, once the date is past', async () => {
+    findManyHonouringWhere([reminder({ dueDate: new Date('2026-09-02T00:00:00.000Z') })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      {
+        kind: 'reminder-overdue',
+        payload: expect.objectContaining({ basis: 'date', daysUntilDue: -6 }),
+      },
+    ]);
+    expect(kindsRaised()).not.toContain('reminder-due');
+  });
+
+  it('raises the same payload on a second run, so the dedup key cannot move', async () => {
+    // The engine raises again every morning; `NotifyService` is what collapses
+    // the repeat into the existing unread row, and it can only do that while
+    // the dedup key stays put. Payload equality is what guarantees it here.
+    findManyHonouringWhere([reminder()]);
+
+    await service.runAlertChecks('v1');
+    await service.runAlertChecks('v1');
+
+    const raised = reminderAlerts();
+    expect(raised).toHaveLength(2);
+    expect(new ReminderDueTemplate().dedupKey(raised[0].payload)).toBe(
+      new ReminderDueTemplate().dedupKey(raised[1].payload),
+    );
+  });
+
+  it('says nothing about a completed reminder', async () => {
+    findManyHonouringWhere([reminder({ status: 'completed' })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([]);
+  });
+
+  it('leaves the dated tyre walk-around to the measurements too', async () => {
+    findManyHonouringWhere([
+      reminder({
+        title: 'Tyre tread & pressure check',
+        dueDate: new Date('2026-09-02T00:00:00.000Z'),
+        notes: '[catalog:tyre_inspection]',
+      }),
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([]);
+  });
+
+  it('raises one notification, not two, for a reminder carrying both timings', async () => {
+    // Due in three days and 200 km short of its mark: two true statements about
+    // one task, and the owner should hear it once.
+    findManyHonouringWhere([reminder({ dueOdometer: 40_200 })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toHaveLength(1);
+  });
+
+  it('lets the missed half of a two-timing reminder win', async () => {
+    // The odometer is comfortably inside its window while the date has already
+    // gone. "You have missed this" is the truer sentence.
+    findManyHonouringWhere([
+      reminder({ dueDate: new Date('2026-09-02T00:00:00.000Z'), dueOdometer: 40_200 }),
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      {
+        kind: 'reminder-overdue',
+        payload: expect.objectContaining({ basis: 'date', daysUntilDue: -6 }),
+      },
+    ]);
+  });
+
+  it('still reports a distant date reminder by its odometer when that is what is close', async () => {
+    findManyHonouringWhere([
+      reminder({ dueDate: new Date('2026-12-01T00:00:00.000Z'), dueOdometer: 40_200 }),
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      {
+        kind: 'reminder-due',
+        payload: expect.objectContaining({ basis: 'odometer', remainingDistanceKm: 200 }),
+      },
+    ]);
+  });
+
+  it('still alerts on an odometer-only reminder exactly as before', async () => {
+    findManyHonouringWhere([reminder({ dueDate: null, dueOdometer: 35_000 })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([
+      {
+        kind: 'reminder-overdue',
+        payload: expect.objectContaining({ basis: 'odometer', remainingDistanceKm: -5_000 }),
+      },
+    ]);
+  });
+
+  it('says nothing about a reminder that carries neither a date nor an odometer', async () => {
+    findManyHonouringWhere([reminder({ dueDate: null, dueOdometer: null })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(reminderAlerts()).toEqual([]);
   });
 });
