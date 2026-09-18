@@ -38,6 +38,10 @@ async function bootstrap() {
       }
     : true;
 
+  // Decides whether `req.ip` may come from X-Forwarded-For. Rate limiting keys
+  // on it, so leaving this on without a proxy in front would let a client pick
+  // its own address. See TRUST_PROXY in .env.example.
+  app.getHttpAdapter().getInstance().set('trust proxy', appConfig.trustProxy);
   app.setGlobalPrefix(API_PREFIX);
   app.enableCors({
     origin: corsOrigin,

@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
@@ -104,6 +105,7 @@ export class VehicleSharingController {
     await this.invitesService.revoke(user.id, vehicleId, inviteId);
   }
 
+  @RateLimit('token')
   @Post('vehicle-invites/accept')
   @ApiOperation({ summary: 'Accept a vehicle invitation by token' })
   async acceptInvite(@CurrentUser() user: AuthUser, @Body() body: AcceptInviteDto) {

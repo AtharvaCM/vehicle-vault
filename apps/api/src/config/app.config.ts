@@ -2,6 +2,7 @@ import { registerAs } from '@nestjs/config';
 
 import { DEFAULT_APP_PORT, DEFAULT_FRONTEND_ORIGIN } from '../common/constants/app.constants';
 import type { NodeEnv } from '../common/types/node-env.type';
+import type { RateLimitPolicy } from '../common/rate-limit/rate-limit.types';
 
 function resolveNodeEnv(value: string | undefined): NodeEnv {
   const normalized = value ?? 'development';
@@ -59,6 +60,37 @@ function resolveAttachmentStorageBackend(value: string | undefined) {
   return null;
 }
 
+/**
+ * `limit/windowSeconds`, e.g. `5/60`. A value that does not parse keeps the
+ * default rather than failing boot: a typo in a rate limit should not take the
+ * API down. `RateLimitService` logs the limits in effect at startup, which is
+ * where a value that fell back shows up.
+ */
+function resolveRateLimit(value: string | undefined, fallback: RateLimitPolicy): RateLimitPolicy {
+  const match = value?.trim().match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (!match) return fallback;
+
+  const limit = Number(match[1]);
+  const windowSeconds = Number(match[2]);
+  return limit > 0 && windowSeconds > 0 ? { limit, windowSeconds } : fallback;
+}
+
+/**
+ * Passed straight to Express's `trust proxy`. Off unless set: behind no proxy,
+ * honouring `X-Forwarded-For` would let any client pick the IP it is limited
+ * by. `true`, a hop count, or a comma-separated list of addresses / subnets.
+ */
+function resolveTrustProxy(value: string | undefined): boolean | number | string {
+  const normalized = value?.trim();
+  if (!normalized) return false;
+
+  const lowered = normalized.toLowerCase();
+  if (['true', 'yes', 'on'].includes(lowered)) return true;
+  if (['false', 'no', 'off'].includes(lowered)) return false;
+  if (/^\d+$/.test(normalized)) return Number(normalized);
+  return normalized;
+}
+
 function resolveFrontendOrigins(value: string | undefined) {
   const origins = (value ?? DEFAULT_FRONTEND_ORIGIN)
     .split(',')
@@ -99,6 +131,19 @@ export const appConfig = registerAs('app', () => ({
   frontendOrigins: resolveFrontendOrigins(process.env.FRONTEND_ORIGIN),
   frontendOriginPattern: resolveFrontendOriginPattern(process.env.FRONTEND_ORIGIN_PATTERN),
   apiPublicUrl: resolveOptionalString(process.env.API_PUBLIC_URL),
+  trustProxy: resolveTrustProxy(process.env.TRUST_PROXY),
+  // Off under test so no unit or e2e run trips over its own requests; on
+  // everywhere else unless explicitly disabled.
+  rateLimitEnabled: resolveBoolean(
+    process.env.RATE_LIMIT_ENABLED,
+    resolveNodeEnv(process.env.NODE_ENV) !== 'test',
+  ),
+  rateLimits: {
+    login: resolveRateLimit(process.env.RATE_LIMIT_LOGIN, { limit: 5, windowSeconds: 60 }),
+    register: resolveRateLimit(process.env.RATE_LIMIT_REGISTER, { limit: 5, windowSeconds: 60 }),
+    mail: resolveRateLimit(process.env.RATE_LIMIT_MAIL, { limit: 3, windowSeconds: 900 }),
+    token: resolveRateLimit(process.env.RATE_LIMIT_TOKEN, { limit: 20, windowSeconds: 60 }),
+  },
   adminEmails: resolveAdminEmails(process.env.ADMIN_EMAILS),
   attachmentStorageBackend:
     resolveAttachmentStorageBackend(process.env.ATTACHMENT_STORAGE_BACKEND) ??

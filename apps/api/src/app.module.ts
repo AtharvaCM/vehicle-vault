@@ -18,6 +18,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { FuelLogsModule } from './modules/fuel-logs/fuel-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MailModule } from './common/mail/mail.module';
+import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
 import { ClaimsModule } from './modules/claims/claims.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
@@ -50,6 +51,7 @@ import { VehicleSharingModule } from './modules/vehicle-sharing/vehicle-sharing.
     FuelLogsModule,
     NotificationsModule,
     MailModule,
+    RateLimitModule,
     AttachmentsModule,
     ExportsModule,
     VehicleDocumentsModule,
