@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.31.0...v1.31.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* **catalog:** show the import-review card only to curators ([9825389](https://github.com/AtharvaCM/vehicle-vault/commit/9825389f7f27ed24fbdeafd6944ad5bf7048dfe7))
+
 # [1.31.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.30.0...v1.31.0) (2026-09-18)
 
 
