@@ -7,15 +7,14 @@ const notificationsQuery = vi.hoisted(() => ({ current: {} as Record<string, unk
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => navigate,
-  Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 vi.mock('../hooks/use-notifications', () => ({
   useNotifications: () => notificationsQuery.current,
   useOpenNotification: () => openNotification,
   useMarkAllNotificationsRead: () => ({ mutate: vi.fn(), isPending: false }),
-}));
-vi.mock('../hooks/use-push-notifications', () => ({
-  usePushNotifications: () => ({ status: 'unsupported', enable: vi.fn(), disable: vi.fn() }),
 }));
 
 import { NotificationCenter } from './notification-center';
@@ -65,5 +64,22 @@ describe('NotificationCenter', () => {
     await openBellAndClick('Reminder Due Soon: Insurance renewal');
 
     await waitFor(() => expect(openNotification.mutateAsync).toHaveBeenCalledWith('notif-1'));
+  });
+
+  it('sends people to the preferences page for push and email choices', async () => {
+    notificationsQuery.current = {
+      data: { notifications: [], unreadCount: 0 },
+      isLoading: false,
+    };
+    render(<NotificationCenter />);
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+
+    expect(await screen.findByRole('link', { name: 'Notification preferences' })).toHaveAttribute(
+      'href',
+      '/settings/preferences',
+    );
+    // The per-device push switch moved there with the rest.
+    expect(screen.queryByRole('button', { name: /push/i })).not.toBeInTheDocument();
   });
 });

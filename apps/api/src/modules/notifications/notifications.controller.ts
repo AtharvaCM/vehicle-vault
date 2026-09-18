@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Patch, Param, Delete, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Param, Delete, Post, Put, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
-import { UpdateAlertEmailPreferenceDto } from './dto/alert-email-preference.dto';
+import { UpdateNotificationPreferencesDto } from './dto/notification-preferences.dto';
 import { SubscribePushDto, UnsubscribePushDto } from './dto/push-subscription.dto';
-import { AlertEmailPreferenceService } from './alert-email-preference.service';
+import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsService } from './notifications.service';
 import { PushSubscriptionsService } from './push-subscriptions.service';
 
@@ -13,27 +13,28 @@ export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly pushSubscriptions: PushSubscriptionsService,
-    private readonly alertEmailPreference: AlertEmailPreferenceService,
+    private readonly notificationPreferences: NotificationPreferencesService,
   ) {}
 
-  @Get('email-preference')
-  async getEmailPreference(@CurrentUser('id') userId: string) {
-    return this.alertEmailPreference.get(userId);
+  /** Email and push, per alert kind, as the API will actually deliver them. */
+  @Get('preferences')
+  async getPreferences(@CurrentUser('id') userId: string) {
+    return this.notificationPreferences.get(userId);
   }
 
   /**
-   * The signed-in counterpart to the unsubscribe link. Both directions are
-   * here, so Settings can turn alert email back on and off again without the
-   * user having to hunt for an old email to click.
+   * The signed-in counterpart to the unsubscribe link, and more: every kind can
+   * be turned off or back on per channel. Kinds left out of the body keep their
+   * current setting.
    */
-  @Patch('email-preference')
-  async updateEmailPreference(
+  @Put('preferences')
+  async updatePreferences(
     @CurrentUser('id') userId: string,
-    @Body() body: UpdateAlertEmailPreferenceDto,
+    @Body() body: UpdateNotificationPreferencesDto,
   ) {
-    return body.muted
-      ? this.alertEmailPreference.mute(userId, { actorUserId: userId })
-      : this.alertEmailPreference.unmute(userId, { actorUserId: userId });
+    return this.notificationPreferences.update(userId, body.preferences, {
+      actorUserId: userId,
+    });
   }
 
   @Get('push/public-key')

@@ -23,6 +23,7 @@ import {
   rootRoute,
   settingsRoute,
   settingsActivityRoute,
+  settingsPreferencesRoute,
   vehicleDetailRoute,
   vehicleEditRoute,
   vehicleMaintenanceNewRoute,
@@ -54,6 +55,7 @@ const protectedRouteTree = appRoute.addChildren([
   loansRoute,
   settingsRoute,
   settingsActivityRoute,
+  settingsPreferencesRoute,
   adminUsersRoute,
   acceptInviteRoute,
 ]);

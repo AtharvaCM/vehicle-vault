@@ -52,6 +52,8 @@ describe('NotifyService', () => {
     id: 'user-1',
     email: 'atharva@example.com',
     name: 'Atharva',
+    // What `include` returns for a user who never changed a preference.
+    notificationPreferences: [] as { kind: string; emailEnabled: boolean; pushEnabled: boolean }[],
   };
 
   beforeEach(() => {
@@ -152,6 +154,90 @@ describe('NotifyService', () => {
     });
 
     expect(okChannel.deliver).not.toHaveBeenCalled();
+  });
+
+  describe('per-kind channel preferences', () => {
+    const email: Channel = { name: 'email', deliver: vi.fn() };
+    const push: Channel = { name: 'push', deliver: vi.fn() };
+    const payload = { vehicleId: 'veh-1', category: 'engine_oil', remainingDistanceKm: 200 };
+
+    let gated: NotifyService;
+
+    /** The user as Prisma returns them with this kind's preference included, if one is stored. */
+    const preferring = (preference?: { emailEnabled: boolean; pushEnabled: boolean }) => {
+      prisma.user.findUnique.mockResolvedValue({
+        ...sampleUser,
+        notificationPreferences: preference ? [{ kind: 'maintenance-due', ...preference }] : [],
+      });
+    };
+
+    const delivered = () =>
+      [email, push]
+        .filter((channel) => (channel.deliver as ReturnType<typeof vi.fn>).mock.calls.length > 0)
+        .map((channel) => channel.name);
+
+    beforeEach(() => {
+      (email.deliver as ReturnType<typeof vi.fn>).mockReset().mockResolvedValue(undefined);
+      (push.deliver as ReturnType<typeof vi.fn>).mockReset().mockResolvedValue(undefined);
+      prisma.notification.create.mockResolvedValue(sampleNotification);
+      gated = new NotifyService(prisma as never, [template] as never, [email, push]);
+    });
+
+    it('reads only this kind’s preference, in the same query as the user', async () => {
+      preferring();
+
+      await gated.raise('user-1', 'veh-1', 'maintenance-due', payload);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledTimes(1);
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        include: { notificationPreferences: { where: { kind: 'maintenance-due' } } },
+      });
+    });
+
+    it('delivers everywhere when nothing has been chosen', async () => {
+      preferring();
+
+      await gated.raise('user-1', 'veh-1', 'maintenance-due', payload);
+
+      expect(delivered()).toEqual(['email', 'push']);
+    });
+
+    it('holds email back and still pushes when email is off for the kind', async () => {
+      preferring({ emailEnabled: false, pushEnabled: true });
+
+      await gated.raise('user-1', 'veh-1', 'maintenance-due', payload);
+
+      expect(delivered()).toEqual(['push']);
+    });
+
+    it('holds push back and still emails when push is off for the kind', async () => {
+      preferring({ emailEnabled: true, pushEnabled: false });
+
+      await gated.raise('user-1', 'veh-1', 'maintenance-due', payload);
+
+      expect(delivered()).toEqual(['email']);
+    });
+
+    it('still records the alert in the app when both are off', async () => {
+      preferring({ emailEnabled: false, pushEnabled: false });
+
+      const result = await gated.raise('user-1', 'veh-1', 'maintenance-due', payload);
+
+      expect(result).toEqual(sampleNotification);
+      expect(prisma.notification.create).toHaveBeenCalledTimes(1);
+      expect(delivered()).toEqual([]);
+    });
+
+    it('never holds back a channel that has no switch', async () => {
+      const sms: Channel = { name: 'sms', deliver: vi.fn().mockResolvedValue(undefined) };
+      gated = new NotifyService(prisma as never, [template] as never, [email, push, sms]);
+      preferring({ emailEnabled: false, pushEnabled: false });
+
+      await gated.raise('user-1', 'veh-1', 'maintenance-due', payload);
+
+      expect(sms.deliver).toHaveBeenCalledTimes(1);
+    });
   });
 });
 
@@ -289,7 +375,11 @@ describe('NotifyService raise options', () => {
     notifications = [];
     raises = [];
     nextId = 1;
-    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', email: 'a@example.com' });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      email: 'a@example.com',
+      notificationPreferences: [],
+    });
     (channel.deliver as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
     service = new NotifyService(
       prisma as never,

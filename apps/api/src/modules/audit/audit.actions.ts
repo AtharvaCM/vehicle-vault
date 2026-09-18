@@ -108,6 +108,9 @@ export const AUDIT_ACTIONS = {
     // complaints this feature exists to answer.
     alertEmailMuted: 'notification.alert_email_muted',
     alertEmailUnmuted: 'notification.alert_email_unmuted',
+    // Per-kind channel choices, recorded with the before and after of only the
+    // kinds that changed.
+    preferencesUpdated: 'notification.preferences_updated',
   },
   vehicleMember: {
     added: 'vehicle_member.added',

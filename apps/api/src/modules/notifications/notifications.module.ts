@@ -8,6 +8,7 @@ import { VehicleDocumentsModule } from '../vehicle-documents/vehicle-documents.m
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { AlertEmailPreferenceService } from './alert-email-preference.service';
 import { MaintenanceAlertService } from './maintenance-alert.service';
+import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotifyService } from './notify.service';
@@ -68,6 +69,7 @@ export const ALERT_TEMPLATE_PROVIDERS = [
   providers: [
     NotificationsService,
     AlertEmailPreferenceService,
+    NotificationPreferencesService,
     UnsubscribeTokenService,
     MaintenanceAlertService,
     NotifyService,

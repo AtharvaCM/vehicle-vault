@@ -132,7 +132,7 @@ export const queryKeys = {
   notifications: {
     all: () => ['notifications'] as const,
     list: () => [...queryKeys.notifications.all(), 'list'] as const,
-    emailPreference: () => [...queryKeys.notifications.all(), 'email-preference'] as const,
+    preferences: () => [...queryKeys.notifications.all(), 'preferences'] as const,
   },
   audit: {
     all: () => ['audit'] as const,

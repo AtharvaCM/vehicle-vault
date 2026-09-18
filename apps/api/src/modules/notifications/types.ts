@@ -1,8 +1,14 @@
 import type { Notification, User } from '@prisma/client';
-import type { TyreConditionLevel, TyrePosition, VehicleDocument } from '@vehicle-vault/shared';
+import type {
+  AlertKind,
+  TyreConditionLevel,
+  TyrePosition,
+  VehicleDocument,
+} from '@vehicle-vault/shared';
 
 /**
- * Every typed alert flowing through {@link NotifyService}.
+ * Every typed alert flowing through {@link NotifyService}, defined in the shared
+ * package so the web app's preferences page lists the same set.
  *
  * Declared as a value so the set is enumerable at runtime: a kind with no
  * registered **AlertTemplate** only fails inside `NotifyService.raise`, which
@@ -11,20 +17,7 @@ import type { TyreConditionLevel, TyrePosition, VehicleDocument } from '@vehicle
  *
  * Keep `AlertPayloads` in lockstep when adding a kind.
  */
-export const ALERT_KINDS = [
-  'maintenance-due',
-  'maintenance-overdue',
-  'reminder-due',
-  'reminder-overdue',
-  'document-expiring',
-  'accessory-warranty-expiring',
-  'tyre-worn',
-  'tyre-aged',
-  'tyre-uninspected',
-  'service-baseline-unknown',
-] as const;
-
-export type AlertKind = (typeof ALERT_KINDS)[number];
+export { ALERT_KINDS, type AlertKind } from '@vehicle-vault/shared';
 
 export type MaintenanceDuePayload = {
   vehicleId: string;

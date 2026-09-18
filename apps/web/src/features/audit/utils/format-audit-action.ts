@@ -12,6 +12,7 @@ const NAMESPACE_LABELS: Record<string, string> = {
   fuel: 'Fuel log',
   attachment: 'Attachment',
   auth: 'Account',
+  notification: 'Notification',
 };
 
 const VERB_LABELS: Record<string, string> = {
@@ -30,6 +31,9 @@ const VERB_LABELS: Record<string, string> = {
   password_reset_completed: 'password reset completed',
   email_verified: 'email verified',
   oauth_linked: 'linked a sign-in provider',
+  preferences_updated: 'preferences updated',
+  alert_email_muted: 'emails turned off',
+  alert_email_unmuted: 'emails turned on',
 };
 
 const RESOURCE_TYPE_LABELS: Record<AuditResourceType, string> = {

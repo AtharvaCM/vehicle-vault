@@ -190,10 +190,10 @@ enum ServiceBaselineStatus {
 /// stands and nothing is claimed. `unknown` is the state a user has to opt into
 /// by saying so, and it is the one that produces an alert.
 model ServiceBaseline {
-  id        String                @id @default(uuid()) @db.Uuid
-  vehicleId String                @db.Uuid
-  category  MaintenanceCategory
-  status    ServiceBaselineStatus
+  id               String                @id @default(uuid()) @db.Uuid
+  vehicleId        String                @db.Uuid
+  category         MaintenanceCategory
+  status           ServiceBaselineStatus
   /// Odometer at which this category was last done before the vault knew the
   /// vehicle. Null when the status is `unknown`, and also when the owner
   /// remembers the date but not the reading — the CHECK constraint requires one
@@ -670,6 +670,7 @@ model User {
   documentDismissals              DocumentDismissal[]
   alertRaises                     AlertRaise[]
   productEvents                   ProductEvent[]
+  notificationPreferences         NotificationPreference[]
 }
 
 enum Role {
@@ -931,6 +932,24 @@ model AlertRaise {
 
   @@index([userId, vehicleId, kind, raisedAt(sort: Desc)])
   @@index([vehicleId])
+}
+
+/// Where one kind of alert reaches one user, beyond the in-app Notification,
+/// which is always created. No row means the defaults — every channel on — so
+/// only a choice someone made is stored.
+///
+/// Email is also gated by `User.alertEmailsMutedAt`, the one-click unsubscribe.
+/// The two are kept as one state: the unsubscribe reads as every email toggle
+/// off, and saving preferences with every email toggle off sets it.
+model NotificationPreference {
+  userId       String   @db.Uuid
+  kind         String   @db.VarChar(60)
+  emailEnabled Boolean  @default(true)
+  pushEnabled  Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, kind])
 }
 
 // Global catalog of maintenance parts harvested from MaintenanceLineItem history.

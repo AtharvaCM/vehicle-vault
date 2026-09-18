@@ -154,10 +154,20 @@ export class NotifyService {
     );
   }
 
+  /**
+   * Delivers to each Channel the user has left on for this kind of alert. The
+   * row already exists by now — preferences decide how an alert reaches
+   * someone, never whether the app records it — and a kind with no stored
+   * preference goes everywhere. The preference is read with the user, so
+   * honouring it costs no extra query.
+   */
   private async dispatch(notification: Notification, userId: string): Promise<void> {
     if (this.channels.length === 0) return;
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { notificationPreferences: { where: { kind: notification.kind } } },
+    });
     if (!user) {
       this.logger.warn(
         `Skipping channel dispatch for notification ${notification.id}: user ${userId} not found.`,
@@ -165,13 +175,16 @@ export class NotifyService {
       return;
     }
 
+    const preference = user.notificationPreferences[0];
+    const channels = this.channels.filter((channel) => isChannelOn(channel.name, preference));
+
     const results = await Promise.allSettled(
-      this.channels.map((channel) => channel.deliver(notification, user)),
+      channels.map((channel) => channel.deliver(notification, user)),
     );
 
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        const channelName = this.channels[index]?.name ?? 'unknown';
+        const channelName = channels[index]?.name ?? 'unknown';
         this.logger.error(
           `Channel "${channelName}" failed to deliver notification ${notification.id}`,
           result.reason instanceof Error ? result.reason.stack : String(result.reason),
@@ -179,4 +192,18 @@ export class NotifyService {
       }
     });
   }
+}
+
+/**
+ * Whether a user's preference for this kind lets a Channel deliver it. Only
+ * email and push have a switch; a channel without one is never held back.
+ */
+function isChannelOn(
+  channel: string,
+  preference: { emailEnabled: boolean; pushEnabled: boolean } | undefined,
+): boolean {
+  if (!preference) return true;
+  if (channel === 'email') return preference.emailEnabled;
+  if (channel === 'push') return preference.pushEnabled;
+  return true;
 }
