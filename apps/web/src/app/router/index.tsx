@@ -58,7 +58,8 @@ const protectedRouteTree = appRoute.addChildren([
   acceptInviteRoute,
 ]);
 
-const routeTree = rootRoute.addChildren([
+/** Exported so tests can build a router over the real tree with their own history. */
+export const routeTree = rootRoute.addChildren([
   indexRoute,
   forgotPasswordRoute,
   loginRoute,
