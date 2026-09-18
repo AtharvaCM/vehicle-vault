@@ -1,3 +1,10 @@
+## [1.27.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.27.0...v1.27.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* **e2e:** never default to the production API or a remote database ([d18469a](https://github.com/AtharvaCM/vehicle-vault/commit/d18469a0d297f23239b4fe4b34d5e431d77b2fdb))
+
 # [1.27.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.26.0...v1.27.0) (2026-09-18)
 
 
