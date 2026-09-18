@@ -74,4 +74,25 @@ describe('ServiceBaselineUnknownTemplate', () => {
     expect(template.render(categoryPayload).type).toBe('info');
     expect(template.render(vehiclePayload).type).toBe('info');
   });
+
+  describe('cooldownKey', () => {
+    it('ignores the odometer, so a later bucket is still the same prompt', () => {
+      expect(template.cooldownKey({ ...vehiclePayload, odometer: 40_000 })).toBe(
+        template.cooldownKey({ ...vehiclePayload, odometer: 95_000 }),
+      );
+    });
+
+    it('is a prefix of the dedup key, which is what the cooldown lookup relies on', () => {
+      for (const payload of [vehiclePayload, categoryPayload]) {
+        expect(template.dedupKey(payload).startsWith(template.cooldownKey(payload))).toBe(true);
+      }
+    });
+
+    it('keeps the vehicle prompt and a category alert apart', () => {
+      expect(template.cooldownKey(vehiclePayload)).not.toBe(template.cooldownKey(categoryPayload));
+      expect(
+        template.dedupKey(categoryPayload).startsWith(template.cooldownKey(vehiclePayload)),
+      ).toBe(false);
+    });
+  });
 });

@@ -33,13 +33,19 @@ export class ServiceBaselineUnknownTemplate implements AlertTemplate<'service-ba
    * out of the interval itself instead of a second table of numbers.
    */
   dedupKey(payload: ServiceBaselineUnknownPayload): string {
-    if (payload.scope === 'vehicle') {
-      const bucket = Math.floor(payload.odometer / SERVICE_HISTORY_PROMPT_KM);
-      return `service-baseline-unknown:${payload.vehicleId}:vehicle:${bucket}`;
-    }
+    const bucket =
+      payload.scope === 'vehicle'
+        ? Math.floor(payload.odometer / SERVICE_HISTORY_PROMPT_KM)
+        : Math.floor(payload.odometer / payload.intervalKm);
 
-    const bucket = Math.floor(payload.odometer / payload.intervalKm);
-    return `service-baseline-unknown:${payload.vehicleId}:${payload.category}:${bucket}`;
+    return `${this.cooldownKey(payload)}${bucket}`;
+  }
+
+  /** The dedup key without its bucket: this vehicle and scope, any odometer. */
+  cooldownKey(payload: ServiceBaselineUnknownPayload): string {
+    return payload.scope === 'vehicle'
+      ? `service-baseline-unknown:${payload.vehicleId}:vehicle:`
+      : `service-baseline-unknown:${payload.vehicleId}:${payload.category}:`;
   }
 
   render(payload: ServiceBaselineUnknownPayload): RenderedNotification {

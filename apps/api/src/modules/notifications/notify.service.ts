@@ -10,7 +10,10 @@ import {
   type AlertPayloads,
   type AlertTemplate,
   type Channel,
+  type RaiseOptions,
 } from './types';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class NotifyService {
@@ -32,12 +35,18 @@ export class NotifyService {
    * Dedup is enforced by the `notification_dedup_unread` partial unique index
    * — at most one unread row per `(userId, dedupKey)`. On collision we return
    * the existing row instead of throwing.
+   *
+   * `options` can widen that into a cooldown across read rows too, and can keep
+   * the alert off every external Channel — see {@link RaiseOptions}. Either way
+   * the caller gets a row back: the one just created, or the one that made
+   * creating it unnecessary.
    */
   async raise<K extends AlertKind>(
     userId: string,
     vehicleId: string | null,
     kind: K,
     payload: AlertPayloads[K],
+    options: RaiseOptions = {},
   ): Promise<Notification> {
     const template = this.templateByKind.get(kind) as AlertTemplate<K> | undefined;
     if (!template) {
@@ -45,6 +54,19 @@ export class NotifyService {
     }
 
     const dedupKey = template.dedupKey(payload);
+
+    if (options.cooldownDays != null) {
+      const recent = await this.findWithinCooldown(
+        userId,
+        vehicleId,
+        kind,
+        template.cooldownKey?.(payload) ?? null,
+        dedupKey,
+        options.cooldownDays,
+      );
+      if (recent) return recent;
+    }
+
     const rendered = template.render(payload);
 
     let notification: Notification;
@@ -75,11 +97,46 @@ export class NotifyService {
       throw error;
     }
 
-    if (wasCreated) {
+    if (wasCreated && !options.inAppOnly) {
       await this.dispatch(notification, userId);
     }
 
     return notification;
+  }
+
+  /**
+   * The newest row this user has had for the same alert inside the window,
+   * read or unread.
+   *
+   * Filtered by prefix in code rather than with a `startsWith` query: Prisma
+   * compiles that to `LIKE`, where `_` in a key (a category such as
+   * `engine_oil`) would match any character. The candidates are one user's
+   * rows of one kind for one vehicle over a few months, so there is nothing to
+   * gain from pushing the match into SQL. `(userId, kind, createdAt)` is indexed.
+   */
+  private async findWithinCooldown(
+    userId: string,
+    vehicleId: string | null,
+    kind: AlertKind,
+    cooldownKey: string | null,
+    dedupKey: string,
+    days: number,
+  ): Promise<Notification | null> {
+    const candidates = await this.prisma.notification.findMany({
+      where: {
+        userId,
+        vehicleId,
+        kind,
+        createdAt: { gte: new Date(Date.now() - days * MS_PER_DAY) },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return (
+      candidates.find((row) =>
+        cooldownKey ? row.dedupKey?.startsWith(cooldownKey) : row.dedupKey === dedupKey,
+      ) ?? null
+    );
   }
 
   private async dispatch(notification: Notification, userId: string): Promise<void> {

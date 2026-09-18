@@ -93,4 +93,31 @@ describe('TyreUninspectedTemplate', () => {
     expect(stale.type).toBe('info');
     expect(stale.message).toContain('1 day ');
   });
+
+  describe('cooldownKey', () => {
+    const untracked = { vehicleId: 'vehicle-1', odometer: 40_000, reason: 'untracked' as const };
+    const stale = {
+      vehicleId: 'vehicle-1',
+      odometer: 40_000,
+      reason: 'stale' as const,
+      kmSinceLastCheck: 6_000,
+      daysSinceLastCheck: 40,
+    };
+
+    it('ignores the odometer, so a later bucket is still the same prompt', () => {
+      expect(template.cooldownKey(untracked)).toBe(
+        template.cooldownKey({ ...untracked, odometer: 90_000 }),
+      );
+    });
+
+    it('is a prefix of the dedup key, which is what the cooldown lookup relies on', () => {
+      for (const payload of [untracked, stale]) {
+        expect(template.dedupKey(payload).startsWith(template.cooldownKey(payload))).toBe(true);
+      }
+    });
+
+    it('keeps "no tyres on file" and "tyres not measured lately" apart', () => {
+      expect(template.dedupKey(stale).startsWith(template.cooldownKey(untracked))).toBe(false);
+    });
+  });
 });

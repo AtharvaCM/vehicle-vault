@@ -189,8 +189,39 @@ export type RenderedNotification = {
 export interface AlertTemplate<K extends AlertKind = AlertKind> {
   readonly kind: K;
   dedupKey(payload: AlertPayloads[K]): string;
+  /**
+   * What counts as "the same alert" when a caller asks for a cooldown — see
+   * `RaiseOptions.cooldownDays`. Coarser than `dedupKey`, which may carry a
+   * bucket so an unread row can be superseded; a cooldown is about the person,
+   * and a prompt they dismissed last month is the same prompt whatever bucket
+   * the odometer has since moved into.
+   *
+   * Must be a prefix of every `dedupKey` this template produces for the same
+   * payload. Optional: without it a cooldown matches on the exact `dedupKey`.
+   */
+  cooldownKey?(payload: AlertPayloads[K]): string;
   render(payload: AlertPayloads[K]): RenderedNotification;
 }
+
+/**
+ * How a single raise should behave beyond the default of "create the row once
+ * per unread dedup key and deliver it everywhere".
+ */
+export type RaiseOptions = {
+  /**
+   * Skip the raise entirely when this user has had the same alert — as the
+   * template's `cooldownKey` defines "same" — within this many days, whether or
+   * not they read it. The default dedup only guards unread rows, so without
+   * this a read prompt comes back the next morning.
+   */
+  cooldownDays?: number;
+  /**
+   * Create the **Notification** row and deliver it through no external
+   * Channel. For alerts worth recording but not worth interrupting someone
+   * for — the row is still there when they next open the app.
+   */
+  inAppOnly?: boolean;
+};
 
 export interface Channel {
   readonly name: string;

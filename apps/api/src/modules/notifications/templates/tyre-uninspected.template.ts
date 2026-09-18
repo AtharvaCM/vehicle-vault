@@ -25,7 +25,12 @@ export class TyreUninspectedTemplate implements AlertTemplate<'tyre-uninspected'
    */
   dedupKey(payload: TyreUninspectedPayload): string {
     const bucket = Math.floor(payload.odometer / TYRE_INSPECTION_INTERVAL_KM);
-    return `tyre-uninspected:${payload.vehicleId}:${payload.reason}:${bucket}`;
+    return `${this.cooldownKey(payload)}${bucket}`;
+  }
+
+  /** The dedup key without its bucket: this vehicle, this reason, any odometer. */
+  cooldownKey(payload: TyreUninspectedPayload): string {
+    return `tyre-uninspected:${payload.vehicleId}:${payload.reason}:`;
   }
 
   render(payload: TyreUninspectedPayload): RenderedNotification {
