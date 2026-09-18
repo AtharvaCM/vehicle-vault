@@ -1,6 +1,6 @@
 {
   "name": "vehicle-vault",
-  "version": "1.33.0",
+  "version": "1.34.0",
   "private": true,
   "packageManager": "pnpm@10.23.0",
   "scripts": {

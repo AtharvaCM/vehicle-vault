@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.33.0...v1.34.0) (2026-09-18)
+
+
+### Features
+
+* **notifications:** raise vehicle alerts to every member, not the owner column ([a22605a](https://github.com/AtharvaCM/vehicle-vault/commit/a22605adfa730fdf21ccd8a2f6e69854767d0928)), closes [#90](https://github.com/AtharvaCM/vehicle-vault/issues/90)
+
 # [1.33.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.32.0...v1.33.0) (2026-09-18)
 
 
