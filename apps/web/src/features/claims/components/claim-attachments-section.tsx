@@ -32,6 +32,7 @@ import {
   useUploadClaimAttachments,
 } from '../hooks/use-claim-attachments';
 import { useUpdateClaim } from '../hooks/use-claims';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 const ACCEPT =
   '.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf';
@@ -68,6 +69,7 @@ export function ClaimAttachmentsSection({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const attachmentsQuery = useClaimAttachments(claim.id, isExpanded);
+  const { canEdit } = useVehicleAccess();
   const extractionStatusQuery = useClaimExtractionStatus();
   const uploadMutation = useUploadClaimAttachments(claim.id);
   const deleteMutation = useDeleteClaimAttachment(claim.id);
@@ -226,7 +228,7 @@ export function ClaimAttachmentsSection({
                               {format(new Date(att.uploadedAt), 'd MMM yyyy')}
                             </p>
                           </div>
-                          {ocrAvailable ? (
+                          {ocrAvailable && canEdit ? (
                             <button
                               type="button"
                               onClick={() => handleExtract(att.id)}
@@ -250,15 +252,17 @@ export function ClaimAttachmentsSection({
                           >
                             <Download className="h-4 w-4" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(att.id)}
-                            disabled={deleteMutation.isPending}
-                            className="text-rose-400 hover:text-rose-600"
-                            aria-label="Delete attachment"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {canEdit ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(att.id)}
+                              disabled={deleteMutation.isPending}
+                              className="text-rose-400 hover:text-rose-600"
+                              aria-label="Delete attachment"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          ) : null}
                         </div>
 
                         {suggestion?.attachmentId === att.id ? (
@@ -277,31 +281,33 @@ export function ClaimAttachmentsSection({
                 <p className="text-xs text-slate-400 italic">No attachments yet.</p>
               )}
 
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept={ACCEPT}
-                  className="sr-only"
-                  onChange={handleFileChange}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled={uploadMutation.isPending}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <UploadCloud className="h-4 w-4" />
-                  {uploadMutation.isPending ? 'Uploading…' : 'Upload receipts / photos'}
-                </Button>
-                <p className="text-[10px] text-slate-400 mt-1.5">
-                  JPEG, PNG, WEBP, HEIC, or PDF · up to 5 MB each
-                  {ocrAvailable ? ' · ✨ AI can suggest claim fields from each file' : ''}
-                </p>
-              </div>
+              {canEdit ? (
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept={ACCEPT}
+                    className="sr-only"
+                    onChange={handleFileChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={uploadMutation.isPending}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <UploadCloud className="h-4 w-4" />
+                    {uploadMutation.isPending ? 'Uploading…' : 'Upload receipts / photos'}
+                  </Button>
+                  <p className="text-[10px] text-slate-400 mt-1.5">
+                    JPEG, PNG, WEBP, HEIC, or PDF · up to 5 MB each
+                    {ocrAvailable ? ' · ✨ AI can suggest claim fields from each file' : ''}
+                  </p>
+                </div>
+              ) : null}
             </>
           )}
         </div>

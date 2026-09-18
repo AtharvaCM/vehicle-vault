@@ -22,12 +22,14 @@ import {
   isEditable,
   type BaselineDrafts,
 } from '../utils/baseline-drafts';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 interface ServiceHistoryCardProps {
   vehicleId: string;
 }
 
 export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
+  const { canEdit } = useVehicleAccess();
   const coverageQuery = useServiceBaselineCoverage(vehicleId);
   const upsertMutation = useUpsertServiceBaseline(vehicleId);
   const [drafts, setDrafts] = useState<BaselineDrafts>({});
@@ -127,22 +129,25 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
             draft={drafts[entry.category]}
             onOdometerChange={(value) => handleOdometerChange(entry.category, value)}
             onToggleUnknown={() => toggleUnknown(entry.category)}
+            readOnly={!canEdit}
           />
         ))}
 
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <p className="text-xs text-slate-500">
-            {pending.length === 0
-              ? 'No changes to save'
-              : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
-          </p>
-          <Button
-            disabled={pending.length === 0 || upsertMutation.isPending}
-            onClick={() => void handleSave()}
-          >
-            {upsertMutation.isPending ? 'Saving…' : 'Save history'}
-          </Button>
-        </div>
+        {canEdit ? (
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <p className="text-xs text-slate-500">
+              {pending.length === 0
+                ? 'No changes to save'
+                : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
+            </p>
+            <Button
+              disabled={pending.length === 0 || upsertMutation.isPending}
+              onClick={() => void handleSave()}
+            >
+              {upsertMutation.isPending ? 'Saving…' : 'Save history'}
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -153,10 +158,27 @@ interface BaselineRowProps {
   draft: BaselineDrafts[string] | undefined;
   onOdometerChange: (value: string) => void;
   onToggleUnknown: () => void;
+  /** Someone who can see the vehicle but not change it: the answer, not the form. */
+  readOnly?: boolean;
 }
 
-function BaselineRow({ entry, draft, onOdometerChange, onToggleUnknown }: BaselineRowProps) {
+function BaselineRow({
+  entry,
+  draft,
+  onOdometerChange,
+  onToggleUnknown,
+  readOnly = false,
+}: BaselineRowProps) {
   const label = formatMaintenanceCategory(entry.category);
+
+  if (readOnly && isEditable(entry)) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-slate-50/60 px-3 py-2">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-xs text-slate-500">{describeAnswer(entry)}</span>
+      </div>
+    );
+  }
 
   if (!isEditable(entry)) {
     return (
@@ -198,4 +220,14 @@ function BaselineRow({ entry, draft, onOdometerChange, onToggleUnknown }: Baseli
       </div>
     </div>
   );
+}
+
+/** What the owner has said about a category, for someone who cannot change it. */
+function describeAnswer(entry: VehicleServiceBaselineEntry): string {
+  if (entry.source === 'declared-unknown') return 'Marked as not known';
+  if (entry.source === 'baseline' && entry.lastDoneOdometer != null) {
+    return `Last done at ${entry.lastDoneOdometer.toLocaleString('en-IN')} km`;
+  }
+  if (entry.source === 'baseline') return 'Answered without an odometer reading';
+  return 'Not answered yet';
 }

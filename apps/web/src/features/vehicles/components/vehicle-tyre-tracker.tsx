@@ -35,6 +35,7 @@ import { TyreInspectionDialog } from '../../tyres/components/tyre-inspection-dia
 import { useVehicleTyreCondition, useVehicleTyres } from '../../tyres/hooks/use-tyres';
 import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
+import { useVehicleAccess } from '../context/vehicle-access';
 
 interface VehicleTyreTrackerProps {
   vehicle: Vehicle | null;
@@ -42,6 +43,7 @@ interface VehicleTyreTrackerProps {
 }
 
 export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTrackerProps) {
+  const { canEdit } = useVehicleAccess();
   const records = useMemo<MaintenanceRecord[]>(
     () => maintenanceQuery.data ?? [],
     [maintenanceQuery.data],
@@ -124,14 +126,22 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                     ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
                     : STATUS_COPY[serviceStatus].label}
                 </Badge>
-                <Button onClick={() => setOpenDialog('tyre')} size="sm" variant="secondary">
-                  <Plus className="mr-1 h-3.5 w-3.5" />
-                  Add tyre
-                </Button>
-                <Button onClick={() => setOpenDialog('inspection')} size="sm" variant="secondary">
-                  <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
-                  Log inspection
-                </Button>
+                {canEdit ? (
+                  <>
+                    <Button onClick={() => setOpenDialog('tyre')} size="sm" variant="secondary">
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      Add tyre
+                    </Button>
+                    <Button
+                      onClick={() => setOpenDialog('inspection')}
+                      size="sm"
+                      variant="secondary"
+                    >
+                      <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
+                      Log inspection
+                    </Button>
+                  </>
+                ) : null}
               </div>
             </div>
           </CardHeader>
@@ -178,9 +188,11 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
         ) : (
           <EmptyState
             action={
-              <EmptyStateAction onClick={() => setOpenDialog('tyre')} size="sm">
-                Add a tyre
-              </EmptyStateAction>
+              canEdit ? (
+                <EmptyStateAction onClick={() => setOpenDialog('tyre')} size="sm">
+                  Add a tyre
+                </EmptyStateAction>
+              ) : undefined
             }
             description="Tread depth and manufacture date decide whether a tyre is safe, and neither can be inferred from service dates. Add your tyres to track them per corner."
             icon={Gauge}

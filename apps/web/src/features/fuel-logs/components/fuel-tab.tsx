@@ -17,6 +17,7 @@ import { useDeleteFuelLog } from '../hooks/use-delete-fuel-log';
 import { useUpdateFuelLog } from '../hooks/use-update-fuel-log';
 import { useScanReceipt, useScanStatus, type ScannedFuelLog } from '../hooks/use-scan-receipt';
 import type { FuelLog } from '@vehicle-vault/shared';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 type FuelTabProps = {
   vehicleId: string;
@@ -24,6 +25,7 @@ type FuelTabProps = {
 
 export function FuelTab({ vehicleId }: FuelTabProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { canEdit } = useVehicleAccess();
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<FuelLog | null>(null);
@@ -125,69 +127,71 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
             Track your fuel consumption and efficiency over time.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {/* Hidden File Input for Scan */}
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleScan}
-          />
+        {canEdit ? (
+          <div className="flex flex-wrap gap-2">
+            {/* Hidden File Input for Scan */}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleScan}
+            />
 
-          <Button
-            disabled={scanMutation.isPending}
-            onClick={() => {
-              if (scanStatus.data?.available === false) {
-                appToast.info({
-                  title: 'AI Not Configured',
-                  description:
-                    'Please set your GEMINI_API_KEY in the backend .env to enable receipt scanning.',
-                });
-                return;
-              }
-              fileInputRef.current?.click();
-            }}
-            size="sm"
-            variant="outline"
-            className="gap-2 border-primary/20 hover:border-primary/50 text-primary bg-primary/5 relative"
-            title={scanStatus.data?.available ? 'AI Ready' : 'AI Plugin Missing'}
-          >
-            {scanMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <div className="relative">
-                <Scan className="h-4 w-4" />
-                <span
-                  className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${scanStatus.data?.available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
-                />
-              </div>
-            )}
-            {scanMutation.isPending ? 'Analyzing...' : 'Scan Receipt'}
-          </Button>
+            <Button
+              disabled={scanMutation.isPending}
+              onClick={() => {
+                if (scanStatus.data?.available === false) {
+                  appToast.info({
+                    title: 'AI Not Configured',
+                    description:
+                      'Please set your GEMINI_API_KEY in the backend .env to enable receipt scanning.',
+                  });
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
+              size="sm"
+              variant="outline"
+              className="gap-2 border-primary/20 hover:border-primary/50 text-primary bg-primary/5 relative"
+              title={scanStatus.data?.available ? 'AI Ready' : 'AI Plugin Missing'}
+            >
+              {scanMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <div className="relative">
+                  <Scan className="h-4 w-4" />
+                  <span
+                    className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${scanStatus.data?.available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
+                  />
+                </div>
+              )}
+              {scanMutation.isPending ? 'Analyzing...' : 'Scan Receipt'}
+            </Button>
 
-          <Button
-            onClick={() => setIsImportOpen(true)}
-            size="sm"
-            variant="outline"
-            className="gap-2"
-          >
-            Import CSV
-          </Button>
+            <Button
+              onClick={() => setIsImportOpen(true)}
+              size="sm"
+              variant="outline"
+              className="gap-2"
+            >
+              Import CSV
+            </Button>
 
-          <Button
-            onClick={() => {
-              setScannedData(null);
-              setIsFormOpen(true);
-            }}
-            size="sm"
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Log Fuel
-          </Button>
-        </div>
+            <Button
+              onClick={() => {
+                setScannedData(null);
+                setIsFormOpen(true);
+              }}
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Log Fuel
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {logsQuery.isError ? (
@@ -207,9 +211,9 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
         <FuelLogList
           logs={logsQuery.data || []}
           isLoading={logsQuery.isLoading}
-          onAdd={() => setIsFormOpen(true)}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onAdd={canEdit ? () => setIsFormOpen(true) : undefined}
+          onEdit={canEdit ? handleEdit : undefined}
+          onDelete={canEdit ? handleDelete : undefined}
         />
       )}
 

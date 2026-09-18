@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import {
   MaintenanceCategory,
   ServiceBaselineStatus,
+  VehicleRole,
   type VehicleServiceBaselineCoverage,
 } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +14,8 @@ vi.mock('../hooks/use-service-baseline', () => ({
   useServiceBaselineCoverage: () => coverageQuery.current,
   useUpsertServiceBaseline: () => upsert,
 }));
+
+import { VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 
 import { ServiceHistoryCard } from './service-history-card';
 
@@ -127,5 +130,59 @@ describe('ServiceHistoryCard', () => {
     fireEvent.click(unknownButton);
 
     expect(screen.getByText('No changes to save')).toBeInTheDocument();
+  });
+});
+
+describe('ServiceHistoryCard for someone who cannot edit the vehicle', () => {
+  const answered: VehicleServiceBaselineCoverage = {
+    ...coverage,
+    entries: [
+      ...coverage.entries,
+      {
+        category: MaintenanceCategory.AirFilter,
+        source: 'baseline',
+        lastDoneOdometer: 30_000,
+        lastDoneDate: null,
+        baseline: null,
+      },
+      {
+        category: MaintenanceCategory.Coolant,
+        source: 'declared-unknown',
+        lastDoneOdometer: null,
+        lastDoneDate: null,
+        baseline: null,
+      },
+    ],
+  };
+
+  function renderAs(role: VehicleRole) {
+    return render(
+      <VehicleAccessProvider role={role}>
+        <ServiceHistoryCard vehicleId="vehicle-1" />
+      </VehicleAccessProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    setCoverage(answered);
+  });
+
+  it('shows a viewer the answers instead of the form', () => {
+    renderAs(VehicleRole.Viewer);
+
+    expect(screen.getByText(/Logged service at 38,000 km/)).toBeInTheDocument();
+    expect(screen.getByText('Not answered yet')).toBeInTheDocument();
+    expect(screen.getByText('Last done at 30,000 km')).toBeInTheDocument();
+    expect(screen.getByText('Marked as not known')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/last done at odometer/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /don’t know/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save history/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps the form for an editor', () => {
+    renderAs(VehicleRole.Editor);
+
+    expect(screen.getByLabelText(/Brake Pads last done at odometer/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save history/i })).toBeInTheDocument();
   });
 });

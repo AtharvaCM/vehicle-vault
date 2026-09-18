@@ -8,7 +8,8 @@ type FuelLogListProps = {
   logs: FuelLog[];
   onEdit?: (log: FuelLog) => void;
   onDelete?: (logId: string) => void;
-  onAdd: () => void;
+  /** Omitted for someone who cannot add, which also drops the empty state's action. */
+  onAdd?: () => void;
   isLoading?: boolean;
 };
 
@@ -30,9 +31,11 @@ export function FuelLogList({ logs, onEdit, onDelete, onAdd, isLoading }: FuelLo
         title="No fuel logs found"
         description="Start tracking your vehicle's efficiency by adding your first fuel fill-up."
         action={
-          <Button onClick={onAdd} variant="outline">
-            Add Fuel Log
-          </Button>
+          onAdd ? (
+            <Button onClick={onAdd} variant="outline">
+              Add Fuel Log
+            </Button>
+          ) : undefined
         }
       />
     );
