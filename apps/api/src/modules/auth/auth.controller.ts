@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Ip, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { Public } from '../../common/auth/decorators/public.decorator';
+import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
 import type { AuthUser } from '@vehicle-vault/shared';
 import { AuthService } from './auth.service';
@@ -20,6 +21,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @RateLimit('register')
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
@@ -27,15 +29,21 @@ export class AuthController {
     return successResponse(await this.authService.register(body));
   }
 
+  /**
+   * Rate-limited inside `AuthService.login` rather than by `@RateLimit`: a guard
+   * refuses before the handler runs, and a refused login still has to leave its
+   * `auth.login_failed` event behind for the account it was aimed at.
+   */
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
-  async login(@Body() body: LoginDto) {
-    return successResponse(await this.authService.login(body));
+  async login(@Body() body: LoginDto, @Ip() clientIp: string) {
+    return successResponse(await this.authService.login(body, clientIp));
   }
 
   @Public()
+  @RateLimit('token')
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh authentication token' })
   async refresh(@Body() body: RefreshTokenDto) {
@@ -43,6 +51,7 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit('mail')
   @Post('password-reset/request')
   @ApiOperation({ summary: 'Request password reset email' })
   async requestPasswordReset(@Body() body: PasswordResetRequestDto) {
@@ -50,6 +59,7 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit('token')
   @Post('password-reset/confirm')
   @ApiOperation({ summary: 'Confirm password reset' })
   async resetPassword(@Body() body: PasswordResetConfirmDto) {
@@ -64,6 +74,7 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit('mail')
   @Post('resend-verification')
   @ApiOperation({ summary: 'Resend verification email' })
   async resendVerification(@Body() body: ResendVerificationDto) {

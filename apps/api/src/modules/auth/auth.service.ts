@@ -38,6 +38,8 @@ import {
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MailService } from '../../common/mail/mail.service';
+import { RateLimitService } from '../../common/rate-limit/rate-limit.service';
+import { RateLimitedException } from '../../common/rate-limit/rate-limited.exception';
 import { AppConfigService } from '../../config/app-config.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
@@ -82,6 +84,7 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly tokenService: TokenService,
     private readonly auditService: AuditService,
+    private readonly rateLimit: RateLimitService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -136,37 +139,38 @@ export class AuthService {
     }
   }
 
-  async login(payload: LoginDto) {
+  /**
+   * `clientIp` is what the login rate limit counts by. It is checked before the
+   * password — the bcrypt compare is the expensive step a guessing loop wants —
+   * but after the email is known, so a refused attempt is still recorded
+   * against the account it was aimed at, where its owner can see it.
+   */
+  async login(payload: LoginDto, clientIp = 'unknown') {
     const input = this.validateLoginInput(payload);
+    const email = input.email.trim().toLowerCase();
+
+    const limit = this.rateLimit.hit('login', clientIp);
+    if (limit.limited) {
+      const target = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+      await this.trackLoginFailure(target?.id ?? null, email, 'rate_limited');
+      throw new RateLimitedException(limit.retryAfterSeconds);
+    }
+
     const user = await this.prisma.user.findUnique({
       where: {
-        email: input.email.trim().toLowerCase(),
+        email,
       },
     });
 
     if (!user || !user.passwordHash) {
-      await this.auditService.track(this.prisma, {
-        actorUserId: user?.id ?? null,
-        ownerUserId: user?.id ?? null,
-        action: AUDIT_ACTIONS.auth.loginFailed,
-        resourceType: AuditResourceType.user,
-        resourceId: user?.id ?? null,
-        after: { email: input.email.trim().toLowerCase(), reason: 'no_credential' },
-      });
+      await this.trackLoginFailure(user?.id ?? null, email, 'no_credential');
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     const isPasswordValid = await compare(input.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      await this.auditService.track(this.prisma, {
-        actorUserId: user.id,
-        ownerUserId: user.id,
-        action: AUDIT_ACTIONS.auth.loginFailed,
-        resourceType: AuditResourceType.user,
-        resourceId: user.id,
-        after: { email: user.email, reason: 'bad_password' },
-      });
+      await this.trackLoginFailure(user.id, user.email, 'bad_password');
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
@@ -180,6 +184,26 @@ export class AuthService {
     });
 
     return this.buildAuthResponse(this.toUser(user));
+  }
+
+  /**
+   * One shape for every refused login. Attributed to the targeted account when
+   * one exists — including as actor, which is why the dormancy check in the
+   * alert engine has to ignore this action.
+   */
+  private async trackLoginFailure(
+    userId: string | null,
+    email: string,
+    reason: 'no_credential' | 'bad_password' | 'rate_limited',
+  ) {
+    await this.auditService.track(this.prisma, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: AUDIT_ACTIONS.auth.loginFailed,
+      resourceType: AuditResourceType.user,
+      resourceId: userId,
+      after: { email, reason },
+    });
   }
 
   async refresh(payload: RefreshTokenDto) {

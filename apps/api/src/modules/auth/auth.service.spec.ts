@@ -7,6 +7,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from './auth.service';
+import { RateLimitedException } from '../../common/rate-limit/rate-limited.exception';
 
 describe('AuthService', () => {
   type UserDelegateMock = {
@@ -96,6 +97,11 @@ describe('AuthService', () => {
 
   const passwordResetExpiresAt = new Date('2026-03-20T00:30:00.000Z');
 
+  // Unlimited by default, as under test; the throttling tests say otherwise.
+  const rateLimit = {
+    hit: vi.fn(),
+  };
+
   let service: AuthService;
 
   beforeEach(() => {
@@ -128,6 +134,7 @@ describe('AuthService', () => {
     tokenService.tryVerifyRefreshToken.mockResolvedValue(null);
     tokenService.revokeRefreshToken.mockResolvedValue(undefined);
     auditService.track.mockResolvedValue(undefined);
+    rateLimit.hit.mockReturnValue({ limited: false });
     service = new AuthService(
       prisma as never,
       jwtService as never,
@@ -135,6 +142,7 @@ describe('AuthService', () => {
       mailService as never,
       tokenService as never,
       auditService as never,
+      rateLimit as never,
     );
   });
 
@@ -242,6 +250,97 @@ describe('AuthService', () => {
         password: 'password123',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  describe('login rate limiting', () => {
+    const loginFailures = () =>
+      auditService.track.mock.calls
+        .map(([, input]) => input)
+        .filter((input) => input.action === 'auth.login_failed');
+
+    it('counts every attempt by client IP before checking the password', async () => {
+      prisma.user.findUnique = vi.fn().mockResolvedValue(null);
+
+      await expect(
+        service.login({ email: 'atharva@example.com', password: 'password123' }, '203.0.113.7'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(rateLimit.hit).toHaveBeenCalledWith('login', '203.0.113.7');
+    });
+
+    it('refuses a throttled attempt with a 429 and never reaches the password check', async () => {
+      rateLimit.hit.mockReturnValue({ limited: true, retryAfterSeconds: 37 });
+      prisma.user.findUnique = vi.fn().mockResolvedValue({ id: 'user-1' });
+
+      const error = await service
+        .login({ email: 'atharva@example.com', password: 'password123' }, '203.0.113.7')
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(RateLimitedException);
+      expect((error as RateLimitedException).getStatus()).toBe(429);
+      expect((error as RateLimitedException).retryAfterSeconds).toBe(37);
+      // Only the id is read, to attribute the audit event — not the password hash.
+      expect(prisma.user.findUnique).toHaveBeenCalledTimes(1);
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'atharva@example.com' },
+        select: { id: true },
+      });
+      expect(tokenService.rotateRefreshToken).not.toHaveBeenCalled();
+    });
+
+    it('still records a throttled attempt against the account it was aimed at', async () => {
+      rateLimit.hit.mockReturnValue({ limited: true, retryAfterSeconds: 37 });
+      prisma.user.findUnique = vi.fn().mockResolvedValue({ id: 'user-1' });
+
+      await service
+        .login({ email: '  ATHARVA@example.com ', password: 'password123' }, '203.0.113.7')
+        .catch(() => undefined);
+
+      expect(loginFailures()).toEqual([
+        expect.objectContaining({
+          actorUserId: 'user-1',
+          ownerUserId: 'user-1',
+          resourceId: 'user-1',
+          after: { email: 'atharva@example.com', reason: 'rate_limited' },
+        }),
+      ]);
+    });
+
+    it('records a throttled attempt on an unknown email without inventing an owner', async () => {
+      rateLimit.hit.mockReturnValue({ limited: true, retryAfterSeconds: 5 });
+      prisma.user.findUnique = vi.fn().mockResolvedValue(null);
+
+      await service
+        .login({ email: 'nobody@example.com', password: 'password123' }, '203.0.113.7')
+        .catch(() => undefined);
+
+      expect(loginFailures()).toEqual([
+        expect.objectContaining({
+          actorUserId: null,
+          ownerUserId: null,
+          after: { email: 'nobody@example.com', reason: 'rate_limited' },
+        }),
+      ]);
+    });
+
+    it('keeps auditing ordinary failed logins when nothing is throttled', async () => {
+      const passwordHash = await import('bcryptjs').then(({ hash }) => hash('right-password', 4));
+      prisma.user.findUnique = vi.fn().mockResolvedValue({
+        id: 'user-1',
+        email: 'atharva@example.com',
+        passwordHash,
+      });
+
+      await expect(
+        service.login({ email: 'atharva@example.com', password: 'wrong-password' }, '203.0.113.7'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(loginFailures()).toEqual([
+        expect.objectContaining({
+          after: { email: 'atharva@example.com', reason: 'bad_password' },
+        }),
+      ]);
+    });
   });
 
   it('logs in a user with a valid password and rotates refresh state', async () => {

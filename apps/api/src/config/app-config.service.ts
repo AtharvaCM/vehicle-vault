@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { DEFAULT_APP_PORT, DEFAULT_FRONTEND_ORIGIN } from '../common/constants/app.constants';
+import type { RateLimitBucket, RateLimitPolicy } from '../common/rate-limit/rate-limit.types';
 import type { NodeEnv } from '../common/types/node-env.type';
 
 @Injectable()
@@ -37,6 +38,18 @@ export class AppConfigService {
    */
   get apiPublicUrl() {
     return this.configService.get<string | null>('app.apiPublicUrl') ?? null;
+  }
+
+  get trustProxy(): boolean | number | string {
+    return this.configService.get<boolean | number | string>('app.trustProxy') ?? false;
+  }
+
+  get rateLimitEnabled(): boolean {
+    return this.configService.get<boolean>('app.rateLimitEnabled') ?? true;
+  }
+
+  get rateLimits(): Record<RateLimitBucket, RateLimitPolicy> {
+    return this.configService.get<Record<RateLimitBucket, RateLimitPolicy>>('app.rateLimits')!;
   }
 
   get adminEmails() {

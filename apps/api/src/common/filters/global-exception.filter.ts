@@ -9,6 +9,7 @@ import {
 
 import * as Sentry from '@sentry/node';
 
+import { RateLimitedException } from '../rate-limit/rate-limited.exception';
 import type { ApiErrorResponse } from '../types/api-response.type';
 
 @Catch()
@@ -18,6 +19,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const context = host.switchToHttp();
     const response = context.getResponse<{
+      setHeader: (name: string, value: string) => void;
       status: (code: number) => {
         json: (body: ApiErrorResponse) => void;
       };
@@ -42,6 +44,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       Sentry.captureException(exception, {
         tags: { path: request.url },
       });
+    }
+
+    if (exception instanceof RateLimitedException) {
+      response.setHeader('Retry-After', String(exception.retryAfterSeconds));
     }
 
     response.status(normalized.status).json(payload);
@@ -133,6 +139,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         return 'UNAUTHORIZED';
       case HttpStatus.FORBIDDEN:
         return 'FORBIDDEN';
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return 'RATE_LIMITED';
       default:
         return status >= HttpStatus.INTERNAL_SERVER_ERROR ? 'INTERNAL_SERVER_ERROR' : 'ERROR';
     }
