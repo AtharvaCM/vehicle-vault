@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.30.0...v1.31.0) (2026-09-18)
+
+
+### Features
+
+* product telemetry v1 — ProductEvent and an opt-in Clarity loader ([bc6e5f1](https://github.com/AtharvaCM/vehicle-vault/commit/bc6e5f1778922a661900bd98d8a7223dda0db03f))
+
 # [1.30.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.29.0...v1.30.0) (2026-09-18)
 
 
