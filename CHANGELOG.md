@@ -1,3 +1,10 @@
+## [1.27.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.27.1...v1.27.2) (2026-09-18)
+
+
+### Bug Fixes
+
+* **notifications:** keep a deleted prompt inside its cooldown ([8b5b136](https://github.com/AtharvaCM/vehicle-vault/commit/8b5b136bc47e8b10459904f1495ae901101034f4))
+
 ## [1.27.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.27.0...v1.27.1) (2026-09-18)
 
 
