@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.34.0...v1.35.0) (2026-09-18)
+
+
+### Features
+
+* **notifications:** per-kind email and push preferences ([64625a0](https://github.com/AtharvaCM/vehicle-vault/commit/64625a0c513a9ca49991f792ee7c79a5ec693971)), closes [#91](https://github.com/AtharvaCM/vehicle-vault/issues/91)
+
 # [1.34.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.33.0...v1.34.0) (2026-09-18)
 
 
