@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.32.0...v1.33.0) (2026-09-18)
+
+
+### Features
+
+* **auth:** give unverified accounts a week before the verification wall ([9a1ff61](https://github.com/AtharvaCM/vehicle-vault/commit/9a1ff61790a1c0816ecb398b7bfcd81efaefcb48)), closes [#92](https://github.com/AtharvaCM/vehicle-vault/issues/92)
+
 # [1.32.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.31.1...v1.32.0) (2026-09-18)
 
 
