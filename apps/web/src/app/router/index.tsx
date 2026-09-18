@@ -1,5 +1,7 @@
 import { createRouter } from '@tanstack/react-router';
 
+import { NotFoundScreen } from '@/components/errors/not-found-screen';
+import { RouteError } from '@/components/errors/route-error';
 import { queryClient } from '@/lib/query/query-client';
 import {
   adminUsersRoute,
@@ -75,6 +77,10 @@ export const router = createRouter({
   },
   defaultPreload: 'intent',
   scrollRestoration: true,
+  // Without these a render exception is a blank page and an unknown address
+  // renders nothing. Both apply to every route that does not set its own.
+  defaultErrorComponent: RouteError,
+  defaultNotFoundComponent: NotFoundScreen,
 });
 
 declare module '@tanstack/react-router' {
