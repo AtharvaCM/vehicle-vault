@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.27.2...v1.28.0) (2026-09-18)
+
+
+### Features
+
+* **auth:** rate-limit the public auth endpoints ([04189fa](https://github.com/AtharvaCM/vehicle-vault/commit/04189fa70a9b3a8a46b915cea6bec79999f82537))
+
 ## [1.27.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.27.1...v1.27.2) (2026-09-18)
 
 
