@@ -22,13 +22,15 @@ function routerAtRoot(isAuthenticated: boolean) {
  * screen; importing it up front means `React.lazy` resolves from the module
  * cache. The longer timeout below is a backstop, not the fix.
  */
-const LAZY_PAGE_TIMEOUT = { timeout: 10_000 };
+const LAZY_PAGE_TIMEOUT = { timeout: 20_000 };
 
 beforeAll(async () => {
   await import('@/features/landing/pages/landing-page');
-});
+}, 30_000);
 
-describe('the index route', () => {
+// The first render of the real tree also loads the dev-only devtools; on a cold
+// runner that alone has taken over five seconds.
+describe('the index route', { timeout: 30_000 }, () => {
   it('sends a signed-in visitor straight to the dashboard', async () => {
     const { router } = routerAtRoot(true);
 
