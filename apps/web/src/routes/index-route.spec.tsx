@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createMemoryHistory, createRouter } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { routeTree } from '@/app/router';
 
@@ -15,6 +15,18 @@ function routerAtRoot(isAuthenticated: boolean) {
   });
   return { router, queryClient };
 }
+
+/**
+ * The landing page is a lazy route. On a cold CI runner its first import can
+ * outlast `findBy`'s default second, leaving only the Suspense fallback on
+ * screen; importing it up front means `React.lazy` resolves from the module
+ * cache. The longer timeout below is a backstop, not the fix.
+ */
+const LAZY_PAGE_TIMEOUT = { timeout: 10_000 };
+
+beforeAll(async () => {
+  await import('@/features/landing/pages/landing-page');
+});
 
 describe('the index route', () => {
   it('sends a signed-in visitor straight to the dashboard', async () => {
@@ -34,7 +46,11 @@ describe('the index route', () => {
     );
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: /one record of your vehicle/i }),
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: /one record of your vehicle/i },
+        LAZY_PAGE_TIMEOUT,
+      ),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
@@ -46,7 +62,7 @@ describe('the index route', () => {
         <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    await screen.findByRole('heading', { level: 1 });
+    await screen.findByRole('heading', { level: 1 }, LAZY_PAGE_TIMEOUT);
 
     const create = screen.getAllByRole('link', { name: /create free account/i });
     expect(create.length).toBeGreaterThan(0);
@@ -64,7 +80,7 @@ describe('the index route', () => {
         <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    await screen.findByRole('heading', { level: 1 });
+    await screen.findByRole('heading', { level: 1 }, LAZY_PAGE_TIMEOUT);
 
     const images = screen.getAllByRole('img');
     expect(images).toHaveLength(3);
