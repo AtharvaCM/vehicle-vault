@@ -21,9 +21,8 @@ export const prisma = new PrismaClient({
 });
 
 /**
- * Email verification is mandatory, and the verification link only arrives by
- * email — which the e2e environment deliberately cannot receive. Flip the flag
- * straight in the database instead.
+ * The verification link only arrives by email, which the e2e environment
+ * deliberately cannot receive. Flip the flag straight in the database instead.
  */
 export async function markUserEmailVerified(email: string) {
   await prisma.user.update({

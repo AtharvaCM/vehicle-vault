@@ -136,6 +136,32 @@ describe('OAuthService.loginOrLink', () => {
       },
     });
     expect(response.user.id).toBe('user-99');
+    expect(response.user.emailVerificationDueAt).toBeNull();
+  });
+
+  it('never gives an account created without an email a verification deadline', async () => {
+    const noEmail: OAuthProfile = {
+      provider: OAuthProvider.github,
+      providerAccountId: '4242',
+      email: null,
+      name: 'Private Email',
+      emailVerified: false,
+    };
+    prisma.oAuthAccount.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+      ...baseUser(),
+      id: 'user-100',
+      name: data.name,
+      email: data.email,
+      emailVerified: data.emailVerified,
+    }));
+
+    const response = await service.loginOrLink(noEmail);
+
+    // A placeholder with no inbox behind it: asking for verification would lock the account.
+    expect(response.user.email).toBe('github-4242@oauth.local');
+    expect(response.user.emailVerified).toBe(false);
+    expect(response.user.emailVerificationDueAt).toBeNull();
   });
 
   it('records a new OAuth account with its provider as the method', async () => {

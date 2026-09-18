@@ -54,6 +54,7 @@ export function OAuthCallbackPage() {
             role: 'user',
             emailVerified: true,
             allowedCatalogSources: [],
+            emailVerificationDueAt: null,
           },
         });
         const me = await getMe();

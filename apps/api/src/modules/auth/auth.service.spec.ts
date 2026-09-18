@@ -198,6 +198,7 @@ describe('AuthService', () => {
         role: 'user',
         allowedCatalogSources: [],
         emailVerified: false,
+        emailVerificationDueAt: '2026-03-27T00:00:00.000Z',
       },
     });
     expect(productEvents.record).toHaveBeenCalledWith(prisma, {
@@ -430,6 +431,7 @@ describe('AuthService', () => {
         role: 'user',
         allowedCatalogSources: [],
         emailVerified: false,
+        emailVerificationDueAt: '2026-03-27T00:00:00.000Z',
       },
     });
   });
@@ -679,6 +681,23 @@ describe('AuthService', () => {
       role: 'user',
       allowedCatalogSources: [],
       emailVerified: false,
+      emailVerificationDueAt: '2026-03-27T00:00:00.000Z',
+    });
+  });
+
+  it('gives a verified user no verification deadline', async () => {
+    prisma.user.findUnique = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      emailVerified: true,
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    await expect(service.getMe('user-1')).resolves.toMatchObject({
+      emailVerified: true,
+      emailVerificationDueAt: null,
     });
   });
 });

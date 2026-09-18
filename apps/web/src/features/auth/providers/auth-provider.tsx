@@ -138,6 +138,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     [persistAuthResponse],
   );
 
+  const refreshUser = useCallback(async () => {
+    const requestedFor = sessionRef.current?.user.id;
+
+    if (!requestedFor) {
+      return null;
+    }
+
+    try {
+      const user = await getMe();
+      const current = sessionRef.current;
+
+      // Signed out, or into another account, while the request was out.
+      if (!current || current.user.id !== requestedFor || user.id !== requestedFor) {
+        return null;
+      }
+
+      persistSession({ ...current, user });
+      return user;
+    } catch {
+      return null;
+    }
+  }, [persistSession]);
+
   const logout = useCallback(() => {
     const refreshToken = sessionRef.current?.refreshToken;
 
@@ -262,11 +285,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       accessToken: session?.accessToken ?? null,
       isAuthenticated: status === 'authenticated' && Boolean(session?.accessToken),
       logout,
+      refreshUser,
       setSession,
       status,
       user: session?.user ?? null,
     }),
-    [logout, session?.accessToken, session?.user, setSession, status],
+    [logout, refreshUser, session?.accessToken, session?.user, setSession, status],
   );
 
   if (status === 'loading') {

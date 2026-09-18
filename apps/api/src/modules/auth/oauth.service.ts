@@ -14,6 +14,10 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
+import {
+  getEmailVerificationDueAt,
+  OAUTH_PLACEHOLDER_EMAIL_DOMAIN,
+} from './email-verification-deadline';
 import { TokenService } from './token.service';
 import type { JwtPayload } from './auth.types';
 
@@ -136,7 +140,7 @@ export class OAuthService {
   private async createUserAndLink(profile: OAuthProfile) {
     const email =
       profile.email?.toLowerCase() ??
-      `${profile.provider}-${profile.providerAccountId}@oauth.local`;
+      `${profile.provider}-${profile.providerAccountId}@${OAUTH_PLACEHOLDER_EMAIL_DOMAIN}`;
     return this.prisma.user.create({
       data: {
         name: profile.name || 'Vehicle Vault User',
@@ -197,6 +201,7 @@ export class OAuthService {
       email: user.email,
       emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
+      emailVerificationDueAt: getEmailVerificationDueAt(user),
     });
   }
 }

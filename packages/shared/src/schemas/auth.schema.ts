@@ -44,6 +44,13 @@ export const AuthUserSchema = UserSchema.pick({
   role: true,
   emailVerified: true,
   allowedCatalogSources: true,
+}).extend({
+  /**
+   * When an unverified account starts having to verify before using the app;
+   * null when it never will (verified, or no address to verify). Computed by
+   * the API so the grace period is set in one place.
+   */
+  emailVerificationDueAt: z.string().datetime().nullable(),
 });
 
 export const VerifyEmailSchema = z.object({

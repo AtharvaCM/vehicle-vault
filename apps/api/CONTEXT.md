@@ -112,6 +112,9 @@ _Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic
 **Token**:
 A credential issued to a **User** for a specific purpose: email verification, password reset, or refresh session. **TokenService** owns issue/consume/rotate/revoke lifecycle for all purposes, regardless of whether the bits are a JWT (refresh) or a SHA-256 hash of random bytes (verification, reset). Timing-safe comparisons. See ADR-0002.
 
+**Email verification deadline**:
+A new password account may use the app unverified for `EMAIL_VERIFICATION_GRACE_DAYS` (7) from `createdAt` (`modules/auth/email-verification-deadline.ts`). `AuthUser.emailVerificationDueAt` carries the moment, or null when there is nothing to wait for: the address is verified, or it is the `@oauth.local` placeholder an OAuth sign-in without an email gets. The API itself does not gate on verification — the web app turns the deadline into a banner and then a wall, and alert email waits for verification regardless.
+
 **AuditEvent**:
 An immutable record of one happened-thing in the system. Two flavours: a **mutation** against a tracked resource or an **auth event**. Dotted `action` string (`vehicle.updated`, `auth.login_failed`), optional `actorUserId`, polymorphic no-FK resource reference (`resourceType` enum + `resourceId`), diff payload (`before`/`after`/`changedFields`, PII-redacted). Written **inside the same transaction** as the mutation via `auditService.track(tx, …)`; a dev/CI safety net in `PrismaService.$transaction` throws `AuditCoverageError` when an audited mutation emits no event. Survives deletion of subject and actor. Rendered to end users as "Activity". See ADR-0004.
 _Not_ a **Notification**; not a log line.
