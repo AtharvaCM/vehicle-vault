@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { formatDate } from '@/lib/utils/format-date';
 import { appToast } from '@/lib/toast';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 
 import { useCatalogImportRunDetail } from '../hooks/use-catalog-import-run-detail';
 import { useCatalogImportRuns } from '../hooks/use-catalog-import-runs';
@@ -39,7 +40,31 @@ import { useArchiveMissingCatalogImportRun } from '../hooks/use-archive-missing-
 import { usePublishCatalogImportRun } from '../hooks/use-publish-catalog-import-run';
 import { useUpdateVehicleCatalogOfferingReview } from '../hooks/use-update-vehicle-catalog-offering-review';
 
+/**
+ * Catalog curation is for admins and the users granted a source. Everyone else
+ * gets nothing — not an empty card, and not the import-run request behind it,
+ * since the panel's queries only run once it mounts. The API filters the list the
+ * same way, so this is about not showing a workspace command to a car owner, not
+ * about hiding data.
+ */
 export function CatalogImportReviewCard() {
+  const { user } = useAuth();
+
+  if (!canSeeCatalogReview(user)) {
+    return null;
+  }
+
+  return <CatalogImportReviewPanel />;
+}
+
+export function canSeeCatalogReview(
+  user: { role?: string; allowedCatalogSources?: string[] } | null | undefined,
+): boolean {
+  if (!user) return false;
+  return user.role === 'admin' || (user.allowedCatalogSources?.length ?? 0) > 0;
+}
+
+function CatalogImportReviewPanel() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const runsQuery = useCatalogImportRuns();
   const detailQuery = useCatalogImportRunDetail(selectedRunId);

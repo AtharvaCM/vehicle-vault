@@ -29,6 +29,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ListVehicleCatalogMakesDto } from './dto/list-vehicle-catalog-makes.dto';
 import { ListVehicleCatalogModelsDto } from './dto/list-vehicle-catalog-models.dto';
 import { ListVehicleCatalogVariantsDto } from './dto/list-vehicle-catalog-variants.dto';
+import { canSeeCatalogSource, visibleCatalogSources } from './catalog-source-visibility';
 
 type ImportRunRecord = {
   id: string;
@@ -333,8 +334,20 @@ export class VehicleCatalogService {
     );
   }
 
-  async listImportRuns(): Promise<VehicleCatalogImportRunReview[]> {
+  /**
+   * Recent import runs the caller may see. Admins and holders of the `*` grant see
+   * every source; everyone else sees their granted sources, and a caller with no
+   * grants gets nothing without a query — the review card is not theirs to see.
+   * Seeing is not publishing: publish, review and archive stay grant-gated below.
+   */
+  async listImportRuns(user: AuthUser): Promise<VehicleCatalogImportRunReview[]> {
+    const sees = visibleCatalogSources(user);
+    if (sees !== 'all' && sees.length === 0) {
+      return [];
+    }
+
     const runs = await this.prisma.vehicleCatalogImportRun.findMany({
+      where: sees === 'all' ? undefined : { sourceKey: { in: sees } },
       include: {
         snapshots: {
           orderBy: {
@@ -352,7 +365,8 @@ export class VehicleCatalogService {
     return Promise.all(runs.map((run) => this.mapImportRunReview(run)));
   }
 
-  async getImportRunDetail(runId: string): Promise<VehicleCatalogImportRunDetail> {
+  /** A run outside the caller's sources is reported as missing, as the list would have it. */
+  async getImportRunDetail(user: AuthUser, runId: string): Promise<VehicleCatalogImportRunDetail> {
     const run = await this.prisma.vehicleCatalogImportRun.findUnique({
       where: {
         id: runId,
@@ -367,7 +381,7 @@ export class VehicleCatalogService {
       },
     });
 
-    if (!run) {
+    if (!run || !canSeeCatalogSource(user, run.sourceKey)) {
       throw new NotFoundException(`Catalog import run ${runId} was not found`);
     }
 
