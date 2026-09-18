@@ -12,6 +12,7 @@ import { formatCurrency } from '@/lib/utils/format-currency';
 import { useDeleteAccessory, useVehicleAccessories } from '../hooks/use-accessories';
 import { AccessoryCard } from './accessory-card';
 import { AccessoryFormDialog } from './accessory-form-dialog';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 interface AccessoriesTabProps {
   vehicleId: string;
@@ -19,6 +20,7 @@ interface AccessoriesTabProps {
 
 export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
   const accessoriesQuery = useVehicleAccessories(vehicleId);
+  const { canEdit } = useVehicleAccess();
   const deleteMutation = useDeleteAccessory(vehicleId);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Accessory | null>(null);
@@ -117,17 +119,21 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
               : 'Things bought for this vehicle, kept out of your service history.'}
           </p>
         </div>
-        <Button onClick={openCreate} size="sm">
-          Add accessory
-        </Button>
+        {canEdit ? (
+          <Button onClick={openCreate} size="sm">
+            Add accessory
+          </Button>
+        ) : null}
       </div>
 
       {accessories.length === 0 ? (
         <EmptyState
           action={
-            <Button onClick={openCreate} size="sm">
-              Add accessory
-            </Button>
+            canEdit ? (
+              <Button onClick={openCreate} size="sm">
+                Add accessory
+              </Button>
+            ) : undefined
           }
           description="Mats, a dashcam, alloys — anything you bought for the car. Recorded separately from services so it does not distort your cost per kilometre."
           title="No accessories yet"
@@ -145,8 +151,8 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
                     accessory={accessory}
                     isDeleting={deletingId === accessory.id}
                     key={accessory.id}
-                    onDelete={handleDelete}
-                    onEdit={openEdit}
+                    onDelete={canEdit ? handleDelete : undefined}
+                    onEdit={canEdit ? openEdit : undefined}
                   />
                 ))}
               </div>
@@ -164,8 +170,8 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
                     accessory={accessory}
                     isDeleting={deletingId === accessory.id}
                     key={accessory.id}
-                    onDelete={handleDelete}
-                    onEdit={openEdit}
+                    onDelete={canEdit ? handleDelete : undefined}
+                    onEdit={canEdit ? openEdit : undefined}
                   />
                 ))}
               </div>
@@ -183,8 +189,8 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
                     accessory={accessory}
                     isDeleting={deletingId === accessory.id}
                     key={accessory.id}
-                    onDelete={handleDelete}
-                    onEdit={openEdit}
+                    onDelete={canEdit ? handleDelete : undefined}
+                    onEdit={canEdit ? openEdit : undefined}
                   />
                 ))}
               </div>

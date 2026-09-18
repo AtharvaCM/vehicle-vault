@@ -31,6 +31,9 @@ URL search params validated by a `normalize*Search` function in the feature's `t
 **Query-state UI**:
 The standard triad `LoadingState` / `EmptyState` / `ErrorState` from `src/components/shared/` for every query-backed view. Forms use `FormField`; mutation errors go to `appToast.error(getApiErrorMessage(e))`.
 
+**Vehicle access** (`features/vehicles/context/vehicle-access.tsx`):
+The signed-in user's role on the vehicle on screen, provided once by `VehicleDetailPage` from `vehicle.currentUserRole` (the members lookup is only a fallback). Tabs and anything they nest read `useVehicleAccess()`: `canEdit` (owner or editor) gates every create/edit/delete/import/scan control, `isOwner` gates deleting the vehicle, loans and member management. Viewers get the same lists with the controls removed, not disabled, and a "View only" badge on the header explains why. Outside the provider nothing is hidden (`canEdit` defaults to true) — the API is the enforcement, this only avoids offering a button that will 403. Cards that take optional `onEdit`/`onDelete` handlers drop their controls when the handler is omitted; cards that always render a delete read the context themselves.
+
 **AppShell**:
 `components/layout/app-shell.tsx` → `app-layout` → `sidebar` + `topbar` + main outlet. Renders `EmailVerificationScreen` instead of the app when the user's email is unverified. Navigation config lives in `sidebar.tsx` (`appNavigation`, `adminNavigation`).
 
@@ -40,7 +43,7 @@ Route tree assembled in `src/app/router/index.tsx`; one `*-route.tsx` file per r
 
 - Public: `/`, login, register, forgot/reset-password, verify-email, oauth-callback.
 - `appRoute` (id `app`) guards everything else: `beforeLoad` redirects unauthenticated users to `/login`. Admin routes additionally check `auth.user?.role === 'admin'`.
-- Data loading is entirely in-component via TanStack Query — no router `loader`s, no `errorComponent`/`notFoundComponent` (known gap). `defaultPreload: 'intent'`.
+- Data loading is entirely in-component via TanStack Query — no router `loader`s. `defaultErrorComponent` and `defaultNotFoundComponent` are set on the router (see Testing → Errors and unknown addresses). `defaultPreload: 'intent'`.
 
 Adding a route: create `routes/x-route.tsx` → export from `routes/index.ts` → wire into the tree in `app/router/index.tsx`.
 
@@ -70,4 +73,4 @@ Adding a route: create `routes/x-route.tsx` → export from `routes/index.ts` �
 - Duplicate layout components: `app-header.tsx` / `app-sidebar.tsx` / `app-navigation.ts` are legacy; the active layout is `topbar.tsx` + `sidebar.tsx`.
 - Duplicate util locations: `lib/utils.ts` vs `lib/utils/cn.ts`.
 - Vehicle-catalog admin curation UI (import-run review/publish/archive) lives under the `settings` slice, not `vehicles` — non-obvious placement.
-- No React error boundaries; errors surface only via `ErrorState` and toasts.
+- Vehicle access covers the vehicle detail page's tabs only. The vehicle-scoped maintenance and reminder list pages and the record/reminder detail and edit pages sit outside the provider, so a viewer who follows "View all" still sees add, import, edit and delete controls there (the API refuses them).

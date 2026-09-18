@@ -1,6 +1,15 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {
+  AttachmentKind,
+  VehicleRole,
+  type Claim,
+  type ClaimAttachment,
+  type VehicleDocument,
+} from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
+import { VehicleAccessProvider } from '../context/vehicle-access';
 import { ProtectionTab } from './protection-tab';
 
 const documentsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
@@ -19,6 +28,13 @@ vi.mock('../../claims/hooks/use-claims', () => ({
   useCreateClaim: mutation,
   useUpdateClaim: mutation,
   useDeleteClaim: mutation,
+}));
+vi.mock('../../claims/hooks/use-claim-attachments', () => ({
+  useClaimAttachments: () => ({ data: [receipt], isPending: false, isError: false }),
+  useClaimExtractionStatus: () => ({ data: { available: true } }),
+  useUploadClaimAttachments: mutation,
+  useDeleteClaimAttachment: mutation,
+  useExtractClaimAttachment: mutation,
 }));
 vi.mock('../../vehicle-documents/hooks/use-scan-document', () => ({
   useScanStatusQuery: () => ({ queryKey: ['scan-status'], queryFn: async () => null }),
@@ -74,5 +90,128 @@ describe('ProtectionTab', () => {
     expect(screen.getByText('Unable to load claims')).toBeInTheDocument();
     expect(screen.getByText('No insurance policies')).toBeInTheDocument();
     expect(screen.queryByText('No claims yet')).not.toBeInTheDocument();
+  });
+});
+
+// Read at render time, after this module has finished initialising.
+const receipt: ClaimAttachment = {
+  id: 'attachment-1',
+  claimId: 'claim-1',
+  kind: AttachmentKind.Document,
+  fileName: 'garage-bill.pdf',
+  originalFileName: 'garage-bill.pdf',
+  mimeType: 'application/pdf',
+  size: 2048,
+  url: '/claims/attachments/attachment-1',
+  uploadedAt: '2026-08-02T00:00:00.000Z',
+};
+
+const policy: VehicleDocument = {
+  id: 'policy-1',
+  vehicleId: 'vehicle-1',
+  kind: 'insurance',
+  provider: 'Acme General',
+  number: 'POL-1',
+  startDate: new Date('2026-01-01'),
+  endDate: new Date('2030-01-01'),
+  notes: null,
+  details: {},
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+};
+
+const claim: Claim = {
+  id: 'claim-1',
+  insurancePolicyId: 'policy-1',
+  maintenanceRecordId: null,
+  claimNumber: 'CLM-7',
+  grossAmount: 20_000,
+  insurerPaidAmount: 15_000,
+  status: 'settled',
+  filedDate: new Date('2026-08-01'),
+  settledDate: new Date('2026-08-20'),
+  notes: null,
+  createdAt: new Date('2026-08-01'),
+  updatedAt: new Date('2026-08-20'),
+};
+
+function renderAs(role: VehicleRole) {
+  documentsQuery.current = { isPending: false, isError: false, data: [policy], refetch: vi.fn() };
+  claimsQuery.current = { isPending: false, isError: false, data: [claim] };
+
+  return render(
+    <VehicleAccessProvider role={role}>
+      <ProtectionTab vehicleId="vehicle-1" />
+    </VehicleAccessProvider>,
+  );
+}
+
+const sectionActions = [
+  'Add Policy',
+  'Scan Policy',
+  'Record Claim',
+  'Add Warranty',
+  'Add Document',
+];
+// Empty-state prompts, shown here because this vehicle has no warranty or compliance papers.
+const emptyStateActions = ['Add warranty details', 'Add PUC certificate'];
+
+describe('ProtectionTab roles', () => {
+  it.each([VehicleRole.Owner, VehicleRole.Editor])('lets an %s add and change cover', (role) => {
+    renderAs(role);
+
+    for (const name of sectionActions) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('button', { name: 'Edit document' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete document' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit claim' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete claim' })).toBeInTheDocument();
+    for (const name of emptyStateActions) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
+  });
+
+  it('shows a viewer the cover without any way to change it', () => {
+    renderAs(VehicleRole.Viewer);
+
+    expect(screen.getByText('Acme General')).toBeInTheDocument();
+    expect(screen.getByText('#CLM-7')).toBeInTheDocument();
+    for (const name of [
+      ...sectionActions,
+      'Edit document',
+      'Delete document',
+      'Edit claim',
+      'Delete claim',
+      ...emptyStateActions,
+    ]) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
+    // The compliance scan is a menu trigger named just "Scan".
+    expect(screen.queryByRole('button', { name: 'Scan' })).not.toBeInTheDocument();
+  });
+
+  it('lets a viewer open a claim receipt but not upload, extract or delete one', async () => {
+    const user = userEvent.setup();
+    renderAs(VehicleRole.Viewer);
+
+    await user.click(screen.getByRole('button', { name: /receipts & documents/i }));
+
+    expect(screen.getByText('garage-bill.pdf')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download attachment' })).toBeInTheDocument();
+    for (const name of ['Delete attachment', 'Extract claim fields', /upload receipts/i]) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
+  });
+
+  it('keeps receipt management for an editor', async () => {
+    const user = userEvent.setup();
+    renderAs(VehicleRole.Editor);
+
+    await user.click(screen.getByRole('button', { name: /receipts & documents/i }));
+
+    for (const name of ['Delete attachment', 'Extract claim fields', /upload receipts/i]) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
   });
 });

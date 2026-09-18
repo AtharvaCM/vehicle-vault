@@ -36,6 +36,7 @@ import {
   type VehicleDocumentExtractionDraft,
   type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
+import { useVehicleAccess } from '../context/vehicle-access';
 
 type ScanButtonProps = {
   available: boolean | undefined;
@@ -83,6 +84,7 @@ interface ProtectionTabProps {
 }
 
 export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
+  const { canEdit } = useVehicleAccess();
   const documentsQuery = useVehicleDocuments(vehicleId);
   const claimsQuery = useVehicleClaims(vehicleId);
 
@@ -218,25 +220,27 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <ShieldCheck className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Insurance Policies</h3>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                ref={scanInputRef}
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={handleScanFile}
-                className="hidden"
-              />
-              <ScanButton
-                available={insuranceScanStatus.data?.available}
-                isScanning={scanMutation.isPending && scanKind === 'insurance'}
-                label="Scan Policy"
-                onClick={() => triggerScan('insurance', insuranceScanStatus.data?.available)}
-              />
-              <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Policy
-              </Button>
-            </div>
+            {canEdit ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={scanInputRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={handleScanFile}
+                  className="hidden"
+                />
+                <ScanButton
+                  available={insuranceScanStatus.data?.available}
+                  isScanning={scanMutation.isPending && scanKind === 'insurance'}
+                  label="Scan Policy"
+                  onClick={() => triggerScan('insurance', insuranceScanStatus.data?.available)}
+                />
+                <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Policy
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-4">
@@ -246,7 +250,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   key={policy.id}
                   document={policy}
                   vehicleId={vehicleId}
-                  onEdit={handleEdit}
+                  onEdit={canEdit ? handleEdit : undefined}
                 />
               ))
             ) : (
@@ -254,9 +258,11 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                 title="No insurance policies"
                 description="Keep your motor insurance details handy for renewals and claims."
                 action={
-                  <Button variant="secondary" onClick={() => openDialog('insurance')}>
-                    Register first policy
-                  </Button>
+                  canEdit ? (
+                    <Button variant="secondary" onClick={() => openDialog('insurance')}>
+                      Register first policy
+                    </Button>
+                  ) : undefined
                 }
               />
             )}
@@ -270,16 +276,18 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <ReceiptText className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Insurance Claims</h3>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={openClaimDialog}
-              disabled={policies.length === 0}
-              title={policies.length === 0 ? 'Add an insurance policy first' : undefined}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Record Claim
-            </Button>
+            {canEdit ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={openClaimDialog}
+                disabled={policies.length === 0}
+                title={policies.length === 0 ? 'Add an insurance policy first' : undefined}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Record Claim
+              </Button>
+            ) : null}
           </div>
 
           <div className="grid gap-4">
@@ -304,7 +312,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   key={claim.id}
                   claim={claim}
                   vehicleId={vehicleId}
-                  onEdit={handleClaimEdit}
+                  onEdit={canEdit ? handleClaimEdit : undefined}
                 />
               ))
             ) : (
@@ -316,7 +324,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                     : 'Track accident repairs and what your insurer covered.'
                 }
                 action={
-                  policies.length > 0 ? (
+                  canEdit && policies.length > 0 ? (
                     <Button variant="secondary" onClick={openClaimDialog}>
                       Record first claim
                     </Button>
@@ -334,18 +342,20 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <Car className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Warranty Coverage</h3>
             </div>
-            <div className="flex items-center gap-2">
-              <ScanButton
-                available={warrantyScanStatus.data?.available}
-                isScanning={scanMutation.isPending && scanKind === 'warranty'}
-                label="Scan Warranty"
-                onClick={() => triggerScan('warranty', warrantyScanStatus.data?.available)}
-              />
-              <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Warranty
-              </Button>
-            </div>
+            {canEdit ? (
+              <div className="flex items-center gap-2">
+                <ScanButton
+                  available={warrantyScanStatus.data?.available}
+                  isScanning={scanMutation.isPending && scanKind === 'warranty'}
+                  label="Scan Warranty"
+                  onClick={() => triggerScan('warranty', warrantyScanStatus.data?.available)}
+                />
+                <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Warranty
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-4">
@@ -355,7 +365,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   key={warranty.id}
                   document={warranty}
                   vehicleId={vehicleId}
-                  onEdit={handleEdit}
+                  onEdit={canEdit ? handleEdit : undefined}
                 />
               ))
             ) : (
@@ -363,9 +373,11 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                 title="No warranty info"
                 description="Track your manufacturer or extended warranty coverage."
                 action={
-                  <Button variant="secondary" onClick={() => openDialog('warranty')}>
-                    Add warranty details
-                  </Button>
+                  canEdit ? (
+                    <Button variant="secondary" onClick={() => openDialog('warranty')}>
+                      Add warranty details
+                    </Button>
+                  ) : undefined
                 }
               />
             )}
@@ -379,34 +391,36 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
               <FileBadge className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Registration &amp; Compliance</h3>
             </div>
-            <div className="flex items-center gap-2">
-              {/* Three document types share this section, and the prompt is
+            {canEdit ? (
+              <div className="flex items-center gap-2">
+                {/* Three document types share this section, and the prompt is
                   narrowed per type — so the user picks which one they are
                   scanning rather than the model guessing from the page. */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <ScanButton
-                    available={complianceScanStatus.data?.available}
-                    isScanning={scanMutation.isPending && isComplianceKind(scanKind)}
-                    label="Scan"
-                  />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {complianceDocumentKinds.map((kind) => (
-                    <DropdownMenuItem
-                      key={kind}
-                      onClick={() => triggerScan(kind, complianceScanStatus.data?.available)}
-                    >
-                      {documentKindTitles[kind]}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Document
-              </Button>
-            </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <ScanButton
+                      available={complianceScanStatus.data?.available}
+                      isScanning={scanMutation.isPending && isComplianceKind(scanKind)}
+                      label="Scan"
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {complianceDocumentKinds.map((kind) => (
+                      <DropdownMenuItem
+                        key={kind}
+                        onClick={() => triggerScan(kind, complianceScanStatus.data?.available)}
+                      >
+                        {documentKindTitles[kind]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Document
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-4">
@@ -416,7 +430,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   key={doc.id}
                   document={doc}
                   vehicleId={vehicleId}
-                  onEdit={handleEdit}
+                  onEdit={canEdit ? handleEdit : undefined}
                 />
               ))
             ) : (
@@ -424,9 +438,11 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                 title="No compliance documents"
                 description="Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due."
                 action={
-                  <Button variant="secondary" onClick={() => openDialog('puc')}>
-                    Add PUC certificate
-                  </Button>
+                  canEdit ? (
+                    <Button variant="secondary" onClick={() => openDialog('puc')}>
+                      Add PUC certificate
+                    </Button>
+                  ) : undefined
                 }
               />
             )}

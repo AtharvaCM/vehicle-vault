@@ -12,6 +12,7 @@ import {
   isComplianceKind,
 } from '../utils/document-kind-labels';
 import { appToast } from '@/lib/toast';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 interface DocumentCardProps {
   document: VehicleDocument;
@@ -20,6 +21,8 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps) {
+  // Delete is always offered here, unlike edit, so it needs the role itself.
+  const { canEdit } = useVehicleAccess();
   const deleteMutation = useDeleteVehicleDocument(vehicleId);
 
   const isExpired = document.endDate ? isBefore(new Date(document.endDate), new Date()) : false;
@@ -127,19 +130,23 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                     variant="ghost"
                     className="h-8 w-8 text-slate-400 hover:text-primary rounded-full"
                     onClick={() => onEdit(document)}
+                    aria-label="Edit document"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                 )}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canEdit ? (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
+                    onClick={handleDelete}
+                    aria-label="Delete document"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -232,19 +239,23 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                     variant="ghost"
                     className="h-8 w-8 text-slate-400 hover:text-primary rounded-full"
                     onClick={() => onEdit(document)}
+                    aria-label="Edit document"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                 )}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canEdit ? (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
+                    onClick={handleDelete}
+                    aria-label="Delete document"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -332,19 +343,23 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                   variant="ghost"
                   className="h-8 w-8 text-slate-400 hover:text-primary rounded-full"
                   onClick={() => onEdit(document)}
+                  aria-label="Edit document"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
               )}
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {canEdit ? (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
+                  onClick={handleDelete}
+                  aria-label="Delete document"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>

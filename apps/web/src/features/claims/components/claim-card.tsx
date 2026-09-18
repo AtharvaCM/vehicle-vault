@@ -9,6 +9,7 @@ import { appToast } from '@/lib/toast';
 
 import { useDeleteClaim } from '../hooks/use-claims';
 import { ClaimAttachmentsSection } from './claim-attachments-section';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 interface ClaimCardProps {
   claim: Claim;
@@ -39,6 +40,8 @@ function formatINR(amount: number): string {
 }
 
 export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
+  // Delete is always offered here, unlike edit, so it needs the role itself.
+  const { canEdit } = useVehicleAccess();
   const deleteMutation = useDeleteClaim(vehicleId);
   const pocket = outOfPocket(claim);
 
@@ -120,15 +123,17 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
                 <Pencil className="h-4 w-4" />
               </Button>
             ) : null}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDelete}
-              aria-label="Delete claim"
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4 text-rose-500" />
-            </Button>
+            {canEdit ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDelete}
+                aria-label="Delete claim"
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 text-rose-500" />
+              </Button>
+            ) : null}
           </div>
         </div>
 

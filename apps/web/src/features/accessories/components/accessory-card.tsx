@@ -11,8 +11,9 @@ import { daysUntilExpiry } from '../utils/warranty-status';
 
 interface AccessoryCardProps {
   accessory: Accessory;
-  onEdit: (accessory: Accessory) => void;
-  onDelete: (accessory: Accessory) => Promise<void>;
+  /** Omitted for someone who cannot change the vehicle; the control goes with it. */
+  onEdit?: (accessory: Accessory) => void;
+  onDelete?: (accessory: Accessory) => Promise<void>;
   isDeleting?: boolean;
 }
 
@@ -99,20 +100,26 @@ export function AccessoryCard({
 
         {accessory.notes ? <p className="text-sm text-slate-600">{accessory.notes}</p> : null}
 
-        <div className="flex items-center gap-2">
-          <Button onClick={() => onEdit(accessory)} size="sm" variant="secondary">
-            Edit
-          </Button>
-          <ConfirmActionDialog
-            confirmLabel="Delete"
-            description={`${accessory.name} will be removed from this vehicle's accessories. This cannot be undone.`}
-            isPending={isDeleting}
-            onConfirm={() => onDelete(accessory)}
-            title="Delete this accessory?"
-            triggerLabel="Delete"
-            triggerVariant="ghost"
-          />
-        </div>
+        {onEdit || onDelete ? (
+          <div className="flex items-center gap-2">
+            {onEdit ? (
+              <Button onClick={() => onEdit(accessory)} size="sm" variant="secondary">
+                Edit
+              </Button>
+            ) : null}
+            {onDelete ? (
+              <ConfirmActionDialog
+                confirmLabel="Delete"
+                description={`${accessory.name} will be removed from this vehicle's accessories. This cannot be undone.`}
+                isPending={isDeleting}
+                onConfirm={() => onDelete(accessory)}
+                title="Delete this accessory?"
+                triggerLabel="Delete"
+                triggerVariant="ghost"
+              />
+            ) : null}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
