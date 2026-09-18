@@ -230,7 +230,7 @@ describe('VehicleCatalogService', () => {
     ]);
     prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
 
-    await expect(service.listImportRuns()).resolves.toEqual([
+    await expect(service.listImportRuns(mockUser)).resolves.toEqual([
       expect.objectContaining({
         id: 'run-1',
         sourceKey: 'hyundai-india',
@@ -273,7 +273,7 @@ describe('VehicleCatalogService', () => {
     prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([]);
     prisma.vehicleCatalogVariantOfferingOverride.findMany.mockResolvedValue([]);
 
-    await expect(service.getImportRunDetail('run-1')).resolves.toEqual(
+    await expect(service.getImportRunDetail(mockUser, 'run-1')).resolves.toEqual(
       expect.objectContaining({
         id: 'run-1',
         dataset: snapshotPayload.dataset,
@@ -534,7 +534,9 @@ describe('VehicleCatalogService', () => {
   it('throws when an import run is missing', async () => {
     prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(null);
 
-    await expect(service.getImportRunDetail('missing')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getImportRunDetail(mockUser, 'missing')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('rejects archiving missing variants after a run has been published', async () => {
@@ -561,5 +563,64 @@ describe('VehicleCatalogService', () => {
     await expect(service.archiveMissingVariants(mockUser, 'run-1')).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+
+  describe('who sees which import runs', () => {
+    const run = (sourceKey: string) => ({
+      id: `run-${sourceKey}`,
+      sourceKey,
+      sourceLabel: sourceKey,
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      finishedAt: new Date('2026-03-22T10:05:00.000Z'),
+      notes: null,
+      publishedAt: null,
+      publishedByUserId: null,
+      snapshots: [],
+    });
+    const regular: AuthUser = { ...mockUser, role: 'user', allowedCatalogSources: [] };
+    const granted: AuthUser = { ...mockUser, role: 'user', allowedCatalogSources: ['tata-india'] };
+    const admin: AuthUser = { ...mockUser, role: 'admin', allowedCatalogSources: [] };
+
+    it('gives a user with no grants nothing, without asking the database', async () => {
+      await expect(service.listImportRuns(regular)).resolves.toEqual([]);
+      expect(prisma.vehicleCatalogImportRun.findMany).not.toHaveBeenCalled();
+    });
+
+    it('limits a granted user to their sources', async () => {
+      prisma.vehicleCatalogImportRun.findMany.mockResolvedValue([]);
+
+      await service.listImportRuns(granted);
+
+      expect(prisma.vehicleCatalogImportRun.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { sourceKey: { in: ['tata-india'] } } }),
+      );
+    });
+
+    it('shows an admin every source', async () => {
+      prisma.vehicleCatalogImportRun.findMany.mockResolvedValue([]);
+
+      await service.listImportRuns(admin);
+
+      expect(prisma.vehicleCatalogImportRun.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: undefined }),
+      );
+    });
+
+    it("reports a run outside the caller's sources as missing, like the list would", async () => {
+      prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(run('hyundai-india'));
+
+      await expect(service.getImportRunDetail(granted, 'run-hyundai-india')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('does not let seeing a run become publishing it: an admin still needs a grant', async () => {
+      prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(run('hyundai-india'));
+
+      await expect(service.publishImportRun(admin, 'run-hyundai-india')).rejects.toThrow(
+        'You do not have permission to publish this import run.',
+      );
+    });
   });
 });

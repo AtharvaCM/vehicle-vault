@@ -53,15 +53,20 @@ export class VehicleCatalogController {
   }
 
   @Get('import-runs')
-  @ApiOperation({ summary: 'List recent catalog import runs' })
-  async listImportRuns() {
-    return successResponse(await this.vehicleCatalogService.listImportRuns());
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List recent catalog import runs for the sources the caller may see' })
+  async listImportRuns(@CurrentUser() user: AuthUser) {
+    return successResponse(await this.vehicleCatalogService.listImportRuns(user));
   }
 
   @Get('import-runs/:runId')
-  @ApiOperation({ summary: 'Get details of a specific import run' })
-  async getImportRunDetail(@Param() params: CatalogImportRunIdParamDto) {
-    return successResponse(await this.vehicleCatalogService.getImportRunDetail(params.runId));
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get details of an import run the caller may see' })
+  async getImportRunDetail(
+    @Param() params: CatalogImportRunIdParamDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(await this.vehicleCatalogService.getImportRunDetail(user, params.runId));
   }
 
   @Post('import-runs/:runId/publish')
