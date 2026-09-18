@@ -66,6 +66,12 @@ export class NotificationsController {
     return { count: await this.notificationsService.getUnreadCount(userId) };
   }
 
+  /** Opened from the bell: marks it read and counts the open. */
+  @Post(':id/open')
+  async open(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.notificationsService.open(userId, id);
+  }
+
   @Patch(':id/read')
   async markAsRead(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.notificationsService.markAsRead(userId, id);

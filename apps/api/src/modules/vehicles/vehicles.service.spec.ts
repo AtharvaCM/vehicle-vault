@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VehiclesService } from './vehicles.service';
 
 describe('VehiclesService', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   type VehicleDelegateMock = {
     count: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -102,6 +103,7 @@ describe('VehiclesService', () => {
       accessService as never,
       catalogLinker as never,
       intervalResolver as never,
+      productEvents as never,
     );
   });
 
@@ -139,6 +141,11 @@ describe('VehiclesService', () => {
       }),
     });
     expect(result.id).toBe('vehicle-1');
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'vehicle_created',
+      userId: 'user-1',
+      vehicleId: 'vehicle-1',
+    });
   });
 
   it('auto-links a created vehicle to the resolved catalog references', async () => {

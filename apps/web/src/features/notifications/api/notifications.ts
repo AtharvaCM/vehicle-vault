@@ -19,8 +19,11 @@ export function notificationsQueryOptions() {
   });
 }
 
-export async function markNotificationRead(id: string): Promise<void> {
-  await apiClient.patch(endpoints.notifications.markRead(id), {});
+/**
+ * Opened from the bell: the API marks it read and counts the open.
+ */
+export async function openNotification(id: string): Promise<void> {
+  await apiClient.post(endpoints.notifications.open(id), {});
 }
 
 export async function markAllNotificationsRead(): Promise<void> {

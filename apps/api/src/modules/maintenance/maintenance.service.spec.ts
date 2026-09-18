@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MaintenanceService } from './maintenance.service';
 
 describe('MaintenanceService', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   type MaintenanceRecordDelegateMock = {
     count: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -127,6 +128,7 @@ describe('MaintenanceService', () => {
         searchByPrefix: vi.fn().mockResolvedValue([]),
         recordObservation: vi.fn().mockResolvedValue(undefined),
       } as never,
+      productEvents as never,
     );
   });
 
@@ -434,5 +436,148 @@ describe('MaintenanceService', () => {
       id: 'record-1',
       deleted: true,
     });
+  });
+});
+
+describe('MaintenanceService first_maintenance_logged', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
+  const at = new Date('2026-03-18T00:00:00.000Z');
+  const confirmed = {
+    id: 'record-1',
+    vehicleId: 'vehicle-1',
+    category: MaintenanceCategory.EngineOil,
+    serviceDate: at,
+    odometer: 12345,
+    workshopName: null,
+    invoiceNumber: null,
+    currencyCode: 'INR',
+    source: MaintenanceSource.Manual,
+    status: MaintenanceRecordStatus.Confirmed,
+    totalCost: new Prisma.Decimal(2499),
+    laborCost: null,
+    partsCost: null,
+    fluidsCost: null,
+    taxCost: null,
+    discountAmount: null,
+    notes: null,
+    metadata: null,
+    nextDueDate: null,
+    nextDueOdometer: null,
+    createdAt: at,
+    updatedAt: at,
+    lineItems: [],
+  };
+  const draft = { ...confirmed, status: MaintenanceRecordStatus.Draft };
+
+  /** The transaction client the callback receives — what the event must be written through. */
+  const tx = { marker: 'tx' };
+  const prisma = {
+    $transaction: vi.fn(),
+    maintenanceRecord: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+  };
+
+  const build = () =>
+    new MaintenanceService(
+      prisma as never,
+      {
+        ensureVehicleExists: vi.fn().mockResolvedValue({ id: 'vehicle-1', odometer: 12345 }),
+      } as never,
+      {} as never,
+      { track: vi.fn().mockResolvedValue(undefined) } as never,
+      { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
+      {
+        suggestCategory: vi.fn().mockResolvedValue(null),
+        searchByPrefix: vi.fn().mockResolvedValue([]),
+        recordObservation: vi.fn().mockResolvedValue(undefined),
+      } as never,
+      productEvents as never,
+    );
+
+  const payload = {
+    category: MaintenanceCategory.EngineOil,
+    serviceDate: '2026-03-18T00:00:00.000Z',
+    odometer: 12345,
+    totalCost: 2499,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.assign(tx, { maintenanceRecord: prisma.maintenanceRecord });
+    prisma.$transaction.mockImplementation((arg: unknown) =>
+      typeof arg === 'function'
+        ? (arg as (client: unknown) => unknown)(tx)
+        : Promise.resolve((arg as unknown[]).map(() => confirmed)),
+    );
+  });
+
+  it('is recorded inside the create transaction for a confirmed record', async () => {
+    prisma.maintenanceRecord.create.mockResolvedValue(confirmed);
+
+    await build().createForVehicle('user-1', 'vehicle-1', payload);
+
+    expect(productEvents.recordFirst).toHaveBeenCalledWith(tx, {
+      name: 'first_maintenance_logged',
+      userId: 'user-1',
+      vehicleId: 'vehicle-1',
+    });
+  });
+
+  it('is not recorded for a draft, which is not yet a service anyone agreed happened', async () => {
+    prisma.maintenanceRecord.create.mockResolvedValue(draft);
+
+    await build().createForVehicle('user-1', 'vehicle-1', {
+      ...payload,
+      status: MaintenanceRecordStatus.Draft,
+    });
+
+    expect(productEvents.recordFirst).not.toHaveBeenCalled();
+  });
+
+  it('is recorded when a draft is confirmed', async () => {
+    prisma.maintenanceRecord.findFirst.mockResolvedValue(draft);
+    prisma.maintenanceRecord.update.mockResolvedValue(confirmed);
+
+    await build().updateRecord('user-1', 'record-1', { status: MaintenanceRecordStatus.Confirmed });
+
+    expect(productEvents.recordFirst).toHaveBeenCalledWith(tx, {
+      name: 'first_maintenance_logged',
+      userId: 'user-1',
+      vehicleId: 'vehicle-1',
+    });
+  });
+
+  it('is not recorded for an edit to a record that was already confirmed', async () => {
+    prisma.maintenanceRecord.findFirst.mockResolvedValue(confirmed);
+    prisma.maintenanceRecord.update.mockResolvedValue(confirmed);
+
+    await build().updateRecord('user-1', 'record-1', { notes: 'typo fixed' });
+
+    expect(productEvents.recordFirst).not.toHaveBeenCalled();
+  });
+
+  it('joins the bulk import batch when any imported record is confirmed', async () => {
+    const service = build();
+
+    await service.createBulkForVehicle('user-1', 'vehicle-1', [
+      payload,
+      { ...payload, status: MaintenanceRecordStatus.Draft },
+    ]);
+
+    const batch = prisma.$transaction.mock.calls[0][0] as unknown[];
+    expect(batch).toHaveLength(3);
+    expect(productEvents.recordFirst).toHaveBeenCalledWith(prisma, {
+      name: 'first_maintenance_logged',
+      userId: 'user-1',
+      vehicleId: 'vehicle-1',
+    });
+  });
+
+  it('adds nothing to the batch when every imported record is a draft', async () => {
+    await build().createBulkForVehicle('user-1', 'vehicle-1', [
+      { ...payload, status: MaintenanceRecordStatus.Draft },
+    ]);
+
+    expect(prisma.$transaction.mock.calls[0][0]).toHaveLength(1);
+    expect(productEvents.recordFirst).not.toHaveBeenCalled();
   });
 });

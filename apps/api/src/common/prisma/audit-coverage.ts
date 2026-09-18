@@ -59,6 +59,9 @@ export const DEFAULT_EXEMPT_MODELS = new Set<string>([
   'OAuthAccount',
   'Notification',
   'AlertRaise',
+  // Telemetry about an action, written next to that action's own audit event —
+  // or on its own for reads like opening a notification. Not a user-facing mutation.
+  'ProductEvent',
   'ServiceInterval',
   'AttachmentExtraction',
   'MaintenanceLineItem',

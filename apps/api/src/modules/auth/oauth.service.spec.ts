@@ -23,6 +23,7 @@ function baseUser() {
 }
 
 describe('OAuthService.loginOrLink', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   let prisma: ReturnType<typeof basePrisma>;
   const tokenService = { rotateRefreshToken: vi.fn() };
   const jwtService = { signAsync: vi.fn() };
@@ -42,6 +43,7 @@ describe('OAuthService.loginOrLink', () => {
       tokenService as never,
       jwtService as never,
       auditService as never,
+      productEvents as never,
     );
   });
 
@@ -84,6 +86,8 @@ describe('OAuthService.loginOrLink', () => {
       data: { emailVerified: true },
     });
     expect(response.user.emailVerified).toBe(true);
+    // Linking an existing account is not a new account.
+    expect(productEvents.record).not.toHaveBeenCalled();
   });
 
   it('skips email-link when provider email is not verified', async () => {
@@ -132,5 +136,19 @@ describe('OAuthService.loginOrLink', () => {
       },
     });
     expect(response.user.id).toBe('user-99');
+  });
+
+  it('records a new OAuth account with its provider as the method', async () => {
+    prisma.oAuthAccount.findUnique.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ ...baseUser(), id: 'user-99' });
+
+    await service.loginOrLink(profile);
+
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'account_created',
+      userId: 'user-99',
+      properties: { method: 'google' },
+    });
   });
 });

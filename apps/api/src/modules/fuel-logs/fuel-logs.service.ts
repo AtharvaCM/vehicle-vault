@@ -4,6 +4,7 @@ import type { FuelLog } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
@@ -17,6 +18,7 @@ export class FuelLogsService {
     private readonly vehiclesService: VehiclesService,
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async getFuelLogsByVehicle(userId: string, vehicleId: string) {
@@ -74,6 +76,7 @@ export class FuelLogsService {
         after: created as unknown as Record<string, unknown>,
       });
       await this.bumpVehicleOdometer(tx, vehicleId, dto.odometer);
+      await this.productEvents.recordFirst(tx, { name: 'first_fuel_logged', userId, vehicleId });
       return created;
     });
 
@@ -111,6 +114,9 @@ export class FuelLogsService {
         count += 1;
       }
       await this.bumpVehicleOdometer(tx, vehicleId, maxOdometer);
+      if (count > 0) {
+        await this.productEvents.recordFirst(tx, { name: 'first_fuel_logged', userId, vehicleId });
+      }
       return { count };
     });
   }

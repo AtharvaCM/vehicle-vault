@@ -151,7 +151,7 @@ export const endpoints = {
   notifications: {
     list: () => '/notifications',
     unreadCount: () => '/notifications/unread-count',
-    markRead: (id: string) => `/notifications/${id}/read`,
+    open: (id: string) => `/notifications/${id}/open`,
     markAllRead: () => '/notifications/read-all',
     delete: (id: string) => `/notifications/${id}`,
     pushPublicKey: () => '/notifications/push/public-key',
