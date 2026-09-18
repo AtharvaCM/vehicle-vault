@@ -59,7 +59,7 @@ Adding a route: create `routes/x-route.tsx` → export from `routes/index.ts` �
 ## Testing
 
 - Unit: Vitest + jsdom, specs colocated (`*.spec.ts(x)`), setup in `src/test/setup.ts` (jest-dom, RTL cleanup, fresh in-memory localStorage per test).
-- E2E: Playwright under `tests/e2e/` — boots its own Vite server on 127.0.0.1:4307 proxying to a **live staging API** (`E2E_API_PROXY_TARGET`, default `https://vehiclevault.middle-earth.in`). Chromium-only, serial. Running e2e has real network dependencies.
+- E2E: Playwright under `tests/e2e/` — boots its own Vite server on 127.0.0.1:4307 proxying to a **local API** (`E2E_API_PROXY_TARGET`, default `http://127.0.0.1:3001`), and writes to the database directly to mark new users verified (`DATABASE_URL`, falling back to `apps/api/.env`). Both are checked when the config loads (`tests/e2e/helpers/api-target.ts`, `database-target.ts`): the production API needs `E2E_ALLOW_PRODUCTION_API=1` and any non-local database needs `E2E_ALLOW_REMOTE_DATABASE=1`, otherwise the run aborts before anything boots. The database guard is not production-specific because this repo is public and naming the production database would publish it. Chromium-only. `helpers/` is excluded from Playwright's test match, which lets the helpers carry Vitest unit specs.
 
 ## Known debt / ambiguities
 

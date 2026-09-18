@@ -197,6 +197,32 @@ If you want preview deployments to work without editing CORS each time, set `FRO
 - `pnpm catalog:audit -- --json` reports make/model/generation/variant and spec coverage against the configured database.
 - `pnpm catalog:sync-aliases` backfills curated alias rows onto the published vehicle catalog.
 
+## End-to-end tests
+
+The Playwright suite in `apps/web/tests/e2e` boots its own Vite server on `127.0.0.1:4307` and proxies `/api` to a running API. Every spec registers a new user, and the suite marks those users verified by writing to the database directly — so by default both ends stay on this machine:
+
+- **API:** `http://127.0.0.1:3001`, which is what `pnpm dev:api` serves. Set `E2E_API_PROXY_TARGET` to point elsewhere.
+- **Database:** `DATABASE_URL`, or `DATABASE_URL` from `apps/api/.env` when unset. It must be a local Postgres.
+
+```bash
+docker run -d --name vehicle-vault-e2e-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=vehicle_vault -p 5432:5432 postgres:16-alpine
+# apps/api/.env → DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public
+pnpm db:deploy
+# the seed script does not read apps/api/.env, so pass the URL explicitly
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vehicle_vault?schema=public pnpm db:seed
+pnpm dev:api
+pnpm --filter @vehicle-vault/web run test:e2e
+```
+
+The run refuses to start — before the dev server boots or any spec runs — unless you opt in explicitly:
+
+| Pointed at                             | Also set                      |
+| -------------------------------------- | ----------------------------- |
+| the production API                     | `E2E_ALLOW_PRODUCTION_API=1`  |
+| a database that is not on this machine | `E2E_ALLOW_REMOTE_DATABASE=1` |
+
+These guards exist because the suite used to default to production, which is how 25 of the 26 accounts there came to be test users. Keep the API on port 3001 on the same local database as the suite: the suite can check the database it writes to, but not the one the API writes to. CI sets both explicitly to its own Postgres service.
+
 ## Notes
 
 - Frontend routing is set up with TanStack Router.
