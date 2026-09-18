@@ -1,9 +1,14 @@
-import { ServiceBaselineStatus } from '@prisma/client';
+import { ServiceBaselineStatus, VehicleRole } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { MaintenanceRecordStatus, TyrePosition, type TyreCondition } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MaintenanceAlertService } from './maintenance-alert.service';
+import { NotifyService } from './notify.service';
+import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
 import { ReminderDueTemplate } from './templates/reminder-due.template';
+import { ServiceBaselineUnknownTemplate } from './templates/service-baseline-unknown.template';
+import { TyreWornTemplate } from './templates/tyre-worn.template';
 import type { VehicleTyreAlertState } from '../tyres/tyres.service';
 
 const NOW = new Date('2026-09-08T06:00:00.000Z');
@@ -28,6 +33,8 @@ const VEHICLE = {
     status: ServiceBaselineStatus;
     lastDoneOdometer: number | null;
   }[],
+  // A sole owner, as every vehicle starts. The fan-out tests add members.
+  members: [{ userId: 'u1', role: VehicleRole.owner }] as { userId: string; role: VehicleRole }[],
 };
 
 function condition(overrides: Partial<TyreCondition>): TyreCondition {
@@ -1045,5 +1052,317 @@ describe('MaintenanceAlertService cold-start prompts', () => {
       expect(stale).toHaveLength(1);
       expect(stale[0][4]).toBeUndefined();
     });
+  });
+});
+
+describe('MaintenanceAlertService member fan-out', () => {
+  let service: MaintenanceAlertService;
+
+  const OWNER = { userId: 'u1', role: VehicleRole.owner };
+  const EDITOR = { userId: 'u2', role: VehicleRole.editor };
+  const VIEWER = { userId: 'u3', role: VehicleRole.viewer };
+
+  const daysFromNow = (days: number) => new Date(NOW.getTime() + days * 24 * 60 * 60 * 1000);
+
+  /**
+   * One run that trips every kind the engine raises outside the cold-start
+   * prompts, each exactly once: an overdue oil change, a brake-pad history the
+   * owner said they do not know, a reminder three days out, an expiring policy,
+   * an expiring accessory warranty, one worn and one aged tyre, and a tyre
+   * reading gone stale.
+   */
+  function everyAlertOnce(members: { userId: string; role: VehicleRole }[]) {
+    prisma.vehicle.findUnique.mockResolvedValue({
+      ...VEHICLE,
+      maintenanceRecords: [{ category: 'engine_oil', odometer: 34_000 }],
+      serviceBaselines: [
+        { category: 'brake_pads', status: ServiceBaselineStatus.unknown, lastDoneOdometer: null },
+      ],
+      members,
+    });
+    intervals.resolveForVehicle.mockResolvedValue({
+      engine_oil: { km: 5_000 },
+      brake_pads: { km: 20_000 },
+    });
+    prisma.reminder.findMany.mockResolvedValue([
+      {
+        id: 'rem-1',
+        vehicleId: 'v1',
+        title: 'Insurance renewal',
+        dueDate: daysFromNow(3),
+        dueOdometer: null,
+        notes: null,
+      },
+    ]);
+    documents.findExpiring.mockResolvedValue([
+      { id: 'doc-1', vehicleId: 'v1', kind: 'insurance', endDate: daysFromNow(5) },
+    ]);
+    accessories.findExpiringWarranties.mockResolvedValue([
+      { id: 'acc-1', vehicleId: 'v1', name: 'Dashcam', warrantyExpiresAt: daysFromNow(10) },
+    ]);
+    tyres.getAlertState.mockResolvedValue(
+      alertState({
+        conditions: [
+          condition({ tyreId: 'tyre-1', level: 'illegal', reason: 'tread', treadDepthMm: 1.4 }),
+          condition({ tyreId: 'tyre-2', level: 'replace', reason: 'age', ageYears: 6.4 }),
+        ],
+        lastObservation: { at: new Date('2026-01-01T00:00:00.000Z'), odometer: 30_000 },
+      }),
+    );
+  }
+
+  /** Who each kind was raised to this run, in raise order. */
+  const recipientsByKind = () => {
+    const byKind = new Map<string, string[]>();
+    for (const [userId, , kind] of notify.raise.mock.calls) {
+      byKind.set(kind, [...(byKind.get(kind) ?? []), userId]);
+    }
+    return Object.fromEntries(byKind);
+  };
+
+  const NEWS_KINDS = [
+    'maintenance-overdue',
+    'reminder-due',
+    'document-expiring',
+    'accessory-warranty-expiring',
+    'tyre-worn',
+    'tyre-aged',
+  ];
+  const ASKING_KINDS = ['service-baseline-unknown', 'tyre-uninspected'];
+
+  beforeEach(() => {
+    service = buildService();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('tells every member of a shared vehicle what is due or wrong with it', async () => {
+    everyAlertOnce([OWNER, EDITOR, VIEWER]);
+
+    await service.runAlertChecks('v1');
+
+    const recipients = recipientsByKind();
+    for (const kind of NEWS_KINDS) {
+      expect(recipients[kind], kind).toEqual(['u1', 'u2', 'u3']);
+    }
+  });
+
+  it('asks only the members who can log an answer', async () => {
+    // Both of these ask the reader to record something. A viewer cannot, and
+    // since viewers stopped seeing the controls, could not even try.
+    everyAlertOnce([OWNER, EDITOR, VIEWER]);
+
+    await service.runAlertChecks('v1');
+
+    const recipients = recipientsByKind();
+    for (const kind of ASKING_KINDS) {
+      expect(recipients[kind], kind).toEqual(['u1', 'u2']);
+    }
+  });
+
+  it('raises to a sole owner exactly as it did before sharing', async () => {
+    everyAlertOnce([OWNER]);
+
+    await service.runAlertChecks('v1');
+
+    const recipients = recipientsByKind();
+    for (const kind of [...NEWS_KINDS, ...ASKING_KINDS]) {
+      expect(recipients[kind], kind).toEqual(['u1']);
+    }
+  });
+
+  it('falls back to the owner column for a vehicle with no member rows', async () => {
+    everyAlertOnce([]);
+
+    await service.runAlertChecks('v1');
+
+    expect(notify.raise.mock.calls.map(([userId]) => userId)).toEqual(
+      Array(NEWS_KINDS.length + ASKING_KINDS.length).fill('u1'),
+    );
+  });
+
+  it('follows the membership as it is on each run', async () => {
+    everyAlertOnce([OWNER, EDITOR, VIEWER]);
+    await service.runAlertChecks('v1');
+
+    // The viewer is removed and someone new joins as a viewer before the next run.
+    notify.raise.mockClear();
+    everyAlertOnce([OWNER, EDITOR, { userId: 'u4', role: VehicleRole.viewer }]);
+    await service.runAlertChecks('v1');
+
+    const raisedTo = new Set(notify.raise.mock.calls.map(([userId]) => userId));
+    expect(raisedTo.has('u3')).toBe(false);
+    expect(recipientsByKind()['maintenance-overdue']).toEqual(['u1', 'u2', 'u4']);
+  });
+
+  it('reads the members in the vehicle query, with no lookup of its own', async () => {
+    everyAlertOnce([OWNER, EDITOR, VIEWER]);
+
+    await service.runAlertChecks('v1');
+
+    // The Prisma stub has no vehicleMember model, so a separate lookup would throw.
+    expect(prisma.vehicle.findUnique).toHaveBeenCalledTimes(1);
+    expect(prisma.vehicle.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          members: { select: { userId: true, role: true } },
+        }),
+      }),
+    );
+  });
+
+  describe('cold-start prompts', () => {
+    const coldStart = (members: { userId: string; role: VehicleRole }[]) => {
+      prisma.vehicle.findUnique.mockResolvedValue({ ...VEHICLE, members });
+      intervals.resolveForVehicle.mockResolvedValue({});
+      tyres.getAlertState.mockResolvedValue(alertState({ conditions: [], lastObservation: null }));
+    };
+
+    it('asks the owner and editors, never the viewer', async () => {
+      coldStart([OWNER, EDITOR, VIEWER]);
+
+      await service.runAlertChecks('v1');
+
+      expect(recipientsByKind()).toEqual({
+        'service-baseline-unknown': ['u1', 'u2'],
+        'tyre-uninspected': ['u1', 'u2'],
+      });
+    });
+
+    it('judges dormancy for each member separately', async () => {
+      coldStart([OWNER, EDITOR]);
+      // The owner has been active; the editor has not been seen in months.
+      prisma.auditEvent.findFirst.mockImplementation((args: unknown) => {
+        const { actorUserId } = (args as { where: { actorUserId: string } }).where;
+        return Promise.resolve(actorUserId === 'u1' ? { id: 'evt-recent' } : null);
+      });
+
+      await service.runAlertChecks('v1');
+
+      const optionsFor = (userId: string) =>
+        notify.raise.mock.calls
+          .filter(([raisedTo, , kind]) => raisedTo === userId && kind === 'tyre-uninspected')
+          .map(([, , , , options]) => options);
+
+      expect(optionsFor('u1')).toEqual([expect.objectContaining({ inAppOnly: false })]);
+      expect(optionsFor('u2')).toEqual([expect.objectContaining({ inAppOnly: true })]);
+    });
+  });
+});
+
+/**
+ * The engine against the real NotifyService and templates, over a notification
+ * table that enforces the unread-dedup index the way Postgres does. The engine
+ * tests above stub `raise`, so they cannot say what a second run leaves behind.
+ */
+describe('MaintenanceAlertService re-runs with several members', () => {
+  type Row = { id: string; userId: string; dedupKey: string; kind: string; isRead: boolean };
+
+  function notificationTable() {
+    const rows: Row[] = [];
+    return {
+      rows,
+      notification: {
+        create: vi.fn(async ({ data }: { data: Omit<Row, 'id' | 'isRead'> }) => {
+          const clash = rows.some(
+            (row) => row.userId === data.userId && row.dedupKey === data.dedupKey && !row.isRead,
+          );
+          if (clash) {
+            throw new PrismaClientKnownRequestError('Unique constraint failed', {
+              code: 'P2002',
+              clientVersion: 'test',
+            });
+          }
+          const row = { ...data, id: `n${rows.length + 1}`, isRead: false };
+          rows.push(row);
+          return row;
+        }),
+        findFirst: vi.fn(async ({ where }: { where: { userId: string; dedupKey: string } }) => {
+          return (
+            rows.find(
+              (row) =>
+                row.userId === where.userId && row.dedupKey === where.dedupKey && !row.isRead,
+            ) ?? null
+          );
+        }),
+      },
+    };
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('leaves each member one unread copy of each alert, however often it runs', async () => {
+    buildService();
+    const table = notificationTable();
+    const notifyService = new NotifyService(
+      table as never,
+      [
+        new MaintenanceOverdueTemplate(),
+        new ReminderDueTemplate(),
+        new TyreWornTemplate(),
+        new ServiceBaselineUnknownTemplate(),
+      ] as never,
+      [],
+    );
+    const engine = new MaintenanceAlertService(
+      prisma as never,
+      insights as never,
+      notifyService,
+      documents as never,
+      intervals as never,
+      accessories as never,
+      tyres as never,
+    );
+
+    prisma.vehicle.findUnique.mockResolvedValue({
+      ...VEHICLE,
+      maintenanceRecords: [{ category: 'engine_oil', odometer: 34_000 }],
+      serviceBaselines: [
+        { category: 'brake_pads', status: ServiceBaselineStatus.unknown, lastDoneOdometer: null },
+      ],
+      members: [
+        { userId: 'u1', role: VehicleRole.owner },
+        { userId: 'u2', role: VehicleRole.editor },
+        { userId: 'u3', role: VehicleRole.viewer },
+      ],
+    });
+    intervals.resolveForVehicle.mockResolvedValue({
+      engine_oil: { km: 5_000 },
+      brake_pads: { km: 20_000 },
+    });
+    prisma.reminder.findMany.mockResolvedValue([
+      {
+        id: 'rem-1',
+        vehicleId: 'v1',
+        title: 'Insurance renewal',
+        dueDate: new Date('2026-09-11T00:00:00.000Z'),
+        dueOdometer: null,
+        notes: null,
+      },
+    ]);
+    tyres.getAlertState.mockResolvedValue(
+      alertState({
+        conditions: [condition({ level: 'illegal', reason: 'tread', treadDepthMm: 1.4 })],
+      }),
+    );
+
+    await engine.runAlertChecks('v1');
+    const afterFirstRun = table.rows.length;
+    await engine.runAlertChecks('v1');
+    await engine.runAlertChecks('v1');
+
+    // Three news alerts to three members, one question to the two who can answer it.
+    expect(afterFirstRun).toBe(3 * 3 + 2);
+    expect(table.rows).toHaveLength(afterFirstRun);
+    const copies = new Map<string, number>();
+    for (const row of table.rows) {
+      const key = `${row.userId} ${row.dedupKey}`;
+      copies.set(key, (copies.get(key) ?? 0) + 1);
+    }
+    expect([...copies.values()].every((count) => count === 1)).toBe(true);
   });
 });

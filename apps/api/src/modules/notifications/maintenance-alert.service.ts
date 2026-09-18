@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 // The Prisma enum rather than the shared one: these rows come straight off the
 // vehicle include, and re-casting them to the wire enum would be ceremony over
 // two identical string unions.
-import { ServiceBaselineStatus } from '@prisma/client';
+import { ServiceBaselineStatus, VehicleRole } from '@prisma/client';
 import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
@@ -15,7 +15,7 @@ import { TyresService, type VehicleTyreAlertState } from '../tyres/tyres.service
 // notifications module depend on the reminders module, which would close a
 // cycle (reminders → notifications → tyres).
 import { extractSlugFromNotes, TYRE_INSPECTION_SLUG } from '../reminders/catalog-marker';
-import type { AlertPayloads, ReminderAlertBasis } from './types';
+import type { AlertKind, AlertPayloads, ReminderAlertBasis } from './types';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import {
   ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
@@ -53,11 +53,40 @@ const PROMPT_DORMANT_AFTER_DAYS = 60;
 /** A prompt once asked — then read, ignored or deleted — is not asked again for this long. */
 const PROMPT_COOLDOWN_DAYS = 90;
 
+/**
+ * Who hears about a vehicle: the people it is shared with, not the legacy owner
+ * column. Everyone is told what is due or wrong with it; only the members who
+ * can record something are asked to.
+ */
+type Audience = {
+  /** Every member — owner, editors and viewers. */
+  everyone: string[];
+  /** The owner and editors: the members who can answer a request to log something. */
+  editors: string[];
+};
+
+/**
+ * The alerts that ask their reader to record something — service history, a
+ * tyre reading. A viewer cannot, and no longer sees the controls to try, so
+ * these go to the members who can. Every other alert is news about the vehicle
+ * and goes to all of them.
+ */
+const EDITOR_ONLY_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>([
+  'service-baseline-unknown',
+  'tyre-uninspected',
+]);
+
 /** The vehicle facts the tyre checks need, kept narrow so the tests can state them. */
-type TyreCheckVehicle = { id: string; userId: string; year: number; createdAt: Date };
+type TyreCheckVehicle = {
+  id: string;
+  userId: string;
+  year: number;
+  createdAt: Date;
+  audience: Audience;
+};
 
 /** The vehicle facts {@link MaintenanceAlertService.raisePrompt} needs. */
-type PromptVehicle = { id: string; userId: string; createdAt: Date };
+type PromptVehicle = { id: string; createdAt: Date; audience: Audience };
 
 function monthsBefore(date: Date, months: number): Date {
   const shifted = new Date(date);
@@ -121,10 +150,14 @@ export class MaintenanceAlertService {
         // once per vehicle in a loop over every vehicle in the database, and a
         // baseline is a small child row of the vehicle already being read.
         serviceBaselines: true,
+        // The alert audience, read in the same query for the same reason.
+        members: { select: { userId: true, role: true } },
       },
     });
 
     if (!vehicle) return;
+
+    const audience = this.audienceOf(vehicle);
 
     // One clock for the whole run, so two checks cannot land on different sides
     // of midnight and disagree about what is due.
@@ -150,7 +183,7 @@ export class MaintenanceAlertService {
       const baseline = baselines.get(category as MaintenanceCategory) ?? null;
 
       const lastOdo = await this.resolveLastDoneOdometer({
-        vehicle,
+        vehicle: { ...vehicle, audience },
         category,
         intervalKm: interval.km,
         lastRecordOdometer: lastRecord?.odometer ?? null,
@@ -164,7 +197,7 @@ export class MaintenanceAlertService {
       // Alert if due within the odometer window or already overdue
       if (remainingDistance <= ODOMETER_ALERT_WINDOW_KM) {
         const kind = remainingDistance < 0 ? 'maintenance-overdue' : 'maintenance-due';
-        await this.notifyService.raise(vehicle.userId, vehicle.id, kind, {
+        await this.raiseToMembers(audience, vehicle.id, kind, {
           vehicleId: vehicle.id,
           category,
           remainingDistanceKm: remainingDistance,
@@ -175,7 +208,7 @@ export class MaintenanceAlertService {
     // 2b. A vehicle nobody has told us anything about. Raised once for the whole
     // vehicle rather than once per category, because every category is in the
     // same state and ten notifications would say one thing.
-    await this.runServiceHistoryPrompt(vehicle, now);
+    await this.runServiceHistoryPrompt({ ...vehicle, audience }, now);
 
     // 3. Reminders the owner set themselves. Both timings are checked here: an
     // odometer mark the vehicle is approaching, and a due date the calendar has
@@ -212,9 +245,9 @@ export class MaintenanceAlertService {
       // Spelled out per kind rather than passed as a variable: `raise` is
       // generic over the kind, and a union would widen the payload it accepts.
       if (signal.kind === 'reminder-overdue') {
-        await this.notifyService.raise(vehicle.userId, vehicle.id, 'reminder-overdue', payload);
+        await this.raiseToMembers(audience, vehicle.id, 'reminder-overdue', payload);
       } else {
-        await this.notifyService.raise(vehicle.userId, vehicle.id, 'reminder-due', payload);
+        await this.raiseToMembers(audience, vehicle.id, 'reminder-due', payload);
       }
     }
 
@@ -236,7 +269,7 @@ export class MaintenanceAlertService {
         0,
         Math.ceil((doc.endDate.getTime() - today.getTime()) / MS_PER_DAY),
       );
-      await this.notifyService.raise(vehicle.userId, doc.vehicleId, 'document-expiring', {
+      await this.raiseToMembers(audience, doc.vehicleId, 'document-expiring', {
         document: doc,
         daysUntilExpiry,
       });
@@ -257,12 +290,10 @@ export class MaintenanceAlertService {
         0,
         Math.ceil((accessory.warrantyExpiresAt.getTime() - today.getTime()) / MS_PER_DAY),
       );
-      await this.notifyService.raise(
-        vehicle.userId,
-        accessory.vehicleId,
-        'accessory-warranty-expiring',
-        { accessory, daysUntilExpiry },
-      );
+      await this.raiseToMembers(audience, accessory.vehicleId, 'accessory-warranty-expiring', {
+        accessory,
+        daysUntilExpiry,
+      });
     }
 
     // 6. Tyres. Tread and age are the two wear limits an odometer-driven service
@@ -270,7 +301,49 @@ export class MaintenanceAlertService {
     // services, and rubber ages out whether or not the vehicle moves. The
     // grading already existed for the vehicle page; without this call nothing
     // reached the user unless they went looking.
-    await this.runTyreChecks(vehicle, now);
+    await this.runTyreChecks({ ...vehicle, audience }, now);
+  }
+
+  /**
+   * Everyone the vehicle is shared with, from its VehicleMember rows. Every
+   * vehicle has had an owner row since sharing shipped — created with the
+   * vehicle, backfilled before that — so the owner column is only a fallback
+   * for one that has somehow lost it, where it keeps the old behaviour.
+   */
+  private audienceOf(vehicle: {
+    userId: string;
+    members: { userId: string; role: VehicleRole }[];
+  }): Audience {
+    if (vehicle.members.length === 0) {
+      return { everyone: [vehicle.userId], editors: [vehicle.userId] };
+    }
+
+    return {
+      everyone: vehicle.members.map((member) => member.userId),
+      editors: vehicle.members
+        .filter((member) => member.role !== VehicleRole.viewer)
+        .map((member) => member.userId),
+    };
+  }
+
+  private recipientsFor(audience: Audience, kind: AlertKind): string[] {
+    return EDITOR_ONLY_KINDS.has(kind) ? audience.editors : audience.everyone;
+  }
+
+  /**
+   * One raise per recipient. Dedup, cooldowns and channel gating (a verified
+   * address, an unmuted inbox) are all per user in NotifyService, so each member
+   * gets their own row and their own delivery, and a re-run adds nothing.
+   */
+  private async raiseToMembers<K extends AlertKind>(
+    audience: Audience,
+    vehicleId: string,
+    kind: K,
+    payload: AlertPayloads[K],
+  ) {
+    for (const userId of this.recipientsFor(audience, kind)) {
+      await this.notifyService.raise(userId, vehicleId, kind, payload);
+    }
   }
 
   /**
@@ -341,7 +414,7 @@ export class MaintenanceAlertService {
    * overdue. Month-based intervals surface through the forecast, not alerts.
    */
   private async resolveLastDoneOdometer(args: {
-    vehicle: { id: string; userId: string; odometer: number };
+    vehicle: { id: string; odometer: number; audience: Audience };
     category: string;
     intervalKm: number;
     lastRecordOdometer: number | null;
@@ -353,7 +426,7 @@ export class MaintenanceAlertService {
     if (baseline?.lastDoneOdometer != null) return baseline.lastDoneOdometer;
 
     if (baseline?.status === ServiceBaselineStatus.unknown) {
-      await this.notifyService.raise(vehicle.userId, vehicle.id, 'service-baseline-unknown', {
+      await this.raiseToMembers(vehicle.audience, vehicle.id, 'service-baseline-unknown', {
         vehicleId: vehicle.id,
         odometer: vehicle.odometer,
         scope: 'category',
@@ -416,7 +489,7 @@ export class MaintenanceAlertService {
       if (condition.level === 'healthy' || condition.level === 'unknown') continue;
 
       if (condition.reason === 'tread') {
-        await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-worn', {
+        await this.raiseToMembers(vehicle.audience, vehicle.id, 'tyre-worn', {
           vehicleId: vehicle.id,
           tyreId: condition.tyreId,
           position: condition.position,
@@ -425,7 +498,7 @@ export class MaintenanceAlertService {
           treadDepthMm: condition.treadDepthMm,
         });
       } else if (condition.reason === 'age' && condition.level !== 'illegal') {
-        await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-aged', {
+        await this.raiseToMembers(vehicle.audience, vehicle.id, 'tyre-aged', {
           vehicleId: vehicle.id,
           tyreId: condition.tyreId,
           position: condition.position,
@@ -473,7 +546,7 @@ export class MaintenanceAlertService {
       Math.floor((now.getTime() - state.lastObservation.at.getTime()) / MS_PER_DAY),
     );
 
-    await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-uninspected', {
+    await this.raiseToMembers(vehicle.audience, vehicle.id, 'tyre-uninspected', {
       vehicleId: vehicle.id,
       odometer: state.vehicleOdometer,
       reason: 'stale',
@@ -511,10 +584,12 @@ export class MaintenanceAlertService {
   ) {
     if (vehicle.createdAt > daysBefore(now, PROMPT_NEW_VEHICLE_GRACE_DAYS)) return;
 
-    await this.notifyService.raise(vehicle.userId, vehicle.id, kind, payload, {
-      cooldownDays: PROMPT_COOLDOWN_DAYS,
-      inAppOnly: await this.isDormant(vehicle.userId, now),
-    });
+    for (const userId of this.recipientsFor(vehicle.audience, kind)) {
+      await this.notifyService.raise(userId, vehicle.id, kind, payload, {
+        cooldownDays: PROMPT_COOLDOWN_DAYS,
+        inAppOnly: await this.isDormant(userId, now),
+      });
+    }
   }
 
   /**
