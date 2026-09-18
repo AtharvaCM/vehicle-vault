@@ -210,9 +210,13 @@ export interface AlertTemplate<K extends AlertKind = AlertKind> {
 export type RaiseOptions = {
   /**
    * Skip the raise entirely when this user has had the same alert — as the
-   * template's `cooldownKey` defines "same" — within this many days, whether or
-   * not they read it. The default dedup only guards unread rows, so without
-   * this a read prompt comes back the next morning.
+   * template's `cooldownKey` defines "same" — within this many days, whether
+   * they read it, ignored it or deleted it. The default dedup only guards
+   * unread rows, so without this a read or deleted prompt comes back the next
+   * morning.
+   *
+   * Remembered in **AlertRaise**, which every raise under a cooldown writes to,
+   * rather than in the Notification rows, which the user is free to delete.
    */
   cooldownDays?: number;
   /**

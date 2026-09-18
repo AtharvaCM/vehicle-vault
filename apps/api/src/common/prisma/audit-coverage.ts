@@ -58,6 +58,7 @@ export const DEFAULT_EXEMPT_MODELS = new Set<string>([
   'User',
   'OAuthAccount',
   'Notification',
+  'AlertRaise',
   'ServiceInterval',
   'AttachmentExtraction',
   'MaintenanceLineItem',
