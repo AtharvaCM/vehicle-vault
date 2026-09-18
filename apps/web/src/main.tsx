@@ -2,10 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { AppProviders } from '@/app/providers';
+import { initClarity } from '@/lib/monitoring/init-clarity';
 import { initErrorReporting } from '@/lib/monitoring/init-error-reporting';
 import '@/styles/globals.css';
 
 initErrorReporting();
+initClarity();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

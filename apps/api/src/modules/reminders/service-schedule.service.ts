@@ -5,6 +5,7 @@ import { FuelType, ReminderStatus, VehicleType } from '@vehicle-vault/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import {
   MaintenanceIntervalResolver,
   type IntervalVehicleShape,
@@ -57,6 +58,7 @@ export class ServiceScheduleService {
     private readonly access: VehicleAccessService,
     private readonly intervalResolver: MaintenanceIntervalResolver,
     private readonly tyresService: TyresService,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async getSuggestions(userId: string, vehicleId: string): Promise<ServiceScheduleSuggestion[]> {
@@ -133,6 +135,14 @@ export class ServiceScheduleService {
           resourceType: AuditResourceType.reminder,
           resourceId: reminder.id,
           after: reminder as unknown as Record<string, unknown>,
+        });
+        // Counted per reminder the user chose to apply. A successor rolled forward on
+        // completion (`buildNextOccurrence`) is the app's doing, not theirs, and is not.
+        await this.productEvents.record(tx, {
+          name: 'reminder_created',
+          userId,
+          vehicleId,
+          properties: { source: 'schedule' },
         });
         created.push(reminder.id);
       }

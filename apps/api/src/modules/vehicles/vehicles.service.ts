@@ -21,6 +21,7 @@ import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditResourceType } from '@prisma/client';
 import type { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -38,6 +39,7 @@ export class VehiclesService {
     private readonly access: VehicleAccessService,
     private readonly catalogLinker: VehicleCatalogLinkerService,
     private readonly intervalResolver: MaintenanceIntervalResolver,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async getAllVehicles(userId: string) {
@@ -145,6 +147,11 @@ export class VehiclesService {
           resourceId: created.id,
           before: null,
           after: created as unknown as Record<string, unknown>,
+        });
+        await this.productEvents.record(tx, {
+          name: 'vehicle_created',
+          userId,
+          vehicleId: created.id,
         });
         return created;
       });

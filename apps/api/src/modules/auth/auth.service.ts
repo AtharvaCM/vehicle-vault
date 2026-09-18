@@ -42,6 +42,7 @@ import { RateLimitService } from '../../common/rate-limit/rate-limit.service';
 import { RateLimitedException } from '../../common/rate-limit/rate-limited.exception';
 import { AppConfigService } from '../../config/app-config.service';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditResourceType } from '@prisma/client';
 import { TokenService } from './token.service';
@@ -85,6 +86,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly auditService: AuditService,
     private readonly rateLimit: RateLimitService,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -108,6 +110,11 @@ export class AuthService {
         resourceType: AuditResourceType.user,
         resourceId: user.id,
         after: { email: user.email, name: user.name },
+      });
+      await this.productEvents.record(this.prisma, {
+        name: 'account_created',
+        userId: user.id,
+        properties: { method: 'password' },
       });
 
       const { url } = await this.tokenService.issueEmailVerification(user.id);
@@ -284,7 +291,9 @@ export class AuthService {
 
   async verifyEmail(payload: VerifyEmailDto) {
     const input = this.validateVerifyEmailInput(payload);
-    await this.tokenService.consumeEmailVerification(input.token);
+    const user = await this.tokenService.consumeEmailVerification(input.token);
+    // A spent or unknown token throws above, so this counts each verification once.
+    await this.productEvents.record(this.prisma, { name: 'email_verified', userId: user.id });
     return { verified: true };
   }
 

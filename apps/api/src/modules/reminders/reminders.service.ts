@@ -11,6 +11,7 @@ import {
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { NotificationsService } from '../notifications/notifications.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -50,6 +51,7 @@ export class RemindersService {
     private readonly access: VehicleAccessService,
     private readonly notificationsService: NotificationsService,
     private readonly serviceScheduleService: ServiceScheduleService,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async getAllReminders(userId: string) {
@@ -141,6 +143,12 @@ export class RemindersService {
         resourceType: AuditResourceType.reminder,
         resourceId: created.id,
         after: created as unknown as Record<string, unknown>,
+      });
+      await this.productEvents.record(tx, {
+        name: 'reminder_created',
+        userId,
+        vehicleId,
+        properties: { source: 'manual' },
       });
       return created;
     });

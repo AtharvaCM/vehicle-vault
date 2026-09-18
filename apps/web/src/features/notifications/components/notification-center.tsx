@@ -15,7 +15,7 @@ import { useNavigate, Link } from '@tanstack/react-router';
 
 import {
   useNotifications,
-  useMarkNotificationRead,
+  useOpenNotification,
   useMarkAllNotificationsRead,
 } from '../hooks/use-notifications';
 import { usePushNotifications } from '../hooks/use-push-notifications';
@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils/cn';
 export function NotificationCenter() {
   const navigate = useNavigate();
   const { data, isLoading } = useNotifications();
-  const markRead = useMarkNotificationRead();
+  const openNotification = useOpenNotification();
   const markAllRead = useMarkAllNotificationsRead();
   const push = usePushNotifications();
 
@@ -58,10 +58,10 @@ export function NotificationCenter() {
   const notifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;
 
+  // Every open from the list is sent — read or not — so the API can count
+  // revisits apart from the first open that followed the nudge.
   const handleNotificationClick = async (notif: Notification) => {
-    if (!notif.isRead) {
-      await markRead.mutateAsync(notif.id);
-    }
+    await openNotification.mutateAsync(notif.id);
     if (notif.link) {
       await navigate({ href: notif.link });
     }

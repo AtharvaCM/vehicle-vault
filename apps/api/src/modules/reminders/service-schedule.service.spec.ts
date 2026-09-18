@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ServiceScheduleService } from './service-schedule.service';
 
 describe('ServiceScheduleService', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   const prisma = {
     reminder: { findMany: vi.fn(), create: vi.fn() },
     $transaction: vi.fn(),
@@ -39,6 +40,7 @@ describe('ServiceScheduleService', () => {
       { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
       intervalResolver as never,
       tyresService as never,
+      productEvents as never,
     );
   });
 
@@ -112,6 +114,13 @@ describe('ServiceScheduleService', () => {
     expect(result.created).toHaveLength(2);
     expect(prisma.reminder.create).toHaveBeenCalledTimes(2);
     expect(auditService.track).toHaveBeenCalledTimes(2);
+    expect(productEvents.record).toHaveBeenCalledTimes(2);
+    expect(productEvents.record).toHaveBeenCalledWith(expect.anything(), {
+      name: 'reminder_created',
+      userId: 'u1',
+      vehicleId: 'v1',
+      properties: { source: 'schedule' },
+    });
     const firstCall = prisma.reminder.create.mock.calls[0][0].data;
     expect(firstCall.title).toBe('Engine oil change');
     expect(firstCall.dueOdometer).toBe(20000);

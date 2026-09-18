@@ -9,6 +9,8 @@ import { RolesGuard } from '../../common/auth/guards/roles.guard';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AdminService } from './admin.service';
 import { ListAdminUsersQueryDto } from './dto/list-users-query.dto';
+import { ProductEventSummaryQueryDto } from './dto/product-event-summary-query.dto';
+import { ProductEventsService } from '../product-events/product-events.service';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -16,7 +18,18 @@ import { ListAdminUsersQueryDto } from './dto/list-users-query.dto';
 @Roles('admin')
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly productEvents: ProductEventsService,
+  ) {}
+
+  @Get('product-events/summary')
+  @ApiOperation({
+    summary: 'Per-day counts of each product event over the last N days, UTC (admin only)',
+  })
+  async productEventSummary(@Query() query: ProductEventSummaryQueryDto) {
+    return successResponse(await this.productEvents.summary(query.days ?? 30));
+  }
 
   @Get('users')
   @ApiOperation({ summary: 'List users with optional search + pagination (admin only)' })

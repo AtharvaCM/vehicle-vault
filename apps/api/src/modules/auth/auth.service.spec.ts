@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { RateLimitedException } from '../../common/rate-limit/rate-limited.exception';
 
 describe('AuthService', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   type UserDelegateMock = {
     create: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
@@ -143,6 +144,7 @@ describe('AuthService', () => {
       tokenService as never,
       auditService as never,
       rateLimit as never,
+      productEvents as never,
     );
   });
 
@@ -198,6 +200,30 @@ describe('AuthService', () => {
         emailVerified: false,
       },
     });
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'account_created',
+      userId: 'user-1',
+      properties: { method: 'password' },
+    });
+  });
+
+  it('records a verified email once the token is spent, and not before', async () => {
+    tokenService.consumeEmailVerification.mockResolvedValue({ id: 'user-1' });
+
+    await service.verifyEmail({ token: 'a'.repeat(64) });
+
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'email_verified',
+      userId: 'user-1',
+    });
+  });
+
+  it('records nothing when the verification token is rejected', async () => {
+    tokenService.consumeEmailVerification.mockRejectedValue(new Error('spent'));
+
+    await expect(service.verifyEmail({ token: 'a'.repeat(64) })).rejects.toThrow('spent');
+
+    expect(productEvents.record).not.toHaveBeenCalled();
   });
 
   it('still registers when the verification email cannot be delivered', async () => {

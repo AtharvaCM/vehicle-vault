@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly productEvents: ProductEventsService,
+  ) {}
 
   async findAll(userId: string) {
     return this.prisma.notification.findMany({
@@ -23,6 +27,37 @@ export class NotificationsService {
     return this.prisma.notification.update({
       where: { id, userId },
       data: { isRead: true },
+    });
+  }
+
+  /**
+   * The bell's "open": mark it read and record that it was opened, together.
+   * Distinct from `markAsRead`, which marks without counting — only an open from
+   * the list says the alert brought someone back. `firstOpen` separates the open
+   * that followed the nudge from later revisits.
+   *
+   * No vehicle on the event: a notification's vehicleId has no foreign key and can
+   * name a vehicle deleted since, which the event's foreign key would refuse —
+   * failing the open over bookkeeping. The kind says enough.
+   */
+  async open(userId: string, id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const notification = await tx.notification.findFirst({ where: { id, userId } });
+      if (!notification) {
+        throw new NotFoundException('Notification not found.');
+      }
+
+      const opened = notification.isRead
+        ? notification
+        : await tx.notification.update({ where: { id }, data: { isRead: true } });
+
+      await this.productEvents.record(tx, {
+        name: 'notification_opened',
+        userId,
+        properties: { kind: notification.kind, firstOpen: !notification.isRead },
+      });
+
+      return opened;
     });
   }
 

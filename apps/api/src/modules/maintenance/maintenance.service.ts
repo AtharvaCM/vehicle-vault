@@ -17,6 +17,7 @@ import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { MaintenancePartsService } from '../maintenance-parts/maintenance-parts.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -43,6 +44,7 @@ export class MaintenanceService {
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
     private readonly parts: MaintenancePartsService,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async getAllRecords(userId: string) {
@@ -117,6 +119,14 @@ export class MaintenanceService {
         resourceId: created.id,
         after: created as unknown as Record<string, unknown>,
       });
+      // Only a confirmed record is a service someone logged; a draft is not yet.
+      if (created.status === MaintenanceRecordStatus.Confirmed) {
+        await this.productEvents.recordFirst(tx, {
+          name: 'first_maintenance_logged',
+          userId,
+          vehicleId,
+        });
+      }
       return created;
     });
 
@@ -177,14 +187,31 @@ export class MaintenanceService {
       await this.enrichLineItemsFromCatalog(input.lineItems);
     }
 
-    const created = await this.prisma.$transaction(
-      inputs.map((input) =>
-        this.prisma.maintenanceRecord.create({
-          data: this.toCreateMaintenanceData(input),
-          include: maintenanceRecordInclude,
-        }),
-      ),
+    // A missing status is the column default, confirmed; only drafts do not count.
+    const logsAService = inputs.some(
+      (input) =>
+        (input.status ?? MaintenanceRecordStatus.Confirmed) === MaintenanceRecordStatus.Confirmed,
     );
+    const creates = inputs.map((input) =>
+      this.prisma.maintenanceRecord.create({
+        data: this.toCreateMaintenanceData(input),
+        include: maintenanceRecordInclude,
+      }),
+    );
+    // Joined to the same batch, so the event commits or rolls back with the rows.
+    const results = await this.prisma.$transaction([
+      ...creates,
+      ...(logsAService
+        ? [
+            this.productEvents.recordFirst(this.prisma, {
+              name: 'first_maintenance_logged',
+              userId,
+              vehicleId,
+            }),
+          ]
+        : []),
+    ]);
+    const created = results.slice(0, creates.length) as Awaited<(typeof creates)[number]>[];
 
     for (const record of created) {
       await this.recordPartObservations(record.lineItems);
@@ -215,6 +242,17 @@ export class MaintenanceService {
         before: before as unknown as Record<string, unknown>,
         after: updated as unknown as Record<string, unknown>,
       });
+      // Confirming a draft is the moment it becomes a logged service.
+      if (
+        updated.status === MaintenanceRecordStatus.Confirmed &&
+        before.status !== MaintenanceRecordStatus.Confirmed
+      ) {
+        await this.productEvents.recordFirst(tx, {
+          name: 'first_maintenance_logged',
+          userId,
+          vehicleId: updated.vehicleId,
+        });
+      }
       return updated;
     });
 

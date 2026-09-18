@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RemindersService } from './reminders.service';
 
 describe('RemindersService', () => {
+  const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   type ReminderDelegateMock = {
     create: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
@@ -76,6 +77,7 @@ describe('RemindersService', () => {
       { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
       notificationsService as never,
       serviceScheduleService as never,
+      productEvents as never,
     );
   });
 
@@ -129,6 +131,12 @@ describe('RemindersService', () => {
       }),
     });
     expect(result.status).toBe(ReminderStatus.Overdue);
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'reminder_created',
+      userId: 'user-1',
+      vehicleId: 'vehicle-1',
+      properties: { source: 'manual' },
+    });
   });
 
   it('uses vehicle odometer to mark reminders due today', async () => {
@@ -275,6 +283,8 @@ describe('RemindersService', () => {
         ([, event]) => (event as { action: string }).action,
       );
       expect(actions).toEqual(['reminder.completed', 'reminder.created']);
+      // Rolled forward by the app, not created by the user: audited, not counted.
+      expect(productEvents.record).not.toHaveBeenCalled();
     });
 
     it('creates nothing when the reminder does not recur', async () => {

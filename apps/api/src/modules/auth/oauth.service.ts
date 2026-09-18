@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { TokenService } from './token.service';
 import type { JwtPayload } from './auth.types';
@@ -41,6 +42,7 @@ export class OAuthService {
     private readonly tokenService: TokenService,
     private readonly jwtService: JwtService,
     private readonly auditService: AuditService,
+    private readonly productEvents: ProductEventsService,
   ) {}
 
   async loginOrLink(profile: OAuthProfile): Promise<AuthResponse> {
@@ -70,6 +72,16 @@ export class OAuthService {
         resourceType: AuditResourceType.oauth_account,
         resourceId: null,
         after: { provider: profile.provider, email: user.email },
+      });
+    }
+
+    // An OAuth address arrives already verified, so these accounts never emit
+    // `email_verified`; the method here is what lets a funnel account for that.
+    if (outcome === 'linked_new') {
+      await this.productEvents.record(this.prisma, {
+        name: 'account_created',
+        userId: user.id,
+        properties: { method: profile.provider },
       });
     }
 
