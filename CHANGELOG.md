@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.28.0...v1.29.0) (2026-09-18)
+
+
+### Features
+
+* **web:** recovery screen for render errors and a real 404 ([2fc620f](https://github.com/AtharvaCM/vehicle-vault/commit/2fc620fcc9e1eb17f6cb65bd86234fe3fe7aaaf9))
+
 # [1.28.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.27.2...v1.28.0) (2026-09-18)
 
 
