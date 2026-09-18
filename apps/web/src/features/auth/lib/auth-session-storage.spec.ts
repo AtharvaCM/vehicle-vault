@@ -33,6 +33,7 @@ describe('authSessionStorage', () => {
         role: 'user',
         emailVerified: true,
         allowedCatalogSources: [],
+        emailVerificationDueAt: null,
       },
     });
 
@@ -46,6 +47,7 @@ describe('authSessionStorage', () => {
         role: 'user',
         emailVerified: true,
         allowedCatalogSources: [],
+        emailVerificationDueAt: null,
       },
     });
   });
@@ -70,6 +72,7 @@ describe('authSessionStorage', () => {
           role: 'user',
           emailVerified: true,
           allowedCatalogSources: [],
+          emailVerificationDueAt: null,
         },
       }),
     );
@@ -91,6 +94,7 @@ describe('authSessionStorage', () => {
           role: 'user',
           emailVerified: true,
           allowedCatalogSources: [],
+          emailVerificationDueAt: null,
         },
       }),
     );
@@ -114,6 +118,7 @@ describe('authSessionStorage', () => {
           role: 'user',
           emailVerified: true,
           allowedCatalogSources: [],
+          emailVerificationDueAt: null,
         },
       }),
     );
@@ -128,6 +133,7 @@ describe('authSessionStorage', () => {
         role: 'user',
         emailVerified: true,
         allowedCatalogSources: [],
+        emailVerificationDueAt: null,
       },
     });
   });
@@ -143,6 +149,7 @@ describe('authSessionStorage', () => {
         role: 'user',
         emailVerified: true,
         allowedCatalogSources: [],
+        emailVerificationDueAt: null,
       },
     });
 

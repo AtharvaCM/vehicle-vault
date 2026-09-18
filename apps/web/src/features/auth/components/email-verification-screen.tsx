@@ -1,36 +1,13 @@
-import { Mail, LogOut, RefreshCw, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { CheckCircle2, LogOut, Mail, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+
 import { useAuth } from '../hooks/use-auth';
-import { resendVerification } from '../api/resend-verification';
+import { useResendVerification } from '../hooks/use-resend-verification';
 
 export function EmailVerificationScreen() {
   const { user, logout } = useAuth();
-  const [isResending, setIsResending] = useState(false);
-  const [hasSent, setHasSent] = useState(false);
-
-  const handleResend = async () => {
-    if (!user?.email) return;
-
-    setIsResending(true);
-    try {
-      await resendVerification({ email: user.email });
-      setHasSent(true);
-      toast.success('Verification email sent!', {
-        description: 'Please check your inbox (and spam folder).',
-      });
-      // Reset "Sent" state after 60 seconds to allow another resend
-      setTimeout(() => setHasSent(false), 60000);
-    } catch {
-      toast.error('Failed to resend email', {
-        description: 'Please try again later or contact support.',
-      });
-    } finally {
-      setIsResending(false);
-    }
-  };
+  const { resend, isResending, hasSent } = useResendVerification(user?.email);
 
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
@@ -45,8 +22,8 @@ export function EmailVerificationScreen() {
           </h2>
           <p className="mt-3 text-slate-500">
             We&apos;ve sent a verification link to{' '}
-            <span className="font-semibold text-slate-900">{user?.email}</span>. Please check your
-            inbox to activate your account.
+            <span className="break-all font-semibold text-slate-900">{user?.email}</span>. Open it
+            to keep using Vehicle Vault — everything you have added is still here.
           </p>
         </div>
 
@@ -54,7 +31,7 @@ export function EmailVerificationScreen() {
           <Button
             className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             disabled={isResending || hasSent}
-            onClick={handleResend}
+            onClick={() => void resend()}
           >
             {isResending ? (
               <RefreshCw className="h-4 w-4 animate-spin" />

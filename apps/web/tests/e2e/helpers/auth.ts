@@ -9,26 +9,28 @@ type Credentials = {
 };
 
 /**
- * Registration leaves the account unverified, and an unverified session renders
- * the "Verify your email" screen on every route. Verify out of band, then sign
- * in properly so the test lands on a usable dashboard.
+ * Registers through the form. The new account is signed straight in and lands
+ * on the dashboard unverified, inside its week of grace, with the banner up.
  */
-export async function registerAndSignIn(page: Page, { email, name, password }: Credentials) {
+export async function registerUnverified(page: Page, { email, name, password }: Credentials) {
   await page.goto('/register');
   await page.getByLabel(/^name$/i).fill(name);
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole('button', { name: /create account/i }).click();
 
-  await expect(page.getByRole('heading', { name: /verify your email/i })).toBeVisible();
-  await markUserEmailVerified(email);
-
-  await page.getByRole('button', { name: /sign out/i }).click();
-  await expect(page).toHaveURL(/\/login$/);
-
-  await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/^password$/i).fill(password);
-  await page.getByRole('button', { name: /sign in/i }).click();
-
   await expect(page).toHaveURL(/\/dashboard$/);
+}
+
+/**
+ * The verification link only arrives by email, which the e2e environment
+ * deliberately cannot receive. Verify out of band so suites run as a settled
+ * account, then reload so the session picks the verified account up.
+ */
+export async function registerAndSignIn(page: Page, credentials: Credentials) {
+  await registerUnverified(page, credentials);
+  await markUserEmailVerified(credentials.email);
+
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 }

@@ -1,13 +1,19 @@
 import type { PropsWithChildren } from 'react';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { useRecheckVerificationOnReturn } from '@/features/auth/hooks/use-recheck-verification-on-return';
+import { EmailVerificationBanner } from '@/features/auth/components/email-verification-banner';
 import { EmailVerificationScreen } from '@/features/auth/components/email-verification-screen';
+import { getVerificationStatus } from '@/features/auth/lib/verification-status';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 
 export function AppLayout({ children }: PropsWithChildren) {
   const { user } = useAuth();
+  // A new account gets a week in the app before the wall; see verification-status.ts.
+  const verification = getVerificationStatus(user);
+  useRecheckVerificationOnReturn(verification.kind !== 'none');
 
-  if (user && !user.emailVerified) {
+  if (verification.kind === 'required') {
     return (
       <div className="min-h-screen bg-slate-50/70 text-foreground" data-clarity-mask="True">
         <EmailVerificationScreen />
@@ -30,6 +36,9 @@ export function AppLayout({ children }: PropsWithChildren) {
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <Topbar />
           <main className="flex-1" id="main-content">
+            {verification.kind === 'grace' ? (
+              <EmailVerificationBanner daysLeft={verification.daysLeft} />
+            ) : null}
             {children}
           </main>
         </div>

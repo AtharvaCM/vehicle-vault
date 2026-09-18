@@ -45,6 +45,7 @@ import { AuditService } from '../audit/audit.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditResourceType } from '@prisma/client';
+import { getEmailVerificationDueAt } from './email-verification-deadline';
 import { TokenService } from './token.service';
 import type { LoginDto } from './dto/login.dto';
 import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
@@ -449,6 +450,7 @@ export class AuthService {
       role: user.role,
       emailVerified: user.emailVerified,
       allowedCatalogSources: user.allowedCatalogSources,
+      emailVerificationDueAt: getEmailVerificationDueAt(user),
     });
   }
 }
