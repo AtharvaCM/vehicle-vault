@@ -50,7 +50,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const PROMPT_NEW_VEHICLE_GRACE_DAYS = 7;
 /** No audited action for this long and a prompt stays in the app instead of interrupting anyone. */
 const PROMPT_DORMANT_AFTER_DAYS = 60;
-/** A prompt someone has seen — read or not — is not asked again for this long. */
+/** A prompt once asked — then read, ignored or deleted — is not asked again for this long. */
 const PROMPT_COOLDOWN_DAYS = 90;
 
 /** The vehicle facts the tyre checks need, kept narrow so the tests can state them. */
@@ -492,9 +492,10 @@ export class MaintenanceAlertService {
    * - A vehicle added in the last week is still being set up. Asking its owner
    *   about tyres or service history they may be about to enter is noise, so
    *   nothing is raised at all.
-   * - The same prompt for the same vehicle is not asked twice in 90 days, read
-   *   or not. The dedup key alone only guards unread rows, so a prompt someone
-   *   read and chose to ignore used to come back the next morning.
+   * - The same prompt for the same vehicle is not asked twice in 90 days,
+   *   whether it was read, ignored or deleted. The dedup key alone only guards
+   *   unread rows, so a prompt someone read and chose to ignore used to come
+   *   back the next morning.
    * - Someone who has done nothing in 60 days still gets the row, so it is
    *   waiting in the app if they return, but no email and no push. Waking a
    *   dormant account to ask it a question is how a notification becomes spam.

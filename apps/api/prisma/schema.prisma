@@ -161,6 +161,7 @@ model Vehicle {
   tyreInspections     TyreInspection[]
   accessories         Accessory[]
   serviceBaselines    ServiceBaseline[]
+  alertRaises         AlertRaise[]
 
   @@unique([userId, registrationNumber])
   @@index([createdAt(sort: Desc)])
@@ -666,6 +667,7 @@ model User {
   vehicleInvitesSent              VehicleInvite[]           @relation("VehicleInviteAuthor")
   pushSubscriptions               PushSubscription[]
   documentDismissals              DocumentDismissal[]
+  alertRaises                     AlertRaise[]
 }
 
 enum Role {
@@ -901,6 +903,32 @@ model Notification {
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, isRead])
   @@index([userId, kind, createdAt(sort: Desc)])
+}
+
+/// A record that NotifyService raised an alert under a cooldown — who it went
+/// to, which alert, and when — and what `RaiseOptions.cooldownDays` reads to
+/// decide whether the same alert was raised too recently to raise again.
+///
+/// Separate from Notification because the inbox is the user's to delete from
+/// and a cooldown's memory cannot be. A cooldown that read the inbox forgot a
+/// prompt the moment someone deleted it — the clearest "stop asking" a user
+/// can give — so it came back the next morning. Rows here are only ever
+/// inserted, never tied to the Notification they produced, and outlive it;
+/// they go only with the user or the vehicle they are about.
+model AlertRaise {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  vehicleId String?  @db.Uuid
+  kind      String   @db.VarChar(60)
+  /// The raised Notification's dedup key. The cooldown matches it by prefix
+  /// against the template's `cooldownKey`, or exactly when there is none.
+  dedupKey  String   @db.VarChar(160)
+  raisedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, vehicleId, kind, raisedAt(sort: Desc)])
+  @@index([vehicleId])
 }
 
 // Global catalog of maintenance parts harvested from MaintenanceLineItem history.

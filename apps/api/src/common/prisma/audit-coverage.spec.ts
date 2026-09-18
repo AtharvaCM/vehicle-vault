@@ -38,6 +38,18 @@ describe('AuditCoverageScope', () => {
     expect(scope.violations()).toEqual([]);
   });
 
+  it('lets a cooldown raise write its notification and AlertRaise without an audit event', () => {
+    // NotifyService writes the pair in one transaction from the cron, where
+    // there is no actor to audit. Without the exemption every such raise
+    // would throw in dev and CI.
+    const scope = new AuditCoverageScope();
+
+    scope.recordOperation('Notification', 'create');
+    scope.recordOperation('AlertRaise', 'create');
+
+    expect(scope.violations()).toEqual([]);
+  });
+
   it('exposes the default exempt set including catalog and audit models', () => {
     expect(DEFAULT_EXEMPT_MODELS).toContain('AuditEvent');
     expect(DEFAULT_EXEMPT_MODELS).toContain('VehicleCatalogMake');

@@ -36,10 +36,12 @@ export class NotifyService {
    * — at most one unread row per `(userId, dedupKey)`. On collision we return
    * the existing row instead of throwing.
    *
-   * `options` can widen that into a cooldown across read rows too, and can keep
-   * the alert off every external Channel — see {@link RaiseOptions}. Either way
-   * the caller gets a row back: the one just created, or the one that made
-   * creating it unnecessary.
+   * `options` can widen that into a cooldown across read and deleted rows too,
+   * and can keep the alert off every external Channel — see
+   * {@link RaiseOptions}. The caller gets back the row just created, the unread
+   * row that made creating one unnecessary, or null when a cooldown held the
+   * alert back: the row that started the cooldown may since have been deleted,
+   * so there is not always one to return.
    */
   async raise<K extends AlertKind>(
     userId: string,
@@ -47,7 +49,7 @@ export class NotifyService {
     kind: K,
     payload: AlertPayloads[K],
     options: RaiseOptions = {},
-  ): Promise<Notification> {
+  ): Promise<Notification | null> {
     const template = this.templateByKind.get(kind) as AlertTemplate<K> | undefined;
     if (!template) {
       throw new Error(`No AlertTemplate registered for kind "${kind}"`);
@@ -56,7 +58,7 @@ export class NotifyService {
     const dedupKey = template.dedupKey(payload);
 
     if (options.cooldownDays != null) {
-      const recent = await this.findWithinCooldown(
+      const coolingDown = await this.raisedWithinCooldown(
         userId,
         vehicleId,
         kind,
@@ -64,27 +66,37 @@ export class NotifyService {
         dedupKey,
         options.cooldownDays,
       );
-      if (recent) return recent;
+      if (coolingDown) return null;
     }
 
     const rendered = template.render(payload);
+    const data = {
+      userId,
+      vehicleId,
+      kind,
+      dedupKey,
+      title: rendered.title,
+      message: rendered.message,
+      type: rendered.type,
+      link: rendered.link,
+    };
 
     let notification: Notification;
     let wasCreated = false;
 
     try {
-      notification = await this.prisma.notification.create({
-        data: {
-          userId,
-          vehicleId,
-          kind,
-          dedupKey,
-          title: rendered.title,
-          message: rendered.message,
-          type: rendered.type,
-          link: rendered.link,
-        },
-      });
+      // A cooldown is only as good as its record of what was raised, so the
+      // row and its AlertRaise are written together or not at all. A dedup
+      // collision on the row therefore records nothing: an unread copy of this
+      // alert is already there, and nobody has been asked anything new.
+      notification =
+        options.cooldownDays == null
+          ? await this.prisma.notification.create({ data })
+          : await this.prisma.$transaction(async (tx) => {
+              const created = await tx.notification.create({ data });
+              await tx.alertRaise.create({ data: { userId, vehicleId, kind, dedupKey } });
+              return created;
+            });
       wasCreated = true;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -105,37 +117,40 @@ export class NotifyService {
   }
 
   /**
-   * The newest row this user has had for the same alert inside the window,
-   * read or unread.
+   * Whether the same alert has been raised for this user inside the window,
+   * whatever has happened to its row since: read, unread or deleted.
+   *
+   * Asked of **AlertRaise** rather than of the Notification rows: the inbox is
+   * the user's to delete from, and a cooldown that read it forgot a prompt the
+   * moment someone deleted it, which is the plainest "stop asking" there is.
    *
    * Filtered by prefix in code rather than with a `startsWith` query: Prisma
    * compiles that to `LIKE`, where `_` in a key (a category such as
    * `engine_oil`) would match any character. The candidates are one user's
-   * rows of one kind for one vehicle over a few months, so there is nothing to
-   * gain from pushing the match into SQL. `(userId, kind, createdAt)` is indexed.
+   * raises of one kind for one vehicle over a few months, so there is nothing
+   * to gain from pushing the match into SQL. The query is covered by the
+   * `(userId, vehicleId, kind, raisedAt)` index.
    */
-  private async findWithinCooldown(
+  private async raisedWithinCooldown(
     userId: string,
     vehicleId: string | null,
     kind: AlertKind,
     cooldownKey: string | null,
     dedupKey: string,
     days: number,
-  ): Promise<Notification | null> {
-    const candidates = await this.prisma.notification.findMany({
+  ): Promise<boolean> {
+    const raises = await this.prisma.alertRaise.findMany({
       where: {
         userId,
         vehicleId,
         kind,
-        createdAt: { gte: new Date(Date.now() - days * MS_PER_DAY) },
+        raisedAt: { gte: new Date(Date.now() - days * MS_PER_DAY) },
       },
-      orderBy: { createdAt: 'desc' },
+      select: { dedupKey: true },
     });
 
-    return (
-      candidates.find((row) =>
-        cooldownKey ? row.dedupKey?.startsWith(cooldownKey) : row.dedupKey === dedupKey,
-      ) ?? null
+    return raises.some((raise) =>
+      cooldownKey ? raise.dedupKey.startsWith(cooldownKey) : raise.dedupKey === dedupKey,
     );
   }
 
