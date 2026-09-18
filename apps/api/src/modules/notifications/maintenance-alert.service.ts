@@ -15,7 +15,8 @@ import { TyresService, type VehicleTyreAlertState } from '../tyres/tyres.service
 // notifications module depend on the reminders module, which would close a
 // cycle (reminders → notifications → tyres).
 import { extractSlugFromNotes, TYRE_INSPECTION_SLUG } from '../reminders/catalog-marker';
-import type { ReminderAlertBasis } from './types';
+import type { AlertPayloads, ReminderAlertBasis } from './types';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import {
   ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
   SERVICE_HISTORY_PROMPT_KM,
@@ -38,13 +39,34 @@ const REMINDER_DUE_WINDOW_DAYS = DOCUMENT_EXPIRY_WINDOW_DAYS;
 const ODOMETER_ALERT_WINDOW_KM = 500;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// The cold-start prompts — `tyre-uninspected` for a vehicle with no tyres on
+// file, and the vehicle-scope `service-baseline-unknown` — ask the owner to
+// tell the app what it does not know. The 9 September cron raised 30 of them,
+// mostly to accounts idle for six months, and they would have greeted a vehicle
+// added the day before. These three numbers keep them for people who are
+// listening and polite to everyone else. See `raisePrompt`.
+
+/** A vehicle this new is still being set up; asking what its owner has not entered yet is premature. */
+const PROMPT_NEW_VEHICLE_GRACE_DAYS = 7;
+/** No audited action for this long and a prompt stays in the app instead of interrupting anyone. */
+const PROMPT_DORMANT_AFTER_DAYS = 60;
+/** A prompt someone has seen — read or not — is not asked again for this long. */
+const PROMPT_COOLDOWN_DAYS = 90;
+
 /** The vehicle facts the tyre checks need, kept narrow so the tests can state them. */
-type TyreCheckVehicle = { id: string; userId: string; year: number };
+type TyreCheckVehicle = { id: string; userId: string; year: number; createdAt: Date };
+
+/** The vehicle facts {@link MaintenanceAlertService.raisePrompt} needs. */
+type PromptVehicle = { id: string; userId: string; createdAt: Date };
 
 function monthsBefore(date: Date, months: number): Date {
   const shifted = new Date(date);
   shifted.setMonth(shifted.getMonth() - months);
   return shifted;
+}
+
+function daysBefore(date: Date, days: number): Date {
+  return new Date(date.getTime() - days * MS_PER_DAY);
 }
 
 /**
@@ -357,9 +379,7 @@ export class MaintenanceAlertService {
    * is the point: nobody has yet agreed the draft describes a real service.
    */
   private async runServiceHistoryPrompt(
-    vehicle: {
-      id: string;
-      userId: string;
+    vehicle: PromptVehicle & {
       odometer: number;
       year: number;
       maintenanceRecords: unknown[];
@@ -373,11 +393,12 @@ export class MaintenanceAlertService {
       return;
     }
 
-    await this.notifyService.raise(vehicle.userId, vehicle.id, 'service-baseline-unknown', {
-      vehicleId: vehicle.id,
-      odometer: vehicle.odometer,
-      scope: 'vehicle',
-    });
+    await this.raisePrompt(
+      vehicle,
+      'service-baseline-unknown',
+      { vehicleId: vehicle.id, odometer: vehicle.odometer, scope: 'vehicle' },
+      now,
+    );
   }
 
   /**
@@ -428,11 +449,12 @@ export class MaintenanceAlertService {
         return;
       }
 
-      await this.notifyService.raise(vehicle.userId, vehicle.id, 'tyre-uninspected', {
-        vehicleId: vehicle.id,
-        odometer: state.vehicleOdometer,
-        reason: 'untracked',
-      });
+      await this.raisePrompt(
+        vehicle,
+        'tyre-uninspected',
+        { vehicleId: vehicle.id, odometer: state.vehicleOdometer, reason: 'untracked' },
+        now,
+      );
       return;
     }
 
@@ -458,6 +480,62 @@ export class MaintenanceAlertService {
       kmSinceLastCheck,
       daysSinceLastCheck,
     });
+  }
+
+  /**
+   * Raise one of the two cold-start prompts, politely.
+   *
+   * Three rules, none of which touch the condition alerts (`tyre-worn`,
+   * `tyre-aged`, the category-scope baseline) — those describe something true
+   * about the vehicle and go out regardless:
+   *
+   * - A vehicle added in the last week is still being set up. Asking its owner
+   *   about tyres or service history they may be about to enter is noise, so
+   *   nothing is raised at all.
+   * - The same prompt for the same vehicle is not asked twice in 90 days, read
+   *   or not. The dedup key alone only guards unread rows, so a prompt someone
+   *   read and chose to ignore used to come back the next morning.
+   * - Someone who has done nothing in 60 days still gets the row, so it is
+   *   waiting in the app if they return, but no email and no push. Waking a
+   *   dormant account to ask it a question is how a notification becomes spam.
+   *
+   * Dormancy is judged per recipient, so fanning an alert out to more than one
+   * person decides it separately for each of them.
+   */
+  private async raisePrompt<K extends 'tyre-uninspected' | 'service-baseline-unknown'>(
+    vehicle: PromptVehicle,
+    kind: K,
+    payload: AlertPayloads[K],
+    now: Date,
+  ) {
+    if (vehicle.createdAt > daysBefore(now, PROMPT_NEW_VEHICLE_GRACE_DAYS)) return;
+
+    await this.notifyService.raise(vehicle.userId, vehicle.id, kind, payload, {
+      cooldownDays: PROMPT_COOLDOWN_DAYS,
+      inAppOnly: await this.isDormant(vehicle.userId, now),
+    });
+  }
+
+  /**
+   * No audited action by this user in the dormancy window.
+   *
+   * Any action counts, sign-ins included: the question is whether anyone is
+   * around to read a prompt, and signing in is the plainest evidence there is.
+   * A failed sign-in is the exception — it is recorded against the account it
+   * targeted, so without excluding it a stranger guessing passwords would keep
+   * a dormant account looking active.
+   */
+  private async isDormant(userId: string, now: Date): Promise<boolean> {
+    const recent = await this.prisma.auditEvent.findFirst({
+      where: {
+        actorUserId: userId,
+        occurredAt: { gte: daysBefore(now, PROMPT_DORMANT_AFTER_DAYS) },
+        action: { not: AUDIT_ACTIONS.auth.loginFailed },
+      },
+      select: { id: true },
+    });
+
+    return recent === null;
   }
 
   /**

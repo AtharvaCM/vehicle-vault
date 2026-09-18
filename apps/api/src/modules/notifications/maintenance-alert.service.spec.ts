@@ -13,6 +13,9 @@ const VEHICLE = {
   userId: 'u1',
   year: 2024,
   odometer: 40_000,
+  // Long past the new-vehicle grace period, so the prompts below are judged on
+  // their own merits. The grace-period tests say otherwise out loud.
+  createdAt: new Date('2025-01-15T00:00:00.000Z'),
   // `status` is optional for the same reason the column has a default: a record
   // without one is confirmed. Only the draft tests say it out loud.
   maintenanceRecords: [] as {
@@ -46,6 +49,7 @@ function condition(overrides: Partial<TyreCondition>): TyreCondition {
 const prisma = {
   vehicle: { findUnique: vi.fn() },
   reminder: { findMany: vi.fn() },
+  auditEvent: { findFirst: vi.fn() },
 };
 const insights = { getOdometerInsights: vi.fn() };
 const notify = { raise: vi.fn() };
@@ -76,6 +80,9 @@ function buildService(): MaintenanceAlertService {
 
   prisma.vehicle.findUnique.mockResolvedValue(VEHICLE);
   prisma.reminder.findMany.mockResolvedValue([]);
+  // An active owner by default — a recent audited action — so prompts go to
+  // every channel unless a test is specifically about dormancy.
+  prisma.auditEvent.findFirst.mockResolvedValue({ id: 'evt-recent' });
   insights.getOdometerInsights.mockResolvedValue({ currentOdometerPredicted: 40_000 });
   intervals.resolveForVehicle.mockResolvedValue({});
   documents.findExpiring.mockResolvedValue([]);
@@ -814,5 +821,229 @@ describe('MaintenanceAlertService date reminders', () => {
     await service.runAlertChecks('v1');
 
     expect(reminderAlerts()).toEqual([]);
+  });
+});
+
+describe('MaintenanceAlertService cold-start prompts', () => {
+  let service: MaintenanceAlertService;
+
+  const daysAgo = (days: number) => new Date(NOW.getTime() - days * 24 * 60 * 60 * 1000);
+
+  /** This vehicle is old enough for both prompts and has told the app nothing. */
+  const untold = (overrides: Partial<typeof VEHICLE> = {}) => ({ ...VEHICLE, ...overrides });
+
+  /**
+   * Audit events for the owner, answered the way Postgres would apply the
+   * engine's `where`. A stub that returned "active" or "dormant" outright
+   * would pass with the 60-day window or the failed-login exclusion deleted.
+   */
+  const auditTrail = (events: { action: string; occurredAt: Date; actorUserId?: string }[]) => {
+    prisma.auditEvent.findFirst.mockImplementation((args: unknown) => {
+      const where = (
+        args as {
+          where: { actorUserId: string; occurredAt: { gte: Date }; action: { not: string } };
+        }
+      ).where;
+      const match = events.find(
+        (event) =>
+          (event.actorUserId ?? 'u1') === where.actorUserId &&
+          event.occurredAt >= where.occurredAt.gte &&
+          event.action !== where.action.not,
+      );
+      return Promise.resolve(match ? { id: 'evt' } : null);
+    });
+  };
+
+  /** The prompts raised this run, with the options they were raised under. */
+  const prompts = () =>
+    notify.raise.mock.calls
+      .filter(
+        ([, , kind, payload]) =>
+          (kind === 'tyre-uninspected' && payload.reason === 'untracked') ||
+          (kind === 'service-baseline-unknown' && payload.scope === 'vehicle'),
+      )
+      .map(([, , kind, , options]) => ({ kind, options }));
+
+  beforeEach(() => {
+    service = buildService();
+    intervals.resolveForVehicle.mockResolvedValue({});
+    // No tyres on file: the `untracked` prompt's precondition.
+    tyres.getAlertState.mockResolvedValue(alertState({ conditions: [], lastObservation: null }));
+    auditTrail([{ action: 'vehicle.updated', occurredAt: daysAgo(2) }]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('new vehicles', () => {
+    it('asks nothing about a vehicle added three days ago, however old it is', async () => {
+      // 40 000 km is far past both prompt thresholds. The owner may be about to
+      // enter exactly what the prompts would ask for.
+      prisma.vehicle.findUnique.mockResolvedValue(untold({ createdAt: daysAgo(3) }));
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts()).toEqual([]);
+    });
+
+    it('asks once the vehicle is eight days old', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue(untold({ createdAt: daysAgo(8) }));
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts().map((prompt) => prompt.kind)).toEqual([
+        'service-baseline-unknown',
+        'tyre-uninspected',
+      ]);
+    });
+
+    it('still says what is actually wrong with a brand-new vehicle', async () => {
+      // A worn tyre is a fact, not a question, and waits for nobody's setup.
+      prisma.vehicle.findUnique.mockResolvedValue(untold({ createdAt: daysAgo(1) }));
+      tyres.getAlertState.mockResolvedValue(
+        alertState({
+          conditions: [condition({ level: 'illegal', reason: 'tread', treadDepthMm: 1.2 })],
+        }),
+      );
+
+      await service.runAlertChecks('v1');
+
+      expect(kindsRaised()).toContain('tyre-worn');
+    });
+  });
+
+  describe('dormant owners', () => {
+    it('keeps a prompt in the app for someone idle for 61 days', async () => {
+      auditTrail([{ action: 'vehicle.updated', occurredAt: daysAgo(61) }]);
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts()).toHaveLength(2);
+      for (const prompt of prompts()) {
+        expect(prompt.options).toEqual(expect.objectContaining({ inAppOnly: true }));
+      }
+    });
+
+    it('delivers everywhere to someone who acted 59 days ago', async () => {
+      auditTrail([{ action: 'vehicle.updated', occurredAt: daysAgo(59) }]);
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts()).toHaveLength(2);
+      for (const prompt of prompts()) {
+        expect(prompt.options).toEqual(expect.objectContaining({ inAppOnly: false }));
+      }
+    });
+
+    it('counts signing in as being around', async () => {
+      auditTrail([{ action: 'auth.login_succeeded', occurredAt: daysAgo(5) }]);
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts()[0].options).toEqual(expect.objectContaining({ inAppOnly: false }));
+    });
+
+    it('does not let a stranger’s failed sign-ins make an idle account look active', async () => {
+      // A failed login is recorded against the account it targeted.
+      auditTrail([
+        { action: 'auth.login_failed', occurredAt: daysAgo(1) },
+        { action: 'vehicle.updated', occurredAt: daysAgo(200) },
+      ]);
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts()[0].options).toEqual(expect.objectContaining({ inAppOnly: true }));
+    });
+
+    it('judges the recipient, not whoever happens to act on the vehicle', async () => {
+      // Someone else's recent activity says nothing about whether the owner is
+      // around — the distinction that matters once alerts reach every member.
+      auditTrail([{ action: 'vehicle.updated', occurredAt: daysAgo(1), actorUserId: 'u2' }]);
+
+      await service.runAlertChecks('v1');
+
+      expect(prompts()[0].options).toEqual(expect.objectContaining({ inAppOnly: true }));
+    });
+
+    it('never mutes a condition alert for a dormant owner', async () => {
+      auditTrail([]);
+      tyres.getAlertState.mockResolvedValue(
+        alertState({
+          conditions: [condition({ level: 'illegal', reason: 'tread', treadDepthMm: 1.2 })],
+        }),
+      );
+
+      await service.runAlertChecks('v1');
+
+      const worn = notify.raise.mock.calls.find(([, , kind]) => kind === 'tyre-worn');
+      expect(worn).toBeDefined();
+      expect(worn?.[4]).toBeUndefined();
+    });
+  });
+
+  describe('repetition', () => {
+    it('asks for a 90-day cooldown on both prompts', async () => {
+      await service.runAlertChecks('v1');
+
+      expect(prompts()).toEqual([
+        {
+          kind: 'service-baseline-unknown',
+          options: expect.objectContaining({ cooldownDays: 90 }),
+        },
+        { kind: 'tyre-uninspected', options: expect.objectContaining({ cooldownDays: 90 }) },
+      ]);
+    });
+
+    it('leaves the category-scope baseline alert exactly as it was', async () => {
+      // The owner answered "unknown" for one category: an answer, not silence,
+      // and not one of the prompts this policy is about.
+      intervals.resolveForVehicle.mockResolvedValue({
+        brake_pads: { km: 30_000, months: 24, source: 'default' },
+      });
+      prisma.vehicle.findUnique.mockResolvedValue(
+        untold({
+          createdAt: daysAgo(1),
+          serviceBaselines: [
+            {
+              category: 'brake_pads',
+              status: ServiceBaselineStatus.unknown,
+              lastDoneOdometer: null,
+            },
+          ],
+        }),
+      );
+      auditTrail([]);
+
+      await service.runAlertChecks('v1');
+
+      const categoryScope = notify.raise.mock.calls.filter(
+        ([, , kind, payload]) =>
+          kind === 'service-baseline-unknown' && payload.scope === 'category',
+      );
+      expect(categoryScope).toHaveLength(1);
+      expect(categoryScope[0][4]).toBeUndefined();
+    });
+
+    it('leaves the stale-tyre reminder exactly as it was', async () => {
+      // Tyres are on file, just not measured lately. That is not a cold-start
+      // question about a vehicle nobody has described.
+      prisma.vehicle.findUnique.mockResolvedValue(untold({ createdAt: daysAgo(1) }));
+      tyres.getAlertState.mockResolvedValue(
+        alertState({
+          conditions: [condition({})],
+          lastObservation: { at: daysAgo(40), odometer: 33_500 },
+        }),
+      );
+      auditTrail([]);
+
+      await service.runAlertChecks('v1');
+
+      const stale = notify.raise.mock.calls.filter(
+        ([, , kind, payload]) => kind === 'tyre-uninspected' && payload.reason === 'stale',
+      );
+      expect(stale).toHaveLength(1);
+      expect(stale[0][4]).toBeUndefined();
+    });
   });
 });
