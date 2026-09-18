@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.26.0...v1.27.0) (2026-09-18)
+
+
+### Features
+
+* **notifications:** quiet the cold-start prompts ([3c4b5ba](https://github.com/AtharvaCM/vehicle-vault/commit/3c4b5bad038d2994a5d92830867924a2bcedd0fd)), closes [#90](https://github.com/AtharvaCM/vehicle-vault/issues/90)
+
 # [1.26.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.25.1...v1.26.0) (2026-09-11)
 
 
