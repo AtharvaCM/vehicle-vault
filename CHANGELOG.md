@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.29.0...v1.30.0) (2026-09-18)
+
+
+### Features
+
+* **web:** landing page for logged-out visitors ([9bd3cc7](https://github.com/AtharvaCM/vehicle-vault/commit/9bd3cc7593a4d57cb0340aa9e31b745902861553))
+
 # [1.29.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.28.0...v1.29.0) (2026-09-18)
 
 
