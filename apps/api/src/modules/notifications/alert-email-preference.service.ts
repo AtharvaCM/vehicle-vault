@@ -11,7 +11,12 @@ export type AlertEmailPreference = {
 };
 
 /**
- * Whether a user has silenced alert email, and the two ways that changes.
+ * The one-click unsubscribe: silence every alert email for a user.
+ *
+ * Only muting lives here. Turning email back on — for every kind or just some —
+ * is a notification preference and goes through NotificationPreferencesService,
+ * which reads this mute as every email toggle off and clears it when any comes
+ * back on.
  *
  * Scoped to alert email on purpose. Verification, password reset, and invite
  * mail are transactional — each one answers something the recipient just did —
@@ -26,15 +31,6 @@ export class AlertEmailPreferenceService {
     private readonly auditService: AuditService,
   ) {}
 
-  async get(userId: string): Promise<AlertEmailPreference> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { alertEmailsMutedAt: true },
-    });
-
-    return toPreference(user?.alertEmailsMutedAt ?? null);
-  }
-
   /**
    * `actorUserId` is null when this came from an unsubscribe link: the token
    * proves control of the mailbox, not of a session, and recording the user as
@@ -45,13 +41,6 @@ export class AlertEmailPreferenceService {
     options: { actorUserId: string | null },
   ): Promise<AlertEmailPreference> {
     return this.set(userId, new Date(), AUDIT_ACTIONS.notification.alertEmailMuted, options);
-  }
-
-  async unmute(
-    userId: string,
-    options: { actorUserId: string | null },
-  ): Promise<AlertEmailPreference> {
-    return this.set(userId, null, AUDIT_ACTIONS.notification.alertEmailUnmuted, options);
   }
 
   private async set(

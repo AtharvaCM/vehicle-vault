@@ -42,10 +42,10 @@ describe('UnsubscribeController', () => {
       expect(page).toContain('still see them in the app');
     });
 
-    it('links back to Settings so the decision is reversible', async () => {
+    it('links to the notification preferences so the decision is reversible', async () => {
       const page = html(await controller.unsubscribe(tokens.issue('user-1'), res as never));
 
-      expect(page).toContain('https://app.example/settings');
+      expect(page).toContain('https://app.example/settings/preferences');
     });
 
     it('rejects a tampered token without touching the preference', async () => {
@@ -84,7 +84,7 @@ describe('UnsubscribeController', () => {
 
       const page = html(await controller.unsubscribe(tokens.issue('user-1'), res as never));
 
-      expect(page).toContain('href="https://app.example/settings"');
+      expect(page).toContain('href="https://app.example/settings/preferences"');
       expect(page).not.toContain('onload=');
     });
   });

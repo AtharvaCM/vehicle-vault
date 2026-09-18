@@ -23,26 +23,10 @@ describe('AlertEmailPreferenceService', () => {
     tx.user.update.mockResolvedValue({ alertEmailsMutedAt: after });
   };
 
-  const auditedActions = () => audit.track.mock.calls.map(([, input]) => input.action);
-
   beforeEach(() => {
     vi.clearAllMocks();
     prisma.$transaction.mockImplementation((fn: (client: typeof tx) => unknown) => fn(tx));
     service = new AlertEmailPreferenceService(prisma as never, audit as never);
-  });
-
-  describe('get', () => {
-    it('reports an untouched user as unmuted', async () => {
-      prisma.user.findUnique.mockResolvedValue({ alertEmailsMutedAt: null });
-
-      expect(await service.get('user-1')).toEqual({ muted: false, mutedAt: null });
-    });
-
-    it('reports when the mute happened, not just that it did', async () => {
-      prisma.user.findUnique.mockResolvedValue({ alertEmailsMutedAt: MUTED_AT });
-
-      expect(await service.get('user-1')).toEqual({ muted: true, mutedAt: MUTED_AT });
-    });
   });
 
   describe('mute', () => {
@@ -97,30 +81,6 @@ describe('AlertEmailPreferenceService', () => {
         'That account no longer exists.',
       );
       expect(tx.user.update).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('unmute', () => {
-    it('clears the stamp and audits the other direction', async () => {
-      given(MUTED_AT, null);
-
-      expect(await service.unmute('user-1', { actorUserId: 'user-1' })).toEqual({
-        muted: false,
-        mutedAt: null,
-      });
-      expect(tx.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { alertEmailsMutedAt: null } }),
-      );
-      expect(auditedActions()).toEqual(['notification.alert_email_unmuted']);
-    });
-
-    it('does nothing for a user who was never muted', async () => {
-      given(null, null);
-
-      await service.unmute('user-1', { actorUserId: 'user-1' });
-
-      expect(tx.user.update).not.toHaveBeenCalled();
-      expect(audit.track).not.toHaveBeenCalled();
     });
   });
 

@@ -26,6 +26,15 @@ describe('formatAuditAction', () => {
     });
   });
 
+  it('names notification preference changes', () => {
+    expect(formatAuditAction('notification.preferences_updated').label).toBe(
+      'Notification preferences updated',
+    );
+    expect(formatAuditAction('notification.alert_email_muted').label).toBe(
+      'Notification emails turned off',
+    );
+  });
+
   it('falls back to a humanised label for unknown actions', () => {
     expect(formatAuditAction('widget.frobnicated')).toEqual({
       label: 'widget frobnicated',

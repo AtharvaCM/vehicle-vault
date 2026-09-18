@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronRight, Download, History, ScanSearch, ShieldCheck } from 'lucide-react';
+import { BellRing, ChevronRight, Download, History, ScanSearch, ShieldCheck } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { InlineError } from '@/components/shared/inline-error';
@@ -12,7 +12,6 @@ import { appToast } from '@/lib/toast';
 
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
 import { useReconcileAttachments } from '../hooks/use-reconcile-attachments';
-import { AlertEmailCard } from '../components/alert-email-card';
 import { CatalogImportReviewCard } from '../components/catalog-import-review-card';
 
 export function SettingsPage() {
@@ -64,7 +63,7 @@ export function SettingsPage() {
   return (
     <PageContainer>
       <PageTitle
-        description="View your account and download a backup of your garage data."
+        description="Your account, your notification preferences, and a backup of your garage data."
         title="Settings"
       />
 
@@ -127,48 +126,60 @@ export function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Preferences</CardTitle>
-            <CardDescription>More personal settings will appear here over time.</CardDescription>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>
+              Choose which alerts reach you by email and push, and turn push on for this device.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
-            <div className="space-y-2">
-              <p>
-                Reminder defaults, currency, and date formatting are planned for a future update.
-              </p>
-              <p>For now, this page also includes a repair tool for attachment metadata.</p>
-            </div>
-            <div className="space-y-3 rounded-xl border border-border/70 bg-slate-50/80 p-4">
-              <div className="space-y-1">
-                <p className="font-semibold text-slate-900">Attachment reconciliation</p>
-                <p className="text-sm leading-6 text-slate-600">
-                  Scan your attachment records and remove stale metadata if a stored file is no
-                  longer available.
-                </p>
-              </div>
-              {reconcileMutation.isError ? (
-                <InlineError
-                  message={getApiErrorMessage(
-                    reconcileMutation.error,
-                    "We couldn't complete the attachment cleanup check right now.",
-                  )}
-                />
-              ) : null}
-              <Button
-                className="w-full justify-center sm:w-auto"
-                disabled={reconcileMutation.isPending}
-                onClick={() => {
-                  void handleReconcileAttachments();
-                }}
-                type="button"
-                variant="outline"
-              >
-                <ScanSearch className="mr-2 h-4 w-4" />
-                {reconcileMutation.isPending ? 'Checking attachments...' : 'Reconcile attachments'}
-              </Button>
-            </div>
+            <p>
+              Every alert stays in the bell either way. These settings only decide what else reaches
+              you.
+            </p>
+            <Link
+              to="/settings/preferences"
+              className="flex items-center justify-between rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3 font-medium text-slate-900 transition-colors hover:bg-slate-100"
+            >
+              <span className="flex items-center gap-2">
+                <BellRing className="h-4 w-4 text-slate-500" />
+                Notification preferences
+              </span>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </Link>
           </CardContent>
         </Card>
-        <AlertEmailCard />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Attachment reconciliation</CardTitle>
+            <CardDescription>
+              Scan your attachment records and remove stale metadata if a stored file is no longer
+              available.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+            {reconcileMutation.isError ? (
+              <InlineError
+                message={getApiErrorMessage(
+                  reconcileMutation.error,
+                  "We couldn't complete the attachment cleanup check right now.",
+                )}
+              />
+            ) : null}
+            <Button
+              className="w-full justify-center sm:w-auto"
+              disabled={reconcileMutation.isPending}
+              onClick={() => {
+                void handleReconcileAttachments();
+              }}
+              type="button"
+              variant="outline"
+            >
+              <ScanSearch className="mr-2 h-4 w-4" />
+              {reconcileMutation.isPending ? 'Checking attachments...' : 'Reconcile attachments'}
+            </Button>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

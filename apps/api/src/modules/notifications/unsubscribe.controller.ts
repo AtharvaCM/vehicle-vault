@@ -59,7 +59,7 @@ export class UnsubscribeController {
       res.status(400);
       return this.page(
         'This link is not valid',
-        'It may have been altered in transit or truncated by your mail client. You can turn alert emails off from Settings instead.',
+        'It may have been altered in transit or truncated by your mail client. You can turn alert emails off from your notification preferences instead.',
       );
     }
 
@@ -77,7 +77,7 @@ export class UnsubscribeController {
 
     return this.page(
       'Alert emails are off',
-      'We will stop emailing you maintenance alerts. You will still see them in the app and in push notifications, and you can turn email back on any time from Settings.',
+      'We will stop emailing you maintenance alerts. You will still see them in the app and in push notifications, and you can turn email back on, for every alert or just some, from your notification preferences.',
     );
   }
 
@@ -107,7 +107,10 @@ export class UnsubscribeController {
   }
 
   private page(heading: string, body: string): StreamableFile {
-    const settingsUrl = new URL('/settings', this.appConfigService.frontendOrigin).toString();
+    const settingsUrl = new URL(
+      '/settings/preferences',
+      this.appConfigService.frontendOrigin,
+    ).toString();
 
     return new StreamableFile(
       Buffer.from(
@@ -122,7 +125,7 @@ export class UnsubscribeController {
           '<h1 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#0f172a;">Vehicle Vault</h1>',
           `<h2 style="margin:0 0 12px;font-size:16px;font-weight:700;color:#0f172a;">${escapeHtml(heading)}</h2>`,
           `<p style="margin:0 0 24px;font-size:14px;line-height:22px;">${escapeHtml(body)}</p>`,
-          `<p style="margin:0;font-size:14px;"><a href="${escapeAttribute(settingsUrl)}" style="color:#0f172a;">Open Vehicle Vault settings</a></p>`,
+          `<p style="margin:0;font-size:14px;"><a href="${escapeAttribute(settingsUrl)}" style="color:#0f172a;">Open notification preferences</a></p>`,
           '</main></body></html>',
         ].join(''),
         'utf8',

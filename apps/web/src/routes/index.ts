@@ -17,6 +17,7 @@ export * from './reset-password-route';
 export * from './root-route';
 export * from './settings-route';
 export * from './settings-activity-route';
+export * from './settings-preferences-route';
 export * from './vehicle-detail-route';
 export * from './vehicle-edit-route';
 export * from './vehicle-maintenance-new-route';
