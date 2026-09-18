@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.31.1...v1.32.0) (2026-09-18)
+
+
+### Features
+
+* **web:** hide write controls from vehicle viewers ([7b222f6](https://github.com/AtharvaCM/vehicle-vault/commit/7b222f6fbf8b313d9d3aa981feb2c02aee15d6f1)), closes [#89](https://github.com/AtharvaCM/vehicle-vault/issues/89)
+
 ## [1.31.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.31.0...v1.31.1) (2026-09-18)
 
 
