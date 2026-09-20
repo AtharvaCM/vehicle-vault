@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { BulkReminderActions } from '../components/bulk-reminder-actions';
@@ -41,6 +42,8 @@ export function VehicleRemindersPage({
 }: VehicleRemindersPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const bulkCompleteMutation = useBulkCompleteReminders();
   const bulkDeleteMutation = useBulkDeleteReminders();
   const [selectedReminderIds, setSelectedReminderIds] = useState<string[]>([]);
@@ -178,142 +181,154 @@ export function VehicleRemindersPage({
   }
 
   return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <div className="flex gap-3">
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId"
-            >
-              Back to Vehicle
-            </Link>
-            <Link
-              className={buttonVariants()}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/reminders/new"
-            >
-              Add Reminder
-            </Link>
-          </div>
-        }
-        description="Keep service, insurance, PUC, and custom reminders tied to this vehicle."
-        title={`${vehicleTitle} Reminders`}
-      />
-
-      {remindersQuery.isPending ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading reminders</CardTitle>
-            <CardDescription>Getting reminders for this vehicle.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-600">
-            Please wait while we load the due items.
-          </CardContent>
-        </Card>
-      ) : remindersQuery.isError ? (
-        <ErrorState
-          action={
-            <Button onClick={() => remindersQuery.refetch()} variant="secondary">
-              Retry
-            </Button>
-          }
-          description="We couldn't load this vehicle's reminders. Try again in a moment."
-          title="Unable to load reminders"
-        />
-      ) : remindersQuery.data.length ? (
-        <div className="grid gap-4">
-          <ServiceSchedulePanel vehicleId={vehicleId} />
-          <BulkReminderActions
-            isCompleting={bulkCompleteMutation.isPending}
-            isDeleting={bulkDeleteMutation.isPending}
-            onClearSelection={() => setSelectedReminderIds([])}
-            onCompleteSelected={handleBulkComplete}
-            onDeleteSelected={handleBulkDelete}
-            onSelectAllVisible={() => setSelectedReminderIds(visibleReminderIds)}
-            selectedCompletableCount={selectedCompletableReminderIds.length}
-            selectedCount={selectedReminderIds.length}
-            visibleCount={visibleReminderIds.length}
-          />
-          <ReminderListControls
-            onReset={resetControls}
-            onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
-            onSortChange={(value) => onSearchStateChange({ sort: value })}
-            onStatusChange={(value) => onSearchStateChange({ status: value })}
-            onTypeChange={(value) => onSearchStateChange({ type: value })}
-            resultCount={filteredReminders.length}
-            searchValue={searchValue}
-            sortBy={sortBy}
-            status={status}
-            totalCount={remindersQuery.data.length}
-            type={type}
-          />
-          {filteredReminders.length ? (
-            <div className="grid gap-6">
-              <ReminderList
-                description="Items that need attention immediately."
-                emptyMessage="No overdue reminders."
-                onSelectionChange={handleSelectionChange}
-                reminders={groupedReminders[ReminderStatus.Overdue]}
-                selectedReminderIds={selectedReminderIds}
-                title="Overdue"
-              />
-              <ReminderList
-                description="Items due today."
-                emptyMessage="No reminders are due today."
-                onSelectionChange={handleSelectionChange}
-                reminders={groupedReminders[ReminderStatus.DueToday]}
-                selectedReminderIds={selectedReminderIds}
-                title="Due Today"
-              />
-              <ReminderList
-                description="Upcoming reminders for this vehicle."
-                emptyMessage="No upcoming reminders."
-                onSelectionChange={handleSelectionChange}
-                reminders={groupedReminders[ReminderStatus.Upcoming]}
-                selectedReminderIds={selectedReminderIds}
-                title="Upcoming"
-              />
-              <ReminderList
-                description="Completed reminders retained for history."
-                emptyMessage="No completed reminders yet."
-                onSelectionChange={handleSelectionChange}
-                reminders={groupedReminders[ReminderStatus.Completed]}
-                selectedReminderIds={selectedReminderIds}
-                title="Completed"
-              />
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <div className="flex gap-3">
+              <Link
+                className={buttonVariants({ variant: 'secondary' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId"
+              >
+                Back to Vehicle
+              </Link>
+              {canEdit ? (
+                <Link
+                  className={buttonVariants()}
+                  params={{ vehicleId }}
+                  to="/vehicles/$vehicleId/reminders/new"
+                >
+                  Add Reminder
+                </Link>
+              ) : null}
             </div>
-          ) : (
+          }
+          description="Keep service, insurance, PUC, and custom reminders tied to this vehicle."
+          title={`${vehicleTitle} Reminders`}
+        />
+
+        {remindersQuery.isPending ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Loading reminders</CardTitle>
+              <CardDescription>Getting reminders for this vehicle.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-600">
+              Please wait while we load the due items.
+            </CardContent>
+          </Card>
+        ) : remindersQuery.isError ? (
+          <ErrorState
+            action={
+              <Button onClick={() => remindersQuery.refetch()} variant="secondary">
+                Retry
+              </Button>
+            }
+            description="We couldn't load this vehicle's reminders. Try again in a moment."
+            title="Unable to load reminders"
+          />
+        ) : remindersQuery.data.length ? (
+          <div className="grid gap-4">
+            <ServiceSchedulePanel vehicleId={vehicleId} />
+            {canEdit ? (
+              <BulkReminderActions
+                isCompleting={bulkCompleteMutation.isPending}
+                isDeleting={bulkDeleteMutation.isPending}
+                onClearSelection={() => setSelectedReminderIds([])}
+                onCompleteSelected={handleBulkComplete}
+                onDeleteSelected={handleBulkDelete}
+                onSelectAllVisible={() => setSelectedReminderIds(visibleReminderIds)}
+                selectedCompletableCount={selectedCompletableReminderIds.length}
+                selectedCount={selectedReminderIds.length}
+                visibleCount={visibleReminderIds.length}
+              />
+            ) : null}
+            <ReminderListControls
+              onReset={resetControls}
+              onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+              onSortChange={(value) => onSearchStateChange({ sort: value })}
+              onStatusChange={(value) => onSearchStateChange({ status: value })}
+              onTypeChange={(value) => onSearchStateChange({ type: value })}
+              resultCount={filteredReminders.length}
+              searchValue={searchValue}
+              sortBy={sortBy}
+              status={status}
+              totalCount={remindersQuery.data.length}
+              type={type}
+            />
+            {filteredReminders.length ? (
+              <div className="grid gap-6">
+                <ReminderList
+                  description="Items that need attention immediately."
+                  emptyMessage="No overdue reminders."
+                  onSelectionChange={canEdit ? handleSelectionChange : undefined}
+                  reminders={groupedReminders[ReminderStatus.Overdue]}
+                  selectedReminderIds={selectedReminderIds}
+                  title="Overdue"
+                />
+                <ReminderList
+                  description="Items due today."
+                  emptyMessage="No reminders are due today."
+                  onSelectionChange={canEdit ? handleSelectionChange : undefined}
+                  reminders={groupedReminders[ReminderStatus.DueToday]}
+                  selectedReminderIds={selectedReminderIds}
+                  title="Due Today"
+                />
+                <ReminderList
+                  description="Upcoming reminders for this vehicle."
+                  emptyMessage="No upcoming reminders."
+                  onSelectionChange={canEdit ? handleSelectionChange : undefined}
+                  reminders={groupedReminders[ReminderStatus.Upcoming]}
+                  selectedReminderIds={selectedReminderIds}
+                  title="Upcoming"
+                />
+                <ReminderList
+                  description="Completed reminders retained for history."
+                  emptyMessage="No completed reminders yet."
+                  onSelectionChange={canEdit ? handleSelectionChange : undefined}
+                  reminders={groupedReminders[ReminderStatus.Completed]}
+                  selectedReminderIds={selectedReminderIds}
+                  title="Completed"
+                />
+              </div>
+            ) : (
+              <EmptyState
+                action={
+                  <Button onClick={resetControls} variant="secondary">
+                    Clear filters
+                  </Button>
+                }
+                description="Try broadening the search or removing the active status and type filters."
+                title="No reminders match these filters"
+              />
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            <ServiceSchedulePanel vehicleId={vehicleId} />
             <EmptyState
               action={
-                <Button onClick={resetControls} variant="secondary">
-                  Clear filters
-                </Button>
+                canEdit ? (
+                  <Link
+                    className={buttonVariants()}
+                    params={{ vehicleId }}
+                    to="/vehicles/$vehicleId/reminders/new"
+                  >
+                    Add the first reminder
+                  </Link>
+                ) : undefined
               }
-              description="Try broadening the search or removing the active status and type filters."
-              title="No reminders match these filters"
+              description={
+                canEdit
+                  ? 'No reminders have been created for this vehicle yet.'
+                  : 'No reminders have been created for this vehicle yet. Whoever owns it can add them.'
+              }
+              title="No reminders yet"
             />
-          )}
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          <ServiceSchedulePanel vehicleId={vehicleId} />
-          <EmptyState
-            action={
-              <Link
-                className={buttonVariants()}
-                params={{ vehicleId }}
-                to="/vehicles/$vehicleId/reminders/new"
-              >
-                Add the first reminder
-              </Link>
-            }
-            description="No reminders have been created for this vehicle yet."
-            title="No reminders yet"
-          />
-        </div>
-      )}
-    </PageContainer>
+          </div>
+        )}
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

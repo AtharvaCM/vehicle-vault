@@ -12,6 +12,8 @@ import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
+import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { MaintenanceSummaryCard } from '../components/maintenance-summary-card';
 import { useDeleteMaintenanceRecord } from '../hooks/use-delete-maintenance-record';
@@ -27,6 +29,11 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
   const [actionError, setActionError] = useState<string | null>(null);
   const recordQuery = useMaintenanceRecord(recordId);
   const deleteRecordMutation = useDeleteMaintenanceRecord();
+  // The record names its vehicle, and the vehicle carries the caller's role on
+  // it; until the record has loaded there is no vehicle to ask about.
+  const vehicleQuery = useVehicle(recordQuery.data?.vehicleId ?? '');
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
 
   async function handleDeleteRecord(vehicleId: string) {
     try {
@@ -90,45 +97,51 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
   const record = recordQuery.data;
 
   return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <div className="flex flex-wrap gap-3">
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ vehicleId: record.vehicleId }}
-              to="/vehicles/$vehicleId/maintenance"
-            >
-              Back to Maintenance History
-            </Link>
-            <Link
-              className={buttonVariants()}
-              params={{ recordId: record.id }}
-              to="/maintenance-records/$recordId/edit"
-            >
-              Edit Record
-            </Link>
-            <ConfirmActionDialog
-              confirmLabel="Delete record"
-              description="This removes the service entry and any linked receipts or documents. This can't be undone."
-              isPending={deleteRecordMutation.isPending}
-              onConfirm={() => handleDeleteRecord(record.vehicleId)}
-              title="Delete this maintenance record?"
-              triggerLabel="Delete Record"
-              triggerVariant="secondary"
-            />
-          </div>
-        }
-        description="Review what was done, when it happened, and what it cost."
-        title={formatMaintenanceCategory(record.category)}
-      />
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <div className="flex flex-wrap gap-3">
+              <Link
+                className={buttonVariants({ variant: 'secondary' })}
+                params={{ vehicleId: record.vehicleId }}
+                to="/vehicles/$vehicleId/maintenance"
+              >
+                Back to Maintenance History
+              </Link>
+              {canEdit ? (
+                <>
+                  <Link
+                    className={buttonVariants()}
+                    params={{ recordId: record.id }}
+                    to="/maintenance-records/$recordId/edit"
+                  >
+                    Edit Record
+                  </Link>
+                  <ConfirmActionDialog
+                    confirmLabel="Delete record"
+                    description="This removes the service entry and any linked receipts or documents. This can't be undone."
+                    isPending={deleteRecordMutation.isPending}
+                    onConfirm={() => handleDeleteRecord(record.vehicleId)}
+                    title="Delete this maintenance record?"
+                    triggerLabel="Delete Record"
+                    triggerVariant="secondary"
+                  />
+                </>
+              ) : null}
+            </div>
+          }
+          description="Review what was done, when it happened, and what it cost."
+          title={formatMaintenanceCategory(record.category)}
+        />
 
-      {actionError ? <InlineError message={actionError} /> : null}
+        {actionError ? <InlineError message={actionError} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <MaintenanceSummaryCard record={record} />
-        <AttachmentsSection recordId={record.id} />
-      </div>
-    </PageContainer>
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <MaintenanceSummaryCard record={record} />
+          <AttachmentsSection recordId={record.id} />
+        </div>
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

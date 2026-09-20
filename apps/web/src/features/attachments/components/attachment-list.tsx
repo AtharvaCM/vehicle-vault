@@ -4,7 +4,8 @@ import { AttachmentItem } from './attachment-item';
 type AttachmentListProps = {
   attachments: Attachment[];
   deletingAttachmentId?: string | null;
-  onDelete: (attachmentId: string) => Promise<void> | void;
+  /** Omitted for a viewer, which drops each file's delete control. */
+  onDelete?: (attachmentId: string) => Promise<void> | void;
 };
 
 export function AttachmentList({

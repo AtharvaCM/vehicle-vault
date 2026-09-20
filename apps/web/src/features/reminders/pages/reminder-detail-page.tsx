@@ -12,7 +12,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
-import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
+import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { useCompleteReminder } from '../hooks/use-complete-reminder';
 import { useDeleteReminder } from '../hooks/use-delete-reminder';
@@ -27,7 +28,12 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const reminderQuery = useReminder(reminderId);
-  const vehiclesQuery = useVehicles();
+  // The reminder names its vehicle, and the vehicle carries both the label for
+  // it and the caller's role on it; until the reminder has loaded there is no
+  // vehicle to ask about.
+  const vehicleQuery = useVehicle(reminderQuery.data?.vehicleId ?? '');
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const completeReminderMutation = useCompleteReminder();
   const deleteReminderMutation = useDeleteReminder();
 
@@ -108,60 +114,64 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   }
 
   const reminder = reminderQuery.data;
-  const linkedVehicle = (vehiclesQuery.data ?? []).find(
-    (vehicle) => vehicle.id === reminder.vehicleId,
-  );
+  const linkedVehicle = vehicleQuery.data;
   const vehicleLabel = linkedVehicle
     ? `${linkedVehicle.nickname?.trim() || `${linkedVehicle.make} ${linkedVehicle.model}`} • ${linkedVehicle.registrationNumber}`
     : 'Vehicle details unavailable';
 
   return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <div className="flex gap-3">
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ vehicleId: reminder.vehicleId }}
-              to="/vehicles/$vehicleId/reminders"
-            >
-              Back to Vehicle Reminders
-            </Link>
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ reminderId: reminder.id }}
-              to="/reminders/$reminderId/edit"
-            >
-              Edit Reminder
-            </Link>
-            {reminder.status !== ReminderStatus.Completed ? (
-              <Button
-                disabled={completeReminderMutation.isPending}
-                onClick={handleCompleteReminder}
-                size="sm"
-                type="button"
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <div className="flex gap-3">
+              <Link
+                className={buttonVariants({ variant: 'secondary' })}
+                params={{ vehicleId: reminder.vehicleId }}
+                to="/vehicles/$vehicleId/reminders"
               >
-                {completeReminderMutation.isPending ? 'Completing...' : 'Mark Complete'}
-              </Button>
-            ) : null}
-            <ConfirmActionDialog
-              confirmLabel="Delete reminder"
-              description="This removes the reminder from this vehicle. This can't be undone."
-              isPending={deleteReminderMutation.isPending}
-              onConfirm={() => handleDeleteReminder(reminder.vehicleId)}
-              title="Delete this reminder?"
-              triggerLabel="Delete Reminder"
-              triggerVariant="secondary"
-            />
-          </div>
-        }
-        description="Review when this item is due and what it is for."
-        title={reminder.title}
-      />
+                Back to Vehicle Reminders
+              </Link>
+              {canEdit ? (
+                <>
+                  <Link
+                    className={buttonVariants({ variant: 'secondary' })}
+                    params={{ reminderId: reminder.id }}
+                    to="/reminders/$reminderId/edit"
+                  >
+                    Edit Reminder
+                  </Link>
+                  {reminder.status !== ReminderStatus.Completed ? (
+                    <Button
+                      disabled={completeReminderMutation.isPending}
+                      onClick={handleCompleteReminder}
+                      size="sm"
+                      type="button"
+                    >
+                      {completeReminderMutation.isPending ? 'Completing...' : 'Mark Complete'}
+                    </Button>
+                  ) : null}
+                  <ConfirmActionDialog
+                    confirmLabel="Delete reminder"
+                    description="This removes the reminder from this vehicle. This can't be undone."
+                    isPending={deleteReminderMutation.isPending}
+                    onConfirm={() => handleDeleteReminder(reminder.vehicleId)}
+                    title="Delete this reminder?"
+                    triggerLabel="Delete Reminder"
+                    triggerVariant="secondary"
+                  />
+                </>
+              ) : null}
+            </div>
+          }
+          description="Review when this item is due and what it is for."
+          title={reminder.title}
+        />
 
-      {actionError ? <InlineError message={actionError} /> : null}
+        {actionError ? <InlineError message={actionError} /> : null}
 
-      <ReminderSummaryCard reminder={reminder} vehicleLabel={vehicleLabel} />
-    </PageContainer>
+        <ReminderSummaryCard reminder={reminder} vehicleLabel={vehicleLabel} />
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

@@ -13,7 +13,9 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
+import { ViewOnlyNotice } from '../components/view-only-notice';
 import { VehicleForm } from '../components/vehicle-form';
+import { accessFor, VehicleAccessProvider } from '../context/vehicle-access';
 import { useUpdateVehicle } from '../hooks/use-update-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
 
@@ -26,6 +28,8 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   const [isDirty, setIsDirty] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
   const updateVehicleMutation = useUpdateVehicle(vehicleId);
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved vehicle edits. Leave without saving?',
@@ -121,56 +125,82 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
       </PageContainer>
     );
   }
-  return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <Link
-            className={buttonVariants({ variant: 'secondary' })}
-            params={{ vehicleId }}
-            to="/vehicles/$vehicleId"
-          >
-            Back to Vehicle
-          </Link>
-        }
-        description="Update the details that identify this vehicle across your garage."
-        title="Edit Vehicle"
-      />
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <VehicleForm
-          initialValues={initialValues}
-          isSubmitting={updateVehicleMutation.isPending}
-          onDirtyChange={setIsDirty}
-          onSubmit={handleUpdateVehicle}
-          submitError={
-            updateVehicleMutation.error
-              ? getApiErrorMessage(updateVehicleMutation.error, 'Unable to update the vehicle.')
-              : null
+  if (!canEdit) {
+    return (
+      <PageContainer>
+        <PageTitle
+          actions={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId"
+            >
+              Back to Vehicle
+            </Link>
           }
-          submitHint="Keep the odometer and key details current so reminders stay accurate."
-          submitLabel="Save Changes"
-          submittingLabel="Saving changes..."
-          successMessage="Vehicle details updated."
+          description="This vehicle is shared with you for reading."
+          title="Edit Vehicle"
+        />
+        <ViewOnlyNotice description="You can see this vehicle but not change its registration, odometer, or other details." />
+      </PageContainer>
+    );
+  }
+
+  return (
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId"
+            >
+              Back to Vehicle
+            </Link>
+          }
+          description="Update the details that identify this vehicle across your garage."
+          title="Edit Vehicle"
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Keep details accurate</CardTitle>
-            <CardDescription>
-              Small changes here keep the rest of your records clear.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Update the odometer when you want kilometre-based reminders to stay trustworthy.</p>
-            <p>
-              Registration, make, model, and nickname help you recognise the right vehicle
-              everywhere in the app.
-            </p>
-            <p>Use this page whenever ownership details or naming need cleanup.</p>
-          </CardContent>
-        </Card>
-      </div>
-    </PageContainer>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <VehicleForm
+            initialValues={initialValues}
+            isSubmitting={updateVehicleMutation.isPending}
+            onDirtyChange={setIsDirty}
+            onSubmit={handleUpdateVehicle}
+            submitError={
+              updateVehicleMutation.error
+                ? getApiErrorMessage(updateVehicleMutation.error, 'Unable to update the vehicle.')
+                : null
+            }
+            submitHint="Keep the odometer and key details current so reminders stay accurate."
+            submitLabel="Save Changes"
+            submittingLabel="Saving changes..."
+            successMessage="Vehicle details updated."
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Keep details accurate</CardTitle>
+              <CardDescription>
+                Small changes here keep the rest of your records clear.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+              <p>
+                Update the odometer when you want kilometre-based reminders to stay trustworthy.
+              </p>
+              <p>
+                Registration, make, model, and nickname help you recognise the right vehicle
+                everywhere in the app.
+              </p>
+              <p>Use this page whenever ownership details or naming need cleanup.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

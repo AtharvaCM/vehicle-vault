@@ -7,6 +7,9 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
+import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -26,6 +29,11 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
   const [isDirty, setIsDirty] = useState(false);
   const reminderQuery = useReminder(reminderId);
   const updateReminderMutation = useUpdateReminder(reminderId);
+  // The reminder names its vehicle, and the vehicle carries the caller's role
+  // on it; until the reminder has loaded there is no vehicle to ask about.
+  const vehicleQuery = useVehicle(reminderQuery.data?.vehicleId ?? '');
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved reminder edits. Leave without saving?',
@@ -110,57 +118,81 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
       </PageContainer>
     );
   }
-  return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <Link
-            className={buttonVariants({ variant: 'secondary' })}
-            params={{ reminderId }}
-            to="/reminders/$reminderId"
-          >
-            Back to Reminder
-          </Link>
-        }
-        description="Update timing, kilometre targets, or notes for this reminder."
-        title="Edit Reminder"
-      />
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <ReminderForm
-          initialValues={initialValues}
-          isSubmitting={updateReminderMutation.isPending}
-          onDirtyChange={setIsDirty}
-          onSubmit={handleUpdateReminder}
-          submitError={
-            updateReminderMutation.error
-              ? getApiErrorMessage(updateReminderMutation.error, 'Unable to update the reminder.')
-              : null
+  if (!canEdit) {
+    return (
+      <PageContainer>
+        <PageTitle
+          actions={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ reminderId }}
+              to="/reminders/$reminderId"
+            >
+              Back to Reminder
+            </Link>
           }
-          submitHint="Use edits when the title, due date, or due kilometre changes."
-          submitLabel="Save Changes"
-          submittingLabel="Saving changes..."
-          successMessage="Reminder updated."
+          description="This vehicle is shared with you for reading."
+          title="Edit Reminder"
+        />
+        <ViewOnlyNotice description="You can read this reminder, but not change when it is due or what it says." />
+      </PageContainer>
+    );
+  }
+
+  return (
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ reminderId }}
+              to="/reminders/$reminderId"
+            >
+              Back to Reminder
+            </Link>
+          }
+          description="Update timing, kilometre targets, or notes for this reminder."
+          title="Edit Reminder"
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Keep reminders actionable</CardTitle>
-            <CardDescription>Clear reminder details are easier to trust later.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>
-              Use edits when a reminder&apos;s title, timing, or kilometre target was logged
-              incorrectly.
-            </p>
-            <p>
-              Completed reminders can still be cleaned up if their reference details need
-              correction.
-            </p>
-            <p>Keep notes clear so the reminder still makes sense when it resurfaces later.</p>
-          </CardContent>
-        </Card>
-      </div>
-    </PageContainer>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <ReminderForm
+            initialValues={initialValues}
+            isSubmitting={updateReminderMutation.isPending}
+            onDirtyChange={setIsDirty}
+            onSubmit={handleUpdateReminder}
+            submitError={
+              updateReminderMutation.error
+                ? getApiErrorMessage(updateReminderMutation.error, 'Unable to update the reminder.')
+                : null
+            }
+            submitHint="Use edits when the title, due date, or due kilometre changes."
+            submitLabel="Save Changes"
+            submittingLabel="Saving changes..."
+            successMessage="Reminder updated."
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Keep reminders actionable</CardTitle>
+              <CardDescription>Clear reminder details are easier to trust later.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+              <p>
+                Use edits when a reminder&apos;s title, timing, or kilometre target was logged
+                incorrectly.
+              </p>
+              <p>
+                Completed reminders can still be cleaned up if their reference details need
+                correction.
+              </p>
+              <p>Keep notes clear so the reminder still makes sense when it resurfaces later.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

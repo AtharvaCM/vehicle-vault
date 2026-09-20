@@ -16,6 +16,8 @@ import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
+import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { MaintenanceClaimLinkCard } from '@/features/claims/components/maintenance-claim-link-card';
@@ -34,6 +36,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
   const [isUploadFirstPending, setIsUploadFirstPending] = useState(false);
   const uploadFirstInputRef = useRef<HTMLInputElement | null>(null);
   const vehicleQuery = useVehicle(vehicleId);
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const createMaintenanceMutation = useCreateMaintenanceRecord(vehicleId);
   const createDraftMutation = useCreateMaintenanceDraft(vehicleId);
   const extractionStatusQuery = useAttachmentExtractionStatus();
@@ -201,88 +205,117 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
     ? vehicleQuery.data.nickname?.trim() || `${vehicleQuery.data.make} ${vehicleQuery.data.model}`
     : 'Vehicle';
 
-  return (
-    <PageContainer>
-      <PageTitle
-        description={`Log a service, repair, or inspection for ${vehicleTitle}.`}
-        title="Add Maintenance Record"
-      />
+  if (!canEdit) {
+    return (
+      <PageContainer>
+        <PageTitle
+          description={`${vehicleTitle} is shared with you for reading.`}
+          title="Add Maintenance Record"
+        />
+        <ViewOnlyNotice
+          action={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId/maintenance"
+            >
+              Back to Maintenance History
+            </Link>
+          }
+          description="You can read this vehicle's service history, but not log new entries for it."
+        />
+      </PageContainer>
+    );
+  }
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <MaintenanceForm
-          isSubmitting={createMaintenanceMutation.isPending || isUploadFirstPending}
-          onDirtyChange={setIsDirty}
-          onSubmit={handleCreateMaintenanceRecord}
-          submitError={submitError}
-          vehicleId={vehicleId}
+  return (
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          description={`Log a service, repair, or inspection for ${vehicleTitle}.`}
+          title="Add Maintenance Record"
         />
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload First</CardTitle>
-              <CardDescription>
-                Start with the invoice or job card and turn it into a draft before you type
-                anything.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
-              <p>
-                This creates a draft maintenance record, uploads the files, and runs OCR so you can
-                review the extracted fields on the next screen.
-              </p>
-              <Button
-                className="w-full justify-center gap-2"
-                disabled={isUploadFirstPending}
-                onClick={() => uploadFirstInputRef.current?.click()}
-                type="button"
-              >
-                {isUploadFirstPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ScanText className="h-4 w-4" />
-                )}
-                {isUploadFirstPending ? 'Creating Draft...' : 'Upload Job Card First'}
-              </Button>
-              <input
-                accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
-                className="sr-only"
-                multiple
-                onChange={handleUploadFirst}
-                ref={uploadFirstInputRef}
-                type="file"
-              />
-              <p className="text-xs text-slate-500">
-                {extractionStatusQuery.data?.available === false
-                  ? 'OCR is not configured right now, but draft upload still works.'
-                  : 'OCR will run automatically after upload when available.'}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <MaintenanceForm
+            isSubmitting={createMaintenanceMutation.isPending || isUploadFirstPending}
+            onDirtyChange={setIsDirty}
+            onSubmit={handleCreateMaintenanceRecord}
+            submitError={submitError}
+            vehicleId={vehicleId}
+          />
 
-          <MaintenanceClaimLinkCard vehicleId={vehicleId} />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload First</CardTitle>
+                <CardDescription>
+                  Start with the invoice or job card and turn it into a draft before you type
+                  anything.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+                <p>
+                  This creates a draft maintenance record, uploads the files, and runs OCR so you
+                  can review the extracted fields on the next screen.
+                </p>
+                <Button
+                  className="w-full justify-center gap-2"
+                  disabled={isUploadFirstPending}
+                  onClick={() => uploadFirstInputRef.current?.click()}
+                  type="button"
+                >
+                  {isUploadFirstPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ScanText className="h-4 w-4" />
+                  )}
+                  {isUploadFirstPending ? 'Creating Draft...' : 'Upload Job Card First'}
+                </Button>
+                <input
+                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
+                  className="sr-only"
+                  multiple
+                  onChange={handleUploadFirst}
+                  ref={uploadFirstInputRef}
+                  type="file"
+                />
+                <p className="text-xs text-slate-500">
+                  {extractionStatusQuery.data?.available === false
+                    ? 'OCR is not configured right now, but draft upload still works.'
+                    : 'OCR will run automatically after upload when available.'}
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>What to capture</CardTitle>
-              <CardDescription>
-                One entry should represent one completed visit, repair, or service job.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-              <p>Quick Entry is best when you only need the date, category, odometer, and total.</p>
-              <p>
-                Detailed Entry lets you break the invoice into jobs, parts, fluids, taxes, and
-                discounts.
-              </p>
-              <p>Workshop is optional, so self-done work and roadside fixes can still be logged.</p>
-              <p>
-                After saving, you can still attach invoices, job cards, or photos to this entry.
-              </p>
-            </CardContent>
-          </Card>
+            <MaintenanceClaimLinkCard vehicleId={vehicleId} />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>What to capture</CardTitle>
+                <CardDescription>
+                  One entry should represent one completed visit, repair, or service job.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+                <p>
+                  Quick Entry is best when you only need the date, category, odometer, and total.
+                </p>
+                <p>
+                  Detailed Entry lets you break the invoice into jobs, parts, fluids, taxes, and
+                  discounts.
+                </p>
+                <p>
+                  Workshop is optional, so self-done work and roadside fixes can still be logged.
+                </p>
+                <p>
+                  After saving, you can still attach invoices, job cards, or photos to this entry.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-    </PageContainer>
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }
