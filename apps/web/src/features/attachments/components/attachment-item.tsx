@@ -13,7 +13,8 @@ import { getAttachmentKindLabel } from '../utils/get-attachment-kind-label';
 type AttachmentItemProps = {
   attachment: Attachment;
   isDeleting?: boolean;
-  onDelete: (attachmentId: string) => Promise<void> | void;
+  /** Omitted for a viewer, which drops the delete control. */
+  onDelete?: (attachmentId: string) => Promise<void> | void;
 };
 
 export function AttachmentItem({ attachment, isDeleting = false, onDelete }: AttachmentItemProps) {
@@ -68,15 +69,17 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
         >
           View file
         </button>
-        <ConfirmActionDialog
-          confirmLabel="Delete attachment"
-          description={`This removes ${attachment.originalFileName} from this service entry. If available, the stored file is deleted too.`}
-          isPending={isDeleting}
-          onConfirm={() => onDelete(attachment.id)}
-          title="Delete this attachment?"
-          triggerLabel="Delete"
-          triggerVariant="secondary"
-        />
+        {onDelete ? (
+          <ConfirmActionDialog
+            confirmLabel="Delete attachment"
+            description={`This removes ${attachment.originalFileName} from this service entry. If available, the stored file is deleted too.`}
+            isPending={isDeleting}
+            onConfirm={() => onDelete(attachment.id)}
+            title="Delete this attachment?"
+            triggerLabel="Delete"
+            triggerVariant="secondary"
+          />
+        ) : null}
       </div>
     </div>
   );

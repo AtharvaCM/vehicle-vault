@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { queryKeys } from '@/lib/query/query-keys';
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export function ServiceSchedulePanel({ vehicleId }: Props) {
+  const { canEdit } = useVehicleAccess();
   const queryClient = useQueryClient();
   const suggestionsQuery = useQuery(serviceScheduleSuggestionsQueryOptions(vehicleId));
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -98,8 +100,9 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
           </Badge>
         </div>
         <CardDescription>
-          Common maintenance items based on your vehicle&apos;s fuel type. Pick the ones to add as
-          reminders — you can edit the date or odometer afterwards.
+          {canEdit
+            ? "Common maintenance items based on your vehicle's fuel type. Pick the ones to add as reminders — you can edit the date or odometer afterwards."
+            : "Common maintenance items based on your vehicle's fuel type, and whether each one is already scheduled."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 p-5">
@@ -112,14 +115,16 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
               const checked = selected.has(item.slug);
               return (
                 <li key={item.slug} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                  <input
-                    type="checkbox"
-                    className="mt-1 h-4 w-4 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-                    checked={checked}
-                    disabled={disabled}
-                    onChange={() => toggle(item.slug)}
-                    aria-label={`Add ${item.title}`}
-                  />
+                  {canEdit ? (
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => toggle(item.slug)}
+                      aria-label={`Add ${item.title}`}
+                    />
+                  ) : null}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-slate-900">{item.title}</p>
@@ -160,7 +165,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
           </ul>
         )}
 
-        {actionable.length > 0 ? (
+        {canEdit && actionable.length > 0 ? (
           <div className="flex items-center justify-between border-t border-slate-100 pt-4">
             <p className="text-xs text-slate-500">
               <ListChecks className="mr-1 inline h-3 w-3" />

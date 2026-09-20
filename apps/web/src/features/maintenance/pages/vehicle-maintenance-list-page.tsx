@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { BulkMaintenanceActions } from '../components/bulk-maintenance-actions';
@@ -39,6 +40,8 @@ export function VehicleMaintenanceListPage({
 }: VehicleMaintenanceListPageProps) {
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const bulkDeleteMutation = useBulkDeleteMaintenanceRecords();
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState<string[]>([]);
@@ -133,135 +136,155 @@ export function VehicleMaintenanceListPage({
   }
 
   return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <div className="flex gap-3">
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId"
-            >
-              Back to Vehicle
-            </Link>
-            <Button onClick={() => setIsImportOpen(true)} type="button" variant="outline">
-              Import CSV
-            </Button>
-            <Link
-              className={buttonVariants()}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/maintenance/new"
-            >
-              Add Maintenance
-            </Link>
-          </div>
-        }
-        description="See every service entry tied to this vehicle."
-        title={`${vehicleTitle} Maintenance`}
-      />
-
-      {maintenanceQuery.isPending ? (
-        <LoadingState
-          description="Loading maintenance history for this vehicle."
-          title="Loading maintenance"
-        />
-      ) : maintenanceQuery.isError ? (
-        <ErrorState
-          action={
-            <Button onClick={() => maintenanceQuery.refetch()} variant="secondary">
-              Retry
-            </Button>
-          }
-          description="We couldn't load this vehicle's maintenance history. Try again in a moment."
-          title="Unable to load maintenance records"
-        />
-      ) : (
-        <div className="space-y-4">
-          <MaintenanceImportDialog
-            onOpenChange={setIsImportOpen}
-            open={isImportOpen}
-            vehicleId={vehicleId}
-          />
-          {maintenanceQuery.data.length ? (
-            <div className="space-y-4">
-              <MaintenanceListControls
-                category={category}
-                onCategoryChange={(value) => onSearchStateChange({ category: value })}
-                onReset={resetControls}
-                onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
-                onSortChange={(value) => onSearchStateChange({ sort: value })}
-                resultCount={filteredRecords.length}
-                searchValue={searchValue}
-                sortBy={sortBy}
-                totalCount={maintenanceQuery.data.length}
-              />
-              <BulkMaintenanceActions
-                isDeleting={bulkDeleteMutation.isPending}
-                onClearSelection={() => setSelectedRecordIds([])}
-                onDeleteSelected={handleBulkDelete}
-                onSelectAllVisible={() => setSelectedRecordIds(visibleRecordIds)}
-                selectedCount={selectedRecordIds.length}
-                visibleCount={visibleRecordIds.length}
-              />
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <div className="flex gap-3">
+              <Link
+                className={buttonVariants({ variant: 'secondary' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId"
+              >
+                Back to Vehicle
+              </Link>
+              {canEdit ? (
+                <>
+                  <Button onClick={() => setIsImportOpen(true)} type="button" variant="outline">
+                    Import CSV
+                  </Button>
+                  <Link
+                    className={buttonVariants()}
+                    params={{ vehicleId }}
+                    to="/vehicles/$vehicleId/maintenance/new"
+                  >
+                    Add Maintenance
+                  </Link>
+                </>
+              ) : null}
             </div>
-          ) : null}
+          }
+          description="See every service entry tied to this vehicle."
+          title={`${vehicleTitle} Maintenance`}
+        />
 
-          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+        {maintenanceQuery.isPending ? (
+          <LoadingState
+            description="Loading maintenance history for this vehicle."
+            title="Loading maintenance"
+          />
+        ) : maintenanceQuery.isError ? (
+          <ErrorState
+            action={
+              <Button onClick={() => maintenanceQuery.refetch()} variant="secondary">
+                Retry
+              </Button>
+            }
+            description="We couldn't load this vehicle's maintenance history. Try again in a moment."
+            title="Unable to load maintenance records"
+          />
+        ) : (
+          <div className="space-y-4">
+            {canEdit ? (
+              <MaintenanceImportDialog
+                onOpenChange={setIsImportOpen}
+                open={isImportOpen}
+                vehicleId={vehicleId}
+              />
+            ) : null}
             {maintenanceQuery.data.length ? (
-              filteredRecords.length ? (
-                <MaintenanceRecordList
-                  onSelectionChange={handleSelectionChange}
-                  records={filteredRecords}
-                  selectedRecordIds={selectedRecordIds}
+              <div className="space-y-4">
+                <MaintenanceListControls
+                  category={category}
+                  onCategoryChange={(value) => onSearchStateChange({ category: value })}
+                  onReset={resetControls}
+                  onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+                  onSortChange={(value) => onSearchStateChange({ sort: value })}
+                  resultCount={filteredRecords.length}
+                  searchValue={searchValue}
+                  sortBy={sortBy}
+                  totalCount={maintenanceQuery.data.length}
                 />
+                {canEdit ? (
+                  <BulkMaintenanceActions
+                    isDeleting={bulkDeleteMutation.isPending}
+                    onClearSelection={() => setSelectedRecordIds([])}
+                    onDeleteSelected={handleBulkDelete}
+                    onSelectAllVisible={() => setSelectedRecordIds(visibleRecordIds)}
+                    selectedCount={selectedRecordIds.length}
+                    visibleCount={visibleRecordIds.length}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+              {maintenanceQuery.data.length ? (
+                filteredRecords.length ? (
+                  <MaintenanceRecordList
+                    onSelectionChange={canEdit ? handleSelectionChange : undefined}
+                    records={filteredRecords}
+                    selectedRecordIds={selectedRecordIds}
+                  />
+                ) : (
+                  <EmptyState
+                    action={
+                      <Button onClick={resetControls} variant="secondary">
+                        Clear filters
+                      </Button>
+                    }
+                    description="Try a broader search or remove the current category filter."
+                    title="No maintenance records match these filters"
+                  />
+                )
               ) : (
                 <EmptyState
                   action={
-                    <Button onClick={resetControls} variant="secondary">
-                      Clear filters
-                    </Button>
+                    canEdit ? (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={() => setIsImportOpen(true)}
+                          type="button"
+                          variant="outline"
+                        >
+                          Import CSV
+                        </Button>
+                        <Link
+                          className={buttonVariants()}
+                          params={{ vehicleId }}
+                          to="/vehicles/$vehicleId/maintenance/new"
+                        >
+                          Add the first maintenance record
+                        </Link>
+                      </div>
+                    ) : undefined
                   }
-                  description="Try a broader search or remove the current category filter."
-                  title="No maintenance records match these filters"
+                  description={
+                    canEdit
+                      ? 'No service entries have been logged for this vehicle yet.'
+                      : 'No service entries have been logged for this vehicle yet. Whoever owns it can add them.'
+                  }
+                  title="No maintenance records yet"
                 />
-              )
-            ) : (
-              <EmptyState
-                action={
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => setIsImportOpen(true)} type="button" variant="outline">
-                      Import CSV
-                    </Button>
-                    <Link
-                      className={buttonVariants()}
-                      params={{ vehicleId }}
-                      to="/vehicles/$vehicleId/maintenance/new"
-                    >
-                      Add the first maintenance record
-                    </Link>
-                  </div>
-                }
-                description="No service entries have been logged for this vehicle yet."
-                title="No maintenance records yet"
-              />
-            )}
+              )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Keep service history complete</CardTitle>
-                <CardDescription>
-                  Use this page as the full service log for one vehicle.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-                <p>Capture each completed job with the date, odometer, and total cost.</p>
-                <p>Open any entry to review notes and manage receipts.</p>
-                <p>Use next due fields so future work is easier to plan.</p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Keep service history complete</CardTitle>
+                  <CardDescription>
+                    Use this page as the full service log for one vehicle.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+                  <p>Capture each completed job with the date, odometer, and total cost.</p>
+                  <p>Open any entry to review notes and manage receipts.</p>
+                  <p>Use next due fields so future work is easier to plan.</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-      )}
-    </PageContainer>
+        )}
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

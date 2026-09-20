@@ -8,6 +8,7 @@ import { StatCard } from '@/components/shared/stat-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { formatDate } from '@/lib/utils/format-date';
@@ -24,6 +25,7 @@ type AttachmentsSectionProps = {
 };
 
 export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
+  const { canEdit } = useVehicleAccess();
   const attachmentsQuery = useAttachments(recordId);
   const uploadAttachmentsMutation = useUploadAttachments(recordId);
   const deleteAttachmentMutation = useDeleteAttachment(recordId);
@@ -88,7 +90,9 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
           <div className="space-y-1">
             <CardTitle>Receipts & Documents</CardTitle>
             <CardDescription>
-              Upload and manage the supporting files linked to this service entry.
+              {canEdit
+                ? 'Upload and manage the supporting files linked to this service entry.'
+                : 'The supporting files linked to this service entry. You can open them, but not change them.'}
             </CardDescription>
           </div>
           <Badge tone="neutral">
@@ -97,11 +101,13 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <AttachmentUploadForm
-          error={actionError}
-          isUploading={uploadAttachmentsMutation.isPending}
-          onUpload={handleUpload}
-        />
+        {canEdit ? (
+          <AttachmentUploadForm
+            error={actionError}
+            isUploading={uploadAttachmentsMutation.isPending}
+            onUpload={handleUpload}
+          />
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard
@@ -144,11 +150,15 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
           <AttachmentList
             attachments={attachmentsQuery.data}
             deletingAttachmentId={deletingAttachmentId}
-            onDelete={handleDelete}
+            onDelete={canEdit ? handleDelete : undefined}
           />
         ) : (
           <EmptyState
-            description="No receipts or documents are linked to this service entry yet. Upload an invoice, job card, or supporting photos so you can find them later."
+            description={
+              canEdit
+                ? 'No receipts or documents are linked to this service entry yet. Upload an invoice, job card, or supporting photos so you can find them later.'
+                : 'No receipts or documents are linked to this service entry yet.'
+            }
             title="No attachments yet"
           />
         )}

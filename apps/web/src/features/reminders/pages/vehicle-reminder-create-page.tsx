@@ -10,6 +10,8 @@ import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
+import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { ReminderForm } from '../components/reminder-form';
@@ -23,6 +25,8 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
   const navigate = useNavigate();
   const [isDirty, setIsDirty] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const createReminderMutation = useCreateReminder(vehicleId);
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
@@ -92,33 +96,60 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
     ? vehicleQuery.data.nickname?.trim() || `${vehicleQuery.data.make} ${vehicleQuery.data.model}`
     : 'Vehicle';
 
-  return (
-    <PageContainer>
-      <PageTitle
-        description={`Create a reminder for ${vehicleTitle} so important due dates and kilometre targets stay visible.`}
-        title="Add Reminder"
-      />
+  if (!canEdit) {
+    return (
+      <PageContainer>
+        <PageTitle
+          description={`${vehicleTitle} is shared with you for reading.`}
+          title="Add Reminder"
+        />
+        <ViewOnlyNotice
+          action={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId/reminders"
+            >
+              Back to Vehicle Reminders
+            </Link>
+          }
+          description="You can read this vehicle's reminders, but not create new ones for it."
+        />
+      </PageContainer>
+    );
+  }
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <ReminderForm
-          isSubmitting={createReminderMutation.isPending}
-          onDirtyChange={setIsDirty}
-          onSubmit={handleCreateReminder}
-          submitError={submitError}
+  return (
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          description={`Create a reminder for ${vehicleTitle} so important due dates and kilometre targets stay visible.`}
+          title="Add Reminder"
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Good reminder habits</CardTitle>
-            <CardDescription>Clear reminders are easier to act on later.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-            <p>Use a due date for calendar items like insurance, PUC, or time-based servicing.</p>
-            <p>Use a due odometer when the work depends on kilometres travelled.</p>
-            <p>Add notes if you want the reminder to include parts, documents, or other context.</p>
-          </CardContent>
-        </Card>
-      </div>
-    </PageContainer>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <ReminderForm
+            isSubmitting={createReminderMutation.isPending}
+            onDirtyChange={setIsDirty}
+            onSubmit={handleCreateReminder}
+            submitError={submitError}
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Good reminder habits</CardTitle>
+              <CardDescription>Clear reminders are easier to act on later.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+              <p>Use a due date for calendar items like insurance, PUC, or time-based servicing.</p>
+              <p>Use a due odometer when the work depends on kilometres travelled.</p>
+              <p>
+                Add notes if you want the reminder to include parts, documents, or other context.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }

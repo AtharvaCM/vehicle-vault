@@ -9,6 +9,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 import { MaintenanceClaimLinkCard } from '@/features/claims/components/maintenance-claim-link-card';
+import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
+import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
+import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -30,6 +33,11 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   const [isDirty, setIsDirty] = useState(false);
   const recordQuery = useMaintenanceRecord(recordId);
   const updateRecordMutation = useUpdateMaintenanceRecord(recordId);
+  // The record names its vehicle, and the vehicle carries the caller's role on
+  // it; until the record has loaded there is no vehicle to ask about.
+  const vehicleQuery = useVehicle(recordQuery.data?.vehicleId ?? '');
+  const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const { canEdit } = accessFor(currentUserRole);
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved maintenance edits. Leave without saving?',
@@ -141,74 +149,99 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
       </PageContainer>
     );
   }
-  return (
-    <PageContainer>
-      <PageTitle
-        actions={
-          <Link
-            className={buttonVariants({ variant: 'secondary' })}
-            params={{ recordId }}
-            to="/maintenance-records/$recordId"
-          >
-            Back to Record
-          </Link>
-        }
-        description="Correct service details without losing the linked receipts or history."
-        title="Edit Maintenance Record"
-      />
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <MaintenanceForm
-          initialValues={initialValues}
-          isSubmitting={updateRecordMutation.isPending}
-          onDirtyChange={setIsDirty}
-          onSubmit={handleUpdateRecord}
-          submitError={
-            updateRecordMutation.error
-              ? getApiErrorMessage(
-                  updateRecordMutation.error,
-                  'Unable to update the maintenance record.',
-                )
-              : null
+  if (!canEdit) {
+    return (
+      <PageContainer>
+        <PageTitle
+          actions={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ recordId }}
+              to="/maintenance-records/$recordId"
+            >
+              Back to Record
+            </Link>
           }
-          submitHint="Edits keep the same receipts linked to this service entry."
-          submitLabel="Save Changes"
-          submittingLabel="Saving changes..."
-          successMessage="Maintenance record updated."
-          vehicleId={recordQuery.data?.vehicleId}
+          description="This vehicle is shared with you for reading."
+          title="Edit Maintenance Record"
+        />
+        <ViewOnlyNotice description="You can read this service entry and open its receipts, but not change them." />
+      </PageContainer>
+    );
+  }
+
+  return (
+    <VehicleAccessProvider role={currentUserRole}>
+      <PageContainer>
+        <PageTitle
+          actions={
+            <Link
+              className={buttonVariants({ variant: 'secondary' })}
+              params={{ recordId }}
+              to="/maintenance-records/$recordId"
+            >
+              Back to Record
+            </Link>
+          }
+          description="Correct service details without losing the linked receipts or history."
+          title="Edit Maintenance Record"
         />
 
-        <div className="space-y-6">
-          {recordQuery.data?.status === 'draft' || recordQuery.data?.source === 'ocr' ? (
-            <MaintenanceDraftReviewCard recordId={recordId} />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Keep the record clear</CardTitle>
-                <CardDescription>
-                  Small corrections now make the history easier to trust later.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
-                <p>
-                  Update the date, odometer, and cost whenever the original entry needs correction.
-                </p>
-                <p>Receipts and documents stay attached to the same service entry after edits.</p>
-                <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
-              </CardContent>
-            </Card>
-          )}
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <MaintenanceForm
+            initialValues={initialValues}
+            isSubmitting={updateRecordMutation.isPending}
+            onDirtyChange={setIsDirty}
+            onSubmit={handleUpdateRecord}
+            submitError={
+              updateRecordMutation.error
+                ? getApiErrorMessage(
+                    updateRecordMutation.error,
+                    'Unable to update the maintenance record.',
+                  )
+                : null
+            }
+            submitHint="Edits keep the same receipts linked to this service entry."
+            submitLabel="Save Changes"
+            submittingLabel="Saving changes..."
+            successMessage="Maintenance record updated."
+            vehicleId={recordQuery.data?.vehicleId}
+          />
 
-          {recordQuery.data?.vehicleId ? (
-            <MaintenanceClaimLinkCard
-              vehicleId={recordQuery.data.vehicleId}
-              maintenanceRecordId={recordId}
-            />
-          ) : null}
+          <div className="space-y-6">
+            {recordQuery.data?.status === 'draft' || recordQuery.data?.source === 'ocr' ? (
+              <MaintenanceDraftReviewCard recordId={recordId} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Keep the record clear</CardTitle>
+                  <CardDescription>
+                    Small corrections now make the history easier to trust later.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+                  <p>
+                    Update the date, odometer, and cost whenever the original entry needs
+                    correction.
+                  </p>
+                  <p>Receipts and documents stay attached to the same service entry after edits.</p>
+                  <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
+                </CardContent>
+              </Card>
+            )}
 
-          <AttachmentsSection recordId={recordId} />
+            {recordQuery.data?.vehicleId ? (
+              <MaintenanceClaimLinkCard
+                vehicleId={recordQuery.data.vehicleId}
+                maintenanceRecordId={recordId}
+              />
+            ) : null}
+
+            <AttachmentsSection recordId={recordId} />
+          </div>
         </div>
-      </div>
-    </PageContainer>
+      </PageContainer>
+    </VehicleAccessProvider>
   );
 }
