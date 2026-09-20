@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.35.0...v1.36.0) (2026-09-20)
+
+
+### Features
+
+* **web:** extend viewer gating to the vehicle-scoped pages ([da8520c](https://github.com/AtharvaCM/vehicle-vault/commit/da8520c30c3db9e140a3564d534ef00353a8f3b6)), closes [#107](https://github.com/AtharvaCM/vehicle-vault/issues/107)
+
 # [1.35.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.34.0...v1.35.0) (2026-09-18)
 
 
