@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.36.0...v1.37.0) (2026-09-21)
+
+
+### Features
+
+* **api:** account deletion path and a reviewed purge for test accounts ([79587f3](https://github.com/AtharvaCM/vehicle-vault/commit/79587f3fb3e1cafdaeae20e53299df7fd256ddac)), closes [#93](https://github.com/AtharvaCM/vehicle-vault/issues/93) [#93](https://github.com/AtharvaCM/vehicle-vault/issues/93)
+
 # [1.36.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.35.0...v1.36.0) (2026-09-20)
 
 
