@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.37.0...v1.38.0) (2026-09-21)
+
+
+### Features
+
+* **vehicles:** make the variant optional when adding a vehicle ([f2ad3d9](https://github.com/AtharvaCM/vehicle-vault/commit/f2ad3d947d66d43d0dc22e8675353635b5581c16)), closes [#113](https://github.com/AtharvaCM/vehicle-vault/issues/113)
+
 # [1.37.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.36.0...v1.37.0) (2026-09-21)
 
 
