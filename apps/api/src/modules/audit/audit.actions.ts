@@ -97,6 +97,9 @@ export const AUDIT_ACTIONS = {
     passwordResetCompleted: 'auth.password_reset_completed',
     emailVerified: 'auth.email_verified',
     oauthLinked: 'auth.oauth_linked',
+    // Recorded with no actor and no owner: the account it describes is gone,
+    // and its id is all that is left to say which one it was.
+    accountDeleted: 'auth.account_deleted',
   },
   admin: {
     forceLogout: 'admin.force_logout',

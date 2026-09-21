@@ -63,4 +63,33 @@ describe('SupabaseStorageService', () => {
       service.downloadObject('attachments/user-1/record-1/missing.pdf'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('lists every object under a prefix, however deeply nested', async () => {
+    const service = new SupabaseStorageService({
+      attachmentLocalStoragePath: root,
+      attachmentStorageBackend: 'local',
+      supabaseServiceRoleKey: null,
+      supabaseStorageBucket: 'vehicle-vault-attachments',
+      supabaseUrl: null,
+    } as never);
+    await service.onModuleInit();
+    for (const path of [
+      'attachments/user-1/record-1/a.pdf',
+      'attachments/user-1/record-2/b.jpg',
+      'attachments/user-2/record-3/c.pdf',
+    ]) {
+      await service.uploadObject(path, Buffer.from('x'), 'application/pdf');
+    }
+
+    await expect(service.listObjectPaths('attachments/user-1/')).resolves.toEqual(
+      expect.arrayContaining([
+        'attachments/user-1/record-1/a.pdf',
+        'attachments/user-1/record-2/b.jpg',
+      ]),
+    );
+    expect(await service.listObjectPaths('attachments/user-1')).toHaveLength(2);
+    expect(await service.listObjectPaths('attachments')).toHaveLength(3);
+    // A user who never uploaded anything has no folder at all.
+    await expect(service.listObjectPaths('attachments/user-9')).resolves.toEqual([]);
+  });
 });

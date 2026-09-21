@@ -1,7 +1,7 @@
 import { AuditResourceType } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
 
-import { diffChangedFields, redact } from './audit.redaction';
+import { diffChangedFields, redact, redactAll } from './audit.redaction';
 
 describe('audit.redaction', () => {
   it('replaces deny-listed user fields with the redacted sentinel', () => {
@@ -48,5 +48,19 @@ describe('audit.redaction', () => {
     const before = { make: 'Toyota', model: 'Corolla', odometer: 10000 };
     const after = { make: 'Toyota', model: 'Camry', odometer: 12000 };
     expect(diffChangedFields(before, after)).toEqual(['model', 'odometer']);
+  });
+});
+
+describe('redactAll', () => {
+  it('keeps which fields there were and nothing of what they held', () => {
+    expect(redactAll({ name: 'A Person', odometer: 40_000, notes: null })).toEqual({
+      name: '[redacted]',
+      odometer: '[redacted]',
+      notes: '[redacted]',
+    });
+  });
+
+  it('leaves an empty payload empty', () => {
+    expect(redactAll(null)).toBeNull();
   });
 });
