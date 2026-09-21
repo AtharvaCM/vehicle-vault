@@ -41,6 +41,20 @@ export const REDACTED_FIELDS: Record<AuditResourceType, ReadonlySet<string>> = {
 
 const REDACTED_SENTINEL = '[redacted]';
 
+/**
+ * Every value replaced, every key kept: what anonymisation leaves of a payload
+ * about a deleted account's own data. Names, addresses, registration numbers
+ * and free-text notes cannot be listed field by field — the write-time list
+ * above is about secrets, not identity — so none of the content survives, while
+ * which fields the change touched still does.
+ */
+export function redactAll(
+  payload: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (!payload) return null;
+  return Object.fromEntries(Object.keys(payload).map((key) => [key, REDACTED_SENTINEL]));
+}
+
 export function redact(
   resourceType: AuditResourceType | null | undefined,
   payload: Record<string, unknown> | null | undefined,

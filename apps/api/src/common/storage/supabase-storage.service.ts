@@ -5,8 +5,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { access, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, sep } from 'node:path';
 import { basename as posixBasename, dirname as posixDirname } from 'node:path/posix';
 
 import { AppConfigService } from '../../config/app-config.service';
@@ -146,6 +146,71 @@ export class SupabaseStorageService implements OnModuleInit {
     }
 
     return 'deleted' as const;
+  }
+
+  /**
+   * Every object path under `prefix`, however deeply nested. Stored paths lead
+   * with the uploader (`attachments/<userId>/<ownerId>/<file>`), so this finds
+   * what an account left behind even where no row points at the file any more.
+   */
+  async listObjectPaths(prefix: string): Promise<string[]> {
+    const directory = prefix.replace(/\/+$/, '');
+
+    if (this.storageBackend === 'local') {
+      return this.listLocalObjectPaths(directory);
+    }
+
+    return this.listRemoteObjectPaths(directory);
+  }
+
+  private async listRemoteObjectPaths(directory: string): Promise<string[]> {
+    const pageSize = 100;
+    const paths: string[] = [];
+
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await this.client!.storage.from(this.bucketName).list(directory, {
+        limit: pageSize,
+        offset,
+      });
+
+      if (error) {
+        throw new InternalServerErrorException('Unable to list attachments in cloud storage.');
+      }
+
+      for (const entry of data ?? []) {
+        const path = directory ? `${directory}/${entry.name}` : entry.name;
+        // Storage has no real folders: a path segment comes back as an entry
+        // without an id, and its contents need a listing of their own.
+        if (entry.id === null) {
+          paths.push(...(await this.listRemoteObjectPaths(path)));
+        } else {
+          paths.push(path);
+        }
+      }
+
+      if (!data || data.length < pageSize) {
+        return paths;
+      }
+    }
+  }
+
+  private async listLocalObjectPaths(directory: string): Promise<string[]> {
+    const root = this.resolveLocalPath(directory);
+
+    try {
+      const entries = await readdir(root, { recursive: true, withFileTypes: true });
+      return entries
+        .filter((entry) => entry.isFile())
+        .map((entry) => {
+          const nested = relative(root, join(entry.parentPath, entry.name)).split(sep).join('/');
+          return directory ? `${directory}/${nested}` : nested;
+        });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return [];
+      }
+      throw error;
+    }
   }
 
   private async localObjectExists(path: string) {

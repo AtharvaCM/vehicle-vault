@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuditResourceType, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { diffChangedFields, redact } from './audit.redaction';
+import { diffChangedFields, redact, redactAll } from './audit.redaction';
 
 export type AuditContext = {
   ipAddress?: string | null;
@@ -54,38 +54,59 @@ export class AuditService {
   }
 
   /**
-   * Bulk anonymisation hook for account-deletion flows. Nulls out actor
-   * and owner FKs and replaces PII fields in payloads with the redaction
-   * sentinel while keeping timestamps, action, and resource id intact.
-   * See ADR-0004.
+   * Bulk anonymisation hook for account-deletion flows (ADR-0004): the rows
+   * stay, with their timestamps, action, resource and changed fields, but
+   * nothing in them says who the person was.
+   *
+   * - Rows about their own data (they are the owner): the owner link goes and
+   *   every payload value is blanked — the write-time redaction keeps names and
+   *   emails, which only matter while the account exists.
+   * - Rows where they acted (they are the actor): the actor link goes, and so
+   *   do the IP address and user agent, which describe them. Where the data
+   *   belongs to someone else — an editor's change to a shared vehicle — the
+   *   owner and the payload stay: that is the remaining owner's history.
+   *
+   * Pass `tx` to anonymise inside the transaction that deletes the account, so
+   * the trail is never left pointing at, or describing, someone who is gone.
    */
-  async anonymiseForUser(userId: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      const rows = await tx.auditEvent.findMany({
-        where: {
-          OR: [{ actorUserId: userId }, { ownerUserId: userId }],
-        },
-        select: { id: true, resourceType: true, before: true, after: true },
-      });
-      for (const row of rows) {
-        const before = redact(
-          row.resourceType,
-          (row.before as Record<string, unknown> | null) ?? null,
-        );
-        const after = redact(
-          row.resourceType,
-          (row.after as Record<string, unknown> | null) ?? null,
-        );
-        await tx.auditEvent.update({
-          where: { id: row.id },
-          data: {
-            actorUserId: null,
-            ownerUserId: null,
-            before: before as Prisma.InputJsonValue | undefined,
-            after: after as Prisma.InputJsonValue | undefined,
-          },
-        });
-      }
+  async anonymiseForUser(userId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    if (tx) {
+      await this.anonymiseWithin(tx, userId);
+      return;
+    }
+
+    await this.prisma.$transaction((client) => this.anonymiseWithin(client, userId));
+  }
+
+  private async anonymiseWithin(tx: Prisma.TransactionClient, userId: string): Promise<void> {
+    const rows = await tx.auditEvent.findMany({
+      where: {
+        OR: [{ actorUserId: userId }, { ownerUserId: userId }],
+      },
+      select: { id: true, actorUserId: true, ownerUserId: true, before: true, after: true },
     });
+
+    for (const row of rows) {
+      const theirData = row.ownerUserId === userId;
+      const theirAction = row.actorUserId === userId;
+
+      await tx.auditEvent.update({
+        where: { id: row.id },
+        data: {
+          ...(theirAction ? { actorUserId: null, ipAddress: null, userAgent: null } : {}),
+          ...(theirData
+            ? {
+                ownerUserId: null,
+                before: redactAll(row.before as Record<string, unknown> | null) as
+                  | Prisma.InputJsonValue
+                  | undefined,
+                after: redactAll(row.after as Record<string, unknown> | null) as
+                  | Prisma.InputJsonValue
+                  | undefined,
+              }
+            : {}),
+        },
+      });
+    }
   }
 }
