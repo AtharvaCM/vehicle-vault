@@ -46,6 +46,7 @@ import { AccessoriesTab } from '@/features/accessories/components/accessories-ta
 import { ServiceHistoryCard } from '@/features/service-baseline/components/service-history-card';
 import { ProtectionTab } from '../components/protection-tab';
 import { accessFor, useVehicleAccess, VehicleAccessProvider } from '../context/vehicle-access';
+import { describeVehicleModel } from '../utils/describe-vehicle-model';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
 
@@ -207,8 +208,8 @@ export function VehicleDetailPage({
                     {title}
                   </h1>
                   <p className="text-lg font-medium text-slate-500">
-                    {vehicle.make} {vehicle.model} <span className="mx-2 text-slate-300">•</span>{' '}
-                    {vehicle.variant} <span className="mx-2 text-slate-300">•</span> {vehicle.year}
+                    {describeVehicleModel(vehicle)} <span className="mx-2 text-slate-300">•</span>{' '}
+                    {vehicle.year}
                   </p>
                 </div>
 

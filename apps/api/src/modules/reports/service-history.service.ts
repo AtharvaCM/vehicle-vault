@@ -4,6 +4,7 @@ import PDFDocument from 'pdfkit';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { decimalToNumber, drawRow, fmtDate, inr, intFmt } from './pdf-utils';
+import { vehicleModelLabel, vehicleModelLine } from './vehicle-model-line';
 
 /**
  * Builds a printable Service History PDF for a single vehicle, covering
@@ -89,7 +90,7 @@ export class ServiceHistoryService {
     const displayName = vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
     const lines: [string, string][] = [
       ['Name', displayName],
-      ['Make / Model / Variant', `${vehicle.make} ${vehicle.model} ${vehicle.variant}`],
+      [vehicleModelLabel(vehicle), vehicleModelLine(vehicle)],
       ['Year', String(vehicle.year)],
       ['Registration', vehicle.registrationNumber],
       ['Fuel type', vehicle.fuelType],

@@ -29,10 +29,11 @@ export class CreateVehicleDto {
   @MaxLength(80)
   model!: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  variant!: string;
+  variant?: string;
 
   @Type(() => Number)
   @IsInt()

@@ -4,6 +4,8 @@ import { formatDate } from '@/lib/utils/format-date';
 
 import type { Vehicle } from '../types/vehicle';
 
+import { describeVehicleModel } from '../utils/describe-vehicle-model';
+
 type VehicleSummaryCardProps = {
   vehicle: Vehicle;
 };
@@ -20,7 +22,7 @@ export function VehicleSummaryCard({ vehicle }: VehicleSummaryCardProps) {
           <Badge>{vehicle.fuelType}</Badge>
         </div>
         <CardDescription>
-          {vehicle.registrationNumber} • {vehicle.make} {vehicle.model} • {vehicle.variant}
+          {vehicle.registrationNumber} • {describeVehicleModel(vehicle)}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2">

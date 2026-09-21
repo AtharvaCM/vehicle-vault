@@ -139,7 +139,8 @@ export function VehicleForm({
     [modelsQuery.data, selectedModel],
   );
   const variantOptions = useMemo(
-    () => mergeSelectedOption((variantsQuery.data ?? []).map(toVariantOption), selectedVariant),
+    () =>
+      mergeSelectedOption((variantsQuery.data ?? []).map(toVariantOption), selectedVariant ?? ''),
     [selectedVariant, variantsQuery.data],
   );
   const selectedVariantOption = useMemo(
@@ -186,6 +187,8 @@ export function VehicleForm({
     const result = vehicleFormSchema.safeParse({
       ...values,
       nickname: values.nickname?.trim() ? values.nickname.trim() : undefined,
+      // Optional: an untouched combobox or input means "I don't know it".
+      variant: values.variant?.trim() ? values.variant.trim() : undefined,
       catalogVariantId: selectedVariantOption?.id,
     });
 
@@ -377,7 +380,7 @@ export function VehicleForm({
 
             <FormField
               htmlFor="vehicle-variant"
-              label="Variant"
+              label="Variant (optional)"
               error={form.formState.errors.variant?.message}
             >
               {canUseCatalogSelectors ? (
@@ -400,10 +403,10 @@ export function VehicleForm({
                           ? 'Select model first'
                           : variantsQuery.isLoading
                             ? 'Loading variants...'
-                            : 'Select variant'
+                            : 'Select variant, or skip'
                       }
                       searchPlaceholder="Search variants..."
-                      value={field.value}
+                      value={field.value ?? ''}
                     />
                   )}
                 />

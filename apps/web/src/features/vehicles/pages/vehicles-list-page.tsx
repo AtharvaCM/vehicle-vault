@@ -46,7 +46,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
           vehicle.registrationNumber,
           vehicle.make,
           vehicle.model,
-          vehicle.variant,
+          vehicle.variant ?? '',
           vehicle.nickname ?? '',
           vehicle.fuelType,
           vehicle.vehicleType,

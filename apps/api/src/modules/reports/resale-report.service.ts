@@ -5,6 +5,7 @@ import PDFDocument from 'pdfkit';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { summarize, type LoanParams, type Prepayment } from '../vehicle-loans/amortization';
 import { decimalToNumber, drawKeyValue, drawRow, fmtDate, inr, intFmt } from './pdf-utils';
+import { vehicleModelLabel, vehicleModelLine } from './vehicle-model-line';
 
 interface ResaleReportOptions {
   askingPrice?: number;
@@ -120,7 +121,7 @@ export class ResaleReportService {
       : '—';
     drawKeyValue(doc, [
       ['Name', displayName],
-      ['Make / Model / Variant', `${vehicle.make} ${vehicle.model} ${vehicle.variant}`],
+      [vehicleModelLabel(vehicle), vehicleModelLine(vehicle)],
       ['Year', String(vehicle.year)],
       ['Registration', vehicle.registrationNumber],
       ['Fuel type', vehicle.fuelType],
