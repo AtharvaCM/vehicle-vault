@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { VehicleType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
+import { describeVehicleModel } from '../utils/describe-vehicle-model';
 import { Card } from '@/components/ui/card';
 
 import type { Vehicle } from '../types/vehicle';
@@ -55,8 +56,7 @@ export function VehicleCard({ selectionControl, vehicle }: VehicleCardProps) {
                 ) : null}
               </div>
               <p className="truncate text-[13px] font-medium text-slate-500">
-                {vehicle.make} {vehicle.model} <span className="mx-1 text-slate-300">•</span>{' '}
-                {vehicle.variant}
+                {describeVehicleModel(vehicle)}
               </p>
             </div>
           </div>

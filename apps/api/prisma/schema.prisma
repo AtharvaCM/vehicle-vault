@@ -132,7 +132,7 @@ model Vehicle {
   registrationNumber  String                    @db.VarChar(20)
   make                String                    @db.VarChar(80)
   model               String                    @db.VarChar(80)
-  variant             String                    @db.VarChar(80)
+  variant             String?                   @db.VarChar(80)
   year                Int
   fuelType            FuelType
   odometer            Int

@@ -148,6 +148,42 @@ describe('VehiclesService', () => {
     });
   });
 
+  it('creates a vehicle with no variant, and still links it by make, model and year', async () => {
+    catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
+      variantId: null,
+      generationId: 'generation-1',
+    });
+    prisma.vehicle.create = vi.fn().mockResolvedValue({ ...vehicleRecord, variant: null });
+
+    const result = await service.createVehicle('user-1', {
+      registrationNumber: 'MH12AB1234',
+      make: 'Hyundai',
+      model: 'Creta',
+      year: 2022,
+      fuelType: FuelType.Petrol,
+      odometer: 12000,
+      vehicleType: VehicleType.Car,
+    });
+
+    // Nothing invented in place of the missing trim.
+    expect(prisma.vehicle.create.mock.calls[0]?.[0]?.data).not.toHaveProperty('variant');
+    // The linker never read the free-text variant; it still narrows to a generation.
+    expect(catalogLinker.resolveCatalogLink).toHaveBeenCalledWith({
+      make: 'Hyundai',
+      model: 'Creta',
+      year: 2022,
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.Car,
+    });
+    expect(prisma.vehicle.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        catalogVariantId: undefined,
+        catalogGenerationId: 'generation-1',
+      }),
+    });
+    expect(result.variant).toBeUndefined();
+  });
+
   it('auto-links a created vehicle to the resolved catalog references', async () => {
     catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
       variantId: catalogVariantId,

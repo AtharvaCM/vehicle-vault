@@ -9,11 +9,33 @@ import { useVariantSpecs } from '../hooks/use-variant-specs';
 type VehicleSpecsCardProps = {
   make: string;
   model: string;
-  variant: string;
+  /** Optional on a vehicle; specs are published per variant, so without it there is nothing to look up. */
+  variant?: string;
 };
 
 export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps) {
-  const specsQuery = useVariantSpecs(make, model, variant);
+  const specsQuery = useVariantSpecs(make, model, variant ?? '');
+
+  // The lookup is keyed by variant, so it never runs without one. Say why,
+  // rather than leaving the card loading forever.
+  if (!variant?.trim()) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Vehicle Specifications</CardTitle>
+          <CardDescription>
+            Specifications are published per variant, and this vehicle has none on file.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EmptyState
+            description={`Add the variant for your ${make} ${model} from Edit Vehicle, and its specifications will appear here.`}
+            title="No variant on file"
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (specsQuery.isPending) {
     return (

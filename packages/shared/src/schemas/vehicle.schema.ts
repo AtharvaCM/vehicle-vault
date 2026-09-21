@@ -6,7 +6,11 @@ export const VehicleCreateSchema = z.object({
   registrationNumber: z.string().trim().min(1).max(20),
   make: z.string().trim().min(1).max(80),
   model: z.string().trim().min(1).max(80),
-  variant: z.string().trim().min(1).max(80),
+  /**
+   * Optional: finding the exact trim is the longest step in adding a vehicle,
+   * and the catalog link falls back to the generation when it is missing.
+   */
+  variant: z.string().trim().min(1).max(80).optional(),
   year: z.number().int().min(1900).max(2100),
   vehicleType: z.nativeEnum(VehicleType),
   fuelType: z.nativeEnum(FuelType),

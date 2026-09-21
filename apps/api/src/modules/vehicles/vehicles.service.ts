@@ -331,7 +331,7 @@ export class VehiclesService {
       registrationNumber: vehicle.registrationNumber,
       make: vehicle.make,
       model: vehicle.model,
-      variant: vehicle.variant,
+      variant: vehicle.variant ?? undefined,
       year: vehicle.year,
       fuelType: vehicle.fuelType as FuelType,
       odometer: vehicle.odometer,
