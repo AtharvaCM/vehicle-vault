@@ -353,4 +353,45 @@ describe('VehiclesService', () => {
     });
     expect(intervals).toEqual({ tyre_rotation: { km: 15000, months: 12, source: 'variant' } });
   });
+
+  describe('dismissSetupPrompt', () => {
+    it('stamps the vehicle so the expiry prompt does not come back', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue({
+        ...vehicleRecord,
+        setupPromptDismissedAt: null,
+      });
+      prisma.vehicle.update.mockImplementation(
+        async ({ data }: { data: { setupPromptDismissedAt: Date } }) => ({
+          ...vehicleRecord,
+          setupPromptDismissedAt: data.setupPromptDismissedAt,
+        }),
+      );
+
+      const vehicle = await service.dismissSetupPrompt('user-1', 'vehicle-1');
+
+      expect(accessService.assert).toHaveBeenCalledWith('user-1', 'vehicle-1', 'editor');
+      expect(vehicle.setupPromptDismissedAt).not.toBeNull();
+    });
+
+    it('keeps the first dismissal rather than restarting the clock', async () => {
+      const dismissedAt = new Date('2026-09-01T10:00:00.000Z');
+      prisma.vehicle.findUnique.mockResolvedValue({
+        ...vehicleRecord,
+        setupPromptDismissedAt: dismissedAt,
+      });
+
+      const vehicle = await service.dismissSetupPrompt('user-1', 'vehicle-1');
+
+      expect(prisma.vehicle.update).not.toHaveBeenCalled();
+      expect(vehicle.setupPromptDismissedAt).toBe(dismissedAt.toISOString());
+    });
+
+    it('refuses a vehicle that does not exist', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue(null);
+
+      await expect(service.dismissSetupPrompt('user-1', 'vehicle-1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
 });

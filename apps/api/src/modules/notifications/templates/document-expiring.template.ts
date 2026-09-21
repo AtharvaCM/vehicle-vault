@@ -51,10 +51,15 @@ export class DocumentExpiringTemplate implements AlertTemplate<'document-expirin
       : 'soon';
 
     const identifier = document.number ? ` (${document.number})` : '';
+    // A document captured as an expiry alone names no provider; the alert
+    // still has to read as a sentence without one.
+    const issuedBy = document.provider ? ` with ${document.provider}` : '';
 
     return {
-      title: prefixedTitle(`${label} Expiring Soon: `, document.provider),
-      message: `Your ${label.toLowerCase()} with ${document.provider}${identifier} is expiring in ${formattedDays} day${formattedDays === 1 ? '' : 's'} on ${expiryDate}. Please ensure you renew it in time.`,
+      title: document.provider
+        ? prefixedTitle(`${label} Expiring Soon: `, document.provider)
+        : `${label} Expiring Soon`,
+      message: `Your ${label.toLowerCase()}${issuedBy}${identifier} is expiring in ${formattedDays} day${formattedDays === 1 ? '' : 's'} on ${expiryDate}. Please ensure you renew it in time.`,
       type: 'warning',
       link: `/vehicles/${document.vehicleId}?tab=protection`,
     };

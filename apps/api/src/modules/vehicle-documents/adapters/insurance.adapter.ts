@@ -55,7 +55,9 @@ export class InsuranceAdapter implements VehicleDocumentAdapter {
     const rows = await this.prisma.insurancePolicy.findMany({
       where: {
         vehicleId,
-        startDate: { lte: date },
+        // A policy known only by its expiry counts as covering `date` until it
+        // runs out: the start it does not record cannot be later than today.
+        OR: [{ startDate: { lte: date } }, { startDate: null }],
         endDate: { gte: date },
       },
       orderBy: { endDate: 'desc' },
@@ -81,9 +83,9 @@ export class InsuranceAdapter implements VehicleDocumentAdapter {
     const row = await this.prisma.insurancePolicy.create({
       data: {
         vehicleId,
-        provider: input.provider,
-        policyNumber: input.policyNumber,
-        startDate: input.startDate,
+        provider: input.provider ?? null,
+        policyNumber: input.policyNumber ?? null,
+        startDate: input.startDate ?? null,
         endDate: input.endDate,
         premiumAmount: input.premiumAmount ?? null,
         insuredValue: input.insuredValue ?? null,

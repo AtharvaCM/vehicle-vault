@@ -152,6 +152,9 @@ export class AnalyticsService {
 
     const insurance = policies.reduce((acc, p) => {
       if (!p.premiumAmount) return acc;
+      // Pro-rating needs a term. Without a start date there is none, so the
+      // premium counts in full, as it does for a degenerate term below.
+      if (!p.startDate) return acc.plus(p.premiumAmount);
       const total = p.endDate.getTime() - p.startDate.getTime();
       if (total <= 0) return acc.plus(p.premiumAmount);
       const overlapStart = Math.max(p.startDate.getTime(), from.getTime());
@@ -374,7 +377,9 @@ export class AnalyticsService {
 
     // Insurance pro-rated per month overlap.
     for (const p of policies) {
-      if (!p.premiumAmount) continue;
+      // A premium with no term behind it cannot be spread over months; it is
+      // still counted whole in the period total above.
+      if (!p.premiumAmount || !p.startDate) continue;
       const total = p.endDate.getTime() - p.startDate.getTime();
       if (total <= 0) continue;
       for (const key of buckets.keys()) {

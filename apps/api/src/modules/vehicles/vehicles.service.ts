@@ -86,6 +86,30 @@ export class VehiclesService {
     return this.toVehicle(vehicle, role);
   }
 
+  /**
+   * Put away the expiry prompt a new vehicle lands on, whether it was answered
+   * or skipped. Unaudited and outside a transaction, like a dashboard snooze:
+   * it records that a question was asked, not a change to the vehicle. The
+   * first dismissal stands, so a second call cannot restart the clock.
+   */
+  async dismissSetupPrompt(userId: string, vehicleId: string) {
+    const role = await this.access.assert(userId, vehicleId, VehicleRole.editor);
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id: vehicleId } });
+    if (!vehicle) {
+      throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
+    }
+    if (vehicle.setupPromptDismissedAt) {
+      return this.toVehicle(vehicle, role);
+    }
+
+    const updated = await this.prisma.vehicle.update({
+      where: { id: vehicleId },
+      data: { setupPromptDismissedAt: new Date() },
+    });
+
+    return this.toVehicle(updated, role);
+  }
+
   async ensureVehicleExists(userId: string, vehicleId: string) {
     return this.getVehicleById(userId, vehicleId);
   }
@@ -342,6 +366,9 @@ export class VehiclesService {
       purchasePrice:
         vehicle.purchasePrice != null ? Number(vehicle.purchasePrice.toString()) : null,
       purchaseOdometer: vehicle.purchaseOdometer ?? null,
+      setupPromptDismissedAt: vehicle.setupPromptDismissedAt
+        ? new Date(vehicle.setupPromptDismissedAt).toISOString()
+        : null,
       createdAt: vehicle.createdAt.toISOString(),
       updatedAt: vehicle.updatedAt.toISOString(),
       ...(currentUserRole ? { currentUserRole } : {}),

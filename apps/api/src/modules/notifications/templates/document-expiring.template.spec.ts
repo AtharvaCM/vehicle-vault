@@ -98,6 +98,18 @@ describe('DocumentExpiringTemplate', () => {
       expect(rendered.message).not.toContain('(');
     });
 
+    it('reads as a sentence for a document captured as an expiry alone', () => {
+      const rendered = template.render({
+        document: { ...baseInsurance, provider: null, number: null, startDate: null },
+        daysUntilExpiry: 12,
+      });
+
+      expect(rendered.title).toBe('Insurance Expiring Soon');
+      expect(rendered.message).toContain('Your insurance is expiring in 12 days on');
+      expect(rendered.message).not.toContain('with ');
+      expect(rendered.message).not.toContain('null');
+    });
+
     it('pluralizes "day" correctly at 1 day', () => {
       const rendered = template.render({ document: baseInsurance, daysUntilExpiry: 1 });
       expect(rendered.message).toContain('expiring in 1 day on');

@@ -373,6 +373,32 @@ describe('DashboardService', () => {
       expect(result.attentionCounts.thisMonth).toBe(1);
     });
 
+    it('(c0) raises a document the new-vehicle prompt created, which knows only its expiry', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle({ id: 'vehicle-1' })]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({
+          id: 'doc-from-prompt',
+          kind: 'puc',
+          provider: null,
+          number: null,
+          startDate: null,
+          endDate: new Date(daysFromNow(12)),
+        }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention[0]).toMatchObject({
+        id: 'doc-from-prompt',
+        kind: 'document',
+        documentKind: 'puc',
+        daysUntilDue: 12,
+      });
+      // Absent rather than the string "null": the card has nothing to name.
+      expect(result.attention[0]?.provider).toBeUndefined();
+      expect(result.attentionCounts.documentsExpiring30d).toBe(1);
+    });
+
     it('(c) lists documents expired within 90 days as overdue and marks older expiries only on the vehicle', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([
         makeVehicle({ id: 'vehicle-1', nickname: 'Recent lapse' }),

@@ -36,4 +36,10 @@ export const VehicleSchema = VehicleCreateSchema.extend({
   catalogVariantId: z.string().uuid().optional().nullable(),
   /** Current user's role on this vehicle. Omitted by older API versions. */
   currentUserRole: z.nativeEnum(VehicleRole).optional(),
+  /**
+   * When the insurance-and-PUC expiry prompt a new vehicle lands on was
+   * answered or skipped. Null means it has never been put away, which is what
+   * makes the prompt show. Omitted by older API versions.
+   */
+  setupPromptDismissedAt: z.string().datetime().nullable().optional(),
 });

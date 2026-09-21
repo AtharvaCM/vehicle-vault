@@ -20,6 +20,14 @@ interface DocumentCardProps {
   onEdit?: (document: VehicleDocument) => void;
 }
 
+/**
+ * A document the new-vehicle prompt created knows only its expiry: the insurer,
+ * the number and the start date are all filled in later.
+ */
+function NotRecorded() {
+  return <span className="font-bold text-slate-400">Not recorded</span>;
+}
+
 export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps) {
   // Delete is always offered here, unlike edit, so it needs the role itself.
   const { canEdit } = useVehicleAccess();
@@ -56,10 +64,14 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     Provider & Policy
                   </p>
-                  <h4 className="font-black text-slate-900 leading-tight">{document.provider}</h4>
-                  <p className="text-xs font-bold text-slate-500 tabular-nums">
-                    #{document.number}
-                  </p>
+                  <h4 className="font-black text-slate-900 leading-tight">
+                    {document.provider ?? <NotRecorded />}
+                  </h4>
+                  {document.number && (
+                    <p className="text-xs font-bold text-slate-500 tabular-nums">
+                      #{document.number}
+                    </p>
+                  )}
                 </div>
                 <Badge
                   variant={isExpired ? 'destructive' : isExpiringSoon ? 'secondary' : 'outline'}
@@ -82,7 +94,11 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                     Valid From
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {format(new Date(document.startDate), 'dd MMM yyyy')}
+                    {document.startDate ? (
+                      format(new Date(document.startDate), 'dd MMM yyyy')
+                    ) : (
+                      <NotRecorded />
+                    )}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -167,7 +183,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     {documentKindTitles[document.kind]}
                   </p>
-                  <h4 className="font-black text-slate-900 leading-tight">{document.provider}</h4>
+                  <h4 className="font-black text-slate-900 leading-tight">
+                    {document.provider ?? <NotRecorded />}
+                  </h4>
                   {document.number && (
                     <p className="text-xs font-bold text-slate-500 tabular-nums">
                       #{document.number}
@@ -201,7 +219,11 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                     Issued On
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {format(new Date(document.startDate), 'dd MMM yyyy')}
+                    {document.startDate ? (
+                      format(new Date(document.startDate), 'dd MMM yyyy')
+                    ) : (
+                      <NotRecorded />
+                    )}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -275,7 +297,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   {(document.details?.type as string) || 'Warranty'}
                 </p>
-                <h4 className="font-black text-slate-900 leading-tight">{document.provider}</h4>
+                <h4 className="font-black text-slate-900 leading-tight">
+                  {document.provider ?? <NotRecorded />}
+                </h4>
                 {document.number && (
                   <p className="text-xs font-bold text-slate-500 tabular-nums">
                     #{document.number}
@@ -301,7 +325,11 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                   Coverage Start
                 </div>
                 <p className="text-sm font-bold text-slate-700">
-                  {format(new Date(document.startDate), 'dd MMM yyyy')}
+                  {document.startDate ? (
+                    format(new Date(document.startDate), 'dd MMM yyyy')
+                  ) : (
+                    <NotRecorded />
+                  )}
                 </p>
               </div>
               <div className="space-y-1">

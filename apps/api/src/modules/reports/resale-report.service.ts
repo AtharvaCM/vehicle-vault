@@ -77,8 +77,12 @@ export class ResaleReportService {
         : kmDriven;
 
     const today = new Date();
+    // A policy known only by its expiry is treated as covering today until it
+    // runs out; the start it does not record cannot be later than today.
     const activePolicy = policies.find(
-      (p) => p.startDate.getTime() <= today.getTime() && p.endDate.getTime() >= today.getTime(),
+      (p) =>
+        (p.startDate === null || p.startDate.getTime() <= today.getTime()) &&
+        p.endDate.getTime() >= today.getTime(),
     );
 
     const loanSummaries = loans.map((loan) => {
@@ -180,8 +184,8 @@ export class ResaleReportService {
     doc.font('Helvetica').fontSize(10);
     if (activePolicy) {
       drawKeyValue(doc, [
-        ['Provider', activePolicy.provider],
-        ['Policy number', activePolicy.policyNumber],
+        ['Provider', activePolicy.provider ?? 'Not recorded'],
+        ['Policy number', activePolicy.policyNumber ?? 'Not recorded'],
         ['Valid until', fmtDate(activePolicy.endDate)],
         ['Claims filed (lifetime)', String(claims.length)],
       ]);
