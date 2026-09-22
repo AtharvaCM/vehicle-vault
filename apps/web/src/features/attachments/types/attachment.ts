@@ -4,6 +4,9 @@ import type {
   AttachmentExtractionStatusResponse,
   AttachmentKind,
   CreateAttachmentResponse,
+  MaintenanceFillField,
+  MaintenanceFillPlan,
+  MaintenanceFillResult,
 } from '@vehicle-vault/shared';
 
 export type {
@@ -12,4 +15,7 @@ export type {
   AttachmentExtractionStatusResponse,
   AttachmentKind,
   CreateAttachmentResponse,
+  MaintenanceFillField,
+  MaintenanceFillPlan,
+  MaintenanceFillResult,
 };

@@ -133,6 +133,9 @@ export const MaintenanceInvoiceExtractionDraftSchema = z.object({
   currencyCode: z.string().length(3).optional(),
   notes: z.string().min(1).optional(),
   lineItems: z.array(AttachmentExtractionLineItemSchema).optional(),
+  // When the workshop says to come back, if the document says so.
+  nextDueDate: z.string().datetime({ offset: true }).optional(),
+  nextDueOdometer: z.number().int().nonnegative().optional(),
 });
 
 export type MaintenanceInvoiceExtractionDraft = z.infer<

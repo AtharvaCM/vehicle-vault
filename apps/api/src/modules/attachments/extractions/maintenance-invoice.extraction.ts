@@ -33,6 +33,8 @@ type RawMaintenanceInvoice = {
   currencyCode?: string;
   notes?: string;
   lineItems?: RawLineItem[];
+  nextDueDate?: string;
+  nextDueOdometer?: number;
 };
 
 const maintenanceCategories = Object.values(MaintenanceCategory);
@@ -91,6 +93,16 @@ export class MaintenanceInvoiceExtractionSpec implements ExtractionSpec<Maintena
         type: SchemaType.STRING,
         description: 'Short notes that summarize the work done',
       },
+      nextDueDate: {
+        type: SchemaType.STRING,
+        description:
+          'Date the workshop says the next service is due, in ISO 8601 format, only when the document prints one ("Next service due", "Next service date", "Next visit"). Never the date of this visit.',
+      },
+      nextDueOdometer: {
+        type: SchemaType.INTEGER,
+        description:
+          'Odometer reading at which the workshop says the next service is due, as an integer without separators, only when the document prints one ("Next service at", "Next service km", "Next due km"). Never the reading at this visit.',
+      },
       lineItems: {
         type: SchemaType.ARRAY,
         description: 'Structured line items found in the document',
@@ -134,6 +146,7 @@ export class MaintenanceInvoiceExtractionSpec implements ExtractionSpec<Maintena
       'Always return serviceDate: use the service or job completion date when one is shown, otherwise repeat the document date.',
       'Always look for the odometer reading, which workshops label Kms In, Kms Out, KM Reading, Mileage, or Odometer; prefer the in reading and return it as a plain integer.',
       'When several reference numbers are printed, return the tax invoice number as invoiceNumber rather than the repair order or job card number.',
+      'When the document says when the next service is due, return that date as nextDueDate and that odometer reading as nextDueOdometer; never copy the date or reading of this visit into them.',
       'Use the best matching line item kind from this set:',
       maintenanceLineItemKinds.join(', '),
       'Use the best matching normalizedCategory from this set when obvious:',
@@ -166,6 +179,8 @@ export class MaintenanceInvoiceExtractionSpec implements ExtractionSpec<Maintena
       currencyCode: normalizeCurrency(r.currencyCode),
       notes: normalizeString(r.notes),
       lineItems: lineItems?.length ? lineItems : undefined,
+      nextDueDate: normalizeDate(r.nextDueDate),
+      nextDueOdometer: normalizeInteger(r.nextDueOdometer),
     };
   }
 }
