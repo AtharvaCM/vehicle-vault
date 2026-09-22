@@ -1,3 +1,10 @@
+# [1.52.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.51.0...v1.52.0) (2026-09-22)
+
+
+### Features
+
+* **tyres:** edit, delete and review the readings of a tracked tyre ([3039ae1](https://github.com/AtharvaCM/vehicle-vault/commit/3039ae1b36b0ad0620509ed52613569619eea21b))
+
 # [1.51.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.50.0...v1.51.0) (2026-09-22)
 
 
