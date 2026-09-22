@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.39.1...v1.40.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** update the odometer from the health card ([d0cd561](https://github.com/AtharvaCM/vehicle-vault/commit/d0cd5612297f419858397cb9f911f3457a4fbc83))
+
 ## [1.39.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.39.0...v1.39.1) (2026-09-22)
 
 
