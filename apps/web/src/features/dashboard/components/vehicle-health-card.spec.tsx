@@ -79,6 +79,31 @@ describe('VehicleHealthCard', () => {
     expect(screen.getByText('Insurance policy · Expires in 5 days')).toBeInTheDocument();
   });
 
+  it('points the pill at the tyres tab when a worn tyre is what is overdue', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({
+          status: 'overdue',
+          overdueCount: 1,
+          nextDue: {
+            kind: 'tyre',
+            targetId: 'tyre:fl',
+            title: 'Replace tyre',
+            dueDate: null,
+            daysUntilDue: null,
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: '1 overdue' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'tyres' }),
+    );
+    expect(screen.getByText('Replace tyre')).toBeInTheDocument();
+  });
+
   it('shows All clear and Nothing scheduled for a healthy vehicle', () => {
     renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
 

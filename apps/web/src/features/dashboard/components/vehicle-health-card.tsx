@@ -17,6 +17,7 @@ import { formatDate } from '@/lib/utils/format-date';
 
 import type { DashboardVehicleHealth } from '../types/dashboard';
 import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
+import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
 import { OdometerQuickUpdate } from './odometer-quick-update';
 import {
@@ -88,9 +89,9 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   const statusTab: VehicleDetailTab | undefined =
     vehicle.status === 'ok' || !vehicle.nextDue
       ? undefined
-      : vehicle.nextDue.kind === 'document'
-        ? 'protection'
-        : 'reminders';
+      : vehicle.nextDue.kind === 'reminder'
+        ? 'reminders'
+        : ATTENTION_KIND_TABS[vehicle.nextDue.kind];
   const kmSinceService = vehicle.lastService ? vehicle.odometer - vehicle.lastService.odometer : 0;
 
   return (

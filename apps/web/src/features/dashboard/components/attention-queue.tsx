@@ -251,9 +251,7 @@ export function AttentionQueue({
           <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
         </div>
         <p className="font-semibold text-slate-900">Nothing needs attention</p>
-        <p className="text-[13px] text-slate-500">
-          No reminders are due and no documents expire in the next 7 days.
-        </p>
+        <p className="text-[13px] text-slate-500">Nothing is overdue or due in the next 7 days.</p>
       </div>
     );
   }
@@ -270,7 +268,7 @@ export function AttentionQueue({
               ) : null}
             </CardTitle>
             <CardDescription>
-              Reminders, documents, and EMIs across every vehicle, most urgent first.
+              Everything due or wrong across every vehicle, most urgent first.
             </CardDescription>
           </div>
           <CardAction>

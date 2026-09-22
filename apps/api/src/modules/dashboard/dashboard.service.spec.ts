@@ -1,14 +1,18 @@
+import { ServiceBaselineStatus } from '@prisma/client';
 import {
   AttachmentKind,
   FuelType,
   LoanStatus,
   MaintenanceCategory,
+  MaintenanceRecordStatus,
   ReminderStatus,
   ReminderType,
+  TyrePosition,
   VehicleRole,
   VehicleType,
   type MaintenanceRecord,
   type Reminder,
+  type TyreCondition,
   type VehicleDocument,
 } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -94,6 +98,35 @@ function makeDocument(overrides: Partial<VehicleDocument> = {}): VehicleDocument
   };
 }
 
+function makeTyre(overrides: Partial<TyreCondition> = {}): TyreCondition {
+  return {
+    tyreId: 'tyre-1',
+    position: TyrePosition.FrontLeft,
+    level: 'healthy',
+    reason: 'none',
+    summary: '6.0 mm tread remaining.',
+    treadDepthMm: 6,
+    ageYears: 2,
+    kmOnTyre: 8000,
+    estimatedKmRemaining: null,
+    lastInspectedAt: null,
+    ...overrides,
+  };
+}
+
+/** Tyres on file and measured yesterday, so nothing is stale unless a test says so. */
+function tyreState(
+  conditions: TyreCondition[] = [makeTyre()],
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    vehicleOdometer: 12000,
+    conditions,
+    lastObservation: { at: new Date(daysFromNow(-1)), odometer: 11950 },
+    ...overrides,
+  };
+}
+
 /**
  * Next EMI = startDate + (tenureMonths - monthsRemaining + 1) months. With
  * 36 months tenure and 34 remaining, that is startDate + 3 months.
@@ -155,7 +188,11 @@ describe('DashboardService', () => {
   const prisma = {
     fuelLog: { count: vi.fn(), groupBy: vi.fn() },
     documentDismissal: { findMany: vi.fn(), upsert: vi.fn() },
+    serviceBaseline: { findMany: vi.fn() },
   };
+  const tyresService = { getAlertState: vi.fn() };
+  const accessoriesService = { findExpiringWarranties: vi.fn() };
+  const intervalResolver = { resolveForVehicle: vi.fn() };
 
   let service: DashboardService;
 
@@ -173,6 +210,10 @@ describe('DashboardService', () => {
     prisma.fuelLog.count.mockResolvedValue(0);
     prisma.fuelLog.groupBy.mockResolvedValue([]);
     prisma.documentDismissal.findMany.mockResolvedValue([]);
+    prisma.serviceBaseline.findMany.mockResolvedValue([]);
+    tyresService.getAlertState.mockResolvedValue(tyreState());
+    accessoriesService.findExpiringWarranties.mockResolvedValue([]);
+    intervalResolver.resolveForVehicle.mockResolvedValue({});
     service = new DashboardService(
       vehiclesService as never,
       maintenanceService as never,
@@ -183,6 +224,9 @@ describe('DashboardService', () => {
       vehicleDocumentsService as never,
       prisma as never,
       notificationsService as never,
+      tyresService as never,
+      accessoriesService as never,
+      intervalResolver as never,
     );
   });
 
@@ -678,6 +722,314 @@ describe('DashboardService', () => {
       const result = await service.getSummary('user-1');
 
       expect(result.attention.map((item) => item.id)).toEqual(['doc-visible']);
+    });
+  });
+
+  describe('what the bell knows', () => {
+    /** Past the new-vehicle grace, and far and old enough for both cold-start questions. */
+    const settledVehicle = (overrides: Record<string, unknown> = {}) =>
+      makeVehicle({
+        createdAt: '2025-06-01T00:00:00.000Z',
+        odometer: 42000,
+        year: 2019,
+        ...overrides,
+      });
+
+    const rowsOf = (result: Awaited<ReturnType<DashboardService['getSummary']>>, kind: string) =>
+      result.attention
+        .filter((item) => item.kind === kind)
+        .map((item) => ({
+          id: item.id,
+          urgency: item.urgency,
+          title: item.title,
+          detail: item.detail,
+        }));
+
+    const confirmedService = () =>
+      makeRecord({ status: MaintenanceRecordStatus.Confirmed, odometer: 40000 });
+
+    it('lists a tyre past its tread limit as overdue and a first warning as coming up', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState([
+          makeTyre({ tyreId: 'fl', level: 'illegal', reason: 'tread', treadDepthMm: 1.4 }),
+          makeTyre({
+            tyreId: 'rr',
+            position: TyrePosition.RearRight,
+            level: 'warn',
+            reason: 'tread',
+            treadDepthMm: 3.6,
+          }),
+          makeTyre({ tyreId: 'fr', position: TyrePosition.FrontRight }),
+        ]),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(rowsOf(result, 'tyre')).toEqual([
+        {
+          id: 'tyre:fl',
+          urgency: 'overdue',
+          title: 'Tyre not roadworthy',
+          detail: 'Front left · 1.4 mm tread',
+        },
+        {
+          id: 'tyre:rr',
+          urgency: 'this_month',
+          title: 'Tyre wearing down',
+          detail: 'Rear right · 3.6 mm tread',
+        },
+      ]);
+      // The vehicle's pill and "next due" point at the same row, so the pill has a visible cause.
+      expect(result.vehicles[0]).toMatchObject({
+        status: 'overdue',
+        overdueCount: 1,
+        dueSoonCount: 1,
+        nextDue: { kind: 'tyre', targetId: 'tyre:fl', title: 'Tyre not roadworthy' },
+      });
+      expect(tyresService.getAlertState).toHaveBeenCalledWith('user-1', 'vehicle-1');
+    });
+
+    it('lists a tyre that has aged out, however much tread it has left', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState([
+          makeTyre({
+            tyreId: 'rl',
+            position: TyrePosition.RearLeft,
+            level: 'replace',
+            reason: 'age',
+            ageYears: 6.4,
+          }),
+        ]),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(rowsOf(result, 'tyre')).toEqual([
+        {
+          id: 'tyre:rl',
+          urgency: 'overdue',
+          title: 'Tyre aged out',
+          detail: 'Rear left · 6.4 years old',
+        },
+      ]);
+    });
+
+    it('asks for the tyres of a vehicle that has none on file', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([settledVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([confirmedService()]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState([], { vehicleOdometer: 42000, lastObservation: null }),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(rowsOf(result, 'tyre')).toEqual([
+        {
+          id: 'tyre-check:vehicle-1',
+          urgency: 'this_month',
+          title: 'Tyres not tracked',
+          detail: 'None on file at 42,000 km',
+        },
+      ]);
+    });
+
+    it('asks nothing of a vehicle added this week, as the bell waits too', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        settledVehicle({ createdAt: '2026-03-17T00:00:00.000Z' }),
+      ]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState([], { vehicleOdometer: 42000, lastObservation: null }),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention).toEqual([]);
+    });
+
+    it('asks for a fresh reading once the last one is too old', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState([makeTyre()], {
+          lastObservation: { at: new Date(daysFromNow(-40)), odometer: 6000 },
+        }),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(rowsOf(result, 'tyre')).toEqual([
+        {
+          id: 'tyre-check:vehicle-1',
+          urgency: 'this_month',
+          title: 'Time to check the tyres',
+          detail: 'Last measured 6,000 km and 40 days ago',
+        },
+      ]);
+    });
+
+    it('asks for the service history of a vehicle with none, not counting a draft', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([settledVehicle()]);
+      // An extraction nobody has confirmed is not evidence the service happened.
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ status: MaintenanceRecordStatus.Draft }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(rowsOf(result, 'service_baseline')).toEqual([
+        {
+          id: 'service-history:vehicle-1',
+          urgency: 'this_month',
+          title: 'Add this vehicle’s service history',
+          detail: 'None on file at 42,000 km',
+        },
+      ]);
+    });
+
+    it('gathers the categories whose history is unknown into one row', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([settledVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([confirmedService()]);
+      intervalResolver.resolveForVehicle.mockResolvedValue({
+        brake_pads: { km: 30000, months: 24, source: 'default' },
+        coolant: { km: 40000, months: 24, source: 'default' },
+        air_filter: { km: 15000, months: 12, source: 'default' },
+        timing_belt: { km: 120000, months: 60, source: 'default' },
+      });
+      const unknown = (category: string) => ({
+        vehicleId: 'vehicle-1',
+        category,
+        status: ServiceBaselineStatus.unknown,
+        lastDoneOdometer: null,
+      });
+      prisma.serviceBaseline.findMany.mockResolvedValue([
+        unknown('brake_pads'),
+        unknown('coolant'),
+        unknown('timing_belt'),
+        { ...unknown('air_filter'), status: ServiceBaselineStatus.known, lastDoneOdometer: 35000 },
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(rowsOf(result, 'service_baseline')).toEqual([
+        {
+          id: 'service-history:vehicle-1',
+          urgency: 'this_month',
+          title: 'Unknown service history',
+          detail: 'Brake pads, coolant and 1 more',
+        },
+      ]);
+      expect(prisma.serviceBaseline.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { vehicle: { members: { some: { userId: 'user-1' } } } },
+        }),
+      );
+    });
+
+    it('keeps the questions from a viewer, who cannot answer them, and tells them the rest', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        settledVehicle({ currentUserRole: VehicleRole.Viewer }),
+      ]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState(
+          [makeTyre({ tyreId: 'fl', level: 'replace', reason: 'tread', treadDepthMm: 2.4 })],
+          { lastObservation: { at: new Date(daysFromNow(-200)), odometer: 30000 } },
+        ),
+      );
+
+      const result = await service.getSummary('viewer-1');
+
+      expect(result.attention.map((item) => item.id)).toEqual(['tyre:fl']);
+    });
+
+    it('lists an accessory warranty like a document, from today to 30 days out', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      accessoriesService.findExpiringWarranties.mockResolvedValue([
+        {
+          id: 'acc-1',
+          vehicleId: 'vehicle-1',
+          name: 'Dashcam',
+          brand: '70mai',
+          warrantyExpiresAt: new Date(daysFromNow(5)),
+        },
+        {
+          id: 'acc-2',
+          vehicleId: 'vehicle-1',
+          name: 'Seat covers',
+          brand: null,
+          warrantyExpiresAt: new Date(daysFromNow(20)),
+        },
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(
+        result.attention.map((item) => [
+          item.id,
+          item.kind,
+          item.urgency,
+          item.title,
+          item.daysUntilDue,
+        ]),
+      ).toEqual([
+        ['accessory:acc-1', 'accessory', 'this_week', '70mai Dashcam warranty', 5],
+        ['accessory:acc-2', 'accessory', 'this_month', 'Seat covers warranty', 20],
+      ]);
+      // The lookup the engine makes, with the queue's look-ahead.
+      expect(accessoriesService.findExpiringWarranties).toHaveBeenCalledWith('user-1', 30);
+      // Not a document: the documents tile counts insurance, PUC and the rest only.
+      expect(result.attentionCounts.documentsExpiring30d).toBe(0);
+    });
+
+    it('leaves the tyre walk-around reminder to the readings, as the bell does', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      remindersService.getAllReminders.mockResolvedValue([
+        makeReminder({
+          id: 'walk-around',
+          title: 'Tyre tread & pressure check',
+          dueDate: daysFromNow(-3),
+          status: ReminderStatus.Overdue,
+          notes: 'Measure tread depth at each corner.\n[catalog:tyre_inspection]',
+        }),
+        makeReminder({
+          id: 'rotation',
+          title: 'Tyre rotation',
+          dueDate: daysFromNow(-3),
+          status: ReminderStatus.Overdue,
+          notes: '[catalog:tyre_rotation]',
+        }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention.map((item) => item.id)).toEqual(['rotation']);
+    });
+
+    it('adds nothing for a vehicle with nothing wrong', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([settledVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([confirmedService()]);
+      intervalResolver.resolveForVehicle.mockResolvedValue({
+        brake_pads: { km: 30000, months: 24, source: 'default' },
+      });
+      prisma.serviceBaseline.findMany.mockResolvedValue([
+        {
+          vehicleId: 'vehicle-1',
+          category: 'brake_pads',
+          status: ServiceBaselineStatus.known,
+          lastDoneOdometer: 35000,
+        },
+      ]);
+      tyresService.getAlertState.mockResolvedValue(
+        tyreState([makeTyre()], {
+          vehicleOdometer: 42000,
+          lastObservation: { at: new Date(daysFromNow(-1)), odometer: 41950 },
+        }),
+      );
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.attention).toEqual([]);
+      expect(result.vehicles[0]).toMatchObject({ status: 'ok', nextDue: null });
     });
   });
 
