@@ -338,16 +338,14 @@ export class AttachmentsService {
     }
 
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
-    if (attachment.insurancePolicyId || attachment.warrantyId || attachment.complianceDocumentId) {
+    if (!attachment.maintenanceRecordId) {
       // This reads every file as a service invoice, which only a maintenance
       // record can take: applyExtraction and fill refuse any other owner. A
-      // document is read as its own kind from an upload to
-      // POST /vehicles/:vehicleId/documents/scan, so its file is refused here
-      // for every role, before it is downloaded or the provider called. A
-      // non-member has already had a 404 above.
-      throw new BadRequestException(
-        "A vehicle document's file is not a service invoice, so it cannot be read here.",
-      );
+      // vehicle document or loan is read as its own kind from an upload to its
+      // scan route, so any other owner's file is refused here for every role,
+      // before it is downloaded or the provider called. A non-member has
+      // already had a 404 above.
+      throw new BadRequestException('Only a file on a service record can be read as an invoice.');
     }
     const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
 

@@ -882,7 +882,7 @@ describe('AttachmentsService', () => {
     });
   });
 
-  describe("extraction on a document's file", () => {
+  describe("extraction on a document's or loan's file", () => {
     // A file as getStoredAttachmentById hands it to a member of the vehicle.
     const storedFile = (owner: Record<string, string>) => ({
       id: 'attachment-1',
@@ -929,18 +929,28 @@ describe('AttachmentsService', () => {
       expect(extractionService.extract).not.toHaveBeenCalled();
     });
 
-    it("still extracts a loan's file, which stays owner-only", async () => {
+    it("refuses a loan's file for the owner who alone can open it", async () => {
       prisma.attachment.findFirst.mockResolvedValue(storedFile({ vehicleLoanId: 'loan-1' }));
 
-      await expect(service.extractAttachment('owner-1', 'attachment-1')).resolves.toMatchObject({
-        status: AttachmentExtractionStatus.Completed,
-      });
-
+      await expect(service.extractAttachment('owner-1', 'attachment-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
       const where = prisma.attachment.findFirst.mock.calls.at(-1)?.[0].where;
       expect(where.OR).toContainEqual({
         vehicleLoan: { vehicle: { members: { some: { userId: 'owner-1', role: 'owner' } } } },
       });
-      expect(extractionService.extract).toHaveBeenCalledTimes(1);
+      expect(storageService.downloadObject).not.toHaveBeenCalled();
+      expect(prisma.attachmentExtraction.upsert).not.toHaveBeenCalled();
+      expect(extractionService.extract).not.toHaveBeenCalled();
+    });
+
+    it("answers a non-member's request with a 404, not the refusal", async () => {
+      prisma.attachment.findFirst.mockResolvedValue(null);
+
+      await expect(service.extractAttachment('stranger-1', 'attachment-1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(extractionService.extract).not.toHaveBeenCalled();
     });
   });
 
