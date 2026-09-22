@@ -13,8 +13,10 @@ import {
 import {
   TyrePosition,
   type MaintenanceRecord,
+  type Tyre,
   type TyreCondition,
   type TyreConditionLevel,
+  type TyreInspection,
   type Vehicle,
 } from '@vehicle-vault/shared';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,16 +25,25 @@ import type { ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { EmptyState, EmptyStateAction } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
+import { formatDate } from '@/lib/utils/format-date';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
 import { TyreFormDialog } from '../../tyres/components/tyre-form-dialog';
 import { TyreInspectionDialog } from '../../tyres/components/tyre-inspection-dialog';
-import { useVehicleTyreCondition, useVehicleTyres } from '../../tyres/hooks/use-tyres';
+import { formatDotCode } from '../../tyres/schemas/tyre-form.schema';
+import {
+  useDeleteTyre,
+  useVehicleTyreCondition,
+  useVehicleTyreInspections,
+  useVehicleTyres,
+} from '../../tyres/hooks/use-tyres';
 import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
 import { useVehicleAccess } from '../context/vehicle-access';
@@ -59,8 +70,52 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   // that decide whether a tyre is safe, and neither can be derived from dates.
   const conditionQuery = useVehicleTyreCondition(vehicle?.id ?? '');
   const tyresQuery = useVehicleTyres(vehicle?.id ?? '');
+  const inspectionsQuery = useVehicleTyreInspections(vehicle?.id ?? '');
+  const deleteTyre = useDeleteTyre(vehicle?.id ?? '');
 
   const [openDialog, setOpenDialog] = useState<'tyre' | 'inspection' | null>(null);
+  // Kept after the dialog closes, so it does not turn into "Add a tyre" while
+  // it animates out.
+  const [editTarget, setEditTarget] = useState<Tyre | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const tyreById = useMemo(
+    () => new Map((tyresQuery.data ?? []).map((tyre) => [tyre.id, tyre])),
+    [tyresQuery.data],
+  );
+  // The API returns readings newest first; grouping keeps that order.
+  const readingsByTyre = useMemo(() => {
+    const byTyre = new Map<string, TyreInspection[]>();
+    for (const reading of inspectionsQuery.data ?? []) {
+      const list = byTyre.get(reading.tyreId);
+      if (list) {
+        list.push(reading);
+      } else {
+        byTyre.set(reading.tyreId, [reading]);
+      }
+    }
+    return byTyre;
+  }, [inspectionsQuery.data]);
+
+  function startEditing(tyre: Tyre) {
+    setEditTarget(tyre);
+    setIsEditOpen(true);
+  }
+
+  async function handleDelete(tyre: Tyre) {
+    try {
+      await deleteTyre.mutateAsync(tyre.id);
+      appToast.success({
+        title: 'Tyre deleted',
+        description: `${POSITION_LABEL[tyre.position]} tyre removed from the tracker.`,
+      });
+    } catch (error) {
+      appToast.error({
+        title: "Couldn't delete the tyre",
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
+    }
+  }
 
   const insights = useMemo(
     () => getTyreInsights({ vehicle, records, intervals: intervalsQuery.data }),
@@ -181,9 +236,21 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
 
         {hasMeasurements ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            {measured.map((tyre) => (
-              <CornerCard key={tyre.tyreId} tyre={tyre} />
-            ))}
+            {measured.map((condition) => {
+              const tyre = tyreById.get(condition.tyreId);
+
+              return (
+                <CornerCard
+                  condition={condition}
+                  isDeleting={deleteTyre.isPending && deleteTyre.variables === condition.tyreId}
+                  key={condition.tyreId}
+                  onDelete={canEdit && tyre ? () => handleDelete(tyre) : undefined}
+                  onEdit={canEdit && tyre ? () => startEditing(tyre) : undefined}
+                  readings={readingsByTyre.get(condition.tyreId) ?? []}
+                  tyre={tyre ?? null}
+                />
+              );
+            })}
           </div>
         ) : (
           <EmptyState
@@ -284,6 +351,15 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
             vehicleId={vehicle.id}
             vehicleOdometer={vehicle.odometer}
           />
+          {editTarget ? (
+            <TyreFormDialog
+              isOpen={isEditOpen}
+              onClose={() => setIsEditOpen(false)}
+              tyre={editTarget}
+              vehicleId={vehicle.id}
+              vehicleOdometer={vehicle.odometer}
+            />
+          ) : null}
         </>
       ) : null}
     </div>
@@ -454,16 +530,38 @@ const SERVICE_TO_CONDITION: Record<TyreStatus, TyreConditionLevel> = {
 };
 
 interface CornerCardProps {
-  tyre: TyreCondition;
+  /** The grading, exactly as the API returns it; nothing here re-derives it. */
+  condition: TyreCondition;
+  /** The recorded tyre behind the grading: its brand, size and DOT code. */
+  tyre: Tyre | null;
+  /** This tyre's readings, newest first. */
+  readings: TyreInspection[];
+  /** Omitted for someone who cannot change the vehicle; the control goes with it. */
+  onEdit?: () => void;
+  onDelete?: () => Promise<void>;
+  isDeleting: boolean;
+}
+
+/** "Michelin Primacy 4 · 205/55 R16 · DOT 3624": what is written on the tyre. */
+function describeTyre(tyre: Tyre): string | null {
+  const name = [tyre.brand, tyre.model].filter(Boolean).join(' ');
+  const dot = formatDotCode(tyre.dotWeek ?? null, tyre.dotYear ?? null);
+
+  return [name, tyre.size, dot ? `DOT ${dot}` : null].filter(Boolean).join(' · ') || null;
 }
 
 /** One measured corner: what it reads, why that matters, and how long it has left. */
-function CornerCard({ tyre }: CornerCardProps) {
-  const appearance = CONDITION_COPY[tyre.level];
+function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }: CornerCardProps) {
+  const appearance = CONDITION_COPY[condition.level];
   const Icon = appearance.icon;
+  const label = POSITION_LABEL[condition.position];
+  const recorded = tyre ? describeTyre(tyre) : null;
 
   return (
-    <div className={cn('rounded-2xl border p-5 shadow-premium-sm', appearance.card)}>
+    <div
+      className={cn('rounded-2xl border p-5 shadow-premium-sm', appearance.card)}
+      data-testid="tyre-corner"
+    >
       <div className="mb-3 flex items-center justify-between">
         <div className={cn('rounded-xl bg-white p-2 shadow-sm', appearance.icons)}>
           <Icon className="h-4 w-4" />
@@ -475,22 +573,21 @@ function CornerCard({ tyre }: CornerCardProps) {
           {appearance.label}
         </Badge>
       </div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-        {POSITION_LABEL[tyre.position]}
-      </p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-black tracking-tighter tabular-nums text-slate-900">
-        {tyre.treadDepthMm != null ? `${tyre.treadDepthMm.toFixed(1)} mm` : '—'}
+        {condition.treadDepthMm != null ? `${condition.treadDepthMm.toFixed(1)} mm` : '—'}
       </p>
-      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600">{tyre.summary}</p>
+      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600">{condition.summary}</p>
+      {recorded ? <p className="mt-1 text-[11px] text-slate-500">{recorded}</p> : null}
       <div className="mt-2 space-y-0.5">
-        {tyre.estimatedKmRemaining != null ? (
+        {condition.estimatedKmRemaining != null ? (
           <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
-            ~{tyre.estimatedKmRemaining.toLocaleString()} km left at current wear
+            ~{condition.estimatedKmRemaining.toLocaleString()} km left at current wear
           </p>
         ) : null}
-        {tyre.lastInspectedAt ? (
+        {condition.lastInspectedAt ? (
           <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
-            Checked {formatDistanceToNow(new Date(tyre.lastInspectedAt), { addSuffix: true })}
+            Checked {formatDistanceToNow(new Date(condition.lastInspectedAt), { addSuffix: true })}
           </p>
         ) : (
           <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
@@ -498,7 +595,77 @@ function CornerCard({ tyre }: CornerCardProps) {
           </p>
         )}
       </div>
+
+      <TyreReadings label={label} readings={readings} />
+
+      {onEdit || onDelete ? (
+        <div className="mt-3 flex items-center gap-2">
+          {onEdit ? (
+            <Button onClick={onEdit} size="sm" variant="secondary">
+              Edit
+            </Button>
+          ) : null}
+          {onDelete ? (
+            <ConfirmActionDialog
+              confirmLabel="Delete tyre"
+              description={`${
+                readings.length > 0
+                  ? `Its ${readings.length} reading${readings.length === 1 ? '' : 's'} will be deleted with it.`
+                  : 'It has no readings yet.'
+              } If it was replaced, add the new tyre instead: that keeps this one's history. This cannot be undone.`}
+              isPending={isDeleting}
+              onConfirm={onDelete}
+              title={`Delete the ${label.toLowerCase()} tyre?`}
+              triggerLabel="Delete"
+              triggerVariant="ghost"
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+/** Reading values as they were recorded, not rounded to the card's one decimal. */
+function formatReading(reading: TyreInspection): string {
+  const figure = (value: number) => value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+
+  return [
+    reading.treadDepthMm != null ? `${figure(reading.treadDepthMm)} mm tread` : null,
+    reading.pressurePsi != null ? `${figure(reading.pressurePsi)} psi` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/** Every reading of one tyre, newest first, folded away until asked for. */
+function TyreReadings({ label, readings }: { label: string; readings: TyreInspection[] }) {
+  if (readings.length === 0) {
+    return <p className="mt-3 text-[11px] text-slate-500">No readings yet.</p>;
+  }
+
+  return (
+    <details className="group mt-3 rounded-xl border border-slate-200/70 bg-white/70">
+      <summary className="cursor-pointer select-none px-3 py-2 text-[11px] font-bold text-slate-700">
+        Readings ({readings.length})
+      </summary>
+      <ol aria-label={`${label} tyre readings, newest first`} className="divide-y divide-slate-100">
+        {readings.map((reading) => (
+          <li className="px-3 py-2 text-[11px]" key={reading.id}>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <span className="text-slate-500">
+                <time dateTime={reading.inspectedAt}>{formatDate(reading.inspectedAt)}</time> ·{' '}
+                {reading.odometer.toLocaleString('en-IN')} km
+              </span>
+              <span className="font-bold tabular-nums text-slate-900">
+                {formatReading(reading)}
+              </span>
+            </div>
+            {reading.notes ? <p className="mt-0.5 text-slate-500">{reading.notes}</p> : null}
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
 

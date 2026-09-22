@@ -15,6 +15,7 @@ export const ALERT_KINDS = [
   'reminder-overdue',
   'document-expiring',
   'accessory-warranty-expiring',
+  'warranty-odometer',
   'tyre-worn',
   'tyre-aged',
   'tyre-uninspected',

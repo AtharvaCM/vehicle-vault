@@ -30,6 +30,14 @@ export class VehiclesController {
     return this.vehicleInsightsService.getOdometerInsights(user.id, params.vehicleId);
   }
 
+  @Get(':vehicleId/fuel-economy')
+  @ApiOperation({ summary: 'Get achieved fuel economy against the catalog claim' })
+  async getVehicleFuelEconomy(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {
+    return successResponse(
+      await this.vehicleInsightsService.getFuelEconomy(user.id, params.vehicleId),
+    );
+  }
+
   @Get(':vehicleId/forecast')
   @ApiOperation({ summary: 'Get maintenance forecast suggestions' })
   async getVehicleForecast(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AnchorHTMLAttributes } from 'react';
+import { useState, type AnchorHTMLAttributes } from 'react';
 import { ReminderStatus, ReminderType } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -23,6 +23,24 @@ const reminder = {
   createdAt: '2026-03-20T00:00:00.000Z',
   updatedAt: '2026-03-20T00:00:00.000Z',
 };
+
+function SelectableReminderList() {
+  const [selectedReminderIds, setSelectedReminderIds] = useState<string[]>([]);
+
+  return (
+    <ReminderList
+      emptyMessage="No reminders"
+      onSelectionChange={(reminderId, checked) =>
+        setSelectedReminderIds((current) =>
+          checked ? [...current, reminderId] : current.filter((id) => id !== reminderId),
+        )
+      }
+      reminders={[reminder]}
+      selectedReminderIds={selectedReminderIds}
+      title="Upcoming"
+    />
+  );
+}
 
 describe('ReminderList', () => {
   it('renders selection checkboxes and reports selection changes', async () => {
@@ -58,5 +76,20 @@ describe('ReminderList', () => {
     expect(
       screen.getByRole('checkbox', { name: /select reminder insurance renewal/i }),
     ).toBeChecked();
+  });
+
+  it('ticks and unticks from the box, or from the label padding around it', async () => {
+    const user = userEvent.setup();
+    render(<SelectableReminderList />);
+    const checkbox = screen.getByRole('checkbox', { name: /select reminder insurance renewal/i });
+
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+
+    // On a phone the padded label, not the 16px box, is what a thumb lands on.
+    await user.click(checkbox.closest('label')!);
+    expect(checkbox).toBeChecked();
   });
 });

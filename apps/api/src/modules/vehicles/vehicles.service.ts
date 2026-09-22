@@ -311,6 +311,11 @@ export class VehiclesService {
             },
           },
         },
+        // Every other owner of stored files goes with the vehicle too.
+        insurancePolicies: { select: { attachments: { select: { fileName: true } } } },
+        warranties: { select: { attachments: { select: { fileName: true } } } },
+        loans: { select: { attachments: { select: { fileName: true } } } },
+        complianceDocuments: { select: { attachments: { select: { fileName: true } } } },
       },
     });
 
@@ -331,9 +336,13 @@ export class VehiclesService {
       });
     });
 
-    const attachmentFileNames = vehicle.maintenanceRecords.flatMap((record) =>
-      record.attachments.map((attachment) => attachment.fileName),
-    );
+    const attachmentFileNames = [
+      ...vehicle.maintenanceRecords,
+      ...vehicle.insurancePolicies,
+      ...vehicle.warranties,
+      ...vehicle.loans,
+      ...vehicle.complianceDocuments,
+    ].flatMap((owner) => owner.attachments.map((attachment) => attachment.fileName));
 
     await Promise.all(
       attachmentFileNames.map((fileName) => this.storageService.deleteObject(fileName)),

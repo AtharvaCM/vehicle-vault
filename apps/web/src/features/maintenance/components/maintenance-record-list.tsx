@@ -20,7 +20,7 @@ export function MaintenanceRecordList({
   vehicleLabelById,
 }: MaintenanceRecordListProps) {
   return (
-    <Card>
+    <Card className="p-3 sm:p-5">
       <CardHeader className="pb-3">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
@@ -31,13 +31,7 @@ export function MaintenanceRecordList({
             record={record}
             selectionControl={
               onSelectionChange ? (
-                <label
-                  className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                >
+                <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm">
                   <input
                     aria-label={`Select maintenance record ${record.workshopName?.trim() || formatSelectionLabel(record.category)} on ${record.serviceDate}`}
                     checked={selectedRecordIds.includes(record.id)}

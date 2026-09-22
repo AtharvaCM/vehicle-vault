@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AuditResourceType } from '@prisma/client';
 import {
   CreateVehicleDocumentSchema,
@@ -10,6 +10,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -41,6 +42,7 @@ const NOT_FOUND_MESSAGE = 'Vehicle document not found';
 
 @Injectable()
 export class VehicleDocumentsService {
+  private readonly logger = new Logger(VehicleDocumentsService.name);
   private readonly adapterByKind: Map<VehicleDocumentKind, VehicleDocumentAdapter>;
 
   constructor(
@@ -51,6 +53,7 @@ export class VehicleDocumentsService {
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
     private readonly notificationsService: NotificationsService,
+    private readonly storageService: SupabaseStorageService,
   ) {
     this.adapterByKind = new Map(adapters.map((a) => [a.kind, a]));
   }
@@ -148,6 +151,9 @@ export class VehicleDocumentsService {
   async remove(userId: string, kind: VehicleDocumentKind, id: string): Promise<void> {
     const owned = await this.findOwned(userId, id, kind, 'editor');
     const adapter = this.requireAdapter(kind);
+    // Read before the delete: the cascade takes the attachment rows with it,
+    // and with them the only record of where their files are stored.
+    const storedFiles = await this.storedFilesOf(kind, owned.id);
     await adapter.remove(owned.id);
     await this.auditService.track(this.prisma, {
       actorUserId: userId,
@@ -156,6 +162,38 @@ export class VehicleDocumentsService {
       resourceType: KIND_TO_RESOURCE_TYPE[kind],
       resourceId: owned.id,
       before: owned as unknown as Record<string, unknown>,
+    });
+    await this.removeStoredFiles(storedFiles);
+  }
+
+  /** Paths of the files a document holds, whichever table it lives in. */
+  private async storedFilesOf(kind: VehicleDocumentKind, documentId: string): Promise<string[]> {
+    const owner =
+      kind === 'insurance'
+        ? { insurancePolicyId: documentId }
+        : kind === 'warranty'
+          ? { warrantyId: documentId }
+          : { complianceDocumentId: documentId };
+    const attachments = await this.prisma.attachment.findMany({
+      where: owner,
+      select: { fileName: true },
+    });
+    return attachments.map((attachment) => attachment.fileName);
+  }
+
+  /**
+   * Best effort, after the rows are gone: the document is deleted either way,
+   * and a file storage refuses to remove is logged rather than resurrecting a
+   * document the user asked to delete. Account deletion's sweep catches strays.
+   */
+  private async removeStoredFiles(paths: string[]) {
+    const results = await Promise.allSettled(
+      paths.map((path) => this.storageService.deleteObject(path)),
+    );
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        this.logger.warn(`Could not remove stored file ${paths[index]}: ${String(result.reason)}`);
+      }
     });
   }
 
@@ -176,8 +214,9 @@ export class VehicleDocumentsService {
   }
 
   /**
-   * Return every document owned by the user whose validity window ends
-   * within the next `withinDays`. The range starts at the current
+   * Return every document of record owned by the user whose validity window
+   * ends within the next `withinDays`; a superseded one never alerts (see
+   * stillOfRecord). The range starts at the current
    * day's midnight (caller-local) so a cron that fires at 06:00 produces
    * the same set of rows as one that fires at 23:59.
    *
@@ -198,8 +237,35 @@ export class VehicleDocumentsService {
     until.setHours(23, 59, 59, 999);
 
     const targets = kind ? [this.requireAdapter(kind)] : this.adapters;
-    const lists = await Promise.all(targets.map((a) => a.findExpiringBetween(userId, from, until)));
+    const lists = await Promise.all(
+      targets.map(async (adapter) =>
+        this.stillOfRecord(adapter, await adapter.findExpiringBetween(userId, from, until)),
+      ),
+    );
     return lists.flat();
+  }
+
+  /**
+   * The expiring documents that are still the vehicle's document of record for
+   * their kind. A renewed policy is superseded by its renewal, which usually
+   * expires far outside the window, so each is weighed against every document
+   * of its vehicle and kind, by the recency rule the dashboard uses. Without
+   * this the daily alert run kept raising fresh expiry alerts for the policy
+   * that had just been renewed, whenever it crossed into a tighter window.
+   */
+  private async stillOfRecord(
+    adapter: VehicleDocumentAdapter,
+    expiring: VehicleDocument[],
+  ): Promise<VehicleDocument[]> {
+    const vehicleIds = [...new Set(expiring.map((document) => document.vehicleId))];
+    const currentIds = new Set<string>();
+    await Promise.all(
+      vehicleIds.map(async (vehicleId) => {
+        const current = pickLatestDocument(await adapter.listForVehicle(vehicleId));
+        if (current) currentIds.add(current.id);
+      }),
+    );
+    return expiring.filter((document) => currentIds.has(document.id));
   }
 
   async activeCoverageAt(

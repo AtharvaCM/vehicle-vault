@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BellRing, Coins, ShieldCheck } from 'lucide-react';
+import { BellRing, CircleDot, Coins, History, Package, ShieldCheck } from 'lucide-react';
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -13,6 +13,9 @@ const KIND_ICONS: Record<DashboardAttentionKind, typeof BellRing> = {
   reminder: BellRing,
   document: ShieldCheck,
   loan_emi: Coins,
+  tyre: CircleDot,
+  service_baseline: History,
+  accessory: Package,
 };
 
 type ComingUpListProps = {

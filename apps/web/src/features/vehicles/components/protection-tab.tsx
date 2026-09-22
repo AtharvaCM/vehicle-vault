@@ -24,6 +24,8 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
+import { documentOfRecord } from '../../vehicle-documents/utils/document-of-record';
+import { renewalValues, type RenewalValues } from '../../vehicle-documents/utils/renewal-values';
 import {
   documentKindNouns,
   documentKindTitles,
@@ -92,6 +94,8 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const [defaultKind, setDefaultKind] = useState<VehicleDocumentKind>('insurance');
   const [editingDocument, setEditingDocument] = useState<VehicleDocument | null>(null);
   const [scannedDraft, setScannedDraft] = useState<VehicleDocumentExtractionDraft | null>(null);
+  // Prefill for "Renew": the current record's details with the next term.
+  const [renewalDraft, setRenewalDraft] = useState<RenewalValues | null>(null);
   // Which kind the file picker is currently collecting a scan for. The endpoint
   // needs it up front so the prompt can narrow to that document type.
   const [scanKind, setScanKind] = useState<VehicleDocumentKind>('insurance');
@@ -152,13 +156,34 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   function handleEdit(doc: VehicleDocument) {
     setEditingDocument(doc);
     setScannedDraft(null);
+    setRenewalDraft(null);
     setDefaultKind(doc.kind);
     setIsDialogOpen(true);
+  }
+
+  /**
+   * A renewal is a new record, not an edit: the old one stays as history, and
+   * the new one outranks it, so the dashboard and the alerts move over to it.
+   */
+  function handleRenew(doc: VehicleDocument) {
+    setEditingDocument(null);
+    setScannedDraft(null);
+    setRenewalDraft(renewalValues(doc));
+    setDefaultKind(doc.kind);
+    setIsDialogOpen(true);
+  }
+
+  /** Renew is offered only on each kind's document of record, never on history. */
+  function renewHandlerFor(doc: VehicleDocument) {
+    if (!canEdit) return undefined;
+    const sameKind = (documentsQuery.data ?? []).filter((other) => other.kind === doc.kind);
+    return documentOfRecord(sameKind)?.id === doc.id ? handleRenew : undefined;
   }
 
   function handleClose() {
     setEditingDocument(null);
     setScannedDraft(null);
+    setRenewalDraft(null);
     setIsDialogOpen(false);
   }
 
@@ -252,6 +277,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   document={policy}
                   vehicleId={vehicleId}
                   onEdit={canEdit ? handleEdit : undefined}
+                  onRenew={renewHandlerFor(policy)}
                 />
               ))
             ) : (
@@ -367,6 +393,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   document={warranty}
                   vehicleId={vehicleId}
                   onEdit={canEdit ? handleEdit : undefined}
+                  onRenew={renewHandlerFor(warranty)}
                 />
               ))
             ) : (
@@ -432,6 +459,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   document={doc}
                   vehicleId={vehicleId}
                   onEdit={canEdit ? handleEdit : undefined}
+                  onRenew={renewHandlerFor(doc)}
                 />
               ))
             ) : (
@@ -489,7 +517,8 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
         vehicleId={vehicleId}
         defaultKind={defaultKind}
         editingDocument={editingDocument}
-        initialValues={scannedDraft ?? undefined}
+        initialValues={scannedDraft ?? renewalDraft ?? undefined}
+        prefillSource={renewalDraft ? 'renewal' : 'scan'}
       />
 
       <ClaimFormDialog

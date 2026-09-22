@@ -22,15 +22,9 @@ import type { UpdateReminderDto } from './dto/update-reminder.dto';
 import { extractSlugFromNotes } from './catalog-marker';
 import { ServiceScheduleService } from './service-schedule.service';
 import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-projection';
+import { computeReminderStatus, reminderStatusPriority } from './reminder-status';
 
 const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
-
-const reminderStatusPriority: Record<ReminderStatus, number> = {
-  [ReminderStatus.Upcoming]: 0,
-  [ReminderStatus.DueToday]: 1,
-  [ReminderStatus.Overdue]: 2,
-  [ReminderStatus.Completed]: 3,
-};
 
 type ReminderWithVehicle = Prisma.ReminderGetPayload<{
   include: {
@@ -420,58 +414,7 @@ export class RemindersService {
     },
     currentOdometer?: number,
   ) {
-    if (reminder.completedAt) {
-      return ReminderStatus.Completed;
-    }
-
-    const dueDateStatus = reminder.dueDate ? this.getDueDateStatus(reminder.dueDate) : null;
-    const dueOdometerStatus =
-      reminder.dueOdometer !== undefined && currentOdometer !== undefined
-        ? this.getDueOdometerStatus(reminder.dueOdometer, currentOdometer)
-        : null;
-
-    return [dueDateStatus, dueOdometerStatus].reduce<ReminderStatus>((current, candidate) => {
-      if (!candidate) {
-        return current;
-      }
-
-      return reminderStatusPriority[candidate] > reminderStatusPriority[current]
-        ? candidate
-        : current;
-    }, ReminderStatus.Upcoming);
-  }
-
-  private getDueDateStatus(dueDate: string) {
-    const dueDay = this.toUtcDayTimestamp(dueDate);
-    const today = this.toUtcDayTimestamp(new Date().toISOString());
-
-    if (dueDay < today) {
-      return ReminderStatus.Overdue;
-    }
-
-    if (dueDay === today) {
-      return ReminderStatus.DueToday;
-    }
-
-    return ReminderStatus.Upcoming;
-  }
-
-  private getDueOdometerStatus(dueOdometer: number, currentOdometer: number) {
-    if (dueOdometer < currentOdometer) {
-      return ReminderStatus.Overdue;
-    }
-
-    if (dueOdometer === currentOdometer) {
-      return ReminderStatus.DueToday;
-    }
-
-    return ReminderStatus.Upcoming;
-  }
-
-  private toUtcDayTimestamp(value: string) {
-    const date = new Date(value);
-
-    return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    return computeReminderStatus(reminder, currentOdometer);
   }
 
   private compareReminders(left: Reminder, right: Reminder) {

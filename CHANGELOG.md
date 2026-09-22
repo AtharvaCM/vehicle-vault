@@ -1,3 +1,104 @@
+## [1.54.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.0...v1.54.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** drop page header actions below a title they would crush ([4672e4e](https://github.com/AtharvaCM/vehicle-vault/commit/4672e4ef80ea62da9eba30f9fe8f0266fac9c605))
+* **web:** stack record and reminder cards in half-width panels ([064616a](https://github.com/AtharvaCM/vehicle-vault/commit/064616a8395eab1f9bef40bda8235347fa1ec016))
+
+# [1.54.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.53.1...v1.54.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** log a service in three fields, and fuel beside it ([8e9c914](https://github.com/AtharvaCM/vehicle-vault/commit/8e9c914e416bb09b0b997fb1b52186f20ec1388e))
+
+## [1.53.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.53.0...v1.53.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** give phone list rows room to read ([6a032ff](https://github.com/AtharvaCM/vehicle-vault/commit/6a032ff4f8f8f9ef02a1e1508c9ea665aa1836d3))
+* **web:** let list checkboxes tick, untick and take a tap on their padding ([0c11e1d](https://github.com/AtharvaCM/vehicle-vault/commit/0c11e1de2155bc7a1c751f576730e1c1f9fd40c2))
+
+# [1.53.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.52.0...v1.53.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** score how complete each vehicle's data is ([e1da2b7](https://github.com/AtharvaCM/vehicle-vault/commit/e1da2b7649417688bbfea8d43c618cd0954a5332))
+
+# [1.52.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.51.0...v1.52.0) (2026-09-22)
+
+
+### Features
+
+* **tyres:** edit, delete and review the readings of a tracked tyre ([3039ae1](https://github.com/AtharvaCM/vehicle-vault/commit/3039ae1b36b0ad0620509ed52613569619eea21b))
+
+# [1.51.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.50.0...v1.51.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** show what the bell knows in the attention queue ([502c0bb](https://github.com/AtharvaCM/vehicle-vault/commit/502c0bb8b55c3f6cf91260ddd12190715f5dee00))
+
+# [1.50.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.49.0...v1.50.0) (2026-09-22)
+
+
+### Features
+
+* **alerts:** warn as a vehicle nears its warranty's distance limit ([22cb673](https://github.com/AtharvaCM/vehicle-vault/commit/22cb67370a3dc92b970fc3ca1ebe7e5134f49bec))
+
+# [1.49.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.48.1...v1.49.0) (2026-09-22)
+
+
+### Features
+
+* **maintenance:** turn a service's next-due into a reminder ([25bcf2f](https://github.com/AtharvaCM/vehicle-vault/commit/25bcf2fd335f50ce910cff0ea63e0cd191be6729))
+
+## [1.48.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.48.0...v1.48.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **reminders:** stop the reminders page re-rendering until it crashes ([e97d778](https://github.com/AtharvaCM/vehicle-vault/commit/e97d778a5dae6290df37b589f2a74753958f9b6a))
+* **web:** keep phone pages from scrolling sideways ([1eaad13](https://github.com/AtharvaCM/vehicle-vault/commit/1eaad132f7b369cebdc77e354b017686216f5985))
+
+# [1.48.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.47.0...v1.48.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** a full-screen view for showing a document at a checkpoint ([02c86b6](https://github.com/AtharvaCM/vehicle-vault/commit/02c86b6dbfbbd247d8075bc29e9ecb8a92bb6b93))
+
+# [1.47.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.46.0...v1.47.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** renew an expiring document from its own record ([8cfd3de](https://github.com/AtharvaCM/vehicle-vault/commit/8cfd3de2f1cde02f45f11e610ea3d70a08dc83af))
+
+# [1.46.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.45.0...v1.46.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** compliance documents keep their file too ([efd3222](https://github.com/AtharvaCM/vehicle-vault/commit/efd322228de1f5044cd37ff77f7aab59439e8953))
+
+# [1.45.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.44.0...v1.45.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** insurance policies and warranties keep their file ([632af81](https://github.com/AtharvaCM/vehicle-vault/commit/632af812cacbeecac7d8505cd8286614a80cb012))
+
+# [1.44.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.43.0...v1.44.0) (2026-09-22)
+
+
+### Features
+
+* **fuel:** show real km/L against the claimed figure ([2236b18](https://github.com/AtharvaCM/vehicle-vault/commit/2236b18754943ca21dcb2172bbf9376aba4aa821))
+
 # [1.43.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.42.0...v1.43.0) (2026-09-22)
 
 
