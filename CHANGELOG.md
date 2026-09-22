@@ -1,3 +1,10 @@
+## [1.57.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.0...v1.57.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** keep a fuel fill's figures whole on a phone ([a9044c5](https://github.com/AtharvaCM/vehicle-vault/commit/a9044c596d8f957d334b19b41f27bd0bd21fe369)), closes [#149](https://github.com/AtharvaCM/vehicle-vault/issues/149) [#143](https://github.com/AtharvaCM/vehicle-vault/issues/143)
+
 # [1.57.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.56.1...v1.57.0) (2026-09-22)
 
 
