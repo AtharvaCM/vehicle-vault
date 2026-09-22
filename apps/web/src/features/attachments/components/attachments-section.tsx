@@ -1,3 +1,4 @@
+import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
 import { useState } from 'react';
 import { Paperclip, ReceiptText } from 'lucide-react';
 
@@ -8,29 +9,52 @@ import { StatCard } from '@/components/shared/stat-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { formatDate } from '@/lib/utils/format-date';
 
+import { useAttachmentExtractionStatus } from '../hooks/use-attachment-extraction-status';
 import { useAttachments } from '../hooks/use-attachments';
 import { useDeleteAttachment } from '../hooks/use-delete-attachment';
 import { useUploadAttachments } from '../hooks/use-upload-attachments';
 import { AttachmentList } from './attachment-list';
 import { AttachmentUploadForm } from './attachment-upload-form';
+import { FillFromPhotoDialog } from './fill-from-photo-dialog';
 import { formatFileSize } from '../utils/format-file-size';
 
 type AttachmentsSectionProps = {
   recordId: string;
+  /**
+   * The record its files can fill in, offered only where nothing typed is open
+   * to lose: the record page passes it, the edit page does not, since writing to
+   * the record under its form would reset what is being typed there.
+   */
+  recordToFill?: MaintenanceRecord;
 };
 
-export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
-  const { canEdit } = useVehicleAccess();
+export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectionProps) {
+  const { canEdit, role } = useVehicleAccess();
   const attachmentsQuery = useAttachments(recordId);
   const uploadAttachmentsMutation = useUploadAttachments(recordId);
   const deleteAttachmentMutation = useDeleteAttachment(recordId);
+  const extractionStatusQuery = useAttachmentExtractionStatus();
   const [actionError, setActionError] = useState<string | null>(null);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
+  const [fillingFromId, setFillingFromId] = useState<string | null>(null);
+
+  // Filling in is an edit, so it waits for a known editor role rather than
+  // showing while the role loads; it needs the extractor configured on the API;
+  // and it is for confirmed records, since a draft takes the whole extraction on
+  // its edit page.
+  const canFillIn =
+    recordToFill !== undefined &&
+    recordToFill.status !== MaintenanceRecordStatus.Draft &&
+    role !== null &&
+    canEdit &&
+    extractionStatusQuery.data?.available === true;
+  const fillingFrom = attachmentsQuery.data?.find((attachment) => attachment.id === fillingFromId);
 
   async function handleUpload(files: File[]) {
     try {
@@ -151,6 +175,9 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
             attachments={attachmentsQuery.data}
             deletingAttachmentId={deletingAttachmentId}
             onDelete={canEdit ? handleDelete : undefined}
+            onFillFromPhoto={
+              canFillIn ? (attachment) => setFillingFromId(attachment.id) : undefined
+            }
           />
         ) : (
           <EmptyState
@@ -162,6 +189,15 @@ export function AttachmentsSection({ recordId }: AttachmentsSectionProps) {
             title="No attachments yet"
           />
         )}
+
+        {canFillIn && fillingFrom ? (
+          <FillFromPhotoDialog
+            attachment={fillingFrom}
+            key={fillingFrom.id}
+            onClose={() => setFillingFromId(null)}
+            record={recordToFill}
+          />
+        ) : null}
       </CardContent>
     </Card>
   );

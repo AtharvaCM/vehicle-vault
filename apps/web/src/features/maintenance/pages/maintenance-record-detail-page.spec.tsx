@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import {
   AttachmentKind,
   MaintenanceCategory,
+  MaintenanceRecordStatus,
   VehicleRole,
   type Attachment,
   type MaintenanceRecord,
@@ -11,8 +12,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const attachmentsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const extractionStatusQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const record = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const mutation = vi.hoisted(() => () => ({ mutateAsync: vi.fn(), isPending: false }));
+const readFile = vi.hoisted(() => ({ mutate: vi.fn() }));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -45,6 +48,18 @@ vi.mock('@/features/attachments/hooks/use-upload-attachments', () => ({
 vi.mock('@/features/attachments/hooks/use-delete-attachment', () => ({
   useDeleteAttachment: mutation,
 }));
+vi.mock('@/features/attachments/hooks/use-attachment-extraction-status', () => ({
+  useAttachmentExtractionStatus: () => extractionStatusQuery.current,
+}));
+vi.mock('@/features/attachments/hooks/use-extract-attachment', () => ({
+  useExtractAttachment: () => ({ mutate: readFile.mutate, isPending: true }),
+}));
+vi.mock('@/features/attachments/hooks/use-fill-plan', () => ({
+  useFillPlan: () => ({ isPending: true }),
+}));
+vi.mock('@/features/attachments/hooks/use-fill-from-attachment', () => ({
+  useFillFromAttachment: mutation,
+}));
 
 import { MaintenanceRecordDetailPage } from './maintenance-record-detail-page';
 
@@ -72,10 +87,35 @@ const attachment: Attachment = {
   uploadedAt: '2026-03-21T00:00:00.000Z',
 };
 
-function renderAs(role: VehicleRole) {
-  record.current = { data: maintenanceRecord, isPending: false, isError: false };
+/** The job card photographed at the counter, as the dashboard's quick log attaches it. */
+const jobCardPhoto: Attachment = {
+  id: 'attachment-2',
+  maintenanceRecordId: 'record-1',
+  fileName: 'record-1/job-card.jpg',
+  originalFileName: 'job-card.jpg',
+  url: 'https://files.test/job-card.jpg',
+  mimeType: 'image/jpeg',
+  size: 4_096,
+  kind: AttachmentKind.Image,
+  uploadedAt: '2026-03-22T00:00:00.000Z',
+};
+
+function renderAs(
+  role: VehicleRole,
+  {
+    attachments = [attachment],
+    extractionAvailable = false,
+    status = MaintenanceRecordStatus.Confirmed,
+  }: {
+    attachments?: Attachment[];
+    extractionAvailable?: boolean;
+    status?: MaintenanceRecordStatus;
+  } = {},
+) {
+  record.current = { data: { ...maintenanceRecord, status }, isPending: false, isError: false };
   vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: role } };
-  attachmentsQuery.current = { data: [attachment], isPending: false, isError: false };
+  attachmentsQuery.current = { data: attachments, isPending: false, isError: false };
+  extractionStatusQuery.current = { data: { available: extractionAvailable } };
 
   return render(<MaintenanceRecordDetailPage recordId="record-1" />);
 }
@@ -117,5 +157,56 @@ describe('MaintenanceRecordDetailPage roles', () => {
 
     expect(screen.queryByRole('button', { name: 'Upload Files' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+  });
+});
+
+describe('MaintenanceRecordDetailPage filling in from a photo', () => {
+  it.each([VehicleRole.Owner, VehicleRole.Editor])(
+    'offers an %s to fill a confirmed record in from its job card photo',
+    (role) => {
+      renderAs(role, { attachments: [jobCardPhoto], extractionAvailable: true });
+
+      expect(screen.getByRole('button', { name: 'Fill in from photo' })).toBeInTheDocument();
+    },
+  );
+
+  it('offers it for a PDF bill as well, named for what it is', () => {
+    renderAs(VehicleRole.Owner, { attachments: [attachment], extractionAvailable: true });
+
+    expect(screen.getByRole('button', { name: 'Fill in from PDF' })).toBeInTheDocument();
+  });
+
+  it('reads the photo only once asked to', () => {
+    renderAs(VehicleRole.Owner, { attachments: [jobCardPhoto], extractionAvailable: true });
+    expect(readFile.mutate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fill in from photo' }));
+
+    expect(screen.getByRole('dialog', { name: 'Fill in from the photo' })).toBeInTheDocument();
+    expect(readFile.mutate).toHaveBeenCalledWith('attachment-2');
+  });
+
+  it('does not offer it to a viewer', () => {
+    renderAs(VehicleRole.Viewer, { attachments: [jobCardPhoto], extractionAvailable: true });
+
+    expect(screen.getByText('job-card.jpg')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fill in from photo' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer it while extraction is not configured on the API', () => {
+    renderAs(VehicleRole.Owner, { attachments: [jobCardPhoto], extractionAvailable: false });
+
+    expect(screen.getByText('job-card.jpg')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fill in from photo' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer it on a draft, which takes the whole extraction on its edit page', () => {
+    renderAs(VehicleRole.Owner, {
+      attachments: [jobCardPhoto],
+      extractionAvailable: true,
+      status: MaintenanceRecordStatus.Draft,
+    });
+
+    expect(screen.queryByRole('button', { name: 'Fill in from photo' })).not.toBeInTheDocument();
   });
 });

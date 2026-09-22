@@ -33,6 +33,8 @@ export const AttachmentExtractionSchema = z.object({
   currencyCode: z.string().trim().length(3).optional(),
   notes: z.string().trim().min(1).optional(),
   lineItems: z.array(AttachmentExtractionLineItemSchema).optional(),
+  nextDueDate: isoDateTimeString.optional(),
+  nextDueOdometer: z.number().int().nonnegative().optional(),
   failureReason: z.string().trim().min(1).optional(),
   extractedAt: isoDateTimeString.optional(),
   createdAt: isoDateTimeString,

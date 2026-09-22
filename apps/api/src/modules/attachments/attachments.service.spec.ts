@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import {
   AttachmentExtractionStatus,
   AttachmentKind,
@@ -27,6 +28,7 @@ vi.mock('heic-convert', () => ({
   default: heicConvertMock,
 }));
 
+import { MaintenanceService } from '../maintenance/maintenance.service';
 import { AttachmentsService } from './attachments.service';
 
 function createHeicBuffer() {
@@ -617,6 +619,8 @@ describe('AttachmentsService', () => {
             lineTotal: 450,
           },
         ],
+        nextDueDate: new Date('2026-09-20T00:00:00.000Z'),
+        nextDueOdometer: 17500,
         failureReason: null,
         extractedAt: new Date('2026-03-20T00:00:00.000Z'),
         createdAt: uploadedAt,
@@ -636,9 +640,58 @@ describe('AttachmentsService', () => {
         invoiceNumber: 'INV-1',
         odometer: 12500,
         totalCost: 2499,
+        nextDueDate: '2026-09-20T00:00:00.000Z',
+        nextDueOdometer: 17500,
       }),
     );
   });
+
+  it('will not apply an extraction over a confirmed record, which it would turn back into a draft', async () => {
+    prisma.attachment.findFirst = vi.fn().mockResolvedValue({
+      id: 'attachment-1',
+      maintenanceRecordId: 'record-1',
+      kind: AttachmentKind.Image,
+      fileName: 'attachments/user-1/record-1/attachment-1.jpg',
+      originalFileName: 'job-card.jpg',
+      mimeType: 'image/jpeg',
+      size: 1024,
+      url: '/api/attachments/attachment-1/file',
+      uploadedAt,
+      extraction: {
+        id: 'extraction-1',
+        attachmentId: 'attachment-1',
+        status: AttachmentExtractionStatus.Completed,
+        provider: 'gemini',
+        confidence: null,
+        vendorName: null,
+        workshopName: 'Torque Garage',
+        invoiceNumber: null,
+        documentDate: null,
+        serviceDate: new Date('2026-03-20T00:00:00.000Z'),
+        odometer: 12500,
+        totalCost: 2499,
+        currencyCode: 'INR',
+        notes: null,
+        lineItems: null,
+        nextDueDate: null,
+        nextDueOdometer: null,
+        failureReason: null,
+        extractedAt: uploadedAt,
+        createdAt: uploadedAt,
+        updatedAt: uploadedAt,
+      },
+    });
+    maintenanceService.getRecordById.mockResolvedValue({
+      id: 'record-1',
+      status: MaintenanceRecordStatus.Confirmed,
+    });
+
+    await expect(service.applyExtraction('user-1', 'attachment-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(maintenanceService.updateRecord).not.toHaveBeenCalled();
+  });
+
   describe('files on insurance policies and warranties', () => {
     const access = {
       assert: vi.fn(),
@@ -826,6 +879,316 @@ describe('AttachmentsService', () => {
         prisma,
         expect.objectContaining({ action: 'attachment.deleted', ownerUserId: 'owner-1' }),
       );
+    });
+  });
+
+  describe('filling a confirmed record in from its photo', () => {
+    const recordedAt = new Date('2026-09-20T10:00:00.000Z');
+    // What the dashboard's quick log saves: date, odometer and cost, category `other`.
+    const quickLogRow = {
+      id: 'record-1',
+      vehicleId: 'vehicle-1',
+      category: MaintenanceCategory.Other,
+      serviceDate: new Date('2026-09-20T00:00:00.000Z'),
+      odometer: 15200,
+      workshopName: null,
+      invoiceNumber: null,
+      currencyCode: 'INR',
+      source: MaintenanceSource.Manual,
+      status: MaintenanceRecordStatus.Confirmed,
+      totalCost: new Prisma.Decimal(1500),
+      laborCost: null,
+      partsCost: null,
+      fluidsCost: null,
+      taxCost: null,
+      discountAmount: null,
+      notes: null,
+      metadata: null,
+      nextDueDate: null,
+      nextDueOdometer: null,
+      createdAt: recordedAt,
+      updatedAt: recordedAt,
+      lineItems: [],
+    };
+    // The job card, read in full. Its date, odometer and total all differ from what was typed.
+    const jobCardExtraction = {
+      id: 'extraction-1',
+      attachmentId: 'attachment-1',
+      status: AttachmentExtractionStatus.Completed,
+      provider: 'gemini',
+      confidence: new Prisma.Decimal(0.9),
+      vendorName: 'Torque Motors Pvt Ltd',
+      workshopName: 'Torque Garage',
+      invoiceNumber: 'INV-77',
+      documentDate: new Date('2026-09-18T00:00:00.000Z'),
+      serviceDate: new Date('2026-09-18T00:00:00.000Z'),
+      odometer: 15180,
+      totalCost: new Prisma.Decimal(1520),
+      currencyCode: 'INR',
+      notes: 'Oil and filter change',
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Fluid,
+          name: 'Engine oil',
+          normalizedCategory: MaintenanceCategory.EngineOil,
+          lineTotal: 1100,
+        },
+        { kind: MaintenanceLineItemKind.Labor, name: 'Labour', lineTotal: 400 },
+      ],
+      nextDueDate: new Date('2027-03-18T00:00:00.000Z'),
+      nextDueOdometer: 18200,
+      failureReason: null,
+      extractedAt: recordedAt,
+      createdAt: recordedAt,
+      updatedAt: recordedAt,
+    };
+    const jobCardPhoto = {
+      id: 'attachment-1',
+      maintenanceRecordId: 'record-1',
+      vehicleLoanId: null,
+      insurancePolicyId: null,
+      warrantyId: null,
+      complianceDocumentId: null,
+      kind: AttachmentKind.Image,
+      fileName: 'attachments/user-1/record-1/attachment-1.jpg',
+      originalFileName: 'job-card.jpg',
+      mimeType: 'image/jpeg',
+      size: 2048,
+      url: '/api/attachments/attachment-1/file',
+      uploadedAt: recordedAt,
+      extraction: jobCardExtraction,
+    };
+
+    const access = {
+      assert: vi.fn(),
+      assertEditor: vi.fn(),
+      assertOwner: vi.fn(),
+      resolve: vi.fn(),
+    };
+    const audit = { track: vi.fn() };
+    // The client the record's transaction runs on, apart from the one outside it.
+    const tx = {
+      maintenanceRecord: { update: vi.fn() },
+      vehicle: { findUnique: vi.fn() },
+      reminder: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+    };
+    const db = {
+      $transaction: vi.fn(),
+      attachment: { findFirst: vi.fn() },
+      maintenanceRecord: { findUnique: vi.fn(), findFirst: vi.fn() },
+    };
+    let fillService: AttachmentsService;
+
+    function recordIs(row: Record<string, unknown>) {
+      db.maintenanceRecord.findFirst.mockResolvedValue({ ...quickLogRow, ...row });
+    }
+
+    beforeEach(() => {
+      access.assertEditor.mockResolvedValue('editor');
+      audit.track.mockResolvedValue(undefined);
+      db.attachment.findFirst.mockResolvedValue(jobCardPhoto);
+      db.maintenanceRecord.findUnique.mockResolvedValue({ vehicleId: 'vehicle-1' });
+      recordIs({});
+      db.$transaction.mockImplementation((work: (client: typeof tx) => unknown) => work(tx));
+      tx.maintenanceRecord.update.mockImplementation(async ({ data }) => ({
+        ...quickLogRow,
+        ...Object.fromEntries(
+          Object.entries(data).filter(([key, value]) => value !== undefined && key !== 'lineItems'),
+        ),
+        lineItems: [],
+      }));
+      tx.vehicle.findUnique.mockResolvedValue({ odometer: 15200, userId: 'owner-1' });
+      tx.reminder.findUnique.mockResolvedValue(null);
+      tx.reminder.findMany.mockResolvedValue([]);
+      tx.reminder.create.mockImplementation(async ({ data }) => ({ id: 'reminder-1', ...data }));
+
+      // The real record service, so the fill is written, validated and audited as it is in use.
+      const maintenance = new MaintenanceService(
+        db as never,
+        { ensureVehicleExists: vi.fn() } as never,
+        storageService as never,
+        audit as never,
+        access as never,
+        { suggestCategory: vi.fn().mockResolvedValue(null), recordObservation: vi.fn() } as never,
+        { record: vi.fn(), recordFirst: vi.fn() } as never,
+      );
+      fillService = new AttachmentsService(
+        db as never,
+        maintenance,
+        storageService as never,
+        extractionService as never,
+        audit as never,
+        { getById: vi.fn(), listForUser: vi.fn() } as never,
+        access as never,
+      );
+    });
+
+    it('writes only the blanks, audited in the transaction that writes them', async () => {
+      const result = await fillService.fillFromAttachment('user-1', 'attachment-1');
+
+      expect(tx.maintenanceRecord.update).toHaveBeenCalledTimes(1);
+      const { where, data } = tx.maintenanceRecord.update.mock.calls[0]![0];
+      expect(where).toEqual({ id: 'record-1' });
+      expect(data).toMatchObject({
+        category: MaintenanceCategory.EngineOil,
+        workshopName: 'Torque Garage',
+        invoiceNumber: 'INV-77',
+        notes: 'Oil and filter change',
+        laborCost: 400,
+        fluidsCost: 1100,
+        nextDueDate: new Date('2027-03-18T00:00:00.000Z'),
+        nextDueOdometer: 18200,
+        lineItems: {
+          deleteMany: {},
+          create: [
+            expect.objectContaining({ name: 'Engine oil', position: 0 }),
+            expect.objectContaining({ name: 'Labour', position: 1 }),
+          ],
+        },
+      });
+      // What was typed at the counter is not written at all, whatever the photo says.
+      expect(data.serviceDate).toBeUndefined();
+      expect(data.odometer).toBeUndefined();
+      expect(data.totalCost).toBeUndefined();
+      expect(data.currencyCode).toBeUndefined();
+      // It stays a confirmed record someone entered by hand.
+      expect(data.status).toBeUndefined();
+      expect(data.source).toBeUndefined();
+
+      expect(audit.track).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({
+          actorUserId: 'user-1',
+          action: 'maintenance.updated',
+          resourceType: 'maintenance_record',
+          resourceId: 'record-1',
+          before: expect.objectContaining({
+            category: MaintenanceCategory.Other,
+            workshopName: null,
+          }),
+          after: expect.objectContaining({
+            category: MaintenanceCategory.EngineOil,
+            workshopName: 'Torque Garage',
+          }),
+        }),
+      );
+      // The next-due it filled in is on the vehicle's reminders, audited alongside.
+      expect(tx.reminder.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          sourceMaintenanceRecordId: 'record-1',
+          dueOdometer: 18200,
+        }),
+      });
+      expect(audit.track).toHaveBeenCalledWith(
+        tx,
+        expect.objectContaining({ action: 'reminder.created' }),
+      );
+
+      expect(result.filledFields).toEqual([
+        'category',
+        'workshopName',
+        'invoiceNumber',
+        'notes',
+        'lineItems',
+        'nextDueDate',
+        'nextDueOdometer',
+      ]);
+      expect(result.record).toMatchObject({
+        status: MaintenanceRecordStatus.Confirmed,
+        serviceDate: '2026-09-20T00:00:00.000Z',
+        odometer: 15200,
+        totalCost: 1500,
+        category: MaintenanceCategory.EngineOil,
+      });
+    });
+
+    it('writes nothing, and audits nothing, over a record someone already filled in', async () => {
+      recordIs({
+        category: MaintenanceCategory.PeriodicService,
+        workshopName: 'My usual garage',
+        invoiceNumber: 'JC-1',
+        notes: 'Asked them to check the brakes',
+        nextDueDate: new Date('2027-01-01T00:00:00.000Z'),
+        nextDueOdometer: 20000,
+        lineItems: [
+          {
+            id: 'item-1',
+            maintenanceRecordId: 'record-1',
+            kind: MaintenanceLineItemKind.Labor,
+            name: 'Service',
+            normalizedCategory: null,
+            quantity: null,
+            unit: null,
+            unitPrice: null,
+            lineTotal: new Prisma.Decimal(1500),
+            brand: null,
+            partNumber: null,
+            notes: null,
+            position: 0,
+            metadata: null,
+            createdAt: recordedAt,
+            updatedAt: recordedAt,
+          },
+        ],
+      });
+
+      const result = await fillService.fillFromAttachment('user-1', 'attachment-1');
+
+      expect(result.filledFields).toEqual([]);
+      expect(result.record.workshopName).toBe('My usual garage');
+      expect(db.$transaction).not.toHaveBeenCalled();
+      expect(tx.maintenanceRecord.update).not.toHaveBeenCalled();
+      expect(audit.track).not.toHaveBeenCalled();
+    });
+
+    it('refuses a viewer, whether previewing or filling, before anything is written', async () => {
+      access.assertEditor.mockRejectedValue(new ForbiddenException());
+
+      await expect(fillService.getFillPlan('viewer-1', 'attachment-1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      await expect(
+        fillService.fillFromAttachment('viewer-1', 'attachment-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(access.assertEditor).toHaveBeenCalledWith('viewer-1', 'vehicle-1');
+      expect(tx.maintenanceRecord.update).not.toHaveBeenCalled();
+      expect(audit.track).not.toHaveBeenCalled();
+    });
+
+    it('turns a draft away: a draft takes the whole extraction when it is applied', async () => {
+      recordIs({ status: MaintenanceRecordStatus.Draft });
+
+      await expect(fillService.fillFromAttachment('user-1', 'attachment-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(tx.maintenanceRecord.update).not.toHaveBeenCalled();
+    });
+
+    it('needs the photo read first, and never reads it on its own', async () => {
+      db.attachment.findFirst.mockResolvedValue({
+        ...jobCardPhoto,
+        extraction: { ...jobCardExtraction, status: AttachmentExtractionStatus.Failed },
+      });
+
+      await expect(fillService.fillFromAttachment('user-1', 'attachment-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      db.attachment.findFirst.mockResolvedValue({ ...jobCardPhoto, extraction: null });
+      await expect(fillService.getFillPlan('user-1', 'attachment-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(extractionService.extract).not.toHaveBeenCalled();
+      expect(tx.maintenanceRecord.update).not.toHaveBeenCalled();
+    });
+
+    it('shows what it would fill in without writing it', async () => {
+      const plan = await fillService.getFillPlan('user-1', 'attachment-1');
+
+      expect(plan.fields).toContain('lineItems');
+      expect(plan.changes).toMatchObject({ workshopName: 'Torque Garage', nextDueOdometer: 18200 });
+      expect(db.$transaction).not.toHaveBeenCalled();
+      expect(audit.track).not.toHaveBeenCalled();
     });
   });
 });

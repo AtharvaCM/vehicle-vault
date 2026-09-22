@@ -75,6 +75,8 @@ export const queryKeys = {
       [...queryKeys.attachments.all(), 'document', kind, documentId] as const,
     detail: (attachmentId: string) =>
       [...queryKeys.attachments.all(), 'detail', attachmentId] as const,
+    fillPlan: (attachmentId: string) =>
+      [...queryKeys.attachments.all(), 'fill-plan', attachmentId] as const,
   },
   reminders: {
     all: () => ['reminders'] as const,
