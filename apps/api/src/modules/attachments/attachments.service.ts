@@ -335,6 +335,12 @@ export class AttachmentsService {
     }
 
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
+    if (attachment.maintenanceRecordId) {
+      // Opening a service file is for any member; extracting from it is an edit.
+      // It costs a provider call and replaces the stored extraction, which only an
+      // editor can go on to apply.
+      await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
+    }
     const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
 
     await this.prisma.attachmentExtraction.upsert({
@@ -403,6 +409,7 @@ export class AttachmentsService {
     }
 
     await this.maintenanceService.getRecordById(userId, recordId);
+    await this.assertEditorOnMaintenanceRecord(userId, recordId);
 
     const uniqueAttachmentIds = [...new Set(attachmentIds)];
 
