@@ -1,7 +1,12 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { TyrePosition, type CreateTyreInput } from '@vehicle-vault/shared';
+import {
+  TyrePosition,
+  type CreateTyreInput,
+  type Tyre,
+  type UpdateTyreInput,
+} from '@vehicle-vault/shared';
 
 import { FormField } from '@/components/shared/form-field';
 import { Button } from '@/components/ui/button';
@@ -25,8 +30,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
-import { useCreateTyre } from '../hooks/use-tyres';
-import { parseDotCode, tyreFormSchema, type TyreFormValues } from '../schemas/tyre-form.schema';
+import { useCreateTyre, useUpdateTyre } from '../hooks/use-tyres';
+import {
+  formatDotCode,
+  parseDotCode,
+  tyreFormSchema,
+  type TyreFormValues,
+} from '../schemas/tyre-form.schema';
 import { POSITION_LABEL } from '../utils/tyre-labels';
 
 interface TyreFormDialogProps {
@@ -37,6 +47,26 @@ interface TyreFormDialogProps {
   vehicleOdometer: number;
   /** Corner to preselect, e.g. when fitting from an empty position. */
   defaultPosition?: TyrePosition;
+  /**
+   * The tyre to correct. The form then edits it in place instead of fitting a
+   * new one, and its readings stay with it.
+   */
+  tyre?: Tyre;
+}
+
+/** What was recorded for the tyre, as the form shows it. */
+function valuesFromTyre(tyre: Tyre): TyreFormValues {
+  return {
+    position: tyre.position,
+    brand: tyre.brand ?? '',
+    model: tyre.model ?? '',
+    size: tyre.size ?? '',
+    dotCode: formatDotCode(tyre.dotWeek ?? null, tyre.dotYear ?? null),
+    fittedDate: tyre.fittedDate.slice(0, 10),
+    fittedOdometer: tyre.fittedOdometer,
+    expectedLifeKm: tyre.expectedLifeKm ?? undefined,
+    notes: tyre.notes ?? '',
+  };
 }
 
 function buildDefaults(vehicleOdometer: number, defaultPosition: TyrePosition): TyreFormValues {
@@ -59,8 +89,11 @@ export function TyreFormDialog({
   vehicleId,
   vehicleOdometer,
   defaultPosition = TyrePosition.FrontLeft,
+  tyre,
 }: TyreFormDialogProps) {
   const createMutation = useCreateTyre(vehicleId);
+  const updateMutation = useUpdateTyre(vehicleId);
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   const {
     control,
@@ -70,17 +103,49 @@ export function TyreFormDialog({
     reset,
   } = useForm<TyreFormValues>({
     resolver: zodResolver(tyreFormSchema),
-    defaultValues: buildDefaults(vehicleOdometer, defaultPosition),
+    defaultValues: tyre ? valuesFromTyre(tyre) : buildDefaults(vehicleOdometer, defaultPosition),
   });
 
   useEffect(() => {
     if (isOpen) {
-      reset(buildDefaults(vehicleOdometer, defaultPosition));
+      reset(tyre ? valuesFromTyre(tyre) : buildDefaults(vehicleOdometer, defaultPosition));
     }
-  }, [isOpen, vehicleOdometer, defaultPosition, reset]);
+  }, [isOpen, tyre, vehicleOdometer, defaultPosition, reset]);
 
   async function onSubmit(values: TyreFormValues) {
     const dot = parseDotCode(values.dotCode);
+
+    if (tyre) {
+      // Position and removal are left out: moving a tyre to another corner is
+      // fitting it there, which retires whatever that corner holds, and only
+      // the add path does that.
+      const changes: UpdateTyreInput = {
+        brand: values.brand?.trim() || null,
+        model: values.model?.trim() || null,
+        size: values.size?.trim() || null,
+        dotWeek: dot?.week ?? null,
+        dotYear: dot?.year ?? null,
+        fittedDate: new Date(values.fittedDate).toISOString(),
+        fittedOdometer: values.fittedOdometer,
+        expectedLifeKm: values.expectedLifeKm ?? null,
+        notes: values.notes?.trim() || null,
+      };
+
+      try {
+        await updateMutation.mutateAsync({ tyreId: tyre.id, input: changes });
+        appToast.success({
+          title: 'Tyre updated',
+          description: `${POSITION_LABEL[tyre.position]} tyre saved.`,
+        });
+        onClose();
+      } catch (error) {
+        appToast.error({
+          title: "Couldn't update the tyre",
+          description: getApiErrorMessage(error, 'Please check the details and try again.'),
+        });
+      }
+      return;
+    }
 
     const payload: CreateTyreInput = {
       position: values.position,
@@ -117,34 +182,45 @@ export function TyreFormDialog({
     <Dialog onOpenChange={(open) => (open ? undefined : onClose())} open={isOpen}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add a tyre</DialogTitle>
+          <DialogTitle>{tyre ? 'Edit tyre' : 'Add a tyre'}</DialogTitle>
           <DialogDescription>
-            Fitting a tyre to a corner retires whatever is already there, so a replacement or
-            rotation stays accurate.
+            {tyre
+              ? `Correct what was recorded for the ${POSITION_LABEL[tyre.position].toLowerCase()} tyre. Its readings stay with it.`
+              : 'Fitting a tyre to a corner retires whatever is already there, so a replacement or rotation stays accurate.'}
           </DialogDescription>
         </DialogHeader>
 
         <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <FormField error={errors.position?.message} htmlFor="tyre-position" label="Position">
-            <Controller
-              control={control}
-              name="position"
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger id="tyre-position">
-                    <SelectValue placeholder="Select a position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(TyrePosition).map((position) => (
-                      <SelectItem key={position} value={position}>
-                        {POSITION_LABEL[position]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
+          {tyre ? (
+            <FormField
+              description="To move it to another corner, add it there as a new tyre."
+              htmlFor="tyre-position"
+              label="Position"
+            >
+              <Input disabled id="tyre-position" value={POSITION_LABEL[tyre.position]} />
+            </FormField>
+          ) : (
+            <FormField error={errors.position?.message} htmlFor="tyre-position" label="Position">
+              <Controller
+                control={control}
+                name="position"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="tyre-position">
+                      <SelectValue placeholder="Select a position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(TyrePosition).map((position) => (
+                        <SelectItem key={position} value={position}>
+                          {POSITION_LABEL[position]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField error={errors.brand?.message} htmlFor="tyre-brand" label="Brand">
@@ -222,8 +298,14 @@ export function TyreFormDialog({
             <Button onClick={onClose} type="button" variant="secondary">
               Cancel
             </Button>
-            <Button disabled={createMutation.isPending} type="submit">
-              {createMutation.isPending ? 'Adding…' : 'Add tyre'}
+            <Button disabled={isPending} type="submit">
+              {tyre
+                ? updateMutation.isPending
+                  ? 'Saving…'
+                  : 'Save changes'
+                : createMutation.isPending
+                  ? 'Adding…'
+                  : 'Add tyre'}
             </Button>
           </DialogFooter>
         </form>
