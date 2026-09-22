@@ -29,12 +29,12 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           : 'bg-primary';
 
   return (
-    <div className="group relative flex items-center gap-4">
+    <div className="group relative flex items-center gap-2 sm:gap-4">
       {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
 
       <Card
         className={cn(
-          'relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md',
+          'relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md sm:p-5',
           reminder.status === ReminderStatus.Overdue && 'border-rose-200/60',
           reminder.status === ReminderStatus.DueToday && 'border-amber-200/60',
         )}
@@ -48,8 +48,8 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           to="/reminders/$reminderId"
         >
           {/* Main Content */}
-          <div className="flex min-w-0 flex-1 items-center gap-4 p-4 sm:p-5 pl-5 sm:pl-6">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+          <div className="flex min-w-0 flex-1 items-center gap-4 p-3 pl-4 sm:p-5 sm:pl-6">
+            <div className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
               <BellRing className="h-5 w-5" />
             </div>
 
@@ -68,9 +68,9 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                   <ReminderStatusBadge status={reminder.status} />
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-slate-500">
+              <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
                 {vehicleLabel ? <span>{vehicleLabel}</span> : null}
-                {vehicleLabel ? <span className="text-slate-300">•</span> : null}
+                {vehicleLabel ? <span className="hidden text-slate-300 sm:inline">•</span> : null}
                 {reminder.dueDate ? (
                   <span>Due {formatDate(reminder.dueDate)}</span>
                 ) : (
@@ -78,7 +78,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                 )}
                 {reminder.status !== ReminderStatus.Completed && reminder.usageProjection ? (
                   <>
-                    <span className="text-slate-300">•</span>
+                    <span className="hidden text-slate-300 sm:inline">•</span>
                     <span
                       className="text-slate-500"
                       title={`Based on ${reminder.usageProjection.kmPerDay.toFixed(1)} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs (${reminder.usageProjection.confidence} confidence)`}
@@ -92,7 +92,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           </div>
 
           {/* Metrics & Action */}
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
             <div className="flex items-center gap-8 md:gap-10">
               {reminder.dueOdometer !== undefined ? (
                 <div className="space-y-0.5">

@@ -31,18 +31,18 @@ export function MaintenanceRecordCard({
   ].filter(Boolean);
 
   return (
-    <div className="group relative flex items-center gap-4">
+    <div className="group relative flex items-center gap-2 sm:gap-4">
       {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
 
-      <Card className="flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md">
+      <Card className="flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md sm:p-5">
         <Link
           className="flex flex-col p-0 md:flex-row md:items-center"
           params={{ recordId: record.id }}
           to="/maintenance-records/$recordId"
         >
           {/* Main Content */}
-          <div className="flex min-w-0 flex-1 items-center gap-4 p-4 sm:p-5">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+          <div className="flex min-w-0 flex-1 items-center gap-4 p-3 sm:p-5">
+            <div className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
               <ClipboardList className="h-5 w-5" />
             </div>
 
@@ -58,10 +58,12 @@ export function MaintenanceRecordCard({
                   {formatMaintenanceCategory(record.category)}
                 </Badge>
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-slate-500">
+              <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
                 {detailBits.map((detail, index) => (
                   <span key={`${detail}-${index}`}>
-                    {index > 0 ? <span className="mr-3 text-slate-300">•</span> : null}
+                    {index > 0 ? (
+                      <span className="mr-3 hidden text-slate-300 sm:inline">•</span>
+                    ) : null}
                     {detail}
                   </span>
                 ))}
@@ -70,7 +72,7 @@ export function MaintenanceRecordCard({
           </div>
 
           {/* Metrics & Action */}
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
             <div className="flex items-center gap-8 md:gap-12">
               <div className="space-y-0.5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">

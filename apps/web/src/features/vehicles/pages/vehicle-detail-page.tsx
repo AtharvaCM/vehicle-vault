@@ -762,7 +762,7 @@ function MaintenancePanel({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="p-5">
+      <CardContent className="pt-5 sm:p-5">
         {maintenanceQuery.isPending ? (
           <div className="animate-pulse space-y-3">
             <div className="h-20 bg-slate-50 rounded-xl" />
@@ -849,7 +849,7 @@ function ReminderPanel({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="p-5">
+      <CardContent className="pt-5 sm:p-5">
         {remindersQuery.isPending ? (
           <div className="animate-pulse space-y-3">
             <div className="h-20 bg-slate-50 rounded-xl" />
