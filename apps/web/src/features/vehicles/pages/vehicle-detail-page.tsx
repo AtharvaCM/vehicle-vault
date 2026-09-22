@@ -24,6 +24,7 @@ import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
+import { useActiveTabInView } from '@/hooks/use-active-tab-in-view';
 
 import { MaintenanceRecordCard } from '@/features/maintenance/components/maintenance-record-card';
 import { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
@@ -88,6 +89,7 @@ export function VehicleDetailPage({
   const isOwner = access.isOwner;
   const selectedTab = searchState.tab ?? defaultVehicleDetailTab;
   const visibleTab = selectedTab === 'loans' && !isOwner ? defaultVehicleDetailTab : selectedTab;
+  const tabListRef = useActiveTabInView(visibleTab);
   const deleteVehicleMutation = useDeleteVehicle();
   const vehicle = vehicleQuery.data ?? null;
   const serviceInsights = useMemo(
@@ -407,7 +409,12 @@ export function VehicleDetailPage({
             onValueChange={(tab) => onSearchStateChange({ tab: tab as VehicleDetailTab })}
             value={visibleTab}
           >
-            <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-slate-100/80 p-1 shadow-inner">
+            {/* Eleven tabs are wider than a phone, and than some desktops: the strip
+                scrolls sideways rather than clipping, with the selected tab kept in view. */}
+            <TabsList
+              className="relative inline-flex h-auto min-h-11 max-w-full items-center justify-start overflow-x-auto overscroll-x-contain rounded-xl bg-slate-100/80 p-1 shadow-inner [scrollbar-width:thin]"
+              ref={tabListRef}
+            >
               <TabsTrigger
                 className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
                 value="overview"

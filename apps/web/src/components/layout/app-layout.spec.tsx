@@ -13,6 +13,7 @@ const auth = vi.hoisted(() => ({
 vi.mock('@/features/auth/hooks/use-auth', () => ({ useAuth: () => auth.current }));
 vi.mock('./sidebar', () => ({ Sidebar: () => <nav /> }));
 vi.mock('./topbar', () => ({ Topbar: () => <header /> }));
+vi.mock('./bottom-nav', () => ({ BottomNav: () => <nav aria-label="Primary" /> }));
 vi.mock('@/features/auth/components/email-verification-screen', () => ({
   EmailVerificationScreen: () => <p>verify your email</p>,
 }));
@@ -123,5 +124,15 @@ describe('AppLayout', () => {
     fireEvent.focus(window);
 
     expect(auth.current.refreshUser).not.toHaveBeenCalled();
+  });
+  it('leaves room under the page for the bottom bar, and only below md', () => {
+    signInAs({ emailVerified: true, emailVerificationDueAt: null });
+    render(<AppLayout>content</AppLayout>);
+
+    // The bar is fixed over the page on a phone; without this padding it would
+    // sit on top of the last row of every list.
+    const main = screen.getByRole('main');
+    expect(main).toHaveClass('pb-[calc(4.5rem+env(safe-area-inset-bottom))]', 'md:pb-0');
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
   });
 });

@@ -10,13 +10,20 @@ type RouterContext = {
   queryClient: QueryClient;
 };
 
+/**
+ * Devtools are for a person at a dev server. Under automation they are left
+ * out: their floating toggles sit over the bottom navigation bar at phone
+ * widths, where Playwright would have to click through them.
+ */
+const showDevtools = import.meta.env.DEV && !globalThis.navigator?.webdriver;
+
 function RootRouteComponent() {
   return (
     <>
       <Outlet />
 
-      {import.meta.env.DEV ? <TanStackRouterDevtools position="bottom-right" /> : null}
-      {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
+      {showDevtools ? <TanStackRouterDevtools position="bottom-right" /> : null}
+      {showDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </>
   );
 }
