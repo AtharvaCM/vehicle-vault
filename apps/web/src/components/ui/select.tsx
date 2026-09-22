@@ -4,7 +4,34 @@ import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-const Select = SelectPrimitive.Root;
+/**
+ * Radix clears a controlled value it cannot match to a mounted item, and every
+ * `SelectItem` lives inside the content, which mounts only while the menu is
+ * open. So a value set after mount — a form resetting to the record it just
+ * loaded — came straight back as `onValueChange('')`, emptying the field the
+ * moment it was filled, and the form then refused to submit over a category
+ * the user could see no problem with.
+ *
+ * Choosing an item never reports an empty value, so ignoring that one case
+ * while a value is set leaves real selections, and clearing a field in code,
+ * exactly as they were.
+ */
+function Select({
+  onValueChange,
+  value,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  return (
+    <SelectPrimitive.Root
+      onValueChange={(next) => {
+        if (next === '' && value) return;
+        onValueChange?.(next);
+      }}
+      value={value}
+      {...props}
+    />
+  );
+}
 const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;
 
