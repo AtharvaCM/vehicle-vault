@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.49.0...v1.50.0) (2026-09-22)
+
+
+### Features
+
+* **alerts:** warn as a vehicle nears its warranty's distance limit ([22cb673](https://github.com/AtharvaCM/vehicle-vault/commit/22cb67370a3dc92b970fc3ca1ebe7e5134f49bec))
+
 # [1.49.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.48.1...v1.49.0) (2026-09-22)
 
 
