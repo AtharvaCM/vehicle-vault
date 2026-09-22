@@ -1,28 +1,42 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import {
   FuelType,
   MaintenanceCategory,
   MaintenanceRecordStatus,
   TyrePosition,
+  VehicleRole,
   VehicleType,
+  type Tyre,
+  type TyreInspection,
 } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const intervalsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const conditionQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const tyresList = vi.hoisted(() => ({ current: [] as Tyre[] }));
+const readingsList = vi.hoisted(() => ({ current: [] as TyreInspection[] }));
+const updateTyre = vi.hoisted(() => vi.fn());
+const deleteTyre = vi.hoisted(() => vi.fn());
 
 vi.mock('../hooks/use-vehicle-intervals', () => ({
   useVehicleIntervals: () => intervalsQuery.current,
 }));
 vi.mock('../../tyres/hooks/use-tyres', () => ({
   useVehicleTyreCondition: () => conditionQuery.current,
-  useVehicleTyres: () => ({ data: [] }),
+  useVehicleTyres: () => ({ data: tyresList.current }),
+  useVehicleTyreInspections: () => ({ data: readingsList.current }),
   useCreateTyre: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateTyre: () => ({ mutateAsync: updateTyre, isPending: false }),
+  useDeleteTyre: () => ({ mutateAsync: deleteTyre, isPending: false, variables: undefined }),
   useCreateTyreInspections: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+vi.mock('@/lib/toast', () => ({
+  appToast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
 
+import { VehicleAccessProvider } from '../context/vehicle-access';
 import type { Vehicle } from '../types/vehicle';
 import { VehicleTyreTracker } from './vehicle-tyre-tracker';
 
@@ -250,6 +264,158 @@ describe('VehicleTyreTracker', () => {
 
     // No tyres tracked in this fixture, so the dialog has nothing to measure.
     expect(screen.getByText(/no tyres are being tracked/i)).toBeInTheDocument();
+  });
+
+  describe('each tracked tyre', () => {
+    const frontLeft: Tyre = {
+      id: 't-fl',
+      vehicleId: 'vehicle-1',
+      position: TyrePosition.FrontLeft,
+      brand: 'Michelin',
+      model: 'Primacy 4',
+      size: '205/55 R16',
+      dotWeek: 36,
+      dotYear: 2024,
+      fittedDate: '2025-01-10T00:00:00.000Z',
+      fittedOdometer: 2000,
+      removedDate: null,
+      removedOdometer: null,
+      expectedLifeKm: 45000,
+      notes: null,
+      createdAt: '2025-01-10T00:00:00.000Z',
+      updatedAt: '2025-01-10T00:00:00.000Z',
+    };
+
+    const reading = (overrides: Partial<TyreInspection>): TyreInspection => ({
+      id: 'r-1',
+      tyreId: 't-fl',
+      vehicleId: 'vehicle-1',
+      inspectedAt: '2026-08-20T00:00:00.000Z',
+      odometer: 6800,
+      treadDepthMm: 5.2,
+      pressurePsi: 32,
+      notes: null,
+      createdAt: '2026-08-20T00:00:00.000Z',
+      updatedAt: '2026-08-20T00:00:00.000Z',
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      updateTyre.mockReset().mockResolvedValue(undefined);
+      deleteTyre.mockReset().mockResolvedValue(undefined);
+      tyresList.current = [frontLeft];
+      // Newest first, as the API returns them.
+      readingsList.current = [
+        reading({ id: 'r-2', inspectedAt: '2026-08-20T00:00:00.000Z', treadDepthMm: 5.25 }),
+        reading({
+          id: 'r-1',
+          inspectedAt: '2026-02-01T00:00:00.000Z',
+          odometer: 4100,
+          treadDepthMm: 7,
+          pressurePsi: null,
+          notes: 'After the rotation',
+        }),
+      ];
+      conditionQuery.current = {
+        data: {
+          vehicleId: 'vehicle-1',
+          overall: 'healthy',
+          tyres: [
+            {
+              tyreId: 't-fl',
+              position: TyrePosition.FrontLeft,
+              level: 'healthy',
+              reason: 'none',
+              summary: '5.3 mm tread remaining.',
+              treadDepthMm: 5.25,
+              ageYears: 2,
+              kmOnTyre: 4800,
+              estimatedKmRemaining: null,
+              lastInspectedAt: '2026-08-20T00:00:00.000Z',
+            },
+          ],
+        },
+      };
+    });
+
+    it('lists its readings newest first, as they were recorded', () => {
+      renderTracker(settled([]));
+
+      expect(screen.getByText('Michelin Primacy 4 · 205/55 R16 · DOT 3624')).toBeInTheDocument();
+      const list = screen.getByRole('list', { name: 'Front left tyre readings, newest first' });
+      expect(list).not.toBeVisible();
+
+      fireEvent.click(screen.getByText('Readings (2)'));
+
+      expect(list).toBeVisible();
+      const rows = within(list).getAllByRole('listitem');
+      expect(rows[0]).toHaveTextContent('5.25 mm tread · 32 psi');
+      expect(rows[0]).toHaveTextContent('6,800 km');
+      // A reading that measured only tread says only that.
+      expect(rows[1]).toHaveTextContent('7 mm tread');
+      expect(rows[1]).not.toHaveTextContent('psi');
+      expect(rows[1]).toHaveTextContent('After the rotation');
+    });
+
+    it('edits the tyre in place, leaving position and readings where they are', async () => {
+      renderTracker(settled([]));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByRole('heading', { name: 'Edit tyre' })).toBeInTheDocument();
+      expect(within(dialog).getByLabelText('Position')).toBeDisabled();
+      expect(within(dialog).getByLabelText('Position')).toHaveValue('Front left');
+      const dot = within(dialog).getByLabelText('DOT code');
+      expect(dot).toHaveValue('3624');
+
+      fireEvent.change(dot, { target: { value: '0118' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+
+      await waitFor(() => expect(updateTyre).toHaveBeenCalledTimes(1));
+      const { tyreId, input } = updateTyre.mock.calls[0]![0] as {
+        tyreId: string;
+        input: Record<string, unknown>;
+      };
+      expect(tyreId).toBe('t-fl');
+      expect(input).toMatchObject({
+        brand: 'Michelin',
+        dotWeek: 1,
+        dotYear: 2018,
+        fittedOdometer: 2000,
+        fittedDate: '2025-01-10T00:00:00.000Z',
+      });
+      // Moving a tyre is fitting it elsewhere, which only the add path does.
+      expect(input).not.toHaveProperty('position');
+      expect(input).not.toHaveProperty('removedDate');
+    });
+
+    it('asks before deleting, and says the readings go with it', async () => {
+      renderTracker(settled([]));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      const confirm = screen.getByRole('alertdialog');
+      expect(
+        within(confirm).getByRole('heading', { name: 'Delete the front left tyre?' }),
+      ).toBeInTheDocument();
+      expect(confirm).toHaveTextContent('Its 2 readings will be deleted with it.');
+      expect(deleteTyre).not.toHaveBeenCalled();
+
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Delete tyre' }));
+
+      await waitFor(() => expect(deleteTyre).toHaveBeenCalledWith('t-fl'));
+    });
+
+    it('shows a viewer the readings but neither control', () => {
+      render(
+        <VehicleAccessProvider role={VehicleRole.Viewer}>
+          <VehicleTyreTracker maintenanceQuery={settled([]) as never} vehicle={newVirtus} />
+        </VehicleAccessProvider>,
+      );
+
+      expect(screen.getByText('Readings (2)')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    });
   });
 
   it('offers adding a tyre from the empty state as well as the header', () => {
