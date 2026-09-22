@@ -145,6 +145,13 @@ describe('AttachmentsService', () => {
     extract: vi.fn().mockResolvedValue(extractionEnvelope),
   };
 
+  const vehicleAccess = {
+    assert: vi.fn(),
+    assertEditor: vi.fn(),
+    assertOwner: vi.fn(),
+    resolve: vi.fn(),
+  };
+
   let service: AttachmentsService;
 
   beforeEach(() => {
@@ -177,6 +184,7 @@ describe('AttachmentsService', () => {
     extractionService.extract.mockResolvedValue(extractionEnvelope);
     extractionService.hasKind.mockReturnValue(true);
     extractionService.isAvailable = true;
+    vehicleAccess.assertEditor.mockResolvedValue('editor');
     prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
       if (typeof arg === 'function') {
         return (arg as (tx: unknown) => unknown)(prisma);
@@ -235,7 +243,7 @@ describe('AttachmentsService', () => {
       extractionService as never,
       auditService as never,
       { getById: vi.fn(), listForUser: vi.fn() } as never,
-      { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
+      vehicleAccess as never,
     );
   });
 
@@ -690,6 +698,69 @@ describe('AttachmentsService', () => {
       BadRequestException,
     );
     expect(maintenanceService.updateRecord).not.toHaveBeenCalled();
+  });
+
+  describe('extraction on a shared vehicle', () => {
+    // A page of a service invoice on someone else's vehicle, shared with this user.
+    const invoicePage = (id: string) => ({
+      id,
+      maintenanceRecordId: 'record-1',
+      kind: AttachmentKind.Image,
+      fileName: `attachments/owner-1/record-1/${id}.jpg`,
+      originalFileName: `${id}.jpg`,
+      mimeType: 'image/jpeg',
+      size: 1024,
+      url: `/api/attachments/${id}/file`,
+      uploadedAt,
+      extraction: null,
+    });
+
+    beforeEach(() => {
+      prisma.attachment.findFirst = vi.fn().mockResolvedValue(invoicePage('attachment-1'));
+      prisma.attachment.findMany = vi
+        .fn()
+        .mockResolvedValue([invoicePage('attachment-1'), invoicePage('attachment-2')]);
+    });
+
+    it("refuses a viewer's extraction before the file is read or the provider called", async () => {
+      vehicleAccess.assertEditor.mockRejectedValue(new ForbiddenException());
+
+      await expect(service.extractAttachment('viewer-1', 'attachment-1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(prisma.maintenanceRecord.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'record-1' } }),
+      );
+      expect(vehicleAccess.assertEditor).toHaveBeenCalledWith('viewer-1', 'vehicle-1');
+      expect(storageService.downloadObject).not.toHaveBeenCalled();
+      expect(prisma.attachmentExtraction.upsert).not.toHaveBeenCalled();
+      expect(extractionService.extract).not.toHaveBeenCalled();
+    });
+
+    it("refuses a viewer's multi-page extraction the same way", async () => {
+      vehicleAccess.assertEditor.mockRejectedValue(new ForbiddenException());
+
+      await expect(
+        service.extractAttachments('viewer-1', 'record-1', ['attachment-1', 'attachment-2']),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(vehicleAccess.assertEditor).toHaveBeenCalledWith('viewer-1', 'vehicle-1');
+      expect(storageService.downloadObject).not.toHaveBeenCalled();
+      expect(prisma.attachmentExtraction.upsert).not.toHaveBeenCalled();
+      expect(extractionService.extract).not.toHaveBeenCalled();
+    });
+
+    it('still extracts for an editor, one page or several', async () => {
+      await expect(service.extractAttachment('editor-1', 'attachment-1')).resolves.toMatchObject({
+        status: AttachmentExtractionStatus.Completed,
+      });
+      await expect(
+        service.extractAttachments('editor-1', 'record-1', ['attachment-1', 'attachment-2']),
+      ).resolves.toMatchObject({ status: AttachmentExtractionStatus.Completed });
+
+      expect(vehicleAccess.assertEditor).toHaveBeenCalledTimes(2);
+      expect(vehicleAccess.assertEditor).toHaveBeenCalledWith('editor-1', 'vehicle-1');
+      expect(extractionService.extract).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('files on insurance policies and warranties', () => {
