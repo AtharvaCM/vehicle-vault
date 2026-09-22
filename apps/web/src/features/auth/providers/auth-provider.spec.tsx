@@ -1,0 +1,161 @@
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiError } from '@/lib/api/api-error';
+
+import { getStoredAuthSession, setStoredAuthSession } from '../lib/auth-session-storage';
+
+const api = vi.hoisted(() => ({
+  getMe: vi.fn(),
+  refreshSession: vi.fn(),
+  logout: vi.fn(),
+}));
+
+vi.mock('../api/get-me', () => ({ getMe: api.getMe }));
+vi.mock('../api/refresh-session', () => ({ refreshSession: api.refreshSession }));
+vi.mock('../api/logout', () => ({ logout: api.logout }));
+vi.mock('@/lib/toast', () => ({ appToast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
+
+import { useAuth } from '../hooks/use-auth';
+import { AuthProvider } from './auth-provider';
+
+function createToken(expSeconds: number) {
+  const encode = (value: Record<string, unknown>) =>
+    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ exp: expSeconds })}.signature`;
+}
+
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+const USER = {
+  id: 'user-1',
+  name: 'Atharva',
+  email: 'atharva@example.com',
+  role: 'user',
+  emailVerified: true,
+  allowedCatalogSources: [],
+};
+
+function storeSession({ accessTokenValid }: { accessTokenValid: boolean }) {
+  setStoredAuthSession({
+    accessToken: createToken(nowSeconds() + (accessTokenValid ? 3600 : -60)),
+    refreshToken: createToken(nowSeconds() + 7 * 24 * 3600),
+    user: USER,
+  } as never);
+}
+
+function Status() {
+  const auth = useAuth();
+  return <p>status: {auth.status}</p>;
+}
+
+/** fetch rejects with a TypeError when there is no network at all. */
+const offline = () => new TypeError('Failed to fetch');
+
+describe('AuthProvider when the API cannot be reached', () => {
+  const replace = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, pathname: '/dashboard', replace },
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('opens signed in offline, with the session it had', async () => {
+    storeSession({ accessTokenValid: true });
+    api.getMe.mockRejectedValue(offline());
+
+    render(
+      <AuthProvider>
+        <Status />
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByText('status: authenticated')).toBeInTheDocument();
+    // Nothing asked the API for a new session, and nothing was thrown away.
+    expect(api.refreshSession).not.toHaveBeenCalled();
+    expect(getStoredAuthSession()?.refreshToken).toBeTruthy();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('keeps an expired session it could not refresh, rather than signing out', async () => {
+    storeSession({ accessTokenValid: false });
+    api.refreshSession.mockRejectedValue(offline());
+
+    render(
+      <AuthProvider>
+        <Status />
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByText('status: authenticated')).toBeInTheDocument();
+    expect(getStoredAuthSession()?.refreshToken).toBeTruthy();
+  });
+
+  it('treats a server error like no answer at all', async () => {
+    storeSession({ accessTokenValid: false });
+    api.refreshSession.mockRejectedValue(new ApiError('Bad gateway', 502));
+
+    render(
+      <AuthProvider>
+        <Status />
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByText('status: authenticated')).toBeInTheDocument();
+  });
+
+  it('still signs out when the server refuses the session', async () => {
+    storeSession({ accessTokenValid: false });
+    api.refreshSession.mockRejectedValue(new ApiError('Invalid refresh token', 401));
+
+    render(
+      <AuthProvider>
+        <Status />
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByText('status: anonymous')).toBeInTheDocument();
+    expect(getStoredAuthSession()).toBeNull();
+  });
+
+  it('keeps retrying the pre-expiry refresh while offline, then takes the new session', async () => {
+    // A token already inside the refresh lead time, so the timer fires at once.
+    setStoredAuthSession({
+      accessToken: createToken(nowSeconds() + 30),
+      refreshToken: createToken(nowSeconds() + 7 * 24 * 3600),
+      user: USER,
+    } as never);
+    api.getMe.mockResolvedValue(USER);
+    api.refreshSession.mockRejectedValueOnce(offline()).mockResolvedValueOnce({
+      accessToken: createToken(nowSeconds() + 3600),
+      refreshToken: createToken(nowSeconds() + 7 * 24 * 3600),
+      user: USER,
+    });
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(
+      <AuthProvider>
+        <Status />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(api.refreshSession).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('status: authenticated')).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+
+    // Signal comes back: the retry succeeds and the session carries on.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    await waitFor(() => expect(api.refreshSession).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('status: authenticated')).toBeInTheDocument();
+  });
+});

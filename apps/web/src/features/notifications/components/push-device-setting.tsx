@@ -1,6 +1,8 @@
 import { Switch } from '@/components/ui/switch';
 import { appToast } from '@/lib/toast';
 
+import { isIos, isStandalone } from '@/features/pwa/platform';
+
 import { usePushNotifications, type PushStatus } from '../hooks/use-push-notifications';
 
 /** Why this device cannot take push, when it cannot. */
@@ -12,13 +14,25 @@ const UNAVAILABLE_REASON: Partial<Record<PushStatus, string>> = {
 };
 
 /**
+ * iOS only delivers web push to an app added to the Home Screen, so in Safari
+ * the honest answer is how to get there, not just that push is missing.
+ */
+const IOS_HOME_SCREEN_ROUTE =
+  'On iPhone and iPad, notifications come to the Home Screen app: tap Share, then Add to Home Screen, and open Vehicle Vault from there.';
+
+function unavailableReason(status: PushStatus): string | undefined {
+  if (status === 'unsupported' && isIos() && !isStandalone()) return IOS_HOME_SCREEN_ROUTE;
+  return UNAVAILABLE_REASON[status];
+}
+
+/**
  * Whether this browser is subscribed to push. Per device rather than per
  * account, which is why it sits apart from the per-kind switches: those decide
  * which alerts are pushed, this decides whether this device receives them.
  */
 export function PushDeviceSetting() {
   const push = usePushNotifications();
-  const reason = UNAVAILABLE_REASON[push.status];
+  const reason = unavailableReason(push.status);
 
   async function handleChange(on: boolean) {
     if (!on) {

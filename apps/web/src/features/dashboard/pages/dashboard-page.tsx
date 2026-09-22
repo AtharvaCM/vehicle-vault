@@ -1,6 +1,7 @@
 import { BellRing, Wrench } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/page-container';
+import { InstallAppCard } from '@/features/pwa/components/install-app-card';
 import { ErrorState } from '@/components/shared/error-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button } from '@/components/ui/button';
@@ -111,6 +112,10 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
       />
 
       <AttentionSummary focus={focus} summary={summary} />
+
+      {/* Offered here, not on the empty onboarding dashboard: installing is worth
+          it once there is a vehicle to come back to. */}
+      <InstallAppCard />
 
       <AttentionQueue
         focus={focus}
