@@ -132,6 +132,26 @@ async function expectControlsInsideCard(card: Locator, where: string) {
 }
 
 /**
+ * An icon beside text that wraps is a flex item like any other, and shrinks
+ * unless told not to: the fuel card's pin fell to 4px and the suggested
+ * schedule's sparkles to 11px on a phone. Every icon on the page is square, so
+ * one that is narrower than it is tall has been squeezed.
+ */
+async function expectNoSqueezedIcons(page: Page, where: string) {
+  const squeezed = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('main svg.lucide'))
+      .map((icon) => ({ icon, box: icon.getBoundingClientRect() }))
+      .filter(({ box }) => box.width > 0 && Math.abs(box.width - box.height) > 0.5)
+      .map(({ icon, box }) => {
+        const name = Array.from(icon.classList).find((c) => c.startsWith('lucide-'));
+        const beside = (icon.parentElement?.textContent ?? '').trim().slice(0, 40);
+        return `${name} ${box.width.toFixed(1)}x${box.height.toFixed(1)} beside "${beside}"`;
+      }),
+  );
+  expect.soft(squeezed, `${where} squeezes an icon.`).toEqual([]);
+}
+
+/**
  * A fill's three figures and its menu share one strip, which a phone leaves
  * narrow. No label or figure may break over two lines, as "15,180 km" and
  * "Total Cost" did at 375px: when the three do not fit, a whole figure moves to
@@ -327,6 +347,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
       await expect(page.getByRole('tabpanel').getByText(text).first()).toBeVisible();
     }
     await expectNoSidewaysScroll(page, `The ${tab} tab`);
+    await expectNoSqueezedIcons(page, `The ${tab} tab`);
   }
 
   // Opened, an activity entry lists every changed value: ids and JSON with
@@ -354,6 +375,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await page.goto(path);
     await expect(page.getByRole('main').getByText(loaded).first()).toBeVisible();
     await expectNoSidewaysScroll(page, path);
+    await expectNoSqueezedIcons(page, path);
   }
 
   // On a phone a fill's three figures and menu share one narrow strip.
