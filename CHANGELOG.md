@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.48.1...v1.49.0) (2026-09-22)
+
+
+### Features
+
+* **maintenance:** turn a service's next-due into a reminder ([25bcf2f](https://github.com/AtharvaCM/vehicle-vault/commit/25bcf2fd335f50ce910cff0ea63e0cd191be6729))
+
 ## [1.48.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.48.0...v1.48.1) (2026-09-22)
 
 
