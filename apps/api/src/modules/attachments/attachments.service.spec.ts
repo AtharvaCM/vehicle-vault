@@ -882,6 +882,78 @@ describe('AttachmentsService', () => {
     });
   });
 
+  describe("extraction on a document's or loan's file", () => {
+    // A file as getStoredAttachmentById hands it to a member of the vehicle.
+    const storedFile = (owner: Record<string, string>) => ({
+      id: 'attachment-1',
+      maintenanceRecordId: null,
+      vehicleLoanId: null,
+      insurancePolicyId: null,
+      warrantyId: null,
+      complianceDocumentId: null,
+      ...owner,
+      kind: AttachmentKind.Document,
+      fileName: 'attachments/owner-1/doc-1/attachment-1.pdf',
+      originalFileName: 'document.pdf',
+      mimeType: 'application/pdf',
+      size: 2048,
+      url: '/api/attachments/attachment-1/file',
+      uploadedAt,
+      extraction: null,
+    });
+
+    it.each([
+      ['an insurance policy', { insurancePolicyId: 'pol-1' }],
+      ['a warranty', { warrantyId: 'wty-1' }],
+      ['a registration, PUC or road-tax record', { complianceDocumentId: 'puc-1' }],
+    ])(
+      "refuses a viewer's read of %s before the file is downloaded or the provider called",
+      async (_owner, column) => {
+        prisma.attachment.findFirst.mockResolvedValue(storedFile(column));
+
+        await expect(service.extractAttachment('viewer-1', 'attachment-1')).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+        expect(storageService.downloadObject).not.toHaveBeenCalled();
+        expect(prisma.attachmentExtraction.upsert).not.toHaveBeenCalled();
+        expect(extractionService.extract).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses the vehicle's owner too: the file would only be read as a service invoice", async () => {
+      prisma.attachment.findFirst.mockResolvedValue(storedFile({ insurancePolicyId: 'pol-1' }));
+
+      await expect(service.extractAttachment('owner-1', 'attachment-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(extractionService.extract).not.toHaveBeenCalled();
+    });
+
+    it("refuses a loan's file for the owner who alone can open it", async () => {
+      prisma.attachment.findFirst.mockResolvedValue(storedFile({ vehicleLoanId: 'loan-1' }));
+
+      await expect(service.extractAttachment('owner-1', 'attachment-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      const where = prisma.attachment.findFirst.mock.calls.at(-1)?.[0].where;
+      expect(where.OR).toContainEqual({
+        vehicleLoan: { vehicle: { members: { some: { userId: 'owner-1', role: 'owner' } } } },
+      });
+      expect(storageService.downloadObject).not.toHaveBeenCalled();
+      expect(prisma.attachmentExtraction.upsert).not.toHaveBeenCalled();
+      expect(extractionService.extract).not.toHaveBeenCalled();
+    });
+
+    it("answers a non-member's request with a 404, not the refusal", async () => {
+      prisma.attachment.findFirst.mockResolvedValue(null);
+
+      await expect(service.extractAttachment('stranger-1', 'attachment-1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(extractionService.extract).not.toHaveBeenCalled();
+    });
+  });
+
   describe('filling a confirmed record in from its photo', () => {
     const recordedAt = new Date('2026-09-20T10:00:00.000Z');
     // What the dashboard's quick log saves: date, odometer and cost, category `other`.
