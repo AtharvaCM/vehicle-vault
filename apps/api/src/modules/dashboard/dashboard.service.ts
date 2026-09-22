@@ -36,6 +36,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { positionLabel } from '../notifications/templates/tyre-labels';
 import { RemindersService } from '../reminders/reminders.service';
+import { unansweredCategories } from '../service-baseline/service-history-coverage';
 import { TyresService } from '../tyres/tyres.service';
 import { isMoreRecentDocument } from '../vehicle-documents/document-recency';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
@@ -44,6 +45,7 @@ import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.re
 import { VehiclesService } from '../vehicles/vehicles.service';
 
 import { MaintenanceForecastService } from '../vehicles/maintenance-forecast.service';
+import { computeDataHealth } from './data-health';
 
 const DASHBOARD_LIST_LIMIT = 5;
 const DASHBOARD_ATTENTION_LIMIT = 25;
@@ -110,6 +112,17 @@ type QueueVerdict = AlertVerdict<
 >;
 
 type ExpiringAccessory = Awaited<ReturnType<AccessoriesService['findExpiringWarranties']>>[number];
+
+/** What the dashboard reads about each vehicle beyond its own row, fetched once per vehicle. */
+type VehicleFacts = {
+  /** The engine's verdicts this user hears, by the engine's audience rule. */
+  verdicts: QueueVerdict[];
+  /** At least one road tyre on file; a spare alone tells the app nothing about wear. */
+  roadTyresTracked: boolean;
+  /** Service categories that apply to the vehicle, and those not yet answered. */
+  serviceCategories: number;
+  unansweredServiceCategories: number;
+};
 
 type BaselineRow = Prisma.ServiceBaselineGetPayload<{
   select: { vehicleId: true; category: true; status: true; lastDoneOdometer: true };
@@ -234,7 +247,7 @@ export class DashboardService {
 
     const vehicleById = new Map(vehicles.map((vehicle) => [vehicle.id, vehicle]));
     const latestDocuments = this.latestDocumentPerVehicleKind(documents);
-    const verdictsByVehicle = await this.alertVerdictsFor({
+    const factsByVehicle = await this.vehicleFactsFor({
       userId,
       vehicles,
       maintenanceRecords,
@@ -246,7 +259,7 @@ export class DashboardService {
       reminders,
       latestDocuments,
       activeLoans,
-      verdictsByVehicle,
+      factsByVehicle,
       expiringAccessories,
       today,
       dismissedDocumentIds,
@@ -257,6 +270,8 @@ export class DashboardService {
       latestDocuments,
       maintenanceRecords,
       latestFuelLogDateByVehicle,
+      factsByVehicle,
+      now,
       today,
     });
 
@@ -336,19 +351,19 @@ export class DashboardService {
    * The alert engine's tyre and service-history verdicts on every vehicle the
    * user can see, from the functions the engine raises them from and the same
    * rows it reads: confirmed records only, every baseline, the resolved
-   * intervals, the tyres' graded state.
+   * intervals, the tyres' graded state. The data score reads the same rows.
    *
    * Who hears a verdict is the engine's rule too: a question that asks someone
    * to record something reaches only the members who can, so a viewer's queue
    * never shows one.
    */
-  private async alertVerdictsFor(input: {
+  private async vehicleFactsFor(input: {
     userId: string;
     vehicles: VehicleSummaryRow[];
     maintenanceRecords: MaintenanceRecord[];
     baselines: BaselineRow[];
     now: Date;
-  }): Promise<Map<string, QueueVerdict[]>> {
+  }): Promise<Map<string, VehicleFacts>> {
     const { userId, vehicles, maintenanceRecords, baselines, now } = input;
     const confirmedByVehicle = this.groupByVehicle(
       maintenanceRecords.filter((record) => record.status === MaintenanceRecordStatus.Confirmed),
@@ -356,7 +371,9 @@ export class DashboardService {
     const baselinesByVehicle = this.groupByVehicle(baselines);
 
     const entries = await Promise.all(
-      vehicles.map(async (vehicle): Promise<[string, QueueVerdict[]]> => {
+      vehicles.map(async (vehicle): Promise<[string, VehicleFacts]> => {
+        const confirmedRecords = confirmedByVehicle.get(vehicle.id) ?? [];
+        const vehicleBaselines = baselinesByVehicle.get(vehicle.id) ?? [];
         const [tyreState, intervals] = await Promise.all([
           this.tyresService.getAlertState(userId, vehicle.id),
           this.intervalResolver.resolveForVehicle(vehicle),
@@ -372,8 +389,8 @@ export class DashboardService {
             {
               vehicle: verdictVehicle,
               intervals,
-              confirmedRecords: confirmedByVehicle.get(vehicle.id) ?? [],
-              baselines: baselinesByVehicle.get(vehicle.id) ?? [],
+              confirmedRecords,
+              baselines: vehicleBaselines,
             },
             now,
           ),
@@ -383,7 +400,18 @@ export class DashboardService {
 
         return [
           vehicle.id,
-          verdicts.filter((verdict) => canRecord || !EDITOR_ONLY_KINDS.has(verdict.kind)),
+          {
+            verdicts: verdicts.filter(
+              (verdict) => canRecord || !EDITOR_ONLY_KINDS.has(verdict.kind),
+            ),
+            roadTyresTracked: tyreState.lastObservation !== null,
+            serviceCategories: Object.keys(intervals).length,
+            unansweredServiceCategories: unansweredCategories(
+              intervals,
+              confirmedRecords,
+              vehicleBaselines,
+            ).length,
+          },
         ];
       }),
     );
@@ -396,7 +424,7 @@ export class DashboardService {
     reminders: Reminder[];
     latestDocuments: Map<string, VehicleDocument>;
     activeLoans: VehicleLoan[];
-    verdictsByVehicle: Map<string, QueueVerdict[]>;
+    factsByVehicle: Map<string, VehicleFacts>;
     expiringAccessories: ExpiringAccessory[];
     today: number;
     dismissedDocumentIds: ReadonlySet<string>;
@@ -406,7 +434,7 @@ export class DashboardService {
       reminders,
       latestDocuments,
       activeLoans,
-      verdictsByVehicle,
+      factsByVehicle,
       expiringAccessories,
       today,
       dismissedDocumentIds,
@@ -493,11 +521,11 @@ export class DashboardService {
       });
     }
 
-    for (const [vehicleId, verdicts] of verdictsByVehicle) {
+    for (const [vehicleId, facts] of factsByVehicle) {
       const vehicle = vehicleById.get(vehicleId);
       if (!vehicle) continue;
 
-      items.push(...this.verdictRows(this.attentionVehicleFields(vehicle), verdicts));
+      items.push(...this.verdictRows(this.attentionVehicleFields(vehicle), facts.verdicts));
     }
 
     for (const accessory of expiringAccessories) {
@@ -735,6 +763,8 @@ export class DashboardService {
     latestDocuments: Map<string, VehicleDocument>;
     maintenanceRecords: MaintenanceRecord[];
     latestFuelLogDateByVehicle: Map<string, Date>;
+    factsByVehicle: Map<string, VehicleFacts>;
+    now: Date;
     today: number;
   }): DashboardVehicleHealth[] {
     const {
@@ -743,6 +773,8 @@ export class DashboardService {
       latestDocuments,
       maintenanceRecords,
       latestFuelLogDateByVehicle,
+      factsByVehicle,
+      now,
       today,
     } = input;
 
@@ -786,6 +818,8 @@ export class DashboardService {
           latestFuelLogDate && latestFuelLogDate.getTime() > new Date(vehicle.updatedAt).getTime()
             ? latestFuelLogDate.toISOString()
             : vehicle.updatedAt;
+        const documents = this.documentStatusesFor(documentsByVehicle.get(vehicle.id) ?? [], today);
+        const facts = factsByVehicle.get(vehicle.id);
 
         return {
           id: vehicle.id,
@@ -799,8 +833,20 @@ export class DashboardService {
           overdueCount,
           dueSoonCount,
           nextDue: this.nextDueFor(items),
-          documents: this.documentStatusesFor(documentsByVehicle.get(vehicle.id) ?? [], today),
+          documents,
           lastService: this.toLastService(lastServiceByVehicle.get(vehicle.id)),
+          dataHealth: computeDataHealth({
+            fuelType: vehicle.fuelType,
+            catalogVariantId: vehicle.catalogVariantId,
+            purchasePrice: vehicle.purchasePrice,
+            serviceCategories: facts?.serviceCategories ?? 0,
+            unansweredServiceCategories: facts?.unansweredServiceCategories ?? 0,
+            insurance: documents.insurance?.state ?? 'missing',
+            puc: documents.puc?.state ?? 'missing',
+            odometerUpdatedAt: new Date(odometerUpdatedAt),
+            roadTyresTracked: facts?.roadTyresTracked ?? false,
+            now,
+          }),
         };
       })
       .sort((left, right) => {
