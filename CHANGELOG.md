@@ -1,3 +1,10 @@
+## [1.54.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.2...v1.54.3) (2026-09-22)
+
+
+### Bug Fixes
+
+* **documents:** stop asking electric vehicles for a PUC ([e3ea51b](https://github.com/AtharvaCM/vehicle-vault/commit/e3ea51be9a81d59ff6415ef42246e43e540cf8e9))
+
 ## [1.54.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.1...v1.54.2) (2026-09-22)
 
 
