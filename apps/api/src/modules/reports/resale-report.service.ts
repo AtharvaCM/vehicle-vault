@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
+import { MaintenanceRecordStatus, type FuelType } from '@vehicle-vault/shared';
 import PDFDocument from 'pdfkit';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { summarize, type LoanParams, type Prepayment } from '../vehicle-loans/amortization';
+import { documentChecklist } from './document-checklist';
 import { decimalToNumber, drawKeyValue, drawRow, fmtDate, inr, intFmt } from './pdf-utils';
 import { vehicleModelLabel, vehicleModelLine } from './vehicle-model-line';
 
@@ -231,25 +232,12 @@ export class ResaleReportService {
     doc.font('Helvetica-Bold').fontSize(13).text('Document checklist');
     doc.moveDown(0.3);
     doc.font('Helvetica').fontSize(10);
-    const loanClosed = loanSummaries.length > 0 && activeLoans.length === 0;
-    const checklist: [string, boolean, string][] = [
-      ['Registration certificate (RC)', true, 'Required for transfer'],
-      [
-        'Active insurance policy',
-        !!activePolicy,
-        activePolicy ? `Valid until ${fmtDate(activePolicy.endDate)}` : 'Renew before transfer',
-      ],
-      ['Pollution under control (PUC)', true, 'Provide latest certificate'],
-      [
-        'Loan NOC',
-        loanClosed,
-        loanSummaries.length === 0
-          ? 'Not applicable — no loan on file'
-          : loanClosed
-            ? 'Available — loan closed'
-            : 'Required after loan settlement',
-      ],
-    ];
+    const checklist = documentChecklist({
+      fuelType: vehicle.fuelType as FuelType,
+      activePolicy,
+      loanCount: loanSummaries.length,
+      activeLoanCount: activeLoans.length,
+    });
     for (const [label, ok, note] of checklist) {
       const mark = ok ? '[x]' : '[ ]';
       doc

@@ -1,4 +1,4 @@
-import type { VehicleDocumentKind } from '@vehicle-vault/shared';
+import { requiresPuc, type VehicleDocumentKind } from '@vehicle-vault/shared';
 
 import { formatDate } from '@/lib/utils/format-date';
 
@@ -39,12 +39,19 @@ function pluralDays(count: number) {
 
 /**
  * One line for the vehicle card's "Documents" row, in precedence order:
- * expired > missing insurance > missing PUC > expiring > valid.
+ * expired > missing insurance > missing PUC > expiring > valid. An electric
+ * vehicle is exempt from PUC, so it is never told one is missing; a PUC it has
+ * on file still reads like any other document.
  */
 export function describeVehicleDocuments(
-  documents: DashboardVehicleHealth['documents'],
+  vehicle: Pick<DashboardVehicleHealth, 'documents' | 'fuelType'>,
   today: Date = new Date(),
 ): VehicleDocumentsDescription {
+  const { documents } = vehicle;
+  // An API that predates `fuelType` asks every vehicle for a PUC, so this does too.
+  const pucRequired = vehicle.fuelType === undefined || requiresPuc(vehicle.fuelType);
+  const puc = documents.puc?.state === 'missing' ? undefined : documents.puc;
+
   for (const kind of EXPIRY_KINDS) {
     const document = documents[kind];
 
@@ -62,7 +69,7 @@ export function describeVehicleDocuments(
     return { text: 'No insurance on file', tone: 'warning' };
   }
 
-  if (!documents.puc || documents.puc.state === 'missing') {
+  if (pucRequired && !puc) {
     return { text: 'No PUC on file', tone: 'warning' };
   }
 
@@ -82,14 +89,15 @@ export function describeVehicleDocuments(
     }
   }
 
-  const endDates = [documents.insurance.endDate, documents.puc.endDate]
+  const endDates = [documents.insurance.endDate, puc?.endDate]
     .filter((value): value is string => Boolean(value))
     .map((value) => new Date(value).getTime())
     .filter((value) => !Number.isNaN(value));
   const earliest = endDates.length > 0 ? Math.min(...endDates) : null;
+  const valid = puc ? 'Insurance & PUC valid' : 'Insurance valid';
 
   return {
-    text: earliest ? `Insurance & PUC valid · to ${formatDate(earliest)}` : 'Insurance & PUC valid',
+    text: earliest ? `${valid} · to ${formatDate(earliest)}` : valid,
     tone: 'ok',
   };
 }

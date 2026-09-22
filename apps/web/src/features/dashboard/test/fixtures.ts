@@ -1,4 +1,4 @@
-import { ReminderStatus, ReminderType, VehicleType } from '@vehicle-vault/shared';
+import { FuelType, ReminderStatus, ReminderType, VehicleType } from '@vehicle-vault/shared';
 
 import type {
   DashboardAttentionCounts,
@@ -36,6 +36,7 @@ export function makeVehicle(
     displayName: 'Daily driver',
     registrationNumber: 'MH12AB1234',
     vehicleType: VehicleType.Car,
+    fuelType: FuelType.Petrol,
     odometer: 45200,
     odometerUpdatedAt: '2026-03-20T00:00:00.000Z',
     currentUserRole: 'owner',

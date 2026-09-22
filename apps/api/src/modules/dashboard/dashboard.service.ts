@@ -5,6 +5,7 @@ import {
   MaintenanceRecordStatus,
   ReminderStatus,
   VehicleRole,
+  requiresPuc,
   type DashboardAttentionCounts,
   type DashboardAttentionItem,
   type DashboardSummary,
@@ -14,6 +15,7 @@ import {
   type DashboardVehicleLastService,
   type DashboardVehicleNextDue,
   type DashboardVehicleStatus,
+  type FuelType,
   type MaintenanceRecord,
   type Reminder,
   type Vehicle,
@@ -87,8 +89,14 @@ const DOCUMENT_KIND_TITLES: Record<VehicleDocumentKind, string> = {
   road_tax: 'Road tax',
 };
 
-/** Legally mandatory in India, so the vehicle card always reports them (state `missing` when absent). */
-const MANDATORY_DOCUMENT_KINDS: readonly VehicleDocumentKind[] = ['insurance', 'puc'];
+/**
+ * The documents the law in India requires of a vehicle, which its card reports
+ * even when none is on file (state `missing`): insurance always, and a PUC
+ * unless the vehicle is electric and so exempt.
+ */
+function mandatoryDocumentKinds(fuelType: FuelType): readonly VehicleDocumentKind[] {
+  return requiresPuc(fuelType) ? ['insurance', 'puc'] : ['insurance'];
+}
 
 /**
  * The bell's tyre titles, in the queue's sentence case. The position goes in
@@ -818,7 +826,11 @@ export class DashboardService {
           latestFuelLogDate && latestFuelLogDate.getTime() > new Date(vehicle.updatedAt).getTime()
             ? latestFuelLogDate.toISOString()
             : vehicle.updatedAt;
-        const documents = this.documentStatusesFor(documentsByVehicle.get(vehicle.id) ?? [], today);
+        const documents = this.documentStatusesFor(
+          documentsByVehicle.get(vehicle.id) ?? [],
+          vehicle.fuelType,
+          today,
+        );
         const facts = factsByVehicle.get(vehicle.id);
 
         return {
@@ -826,6 +838,7 @@ export class DashboardService {
           displayName: this.displayNameFor(vehicle),
           registrationNumber: vehicle.registrationNumber,
           vehicleType: vehicle.vehicleType,
+          fuelType: vehicle.fuelType,
           odometer: vehicle.odometer,
           odometerUpdatedAt,
           currentUserRole: vehicle.currentUserRole ?? VehicleRole.Owner,
@@ -874,10 +887,11 @@ export class DashboardService {
 
   private documentStatusesFor(
     documents: VehicleDocument[],
+    fuelType: FuelType,
     today: number,
   ): Partial<Record<VehicleDocumentKind, DashboardVehicleDocumentStatus>> {
     const statuses: Partial<Record<VehicleDocumentKind, DashboardVehicleDocumentStatus>> = {};
-    for (const kind of MANDATORY_DOCUMENT_KINDS) {
+    for (const kind of mandatoryDocumentKinds(fuelType)) {
       statuses[kind] = { state: 'missing', endDate: null };
     }
 

@@ -489,6 +489,7 @@ export function VehicleDetailPage({
             <TabsContent value="overview" className="space-y-8 animate-in fade-in duration-500">
               <VehicleSetupPrompt
                 dismissedAt={vehicle.setupPromptDismissedAt}
+                fuelType={vehicle.fuelType}
                 vehicleId={vehicleId}
               />
 
@@ -648,7 +649,7 @@ export function VehicleDetailPage({
               <AccessoriesTab vehicleId={vehicleId} />
             </TabsContent>
             <TabsContent value="protection" className="animate-in fade-in duration-500">
-              <ProtectionTab vehicleId={vehicleId} />
+              <ProtectionTab fuelType={vehicle.fuelType} vehicleId={vehicleId} />
             </TabsContent>
             {isOwner ? (
               <TabsContent value="loans" className="animate-in fade-in duration-500">

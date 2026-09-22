@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   AttachmentKind,
+  FuelType,
   VehicleRole,
   type Claim,
   type ClaimAttachment,
@@ -84,7 +85,7 @@ describe('ProtectionTab', () => {
     };
     claimsQuery.current = { isPending: false, isError: false, data: [] };
 
-    render(<ProtectionTab vehicleId="vehicle-1" />);
+    render(<ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />);
 
     expect(screen.getByText('Unable to load protection details')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
@@ -96,7 +97,7 @@ describe('ProtectionTab', () => {
     documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
     claimsQuery.current = { isPending: false, isError: false, data: [] };
 
-    render(<ProtectionTab vehicleId="vehicle-1" />);
+    render(<ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />);
 
     expect(screen.getByRole('button', { name: /scan policy/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /scan warranty/i })).toBeInTheDocument();
@@ -108,7 +109,9 @@ describe('ProtectionTab', () => {
     documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
     claimsQuery.current = { isPending: false, isError: false, data: [] };
 
-    const { container } = render(<ProtectionTab vehicleId="vehicle-1" />);
+    const { container } = render(
+      <ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />,
+    );
 
     // A policy or PUC certificate is a physical thing being photographed, so
     // the input opens the camera rather than the file picker. Desktop browsers
@@ -126,11 +129,30 @@ describe('ProtectionTab', () => {
       refetch: vi.fn(),
     };
 
-    render(<ProtectionTab vehicleId="vehicle-1" />);
+    render(<ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />);
 
     expect(screen.getByText('Unable to load claims')).toBeInTheDocument();
     expect(screen.getByText('No insurance policies')).toBeInTheDocument();
     expect(screen.queryByText('No claims yet')).not.toBeInTheDocument();
+  });
+
+  it('does not ask an electric vehicle for a PUC certificate, which it is exempt from', async () => {
+    const user = userEvent.setup();
+    documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
+    claimsQuery.current = { isPending: false, isError: false, data: [] };
+
+    render(<ProtectionTab fuelType={FuelType.Electric} vehicleId="vehicle-1" />);
+
+    expect(screen.queryByRole('button', { name: 'Add PUC certificate' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Track your RC and road tax/)).toBeInTheDocument();
+    expect(screen.getByText(/Electric vehicles are exempt from PUC/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add registration certificate' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      within(dialog).getByRole('heading', { name: 'Add Registration Certificate' }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -182,7 +204,7 @@ function renderAs(role: VehicleRole) {
 
   return render(
     <VehicleAccessProvider role={role}>
-      <ProtectionTab vehicleId="vehicle-1" />
+      <ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />
     </VehicleAccessProvider>,
   );
 }
@@ -289,7 +311,7 @@ describe('ProtectionTab renewal', () => {
     claimsQuery.current = { isPending: false, isError: false, data: [] };
     return render(
       <VehicleAccessProvider role={role}>
-        <ProtectionTab vehicleId="vehicle-1" />
+        <ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />
       </VehicleAccessProvider>,
     );
   }

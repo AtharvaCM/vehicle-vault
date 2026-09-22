@@ -1,4 +1,5 @@
 import type {
+  FuelType,
   MaintenanceCategory,
   ReminderStatus,
   ReminderType,
@@ -190,6 +191,12 @@ export type DashboardVehicleHealth = {
   displayName: string;
   registrationNumber: string;
   vehicleType: VehicleType;
+  /**
+   * What the vehicle runs on, which decides whether it needs a PUC. Absent
+   * only from an API that predates it: the web deploys ahead of the API, and
+   * then asks every vehicle for a PUC, as that API does.
+   */
+  fuelType?: FuelType;
   odometer: number;
   /**
    * ISO datetime the odometer reading was last touched: the later of the
@@ -209,8 +216,9 @@ export type DashboardVehicleHealth = {
   nextDue: DashboardVehicleNextDue | null;
   /**
    * Latest document per kind. Only kinds present on the vehicle appear, except
-   * `insurance` and `puc`, which are always present (state `missing` when absent)
-   * because they are the two legally mandatory documents in India.
+   * the ones the law in India requires, which appear with state `missing` when
+   * none is on file: `insurance` always, and `puc` unless the vehicle is
+   * electric, which is exempt (`requiresPuc`).
    */
   documents: Partial<Record<VehicleDocumentKind, DashboardVehicleDocumentStatus>>;
   lastService: DashboardVehicleLastService | null;

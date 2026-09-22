@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { VehicleRole, type VehicleDocument } from '@vehicle-vault/shared';
+import { FuelType, VehicleRole, type VehicleDocument } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VehicleAccessProvider } from '../context/vehicle-access';
@@ -36,11 +36,12 @@ function insuranceDocument(): VehicleDocument {
 
 function renderPrompt({
   dismissedAt = null,
+  fuelType = FuelType.Petrol,
   role = VehicleRole.Owner,
-}: { dismissedAt?: string | null | undefined; role?: VehicleRole } = {}) {
+}: { dismissedAt?: string | null | undefined; fuelType?: FuelType; role?: VehicleRole } = {}) {
   return render(
     <VehicleAccessProvider role={role}>
-      <VehicleSetupPrompt dismissedAt={dismissedAt} vehicleId="vehicle-1" />
+      <VehicleSetupPrompt dismissedAt={dismissedAt} fuelType={fuelType} vehicleId="vehicle-1" />
     </VehicleAccessProvider>,
   );
 }
@@ -116,7 +117,11 @@ describe('VehicleSetupPrompt', () => {
     // The field is omitted, not null: the web can ship before the API does.
     render(
       <VehicleAccessProvider role={VehicleRole.Owner}>
-        <VehicleSetupPrompt dismissedAt={undefined} vehicleId="vehicle-1" />
+        <VehicleSetupPrompt
+          dismissedAt={undefined}
+          fuelType={FuelType.Petrol}
+          vehicleId="vehicle-1"
+        />
       </VehicleAccessProvider>,
     );
 
@@ -136,6 +141,22 @@ describe('VehicleSetupPrompt', () => {
 
     expect(screen.queryByLabelText('Insurance expires on')).not.toBeInTheDocument();
     expect(screen.getByLabelText('PUC expires on')).toBeInTheDocument();
+  });
+
+  it('asks an electric vehicle for its insurance alone, since it is exempt from PUC', () => {
+    renderPrompt({ fuelType: FuelType.Electric });
+
+    expect(screen.getByLabelText('Insurance expires on')).toBeInTheDocument();
+    expect(screen.queryByLabelText('PUC expires on')).not.toBeInTheDocument();
+    expect(screen.getByText(/Add the expiry date now/)).toBeInTheDocument();
+  });
+
+  it('stays out of the way of an electric vehicle with its insurance on file', () => {
+    documentsQuery.current = { data: [insuranceDocument()], isSuccess: true };
+
+    renderPrompt({ fuelType: FuelType.Electric });
+
+    expect(screen.queryByText('Never miss a renewal')).not.toBeInTheDocument();
   });
 
   it('stays hidden while the documents are still loading', () => {
