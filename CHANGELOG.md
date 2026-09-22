@@ -1,3 +1,10 @@
+## [1.39.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.39.0...v1.39.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **users:** flag mailinator addresses as test accounts ([3e323ec](https://github.com/AtharvaCM/vehicle-vault/commit/3e323ec564a2f9eb407ae0aee79ebe41498975dd)), closes [#93](https://github.com/AtharvaCM/vehicle-vault/issues/93)
+
 # [1.39.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.38.0...v1.39.0) (2026-09-22)
 
 
