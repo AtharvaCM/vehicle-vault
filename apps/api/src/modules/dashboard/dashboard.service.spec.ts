@@ -322,6 +322,8 @@ describe('DashboardService', () => {
       completed: 0,
     });
     expect(result.recentMaintenance[0]?.attachmentCount).toBe(1);
+    // A record with no status is a confirmed one.
+    expect(result.recentMaintenance[0]?.status).toBe(MaintenanceRecordStatus.Confirmed);
     expect(prisma.fuelLog.count).toHaveBeenCalledWith({
       where: { vehicle: { members: { some: { userId: 'user-1' } } } },
     });
@@ -1179,6 +1181,41 @@ describe('DashboardService', () => {
       });
     });
 
+    it('does not take a draft as the last service', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        // The upload-first flow's draft: dated the day the scan began, at the
+        // vehicle's current reading, and not confirmed by anyone.
+        makeRecord({
+          id: 'scan-draft',
+          serviceDate: '2026-03-20T00:00:00.000Z',
+          odometer: 12000,
+          status: MaintenanceRecordStatus.Draft,
+        }),
+        makeRecord({
+          id: 'logged',
+          serviceDate: '2026-01-10T00:00:00.000Z',
+          odometer: 9000,
+          status: MaintenanceRecordStatus.Confirmed,
+        }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.vehicles[0]?.lastService).toMatchObject({ recordId: 'logged', odometer: 9000 });
+    });
+
+    it('leaves a vehicle whose only record is a draft without a last service', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ status: MaintenanceRecordStatus.Draft }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.vehicles[0]?.lastService).toBeNull();
+    });
+
     it('prefers an expiring document as nextDue when it comes before any reminder', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
       remindersService.getAllReminders.mockResolvedValue([
@@ -1345,6 +1382,23 @@ describe('DashboardService', () => {
     });
   });
 
+  describe('recent maintenance', () => {
+    it('lists a draft, marked as one, so it can be found and confirmed', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ id: 'scan-draft', status: MaintenanceRecordStatus.Draft }),
+        makeRecord({ id: 'logged', status: MaintenanceRecordStatus.Confirmed }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.recentMaintenance.map(({ id, status }) => ({ id, status }))).toEqual([
+        { id: 'scan-draft', status: MaintenanceRecordStatus.Draft },
+        { id: 'logged', status: MaintenanceRecordStatus.Confirmed },
+      ]);
+    });
+  });
+
   describe('hasSpend', () => {
     it('(i) is false with no records, fuel logs or active loans', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
@@ -1353,6 +1407,28 @@ describe('DashboardService', () => {
       const result = await service.getSummary('user-1');
 
       expect(result.hasSpend).toBe(false);
+    });
+
+    it('is false when the only record is a draft, which no spend figure counts', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ status: MaintenanceRecordStatus.Draft }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.hasSpend).toBe(false);
+    });
+
+    it('is true once a record is confirmed', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ status: MaintenanceRecordStatus.Confirmed }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.hasSpend).toBe(true);
     });
 
     it('(i) is true when only fuel logs exist', async () => {

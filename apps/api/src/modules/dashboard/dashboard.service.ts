@@ -315,13 +315,20 @@ export class DashboardService {
         totalCost: record.totalCost,
         workshopName: record.workshopName,
         attachmentCount: attachmentCountByRecordId[record.id] ?? 0,
+        // A draft stays in the list so it can be found and confirmed, marked so
+        // it does not read as a logged service.
+        status: record.status ?? MaintenanceRecordStatus.Confirmed,
       })),
       attention: attention.slice(0, DASHBOARD_ATTENTION_LIMIT),
       attentionTotal: attention.length,
       attentionCounts: this.buildAttentionCounts(attention, vehicleHealth),
       vehicles: vehicleHealth.slice(0, DASHBOARD_VEHICLE_LIMIT),
       vehiclesTotal: vehicleHealth.length,
-      hasSpend: maintenanceRecords.length > 0 || fuelLogCount > 0 || activeLoans.length > 0,
+      // The spend section reads analytics, which count confirmed records only.
+      hasSpend:
+        maintenanceRecords.some((record) => record.status !== MaintenanceRecordStatus.Draft) ||
+        fuelLogCount > 0 ||
+        activeLoans.length > 0,
     };
   }
 
@@ -796,8 +803,11 @@ export class DashboardService {
       }
     }
 
+    // A draft is not a service that happened: the card would read "Serviced
+    // today" for a scan started this morning and count kilometres from it.
     const lastServiceByVehicle = new Map<string, MaintenanceRecord>();
     for (const record of maintenanceRecords) {
+      if (record.status === MaintenanceRecordStatus.Draft) continue;
       const current = lastServiceByVehicle.get(record.vehicleId);
       if (!current || this.toUtcDay(record.serviceDate) > this.toUtcDay(current.serviceDate)) {
         lastServiceByVehicle.set(record.vehicleId, record);

@@ -1,6 +1,7 @@
 import type {
   FuelType,
   MaintenanceCategory,
+  MaintenanceRecordStatus,
   ReminderStatus,
   ReminderType,
   VehicleRole,
@@ -25,6 +26,11 @@ export type DashboardMaintenanceSummary = {
   totalCost: number;
   workshopName?: string;
   attachmentCount: number;
+  /**
+   * A draft is listed so it can be found and confirmed. Absent only from an API
+   * that predates it, and a record without one is a confirmed record.
+   */
+  status?: MaintenanceRecordStatus;
 };
 
 export type DashboardLoanSummary = {
