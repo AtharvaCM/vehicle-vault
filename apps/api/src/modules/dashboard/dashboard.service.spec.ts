@@ -551,6 +551,38 @@ describe('DashboardService', () => {
       });
     });
 
+    it('(e2) asks an electric vehicle for insurance alone, since it is exempt from PUC', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        makeVehicle({ fuelType: FuelType.Electric }),
+      ]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({ id: 'doc-insurance', kind: 'insurance' }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.vehicles[0]?.fuelType).toBe(FuelType.Electric);
+      expect(result.vehicles[0]?.documents).toEqual({
+        insurance: { state: 'active', endDate: daysFromNow(200) },
+      });
+    });
+
+    it('(e3) still reports a PUC an electric vehicle has on file, like any other document', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        makeVehicle({ fuelType: FuelType.Electric }),
+      ]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({ id: 'doc-puc', kind: 'puc', endDate: new Date(daysFromNow(-10)) }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.vehicles[0]?.documents).toEqual({
+        insurance: { state: 'missing', endDate: null },
+        puc: { state: 'expired', endDate: daysFromNow(-10) },
+      });
+    });
+
     it('(f) adds an EMI item for an active loan whose next instalment is within 7 days', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);
       vehicleLoansService.listForUser.mockResolvedValue([

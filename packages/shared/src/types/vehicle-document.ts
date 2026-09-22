@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { FuelType } from '../enums';
+
 export const VehicleDocumentKindSchema = z.enum([
   'insurance',
   'warranty',
@@ -16,6 +18,17 @@ export type VehicleDocumentKind = z.infer<typeof VehicleDocumentKindSchema>;
  */
 export const complianceDocumentKinds = ['registration', 'puc', 'road_tax'] as const;
 export type ComplianceDocumentKind = (typeof complianceDocumentKinds)[number];
+
+/**
+ * Whether the law asks this vehicle for a PUC (Pollution Under Control)
+ * certificate. The test measures what comes out of a tailpipe, so an electric
+ * vehicle, which has none, is exempt and nothing should ask it for one; a
+ * hybrid still burns fuel and is not. This decides only whether a PUC is
+ * expected: one already on file is tracked like any other document.
+ */
+export function requiresPuc(fuelType: FuelType): boolean {
+  return fuelType !== FuelType.Electric;
+}
 
 /**
  * Unified read shape for any kind of vehicle document. `details` carries

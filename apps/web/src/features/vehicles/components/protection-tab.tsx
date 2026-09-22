@@ -33,7 +33,9 @@ import {
 } from '../../vehicle-documents/utils/document-kind-labels';
 import {
   complianceDocumentKinds,
+  requiresPuc,
   type Claim,
+  type FuelType,
   type VehicleDocument,
   type VehicleDocumentExtractionDraft,
   type VehicleDocumentKind,
@@ -83,9 +85,11 @@ const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanB
 
 interface ProtectionTabProps {
   vehicleId: string;
+  /** An electric vehicle is exempt from PUC, so the tab never asks it for one. */
+  fuelType: FuelType;
 }
 
-export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
+export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
   const { canEdit } = useVehicleAccess();
   const documentsQuery = useVehicleDocuments(vehicleId);
   const claimsQuery = useVehicleClaims(vehicleId);
@@ -144,6 +148,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const complianceDocuments = allDocuments.filter(
     (d) => d.kind === 'registration' || d.kind === 'puc' || d.kind === 'road_tax',
   );
+  const pucRequired = requiresPuc(fuelType);
   const claims = claimsQuery.data || [];
 
   function openDialog(kind: VehicleDocumentKind) {
@@ -465,11 +470,18 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
             ) : (
               <EmptyState
                 title="No compliance documents"
-                description="Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due."
+                description={
+                  pucRequired
+                    ? 'Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due.'
+                    : 'Track your RC and road tax to get expiry alerts before renewals are due.'
+                }
                 action={
                   canEdit ? (
-                    <Button variant="secondary" onClick={() => openDialog('puc')}>
-                      Add PUC certificate
+                    <Button
+                      variant="secondary"
+                      onClick={() => openDialog(pucRequired ? 'puc' : 'registration')}
+                    >
+                      {pucRequired ? 'Add PUC certificate' : 'Add registration certificate'}
                     </Button>
                   ) : undefined
                 }
@@ -503,8 +515,10 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
               <p className="font-bold text-slate-700 mb-1">PUC &amp; Road Tax</p>
               <p>
-                PUC certificates typically last 6–12 months and are mandatory. Road tax is often
-                one-time (lifetime) — leave the end date blank for those.
+                {pucRequired
+                  ? 'PUC certificates typically last 6–12 months and are mandatory.'
+                  : 'Electric vehicles are exempt from PUC, so there is no certificate to keep.'}{' '}
+                Road tax is often one-time (lifetime) — leave the end date blank for those.
               </p>
             </div>
           </CardContent>

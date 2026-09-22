@@ -152,7 +152,7 @@ function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
 
 export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   const canEdit = vehicle.currentUserRole !== 'viewer';
-  const documents = describeVehicleDocuments(vehicle.documents, today);
+  const documents = describeVehicleDocuments(vehicle, today);
   const statusTab: VehicleDetailTab | undefined =
     vehicle.status === 'ok' || !vehicle.nextDue
       ? undefined

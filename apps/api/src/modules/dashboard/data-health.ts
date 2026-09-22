@@ -1,8 +1,9 @@
 import {
-  FuelType,
+  requiresPuc,
   type DashboardDataGap,
   type DashboardDocumentState,
   type DashboardVehicleDataHealth,
+  type FuelType,
 } from '@vehicle-vault/shared';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -77,7 +78,7 @@ function missingShare(input: DataHealthInput): Record<DashboardDataGap, number |
         : 0,
     insurance: isCurrent(input.insurance) ? 0 : 1,
     catalog_link: input.catalogVariantId ? 0 : 1,
-    puc: input.fuelType === FuelType.Electric ? null : isCurrent(input.puc) ? 0 : 1,
+    puc: requiresPuc(input.fuelType) ? (isCurrent(input.puc) ? 0 : 1) : null,
     tyres: input.roadTyresTracked ? 0 : 1,
     purchase_price: input.purchasePrice != null ? 0 : 1,
   };

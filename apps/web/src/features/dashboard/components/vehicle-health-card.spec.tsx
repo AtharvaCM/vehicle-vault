@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
-import { MaintenanceCategory } from '@vehicle-vault/shared';
+import { FuelType, MaintenanceCategory } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { makeVehicle } from '../test/fixtures';
@@ -243,6 +243,23 @@ describe('VehicleHealthCard', () => {
       expect(screen.getByText(expected)).toBeInTheDocument();
       unmount();
     }
+  });
+
+  it('does not ask an electric vehicle for a PUC, which it is exempt from', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({
+          fuelType: FuelType.Electric,
+          documents: { insurance: { state: 'active', endDate: '2026-12-01T00:00:00.000Z' } },
+          dataHealth: { score: 100, nextGap: null },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Insurance valid · to 01 Dec 2026')).toBeInTheDocument();
+    expect(screen.queryByText('No PUC on file')).not.toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 
   it('renders the last service with distance since', () => {
