@@ -1,3 +1,10 @@
+## [1.54.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.3...v1.54.4) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** stack fuel log cards in the fuel tab's half-width column ([112ee53](https://github.com/AtharvaCM/vehicle-vault/commit/112ee531985271c5615232551482a0e1a8b6836c))
+
 ## [1.54.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.2...v1.54.3) (2026-09-22)
 
 
