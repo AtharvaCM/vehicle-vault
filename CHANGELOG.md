@@ -1,3 +1,10 @@
+# [1.54.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.53.1...v1.54.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** log a service in three fields, and fuel beside it ([8e9c914](https://github.com/AtharvaCM/vehicle-vault/commit/8e9c914e416bb09b0b997fb1b52186f20ec1388e))
+
 ## [1.53.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.53.0...v1.53.1) (2026-09-22)
 
 
