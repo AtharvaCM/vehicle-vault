@@ -1,4 +1,9 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { VehicleRole } from '@prisma/client';
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
@@ -352,6 +357,72 @@ describe('VehiclesService', () => {
       fuelType: 'petrol',
     });
     expect(intervals).toEqual({ tyre_rotation: { km: 15000, months: 12, source: 'variant' } });
+  });
+
+  describe('updateOdometer', () => {
+    it('records a higher reading and audits it in the same transaction', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue(vehicleRecord);
+      prisma.vehicle.update.mockResolvedValue({ ...vehicleRecord, odometer: 12500 });
+
+      const vehicle = await service.updateOdometer('user-1', 'vehicle-1', 12500);
+
+      expect(accessService.assert).toHaveBeenCalledWith('user-1', 'vehicle-1', 'editor');
+      expect(prisma.vehicle.update).toHaveBeenCalledWith({
+        where: { id: 'vehicle-1' },
+        data: { odometer: 12500 },
+      });
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'vehicle.updated',
+          resourceId: 'vehicle-1',
+          before: expect.objectContaining({ odometer: 12000 }),
+          after: expect.objectContaining({ odometer: 12500 }),
+        }),
+      );
+      expect(vehicle.odometer).toBe(12500);
+    });
+
+    it('refuses a reading below the current one and points at the edit form', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue(vehicleRecord);
+
+      const attempt = service.updateOdometer('user-1', 'vehicle-1', 11999);
+
+      await expect(attempt).rejects.toBeInstanceOf(BadRequestException);
+      await expect(attempt).rejects.toMatchObject({
+        response: {
+          message: expect.stringMatching(/already reads 12,000 km.*edit the vehicle/),
+        },
+      });
+      expect(prisma.vehicle.update).not.toHaveBeenCalled();
+      expect(auditService.track).not.toHaveBeenCalled();
+    });
+
+    it('accepts the same reading again, which confirms the odometer is current', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue(vehicleRecord);
+      prisma.vehicle.update.mockResolvedValue(vehicleRecord);
+
+      await service.updateOdometer('user-1', 'vehicle-1', 12000);
+
+      expect(prisma.vehicle.update).toHaveBeenCalled();
+    });
+
+    it('leaves a viewer to the access check, touching nothing', async () => {
+      accessService.assert.mockRejectedValue(new ForbiddenException());
+
+      await expect(service.updateOdometer('user-2', 'vehicle-1', 13000)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(prisma.vehicle.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses a vehicle that does not exist', async () => {
+      prisma.vehicle.findUnique.mockResolvedValue(null);
+
+      await expect(service.updateOdometer('user-1', 'vehicle-1', 13000)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
   });
 
   describe('dismissSetupPrompt', () => {

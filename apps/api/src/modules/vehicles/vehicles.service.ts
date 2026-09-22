@@ -256,6 +256,44 @@ export class VehiclesService {
     }
   }
 
+  /**
+   * The one-number odometer update on the dashboard. It refuses a reading below
+   * the stored one: this path is for the odometer moving forward, and the edit
+   * form stays the place to correct a mistyped value. The same reading again is
+   * accepted, since it confirms the odometer is current and moves "updated ago".
+   */
+  async updateOdometer(userId: string, vehicleId: string, odometer: number) {
+    const role = await this.access.assert(userId, vehicleId, VehicleRole.editor);
+    const before = await this.prisma.vehicle.findUnique({ where: { id: vehicleId } });
+    if (!before) {
+      throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
+    }
+    if (odometer < before.odometer) {
+      throw new BadRequestException({
+        message: `The odometer already reads ${before.odometer.toLocaleString('en-IN')} km, so a lower reading can't be saved here. To correct a mistyped reading, edit the vehicle.`,
+      });
+    }
+
+    const vehicle = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.vehicle.update({
+        where: { id: vehicleId },
+        data: { odometer },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: before.userId,
+        action: AUDIT_ACTIONS.vehicle.updated,
+        resourceType: AuditResourceType.vehicle,
+        resourceId: vehicleId,
+        before: before as unknown as Record<string, unknown>,
+        after: updated as unknown as Record<string, unknown>,
+      });
+      return updated;
+    });
+
+    return this.toVehicle(vehicle, role);
+  }
+
   async deleteVehicle(userId: string, vehicleId: string) {
     await this.access.assertOwner(userId, vehicleId);
 

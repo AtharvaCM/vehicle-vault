@@ -17,7 +17,7 @@ NestJS backend for vehicle-vault. Owns the persistence model and business rules 
 ## Language
 
 **Vehicle**:
-A car or two-wheeler in a **User**'s garage. Root of most aggregates. Ownership is expressed through **VehicleMember** rows; `Vehicle.userId` survives as a legacy owner FK (still carries the `[userId, registrationNumber]` unique and cascade) — queries go through `members.some`, so **VehicleMember is authoritative**. A Vehicle may link to a **CatalogVariant** (`catalogVariantId`, fuzzy-matched by `VehicleCatalogLinkerService`).
+A car or two-wheeler in a **User**'s garage. Root of most aggregates. Ownership is expressed through **VehicleMember** rows; `Vehicle.userId` survives as a legacy owner FK (still carries the `[userId, registrationNumber]` unique and cascade) — queries go through `members.some`, so **VehicleMember is authoritative**. A Vehicle may link to a **CatalogVariant** (`catalogVariantId`, fuzzy-matched by `VehicleCatalogLinkerService`). `Vehicle.odometer` has two writers with different rules: `PATCH /vehicles/:id/odometer` (the dashboard's quick update) only moves it forward and refuses a lower reading, while the full vehicle update may lower it, since that form is where a mistyped reading gets corrected. Fuel logs also raise it, never lower it.
 
 **VehicleMember** / **VehicleRole**:
 A **User**'s role on a **Vehicle**: `owner`, `editor`, or `viewer` (ranked). Enforced everywhere by **VehicleAccessService** (`assert`/`assertEditor`/`assertOwner`; throws NotFound to prevent id probing). Sharing happens via **VehicleInvite** (hashed token, expiry, accept/revoke) and ownership transfer.

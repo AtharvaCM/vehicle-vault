@@ -18,6 +18,7 @@ import { formatDate } from '@/lib/utils/format-date';
 import type { DashboardVehicleHealth } from '../types/dashboard';
 import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
+import { OdometerQuickUpdate } from './odometer-quick-update';
 import {
   formatKm,
   formatOdometerMeta,
@@ -192,13 +193,17 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           )}
         </MicroRow>
         <MicroRow label="Odometer">
-          <Link
-            className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            params={{ vehicleId: vehicle.id }}
-            to="/vehicles/$vehicleId/edit"
-          >
-            Updated {formatRelativeAgo(vehicle.odometerUpdatedAt, today)} · Update
-          </Link>
+          Updated {formatRelativeAgo(vehicle.odometerUpdatedAt, today)}
+          {canEdit ? (
+            <>
+              {' · '}
+              <OdometerQuickUpdate
+                displayName={vehicle.displayName}
+                odometer={vehicle.odometer}
+                vehicleId={vehicle.id}
+              />
+            </>
+          ) : null}
         </MicroRow>
       </div>
 

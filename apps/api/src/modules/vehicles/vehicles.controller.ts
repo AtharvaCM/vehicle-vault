@@ -6,6 +6,7 @@ import { CurrentUser } from '../../common/auth/decorators/current-user.decorator
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { successResponse } from '../../common/utils/api-response.util';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { UpdateOdometerDto } from './dto/update-odometer.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleIdParamDto } from './dto/vehicle-id-param.dto';
 
@@ -74,6 +75,16 @@ export class VehiclesController {
     @Body() body: UpdateVehicleDto,
   ) {
     return this.vehiclesService.updateVehicle(user.id, params.vehicleId, body);
+  }
+
+  @Patch(':vehicleId/odometer')
+  @ApiOperation({ summary: 'Record a new odometer reading, refusing one below the current' })
+  async updateOdometer(
+    @CurrentUser() user: AuthUser,
+    @Param() params: VehicleIdParamDto,
+    @Body() body: UpdateOdometerDto,
+  ) {
+    return this.vehiclesService.updateOdometer(user.id, params.vehicleId, body.odometer);
   }
 
   @Post(':vehicleId/setup-prompt/dismiss')
