@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.44.0...v1.45.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** insurance policies and warranties keep their file ([632af81](https://github.com/AtharvaCM/vehicle-vault/commit/632af812cacbeecac7d8505cd8286614a80cb012))
+
 # [1.44.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.43.0...v1.44.0) (2026-09-22)
 
 
