@@ -1,3 +1,11 @@
+## [1.53.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.53.0...v1.53.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** give phone list rows room to read ([6a032ff](https://github.com/AtharvaCM/vehicle-vault/commit/6a032ff4f8f8f9ef02a1e1508c9ea665aa1836d3))
+* **web:** let list checkboxes tick, untick and take a tap on their padding ([0c11e1d](https://github.com/AtharvaCM/vehicle-vault/commit/0c11e1de2155bc7a1c751f576730e1c1f9fd40c2))
+
 # [1.53.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.52.0...v1.53.0) (2026-09-22)
 
 
