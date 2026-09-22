@@ -492,7 +492,7 @@ export function VehicleDetailPage({
                 vehicleId={vehicleId}
               />
 
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <VehicleSummaryCard vehicle={vehicle} />
                 <OdometerForecastCard vehicleId={vehicleId} />
               </div>
@@ -517,12 +517,12 @@ export function VehicleDetailPage({
 
               <TcoCard vehicleId={vehicleId} />
 
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <OdometerHistoryCard insights={serviceInsights} />
                 <ServiceTrendCard insights={serviceInsights} />
               </div>
 
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <MaintenancePanel maintenanceQuery={maintenanceQuery} vehicleId={vehicleId} />
                 <ReminderPanel
                   remindersQuery={remindersQuery}
@@ -544,7 +544,7 @@ export function VehicleDetailPage({
               <div className="mb-6">
                 <ServiceHistoryCard vehicleId={vehicleId} />
               </div>
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                 <MaintenancePanel
                   maintenanceQuery={maintenanceQuery}
                   title="Service history"
@@ -583,7 +583,7 @@ export function VehicleDetailPage({
             </TabsContent>
 
             <TabsContent value="reminders" className="animate-in fade-in duration-500">
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                 <ReminderPanel
                   remindersQuery={remindersQuery}
                   title="Reminder queue"
@@ -608,7 +608,7 @@ export function VehicleDetailPage({
             </TabsContent>
 
             <TabsContent value="fuel" className="animate-in fade-in duration-500">
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                 <FuelTab vehicleId={vehicleId} />
                 <div className="h-fit space-y-6">
                   <FuelEconomyCard vehicleId={vehicleId} />
