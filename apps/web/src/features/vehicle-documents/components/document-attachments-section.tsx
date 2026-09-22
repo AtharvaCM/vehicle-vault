@@ -26,10 +26,20 @@ type DocumentAttachmentsSectionProps = {
   documentId: string;
 };
 
+/** What to suggest adding, in the document's own terms. */
+const EMPTY_HINT: Record<DocumentWithFilesKind, string> = {
+  insurance: 'Add the policy PDF or a photo of the document.',
+  warranty: 'Add the warranty card or certificate.',
+  registration: 'Add a photo of the registration certificate.',
+  puc: 'Add a photo of the PUC certificate.',
+  road_tax: 'Add the road tax receipt.',
+};
+
 /**
  * The document itself, kept with the record of it: the policy PDF, a photo of
- * the warranty card. Anyone the vehicle is shared with can open the files;
- * adding and removing them is an edit, so a viewer gets the list alone.
+ * the RC or PUC certificate that gets asked for at a checkpoint. Anyone the
+ * vehicle is shared with can open the files; adding and removing them is an
+ * edit, so a viewer gets the list alone.
  */
 export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachmentsSectionProps) {
   const { canEdit } = useVehicleAccess();
@@ -145,9 +155,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
         </ul>
       ) : (
         <p className="text-xs text-slate-400">
-          {canEdit
-            ? 'No files yet. Add the policy PDF or a photo of the document.'
-            : 'No files yet.'}
+          {canEdit ? `No files yet. ${EMPTY_HINT[kind]}` : 'No files yet.'}
         </p>
       )}
     </section>

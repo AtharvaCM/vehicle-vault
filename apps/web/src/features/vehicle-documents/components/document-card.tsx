@@ -286,6 +286,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               </div>
             </div>
           </div>
+          <div className="border-t border-slate-100 px-5 py-4">
+            <DocumentAttachmentsSection documentId={document.id} kind={document.kind} />
+          </div>
         </CardContent>
       </Card>
     );

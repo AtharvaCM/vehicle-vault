@@ -1,10 +1,11 @@
+import type { VehicleDocumentKind } from '@vehicle-vault/shared';
 import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
 import { endpoints } from '@/lib/api/endpoints';
 import type { Attachment } from '@/features/attachments/types/attachment';
 
-/** The documents whose rows hold their own files; the compliance kinds do not yet. */
-export type DocumentWithFilesKind = 'insurance' | 'warranty';
+/** Every document kind holds its own files. */
+export type DocumentWithFilesKind = VehicleDocumentKind;
 
 export async function getDocumentAttachments(kind: DocumentWithFilesKind, documentId: string) {
   const response = await apiClient.get<ApiSuccessResponse<Attachment[]>>(

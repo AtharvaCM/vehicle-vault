@@ -346,6 +346,32 @@ describe('VehicleDocumentsService', () => {
       expect(order).toEqual(['row', 'file']);
     });
 
+    it('removes the files of a compliance document too', async () => {
+      const compliance = makeAdapter('puc');
+      const withCompliance = new VehicleDocumentsService(
+        vehiclesService as never,
+        [insurance, warranty, compliance],
+        prisma as never,
+        auditService as never,
+        accessService as never,
+        notificationsService as never,
+        storageService as never,
+      );
+      (compliance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: { ...insuranceDoc(), id: 'puc-1', kind: 'puc' },
+        vehicleUserId: 'user-1',
+      });
+      prisma.attachment.findMany.mockResolvedValueOnce([{ fileName: 'puc.jpg' }]);
+
+      await withCompliance.remove('user-1', 'puc', 'puc-1');
+
+      expect(prisma.attachment.findMany).toHaveBeenCalledWith({
+        where: { complianceDocumentId: 'puc-1' },
+        select: { fileName: true },
+      });
+      expect(storageService.deleteObject).toHaveBeenCalledWith('puc.jpg');
+    });
+
     it('still deletes the policy when storage refuses to remove a file', async () => {
       (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
         document: insuranceDoc(),

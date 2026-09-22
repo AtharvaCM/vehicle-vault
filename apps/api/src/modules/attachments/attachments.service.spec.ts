@@ -649,6 +649,7 @@ describe('AttachmentsService', () => {
     const documents = {
       insurancePolicy: { findUnique: vi.fn() },
       warranty: { findUnique: vi.fn() },
+      complianceDocument: { findFirst: vi.fn(), findUnique: vi.fn() },
     };
     const policyFile = {
       originalname: 'policy.pdf',
@@ -667,6 +668,10 @@ describe('AttachmentsService', () => {
         vehicle: { userId: 'owner-1' },
       });
       documents.warranty.findUnique.mockResolvedValue({
+        vehicleId: 'vehicle-1',
+        vehicle: { userId: 'owner-1' },
+      });
+      documents.complianceDocument.findFirst.mockResolvedValue({
         vehicleId: 'vehicle-1',
         vehicle: { userId: 'owner-1' },
       });
@@ -727,6 +732,28 @@ describe('AttachmentsService', () => {
       expect(prisma.attachment.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ warrantyId: 'wty-1' }) }),
       );
+    });
+
+    it('files a PUC certificate under its compliance record, checked against its kind', async () => {
+      await documentService.uploadDocumentAttachments('user-1', 'puc', 'puc-1', [policyFile]);
+
+      expect(documents.complianceDocument.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'puc-1', kind: 'puc' } }),
+      );
+      expect(prisma.attachment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ complianceDocumentId: 'puc-1' }),
+        }),
+      );
+    });
+
+    it('does not reach a compliance record through another kind', async () => {
+      // A PUC certificate asked for as a registration certificate.
+      documents.complianceDocument.findFirst.mockResolvedValue(null);
+
+      await expect(
+        documentService.listByDocument('user-1', 'registration', 'puc-1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it("refuses a viewer's upload before anything is stored", async () => {

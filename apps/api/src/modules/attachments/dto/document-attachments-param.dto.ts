@@ -2,10 +2,13 @@ import { IsIn, IsUUID } from 'class-validator';
 
 import type { DocumentAttachmentKind } from '../attachments.service';
 
-/** The documents whose rows own their files: the compliance kinds do not yet. */
+/** Every vehicle document kind owns its files. */
 export const DOCUMENT_ATTACHMENT_KINDS: readonly DocumentAttachmentKind[] = [
   'insurance',
   'warranty',
+  'registration',
+  'puc',
+  'road_tax',
 ];
 
 export class DocumentAttachmentsParamDto {

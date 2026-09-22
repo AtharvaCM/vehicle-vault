@@ -315,6 +315,7 @@ export class VehiclesService {
         insurancePolicies: { select: { attachments: { select: { fileName: true } } } },
         warranties: { select: { attachments: { select: { fileName: true } } } },
         loans: { select: { attachments: { select: { fileName: true } } } },
+        complianceDocuments: { select: { attachments: { select: { fileName: true } } } },
       },
     });
 
@@ -340,6 +341,7 @@ export class VehiclesService {
       ...vehicle.insurancePolicies,
       ...vehicle.warranties,
       ...vehicle.loans,
+      ...vehicle.complianceDocuments,
     ].flatMap((owner) => owner.attachments.map((attachment) => attachment.fileName));
 
     await Promise.all(

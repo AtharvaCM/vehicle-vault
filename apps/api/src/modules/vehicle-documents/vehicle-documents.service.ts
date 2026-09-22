@@ -166,15 +166,14 @@ export class VehicleDocumentsService {
     await this.removeStoredFiles(storedFiles);
   }
 
-  /** Paths of the files a policy or warranty holds; the compliance kinds hold none. */
+  /** Paths of the files a document holds, whichever table it lives in. */
   private async storedFilesOf(kind: VehicleDocumentKind, documentId: string): Promise<string[]> {
     const owner =
       kind === 'insurance'
         ? { insurancePolicyId: documentId }
         : kind === 'warranty'
           ? { warrantyId: documentId }
-          : null;
-    if (!owner) return [];
+          : { complianceDocumentId: documentId };
     const attachments = await this.prisma.attachment.findMany({
       where: owner,
       select: { fileName: true },
