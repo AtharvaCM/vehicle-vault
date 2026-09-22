@@ -164,7 +164,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   return (
     <Card
       className={cn(
-        'flex flex-col gap-3 border-slate-200/60 bg-white/70 shadow-premium-sm transition-colors hover:bg-white',
+        '@container flex flex-col gap-3 border-slate-200/60 bg-white/70 shadow-premium-sm transition-colors hover:bg-white',
         vehicle.status === 'overdue' && 'border-rose-200/60',
         vehicle.status === 'due_soon' && 'border-amber-200/60',
       )}
@@ -280,11 +280,22 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         </MicroRow>
       </div>
 
-      <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <span className="shrink-0 whitespace-nowrap text-[12px] tabular-nums text-slate-500">
+      {/* Where the grid adds a column (sm, then xl beside the sidebar), a card is narrower
+          than on a phone, so the footer goes by the card's own width: under 22rem the
+          reading gets a row to itself and the labelled actions take the row below. Icons
+          alone (on a phone) or the menu alone (for a viewer) fit beside the reading. Both
+          rows can still wrap, so a long reading or a wide font never pushes a button out
+          of the card. */}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+        <span
+          className={cn(
+            'shrink-0 whitespace-nowrap text-[12px] tabular-nums text-slate-500',
+            canEdit && 'sm:basis-full sm:@[22rem]:basis-auto',
+          )}
+        >
           {formatKm(vehicle.odometer)}
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {canEdit ? (
             <>
               <Link
