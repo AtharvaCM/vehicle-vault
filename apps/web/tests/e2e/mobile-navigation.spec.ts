@@ -80,9 +80,10 @@ async function expectNoSidewaysScroll(page: Page, where: string) {
 
 /**
  * A page can stop scrolling sideways by squeezing a card instead: a title
- * crushed to one letter, or figures pushed out of view. The card has to leave
- * its title a readable width, even if an ellipsis cuts it short, and keep each
- * figure inside the card.
+ * crushed to one letter, or figures pushed out of view or broken over two
+ * lines. The card has to leave its title a readable width, even if an ellipsis
+ * cuts it short, and keep each figure, and the label above it, whole on one
+ * line inside the card.
  */
 async function expectReadableCard(card: Locator, title: string, figures: string[]) {
   await expect(card).toBeVisible();
@@ -101,13 +102,28 @@ async function expectReadableCard(card: Locator, title: string, figures: string[
     .toBeGreaterThanOrEqual(160);
 
   for (const figure of figures) {
-    const box = (await card.getByText(figure, { exact: true }).boundingBox())!;
+    const value = card.getByText(figure, { exact: true });
+    const box = (await value.boundingBox())!;
     expect
       .soft(
         box.x >= cardBox.x && box.x + box.width <= cardBox.x + cardBox.width,
         `The card for "${title}" pushes ${figure} out of view.`,
       )
       .toBe(true);
+
+    // Squeezed, a figure keeps its place but wraps: "15,450 / km", "TOTAL / COST".
+    const lines = await value.evaluate((node) =>
+      Math.max(
+        ...[node, node.previousElementSibling!].map((line) =>
+          Math.round(
+            line.getBoundingClientRect().height / parseFloat(getComputedStyle(line).lineHeight),
+          ),
+        ),
+      ),
+    );
+    expect
+      .soft(lines, `The card for "${title}" breaks ${figure} or its label over ${lines} lines.`)
+      .toBe(1);
   }
 }
 
@@ -345,8 +361,9 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   // The fuel tab splits the same way, and a fill's three figures and menu need
   // more room beside its text than a record's two figures. So it is measured at
   // 1440px too, where its cards are wide enough for a record's figures to sit
-  // beside the text, but not for a fill's.
-  for (const screen of [DESKTOP, WIDE_DESKTOP]) {
+  // beside the text, but not for a fill's. On a phone the figures only just fit
+  // the strip under the text, with the menu moved up beside the title.
+  for (const screen of [PHONE, DESKTOP, WIDE_DESKTOP]) {
     await page.setViewportSize(screen);
     await page.goto(`${vehicleUrl}?tab=fuel`);
     for (const [title, figures] of fills) {

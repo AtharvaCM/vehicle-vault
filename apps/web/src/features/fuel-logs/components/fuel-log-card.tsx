@@ -3,6 +3,7 @@ import type { FuelLog } from '@vehicle-vault/shared';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils/cn';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 import {
@@ -19,12 +20,19 @@ type FuelLogCardProps = {
 };
 
 export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
+  const hasMenu = Boolean(onEdit || onDelete);
+
   // The card fills anything from a phone to half a desktop panel, so its figures move
   // beside the text by the card's own width, not the screen's. There they take about
   // 380px with the menu, so they wait for @2xl (42rem), which leaves the text about
   // 200px, as @xl does on a service record's card.
+  //
+  // Stacked, the figures get the strip under the text to themselves, and the menu sits
+  // at the end of the title's row: a phone's strip is too narrow for all four. Side by
+  // side, the same menu is placed at the end of the figures, in room the strip keeps
+  // for it. There is only ever one menu, so tests find exactly one by role.
   return (
-    <Card className="@container overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md">
+    <Card className="@container relative overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md">
       <div className="flex flex-col @2xl:flex-row @2xl:items-center">
         {/* Main Info */}
         <div className="flex flex-1 items-center gap-4 p-4 sm:p-5">
@@ -37,6 +45,38 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
               <p className="font-bold text-slate-900">
                 {log.quantity.toLocaleString('en-IN')} L Fuel Fill
               </p>
+              {hasMenu ? (
+                // Stacked: at the row's end, its icon in line with the text's edge, and
+                // the row no taller. Side by side: right-11 is the card's p-5 plus the
+                // strip's px-6, and it is centred on the card, as the figures are.
+                <div className="-my-1 -mr-2 ml-auto @2xl:absolute @2xl:right-11 @2xl:top-1/2 @2xl:m-0 @2xl:-translate-y-1/2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                        aria-label="Fuel log actions"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onEdit ? (
+                        <DropdownMenuItem onClick={() => onEdit(log)}>Edit Entry</DropdownMenuItem>
+                      ) : null}
+                      {onDelete ? (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => onDelete(log.id)}
+                        >
+                          Delete Entry
+                        </DropdownMenuItem>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-slate-500">
               <span>{formatDate(log.date)}</span>
@@ -53,9 +93,16 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
           </div>
         </div>
 
-        {/* Metrics */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent @2xl:px-6 @2xl:py-0">
-          <div className="flex items-center gap-8 @2xl:gap-10">
+        {/* Metrics. Side by side, pr-20 holds the menu's place: its ml-6 and w-8, plus px-6. */}
+        <div
+          className={cn(
+            'flex items-center border-t border-slate-100 bg-slate-50/30 p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent @2xl:px-6 @2xl:py-0',
+            hasMenu && '@2xl:pr-20',
+          )}
+        >
+          {/* A phone's strip only just fits the figures, so below @sm they spread across
+              it, at least gap-4 apart. From @sm they keep gap-8. */}
+          <div className="flex flex-1 items-center justify-between gap-4 @sm:flex-initial @sm:justify-start @sm:gap-8 @2xl:gap-10">
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Odometer
@@ -83,36 +130,6 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
               </p>
             </div>
           </div>
-
-          {onEdit || onDelete ? (
-            <div className="ml-6">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-slate-600"
-                    aria-label="Fuel log actions"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {onEdit ? (
-                    <DropdownMenuItem onClick={() => onEdit(log)}>Edit Entry</DropdownMenuItem>
-                  ) : null}
-                  {onDelete ? (
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => onDelete(log.id)}
-                    >
-                      Delete Entry
-                    </DropdownMenuItem>
-                  ) : null}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ) : null}
         </div>
       </div>
     </Card>
