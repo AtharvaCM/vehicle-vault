@@ -1,3 +1,15 @@
+# [1.57.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.56.1...v1.57.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* **dashboard:** stop a draft passing as the last service ([f0e3862](https://github.com/AtharvaCM/vehicle-vault/commit/f0e3862f8d5e52154e5eaf273b9ec77643701552))
+
+
+### Features
+
+* **maintenance:** mark drafts wherever a record is listed ([b7e6b55](https://github.com/AtharvaCM/vehicle-vault/commit/b7e6b5592ae9513466ff1bac78e6e6c9529462d1))
+
 ## [1.56.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.56.0...v1.56.1) (2026-09-22)
 
 
