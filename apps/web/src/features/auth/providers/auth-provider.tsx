@@ -3,6 +3,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 
 import { LoadingState } from '@/components/shared/loading-state';
 import { configureApiClient } from '@/lib/api/api-client';
+import { ApiError } from '@/lib/api/api-error';
 import { queryClient } from '@/lib/query/query-client';
 import { appToast } from '@/lib/toast';
 
@@ -28,6 +29,25 @@ type PersistSessionOptions = {
 };
 
 const ACCESS_TOKEN_REFRESH_LEAD_MS = 60_000;
+
+/** How long to wait before asking again when the API could not be reached. */
+const UNREACHABLE_RETRY_MS = 30_000;
+
+/**
+ * What asking for a fresh session came to. Only the server saying no ends a
+ * session. Not reaching it (offline, which the precached app now opens into, or
+ * the API down) keeps the session, so opening the app with no signal does not
+ * sign anyone out.
+ */
+type RefreshOutcome =
+  | { kind: 'refreshed'; response: AuthResponse }
+  | { kind: 'rejected' }
+  | { kind: 'unreachable' };
+
+/** The server answered and refused the session, as opposed to not answering. */
+function isSessionRejection(error: unknown): boolean {
+  return error instanceof ApiError && [400, 401, 403].includes(error.status);
+}
 
 export const AuthContext = createContext<AppAuthContextValue | null>(null);
 
@@ -109,7 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     [persistSession],
   );
 
-  const requestSessionRefresh = useCallback(async () => {
+  const requestSessionRefresh = useCallback(async (): Promise<RefreshOutcome> => {
     const currentSession = sessionRef.current;
 
     if (
@@ -117,15 +137,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       !hasTokenExpiry(currentSession.refreshToken) ||
       isTokenExpired(currentSession.refreshToken)
     ) {
-      return null;
+      return { kind: 'rejected' };
     }
 
     try {
-      return await refreshSession({
+      const response = await refreshSession({
         refreshToken: currentSession.refreshToken,
       });
-    } catch {
-      return null;
+      return { kind: 'refreshed', response };
+    } catch (error) {
+      return isSessionRejection(error) ? { kind: 'rejected' } : { kind: 'unreachable' };
     }
   }, []);
 
@@ -175,13 +196,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     configureApiClient({
       getAccessToken: () => sessionRef.current?.accessToken ?? null,
       refreshAccessToken: async () => {
-        const refreshedAuthResponse = await requestSessionRefresh();
+        const outcome = await requestSessionRefresh();
 
-        if (!refreshedAuthResponse) {
+        if (outcome.kind === 'unreachable') {
+          // Fails this one request without signing out: the api client only
+          // reaches onUnauthorized when a refresh comes back empty.
+          throw new Error('Could not reach Vehicle Vault to refresh the session.');
+        }
+        if (outcome.kind === 'rejected') {
           return null;
         }
 
-        return persistAuthResponse(refreshedAuthResponse).accessToken;
+        return persistAuthResponse(outcome.response).accessToken;
       },
       onUnauthorized: () => clearSession(true, 'unauthorized'),
     });
@@ -215,23 +241,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
             user,
           });
           return;
-        } catch {
-          // Fall through to refresh when the access token is no longer accepted.
+        } catch (error) {
+          // Unreachable, not refused: open with the session as it was stored.
+          if (!isSessionRejection(error)) {
+            if (isActive) persistSession(storedSession);
+            return;
+          }
+          // Refused: fall through to a refresh.
         }
       }
 
-      const refreshedAuthResponse = await requestSessionRefresh();
+      const outcome = await requestSessionRefresh();
 
       if (!isActive) {
         return;
       }
 
-      if (!refreshedAuthResponse) {
+      if (outcome.kind === 'rejected') {
         clearSession(false, 'bootstrap');
         return;
       }
+      if (outcome.kind === 'unreachable') {
+        // The expiry timer keeps trying, and a request made once the API is
+        // back refreshes through the api client.
+        persistSession(storedSession);
+        return;
+      }
 
-      persistAuthResponse(refreshedAuthResponse);
+      persistAuthResponse(outcome.response);
     };
 
     void restoreSession();
@@ -257,18 +294,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const refreshDelayMs = Math.max(expiryEpochMs - Date.now() - ACCESS_TOKEN_REFRESH_LEAD_MS, 0);
 
-    expiryTimeoutRef.current = setTimeout(() => {
-      void (async () => {
-        const refreshedAuthResponse = await requestSessionRefresh();
+    const refreshBeforeExpiry = async () => {
+      const outcome = await requestSessionRefresh();
 
-        if (!refreshedAuthResponse) {
-          clearSession(true, 'expired');
-          return;
-        }
+      if (outcome.kind === 'rejected') {
+        clearSession(true, 'expired');
+        return;
+      }
+      if (outcome.kind === 'unreachable') {
+        expiryTimeoutRef.current = setTimeout(
+          () => void refreshBeforeExpiry(),
+          UNREACHABLE_RETRY_MS,
+        );
+        return;
+      }
 
-        persistAuthResponse(refreshedAuthResponse);
-      })();
-    }, refreshDelayMs);
+      persistAuthResponse(outcome.response);
+    };
+
+    expiryTimeoutRef.current = setTimeout(() => void refreshBeforeExpiry(), refreshDelayMs);
 
     return clearExpiryTimeout;
   }, [

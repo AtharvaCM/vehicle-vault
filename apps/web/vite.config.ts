@@ -2,9 +2,26 @@ import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // src/sw.ts, built to /sw.js with this build's precache list injected.
+    // The manifest stays public/site.webmanifest, registration happens in
+    // main.tsx, and nothing runs in dev, where a caching worker would fight HMR.
+    VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectRegister: false,
+      manifest: false,
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+      },
+      devOptions: { enabled: false },
+    }),
+  ],
   build: {
     rollupOptions: {
       output: {
