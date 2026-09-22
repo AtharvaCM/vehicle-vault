@@ -1,3 +1,11 @@
+## [1.54.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.0...v1.54.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** drop page header actions below a title they would crush ([4672e4e](https://github.com/AtharvaCM/vehicle-vault/commit/4672e4ef80ea62da9eba30f9fe8f0266fac9c605))
+* **web:** stack record and reminder cards in half-width panels ([064616a](https://github.com/AtharvaCM/vehicle-vault/commit/064616a8395eab1f9bef40bda8235347fa1ec016))
+
 # [1.54.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.53.1...v1.54.0) (2026-09-22)
 
 

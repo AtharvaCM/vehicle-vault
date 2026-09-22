@@ -6,6 +6,8 @@ import { createCatalogVehicle } from './helpers/vehicle-form';
 
 const PHONE = { width: 375, height: 812 };
 const TABLET = { width: 1024, height: 768 };
+const PORTRAIT_TABLET = { width: 768, height: 1024 };
+const DESKTOP = { width: 1280, height: 800 };
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -40,11 +42,12 @@ async function post(page: Page, path: string, data: object) {
 }
 
 /**
- * Fails, softly, when the page is wider than the phone — naming the outermost
+ * Fails, softly, when the page is wider than the screen — naming the outermost
  * elements that stick out, so a failure points at a component rather than
  * only reporting a width.
  */
 async function expectNoSidewaysScroll(page: Page, where: string) {
+  const screen = page.viewportSize()!.width;
   const { width, culprits } = await page.evaluate(() => {
     const edge = document.documentElement.clientWidth;
     const width = document.documentElement.scrollWidth;
@@ -70,8 +73,37 @@ async function expectNoSidewaysScroll(page: Page, where: string) {
   });
 
   expect
-    .soft(width, `${where} is ${width}px wide on a ${PHONE.width}px phone. ${culprits.join(' ')}`)
-    .toBeLessThanOrEqual(PHONE.width);
+    .soft(width, `${where} is ${width}px wide on a ${screen}px screen. ${culprits.join(' ')}`)
+    .toBeLessThanOrEqual(screen);
+}
+
+/**
+ * A page can stop scrolling sideways by squeezing a card instead: a title
+ * crushed to one letter, or figures pushed out of view. The card named by
+ * `title` has to leave its title a readable width, even if an ellipsis cuts it
+ * short, and keep each figure inside the card.
+ */
+async function expectReadableCard(page: Page, title: string, figures: string[]) {
+  const card = page.getByRole('main').getByRole('link', { name: title }).first();
+  await expect(card).toBeVisible();
+  const cardBox = (await card.boundingBox())!;
+
+  const titleWidth = Math.round(
+    (await card.getByText(title, { exact: true }).boundingBox())!.width,
+  );
+  expect
+    .soft(titleWidth, `The card for "${title}" leaves its title ${titleWidth}px wide.`)
+    .toBeGreaterThanOrEqual(160);
+
+  for (const figure of figures) {
+    const box = (await card.getByText(figure, { exact: true }).boundingBox())!;
+    expect
+      .soft(
+        box.x >= cardBox.x && box.x + box.width <= cardBox.x + cardBox.width,
+        `The card for "${title}" pushes ${figure} out of view.`,
+      )
+      .toBe(true);
+  }
 }
 
 /**
@@ -154,9 +186,10 @@ test('the vehicle tabs scroll on a phone, with a linked tab brought into view', 
  * name, an email address, a JSON diff. Every vehicle tab, the top-level pages
  * and the lists the tabs link to are walked with some of it on screen, each
  * measured once its content has loaded — any earlier, a page is only as wide
- * as its loading state.
+ * as its loading state. The pages that lay out differently on wider screens are
+ * measured there too.
  */
-test('no tab or page scrolls sideways on a phone', async ({ page }) => {
+test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) => {
   test.slow();
   const suffix = await signIn(page, 'Overflow');
   const nickname = `Overflow Garage ${suffix.slice(-4)}`;
@@ -245,6 +278,31 @@ test('no tab or page scrolls sideways on a phone', async ({ page }) => {
     await expect(page.getByRole('main').getByText(loaded).first()).toBeVisible();
     await expectNoSidewaysScroll(page, path);
   }
+
+  // From xl the sidebar opens and these panels split into two columns, which
+  // leaves a record or reminder card narrower at 1280px than on a tablet.
+  const recordCard: [string, string[]] = [workshop, ['14,800 km', '₹8,450']];
+  const reminderCard: [string, string[]] = [reminderTitle, ['24,800 km']];
+  const desktopPages: Array<[string, string, Array<[string, string[]]>]> = [
+    ['The overview tab', `${vehicleUrl}?tab=overview`, [recordCard, reminderCard]],
+    ['The maintenance tab', `${vehicleUrl}?tab=maintenance`, [recordCard]],
+    [`/vehicles/${vehicleId}/maintenance`, `/vehicles/${vehicleId}/maintenance`, [recordCard]],
+  ];
+  await page.setViewportSize(DESKTOP);
+  for (const [where, path, cards] of desktopPages) {
+    await page.goto(path);
+    for (const [title, figures] of cards) {
+      await expectReadableCard(page, title, figures);
+    }
+    await expectNoSidewaysScroll(page, where);
+  }
+
+  // From sm the page header puts its actions beside the title, and at 768px a
+  // long title and four actions do not fit on one row.
+  await page.setViewportSize(PORTRAIT_TABLET);
+  await page.goto(`/reminders/${reminder.id}`);
+  await expect(page.getByRole('main').getByText('Mark Complete').first()).toBeVisible();
+  await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
 });
 
 test.afterAll(async () => {

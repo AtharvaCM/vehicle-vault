@@ -4,7 +4,7 @@ React SPA for Vehicle Vault. Consumes the API over HTTP; owns presentation, form
 
 ## Stack
 
-React 19 + TypeScript + Vite 6. TanStack Router (code-defined routes, not file-based) + TanStack Query 5. react-hook-form + Zod (schemas shared via `@vehicle-vault/shared`). Tailwind 3.4 + shadcn/ui (Radix, `style: radix-nova`). Recharts for charts, sonner for toasts, papaparse for CSV import, Vitest (jsdom) for unit tests, Playwright for e2e.
+React 19 + TypeScript + Vite 6. TanStack Router (code-defined routes, not file-based) + TanStack Query 5. react-hook-form + Zod (schemas shared via `@vehicle-vault/shared`). Tailwind 3.4 (with `@tailwindcss/container-queries`) + shadcn/ui (Radix, `style: radix-nova`). Recharts for charts, sonner for toasts, papaparse for CSV import, Vitest (jsdom) for unit tests, Playwright for e2e.
 
 Only env var: `VITE_API_BASE_URL` (`src/lib/env/env.ts`). Throws in PROD build if unset; dev defaults to `http://localhost:3001/api`.
 
@@ -42,6 +42,9 @@ Email and push switches per alert kind, grouped by `ALERT_KIND_GROUPS` with copy
 
 **AppShell**:
 `components/layout/app-shell.tsx` → `app-layout` → `sidebar` + `topbar` + main outlet + `bottom-nav`. Navigation config lives in `sidebar.tsx` (`appNavigation`, `adminNavigation`). Which navigation shows depends on width: the sidebar from `xl`; the topbar's menu button and chip row from `md` to `xl`; below `md`, a fixed bottom bar with Dashboard, Vehicles, Service and Reminders, plus More. More and the menu button open the same sheet (`mobile-nav-sheet.tsx`). Below `md`, `<main>` is padded by the bar's height plus `env(safe-area-inset-bottom)` (the viewport meta sets `viewport-fit=cover`), so the bar never covers the last row. A tab strip that can outgrow the screen scrolls sideways and uses `useActiveTabInView`, which scrolls the list itself rather than the page.
+
+**Page width** (page grids, `PageHeader`, record and reminder cards):
+From `xl` the sidebar opens and the vehicle page's panels split into two columns, so a panel can be narrower at 1280px than full width on a tablet. A grid whose content should truncate rather than widen it gives every track a zero minimum (`grid-cols-1`, `xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]`): an `auto` minimum grows the column, and the page, to the widest line that cannot wrap. `MaintenanceRecordCard` and `ReminderCard` sit in both kinds of column, so they lay out by their own width rather than the screen's: each is an `@container`, and its figures move beside the text from `@xl` (36rem). `PageHeader` keeps its title at least 20rem wide beside the actions; where that doesn't fit, the actions wrap to a row below it.
 
 **Vehicle setup prompt** (`features/vehicles/components/vehicle-setup-prompt.tsx`):
 The insurance/PUC expiry card at the top of a vehicle's Overview tab. Shows while `vehicle.setupPromptDismissedAt` is null, the documents query has loaded, and a kind it asks for is missing: insurance, and PUC unless the vehicle is electric (see the API's **PUC exemption**); `canEdit` gates it, so a viewer never sees it. Saving posts one document per filled date (the expiry alone — the insurer and number come later) and then dismisses; "Not now" dismisses on its own. A failed save keeps the dates on screen instead of dismissing.

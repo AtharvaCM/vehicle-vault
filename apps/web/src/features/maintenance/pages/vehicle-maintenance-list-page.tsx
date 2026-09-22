@@ -218,7 +218,7 @@ export function VehicleMaintenanceListPage({
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
               {maintenanceQuery.data.length ? (
                 filteredRecords.length ? (
                   <MaintenanceRecordList

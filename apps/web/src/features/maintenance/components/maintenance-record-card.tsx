@@ -34,9 +34,11 @@ export function MaintenanceRecordCard({
     <div className="group relative flex items-center gap-2 sm:gap-4">
       {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
 
-      <Card className="flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md sm:p-5">
+      {/* The card fills anything from a phone to half a desktop panel, so its figures
+          move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
+      <Card className="@container flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md sm:p-5">
         <Link
-          className="flex flex-col p-0 md:flex-row md:items-center"
+          className="flex flex-col p-0 @xl:flex-row @xl:items-center"
           params={{ recordId: record.id }}
           to="/maintenance-records/$recordId"
         >
@@ -72,8 +74,8 @@ export function MaintenanceRecordCard({
           </div>
 
           {/* Metrics & Action */}
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
-            <div className="flex items-center gap-8 md:gap-12">
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent @xl:px-6 @xl:py-0">
+            <div className="flex items-center gap-8 @xl:gap-12">
               <div className="space-y-0.5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Odometer
