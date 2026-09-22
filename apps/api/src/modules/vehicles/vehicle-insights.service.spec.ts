@@ -8,6 +8,7 @@ describe('VehicleInsightsService', () => {
     vehicle: { findUnique: vi.fn() },
     maintenanceRecord: { findMany: vi.fn() },
     fuelLog: { findMany: vi.fn() },
+    vehicleCatalogVariantSpec: { findUnique: vi.fn() },
   };
   const access = { assert: vi.fn() };
 
@@ -58,5 +59,53 @@ describe('VehicleInsightsService', () => {
     expect(result.currentOdometerPredicted).toBe(4540);
     expect(result.dataPointsCount).toBe(0);
     expect(result.confidence).toBe('low');
+  });
+  describe('getFuelEconomy', () => {
+    const fills = [
+      { odometer: 15_000, quantity: 30, date: new Date('2026-09-01T00:00:00Z') },
+      { odometer: 15_450, quantity: 30, date: new Date('2026-09-10T00:00:00Z') },
+    ];
+
+    it('sets the achieved figure beside the claim of the variant the vehicle is linked to', async () => {
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        fuelType: 'petrol',
+        catalogVariantId: 'variant-1',
+      });
+      prisma.fuelLog.findMany.mockResolvedValueOnce(fills);
+      prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValueOnce({ mileageCombined: 17.5 });
+
+      const economy = await service.getFuelEconomy('u', 'v');
+
+      expect(access.assert).toHaveBeenCalledWith('u', 'v');
+      expect(prisma.vehicleCatalogVariantSpec.findUnique).toHaveBeenCalledWith({
+        where: { variantId: 'variant-1' },
+        select: { mileageCombined: true },
+      });
+      expect(economy).toMatchObject({
+        unit: 'km/L',
+        achieved: { value: 15 },
+        claimed: 17.5,
+        differencePercent: -14,
+      });
+    });
+
+    it('shows the achieved figure alone for a vehicle with no catalog link', async () => {
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        fuelType: 'petrol',
+        catalogVariantId: null,
+      });
+      prisma.fuelLog.findMany.mockResolvedValueOnce(fills);
+
+      const economy = await service.getFuelEconomy('u', 'v');
+
+      expect(prisma.vehicleCatalogVariantSpec.findUnique).not.toHaveBeenCalled();
+      expect(economy).toMatchObject({ achieved: { value: 15 }, claimed: null });
+    });
+
+    it('throws when the vehicle is missing', async () => {
+      prisma.vehicle.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getFuelEconomy('u', 'v')).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 });

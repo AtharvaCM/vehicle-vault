@@ -24,6 +24,7 @@ export const endpoints = {
     detail: (vehicleId: string) => `/vehicles/${vehicleId}`,
     insights: (vehicleId: string) => `/vehicles/${vehicleId}/insights`,
     forecast: (vehicleId: string) => `/vehicles/${vehicleId}/forecast`,
+    fuelEconomy: (vehicleId: string) => `/vehicles/${vehicleId}/fuel-economy`,
     intervals: (vehicleId: string) => `/vehicles/${vehicleId}/intervals`,
     dismissSetupPrompt: (vehicleId: string) => `/vehicles/${vehicleId}/setup-prompt/dismiss`,
     odometer: (vehicleId: string) => `/vehicles/${vehicleId}/odometer`,

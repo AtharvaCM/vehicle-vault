@@ -7,6 +7,7 @@ export * from './maintenance';
 export * from './reminder';
 export * from './vehicle-catalog';
 export * from './vehicle';
+export * from './fuel-economy';
 export * from './fuel-log';
 export * from './insurance';
 export * from './warranty';
