@@ -34,7 +34,10 @@ function insuranceDocument(): VehicleDocument {
   };
 }
 
-function renderPrompt({ dismissedAt = null as string | null, role = VehicleRole.Owner } = {}) {
+function renderPrompt({
+  dismissedAt = null,
+  role = VehicleRole.Owner,
+}: { dismissedAt?: string | null; role?: VehicleRole } = {}) {
   return render(
     <VehicleAccessProvider role={role}>
       <VehicleSetupPrompt dismissedAt={dismissedAt} vehicleId="vehicle-1" />
