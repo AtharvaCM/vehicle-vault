@@ -1,3 +1,10 @@
+## [1.54.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.1...v1.54.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** keep the garage card's buttons inside it ([8c729fc](https://github.com/AtharvaCM/vehicle-vault/commit/8c729fcba795ed0c7c6e2850e28580061317b790))
+
 ## [1.54.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.0...v1.54.1) (2026-09-22)
 
 
