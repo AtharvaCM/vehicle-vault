@@ -1,3 +1,10 @@
+# [1.56.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.2...v1.56.0) (2026-09-22)
+
+
+### Features
+
+* **maintenance:** confirm a scanned draft from its edit page ([fdcefea](https://github.com/AtharvaCM/vehicle-vault/commit/fdcefea634376fb134cb868ff6b48879d06f94c4))
+
 ## [1.55.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.1...v1.55.2) (2026-09-22)
 
 
