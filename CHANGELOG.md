@@ -1,3 +1,16 @@
+# [1.39.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.38.0...v1.39.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* **vehicles:** keep the expiry prompt hidden until the API can save it ([3cd765b](https://github.com/AtharvaCM/vehicle-vault/commit/3cd765bb6f92a76527ad65728fb8070980924f5b))
+
+
+### Features
+
+* **attachments:** open the camera for uploads that photograph a document ([18f34f4](https://github.com/AtharvaCM/vehicle-vault/commit/18f34f4d324abaf1c39136794bf5d0a1b7841b32))
+* **vehicles:** ask a new vehicle for its insurance and PUC expiry ([d0dafc6](https://github.com/AtharvaCM/vehicle-vault/commit/d0dafc62f4026884043dbfb710cf83f4b9e8e736))
+
 # [1.38.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.37.0...v1.38.0) (2026-09-21)
 
 
