@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.47.0...v1.48.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** a full-screen view for showing a document at a checkpoint ([02c86b6](https://github.com/AtharvaCM/vehicle-vault/commit/02c86b6dbfbbd247d8075bc29e9ecb8a92bb6b93))
+
 # [1.47.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.46.0...v1.47.0) (2026-09-22)
 
 
