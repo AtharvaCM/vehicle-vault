@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AuditResourceType } from '@prisma/client';
 import {
   CreateVehicleDocumentSchema,
@@ -10,6 +10,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -41,6 +42,7 @@ const NOT_FOUND_MESSAGE = 'Vehicle document not found';
 
 @Injectable()
 export class VehicleDocumentsService {
+  private readonly logger = new Logger(VehicleDocumentsService.name);
   private readonly adapterByKind: Map<VehicleDocumentKind, VehicleDocumentAdapter>;
 
   constructor(
@@ -51,6 +53,7 @@ export class VehicleDocumentsService {
     private readonly auditService: AuditService,
     private readonly access: VehicleAccessService,
     private readonly notificationsService: NotificationsService,
+    private readonly storageService: SupabaseStorageService,
   ) {
     this.adapterByKind = new Map(adapters.map((a) => [a.kind, a]));
   }
@@ -148,6 +151,9 @@ export class VehicleDocumentsService {
   async remove(userId: string, kind: VehicleDocumentKind, id: string): Promise<void> {
     const owned = await this.findOwned(userId, id, kind, 'editor');
     const adapter = this.requireAdapter(kind);
+    // Read before the delete: the cascade takes the attachment rows with it,
+    // and with them the only record of where their files are stored.
+    const storedFiles = await this.storedFilesOf(kind, owned.id);
     await adapter.remove(owned.id);
     await this.auditService.track(this.prisma, {
       actorUserId: userId,
@@ -156,6 +162,39 @@ export class VehicleDocumentsService {
       resourceType: KIND_TO_RESOURCE_TYPE[kind],
       resourceId: owned.id,
       before: owned as unknown as Record<string, unknown>,
+    });
+    await this.removeStoredFiles(storedFiles);
+  }
+
+  /** Paths of the files a policy or warranty holds; the compliance kinds hold none. */
+  private async storedFilesOf(kind: VehicleDocumentKind, documentId: string): Promise<string[]> {
+    const owner =
+      kind === 'insurance'
+        ? { insurancePolicyId: documentId }
+        : kind === 'warranty'
+          ? { warrantyId: documentId }
+          : null;
+    if (!owner) return [];
+    const attachments = await this.prisma.attachment.findMany({
+      where: owner,
+      select: { fileName: true },
+    });
+    return attachments.map((attachment) => attachment.fileName);
+  }
+
+  /**
+   * Best effort, after the rows are gone: the document is deleted either way,
+   * and a file storage refuses to remove is logged rather than resurrecting a
+   * document the user asked to delete. Account deletion's sweep catches strays.
+   */
+  private async removeStoredFiles(paths: string[]) {
+    const results = await Promise.allSettled(
+      paths.map((path) => this.storageService.deleteObject(path)),
+    );
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        this.logger.warn(`Could not remove stored file ${paths[index]}: ${String(result.reason)}`);
+      }
     });
   }
 

@@ -36,6 +36,12 @@ vi.mock('../../claims/hooks/use-claim-attachments', () => ({
   useDeleteClaimAttachment: mutation,
   useExtractClaimAttachment: mutation,
 }));
+// A document's files have their own spec, viewer case included.
+vi.mock('../../vehicle-documents/hooks/use-document-attachments', () => ({
+  useDocumentAttachments: () => ({ data: [], isPending: false, isError: false }),
+  useUploadDocumentAttachments: mutation,
+  useDeleteDocumentAttachment: mutation,
+}));
 vi.mock('../../vehicle-documents/hooks/use-scan-document', () => ({
   useScanStatusQuery: () => ({ queryKey: ['scan-status'], queryFn: async () => null }),
   useScanVehicleDocument: () => ({ mutateAsync: vi.fn(), isPending: false }),

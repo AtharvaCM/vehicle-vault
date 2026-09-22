@@ -14,6 +14,8 @@ import {
 import { appToast } from '@/lib/toast';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
+import { DocumentAttachmentsSection } from './document-attachments-section';
+
 interface DocumentCardProps {
   document: VehicleDocument;
   vehicleId: string;
@@ -165,6 +167,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                 ) : null}
               </div>
             </div>
+          </div>
+          <div className="border-t border-slate-100 px-5 py-4">
+            <DocumentAttachmentsSection documentId={document.id} kind="insurance" />
           </div>
         </CardContent>
       </Card>
@@ -390,6 +395,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               ) : null}
             </div>
           </div>
+        </div>
+        <div className="border-t border-slate-100 px-5 py-4">
+          <DocumentAttachmentsSection documentId={document.id} kind="warranty" />
         </div>
       </CardContent>
     </Card>
