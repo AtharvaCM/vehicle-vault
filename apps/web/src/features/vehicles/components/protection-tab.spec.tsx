@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   AttachmentKind,
@@ -7,7 +7,8 @@ import {
   type ClaimAttachment,
   type VehicleDocument,
 } from '@vehicle-vault/shared';
-import { describe, expect, it, vi } from 'vitest';
+import { addDays, addYears } from 'date-fns';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VehicleAccessProvider } from '../context/vehicle-access';
 import { ProtectionTab } from './protection-tab';
@@ -16,11 +17,13 @@ const documentsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown
 const claimsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 
 const mutation = vi.hoisted(() => () => ({ mutateAsync: vi.fn(), isPending: false }));
+const createDocument = vi.hoisted(() => vi.fn());
+const updateDocument = vi.hoisted(() => vi.fn());
 
 vi.mock('../../vehicle-documents/hooks/use-documents', () => ({
   useVehicleDocuments: () => documentsQuery.current,
-  useCreateVehicleDocument: mutation,
-  useUpdateVehicleDocument: mutation,
+  useCreateVehicleDocument: () => ({ mutateAsync: createDocument, isPending: false }),
+  useUpdateVehicleDocument: () => ({ mutateAsync: updateDocument, isPending: false }),
   useDeleteVehicleDocument: mutation,
 }));
 vi.mock('../../claims/hooks/use-claims', () => ({
@@ -232,5 +235,105 @@ describe('ProtectionTab roles', () => {
     for (const name of ['Delete attachment', 'Extract claim fields', /upload receipts/i]) {
       expect(screen.getByRole('button', { name })).toBeInTheDocument();
     }
+  });
+});
+
+describe('ProtectionTab renewal', () => {
+  // Dates as the API sends them: midnight UTC, read back as a UTC calendar day.
+  const dayInput = (date: Date) => date.toISOString().slice(0, 10);
+  const now = new Date();
+  // A policy running out in ten days: close enough to renew.
+  const expiresOn = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 10),
+  );
+  const expiring: VehicleDocument = {
+    ...policy,
+    id: 'policy-expiring',
+    number: 'POL-OLD',
+    startDate: addDays(addYears(expiresOn, -1), 1),
+    endDate: expiresOn,
+    details: { premiumAmount: 14_500 },
+  };
+
+  function renderWith(documents: VehicleDocument[], role: VehicleRole = VehicleRole.Owner) {
+    documentsQuery.current = {
+      isPending: false,
+      isError: false,
+      data: documents,
+      refetch: vi.fn(),
+    };
+    claimsQuery.current = { isPending: false, isError: false, data: [] };
+    return render(
+      <VehicleAccessProvider role={role}>
+        <ProtectionTab vehicleId="vehicle-1" />
+      </VehicleAccessProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    createDocument.mockReset().mockResolvedValue(undefined);
+    updateDocument.mockReset().mockResolvedValue(undefined);
+  });
+
+  it('opens the form prefilled from the expiring policy, with the next term', async () => {
+    const user = userEvent.setup();
+    renderWith([expiring]);
+
+    await user.click(screen.getByRole('button', { name: 'Renew' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/Renewing: details are copied/)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/filled by AI/)).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/provider name/i)).toHaveValue('Acme General');
+    expect(within(dialog).getByLabelText(/policy number/i)).toHaveValue('POL-OLD');
+    expect(within(dialog).getByLabelText(/start date/i)).toHaveValue(
+      dayInput(addDays(expiresOn, 1)),
+    );
+    expect(within(dialog).getByLabelText(/end date/i)).toHaveValue(
+      dayInput(addYears(expiresOn, 1)),
+    );
+  });
+
+  it('saves the renewal as a new record, leaving the old one alone', async () => {
+    const user = userEvent.setup();
+    renderWith([expiring]);
+
+    await user.click(screen.getByRole('button', { name: 'Renew' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /^add policy$/i }));
+
+    await waitFor(() => expect(createDocument).toHaveBeenCalledTimes(1));
+    expect(createDocument.mock.calls[0]?.[0]).toMatchObject({
+      kind: 'insurance',
+      provider: 'Acme General',
+      policyNumber: 'POL-OLD',
+      premiumAmount: 14_500,
+    });
+    expect(updateDocument).not.toHaveBeenCalled();
+  });
+
+  it('does not offer it on a policy that is not near its expiry', () => {
+    renderWith([policy]);
+
+    expect(screen.queryByRole('button', { name: 'Renew' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer it on a policy a renewal has already superseded', () => {
+    const renewal: VehicleDocument = {
+      ...expiring,
+      id: 'policy-renewal',
+      startDate: addDays(expiresOn, 1),
+      endDate: addYears(expiresOn, 1),
+    };
+    renderWith([expiring, renewal]);
+
+    // The old one is history now, and the renewal is a year from expiry.
+    expect(screen.queryByRole('button', { name: 'Renew' })).not.toBeInTheDocument();
+  });
+
+  it('never offers it to a viewer', () => {
+    renderWith([expiring], VehicleRole.Viewer);
+
+    expect(screen.queryByRole('button', { name: 'Renew' })).not.toBeInTheDocument();
   });
 });

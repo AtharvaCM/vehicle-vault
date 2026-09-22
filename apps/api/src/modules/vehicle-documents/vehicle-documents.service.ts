@@ -214,8 +214,9 @@ export class VehicleDocumentsService {
   }
 
   /**
-   * Return every document owned by the user whose validity window ends
-   * within the next `withinDays`. The range starts at the current
+   * Return every document of record owned by the user whose validity window
+   * ends within the next `withinDays`; a superseded one never alerts (see
+   * stillOfRecord). The range starts at the current
    * day's midnight (caller-local) so a cron that fires at 06:00 produces
    * the same set of rows as one that fires at 23:59.
    *
@@ -236,8 +237,35 @@ export class VehicleDocumentsService {
     until.setHours(23, 59, 59, 999);
 
     const targets = kind ? [this.requireAdapter(kind)] : this.adapters;
-    const lists = await Promise.all(targets.map((a) => a.findExpiringBetween(userId, from, until)));
+    const lists = await Promise.all(
+      targets.map(async (adapter) =>
+        this.stillOfRecord(adapter, await adapter.findExpiringBetween(userId, from, until)),
+      ),
+    );
     return lists.flat();
+  }
+
+  /**
+   * The expiring documents that are still the vehicle's document of record for
+   * their kind. A renewed policy is superseded by its renewal, which usually
+   * expires far outside the window, so each is weighed against every document
+   * of its vehicle and kind, by the recency rule the dashboard uses. Without
+   * this the daily alert run kept raising fresh expiry alerts for the policy
+   * that had just been renewed, whenever it crossed into a tighter window.
+   */
+  private async stillOfRecord(
+    adapter: VehicleDocumentAdapter,
+    expiring: VehicleDocument[],
+  ): Promise<VehicleDocument[]> {
+    const vehicleIds = [...new Set(expiring.map((document) => document.vehicleId))];
+    const currentIds = new Set<string>();
+    await Promise.all(
+      vehicleIds.map(async (vehicleId) => {
+        const current = pickLatestDocument(await adapter.listForVehicle(vehicleId));
+        if (current) currentIds.add(current.id);
+      }),
+    );
+    return expiring.filter((document) => currentIds.has(document.id));
   }
 
   async activeCoverageAt(
