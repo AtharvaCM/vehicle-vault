@@ -1,3 +1,10 @@
+## [1.57.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.2...v1.57.3) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** stop a select emptying the value a form loads into it ([a8b6a2f](https://github.com/AtharvaCM/vehicle-vault/commit/a8b6a2f1fd74736a497720194ddfe4f7423c9d59))
+
 ## [1.57.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.1...v1.57.2) (2026-09-22)
 
 
