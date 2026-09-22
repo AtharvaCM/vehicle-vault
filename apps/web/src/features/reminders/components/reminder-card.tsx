@@ -32,9 +32,11 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
     <div className="group relative flex items-center gap-4">
       {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
 
+      {/* The card fills anything from a phone to half a desktop panel, so its figures
+          move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
       <Card
         className={cn(
-          'relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md',
+          '@container relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md',
           reminder.status === ReminderStatus.Overdue && 'border-rose-200/60',
           reminder.status === ReminderStatus.DueToday && 'border-amber-200/60',
         )}
@@ -43,7 +45,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
         <div className={cn('absolute left-0 top-0 bottom-0 w-1', urgencyColor)} />
 
         <Link
-          className="flex flex-col p-0 md:flex-row md:items-center"
+          className="flex flex-col p-0 @xl:flex-row @xl:items-center"
           params={{ reminderId: reminder.id }}
           to="/reminders/$reminderId"
         >
@@ -92,8 +94,8 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           </div>
 
           {/* Metrics & Action */}
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
-            <div className="flex items-center gap-8 md:gap-10">
+          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent @xl:px-6 @xl:py-0">
+            <div className="flex items-center gap-8 @xl:gap-10">
               {reminder.dueOdometer !== undefined ? (
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
