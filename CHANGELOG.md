@@ -1,3 +1,24 @@
+## [1.56.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.56.0...v1.56.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **api:** require editor to extract a maintenance attachment ([baf5ce4](https://github.com/AtharvaCM/vehicle-vault/commit/baf5ce481495ed189dc30b281907e4a7c6e779f0))
+
+# [1.56.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.2...v1.56.0) (2026-09-22)
+
+
+### Features
+
+* **maintenance:** confirm a scanned draft from its edit page ([fdcefea](https://github.com/AtharvaCM/vehicle-vault/commit/fdcefea634376fb134cb868ff6b48879d06f94c4))
+
+## [1.55.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.1...v1.55.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** drop the empty figures strip from date-only reminder cards ([8c206be](https://github.com/AtharvaCM/vehicle-vault/commit/8c206be37bffbf354a9d317235794dc657f42d82))
+
 ## [1.55.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.0...v1.55.1) (2026-09-22)
 
 

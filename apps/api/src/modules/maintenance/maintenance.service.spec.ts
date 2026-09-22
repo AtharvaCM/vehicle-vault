@@ -652,6 +652,52 @@ describe('MaintenanceService', () => {
         expect.objectContaining({ action: 'reminder.completed', resourceId: 'reminder-old' }),
       );
     });
+
+    it('confirms a scanned draft from the edit form: logs the service and makes its reminder', async () => {
+      const draft = {
+        ...record,
+        source: MaintenanceSource.Ocr,
+        status: MaintenanceRecordStatus.Draft,
+      };
+      prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue(draft);
+      prisma.maintenanceRecord.update = vi.fn().mockResolvedValue(record);
+
+      // What the edit page sends when its button reads "Confirm Record": the
+      // reviewed fields, plus the status the draft never had.
+      await service.updateRecord('user-1', 'record-1', {
+        ...createInput,
+        status: MaintenanceRecordStatus.Confirmed,
+      });
+
+      expect(prisma.maintenanceRecord.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'record-1' },
+          data: expect.objectContaining({ status: MaintenanceRecordStatus.Confirmed }),
+        }),
+      );
+      expect(productEvents.recordFirst).toHaveBeenCalledWith(prisma, {
+        name: 'first_maintenance_logged',
+        userId: 'user-1',
+        vehicleId: 'vehicle-1',
+      });
+      expect(prisma.reminder.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          sourceMaintenanceRecordId: 'record-1',
+          dueDate: new Date('2026-06-18T00:00:00.000Z'),
+          dueOdometer: 18000,
+        }),
+      });
+      // The record's own audit carries the confirmation, like any other edit.
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'maintenance.updated',
+          resourceId: 'record-1',
+          before: expect.objectContaining({ status: MaintenanceRecordStatus.Draft }),
+          after: expect.objectContaining({ status: MaintenanceRecordStatus.Confirmed }),
+        }),
+      );
+    });
   });
 });
 

@@ -347,6 +347,10 @@ export class AttachmentsService {
       // already had a 404 above.
       throw new BadRequestException('Only a file on a service record can be read as an invoice.');
     }
+    // Opening a service file is for any member; extracting from it is an edit.
+    // It costs a provider call and replaces the stored extraction, which only an
+    // editor can go on to apply.
+    await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
     const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
 
     await this.prisma.attachmentExtraction.upsert({
@@ -415,6 +419,7 @@ export class AttachmentsService {
     }
 
     await this.maintenanceService.getRecordById(userId, recordId);
+    await this.assertEditorOnMaintenanceRecord(userId, recordId);
 
     const uniqueAttachmentIds = [...new Set(attachmentIds)];
 
