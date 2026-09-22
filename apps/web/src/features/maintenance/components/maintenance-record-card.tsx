@@ -4,11 +4,14 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { MaintenanceRecord } from '../types/maintenance-record';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
+import { isDraftRecord } from '../utils/is-draft-record';
+import { MaintenanceDraftBadge } from './maintenance-draft-badge';
 
 type MaintenanceRecordCardProps = {
   record: MaintenanceRecord;
@@ -21,6 +24,8 @@ export function MaintenanceRecordCard({
   selectionControl,
   vehicleLabel,
 }: MaintenanceRecordCardProps) {
+  const { canEdit } = useVehicleAccess();
+  const isDraft = isDraftRecord(record);
   const detailBits = [
     vehicleLabel,
     formatDate(record.serviceDate),
@@ -59,6 +64,7 @@ export function MaintenanceRecordCard({
                 >
                   {formatMaintenanceCategory(record.category)}
                 </Badge>
+                {isDraft ? <MaintenanceDraftBadge /> : null}
               </div>
               <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
                 {detailBits.map((detail, index) => (
@@ -100,6 +106,26 @@ export function MaintenanceRecordCard({
             </div>
           </div>
         </Link>
+
+        {/* Outside the card's link: a link cannot hold another. */}
+        {isDraft ? (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-amber-100 bg-amber-50/70 px-3 py-2.5 text-[13px] sm:mt-3 sm:rounded-lg sm:border sm:px-4">
+            <p className="text-amber-800">
+              {canEdit
+                ? 'Not counted in costs, reports or reminders until it is confirmed.'
+                : 'Not counted in costs, reports or reminders until an owner or editor confirms it.'}
+            </p>
+            {canEdit ? (
+              <Link
+                className="font-semibold text-amber-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                params={{ recordId: record.id }}
+                to="/maintenance-records/$recordId/edit"
+              >
+                Review and confirm
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </Card>
     </div>
   );

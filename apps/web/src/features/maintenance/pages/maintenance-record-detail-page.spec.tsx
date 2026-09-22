@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import {
   AttachmentKind,
   MaintenanceCategory,
@@ -157,6 +157,48 @@ describe('MaintenanceRecordDetailPage roles', () => {
 
     expect(screen.queryByRole('button', { name: 'Upload Files' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+  });
+});
+
+describe('MaintenanceRecordDetailPage drafts', () => {
+  it.each([VehicleRole.Owner, VehicleRole.Editor])(
+    'tells an %s a draft counts nowhere yet and sends them to confirm it',
+    (role) => {
+      renderAs(role, { status: MaintenanceRecordStatus.Draft });
+
+      const notice = screen.getByRole('region', { name: 'Nobody has confirmed this record yet' });
+      expect(within(notice).getByText('Draft')).toBeInTheDocument();
+      expect(
+        within(notice).getByText(
+          'It is not counted in costs, reports or reminders until it is. Check what was read, then confirm it.',
+        ),
+      ).toBeInTheDocument();
+      expect(within(notice).getByRole('link', { name: 'Review and confirm' })).toHaveAttribute(
+        'href',
+        '/maintenance-records/$recordId/edit',
+      );
+    },
+  );
+
+  it('tells a viewer who can confirm it, without offering to', () => {
+    renderAs(VehicleRole.Viewer, { status: MaintenanceRecordStatus.Draft });
+
+    const notice = screen.getByRole('region', { name: 'Nobody has confirmed this record yet' });
+    expect(
+      within(notice).getByText(
+        'It is not counted in costs, reports or reminders until an owner or editor of this vehicle confirms it.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Review and confirm' })).not.toBeInTheDocument();
+  });
+
+  it('says nothing of the kind on a confirmed record', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(
+      screen.queryByRole('region', { name: 'Nobody has confirmed this record yet' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Review and confirm' })).not.toBeInTheDocument();
   });
 });
 

@@ -15,10 +15,12 @@ import { AttachmentsSection } from '@/features/attachments/components/attachment
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
+import { MaintenanceDraftBadge } from '../components/maintenance-draft-badge';
 import { MaintenanceSummaryCard } from '../components/maintenance-summary-card';
 import { useDeleteMaintenanceRecord } from '../hooks/use-delete-maintenance-record';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
+import { isDraftRecord } from '../utils/is-draft-record';
 
 type MaintenanceRecordDetailPageProps = {
   recordId: string;
@@ -136,6 +138,36 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         />
 
         {actionError ? <InlineError message={actionError} /> : null}
+
+        {isDraftRecord(record) ? (
+          <section
+            aria-labelledby="draft-record-heading"
+            className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <MaintenanceDraftBadge />
+                <h2 className="font-semibold text-amber-950" id="draft-record-heading">
+                  Nobody has confirmed this record yet
+                </h2>
+              </div>
+              <p className="text-sm text-amber-900">
+                {canEdit
+                  ? 'It is not counted in costs, reports or reminders until it is. Check what was read, then confirm it.'
+                  : 'It is not counted in costs, reports or reminders until an owner or editor of this vehicle confirms it.'}
+              </p>
+            </div>
+            {canEdit ? (
+              <Link
+                className={buttonVariants({ className: 'shrink-0' })}
+                params={{ recordId: record.id }}
+                to="/maintenance-records/$recordId/edit"
+              >
+                Review and confirm
+              </Link>
+            ) : null}
+          </section>
+        ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <MaintenanceSummaryCard record={record} />

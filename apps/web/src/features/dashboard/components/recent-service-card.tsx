@@ -4,7 +4,9 @@ import { ClipboardList, Paperclip, Wrench } from 'lucide-react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { SectionCard } from '@/components/shared/section-card';
 import { buttonVariants } from '@/components/ui/button';
+import { MaintenanceDraftBadge } from '@/features/maintenance/components/maintenance-draft-badge';
 import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
+import { isDraftRecord } from '@/features/maintenance/utils/is-draft-record';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 
@@ -46,9 +48,12 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
               to="/maintenance-records/$recordId"
             >
               <div className="min-w-0 space-y-1">
-                <p className="truncate font-semibold text-slate-900 transition-colors group-hover:text-primary">
-                  {formatMaintenanceCategory(record.category)}
-                </p>
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="truncate font-semibold text-slate-900 transition-colors group-hover:text-primary">
+                    {formatMaintenanceCategory(record.category)}
+                  </p>
+                  {isDraftRecord(record) ? <MaintenanceDraftBadge /> : null}
+                </div>
                 <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500">
                   <span className="min-w-0 truncate">{record.vehicleLabel}</span>
                   <MetaDot />

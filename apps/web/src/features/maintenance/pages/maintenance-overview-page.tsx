@@ -24,6 +24,7 @@ import { useBulkDeleteMaintenanceRecords } from '../hooks/use-bulk-delete-mainte
 import { useAllMaintenanceRecords } from '../hooks/use-all-maintenance-records';
 import type { MaintenanceRecord } from '../types/maintenance-record';
 import { filterAndSortMaintenanceRecords } from '../utils/filter-and-sort-maintenance-records';
+import { summarizeMaintenanceHistory } from '../utils/summarize-maintenance-history';
 import {
   defaultMaintenanceSort,
   type MaintenanceListSearch,
@@ -126,12 +127,8 @@ export function MaintenanceOverviewPage({
     );
   }
 
-  const totalSpend = records.reduce((sum, record) => sum + record.totalCost, 0);
-  const vehiclesWithHistory = new Set(records.map((record) => record.vehicleId)).size;
-  const latestRecord = records
-    .slice()
-    .sort((left, right) => Date.parse(right.serviceDate) - Date.parse(left.serviceDate))[0];
-  const latestServiceDate = latestRecord?.serviceDate ?? null;
+  const { recordCount, draftCount, vehiclesWithHistory, totalSpend, latestServiceDate } =
+    summarizeMaintenanceHistory(records);
 
   function resetControls() {
     onSearchStateChange({});
@@ -193,10 +190,17 @@ export function MaintenanceOverviewPage({
         <>
           <div className="grid gap-4 lg:grid-cols-3">
             <StatCard
+              accent={
+                draftCount > 0 ? (
+                  <span className="text-xs font-medium text-amber-700">
+                    {draftCount} draft{draftCount === 1 ? '' : 's'} to confirm
+                  </span>
+                ) : null
+              }
               description="Service entries logged across your garage."
               icon={ClipboardList}
               label="Records"
-              value={String(records.length)}
+              value={String(recordCount)}
             />
             <StatCard
               description="Vehicles that already have at least one service entry."
