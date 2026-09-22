@@ -19,9 +19,13 @@ type FuelLogCardProps = {
 };
 
 export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
+  // The card fills anything from a phone to half a desktop panel, so its figures move
+  // beside the text by the card's own width, not the screen's. There they take about
+  // 380px with the menu, so they wait for @2xl (42rem), which leaves the text about
+  // 200px, as @xl does on a service record's card.
   return (
-    <Card className="overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md">
-      <div className="flex flex-col md:flex-row md:items-center">
+    <Card className="@container overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md">
+      <div className="flex flex-col @2xl:flex-row @2xl:items-center">
         {/* Main Info */}
         <div className="flex flex-1 items-center gap-4 p-4 sm:p-5">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
@@ -50,8 +54,8 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
         </div>
 
         {/* Metrics */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 md:border-l md:border-t-0 md:bg-transparent md:px-6 md:py-0">
-          <div className="flex items-center gap-8 md:gap-10">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent @2xl:px-6 @2xl:py-0">
+          <div className="flex items-center gap-8 @2xl:gap-10">
             <div className="space-y-0.5">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Odometer
