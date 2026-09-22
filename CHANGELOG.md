@@ -1,3 +1,15 @@
+# [1.55.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.4...v1.55.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* **maintenance:** stop Apply to Draft overwriting a confirmed record ([b8ea390](https://github.com/AtharvaCM/vehicle-vault/commit/b8ea3907f0d13f814c5bb86c98a5eaa8ef9f8eec))
+
+
+### Features
+
+* **maintenance:** fill a confirmed record in from its photo ([c2dd4b7](https://github.com/AtharvaCM/vehicle-vault/commit/c2dd4b7791bfecd06925a85909d413d8f02fb945)), closes [#116](https://github.com/AtharvaCM/vehicle-vault/issues/116) [#116](https://github.com/AtharvaCM/vehicle-vault/issues/116) [#126](https://github.com/AtharvaCM/vehicle-vault/issues/126)
+
 ## [1.54.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.3...v1.54.4) (2026-09-22)
 
 
