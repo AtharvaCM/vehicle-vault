@@ -146,6 +146,19 @@ If you use the GHCR path, make sure the published package `ghcr.io/atharvacm/veh
 
 ## Frontend deploy (Vercel)
 
+Automatic deploys are **off**. `vercel.json` sets `git.deploymentEnabled: false`, so
+pushes and pull requests no longer build anything, and pull requests no longer carry
+Vercel checks. The free plan's build minutes are the scarce resource, so the site
+changes only when someone deploys on purpose, from the repository root:
+
+```bash
+npx vercel link          # once per machine
+npx vercel deploy --prod
+```
+
+Vercel's dashboard can also redeploy an existing deployment. To go back to deploying
+on every push, set `deploymentEnabled` to `true`.
+
 For production, the web app should use:
 
 ```bash
