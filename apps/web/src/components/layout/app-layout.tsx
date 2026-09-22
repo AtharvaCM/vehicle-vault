@@ -4,6 +4,7 @@ import { useRecheckVerificationOnReturn } from '@/features/auth/hooks/use-rechec
 import { EmailVerificationBanner } from '@/features/auth/components/email-verification-banner';
 import { EmailVerificationScreen } from '@/features/auth/components/email-verification-screen';
 import { getVerificationStatus } from '@/features/auth/lib/verification-status';
+import { BottomNav } from './bottom-nav';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 
@@ -35,7 +36,13 @@ export function AppLayout({ children }: PropsWithChildren) {
         <Sidebar />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <Topbar />
-          <main className="flex-1" id="main-content">
+          {/* Below md the bottom bar is fixed over the page: leave its height (64px
+              plus a 1px border, rounded up for air) and the iOS home-indicator inset,
+              so the last row of a list stays clear of it. */}
+          <main
+            className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
+            id="main-content"
+          >
             {verification.kind === 'grace' ? (
               <EmailVerificationBanner daysLeft={verification.daysLeft} />
             ) : null}
@@ -43,6 +50,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           </main>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }
