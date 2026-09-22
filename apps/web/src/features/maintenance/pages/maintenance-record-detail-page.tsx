@@ -139,7 +139,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
 
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <MaintenanceSummaryCard record={record} />
-          <AttachmentsSection recordId={record.id} />
+          <AttachmentsSection recordId={record.id} recordToFill={record} />
         </div>
       </PageContainer>
     </VehicleAccessProvider>

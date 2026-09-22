@@ -68,6 +68,28 @@ describe('MaintenanceInvoiceExtractionSpec.normalize', () => {
     });
   });
 
+  it('reads when the workshop says to come back', () => {
+    const result = spec.normalize({
+      serviceDate: '2026-09-18',
+      odometer: 15180,
+      nextDueDate: '2027-03-18',
+      nextDueOdometer: 18200.4,
+    });
+
+    expect(result).toMatchObject({
+      nextDueDate: '2027-03-18T00:00:00.000Z',
+      nextDueOdometer: 18200,
+    });
+    expect(spec.normalize({ nextDueDate: 'after the monsoon' }).nextDueDate).toBeUndefined();
+    expect(spec.normalize({}).nextDueOdometer).toBeUndefined();
+  });
+
+  it('asks the model for the next-due, not only normalizes it', () => {
+    expect(spec.responseSchema.properties).toHaveProperty('nextDueDate');
+    expect(spec.responseSchema.properties).toHaveProperty('nextDueOdometer');
+    expect(spec.buildPrompt([])).toContain('nextDueOdometer');
+  });
+
   it('drops invalid currency codes', () => {
     expect(spec.normalize({ currencyCode: 'INDIAN' }).currencyCode).toBeUndefined();
     expect(spec.normalize({ currencyCode: 'US' }).currencyCode).toBeUndefined();

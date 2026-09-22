@@ -239,7 +239,10 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
 
           <div className="space-y-6">
             {recordQuery.data?.status === 'draft' || recordQuery.data?.source === 'ocr' ? (
-              <MaintenanceDraftReviewCard recordId={recordId} />
+              <MaintenanceDraftReviewCard
+                isDraft={recordQuery.data?.status === 'draft'}
+                recordId={recordId}
+              />
             ) : (
               <Card>
                 <CardHeader>

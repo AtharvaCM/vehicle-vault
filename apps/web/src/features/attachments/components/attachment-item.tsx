@@ -1,5 +1,8 @@
+import { Wand2 } from 'lucide-react';
+
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
@@ -15,9 +18,21 @@ type AttachmentItemProps = {
   isDeleting?: boolean;
   /** Omitted for a viewer, which drops the delete control. */
   onDelete?: (attachmentId: string) => Promise<void> | void;
+  /** Omitted wherever filling the record in is not offered, which drops the control. */
+  onFillFromPhoto?: (attachment: Attachment) => void;
 };
 
-export function AttachmentItem({ attachment, isDeleting = false, onDelete }: AttachmentItemProps) {
+/** What the extractor reads: a photo or a PDF. */
+function canFillFrom(attachment: Attachment) {
+  return attachment.mimeType.startsWith('image/') || attachment.mimeType === 'application/pdf';
+}
+
+export function AttachmentItem({
+  attachment,
+  isDeleting = false,
+  onDelete,
+  onFillFromPhoto,
+}: AttachmentItemProps) {
   const handleOpen = async () => {
     try {
       await openApiFileInNewTab(endpoints.attachments.file(attachment.id));
@@ -27,7 +42,7 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 @xl:flex-row @xl:items-center @xl:justify-between">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium text-slate-950">{attachment.originalFileName}</p>
@@ -61,7 +76,7 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-50"
           onClick={handleOpen}
@@ -69,6 +84,17 @@ export function AttachmentItem({ attachment, isDeleting = false, onDelete }: Att
         >
           View file
         </button>
+        {onFillFromPhoto && canFillFrom(attachment) ? (
+          <Button
+            onClick={() => onFillFromPhoto(attachment)}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            <Wand2 />
+            {attachment.mimeType === 'application/pdf' ? 'Fill in from PDF' : 'Fill in from photo'}
+          </Button>
+        ) : null}
         {onDelete ? (
           <ConfirmActionDialog
             confirmLabel="Delete attachment"
