@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.40.0...v1.41.0) (2026-09-22)
+
+
+### Features
+
+* **web:** bottom navigation and a scrolling tab strip on phones ([11554ec](https://github.com/AtharvaCM/vehicle-vault/commit/11554ec52ec9e84fa57c812ed9c470b73fcf4abd))
+
 # [1.40.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.39.1...v1.40.0) (2026-09-22)
 
 
