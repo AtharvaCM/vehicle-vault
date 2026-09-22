@@ -432,6 +432,9 @@ describe('VehicleDocumentsService', () => {
         insuranceDoc(),
       ]);
       (warranty.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
+      // Each is its vehicle's only document of its kind, so each is of record.
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
+      (warranty.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
 
       const result = await service.findExpiring('user-1', 7);
 
@@ -462,12 +465,34 @@ describe('VehicleDocumentsService', () => {
       (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
         insuranceDoc(),
       ]);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
 
       const result = await service.findExpiring('user-1', 7, 'insurance');
 
       expect(insurance.findExpiringBetween).toHaveBeenCalledTimes(1);
       expect(warranty.findExpiringBetween).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
+    });
+
+    it('leaves out a policy that has been renewed, even while it is still expiring', async () => {
+      const old = insuranceDoc({
+        id: 'pol-old',
+        startDate: new Date('2025-06-01T00:00:00.000Z'),
+        endDate: new Date('2026-06-01T00:00:00.000Z'),
+      });
+      // The renewal starts where the old one ends and runs well past the window.
+      const renewal = insuranceDoc({
+        id: 'pol-new',
+        startDate: new Date('2026-06-02T00:00:00.000Z'),
+        endDate: new Date('2027-06-01T00:00:00.000Z'),
+      });
+      (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([old]);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([renewal, old]);
+
+      const result = await service.findExpiring('user-1', 30, 'insurance');
+
+      expect(insurance.listForVehicle).toHaveBeenCalledWith('veh-1');
+      expect(result).toEqual([]);
     });
   });
 

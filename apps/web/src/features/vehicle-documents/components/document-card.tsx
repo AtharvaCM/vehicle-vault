@@ -1,4 +1,4 @@
-import { Calendar, Gauge, Pencil, Trash2, Shield, FileBadge } from 'lucide-react';
+import { Calendar, Gauge, Pencil, Trash2, Shield, FileBadge, RefreshCw } from 'lucide-react';
 import { format, isBefore, addDays } from 'date-fns';
 import { type VehicleDocument } from '@vehicle-vault/shared';
 
@@ -14,12 +14,18 @@ import {
 import { appToast } from '@/lib/toast';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
+import { isRenewable } from '../utils/renewal-values';
 import { DocumentAttachmentsSection } from './document-attachments-section';
 
 interface DocumentCardProps {
   document: VehicleDocument;
   vehicleId: string;
   onEdit?: (document: VehicleDocument) => void;
+  /**
+   * Offered on the document of record once it has expired or is within a month
+   * of it. Omitted for viewers, and for a record a renewal has superseded.
+   */
+  onRenew?: (document: VehicleDocument) => void;
 }
 
 /**
@@ -30,7 +36,7 @@ function NotRecorded() {
   return <span className="font-bold text-slate-400">Not recorded</span>;
 }
 
-export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps) {
+export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentCardProps) {
   // Delete is always offered here, unlike edit, so it needs the role itself.
   const { canEdit } = useVehicleAccess();
   const deleteMutation = useDeleteVehicleDocument(vehicleId);
@@ -40,6 +46,19 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
     document.endDate && !isExpired
       ? isBefore(new Date(document.endDate), addDays(new Date(), 30))
       : false;
+
+  const renewButton =
+    onRenew && isRenewable(document) ? (
+      <Button
+        className="h-8 rounded-full px-3 text-xs font-bold"
+        onClick={() => onRenew(document)}
+        size="sm"
+        variant="outline"
+      >
+        <RefreshCw aria-hidden="true" className="mr-1 h-3.5 w-3.5" />
+        Renew
+      </Button>
+    ) : null;
 
   async function handleDelete() {
     if (confirm(`Are you sure you want to delete this ${document.kind} record?`)) {
@@ -142,6 +161,7 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4">
+                {renewButton}
                 {onEdit && (
                   <Button
                     size="icon"
@@ -260,6 +280,7 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4">
+                {renewButton}
                 {onEdit && (
                   <Button
                     size="icon"
@@ -373,6 +394,7 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-4">
+              {renewButton}
               {onEdit && (
                 <Button
                   size="icon"
