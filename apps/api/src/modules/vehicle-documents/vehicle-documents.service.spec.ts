@@ -58,7 +58,10 @@ describe('VehicleDocumentsService', () => {
     ensureVehicleExists: vi.fn(),
   };
 
-  const prisma = {};
+  const prisma = {
+    attachment: { findMany: vi.fn().mockResolvedValue([]) },
+  };
+  const storageService = { deleteObject: vi.fn().mockResolvedValue('deleted') };
   const auditService = {
     track: vi.fn().mockResolvedValue(undefined),
   };
@@ -78,6 +81,8 @@ describe('VehicleDocumentsService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    prisma.attachment.findMany.mockResolvedValue([]);
+    storageService.deleteObject.mockResolvedValue('deleted');
     vehiclesService.ensureVehicleExists.mockResolvedValue(undefined);
     auditService.track.mockResolvedValue(undefined);
     accessService.assert.mockResolvedValue('owner');
@@ -95,6 +100,7 @@ describe('VehicleDocumentsService', () => {
       auditService as never,
       accessService as never,
       notificationsService as never,
+      storageService as never,
     );
   });
 
@@ -309,6 +315,74 @@ describe('VehicleDocumentsService', () => {
       expect(insurance.remove).toHaveBeenCalledWith('pol-1');
       expect(warranty.remove).not.toHaveBeenCalled();
     });
+
+    it("removes a policy's stored files once the policy itself is gone", async () => {
+      (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: insuranceDoc(),
+        vehicleUserId: 'user-1',
+      });
+      prisma.attachment.findMany.mockResolvedValueOnce([
+        { fileName: 'attachments/user-1/pol-1/policy.pdf' },
+      ]);
+      const order: string[] = [];
+      (insurance.remove as ReturnType<typeof vi.fn>).mockImplementationOnce(async () => {
+        order.push('row');
+      });
+      storageService.deleteObject.mockImplementationOnce(async () => {
+        order.push('file');
+        return 'deleted';
+      });
+
+      await service.remove('user-1', 'insurance', 'pol-1');
+
+      expect(prisma.attachment.findMany).toHaveBeenCalledWith({
+        where: { insurancePolicyId: 'pol-1' },
+        select: { fileName: true },
+      });
+      expect(storageService.deleteObject).toHaveBeenCalledWith(
+        'attachments/user-1/pol-1/policy.pdf',
+      );
+      // Read first, delete the files last: the cascade takes the paths with the rows.
+      expect(order).toEqual(['row', 'file']);
+    });
+
+    it('removes the files of a compliance document too', async () => {
+      const compliance = makeAdapter('puc');
+      const withCompliance = new VehicleDocumentsService(
+        vehiclesService as never,
+        [insurance, warranty, compliance],
+        prisma as never,
+        auditService as never,
+        accessService as never,
+        notificationsService as never,
+        storageService as never,
+      );
+      (compliance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: { ...insuranceDoc(), id: 'puc-1', kind: 'puc' },
+        vehicleUserId: 'user-1',
+      });
+      prisma.attachment.findMany.mockResolvedValueOnce([{ fileName: 'puc.jpg' }]);
+
+      await withCompliance.remove('user-1', 'puc', 'puc-1');
+
+      expect(prisma.attachment.findMany).toHaveBeenCalledWith({
+        where: { complianceDocumentId: 'puc-1' },
+        select: { fileName: true },
+      });
+      expect(storageService.deleteObject).toHaveBeenCalledWith('puc.jpg');
+    });
+
+    it('still deletes the policy when storage refuses to remove a file', async () => {
+      (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: insuranceDoc(),
+        vehicleUserId: 'user-1',
+      });
+      prisma.attachment.findMany.mockResolvedValueOnce([{ fileName: 'a.pdf' }]);
+      storageService.deleteObject.mockRejectedValueOnce(new Error('storage is down'));
+
+      await expect(service.remove('user-1', 'insurance', 'pol-1')).resolves.toBeUndefined();
+      expect(insurance.remove).toHaveBeenCalledWith('pol-1');
+    });
   });
 
   describe('assertViewable', () => {
@@ -358,6 +432,9 @@ describe('VehicleDocumentsService', () => {
         insuranceDoc(),
       ]);
       (warranty.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
+      // Each is its vehicle's only document of its kind, so each is of record.
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
+      (warranty.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([warrantyDoc()]);
 
       const result = await service.findExpiring('user-1', 7);
 
@@ -388,12 +465,34 @@ describe('VehicleDocumentsService', () => {
       (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([
         insuranceDoc(),
       ]);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([insuranceDoc()]);
 
       const result = await service.findExpiring('user-1', 7, 'insurance');
 
       expect(insurance.findExpiringBetween).toHaveBeenCalledTimes(1);
       expect(warranty.findExpiringBetween).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
+    });
+
+    it('leaves out a policy that has been renewed, even while it is still expiring', async () => {
+      const old = insuranceDoc({
+        id: 'pol-old',
+        startDate: new Date('2025-06-01T00:00:00.000Z'),
+        endDate: new Date('2026-06-01T00:00:00.000Z'),
+      });
+      // The renewal starts where the old one ends and runs well past the window.
+      const renewal = insuranceDoc({
+        id: 'pol-new',
+        startDate: new Date('2026-06-02T00:00:00.000Z'),
+        endDate: new Date('2027-06-01T00:00:00.000Z'),
+      });
+      (insurance.findExpiringBetween as ReturnType<typeof vi.fn>).mockResolvedValue([old]);
+      (insurance.listForVehicle as ReturnType<typeof vi.fn>).mockResolvedValue([renewal, old]);
+
+      const result = await service.findExpiring('user-1', 30, 'insurance');
+
+      expect(insurance.listForVehicle).toHaveBeenCalledWith('veh-1');
+      expect(result).toEqual([]);
     });
   });
 

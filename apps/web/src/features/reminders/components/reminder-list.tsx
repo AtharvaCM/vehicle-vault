@@ -24,7 +24,7 @@ export function ReminderList({
   vehicleLabelById,
 }: ReminderListProps) {
   return (
-    <Card>
+    <Card className="p-3 sm:p-5">
       <CardHeader className="pb-3">
         <CardTitle>{title}</CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}
@@ -37,13 +37,7 @@ export function ReminderList({
               reminder={reminder}
               selectionControl={
                 onSelectionChange ? (
-                  <label
-                    className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }}
-                  >
+                  <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm">
                     <input
                       aria-label={`Select reminder ${reminder.title}`}
                       checked={selectedReminderIds.includes(reminder.id)}

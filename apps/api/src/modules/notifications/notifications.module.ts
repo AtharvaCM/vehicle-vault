@@ -18,6 +18,7 @@ import { PushSubscriptionsService } from './push-subscriptions.service';
 import { UnsubscribeController } from './unsubscribe.controller';
 import { UnsubscribeTokenService } from './unsubscribe-token.service';
 import { AccessoryWarrantyExpiringTemplate } from './templates/accessory-warranty-expiring.template';
+import { WarrantyOdometerTemplate } from './templates/warranty-odometer.template';
 import { DocumentExpiringTemplate } from './templates/document-expiring.template';
 import { MaintenanceDueTemplate } from './templates/maintenance-due.template';
 import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.template';
@@ -48,6 +49,7 @@ export const ALERT_TEMPLATE_PROVIDERS = [
   ReminderOverdueTemplate,
   DocumentExpiringTemplate,
   AccessoryWarrantyExpiringTemplate,
+  WarrantyOdometerTemplate,
   TyreWornTemplate,
   TyreAgedTemplate,
   TyreUninspectedTemplate,

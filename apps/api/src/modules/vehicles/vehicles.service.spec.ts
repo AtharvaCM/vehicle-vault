@@ -315,7 +315,7 @@ describe('VehiclesService', () => {
     );
   });
 
-  it('deletes related attachment objects when an owner deletes a vehicle', async () => {
+  it('deletes every stored file the vehicle owns when an owner deletes it', async () => {
     prisma.vehicle.findUnique = vi.fn().mockResolvedValue({
       ...vehicleRecord,
       maintenanceRecords: [
@@ -323,6 +323,10 @@ describe('VehiclesService', () => {
           attachments: [{ fileName: 'receipt-1.pdf' }, { fileName: 'receipt-2.jpg' }],
         },
       ],
+      insurancePolicies: [{ attachments: [{ fileName: 'policy.pdf' }] }],
+      warranties: [{ attachments: [{ fileName: 'warranty-card.jpg' }] }],
+      loans: [{ attachments: [{ fileName: 'sanction-letter.pdf' }] }],
+      complianceDocuments: [{ attachments: [{ fileName: 'puc-certificate.jpg' }] }],
     });
     prisma.vehicle.delete = vi.fn().mockResolvedValue({ id: 'vehicle-1' });
 
@@ -330,9 +334,15 @@ describe('VehiclesService', () => {
 
     expect(accessService.assertOwner).toHaveBeenCalledWith('user-1', 'vehicle-1');
     expect(prisma.vehicle.delete).toHaveBeenCalledWith({ where: { id: 'vehicle-1' } });
-    expect(storageService.deleteObject).toHaveBeenCalledTimes(2);
-    expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-1.pdf');
-    expect(storageService.deleteObject).toHaveBeenCalledWith('receipt-2.jpg');
+    // The cascade removes the rows; without this the files would outlive them.
+    expect(storageService.deleteObject.mock.calls.map(([path]) => path).sort()).toEqual([
+      'policy.pdf',
+      'puc-certificate.jpg',
+      'receipt-1.pdf',
+      'receipt-2.jpg',
+      'sanction-letter.pdf',
+      'warranty-card.jpg',
+    ]);
     expect(result).toEqual({ id: 'vehicle-1', deleted: true });
   });
 

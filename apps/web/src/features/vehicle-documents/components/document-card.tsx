@@ -1,4 +1,14 @@
-import { Calendar, Gauge, Pencil, Trash2, Shield, FileBadge } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import {
+  Calendar,
+  Gauge,
+  Maximize2,
+  Pencil,
+  Trash2,
+  Shield,
+  FileBadge,
+  RefreshCw,
+} from 'lucide-react';
 import { format, isBefore, addDays } from 'date-fns';
 import { type VehicleDocument } from '@vehicle-vault/shared';
 
@@ -14,10 +24,18 @@ import {
 import { appToast } from '@/lib/toast';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
+import { isRenewable } from '../utils/renewal-values';
+import { DocumentAttachmentsSection } from './document-attachments-section';
+
 interface DocumentCardProps {
   document: VehicleDocument;
   vehicleId: string;
   onEdit?: (document: VehicleDocument) => void;
+  /**
+   * Offered on the document of record once it has expired or is within a month
+   * of it. Omitted for viewers, and for a record a renewal has superseded.
+   */
+  onRenew?: (document: VehicleDocument) => void;
 }
 
 /**
@@ -28,7 +46,7 @@ function NotRecorded() {
   return <span className="font-bold text-slate-400">Not recorded</span>;
 }
 
-export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps) {
+export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentCardProps) {
   // Delete is always offered here, unlike edit, so it needs the role itself.
   const { canEdit } = useVehicleAccess();
   const deleteMutation = useDeleteVehicleDocument(vehicleId);
@@ -38,6 +56,33 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
     document.endDate && !isExpired
       ? isBefore(new Date(document.endDate), addDays(new Date(), 30))
       : false;
+
+  const renewButton =
+    onRenew && isRenewable(document) ? (
+      <Button
+        className="h-8 rounded-full px-3 text-xs font-bold"
+        onClick={() => onRenew(document)}
+        size="sm"
+        variant="outline"
+      >
+        <RefreshCw aria-hidden="true" className="mr-1 h-3.5 w-3.5" />
+        Renew
+      </Button>
+    ) : null;
+
+  // For every role: showing a document is reading it, and a viewer may be the
+  // one stopped at the checkpoint.
+  const showLink = (
+    <Link
+      aria-label={`Show ${documentKindTitles[document.kind]} full screen`}
+      className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      params={{ vehicleId, kind: document.kind, documentId: document.id }}
+      to="/vehicles/$vehicleId/documents/$kind/$documentId"
+    >
+      <Maximize2 aria-hidden="true" className="h-3.5 w-3.5" />
+      Show
+    </Link>
+  );
 
   async function handleDelete() {
     if (confirm(`Are you sure you want to delete this ${document.kind} record?`)) {
@@ -140,6 +185,8 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4">
+                {showLink}
+                {renewButton}
                 {onEdit && (
                   <Button
                     size="icon"
@@ -165,6 +212,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                 ) : null}
               </div>
             </div>
+          </div>
+          <div className="border-t border-slate-100 px-5 py-4">
+            <DocumentAttachmentsSection documentId={document.id} kind="insurance" />
           </div>
         </CardContent>
       </Card>
@@ -255,6 +305,8 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4">
+                {showLink}
+                {renewButton}
                 {onEdit && (
                   <Button
                     size="icon"
@@ -280,6 +332,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
                 ) : null}
               </div>
             </div>
+          </div>
+          <div className="border-t border-slate-100 px-5 py-4">
+            <DocumentAttachmentsSection documentId={document.id} kind={document.kind} />
           </div>
         </CardContent>
       </Card>
@@ -365,6 +420,8 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-4">
+              {showLink}
+              {renewButton}
               {onEdit && (
                 <Button
                   size="icon"
@@ -390,6 +447,9 @@ export function DocumentCard({ document, vehicleId, onEdit }: DocumentCardProps)
               ) : null}
             </div>
           </div>
+        </div>
+        <div className="border-t border-slate-100 px-5 py-4">
+          <DocumentAttachmentsSection documentId={document.id} kind="warranty" />
         </div>
       </CardContent>
     </Card>

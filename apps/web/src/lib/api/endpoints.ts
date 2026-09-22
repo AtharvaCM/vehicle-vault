@@ -24,6 +24,7 @@ export const endpoints = {
     detail: (vehicleId: string) => `/vehicles/${vehicleId}`,
     insights: (vehicleId: string) => `/vehicles/${vehicleId}/insights`,
     forecast: (vehicleId: string) => `/vehicles/${vehicleId}/forecast`,
+    fuelEconomy: (vehicleId: string) => `/vehicles/${vehicleId}/fuel-economy`,
     intervals: (vehicleId: string) => `/vehicles/${vehicleId}/intervals`,
     dismissSetupPrompt: (vehicleId: string) => `/vehicles/${vehicleId}/setup-prompt/dismiss`,
     odometer: (vehicleId: string) => `/vehicles/${vehicleId}/odometer`,
@@ -84,6 +85,8 @@ export const endpoints = {
     extractBatch: (recordId: string) => `/maintenance-records/${recordId}/attachments/extract`,
     applyExtraction: (attachmentId: string) => `/attachments/${attachmentId}/apply`,
     file: (attachmentId: string) => `/attachments/${attachmentId}/file`,
+    byDocument: (kind: string, documentId: string) =>
+      `/vehicle-documents/${kind}/${documentId}/attachments`,
     delete: (attachmentId: string) => `/attachments/${attachmentId}`,
   },
   reminders: {

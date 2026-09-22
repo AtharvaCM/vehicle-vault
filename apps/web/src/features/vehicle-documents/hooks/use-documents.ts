@@ -27,10 +27,12 @@ export function useCreateVehicleDocument(vehicleId: string) {
     mutationFn: (data: CreateVehicleDocumentInput) => createVehicleDocument(vehicleId, data),
     onSuccess: () => {
       void invalidateAudit(queryClient);
-      // Prefix-based invalidation: refreshes all document queries for this vehicle
+      // Prefix-based invalidation: refreshes all document queries for this vehicle,
+      // and the dashboard, whose documents row and data score read them.
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
     },
   });
 }
@@ -46,6 +48,7 @@ export function useUpdateVehicleDocument(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
     },
   });
 }
@@ -61,6 +64,7 @@ export function useDeleteVehicleDocument(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
     },
   });
 }

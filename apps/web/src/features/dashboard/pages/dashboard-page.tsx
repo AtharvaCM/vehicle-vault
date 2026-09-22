@@ -1,4 +1,5 @@
-import { BellRing, Wrench } from 'lucide-react';
+import { BellRing, Fuel, Wrench } from 'lucide-react';
+import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { InstallAppCard } from '@/features/pwa/components/install-app-card';
@@ -14,6 +15,8 @@ import { DashboardSkeleton } from '../components/dashboard-skeleton';
 import { GarageGrid } from '../components/garage-grid';
 import { LoansCard } from '../components/loans-card';
 import { RecentServiceCard } from '../components/recent-service-card';
+import { FuelLogDialog } from '../components/fuel-log-dialog';
+import { QuickLogDialog } from '../components/quick-log-dialog';
 import { SmartSuggestionsCard } from '../components/smart-suggestions-card';
 import { SpendSection } from '../components/spend-section';
 import { VehiclePickerMenu } from '../components/vehicle-picker-menu';
@@ -29,6 +32,7 @@ type DashboardPageProps = {
 
 export function DashboardPage({ searchState, onSearchStateChange }: DashboardPageProps) {
   const dashboardSummaryQuery = useDashboardSummary();
+  const [openLog, setOpenLog] = useState<'service' | 'fuel' | null>(null);
 
   if (dashboardSummaryQuery.isPending) {
     return (
@@ -76,23 +80,25 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
   const focus = isDashboardFocus(searchState.focus) ? searchState.focus : undefined;
   const { queue, comingUp } = splitAttention(summary.attention, focus);
   const showVehicle = summary.vehicles.length > 1;
+  // Logging is for the vehicles the user can change; a viewer is offered none of it.
+  const loggableVehicles = summary.vehicles.filter(
+    (vehicle) => vehicle.currentUserRole !== 'viewer',
+  );
 
   return (
     <PageContainer className="pb-10">
       <PageTitle
         actions={
-          summary.vehicles.length >= 1 ? (
+          loggableVehicles.length >= 1 ? (
             <>
-              <VehiclePickerMenu
-                buildLink={(vehicleId) => ({
-                  to: '/vehicles/$vehicleId/maintenance/new',
-                  params: { vehicleId },
-                })}
-                icon={Wrench}
-                label="Log service"
-                variant="default"
-                vehicles={summary.vehicles}
-              />
+              <Button onClick={() => setOpenLog('service')} type="button">
+                <Wrench aria-hidden="true" />
+                Log service
+              </Button>
+              <Button onClick={() => setOpenLog('fuel')} type="button" variant="outline">
+                <Fuel aria-hidden="true" />
+                Log fuel
+              </Button>
               <VehiclePickerMenu
                 buildLink={(vehicleId) => ({
                   to: '/vehicles/$vehicleId/reminders/new',
@@ -102,7 +108,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
                 icon={BellRing}
                 label="Add reminder"
                 variant="outline"
-                vehicles={summary.vehicles}
+                vehicles={loggableVehicles}
               />
             </>
           ) : undefined
@@ -141,6 +147,20 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
       <LoansCard loans={summary.loans} />
 
       {summary.hasSpend ? <SpendSection /> : null}
+      {loggableVehicles.length > 0 ? (
+        <>
+          <QuickLogDialog
+            onOpenChange={(open) => setOpenLog(open ? 'service' : null)}
+            open={openLog === 'service'}
+            vehicles={loggableVehicles}
+          />
+          <FuelLogDialog
+            onOpenChange={(open) => setOpenLog(open ? 'fuel' : null)}
+            open={openLog === 'fuel'}
+            vehicles={loggableVehicles}
+          />
+        </>
+      ) : null}
     </PageContainer>
   );
 }

@@ -9,6 +9,9 @@ export const queryKeys = {
     detail: (vehicleId: string) => [...queryKeys.vehicles.all(), 'detail', vehicleId] as const,
     fuelLogs: (vehicleId: string) =>
       [...queryKeys.vehicles.detail(vehicleId), 'fuel-logs'] as const,
+    // Under the fuel logs, so every fill logged, edited or deleted refreshes it.
+    fuelEconomy: (vehicleId: string) =>
+      [...queryKeys.vehicles.fuelLogs(vehicleId), 'economy'] as const,
     intervals: (vehicleId: string) =>
       [...queryKeys.vehicles.detail(vehicleId), 'intervals'] as const,
   },
@@ -68,6 +71,8 @@ export const queryKeys = {
     all: () => ['attachments'] as const,
     extractionStatus: () => [...queryKeys.attachments.all(), 'extraction-status'] as const,
     byRecord: (recordId: string) => [...queryKeys.attachments.all(), 'record', recordId] as const,
+    byDocument: (kind: string, documentId: string) =>
+      [...queryKeys.attachments.all(), 'document', kind, documentId] as const,
     detail: (attachmentId: string) =>
       [...queryKeys.attachments.all(), 'detail', attachmentId] as const,
   },

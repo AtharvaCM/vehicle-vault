@@ -78,6 +78,22 @@ export type DocumentExpiringPayload = {
  * takes no dependency on the accessories schema. Dates stay Date objects here
  * because the template formats them; the wire type carries ISO strings.
  */
+/**
+ * A warranty nearing, or past, the distance it ends at. Warranties usually end
+ * at a date or a distance, whichever comes first; the date is document-expiring's.
+ */
+export type WarrantyOdometerPayload = {
+  warranty: {
+    id: string;
+    vehicleId: string;
+    provider: string;
+    type: string;
+    endOdometer: number;
+  };
+  /** Kilometres left before the limit; zero or below once it has been passed. */
+  remainingKm: number;
+};
+
 export type AccessoryWarrantyExpiringPayload = {
   accessory: {
     id: string;
@@ -164,6 +180,7 @@ export type AlertPayloads = {
   'reminder-overdue': ReminderOverduePayload;
   'document-expiring': DocumentExpiringPayload;
   'accessory-warranty-expiring': AccessoryWarrantyExpiringPayload;
+  'warranty-odometer': WarrantyOdometerPayload;
   'tyre-worn': TyreWornPayload;
   'tyre-aged': TyreAgedPayload;
   'tyre-uninspected': TyreUninspectedPayload;

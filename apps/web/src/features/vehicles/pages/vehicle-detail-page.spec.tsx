@@ -44,6 +44,9 @@ vi.mock('../components/service-trend-card', () => ({ ServiceTrendCard: () => nul
 vi.mock('../components/vehicle-summary-card', () => ({ VehicleSummaryCard: () => null }));
 // Covered by its own spec, viewer case included.
 vi.mock('../components/vehicle-setup-prompt', () => ({ VehicleSetupPrompt: () => null }));
+vi.mock('@/features/fuel-logs/components/fuel-economy-card', () => ({
+  FuelEconomyCard: () => null,
+}));
 vi.mock('@/features/analytics/components/tco-card', () => ({ TcoCard: () => null }));
 // Covered by its own spec, viewer case included.
 vi.mock('@/features/service-baseline/components/service-history-card', () => ({

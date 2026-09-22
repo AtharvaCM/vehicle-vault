@@ -33,6 +33,7 @@ import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-remi
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
+import { FuelEconomyCard } from '@/features/fuel-logs/components/fuel-economy-card';
 import { MembersTab } from '@/features/vehicle-sharing/components/members-tab';
 import { useCurrentUserRole } from '@/features/vehicle-sharing/hooks/use-sharing';
 import { AuditFeed } from '@/features/audit/components/audit-feed';
@@ -512,6 +513,8 @@ export function VehicleDetailPage({
                 <SnapshotMetric label="Engine Type" value={vehicle.fuelType} />
               </div>
 
+              <FuelEconomyCard vehicleId={vehicleId} />
+
               <TcoCard vehicleId={vehicleId} />
 
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
@@ -607,36 +610,35 @@ export function VehicleDetailPage({
             <TabsContent value="fuel" className="animate-in fade-in duration-500">
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                 <FuelTab vehicleId={vehicleId} />
-                <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold">Fuel Analytics</CardTitle>
-                    <CardDescription>Understand your vehicle&apos;s efficiency.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
-                    <div className="flex gap-3">
-                      <div className="mt-1 flex-shrink-0 text-primary">
-                        <Fuel className="h-4 w-4" />
+                <div className="h-fit space-y-6">
+                  <FuelEconomyCard vehicleId={vehicleId} />
+                  <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-bold">
+                        Getting an accurate figure
+                      </CardTitle>
+                      <CardDescription>Economy is measured between fill-ups.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
+                      <div className="flex gap-3">
+                        <div className="mt-1 flex-shrink-0 text-primary">
+                          <Fuel className="h-4 w-4" />
+                        </div>
+                        <p>
+                          Log every fill-up to see how your driving habits affect your fuel economy.
+                        </p>
                       </div>
-                      <p>
-                        Log every fill-up to see how your driving habits affect your fuel economy.
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="mt-1 flex-shrink-0 text-primary">
-                        <Gauge className="h-4 w-4" />
+                      <div className="flex gap-3">
+                        <div className="mt-1 flex-shrink-0 text-primary">
+                          <Gauge className="h-4 w-4" />
+                        </div>
+                        <p>
+                          Capture the precise odometer reading for accurate consumption calculation.
+                        </p>
                       </div>
-                      <p>
-                        Capture the precise odometer reading for accurate consumption calculation.
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="mt-1 flex-shrink-0 text-primary">
-                        <LayoutGrid className="h-4 w-4" />
-                      </div>
-                      <p>Soon: We&apos;ll calculate your average km/L and total fueling costs.</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
             <TabsContent value="tyres" className="animate-in fade-in duration-500">
@@ -760,7 +762,7 @@ function MaintenancePanel({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="p-5">
+      <CardContent className="pt-5 sm:p-5">
         {maintenanceQuery.isPending ? (
           <div className="animate-pulse space-y-3">
             <div className="h-20 bg-slate-50 rounded-xl" />
@@ -847,7 +849,7 @@ function ReminderPanel({
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="p-5">
+      <CardContent className="pt-5 sm:p-5">
         {remindersQuery.isPending ? (
           <div className="animate-pulse space-y-3">
             <div className="h-20 bg-slate-50 rounded-xl" />
