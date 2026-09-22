@@ -46,6 +46,7 @@ import { AccessoriesTab } from '@/features/accessories/components/accessories-ta
 import { ServiceHistoryCard } from '@/features/service-baseline/components/service-history-card';
 import { ProtectionTab } from '../components/protection-tab';
 import { accessFor, useVehicleAccess, VehicleAccessProvider } from '../context/vehicle-access';
+import { VehicleSetupPrompt } from '../components/vehicle-setup-prompt';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
@@ -478,6 +479,11 @@ export function VehicleDetailPage({
             </TabsList>
 
             <TabsContent value="overview" className="space-y-8 animate-in fade-in duration-500">
+              <VehicleSetupPrompt
+                dismissedAt={vehicle.setupPromptDismissedAt}
+                vehicleId={vehicleId}
+              />
+
               <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                 <VehicleSummaryCard vehicle={vehicle} />
                 <OdometerForecastCard vehicleId={vehicleId} />

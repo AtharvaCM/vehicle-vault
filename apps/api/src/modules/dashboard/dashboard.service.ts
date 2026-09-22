@@ -325,7 +325,7 @@ export class DashboardService {
         urgency,
         title: DOCUMENT_KIND_TITLES[document.kind],
         documentKind: document.kind,
-        provider: document.provider,
+        provider: document.provider ?? undefined,
         dueDate: document.endDate.toISOString(),
         daysUntilDue,
       });

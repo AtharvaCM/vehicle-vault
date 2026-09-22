@@ -43,6 +43,9 @@ Email and push switches per alert kind, grouped by `ALERT_KIND_GROUPS` with copy
 **AppShell**:
 `components/layout/app-shell.tsx` → `app-layout` → `sidebar` + `topbar` + main outlet. Navigation config lives in `sidebar.tsx` (`appNavigation`, `adminNavigation`).
 
+**Vehicle setup prompt** (`features/vehicles/components/vehicle-setup-prompt.tsx`):
+The insurance/PUC expiry card at the top of a vehicle's Overview tab. Shows while `vehicle.setupPromptDismissedAt` is null, the documents query has loaded, and at least one of the two kinds is missing; `canEdit` gates it, so a viewer never sees it. Saving posts one document per filled date (the expiry alone — the insurer and number come later) and then dismisses; "Not now" dismisses on its own. A failed save keeps the dates on screen instead of dismissing.
+
 **Verification grace**:
 An unverified account gets the whole app for a week, then a wall. The API decides the deadline and sends it as `user.emailVerificationDueAt` (null when there is nothing to verify: verified, or an OAuth account with no address); `getVerificationStatus()` (`features/auth/lib/verification-status.ts`) only compares it with the clock. Inside the week `AppLayout` shows `EmailVerificationBanner` (days left, resend, dismissed until the next local day per user); after it, `EmailVerificationScreen` replaces the app. A session from an API that sends no deadline at all keeps the wall. The verification link usually opens in a new tab: there `/verify-email` refreshes the signed-in user (`refreshUser()` on the auth context) and returns to `/dashboard` rather than to login, and the original tab re-reads the account when it comes back into view. Both surfaces resend through `useResendVerification`, which holds a 60-second cooldown on top of the API's `mail` rate limit.
 

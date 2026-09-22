@@ -179,7 +179,11 @@ export class ServiceHistoryService {
       for (const policy of policies) {
         doc
           .font('Helvetica-Bold')
-          .text(`${policy.provider} — ${policy.policyNumber}`)
+          // Either half may be missing on a policy captured as an expiry alone.
+          .text(
+            [policy.provider, policy.policyNumber].filter(Boolean).join(' — ') ||
+              'Policy details not recorded',
+          )
           .font('Helvetica')
           .text(
             `Valid ${fmtDate(policy.startDate)} → ${fmtDate(policy.endDate)} • Premium ${policy.premiumAmount ? inr.format(decimalToNumber(policy.premiumAmount)) : '—'}`,

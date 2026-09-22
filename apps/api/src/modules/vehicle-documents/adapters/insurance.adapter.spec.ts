@@ -106,7 +106,7 @@ describe('InsuranceAdapter', () => {
   });
 
   describe('activeAt', () => {
-    it('queries policies whose validity window contains the given date', async () => {
+    it('queries policies whose validity window contains the given date, started or not', async () => {
       prisma.insurancePolicy.findMany.mockResolvedValue([rowWithDecimals()]);
       const date = new Date('2026-06-15T00:00:00.000Z');
 
@@ -115,7 +115,8 @@ describe('InsuranceAdapter', () => {
       expect(prisma.insurancePolicy.findMany).toHaveBeenCalledWith({
         where: {
           vehicleId: 'veh-1',
-          startDate: { lte: date },
+          // A policy captured as an expiry alone still covers today.
+          OR: [{ startDate: { lte: date } }, { startDate: null }],
           endDate: { gte: date },
         },
         orderBy: { endDate: 'desc' },

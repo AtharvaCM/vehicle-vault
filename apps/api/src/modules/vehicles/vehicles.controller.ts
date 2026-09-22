@@ -76,6 +76,12 @@ export class VehiclesController {
     return this.vehiclesService.updateVehicle(user.id, params.vehicleId, body);
   }
 
+  @Post(':vehicleId/setup-prompt/dismiss')
+  @ApiOperation({ summary: 'Put away the expiry prompt shown on a new vehicle' })
+  async dismissSetupPrompt(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {
+    return this.vehiclesService.dismissSetupPrompt(user.id, params.vehicleId);
+  }
+
   @Delete(':vehicleId')
   @ApiOperation({ summary: 'Unregister/Delete a vehicle' })
   async deleteVehicle(@CurrentUser() user: AuthUser, @Param() params: VehicleIdParamDto) {

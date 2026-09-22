@@ -58,8 +58,12 @@ abstract class ComplianceAdapter implements VehicleDocumentAdapter {
       where: {
         vehicleId,
         kind: this.kind,
-        startDate: { lte: date },
-        OR: [{ endDate: null }, { endDate: { gte: date } }],
+        AND: [
+          // A document known only by its expiry counts as covering `date`
+          // until it runs out; see InsuranceAdapter.activeAt.
+          { OR: [{ startDate: { lte: date } }, { startDate: null }] },
+          { OR: [{ endDate: null }, { endDate: { gte: date } }] },
+        ],
       },
       orderBy: { startDate: 'desc' },
     });
@@ -87,9 +91,9 @@ abstract class ComplianceAdapter implements VehicleDocumentAdapter {
       data: {
         vehicleId,
         kind: this.kind,
-        provider: input.provider,
+        provider: input.provider ?? null,
         number: input.number ?? null,
-        startDate: input.startDate,
+        startDate: input.startDate ?? null,
         endDate: input.endDate ?? null,
         amount: input.amount ?? null,
         notes: input.notes ?? null,

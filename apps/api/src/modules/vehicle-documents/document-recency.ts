@@ -5,15 +5,26 @@ import type { VehicleDocument } from '@vehicle-vault/shared';
  * for their shared kind: a later `startDate` wins outright; on a tie, an
  * open-ended document (`endDate: null`) outranks a dated one so an older
  * open-ended record can never mask a newer dated renewal.
+ *
+ * A document that records no start date ranks below every dated one, and two
+ * of them fall through to their expiry — a renewal captured as an expiry alone
+ * should still displace the one it renews.
  */
 export function isMoreRecentDocument(
   candidate: VehicleDocument,
   current: VehicleDocument,
 ): boolean {
-  const startDifference = candidate.startDate.getTime() - current.startDate.getTime();
-  if (startDifference !== 0) return startDifference > 0;
+  // Compared rather than subtracted: two undated documents are both
+  // -Infinity, and the difference of those is NaN.
+  const candidateStart = startDateRank(candidate);
+  const currentStart = startDateRank(current);
+  if (candidateStart !== currentStart) return candidateStart > currentStart;
 
   return endDateRank(candidate) > endDateRank(current);
+}
+
+function startDateRank(document: VehicleDocument): number {
+  return document.startDate === null ? Number.NEGATIVE_INFINITY : document.startDate.getTime();
 }
 
 function endDateRank(document: VehicleDocument): number {

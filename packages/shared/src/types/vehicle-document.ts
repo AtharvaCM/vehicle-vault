@@ -27,9 +27,11 @@ export const VehicleDocumentSchema = z.object({
   id: z.string().uuid(),
   vehicleId: z.string().uuid(),
   kind: VehicleDocumentKindSchema,
-  provider: z.string().min(1).max(120),
+  // Null where the document is known only by its expiry: the new-vehicle
+  // prompt collects that alone, and scanning or editing fills the rest in.
+  provider: z.string().min(1).max(120).nullable(),
   number: z.string().min(1).max(80).nullable(),
-  startDate: z.coerce.date(),
+  startDate: z.coerce.date().nullable(),
   endDate: z.coerce.date().nullable(),
   notes: z.string().max(500).nullable(),
   details: z.record(z.unknown()),
@@ -39,10 +41,37 @@ export const VehicleDocumentSchema = z.object({
 
 export type VehicleDocument = z.infer<typeof VehicleDocumentSchema>;
 
+/**
+ * A text or date input the user never touched arrives as '', which means "not
+ * recorded" rather than "a name of length zero" or an invalid date. Written as
+ * a transform rather than `z.preprocess` so the schema keeps a typed input,
+ * which the form resolver on the web needs.
+ */
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((value) => (value === '' ? undefined : value))
+    .optional()
+    .nullable();
+
+const optionalDate = z
+  .union([z.literal(''), z.coerce.date()])
+  .transform((value) => (value === '' ? undefined : value))
+  .optional()
+  .nullable();
+
+/**
+ * Insurance and the compliance kinds are both reachable from the prompt a new
+ * vehicle lands on, which asks for an expiry and nothing else. So the expiry is
+ * the only field either one insists on; the insurer, the number and the start
+ * date are all filled in later, by a scan or by an edit.
+ */
 const InsuranceFieldsSchema = z.object({
-  provider: z.string().min(1, 'Provider is required').max(120),
-  policyNumber: z.string().min(1, 'Policy number is required').max(80),
-  startDate: z.coerce.date(),
+  provider: optionalText(120),
+  policyNumber: optionalText(80),
+  startDate: optionalDate,
   endDate: z.coerce.date(),
   premiumAmount: z.number().min(0).optional().nullable(),
   insuredValue: z.number().min(0).optional().nullable(),
@@ -51,30 +80,50 @@ const InsuranceFieldsSchema = z.object({
 
 const WarrantyFieldsSchema = z.object({
   provider: z.string().min(1, 'Provider is required').max(120),
-  warrantyNumber: z.string().max(80).optional().nullable(),
+  warrantyNumber: optionalText(80),
   type: z.string().min(1, 'Type is required').max(60),
   startDate: z.coerce.date(),
-  endDate: z.coerce.date().optional().nullable(),
+  endDate: optionalDate,
   endOdometer: z.number().int().min(0).optional().nullable(),
   notes: z.string().max(500).optional().nullable(),
 });
 
 const ComplianceFieldsSchema = z.object({
-  provider: z.string().min(1, 'Issuing authority is required').max(120),
-  number: z.string().max(80).optional().nullable(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date().optional().nullable(),
+  provider: optionalText(120),
+  number: optionalText(80),
+  startDate: optionalDate,
+  endDate: optionalDate,
   amount: z.number().min(0).optional().nullable(),
   notes: z.string().max(500).optional().nullable(),
 });
 
-export const CreateVehicleDocumentSchema = z.discriminatedUnion('kind', [
-  InsuranceFieldsSchema.extend({ kind: z.literal('insurance') }),
-  WarrantyFieldsSchema.extend({ kind: z.literal('warranty') }),
-  ComplianceFieldsSchema.extend({ kind: z.literal('registration') }),
-  ComplianceFieldsSchema.extend({ kind: z.literal('puc') }),
-  ComplianceFieldsSchema.extend({ kind: z.literal('road_tax') }),
-]);
+/**
+ * A compliance document with neither date is not a record of anything, so one
+ * of the two is still required even though each is individually optional.
+ * Insurance needs no such check: its expiry is required outright.
+ */
+function requireADate(
+  value: { kind: VehicleDocumentKind; startDate?: Date | null; endDate?: Date | null },
+  ctx: z.RefinementCtx,
+) {
+  if (value.kind === 'insurance' || value.kind === 'warranty') return;
+  if (value.startDate || value.endDate) return;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ['endDate'],
+    message: 'Add an expiry date, or the date it was issued',
+  });
+}
+
+export const CreateVehicleDocumentSchema = z
+  .discriminatedUnion('kind', [
+    InsuranceFieldsSchema.extend({ kind: z.literal('insurance') }),
+    WarrantyFieldsSchema.extend({ kind: z.literal('warranty') }),
+    ComplianceFieldsSchema.extend({ kind: z.literal('registration') }),
+    ComplianceFieldsSchema.extend({ kind: z.literal('puc') }),
+    ComplianceFieldsSchema.extend({ kind: z.literal('road_tax') }),
+  ])
+  .superRefine(requireADate);
 
 export type CreateVehicleDocumentInput = z.infer<typeof CreateVehicleDocumentSchema>;
 

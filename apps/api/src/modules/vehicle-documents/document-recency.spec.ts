@@ -55,6 +55,28 @@ describe('isMoreRecentDocument', () => {
 
     expect(isMoreRecentDocument(newerDated, olderOpenEnded)).toBe(true);
   });
+
+  it('ranks a document captured as an expiry alone below any dated one', () => {
+    const dated = makeDocument({ startDate: new Date('2020-01-01T00:00:00.000Z') });
+    const undated = makeDocument({ startDate: null });
+
+    expect(isMoreRecentDocument(dated, undated)).toBe(true);
+    expect(isMoreRecentDocument(undated, dated)).toBe(false);
+  });
+
+  it('falls through to the expiry when neither document records a start', () => {
+    const expiringSooner = makeDocument({
+      startDate: null,
+      endDate: new Date('2026-06-01T00:00:00.000Z'),
+    });
+    const renewal = makeDocument({
+      startDate: null,
+      endDate: new Date('2027-06-01T00:00:00.000Z'),
+    });
+
+    expect(isMoreRecentDocument(renewal, expiringSooner)).toBe(true);
+    expect(isMoreRecentDocument(expiringSooner, renewal)).toBe(false);
+  });
 });
 
 describe('pickLatestDocument', () => {
@@ -68,5 +90,12 @@ describe('pickLatestDocument', () => {
     const latest = makeDocument({ id: 'latest', startDate: new Date('2026-06-01T00:00:00.000Z') });
 
     expect(pickLatestDocument([oldest, latest, middle])?.id).toBe('latest');
+  });
+
+  it('prefers the policy someone typed a start date for over the one from the prompt', () => {
+    const fromPrompt = makeDocument({ id: 'from-prompt', startDate: null });
+    const dated = makeDocument({ id: 'dated', startDate: new Date('2026-01-01T00:00:00.000Z') });
+
+    expect(pickLatestDocument([fromPrompt, dated])?.id).toBe('dated');
   });
 });

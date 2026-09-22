@@ -42,6 +42,8 @@ vi.mock('../components/odometer-forecast-card', () => ({ OdometerForecastCard: (
 vi.mock('../components/odometer-history-card', () => ({ OdometerHistoryCard: () => null }));
 vi.mock('../components/service-trend-card', () => ({ ServiceTrendCard: () => null }));
 vi.mock('../components/vehicle-summary-card', () => ({ VehicleSummaryCard: () => null }));
+// Covered by its own spec, viewer case included.
+vi.mock('../components/vehicle-setup-prompt', () => ({ VehicleSetupPrompt: () => null }));
 vi.mock('@/features/analytics/components/tco-card', () => ({ TcoCard: () => null }));
 // Covered by its own spec, viewer case included.
 vi.mock('@/features/service-baseline/components/service-history-card', () => ({

@@ -5,7 +5,7 @@
 // to `any` until react-hook-form gains first-class discriminated-union
 // support. The runtime cleanPayload + Zod resolver still validate the shape.
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CreateVehicleDocumentSchema,
@@ -181,7 +181,10 @@ export function DocumentFormDialog({
     watch,
     formState: { errors },
   } = useForm<CreateVehicleDocumentInput>({
-    resolver: zodResolver(CreateVehicleDocumentSchema),
+    // A cleared date field submits '', which the schema accepts and maps to
+    // "not recorded". That makes its input type wider than its output, and
+    // react-hook-form types the form by the output shape.
+    resolver: zodResolver(CreateVehicleDocumentSchema) as Resolver<CreateVehicleDocumentInput>,
     defaultValues: buildDefaults(defaultKind, editingDocument, initialValues),
   });
 
@@ -314,9 +317,9 @@ export function DocumentFormDialog({
           <FormField
             label={
               isComplianceKind(selectedKind)
-                ? 'Issuing Authority'
+                ? 'Issuing Authority (optional)'
                 : selectedKind === 'insurance'
-                  ? 'Provider Name'
+                  ? 'Provider Name (optional)'
                   : 'Provider/Brand'
             }
             htmlFor="provider"
@@ -337,7 +340,7 @@ export function DocumentFormDialog({
 
           {selectedKind === 'insurance' && (
             <FormField
-              label="Policy Number"
+              label="Policy Number (optional)"
               htmlFor="policyNumber"
               error={(errors as any).policyNumber?.message}
             >
@@ -372,7 +375,13 @@ export function DocumentFormDialog({
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Start Date" htmlFor="startDate" error={errors.startDate?.message}>
+            <FormField
+              // Only a warranty needs one: the other kinds run on their expiry,
+              // and the prompt on a new vehicle collects that alone.
+              label={selectedKind === 'warranty' ? 'Start Date' : 'Start Date (optional)'}
+              htmlFor="startDate"
+              error={errors.startDate?.message}
+            >
               <Input id="startDate" type="date" {...register('startDate')} />
             </FormField>
             <FormField label="End Date" htmlFor="endDate" error={errors.endDate?.message}>
