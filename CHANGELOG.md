@@ -1,3 +1,11 @@
+## [1.48.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.48.0...v1.48.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **reminders:** stop the reminders page re-rendering until it crashes ([e97d778](https://github.com/AtharvaCM/vehicle-vault/commit/e97d778a5dae6290df37b589f2a74753958f9b6a))
+* **web:** keep phone pages from scrolling sideways ([1eaad13](https://github.com/AtharvaCM/vehicle-vault/commit/1eaad132f7b369cebdc77e354b017686216f5985))
+
 # [1.48.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.47.0...v1.48.0) (2026-09-22)
 
 
