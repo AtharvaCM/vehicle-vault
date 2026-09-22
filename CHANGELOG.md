@@ -1,3 +1,10 @@
+# [1.46.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.45.0...v1.46.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** compliance documents keep their file too ([efd3222](https://github.com/AtharvaCM/vehicle-vault/commit/efd322228de1f5044cd37ff77f7aab59439e8953))
+
 # [1.45.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.44.0...v1.45.0) (2026-09-22)
 
 
