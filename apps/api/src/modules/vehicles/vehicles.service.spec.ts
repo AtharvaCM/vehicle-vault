@@ -326,6 +326,7 @@ describe('VehiclesService', () => {
       insurancePolicies: [{ attachments: [{ fileName: 'policy.pdf' }] }],
       warranties: [{ attachments: [{ fileName: 'warranty-card.jpg' }] }],
       loans: [{ attachments: [{ fileName: 'sanction-letter.pdf' }] }],
+      complianceDocuments: [{ attachments: [{ fileName: 'puc-certificate.jpg' }] }],
     });
     prisma.vehicle.delete = vi.fn().mockResolvedValue({ id: 'vehicle-1' });
 
@@ -336,6 +337,7 @@ describe('VehiclesService', () => {
     // The cascade removes the rows; without this the files would outlive them.
     expect(storageService.deleteObject.mock.calls.map(([path]) => path).sort()).toEqual([
       'policy.pdf',
+      'puc-certificate.jpg',
       'receipt-1.pdf',
       'receipt-2.jpg',
       'sanction-letter.pdf',

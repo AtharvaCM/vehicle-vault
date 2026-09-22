@@ -11,6 +11,7 @@ export const AttachmentSchema = z.object({
   vehicleLoanId: z.string().trim().min(1).optional(),
   insurancePolicyId: z.string().trim().min(1).optional(),
   warrantyId: z.string().trim().min(1).optional(),
+  complianceDocumentId: z.string().trim().min(1).optional(),
   kind: z.nativeEnum(AttachmentKind),
   fileName: z.string().trim().min(1),
   originalFileName: z.string().trim().min(1),
