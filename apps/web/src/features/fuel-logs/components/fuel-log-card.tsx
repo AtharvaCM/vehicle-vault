@@ -84,7 +84,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                 <>
                   <span className="text-slate-300">•</span>
                   <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
                     {log.location}
                   </span>
                 </>

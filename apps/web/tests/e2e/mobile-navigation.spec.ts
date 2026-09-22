@@ -244,6 +244,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   const workshop = 'Sai Service Hyundai Authorised Workshop, Baner Road';
   const reminderTitle = 'Periodic service and brake fluid replacement';
   const lender = 'HDFC Bank Vehicle Finance';
+  const fuelStation = 'HP Petrol Pump, Mumbai–Pune Expressway Food Mall';
   const invitee = `invitee.with.a.long.address.${suffix}@vehiclevault.dev`;
   await post(page, `vehicles/${vehicleId}/maintenance-records`, {
     category: 'periodic_service',
@@ -281,7 +282,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     quantity: 42.5,
     price: 106,
     totalCost: 4505,
-    location: 'Indian Oil, Baner Road',
+    location: fuelStation,
   });
   const fills: Array<[string, string[]]> = [
     ['30 L Fuel Fill', ['14,950 km', '₹105', '₹3,150']],
@@ -373,6 +374,20 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
         .locator('[data-slot="card"]', { has: page.getByText(title, { exact: true }) });
       await expectReadableCard(card, title, figures);
     }
+    // On a phone the fill's location wraps, which must not squeeze the pin before it.
+    const pinWidth = Math.round(
+      await page
+        .getByRole('main')
+        .getByText(fuelStation, { exact: true })
+        .locator('svg')
+        .evaluate((node) => node.getBoundingClientRect().width),
+    );
+    expect
+      .soft(
+        pinWidth,
+        `The fuel tab at ${screen.width}px squeezes a location's pin to ${pinWidth}px.`,
+      )
+      .toBe(12);
     await expectNoSidewaysScroll(page, `The fuel tab at ${screen.width}px`);
   }
 
