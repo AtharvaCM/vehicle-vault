@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
@@ -8,6 +8,7 @@ const PHONE = { width: 375, height: 812 };
 const TABLET = { width: 1024, height: 768 };
 const PORTRAIT_TABLET = { width: 768, height: 1024 };
 const DESKTOP = { width: 1280, height: 800 };
+const WIDE_DESKTOP = { width: 1440, height: 900 };
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -79,17 +80,21 @@ async function expectNoSidewaysScroll(page: Page, where: string) {
 
 /**
  * A page can stop scrolling sideways by squeezing a card instead: a title
- * crushed to one letter, or figures pushed out of view. The card named by
- * `title` has to leave its title a readable width, even if an ellipsis cuts it
- * short, and keep each figure inside the card.
+ * crushed to one letter, or figures pushed out of view. The card has to leave
+ * its title a readable width, even if an ellipsis cuts it short, and keep each
+ * figure inside the card.
  */
-async function expectReadableCard(page: Page, title: string, figures: string[]) {
-  const card = page.getByRole('main').getByRole('link', { name: title }).first();
+async function expectReadableCard(card: Locator, title: string, figures: string[]) {
   await expect(card).toBeVisible();
   const cardBox = (await card.boundingBox())!;
 
+  // Measured on the title's row, which spans the card's text: a long title fills
+  // it, but a short one, like a fill's, is only as wide as its words, and wraps
+  // them one to a line when the row is too narrow.
   const titleWidth = Math.round(
-    (await card.getByText(title, { exact: true }).boundingBox())!.width,
+    await card
+      .getByText(title, { exact: true })
+      .evaluate((node) => node.parentElement!.getBoundingClientRect().width),
   );
   expect
     .soft(titleWidth, `The card for "${title}" leaves its title ${titleWidth}px wide.`)
@@ -227,6 +232,25 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     startDate: daysFromNow(-400),
   });
   await post(page, `vehicles/${vehicleId}/invites`, { email: invitee, role: 'viewer' });
+  await post(page, `fuel-logs/vehicle/${vehicleId}`, {
+    date: daysFromNow(-30),
+    odometer: 14950,
+    quantity: 30,
+    price: 105,
+    totalCost: 3150,
+  });
+  await post(page, `fuel-logs/vehicle/${vehicleId}`, {
+    date: daysFromNow(-10),
+    odometer: 15180,
+    quantity: 42.5,
+    price: 106,
+    totalCost: 4505,
+    location: 'Indian Oil, Baner Road',
+  });
+  const fills: Array<[string, string[]]> = [
+    ['30 L Fuel Fill', ['14,950 km', '₹105', '₹3,150']],
+    ['42.5 L Fuel Fill', ['15,180 km', '₹106', '₹4,505']],
+  ];
 
   await page.setViewportSize(PHONE);
 
@@ -236,7 +260,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['maintenance', [workshop]],
     ['specs', [/No specifications available|Engine & Drivetrain/]],
     ['reminders', [reminderTitle]],
-    ['fuel', ['No fuel logs found']],
+    ['fuel', ['42.5 L Fuel Fill']],
     ['tyres', ['Log inspection']],
     ['accessories', ['No accessories yet']],
     ['protection', ['Add Policy']],
@@ -292,9 +316,27 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   for (const [where, path, cards] of desktopPages) {
     await page.goto(path);
     for (const [title, figures] of cards) {
-      await expectReadableCard(page, title, figures);
+      const card = page.getByRole('main').getByRole('link', { name: title }).first();
+      await expectReadableCard(card, title, figures);
     }
     await expectNoSidewaysScroll(page, where);
+  }
+
+  // The fuel tab splits the same way, and a fill's three figures and menu need
+  // more room beside its text than a record's two figures. So it is measured at
+  // 1440px too, where its cards are wide enough for a record's figures to sit
+  // beside the text, but not for a fill's.
+  for (const screen of [DESKTOP, WIDE_DESKTOP]) {
+    await page.setViewportSize(screen);
+    await page.goto(`${vehicleUrl}?tab=fuel`);
+    for (const [title, figures] of fills) {
+      // A fill's card is not a link.
+      const card = page
+        .getByRole('main')
+        .locator('[data-slot="card"]', { has: page.getByText(title, { exact: true }) });
+      await expectReadableCard(card, title, figures);
+    }
+    await expectNoSidewaysScroll(page, `The fuel tab at ${screen.width}px`);
   }
 
   // From sm the page header puts its actions beside the title, and at 768px a
