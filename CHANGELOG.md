@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.52.0...v1.53.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** score how complete each vehicle's data is ([e1da2b7](https://github.com/AtharvaCM/vehicle-vault/commit/e1da2b7649417688bbfea8d43c618cd0954a5332))
+
 # [1.52.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.51.0...v1.52.0) (2026-09-22)
 
 
