@@ -19,6 +19,26 @@ type ReminderCardProps = {
 };
 
 export function ReminderCard({ reminder, selectionControl, vehicleLabel }: ReminderCardProps) {
+  // The target odometer is the card's only figure, and a reminder needs either that
+  // or a date, so a date-only one has nothing to put in a figures strip. It gets no
+  // strip at all then, rather than an empty band under its text holding the chevron.
+  const dueOdometer = reminder.dueOdometer;
+  const hasFigures = dueOdometer !== undefined;
+
+  const chevron = (
+    <div
+      className={cn(
+        'ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-300 shadow-premium-sm transition-all group-hover:translate-x-1 group-hover:text-primary',
+        // With no strip to sit in, it rides the text's row, at the distance from the
+        // card's edge the strip would have kept. A stacked card has no room to spare:
+        // there it goes, rather than take 60px from a title that already truncates.
+        !hasFigures && 'hidden @xl:mr-6 @xl:flex',
+      )}
+    >
+      <ChevronRight className="h-4 w-4" />
+    </div>
+  );
+
   const urgencyColor =
     reminder.status === ReminderStatus.Overdue
       ? 'bg-rose-500'
@@ -45,7 +65,10 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
         <div className={cn('absolute left-0 top-0 bottom-0 w-1', urgencyColor)} />
 
         <Link
-          className="flex flex-col p-0 @xl:flex-row @xl:items-center"
+          className={cn(
+            'flex p-0',
+            hasFigures ? 'flex-col @xl:flex-row @xl:items-center' : 'items-center',
+          )}
           params={{ reminderId: reminder.id }}
           to="/reminders/$reminderId"
         >
@@ -94,24 +117,27 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           </div>
 
           {/* Metrics & Action */}
-          <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent @xl:px-6 @xl:py-0">
-            <div className="flex items-center gap-8 @xl:gap-10">
-              {reminder.dueOdometer !== undefined ? (
+          {hasFigures ? (
+            <div
+              className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent @xl:px-6 @xl:py-0"
+              data-testid="reminder-figures"
+            >
+              <div className="flex items-center gap-8 @xl:gap-10">
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Target ODO
                   </p>
                   <p className="text-[13px] font-semibold tabular-nums text-slate-700">
-                    {reminder.dueOdometer.toLocaleString('en-IN')} km
+                    {dueOdometer.toLocaleString('en-IN')} km
                   </p>
                 </div>
-              ) : null}
-            </div>
+              </div>
 
-            <div className="ml-4 flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-300 shadow-premium-sm transition-all group-hover:translate-x-1 group-hover:text-primary">
-              <ChevronRight className="h-4 w-4" />
+              {chevron}
             </div>
-          </div>
+          ) : (
+            chevron
+          )}
         </Link>
       </Card>
     </div>
