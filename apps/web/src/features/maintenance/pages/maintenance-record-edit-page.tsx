@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { MaintenanceRecordStatus } from '@vehicle-vault/shared';
 import { useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
@@ -38,6 +39,10 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   const vehicleQuery = useVehicle(recordQuery.data?.vehicleId ?? '');
   const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
   const { canEdit } = accessFor(currentUserRole);
+  // A draft is an extraction nobody has agreed to yet: it counts nowhere until it
+  // is confirmed, and nothing outside this page says it is a draft, so saving it
+  // here is the confirmation rather than another way to leave it uncounted.
+  const isDraft = recordQuery.data?.status === MaintenanceRecordStatus.Draft;
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved maintenance edits. Leave without saving?',
@@ -82,11 +87,15 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     values: Parameters<typeof updateRecordMutation.mutateAsync>[0],
   ) {
     try {
-      const record = await updateRecordMutation.mutateAsync(values);
+      const record = await updateRecordMutation.mutateAsync(
+        isDraft ? { ...values, status: MaintenanceRecordStatus.Confirmed } : values,
+      );
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
-        title: 'Maintenance record updated',
-        description: 'Changes to this service entry were saved.',
+        title: isDraft ? 'Maintenance record confirmed' : 'Maintenance record updated',
+        description: isDraft
+          ? 'This service now counts towards costs, reports and its next service.'
+          : 'Changes to this service entry were saved.',
       });
 
       try {
@@ -102,8 +111,15 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
       }
     } catch (error) {
       appToast.error({
-        title: 'Unable to update maintenance record',
-        description: getApiErrorMessage(error, 'Unable to update the maintenance record.'),
+        title: isDraft
+          ? 'Unable to confirm maintenance record'
+          : 'Unable to update maintenance record',
+        description: getApiErrorMessage(
+          error,
+          isDraft
+            ? 'Unable to confirm the maintenance record.'
+            : 'Unable to update the maintenance record.',
+        ),
       });
       throw error;
     }
@@ -184,8 +200,12 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               Back to Record
             </Link>
           }
-          description="Correct service details without losing the linked receipts or history."
-          title="Edit Maintenance Record"
+          description={
+            isDraft
+              ? 'This draft does not count anywhere yet. Check the details, then confirm it.'
+              : 'Correct service details without losing the linked receipts or history.'
+          }
+          title={isDraft ? 'Confirm Maintenance Record' : 'Edit Maintenance Record'}
         />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -198,14 +218,22 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               updateRecordMutation.error
                 ? getApiErrorMessage(
                     updateRecordMutation.error,
-                    'Unable to update the maintenance record.',
+                    isDraft
+                      ? 'Unable to confirm the maintenance record.'
+                      : 'Unable to update the maintenance record.',
                   )
                 : null
             }
-            submitHint="Edits keep the same receipts linked to this service entry."
-            submitLabel="Save Changes"
-            submittingLabel="Saving changes..."
-            successMessage="Maintenance record updated."
+            submitHint={
+              isDraft
+                ? 'Confirming logs this service: it starts counting in costs and reports, and any next-due the workshop wrote down becomes a reminder.'
+                : 'Edits keep the same receipts linked to this service entry.'
+            }
+            submitLabel={isDraft ? 'Confirm Record' : 'Save Changes'}
+            submittingLabel={isDraft ? 'Confirming record...' : 'Saving changes...'}
+            successMessage={
+              isDraft ? 'Maintenance record confirmed.' : 'Maintenance record updated.'
+            }
             vehicleId={recordQuery.data?.vehicleId}
           />
 
