@@ -20,7 +20,7 @@ export function MaintenanceRecordList({
   vehicleLabelById,
 }: MaintenanceRecordListProps) {
   return (
-    <Card>
+    <Card className="p-3 sm:p-5">
       <CardHeader className="pb-3">
         <CardTitle>{title}</CardTitle>
       </CardHeader>

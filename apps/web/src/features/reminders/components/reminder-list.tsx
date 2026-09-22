@@ -24,7 +24,7 @@ export function ReminderList({
   vehicleLabelById,
 }: ReminderListProps) {
   return (
-    <Card>
+    <Card className="p-3 sm:p-5">
       <CardHeader className="pb-3">
         <CardTitle>{title}</CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}

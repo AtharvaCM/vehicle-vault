@@ -242,10 +242,11 @@ export function MaintenanceOverviewPage({
           />
 
           <SectionCard
+            className="p-3 sm:p-5"
             description="Browse every logged service entry across your vehicles."
             title="All maintenance records"
             action={
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
                 <span>{filteredRecords.length} visible</span>
               </div>
