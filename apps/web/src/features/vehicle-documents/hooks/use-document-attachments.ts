@@ -9,10 +9,15 @@ import {
   type DocumentWithFilesKind,
 } from '../api/document-attachments';
 
-export function useDocumentAttachments(kind: DocumentWithFilesKind, documentId: string) {
+export function useDocumentAttachments(
+  kind: DocumentWithFilesKind,
+  documentId: string,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: queryKeys.attachments.byDocument(kind, documentId),
     queryFn: () => getDocumentAttachments(kind, documentId),
+    enabled,
   });
 }
 

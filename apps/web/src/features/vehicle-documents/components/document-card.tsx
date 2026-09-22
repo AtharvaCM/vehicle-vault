@@ -1,4 +1,14 @@
-import { Calendar, Gauge, Pencil, Trash2, Shield, FileBadge, RefreshCw } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import {
+  Calendar,
+  Gauge,
+  Maximize2,
+  Pencil,
+  Trash2,
+  Shield,
+  FileBadge,
+  RefreshCw,
+} from 'lucide-react';
 import { format, isBefore, addDays } from 'date-fns';
 import { type VehicleDocument } from '@vehicle-vault/shared';
 
@@ -59,6 +69,20 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
         Renew
       </Button>
     ) : null;
+
+  // For every role: showing a document is reading it, and a viewer may be the
+  // one stopped at the checkpoint.
+  const showLink = (
+    <Link
+      aria-label={`Show ${documentKindTitles[document.kind]} full screen`}
+      className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      params={{ vehicleId, kind: document.kind, documentId: document.id }}
+      to="/vehicles/$vehicleId/documents/$kind/$documentId"
+    >
+      <Maximize2 aria-hidden="true" className="h-3.5 w-3.5" />
+      Show
+    </Link>
+  );
 
   async function handleDelete() {
     if (confirm(`Are you sure you want to delete this ${document.kind} record?`)) {
@@ -161,6 +185,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4">
+                {showLink}
                 {renewButton}
                 {onEdit && (
                   <Button
@@ -280,6 +305,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-4">
+                {showLink}
                 {renewButton}
                 {onEdit && (
                   <Button
@@ -394,6 +420,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-4">
+              {showLink}
               {renewButton}
               {onEdit && (
                 <Button

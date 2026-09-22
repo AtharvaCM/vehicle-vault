@@ -8,6 +8,7 @@ import {
   type VehicleDocument,
 } from '@vehicle-vault/shared';
 import { addDays, addYears } from 'date-fns';
+import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VehicleAccessProvider } from '../context/vehicle-access';
@@ -20,6 +21,24 @@ const mutation = vi.hoisted(() => () => ({ mutateAsync: vi.fn(), isPending: fals
 const createDocument = vi.hoisted(() => vi.fn());
 const updateDocument = vi.hoisted(() => vi.fn());
 
+// A document card links to its full-screen view.
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    children,
+    params: _params,
+    search: _search,
+    to,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    params?: unknown;
+    search?: unknown;
+    to?: string;
+  }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
 vi.mock('../../vehicle-documents/hooks/use-documents', () => ({
   useVehicleDocuments: () => documentsQuery.current,
   useCreateVehicleDocument: () => ({ mutateAsync: createDocument, isPending: false }),
@@ -199,6 +218,11 @@ describe('ProtectionTab roles', () => {
 
     expect(screen.getByText('Acme General')).toBeInTheDocument();
     expect(screen.getByText('#CLM-7')).toBeInTheDocument();
+    // Showing a document is reading it: the viewer may be the one at the checkpoint.
+    expect(screen.getByRole('link', { name: 'Show Insurance Policy full screen' })).toHaveAttribute(
+      'href',
+      '/vehicles/$vehicleId/documents/$kind/$documentId',
+    );
     for (const name of [
       ...sectionActions,
       'Edit document',
