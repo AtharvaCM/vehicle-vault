@@ -11,6 +11,8 @@ import {
   type AttachmentExtraction,
   type Attachment,
   type AttachmentReconciliationSummary,
+  type MaintenanceFillPlan,
+  type MaintenanceFillResult,
   type MaintenanceInvoiceExtractionDraft,
   MaintenanceCategory,
   MaintenanceLineItemKind,
@@ -28,6 +30,7 @@ import { ExtractionService } from '../extraction/extraction.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
+import { getLineItemBreakdown, planMaintenanceFill } from './maintenance-fill';
 
 const MAINTENANCE_EXTRACTION_KIND = 'maintenance_invoice';
 
@@ -335,12 +338,19 @@ export class AttachmentsService {
     }
 
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
-    if (attachment.maintenanceRecordId) {
-      // Opening a service file is for any member; extracting from it is an edit.
-      // It costs a provider call and replaces the stored extraction, which only an
-      // editor can go on to apply.
-      await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
+    if (!attachment.maintenanceRecordId) {
+      // This reads every file as a service invoice, which only a maintenance
+      // record can take: applyExtraction and fill refuse any other owner. A
+      // vehicle document or loan is read as its own kind from an upload to its
+      // scan route, so any other owner's file is refused here for every role,
+      // before it is downloaded or the provider called. A non-member has
+      // already had a 404 above.
+      throw new BadRequestException('Only a file on a service record can be read as an invoice.');
     }
+    // Opening a service file is for any member; extracting from it is an edit.
+    // It costs a provider call and replaces the stored extraction, which only an
+    // editor can go on to apply.
+    await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
     const fileBuffer = await this.storageService.downloadObject(attachment.fileName);
 
     await this.prisma.attachmentExtraction.upsert({
@@ -527,6 +537,12 @@ export class AttachmentsService {
     }
   }
 
+  /**
+   * Writes a whole extraction into a draft: every field it read, over whatever
+   * the draft held, and the record stays a draft for someone to confirm. A
+   * confirmed record is refused — this would overwrite what was typed and turn
+   * it back into a draft — and is filled in with `fillFromAttachment` instead.
+   */
   async applyExtraction(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
     const extraction = attachment.extraction
@@ -549,11 +565,77 @@ export class AttachmentsService {
       );
     }
 
+    const record = await this.maintenanceService.getRecordById(
+      userId,
+      attachment.maintenanceRecordId,
+    );
+    if (record.status === MaintenanceRecordStatus.Confirmed) {
+      throw new BadRequestException(
+        'This record is confirmed, so an extraction only fills in what it is missing. Use Fill in from photo on the record instead.',
+      );
+    }
+
     return this.maintenanceService.updateRecord(
       userId,
       attachment.maintenanceRecordId,
       updatePayload,
     );
+  }
+
+  /** What filling the record in from this attachment would write; changes nothing. */
+  async getFillPlan(userId: string, attachmentId: string): Promise<MaintenanceFillPlan> {
+    const { record, extraction } = await this.getFillSource(userId, attachmentId);
+    return planMaintenanceFill(record, extraction);
+  }
+
+  /**
+   * "Fill in from photo": writes what the attachment's extraction read into the
+   * fields its confirmed record leaves blank, and nothing else (see
+   * `planMaintenanceFill`). The record stays confirmed. The write is an ordinary
+   * record update, so it is validated, audited as `maintenance.updated` in its
+   * own transaction, and a next-due it fills makes the record's reminder.
+   */
+  async fillFromAttachment(userId: string, attachmentId: string): Promise<MaintenanceFillResult> {
+    const { record, extraction } = await this.getFillSource(userId, attachmentId);
+    const plan = planMaintenanceFill(record, extraction);
+
+    if (!plan.fields.length) {
+      return { record, filledFields: [] };
+    }
+
+    const updated = await this.maintenanceService.updateRecord(userId, record.id, plan.changes);
+    return { record: updated, filledFields: plan.fields };
+  }
+
+  /**
+   * The confirmed record an attachment belongs to and the extraction read from
+   * it. Filling a record in is an edit, so it takes an editor; extraction runs
+   * only when someone asks for it, so this needs one that has finished.
+   */
+  private async getFillSource(userId: string, attachmentId: string) {
+    const attachment = await this.getStoredAttachmentById(userId, attachmentId);
+
+    if (!attachment.maintenanceRecordId) {
+      throw new BadRequestException('Only a file on a service record can fill that record in.');
+    }
+
+    await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
+
+    const record = await this.maintenanceService.getRecordById(
+      userId,
+      attachment.maintenanceRecordId,
+    );
+    if (record.status !== MaintenanceRecordStatus.Confirmed) {
+      throw new BadRequestException(
+        'A draft takes the whole extraction: apply it to the draft instead.',
+      );
+    }
+
+    if (attachment.extraction?.status !== AttachmentExtractionStatus.Completed) {
+      throw new BadRequestException('Read this file first, then fill the record in from it.');
+    }
+
+    return { record, extraction: this.toAttachmentExtraction(attachment.extraction) };
   }
 
   async getAttachmentFile(userId: string, attachmentId: string) {
@@ -828,6 +910,8 @@ export class AttachmentsService {
       currencyCode: storedExtraction.currencyCode ?? undefined,
       notes: storedExtraction.notes ?? undefined,
       lineItems: this.fromLineItemJsonValue(storedExtraction.lineItems),
+      nextDueDate: storedExtraction.nextDueDate?.toISOString(),
+      nextDueOdometer: storedExtraction.nextDueOdometer ?? undefined,
       failureReason: storedExtraction.failureReason ?? undefined,
       extractedAt: storedExtraction.extractedAt?.toISOString(),
       createdAt: storedExtraction.createdAt.toISOString(),
@@ -857,6 +941,8 @@ export class AttachmentsService {
       currencyCode: extraction.currencyCode,
       notes: extraction.notes,
       lineItems: extraction.lineItems ? this.toJsonValue(extraction.lineItems) : undefined,
+      nextDueDate: extraction.nextDueDate ? new Date(extraction.nextDueDate) : undefined,
+      nextDueOdometer: extraction.nextDueOdometer,
       extractedAt: extraction.extractedAt ? new Date(extraction.extractedAt) : new Date(),
       failureReason: null,
     };
@@ -882,6 +968,8 @@ export class AttachmentsService {
       currencyCode: extraction.currencyCode,
       notes: extraction.notes,
       lineItems: extraction.lineItems ? this.toJsonValue(extraction.lineItems) : Prisma.JsonNull,
+      nextDueDate: extraction.nextDueDate ? new Date(extraction.nextDueDate) : null,
+      nextDueOdometer: extraction.nextDueOdometer ?? null,
       extractedAt: extraction.extractedAt ? new Date(extraction.extractedAt) : new Date(),
       failureReason: null,
     };
@@ -895,7 +983,7 @@ export class AttachmentsService {
         ...lineItem,
         position: index,
       })) ?? [];
-    const breakdown = this.getLineItemBreakdown(lineItems);
+    const breakdown = getLineItemBreakdown(lineItems);
     const primaryCategory = lineItems.find(
       (lineItem) => lineItem.normalizedCategory,
     )?.normalizedCategory;
@@ -916,61 +1004,14 @@ export class AttachmentsService {
       taxCost: lineItems.length ? breakdown.taxCost : undefined,
       discountAmount: lineItems.length ? breakdown.discountAmount : undefined,
       notes: extraction.notes,
+      nextDueDate: extraction.nextDueDate,
+      nextDueOdometer: extraction.nextDueOdometer,
       lineItems: lineItems.length ? lineItems : undefined,
     };
 
     return Object.fromEntries(
       Object.entries(updatePayload).filter(([, value]) => value !== undefined),
     ) as UpdateMaintenanceRecordInput;
-  }
-
-  private getLineItemBreakdown(lineItems: NonNullable<UpdateMaintenanceRecordInput['lineItems']>) {
-    return lineItems.reduce(
-      (totals, lineItem) => {
-        const amount =
-          typeof lineItem.lineTotal === 'number'
-            ? lineItem.lineTotal
-            : typeof lineItem.quantity === 'number' && typeof lineItem.unitPrice === 'number'
-              ? lineItem.quantity * lineItem.unitPrice
-              : 0;
-
-        switch (lineItem.kind) {
-          case 'labor':
-            totals.laborCost += amount;
-            totals.totalCost += amount;
-            break;
-          case 'part':
-            totals.partsCost += amount;
-            totals.totalCost += amount;
-            break;
-          case 'fluid':
-            totals.fluidsCost += amount;
-            totals.totalCost += amount;
-            break;
-          case 'tax':
-            totals.taxCost += amount;
-            totals.totalCost += amount;
-            break;
-          case 'discount':
-            totals.discountAmount += amount;
-            totals.totalCost -= amount;
-            break;
-          default:
-            totals.totalCost += amount;
-            break;
-        }
-
-        return totals;
-      },
-      {
-        totalCost: 0,
-        laborCost: 0,
-        partsCost: 0,
-        fluidsCost: 0,
-        taxCost: 0,
-        discountAmount: 0,
-      },
-    );
   }
 
   private fromLineItemJsonValue(value: Prisma.JsonValue | null | undefined) {

@@ -1,3 +1,30 @@
+## [1.55.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.1...v1.55.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** drop the empty figures strip from date-only reminder cards ([8c206be](https://github.com/AtharvaCM/vehicle-vault/commit/8c206be37bffbf354a9d317235794dc657f42d82))
+
+## [1.55.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.0...v1.55.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **api:** refuse to extract a vehicle document's file ([67210a2](https://github.com/AtharvaCM/vehicle-vault/commit/67210a22ef32943221a6efd215e65b5c5200939b)), closes [#159](https://github.com/AtharvaCM/vehicle-vault/issues/159)
+* **api:** refuse to extract a vehicle loan's file too ([2736faf](https://github.com/AtharvaCM/vehicle-vault/commit/2736faf71959a33e98210baef2f50e57086d3cf6))
+
+# [1.55.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.4...v1.55.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* **maintenance:** stop Apply to Draft overwriting a confirmed record ([b8ea390](https://github.com/AtharvaCM/vehicle-vault/commit/b8ea3907f0d13f814c5bb86c98a5eaa8ef9f8eec))
+
+
+### Features
+
+* **maintenance:** fill a confirmed record in from its photo ([c2dd4b7](https://github.com/AtharvaCM/vehicle-vault/commit/c2dd4b7791bfecd06925a85909d413d8f02fb945)), closes [#116](https://github.com/AtharvaCM/vehicle-vault/issues/116) [#116](https://github.com/AtharvaCM/vehicle-vault/issues/116) [#126](https://github.com/AtharvaCM/vehicle-vault/issues/126)
+
 ## [1.54.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.54.3...v1.54.4) (2026-09-22)
 
 

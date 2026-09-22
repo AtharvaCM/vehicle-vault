@@ -167,6 +167,18 @@ export class AttachmentsController {
     );
   }
 
+  @Get('attachments/:attachmentId/fill')
+  async getFillPlan(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
+    return successResponse(await this.attachmentsService.getFillPlan(user.id, params.attachmentId));
+  }
+
+  @Post('attachments/:attachmentId/fill')
+  async fillFromAttachment(@Param() params: AttachmentIdParamDto, @CurrentUser() user: AuthUser) {
+    return successResponse(
+      await this.attachmentsService.fillFromAttachment(user.id, params.attachmentId),
+    );
+  }
+
   @Get('attachments/:attachmentId/file')
   async getAttachmentFile(
     @Param() params: AttachmentIdParamDto,
