@@ -6,7 +6,15 @@
  * Leans towards flagging too much. Nothing is deleted on these signals alone —
  * a human reviews the shortlist, and deletion takes the ids they approved.
  */
-export type TestAccountSignal = 'e2e' | 'playwright' | 'example-domain' | 'plus-tagged';
+export type TestAccountSignal =
+  | 'e2e'
+  | 'playwright'
+  | 'example-domain'
+  | 'disposable-domain'
+  | 'plus-tagged';
+
+// Public inboxes: whoever types the name reads the mail, a password reset included.
+const DISPOSABLE_DOMAINS = new Set(['mailinator.com']);
 
 export function testAccountSignals(email: string): TestAccountSignal[] {
   const address = email.trim().toLowerCase();
@@ -19,6 +27,7 @@ export function testAccountSignals(email: string): TestAccountSignal[] {
   if (address.includes('playwright')) signals.push('playwright');
   // Reserved for documentation (RFC 2606): nobody receives mail there.
   if (/(^|\.)example\.(com|org|net)$/.test(domain)) signals.push('example-domain');
+  if (DISPOSABLE_DOMAINS.has(domain)) signals.push('disposable-domain');
   if (local.includes('+')) signals.push('plus-tagged');
 
   return signals;
