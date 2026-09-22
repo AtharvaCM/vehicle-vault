@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-// The Prisma enum rather than the shared one: these rows come straight off the
-// vehicle include, and re-casting them to the wire enum would be ceremony over
-// two identical string unions.
-import { ServiceBaselineStatus, VehicleRole } from '@prisma/client';
+import { VehicleRole } from '@prisma/client';
 import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
@@ -11,22 +8,19 @@ import { pickLatestDocument } from '../vehicle-documents/document-recency';
 import { AccessoriesService } from '../accessories/accessories.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
-import { TyresService, type VehicleTyreAlertState } from '../tyres/tyres.service';
-// Pure functions, not a provider: importing them does not make the
-// notifications module depend on the reminders module, which would close a
-// cycle (reminders → notifications → tyres).
-import { extractSlugFromNotes, TYRE_INSPECTION_SLUG } from '../reminders/catalog-marker';
+import { TyresService } from '../tyres/tyres.service';
+import {
+  distanceIntervals,
+  EDITOR_ONLY_KINDS,
+  isAlertedFromMeasurements,
+  serviceHistoryVerdicts,
+  tyreVerdicts,
+} from './alert-verdicts';
 import type { AlertKind, AlertPayloads, ReminderAlertBasis } from './types';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import {
   ACCESSORY_WARRANTY_ALERT_WINDOW_DAYS,
-  SERVICE_HISTORY_PROMPT_KM,
-  TYRE_INSPECTION_INTERVAL_KM,
-  TYRE_INSPECTION_INTERVAL_MONTHS,
-  TYRE_TRACKING_PROMPT_KM,
-  VEHICLE_AGE_PROMPT_YEARS,
   MaintenanceRecordStatus,
-  type MaintenanceCategory,
 } from '@vehicle-vault/shared';
 
 const DOCUMENT_EXPIRY_WINDOW_DAYS = 7;
@@ -44,11 +38,10 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 // file, and the vehicle-scope `service-baseline-unknown` — ask the owner to
 // tell the app what it does not know. The 9 September cron raised 30 of them,
 // mostly to accounts idle for six months, and they would have greeted a vehicle
-// added the day before. These three numbers keep them for people who are
-// listening and polite to everyone else. See `raisePrompt`.
+// added the day before. The new-vehicle grace is part of the verdict (see
+// `alert-verdicts`); these two numbers are delivery, keeping the prompts for
+// people who are listening and polite to everyone else. See `raisePrompt`.
 
-/** A vehicle this new is still being set up; asking what its owner has not entered yet is premature. */
-const PROMPT_NEW_VEHICLE_GRACE_DAYS = 7;
 /** No audited action for this long and a prompt stays in the app instead of interrupting anyone. */
 const PROMPT_DORMANT_AFTER_DAYS = 60;
 /** A prompt once asked — then read, ignored or deleted — is not asked again for this long. */
@@ -65,35 +58,6 @@ type Audience = {
   /** The owner and editors: the members who can answer a request to log something. */
   editors: string[];
 };
-
-/**
- * The alerts that ask their reader to record something — service history, a
- * tyre reading. A viewer cannot, and no longer sees the controls to try, so
- * these go to the members who can. Every other alert is news about the vehicle
- * and goes to all of them.
- */
-const EDITOR_ONLY_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>([
-  'service-baseline-unknown',
-  'tyre-uninspected',
-]);
-
-/** The vehicle facts the tyre checks need, kept narrow so the tests can state them. */
-type TyreCheckVehicle = {
-  id: string;
-  userId: string;
-  year: number;
-  createdAt: Date;
-  audience: Audience;
-};
-
-/** The vehicle facts {@link MaintenanceAlertService.raisePrompt} needs. */
-type PromptVehicle = { id: string; createdAt: Date; audience: Audience };
-
-function monthsBefore(date: Date, months: number): Date {
-  const shifted = new Date(date);
-  shifted.setMonth(shifted.getMonth() - months);
-  return shifted;
-}
 
 function daysBefore(date: Date, days: number): Date {
   return new Date(date.getTime() - days * MS_PER_DAY);
@@ -176,24 +140,19 @@ export class MaintenanceAlertService {
     // type/fuel-gated defaults otherwise (km-based alerting only —
     // month-based intervals surface through the forecast, not alerts).
     const intervals = await this.intervalResolver.resolveForVehicle(vehicle);
-    const baselines = new Map(vehicle.serviceBaselines.map((row) => [row.category, row]));
+    const history = {
+      vehicle,
+      intervals,
+      confirmedRecords: vehicle.maintenanceRecords,
+      baselines: vehicle.serviceBaselines,
+    };
 
-    for (const [category, interval] of Object.entries(intervals)) {
-      if (interval.km == null) continue;
-      const lastRecord = vehicle.maintenanceRecords.find((r) => r.category === category);
-      const baseline = baselines.get(category as MaintenanceCategory) ?? null;
+    for (const { category, intervalKm, lastDone } of distanceIntervals(history)) {
+      // Nothing honest to measure from; step 2b says so where it is worth saying.
+      if (lastDone.kind !== 'measured') continue;
 
-      const lastOdo = await this.resolveLastDoneOdometer({
-        vehicle: { ...vehicle, audience },
-        category,
-        intervalKm: interval.km,
-        lastRecordOdometer: lastRecord?.odometer ?? null,
-        baseline,
-      });
-      if (lastOdo == null) continue;
-
-      const distanceSinceLast = currentOdo - lastOdo;
-      const remainingDistance = interval.km - distanceSinceLast;
+      const distanceSinceLast = currentOdo - lastDone.odometer;
+      const remainingDistance = intervalKm - distanceSinceLast;
 
       // Alert if due within the odometer window or already overdue
       if (remainingDistance <= ODOMETER_ALERT_WINDOW_KM) {
@@ -206,10 +165,16 @@ export class MaintenanceAlertService {
       }
     }
 
-    // 2b. A vehicle nobody has told us anything about. Raised once for the whole
-    // vehicle rather than once per category, because every category is in the
-    // same state and ten notifications would say one thing.
-    await this.runServiceHistoryPrompt({ ...vehicle, audience }, now);
+    // 2b. What the app does not know about the vehicle's history: nothing at
+    // all, asked once for the whole vehicle as a cold-start prompt, or the
+    // categories its owner has said they cannot answer, each a plain alert.
+    for (const verdict of serviceHistoryVerdicts(history, now)) {
+      if (verdict.payload.scope === 'vehicle') {
+        await this.raisePrompt(audience, vehicle.id, verdict.kind, verdict.payload, now);
+      } else {
+        await this.raiseToMembers(audience, vehicle.id, verdict.kind, verdict.payload);
+      }
+    }
 
     // 3. Reminders the owner set themselves. Both timings are checked here: an
     // odometer mark the vehicle is approaching, and a due date the calendar has
@@ -225,13 +190,7 @@ export class MaintenanceAlertService {
     });
 
     for (const reminder of reminders) {
-      // The tyre walk-around is alerted from measurements, not from this row.
-      // Both would otherwise nag about one thing, and they would disagree: a
-      // reminder goes overdue when nobody ticked a box, while `tyre-uninspected`
-      // goes stale when nobody actually looked. Only the second is true about
-      // the tyres. Someone who inspects and forgets to tick is left alone;
-      // someone who ticks without inspecting is not.
-      if (extractSlugFromNotes(reminder.notes) === TYRE_INSPECTION_SLUG) continue;
+      if (isAlertedFromMeasurements(reminder)) continue;
 
       const signal = this.resolveReminderSignal(reminder, currentOdo, now);
       if (!signal) continue;
@@ -307,7 +266,19 @@ export class MaintenanceAlertService {
     // services, and rubber ages out whether or not the vehicle moves. The
     // grading already existed for the vehicle page; without this call nothing
     // reached the user unless they went looking.
-    await this.runTyreChecks({ ...vehicle, audience }, now);
+    const tyreState = await this.tyresService.getAlertState(vehicle.userId, vehicle.id);
+    for (const verdict of tyreVerdicts(vehicle, tyreState, now)) {
+      // Spelled out per kind, as for reminders above, so each payload keeps its type.
+      if (verdict.kind === 'tyre-worn') {
+        await this.raiseToMembers(audience, vehicle.id, verdict.kind, verdict.payload);
+      } else if (verdict.kind === 'tyre-aged') {
+        await this.raiseToMembers(audience, vehicle.id, verdict.kind, verdict.payload);
+      } else if (verdict.payload.reason === 'untracked') {
+        await this.raisePrompt(audience, vehicle.id, verdict.kind, verdict.payload, now);
+      } else {
+        await this.raiseToMembers(audience, vehicle.id, verdict.kind, verdict.payload);
+      }
+    }
   }
 
   /**
@@ -398,179 +369,14 @@ export class MaintenanceAlertService {
   }
 
   /**
-   * The odometer a category's interval should be measured from, or null when
-   * there is nothing honest to measure from and no alert should be attempted.
-   *
-   * The four cases are genuinely different and used to collapse into one:
-   *
-   * - A **logged service** is a measurement and always wins.
-   * - A **baseline reading** is what the owner told us at onboarding. Second
-   *   best, and the whole point of the table.
-   * - A baseline of **`unknown`** is an owner who was asked and said they did
-   *   not know. That earns an alert, not silence — silence is what let a bike
-   *   at 40 000 km look like it had just had everything done.
-   * - **No baseline row** means nobody has been asked. Every vehicle predating
-   *   the baseline table is in this state, so it keeps the historical fallback
-   *   (measure from the odometer on the vehicle) rather than being retroactively
-   *   declared unknown and alerted about, category by category.
-   *
-   * A baseline that knows only a date is the fifth case and returns null: the
-   * distance arithmetic here cannot use it, and inventing an odometer for that
-   * date from the mileage forecast would let a projection decide a service is
-   * overdue. Month-based intervals surface through the forecast, not alerts.
-   */
-  private async resolveLastDoneOdometer(args: {
-    vehicle: { id: string; odometer: number; audience: Audience };
-    category: string;
-    intervalKm: number;
-    lastRecordOdometer: number | null;
-    baseline: { status: ServiceBaselineStatus; lastDoneOdometer: number | null } | null;
-  }): Promise<number | null> {
-    const { vehicle, category, intervalKm, lastRecordOdometer, baseline } = args;
-
-    if (lastRecordOdometer != null) return lastRecordOdometer;
-    if (baseline?.lastDoneOdometer != null) return baseline.lastDoneOdometer;
-
-    if (baseline?.status === ServiceBaselineStatus.unknown) {
-      await this.raiseToMembers(vehicle.audience, vehicle.id, 'service-baseline-unknown', {
-        vehicleId: vehicle.id,
-        odometer: vehicle.odometer,
-        scope: 'category',
-        category,
-        intervalKm,
-      });
-      return null;
-    }
-
-    if (baseline) return null;
-
-    return vehicle.odometer || 0;
-  }
-
-  /**
-   * Fires only when the app has been told nothing at all: no confirmed service
-   * records, no baselines, and enough distance or years for that silence to be
-   * misleading. A vehicle with a single logged service is already telling us
-   * something and is left alone.
-   *
-   * `maintenanceRecords` arrives already filtered to confirmed rows, so a
-   * vehicle whose only history is an unconfirmed draft still gets asked. That
-   * is the point: nobody has yet agreed the draft describes a real service.
-   */
-  private async runServiceHistoryPrompt(
-    vehicle: PromptVehicle & {
-      odometer: number;
-      year: number;
-      maintenanceRecords: unknown[];
-      serviceBaselines: unknown[];
-    },
-    now: Date,
-  ) {
-    if (vehicle.maintenanceRecords.length > 0) return;
-    if (vehicle.serviceBaselines.length > 0) return;
-    if (!this.isOldEnoughToAsk(vehicle, vehicle.odometer, SERVICE_HISTORY_PROMPT_KM, now)) {
-      return;
-    }
-
-    await this.raisePrompt(
-      vehicle,
-      'service-baseline-unknown',
-      { vehicleId: vehicle.id, odometer: vehicle.odometer, scope: 'vehicle' },
-      now,
-    );
-  }
-
-  /**
-   * Condition alerts fire per tyre; the inspection prompt fires per vehicle.
-   * The resolver reports one verdict per tyre — the worse of tread and age — so
-   * a tyre raises at most one of `tyre-worn` / `tyre-aged` and a set of four
-   * cannot produce eight notifications in a morning.
-   */
-  private async runTyreChecks(vehicle: TyreCheckVehicle, now: Date) {
-    const state = await this.tyresService.getAlertState(vehicle.userId, vehicle.id);
-
-    for (const condition of state.conditions) {
-      // `unknown` means nothing has been measured, which the inspection prompt
-      // below answers. Calling it worn would invent a reading.
-      if (condition.level === 'healthy' || condition.level === 'unknown') continue;
-
-      if (condition.reason === 'tread') {
-        await this.raiseToMembers(vehicle.audience, vehicle.id, 'tyre-worn', {
-          vehicleId: vehicle.id,
-          tyreId: condition.tyreId,
-          position: condition.position,
-          level: condition.level,
-          summary: condition.summary,
-          treadDepthMm: condition.treadDepthMm,
-        });
-      } else if (condition.reason === 'age' && condition.level !== 'illegal') {
-        await this.raiseToMembers(vehicle.audience, vehicle.id, 'tyre-aged', {
-          vehicleId: vehicle.id,
-          tyreId: condition.tyreId,
-          position: condition.position,
-          level: condition.level,
-          summary: condition.summary,
-          ageYears: condition.ageYears,
-        });
-      }
-    }
-
-    await this.runTyreInspectionPrompt(vehicle, state, now);
-  }
-
-  private async runTyreInspectionPrompt(
-    vehicle: TyreCheckVehicle,
-    state: VehicleTyreAlertState,
-    now: Date,
-  ) {
-    if (state.conditions.length === 0) {
-      if (!this.isOldEnoughToAsk(vehicle, state.vehicleOdometer, TYRE_TRACKING_PROMPT_KM, now)) {
-        return;
-      }
-
-      await this.raisePrompt(
-        vehicle,
-        'tyre-uninspected',
-        { vehicleId: vehicle.id, odometer: state.vehicleOdometer, reason: 'untracked' },
-        now,
-      );
-      return;
-    }
-
-    // Tyres are tracked but none of them is on the road (a lone spare). There is
-    // no distance to measure staleness against and nothing useful to ask for.
-    if (state.lastObservation == null) return;
-
-    const kmSinceLastCheck = Math.max(0, state.vehicleOdometer - state.lastObservation.odometer);
-    const staleByDistance = kmSinceLastCheck >= TYRE_INSPECTION_INTERVAL_KM;
-    const staleByTime =
-      state.lastObservation.at <= monthsBefore(now, TYRE_INSPECTION_INTERVAL_MONTHS);
-    if (!staleByDistance && !staleByTime) return;
-
-    const daysSinceLastCheck = Math.max(
-      0,
-      Math.floor((now.getTime() - state.lastObservation.at.getTime()) / MS_PER_DAY),
-    );
-
-    await this.raiseToMembers(vehicle.audience, vehicle.id, 'tyre-uninspected', {
-      vehicleId: vehicle.id,
-      odometer: state.vehicleOdometer,
-      reason: 'stale',
-      kmSinceLastCheck,
-      daysSinceLastCheck,
-    });
-  }
-
-  /**
    * Raise one of the two cold-start prompts, politely.
    *
-   * Three rules, none of which touch the condition alerts (`tyre-worn`,
-   * `tyre-aged`, the category-scope baseline) — those describe something true
-   * about the vehicle and go out regardless:
+   * Whether to ask at all is the verdict's call, new-vehicle grace included
+   * (see `alert-verdicts`). How to ask is decided here, by two rules, neither of
+   * which touches the condition alerts (`tyre-worn`, `tyre-aged`, the
+   * category-scope baseline) — those describe something true about the vehicle
+   * and go out regardless:
    *
-   * - A vehicle added in the last week is still being set up. Asking its owner
-   *   about tyres or service history they may be about to enter is noise, so
-   *   nothing is raised at all.
    * - The same prompt for the same vehicle is not asked twice in 90 days,
    *   whether it was read, ignored or deleted. The dedup key alone only guards
    *   unread rows, so a prompt someone read and chose to ignore used to come
@@ -583,15 +389,14 @@ export class MaintenanceAlertService {
    * person decides it separately for each of them.
    */
   private async raisePrompt<K extends 'tyre-uninspected' | 'service-baseline-unknown'>(
-    vehicle: PromptVehicle,
+    audience: Audience,
+    vehicleId: string,
     kind: K,
     payload: AlertPayloads[K],
     now: Date,
   ) {
-    if (vehicle.createdAt > daysBefore(now, PROMPT_NEW_VEHICLE_GRACE_DAYS)) return;
-
-    for (const userId of this.recipientsFor(vehicle.audience, kind)) {
-      await this.notifyService.raise(userId, vehicle.id, kind, payload, {
+    for (const userId of this.recipientsFor(audience, kind)) {
+      await this.notifyService.raise(userId, vehicleId, kind, payload, {
         cooldownDays: PROMPT_COOLDOWN_DAYS,
         inAppOnly: await this.isDormant(userId, now),
       });
@@ -620,30 +425,6 @@ export class MaintenanceAlertService {
     return recent === null;
   }
 
-  /**
-   * Whether a vehicle has enough history behind it for the app's silence about
-   * that history to be misleading — enough distance covered, or old enough that
-   * wear items have aged regardless of use. Below both, a vehicle really is
-   * young and original and asking is noise.
-   *
-   * The distance threshold differs per question (tyres and service history are
-   * not due at the same point); the age one does not, because it is the same
-   * observation in both cases: the calendar wears a vehicle that never moves.
-   */
-  private isOldEnoughToAsk(
-    vehicle: { year: number },
-    odometer: number,
-    promptKm: number,
-    now: Date,
-  ): boolean {
-    const vehicleAgeYears = now.getFullYear() - vehicle.year;
-    return odometer >= promptKm || vehicleAgeYears >= VEHICLE_AGE_PROMPT_YEARS;
-  }
-
-  /**
-   * Trigger checks for ALL vehicles.
-   * This is called automatically every day at 6:00 AM.
-   */
   /**
    * The vehicle's warranty of record against its distance limit. Only that one
    * counts: an extended warranty supersedes the manufacturer's, whose limit is
@@ -691,6 +472,10 @@ export class MaintenanceAlertService {
     });
   }
 
+  /**
+   * Trigger checks for ALL vehicles.
+   * This is called automatically every day at 6:00 AM.
+   */
   @Cron(process.env.MAINTENANCE_ALERT_CRON || '0 6 * * *')
   async runDailyChecks() {
     if (process.env.NODE_ENV === 'development') {

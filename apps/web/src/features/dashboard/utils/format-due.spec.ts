@@ -38,6 +38,29 @@ describe('formatRelativeDue', () => {
     );
   });
 
+  it('describes an accessory warranty as running out, like a document', () => {
+    expect(formatRelativeDue({ kind: 'accessory', daysUntilDue: 0, dueDate })).toBe(
+      'Expires today',
+    );
+    expect(formatRelativeDue({ kind: 'accessory', daysUntilDue: 5, dueDate })).toBe(
+      'Expires in 5 days',
+    );
+  });
+
+  it('lets an undated verdict say what it rests on', () => {
+    expect(
+      formatRelativeDue({
+        kind: 'tyre',
+        daysUntilDue: null,
+        dueDate: null,
+        detail: '2.8 mm tread',
+      }),
+    ).toBe('2.8 mm tread');
+    expect(formatRelativeDue({ kind: 'service_baseline', daysUntilDue: null, dueDate: null })).toBe(
+      'No due date',
+    );
+  });
+
   it('describes documents with expiry wording', () => {
     expect(formatRelativeDue({ kind: 'document', daysUntilDue: -10, dueDate })).toBe(
       'Expired 10 days ago',

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import {
   LoanStatus,
+  MaintenanceRecordStatus,
   ReminderStatus,
   VehicleRole,
   type DashboardAttentionCounts,
@@ -21,13 +23,24 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AccessoriesService } from '../accessories/accessories.service';
 import { AttachmentsService } from '../attachments/attachments.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
+import {
+  EDITOR_ONLY_KINDS,
+  isAlertedFromMeasurements,
+  serviceHistoryVerdicts,
+  tyreVerdicts,
+  type AlertVerdict,
+} from '../notifications/alert-verdicts';
 import { NotificationsService } from '../notifications/notifications.service';
+import { positionLabel } from '../notifications/templates/tyre-labels';
 import { RemindersService } from '../reminders/reminders.service';
+import { TyresService } from '../tyres/tyres.service';
 import { isMoreRecentDocument } from '../vehicle-documents/document-recency';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
 import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
+import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
 import { VehiclesService } from '../vehicles/vehicles.service';
 
 import { MaintenanceForecastService } from '../vehicles/maintenance-forecast.service';
@@ -75,7 +88,41 @@ const DOCUMENT_KIND_TITLES: Record<VehicleDocumentKind, string> = {
 /** Legally mandatory in India, so the vehicle card always reports them (state `missing` when absent). */
 const MANDATORY_DOCUMENT_KINDS: readonly VehicleDocumentKind[] = ['insurance', 'puc'];
 
+/**
+ * The bell's tyre titles, in the queue's sentence case. The position goes in
+ * the detail line instead of the title, so a phone-width row keeps it.
+ */
+const TYRE_WORN_TITLES = {
+  illegal: 'Tyre not roadworthy',
+  replace: 'Replace tyre',
+  warn: 'Tyre wearing down',
+} as const;
+const TYRE_AGED_TITLES = { replace: 'Tyre aged out', warn: 'Tyre ageing' } as const;
+
+/** How many unanswered categories a service-history row names before it says "and N more". */
+const SERVICE_HISTORY_NAMED_CATEGORIES = 2;
+
 type VehicleSummaryRow = Awaited<ReturnType<VehiclesService['getAllVehicles']>>[number];
+
+/** The verdicts the queue shows: the ones the bell raises about tyres and service history. */
+type QueueVerdict = AlertVerdict<
+  'tyre-worn' | 'tyre-aged' | 'tyre-uninspected' | 'service-baseline-unknown'
+>;
+
+type ExpiringAccessory = Awaited<ReturnType<AccessoriesService['findExpiringWarranties']>>[number];
+
+type BaselineRow = Prisma.ServiceBaselineGetPayload<{
+  select: { vehicleId: true; category: true; status: true; lastDoneOdometer: true };
+}>;
+
+function km(value: number): string {
+  return `${Math.max(0, Math.round(value)).toLocaleString('en-IN')} km`;
+}
+
+/** "engine_oil" → "engine oil". */
+function categoryWords(category: string): string {
+  return category.replace(/_/g, ' ');
+}
 
 type AttentionVehicleFields = Pick<
   DashboardAttentionItem,
@@ -94,6 +141,9 @@ export class DashboardService {
     private readonly vehicleDocumentsService: VehicleDocumentsService,
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly tyresService: TyresService,
+    private readonly accessoriesService: AccessoriesService,
+    private readonly intervalResolver: MaintenanceIntervalResolver,
   ) {}
 
   async getSummary(userId: string): Promise<DashboardSummary> {
@@ -111,6 +161,8 @@ export class DashboardService {
       fuelLogCount,
       dismissals,
       fuelLogLatestDates,
+      baselines,
+      expiringAccessories,
     ] = await Promise.all([
       this.vehiclesService.getAllVehicles(userId),
       this.maintenanceService.getAllRecords(userId),
@@ -128,6 +180,13 @@ export class DashboardService {
         where: { vehicle: { members: { some: { userId } } } },
         _max: { date: true },
       }),
+      this.prisma.serviceBaseline.findMany({
+        where: { vehicle: { members: { some: { userId } } } },
+        select: { vehicleId: true, category: true, status: true, lastDoneOdometer: true },
+      }),
+      // The engine's own lookup, with the queue's 30-day look-ahead in place of
+      // the bell's seven days, as for documents.
+      this.accessoriesService.findExpiringWarranties(userId, THIS_MONTH_MAX_DAYS),
     ]);
     const dismissedDocumentIds = new Set(dismissals.map((d) => d.documentId));
     const latestFuelLogDateByVehicle = new Map(
@@ -175,11 +234,20 @@ export class DashboardService {
 
     const vehicleById = new Map(vehicles.map((vehicle) => [vehicle.id, vehicle]));
     const latestDocuments = this.latestDocumentPerVehicleKind(documents);
+    const verdictsByVehicle = await this.alertVerdictsFor({
+      userId,
+      vehicles,
+      maintenanceRecords,
+      baselines,
+      now,
+    });
     const attention = this.buildAttention({
       vehicleById,
       reminders,
       latestDocuments,
       activeLoans,
+      verdictsByVehicle,
+      expiringAccessories,
       today,
       dismissedDocumentIds,
     });
@@ -264,20 +332,92 @@ export class DashboardService {
   // Attention queue
   // ---------------------------------------------------------------------------
 
+  /**
+   * The alert engine's tyre and service-history verdicts on every vehicle the
+   * user can see, from the functions the engine raises them from and the same
+   * rows it reads: confirmed records only, every baseline, the resolved
+   * intervals, the tyres' graded state.
+   *
+   * Who hears a verdict is the engine's rule too: a question that asks someone
+   * to record something reaches only the members who can, so a viewer's queue
+   * never shows one.
+   */
+  private async alertVerdictsFor(input: {
+    userId: string;
+    vehicles: VehicleSummaryRow[];
+    maintenanceRecords: MaintenanceRecord[];
+    baselines: BaselineRow[];
+    now: Date;
+  }): Promise<Map<string, QueueVerdict[]>> {
+    const { userId, vehicles, maintenanceRecords, baselines, now } = input;
+    const confirmedByVehicle = this.groupByVehicle(
+      maintenanceRecords.filter((record) => record.status === MaintenanceRecordStatus.Confirmed),
+    );
+    const baselinesByVehicle = this.groupByVehicle(baselines);
+
+    const entries = await Promise.all(
+      vehicles.map(async (vehicle): Promise<[string, QueueVerdict[]]> => {
+        const [tyreState, intervals] = await Promise.all([
+          this.tyresService.getAlertState(userId, vehicle.id),
+          this.intervalResolver.resolveForVehicle(vehicle),
+        ]);
+        const verdictVehicle = {
+          id: vehicle.id,
+          year: vehicle.year,
+          odometer: vehicle.odometer,
+          createdAt: new Date(vehicle.createdAt),
+        };
+        const verdicts: QueueVerdict[] = [
+          ...serviceHistoryVerdicts(
+            {
+              vehicle: verdictVehicle,
+              intervals,
+              confirmedRecords: confirmedByVehicle.get(vehicle.id) ?? [],
+              baselines: baselinesByVehicle.get(vehicle.id) ?? [],
+            },
+            now,
+          ),
+          ...tyreVerdicts(verdictVehicle, tyreState, now),
+        ];
+        const canRecord = (vehicle.currentUserRole ?? VehicleRole.Owner) !== VehicleRole.Viewer;
+
+        return [
+          vehicle.id,
+          verdicts.filter((verdict) => canRecord || !EDITOR_ONLY_KINDS.has(verdict.kind)),
+        ];
+      }),
+    );
+
+    return new Map(entries);
+  }
+
   private buildAttention(input: {
     vehicleById: Map<string, VehicleSummaryRow>;
     reminders: Reminder[];
     latestDocuments: Map<string, VehicleDocument>;
     activeLoans: VehicleLoan[];
+    verdictsByVehicle: Map<string, QueueVerdict[]>;
+    expiringAccessories: ExpiringAccessory[];
     today: number;
     dismissedDocumentIds: ReadonlySet<string>;
   }): DashboardAttentionItem[] {
-    const { vehicleById, reminders, latestDocuments, activeLoans, today, dismissedDocumentIds } =
-      input;
+    const {
+      vehicleById,
+      reminders,
+      latestDocuments,
+      activeLoans,
+      verdictsByVehicle,
+      expiringAccessories,
+      today,
+      dismissedDocumentIds,
+    } = input;
     const items: DashboardAttentionItem[] = [];
 
     for (const reminder of reminders) {
       if (reminder.status === ReminderStatus.Completed) continue;
+      // The tyre walk-around is judged from the readings, as in the bell: the
+      // `tyre-check` row below, not this one.
+      if (isAlertedFromMeasurements(reminder)) continue;
       const vehicle = vehicleById.get(reminder.vehicleId);
       if (!vehicle) continue;
 
@@ -353,7 +493,143 @@ export class DashboardService {
       });
     }
 
+    for (const [vehicleId, verdicts] of verdictsByVehicle) {
+      const vehicle = vehicleById.get(vehicleId);
+      if (!vehicle) continue;
+
+      items.push(...this.verdictRows(this.attentionVehicleFields(vehicle), verdicts));
+    }
+
+    for (const accessory of expiringAccessories) {
+      const vehicle = vehicleById.get(accessory.vehicleId);
+      if (!vehicle || !accessory.warrantyExpiresAt) continue;
+
+      // The lookup starts at today, so nothing here has run out; a warranty
+      // ending before today's UTC date is only a server-timezone edge.
+      const daysUntilDue = Math.max(0, this.daysUntil(today, accessory.warrantyExpiresAt));
+      const urgency = this.documentUrgency(daysUntilDue);
+      if (!urgency) continue;
+
+      items.push({
+        ...this.attentionVehicleFields(vehicle),
+        id: `accessory:${accessory.id}`,
+        kind: 'accessory',
+        urgency,
+        title: `${accessory.brand ? `${accessory.brand} ${accessory.name}` : accessory.name} warranty`,
+        dueDate: accessory.warrantyExpiresAt.toISOString(),
+        daysUntilDue,
+      });
+    }
+
     return items.sort((left, right) => this.compareAttention(left, right));
+  }
+
+  /**
+   * One row per tyre the engine would raise, and one per vehicle for each
+   * question it would ask. The categories whose history is unknown share one
+   * row: the bell asks about each on its own rhythm, but they are answered on
+   * the same screen, and a row apiece would bury everything else coming up.
+   */
+  private verdictRows(
+    vehicle: AttentionVehicleFields,
+    verdicts: QueueVerdict[],
+  ): DashboardAttentionItem[] {
+    const rows: DashboardAttentionItem[] = [];
+    const unknownCategories: string[] = [];
+    const undated = { dueDate: null, daysUntilDue: null } as const;
+
+    for (const verdict of verdicts) {
+      switch (verdict.kind) {
+        case 'tyre-worn': {
+          const { payload } = verdict;
+          rows.push({
+            ...vehicle,
+            ...undated,
+            id: `tyre:${payload.tyreId}`,
+            kind: 'tyre',
+            urgency: payload.level === 'warn' ? 'this_month' : 'overdue',
+            title: TYRE_WORN_TITLES[payload.level],
+            detail: `${positionLabel(payload.position)} · ${
+              payload.treadDepthMm === null
+                ? payload.summary
+                : `${payload.treadDepthMm.toFixed(1)} mm tread`
+            }`,
+          });
+          break;
+        }
+        case 'tyre-aged': {
+          const { payload } = verdict;
+          rows.push({
+            ...vehicle,
+            ...undated,
+            id: `tyre:${payload.tyreId}`,
+            kind: 'tyre',
+            urgency: payload.level === 'warn' ? 'this_month' : 'overdue',
+            title: TYRE_AGED_TITLES[payload.level],
+            detail: `${positionLabel(payload.position)} · ${
+              payload.ageYears === null
+                ? payload.summary
+                : `${payload.ageYears.toFixed(1)} years old`
+            }`,
+          });
+          break;
+        }
+        case 'tyre-uninspected': {
+          const { payload } = verdict;
+          rows.push({
+            ...vehicle,
+            ...undated,
+            id: `tyre-check:${payload.vehicleId}`,
+            kind: 'tyre',
+            urgency: 'this_month',
+            ...(payload.reason === 'untracked'
+              ? { title: 'Tyres not tracked', detail: `None on file at ${km(payload.odometer)}` }
+              : {
+                  title: 'Time to check the tyres',
+                  detail: `Last measured ${km(payload.kmSinceLastCheck)} and ${
+                    payload.daysSinceLastCheck
+                  } day${payload.daysSinceLastCheck === 1 ? '' : 's'} ago`,
+                }),
+          });
+          break;
+        }
+        case 'service-baseline-unknown': {
+          const { payload } = verdict;
+          if (payload.scope === 'category') {
+            unknownCategories.push(payload.category);
+            break;
+          }
+          rows.push({
+            ...vehicle,
+            ...undated,
+            id: `service-history:${payload.vehicleId}`,
+            kind: 'service_baseline',
+            urgency: 'this_month',
+            title: 'Add this vehicle’s service history',
+            detail: `None on file at ${km(payload.odometer)}`,
+          });
+          break;
+        }
+      }
+    }
+
+    if (unknownCategories.length > 0) {
+      const named = unknownCategories.slice(0, SERVICE_HISTORY_NAMED_CATEGORIES).map(categoryWords);
+      const more = unknownCategories.length - named.length;
+      const list = more > 0 ? `${named.join(', ')} and ${more} more` : named.join(' and ');
+
+      rows.push({
+        ...vehicle,
+        ...undated,
+        id: `service-history:${vehicle.vehicleId}`,
+        kind: 'service_baseline',
+        urgency: 'this_month',
+        title: 'Unknown service history',
+        detail: `${list.charAt(0).toUpperCase()}${list.slice(1)}`,
+      });
+    }
+
+    return rows;
   }
 
   /**
@@ -535,9 +811,9 @@ export class DashboardService {
       });
   }
 
-  /** The first reminder or document in queue order; EMIs never become "next due". */
+  /** The first row in queue order; EMIs never become "next due". */
   private nextDueFor(items: DashboardAttentionItem[]): DashboardVehicleNextDue | null {
-    const next = items.find((item) => item.kind === 'reminder' || item.kind === 'document');
+    const next = items.find((item) => item.kind !== 'loan_emi');
     if (!next || next.kind === 'loan_emi') return null;
 
     return {
@@ -635,6 +911,20 @@ export class DashboardService {
     );
 
     return target;
+  }
+
+  private groupByVehicle<T extends { vehicleId: string }>(rows: readonly T[]): Map<string, T[]> {
+    const byVehicle = new Map<string, T[]>();
+    for (const row of rows) {
+      const list = byVehicle.get(row.vehicleId);
+      if (list) {
+        list.push(row);
+      } else {
+        byVehicle.set(row.vehicleId, [row]);
+      }
+    }
+
+    return byVehicle;
   }
 
   private attentionVehicleFields(vehicle: VehicleSummaryRow): AttentionVehicleFields {
