@@ -42,11 +42,18 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
   const type = searchState.type ?? 'all';
   const sortBy: ReminderSortOption = searchState.sort ?? defaultReminderSort;
 
-  const vehicleLabelById = Object.fromEntries(
-    (vehiclesQuery.data ?? []).map((vehicle) => [
-      vehicle.id,
-      `${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`,
-    ]),
+  // Memoised, like the maintenance and loans pages: a new object on every render
+  // rebuilt `visibleReminderIds` on every render, and the effect that prunes the
+  // selection then set a new array each time — a render loop that crashed the page.
+  const vehicleLabelById = useMemo(
+    () =>
+      Object.fromEntries(
+        (vehiclesQuery.data ?? []).map((vehicle) => [
+          vehicle.id,
+          `${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} • ${vehicle.registrationNumber}`,
+        ]),
+      ),
+    [vehiclesQuery.data],
   );
   const filteredReminders = useMemo(
     () =>
@@ -178,7 +185,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
           title="Unable to load reminders"
         />
       ) : remindersQuery.data.length ? (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <BulkReminderActions
             isCompleting={bulkCompleteMutation.isPending}
             isDeleting={bulkDeleteMutation.isPending}
@@ -204,7 +211,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
             type={type}
           />
           {filteredReminders.length ? (
-            <div className="grid gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <ReminderList
                 description="Items that need attention immediately."
                 emptyMessage="No overdue reminders."

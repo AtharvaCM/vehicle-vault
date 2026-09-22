@@ -108,7 +108,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       <div className="space-y-6">
         <Card className="border-slate-200/60 bg-white shadow-premium-sm overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg font-bold">Wheel &amp; Tyre Geometry</CardTitle>
                 <CardDescription>
@@ -117,7 +117,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                     : 'Derived from logged service history. Add tyres to track tread and age.'}
                 </CardDescription>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge
                   variant="outline"
                   className="bg-white font-bold tracking-tight uppercase text-[10px]"

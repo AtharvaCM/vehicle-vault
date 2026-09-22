@@ -124,7 +124,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
       <PageContainer>
         <PageTitle
           actions={
-            <div className="flex gap-3">
+            <>
               <Link
                 className={buttonVariants({ variant: 'secondary' })}
                 params={{ vehicleId: reminder.vehicleId }}
@@ -162,7 +162,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
                   />
                 </>
               ) : null}
-            </div>
+            </>
           }
           description="Review when this item is due and what it is for."
           title={reminder.title}

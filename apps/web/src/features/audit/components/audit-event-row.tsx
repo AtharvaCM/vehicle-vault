@@ -32,7 +32,9 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
         disabled={!hasDetail}
         onClick={() => setExpanded((value) => !value)}
         className={cn(
-          'flex w-full items-start gap-3 px-4 py-3 text-left',
+          // On a phone the timestamp goes under the chips: beside them it pushed the
+          // row past the edge of the screen.
+          'flex w-full flex-col gap-2 px-4 py-3 text-left sm:flex-row sm:items-start sm:gap-3',
           hasDetail ? 'cursor-pointer hover:bg-slate-50/80' : 'cursor-default',
         )}
         aria-expanded={hasDetail ? expanded : undefined}
@@ -62,7 +64,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
             </div>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <time
             className="whitespace-nowrap text-xs tabular-nums text-slate-400"
             dateTime={event.occurredAt}
@@ -85,14 +87,19 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
           {event.changedFields.length > 0 ? (
             <dl className="space-y-2">
               {event.changedFields.map((field) => (
-                <div key={field} className="grid grid-cols-[7rem_1fr] items-baseline gap-2 text-xs">
-                  <dt className="font-mono text-slate-500">{field}</dt>
+                <div
+                  key={field}
+                  className="grid grid-cols-[7rem_minmax(0,1fr)] items-baseline gap-2 text-xs"
+                >
+                  {/* Field names, ids and JSON have nowhere to wrap, so they may break
+                      mid-word rather than widen the page. */}
+                  <dt className="font-mono text-slate-500 [overflow-wrap:anywhere]">{field}</dt>
                   <dd className="flex flex-wrap items-center gap-2 text-slate-700">
-                    <span className="rounded bg-rose-50 px-1.5 py-0.5 text-rose-700 line-through decoration-rose-300">
+                    <span className="rounded bg-rose-50 px-1.5 py-0.5 text-rose-700 line-through decoration-rose-300 [overflow-wrap:anywhere]">
                       {renderValue(event.before?.[field])}
                     </span>
                     <span className="text-slate-300">→</span>
-                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
+                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700 [overflow-wrap:anywhere]">
                       {renderValue(event.after?.[field])}
                     </span>
                   </dd>

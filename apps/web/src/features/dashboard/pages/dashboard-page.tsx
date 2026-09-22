@@ -128,7 +128,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
 
       <GarageGrid vehicles={summary.vehicles} vehiclesTotal={summary.vehiclesTotal} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SmartSuggestionsCard insights={summary.insights} />
         <div className={summary.insights.length === 0 ? 'lg:col-span-2' : undefined}>
           <RecentServiceCard

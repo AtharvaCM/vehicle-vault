@@ -139,7 +139,7 @@ function MemberRow({
             {member.name}
             {isSelf ? <span className="ml-2 text-xs text-slate-400">(you)</span> : null}
           </p>
-          <p className="text-xs text-slate-500">{member.email}</p>
+          <p className="break-all text-xs text-slate-500">{member.email}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -331,7 +331,7 @@ function PendingInvitesCard({
                 <Mail className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold">{invite.email}</p>
+                <p className="break-all text-sm font-semibold">{invite.email}</p>
                 <p className="text-xs text-slate-500">
                   Role: {invite.role} · expires {formatDate(invite.expiresAt)}
                 </p>
