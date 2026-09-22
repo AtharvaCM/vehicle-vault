@@ -114,6 +114,7 @@ export function LoanAttachmentsSection({ loanId }: Props) {
         <Input
           ref={fileInputRef}
           type="file"
+          capture="environment"
           multiple
           accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
           onChange={handleFilesChange}

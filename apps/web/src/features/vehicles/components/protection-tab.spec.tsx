@@ -76,6 +76,19 @@ describe('ProtectionTab', () => {
     expect(screen.getByRole('button', { name: 'Scan' })).toBeInTheDocument();
   });
 
+  it('sends the document scan to the camera on a phone', () => {
+    documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
+    claimsQuery.current = { isPending: false, isError: false, data: [] };
+
+    const { container } = render(<ProtectionTab vehicleId="vehicle-1" />);
+
+    // A policy or PUC certificate is a physical thing being photographed, so
+    // the input opens the camera rather than the file picker. Desktop browsers
+    // ignore `capture` and still show a picker.
+    const scanInput = container.querySelector('input[type="file"]');
+    expect(scanInput).toHaveAttribute('capture', 'environment');
+  });
+
   it('reports a failed claims request without hiding the documents that loaded', () => {
     documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
     claimsQuery.current = {
