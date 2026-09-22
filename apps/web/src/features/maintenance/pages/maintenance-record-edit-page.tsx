@@ -39,9 +39,10 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   const vehicleQuery = useVehicle(recordQuery.data?.vehicleId ?? '');
   const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
   const { canEdit } = accessFor(currentUserRole);
-  // A draft is an extraction nobody has agreed to yet: it counts nowhere until it
-  // is confirmed, and nothing outside this page says it is a draft, so saving it
-  // here is the confirmation rather than another way to leave it uncounted.
+  // A draft is an extraction nobody has agreed to yet: it stays out of every
+  // cost, report and reminder until it is confirmed, and this page, where each
+  // draft's "Review and confirm" leads, is where a human agrees to it. So saving
+  // it here is the confirmation rather than another way to leave it uncounted.
   const isDraft = recordQuery.data?.status === MaintenanceRecordStatus.Draft;
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
