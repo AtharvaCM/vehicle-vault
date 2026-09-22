@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.41.0...v1.42.0) (2026-09-22)
+
+
+### Features
+
+* **web:** dialogs become bottom sheets on phones ([23db496](https://github.com/AtharvaCM/vehicle-vault/commit/23db4961e2e4bcf0d02e67f1aa60af9b1e19f540))
+
 # [1.41.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.40.0...v1.41.0) (2026-09-22)
 
 
