@@ -1,10 +1,20 @@
 import { render, screen } from '@testing-library/react';
-import { MaintenanceCategory, VehicleRole, type MaintenanceRecord } from '@vehicle-vault/shared';
+import userEvent from '@testing-library/user-event';
+import {
+  MaintenanceCategory,
+  MaintenanceRecordStatus,
+  MaintenanceSource,
+  VehicleRole,
+  type MaintenanceRecord,
+} from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { appToast } from '@/lib/toast';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const recordQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const updateRecord = vi.hoisted(() => vi.fn());
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -24,7 +34,7 @@ vi.mock('../hooks/use-maintenance-record', () => ({
   useMaintenanceRecord: () => recordQuery.current,
 }));
 vi.mock('../hooks/use-update-maintenance-record', () => ({
-  useUpdateMaintenanceRecord: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useUpdateMaintenanceRecord: () => ({ mutateAsync: updateRecord, isPending: false, error: null }),
 }));
 vi.mock('@/features/vehicles/hooks/use-vehicle', () => ({
   useVehicle: () => vehicleQuery.current,
@@ -33,8 +43,23 @@ vi.mock('@/features/vehicles/hooks/use-vehicle', () => ({
 vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
   useUnsavedChangesGuard: () => ({ allowNextNavigation: () => () => undefined }),
 }));
+vi.mock('@/lib/toast', () => ({
+  appToast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
+// Stands in for the real form: its button carries whatever label the page chose,
+// and pressing it submits the body the form would have built.
 vi.mock('../components/maintenance-form', () => ({
-  MaintenanceForm: () => <div>maintenance form</div>,
+  MaintenanceForm: ({
+    onSubmit,
+    submitLabel,
+  }: {
+    onSubmit: (values: Record<string, unknown>) => void;
+    submitLabel: string;
+  }) => (
+    <button onClick={() => onSubmit({ ...formBody })} type="button">
+      {submitLabel}
+    </button>
+  ),
 }));
 // Cards that fetch their own data; a viewer never reaches them here.
 vi.mock('../components/maintenance-draft-review-card', () => ({
@@ -49,6 +74,15 @@ vi.mock('@/features/attachments/components/attachments-section', () => ({
 
 import { MaintenanceRecordEditPage } from './maintenance-record-edit-page';
 
+const formBody = {
+  serviceDate: '2026-03-21T00:00:00.000Z',
+  odometer: 12_000,
+  category: MaintenanceCategory.EngineOil,
+  currencyCode: 'INR',
+  totalCost: 3_200,
+  nextDueOdometer: 22_000,
+};
+
 const record: MaintenanceRecord = {
   id: 'record-1',
   vehicleId: 'vehicle-1',
@@ -61,26 +95,82 @@ const record: MaintenanceRecord = {
   updatedAt: '2026-03-21T00:00:00.000Z',
 };
 
-function renderAs(role: VehicleRole) {
-  recordQuery.current = { data: record, isPending: false, isError: false };
+const draft: MaintenanceRecord = {
+  ...record,
+  source: MaintenanceSource.Ocr,
+  status: MaintenanceRecordStatus.Draft,
+};
+
+function renderAs(role: VehicleRole, data: MaintenanceRecord = record) {
+  recordQuery.current = { data, isPending: false, isError: false };
   vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: role } };
 
   return render(<MaintenanceRecordEditPage recordId="record-1" />);
 }
 
+beforeEach(() => {
+  vi.clearAllMocks();
+  updateRecord.mockResolvedValue(record);
+});
+
 describe('MaintenanceRecordEditPage roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])('gives an %s the form', (role) => {
     renderAs(role);
 
-    expect(screen.getByText('maintenance form')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
     expect(screen.queryByText('You have view-only access')).not.toBeInTheDocument();
   });
 
   it('replaces the form with an explanation for a viewer', () => {
     renderAs(VehicleRole.Viewer);
 
-    expect(screen.queryByText('maintenance form')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to Record' })).toBeInTheDocument();
+  });
+
+  it('offers a viewer no way to confirm a draft either', () => {
+    renderAs(VehicleRole.Viewer, draft);
+
+    expect(screen.queryByRole('button', { name: 'Confirm Record' })).not.toBeInTheDocument();
+    expect(screen.getByText('You have view-only access')).toBeInTheDocument();
+  });
+});
+
+describe('MaintenanceRecordEditPage draft confirmation', () => {
+  it('asks an editor to confirm a draft rather than save it', () => {
+    renderAs(VehicleRole.Editor, draft);
+
+    expect(screen.getByRole('button', { name: 'Confirm Record' })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'This draft does not count anywhere yet. Check the details, then confirm it.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('confirms the draft with the edited details in one save', async () => {
+    renderAs(VehicleRole.Editor, draft);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Record' }));
+
+    expect(updateRecord).toHaveBeenCalledWith({
+      ...formBody,
+      status: MaintenanceRecordStatus.Confirmed,
+    });
+    expect(appToast.success).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Maintenance record confirmed' }),
+    );
+  });
+
+  it('leaves the status of an already confirmed record alone', async () => {
+    renderAs(VehicleRole.Editor);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(updateRecord).toHaveBeenCalledWith(formBody);
+    expect(appToast.success).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Maintenance record updated' }),
+    );
   });
 });
