@@ -66,7 +66,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
       <Card className="border-slate-200/60 bg-white shadow-premium-sm">
         <CardHeader className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="h-5 w-5 shrink-0 text-primary" />
             <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
           </div>
           <CardDescription>Loading recommended intervals…</CardDescription>
@@ -92,7 +92,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
       <CardHeader className="border-b border-slate-100 pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="h-5 w-5 shrink-0 text-primary" />
             <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
           </div>
           <Badge variant="outline" className="text-[10px] uppercase tracking-widest">
