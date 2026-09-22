@@ -1,3 +1,10 @@
+# [1.51.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.50.0...v1.51.0) (2026-09-22)
+
+
+### Features
+
+* **dashboard:** show what the bell knows in the attention queue ([502c0bb](https://github.com/AtharvaCM/vehicle-vault/commit/502c0bb8b55c3f6cf91260ddd12190715f5dee00))
+
 # [1.50.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.49.0...v1.50.0) (2026-09-22)
 
 
