@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils/cn';
 import { formatDate } from '@/lib/utils/format-date';
 
-import type { DashboardVehicleHealth } from '../types/dashboard';
+import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
 import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
 import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
@@ -57,6 +57,73 @@ function MicroRow({ label, children }: MicroRowProps) {
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
       <div className="min-w-0 truncate text-[12px] font-medium text-slate-700">{children}</div>
     </div>
+  );
+}
+
+/**
+ * How each gap in the vehicle's data reads, and where it is filled. The
+ * odometer has no link: its Update control is on the card itself.
+ */
+const DATA_GAPS: Record<
+  DashboardDataGap,
+  { text: string; fill: VehicleDetailTab | 'edit' | null }
+> = {
+  service_history: { text: 'Service history incomplete', fill: 'maintenance' },
+  odometer: { text: 'Odometer not updated lately', fill: null },
+  insurance: { text: 'No current insurance', fill: 'protection' },
+  catalog_link: { text: 'Not linked to a catalog model', fill: 'edit' },
+  puc: { text: 'No current PUC', fill: 'protection' },
+  tyres: { text: 'Tyres not tracked', fill: 'tyres' },
+  purchase_price: { text: 'No purchase price', fill: 'edit' },
+};
+
+const INLINE_LINK =
+  'rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+/** The score, and the one gap worth filling next: linked for someone who can fill it. */
+function DataHealthText({
+  vehicle,
+  canEdit,
+}: {
+  vehicle: DashboardVehicleHealth;
+  canEdit: boolean;
+}) {
+  const health = vehicle.dataHealth;
+  if (!health) return null;
+
+  if (health.nextGap === null) {
+    return <span className="text-emerald-700">Complete</span>;
+  }
+
+  const { text, fill } = DATA_GAPS[health.nextGap];
+  let gap: ReactNode = <span>{text}</span>;
+  if (canEdit && fill === 'edit') {
+    gap = (
+      <Link
+        className={INLINE_LINK}
+        params={{ vehicleId: vehicle.id }}
+        to="/vehicles/$vehicleId/edit"
+      >
+        {text}
+      </Link>
+    );
+  } else if (canEdit && fill !== null && fill !== 'edit') {
+    gap = (
+      <Link
+        className={INLINE_LINK}
+        params={{ vehicleId: vehicle.id }}
+        search={{ tab: fill }}
+        to="/vehicles/$vehicleId"
+      >
+        {text}
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <span className="tabular-nums">{health.score}%</span> · {gap}
+    </>
   );
 }
 
@@ -193,6 +260,11 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
             <span className="text-slate-400">No service logged</span>
           )}
         </MicroRow>
+        {vehicle.dataHealth ? (
+          <MicroRow label="Data">
+            <DataHealthText canEdit={canEdit} vehicle={vehicle} />
+          </MicroRow>
+        ) : null}
         <MicroRow label="Odometer">
           Updated {formatRelativeAgo(vehicle.odometerUpdatedAt, today)}
           {canEdit ? (

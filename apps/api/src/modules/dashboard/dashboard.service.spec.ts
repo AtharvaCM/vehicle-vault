@@ -1247,6 +1247,72 @@ describe('DashboardService', () => {
     });
   });
 
+  describe('data health', () => {
+    /** Linked, priced, current papers, fresh reading, tyres on file: only history varies below. */
+    const wellKnownVehicle = () =>
+      makeVehicle({ catalogVariantId: 'variant-1', purchasePrice: 900000 });
+
+    beforeEach(() => {
+      vehicleDocumentsService.listForUser.mockResolvedValue([
+        makeDocument({ id: 'insurance-1', kind: 'insurance' }),
+        makeDocument({ id: 'puc-1', kind: 'puc' }),
+      ]);
+      intervalResolver.resolveForVehicle.mockResolvedValue({
+        engine_oil: { km: 7500, months: 6, source: 'default' },
+        brake_pads: { km: 30000, months: 24, source: 'default' },
+      });
+    });
+
+    it('reads a vehicle with everything on file as complete', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([wellKnownVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ status: MaintenanceRecordStatus.Confirmed }),
+      ]);
+      // "Unknown" is an answer: the owner was asked.
+      prisma.serviceBaseline.findMany.mockResolvedValue([
+        {
+          vehicleId: 'vehicle-1',
+          category: 'brake_pads',
+          status: ServiceBaselineStatus.unknown,
+          lastDoneOdometer: null,
+        },
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.vehicles[0]?.dataHealth).toEqual({ score: 100, nextGap: null });
+    });
+
+    it('does not count a draft as history, and names what is missing', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([wellKnownVehicle()]);
+      maintenanceService.getAllRecords.mockResolvedValue([
+        makeRecord({ status: MaintenanceRecordStatus.Confirmed }),
+        makeRecord({
+          id: 'draft',
+          category: MaintenanceCategory.BrakePads,
+          status: MaintenanceRecordStatus.Draft,
+        }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      // One of the two categories unanswered: half of 25 lost.
+      expect(result.vehicles[0]?.dataHealth).toEqual({ score: 88, nextGap: 'service_history' });
+    });
+
+    it('scores an empty vehicle low and asks for the history first', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        makeVehicle({ updatedAt: '2025-11-01T00:00:00.000Z' }),
+      ]);
+      vehicleDocumentsService.listForUser.mockResolvedValue([]);
+      tyresService.getAlertState.mockResolvedValue(tyreState([], { lastObservation: null }));
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.vehicles[0]?.dataHealth).toEqual({ score: 0, nextGap: 'service_history' });
+    });
+  });
+
   describe('hasSpend', () => {
     it('(i) is false with no records, fuel logs or active loans', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle()]);

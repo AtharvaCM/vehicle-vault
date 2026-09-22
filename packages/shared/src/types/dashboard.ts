@@ -162,6 +162,28 @@ export type DashboardVehicleLastService = {
 
 export type DashboardVehicleStatus = 'overdue' | 'due_soon' | 'ok';
 
+/** Something a vehicle's record is missing that the reminders and forecasts lean on. */
+export type DashboardDataGap =
+  | 'service_history'
+  | 'odometer'
+  | 'insurance'
+  | 'catalog_link'
+  | 'puc'
+  | 'tyres'
+  | 'purchase_price';
+
+/**
+ * How much the app knows about a vehicle, scored server-side from fields it
+ * already has. The weights, and why each is what it is, live in the API's
+ * `data-health.ts`.
+ */
+export type DashboardVehicleDataHealth = {
+  /** 0–100: the weighted share of the checks that apply to this vehicle it passes. */
+  score: number;
+  /** The unmet check whose filling would raise the score most; null when complete. */
+  nextGap: DashboardDataGap | null;
+};
+
 /** One vehicle with a health verdict — the "every vehicle at a glance" row. */
 export type DashboardVehicleHealth = {
   id: string;
@@ -192,6 +214,11 @@ export type DashboardVehicleHealth = {
    */
   documents: Partial<Record<VehicleDocumentKind, DashboardVehicleDocumentStatus>>;
   lastService: DashboardVehicleLastService | null;
+  /**
+   * The vehicle's data score. Absent only from an API that predates it: the
+   * web deploys ahead of the API, and the card then leaves the row out.
+   */
+  dataHealth?: DashboardVehicleDataHealth;
 };
 
 export type DashboardSummary = {
