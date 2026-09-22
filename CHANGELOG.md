@@ -1,3 +1,10 @@
+## [1.55.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.1...v1.55.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** drop the empty figures strip from date-only reminder cards ([8c206be](https://github.com/AtharvaCM/vehicle-vault/commit/8c206be37bffbf354a9d317235794dc657f42d82))
+
 ## [1.55.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.0...v1.55.1) (2026-09-22)
 
 
