@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.43.0...v1.44.0) (2026-09-22)
+
+
+### Features
+
+* **fuel:** show real km/L against the claimed figure ([2236b18](https://github.com/AtharvaCM/vehicle-vault/commit/2236b18754943ca21dcb2172bbf9376aba4aa821))
+
 # [1.43.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.42.0...v1.43.0) (2026-09-22)
 
 
