@@ -24,6 +24,13 @@ describe('MaintenanceService', () => {
   type PrismaMock = {
     $transaction: ReturnType<typeof vi.fn>;
     maintenanceRecord: MaintenanceRecordDelegateMock;
+    vehicle: { findUnique: ReturnType<typeof vi.fn> };
+    reminder: {
+      findUnique: ReturnType<typeof vi.fn>;
+      findMany: ReturnType<typeof vi.fn>;
+      create: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+    };
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -84,6 +91,8 @@ describe('MaintenanceService', () => {
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    vehicle: { findUnique: vi.fn() },
+    reminder: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
   };
 
   const vehiclesService = {
@@ -111,6 +120,15 @@ describe('MaintenanceService', () => {
     });
     storageService.deleteObject.mockResolvedValue('deleted');
     auditService.track.mockResolvedValue(undefined);
+    // The vehicle the next-due reminder lands on, and no reminder made from this record yet.
+    prisma.vehicle.findUnique.mockResolvedValue({ odometer: 12345, userId: 'owner-1' });
+    prisma.reminder.findUnique.mockResolvedValue(null);
+    prisma.reminder.findMany.mockResolvedValue([]);
+    prisma.reminder.create.mockImplementation(async ({ data }) => ({ id: 'reminder-1', ...data }));
+    prisma.reminder.update.mockImplementation(async ({ where, data }) => ({
+      id: where.id,
+      ...data,
+    }));
     prisma.$transaction = vi.fn().mockImplementation((arg: unknown) => {
       if (typeof arg === 'function') {
         return (arg as (tx: unknown) => unknown)(prisma);
@@ -435,6 +453,204 @@ describe('MaintenanceService', () => {
     expect(result).toEqual({
       id: 'record-1',
       deleted: true,
+    });
+  });
+  describe('the reminder a confirmed service leaves behind', () => {
+    const createInput = {
+      category: MaintenanceCategory.EngineOil,
+      serviceDate: '2026-03-18T00:00:00.000Z',
+      odometer: 12345,
+      workshopName: 'Trusted Garage',
+      totalCost: 2499,
+      nextDueDate: '2026-06-18T00:00:00.000Z',
+      nextDueOdometer: 18000,
+    };
+
+    it('turns what the workshop wrote down into a reminder on the vehicle', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
+
+      await service.createForVehicle('user-1', 'vehicle-1', createInput);
+
+      expect(prisma.reminder.create).toHaveBeenCalledWith({
+        data: {
+          vehicleId: 'vehicle-1',
+          sourceMaintenanceRecordId: 'record-1',
+          title: 'Engine oil due',
+          type: 'service',
+          dueDate: new Date('2026-06-18T00:00:00.000Z'),
+          dueOdometer: 18000,
+          notes: 'Set at the service at Trusted Garage on 18 Mar 2026.',
+          // Worked out like any reminder's: 18 Jun 2026 has already passed.
+          status: 'overdue',
+        },
+      });
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'reminder.created',
+          resourceId: 'reminder-1',
+          ownerUserId: 'owner-1',
+        }),
+      );
+    });
+
+    it('refreshes the same reminder when the record is edited, instead of adding one', async () => {
+      prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue(record);
+      prisma.maintenanceRecord.update = vi.fn().mockResolvedValue({
+        ...record,
+        nextDueOdometer: 19000,
+      });
+      const existing = {
+        id: 'reminder-1',
+        sourceMaintenanceRecordId: 'record-1',
+        completedAt: null,
+        dueOdometer: 18000,
+      };
+      prisma.reminder.findUnique.mockResolvedValue(existing);
+
+      await service.updateRecord('user-1', 'record-1', { nextDueOdometer: 19000 });
+
+      expect(prisma.reminder.findUnique).toHaveBeenCalledWith({
+        where: { sourceMaintenanceRecordId: 'record-1' },
+      });
+      expect(prisma.reminder.create).not.toHaveBeenCalled();
+      expect(prisma.reminder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'reminder-1' },
+          data: expect.objectContaining({ dueOdometer: 19000 }),
+        }),
+      );
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'reminder.updated', resourceId: 'reminder-1' }),
+      );
+    });
+
+    it('leaves alone a reminder the owner has already completed', async () => {
+      prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue(record);
+      prisma.maintenanceRecord.update = vi.fn().mockResolvedValue(record);
+      prisma.reminder.findUnique.mockResolvedValue({
+        id: 'reminder-1',
+        completedAt: new Date('2026-06-20T00:00:00.000Z'),
+      });
+
+      await service.updateRecord('user-1', 'record-1', { notes: 'Receipt re-read' });
+
+      expect(prisma.reminder.update).not.toHaveBeenCalled();
+      expect(prisma.reminder.create).not.toHaveBeenCalled();
+    });
+
+    it('makes nothing from a record with neither a next-due date nor odometer', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue({
+        ...record,
+        nextDueDate: null,
+        nextDueOdometer: null,
+      });
+
+      await service.createForVehicle('user-1', 'vehicle-1', {
+        ...createInput,
+        nextDueDate: undefined,
+        nextDueOdometer: undefined,
+      });
+
+      expect(prisma.reminder.findUnique).not.toHaveBeenCalled();
+      expect(prisma.reminder.create).not.toHaveBeenCalled();
+    });
+
+    it('waits for a draft to be confirmed', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue({
+        ...record,
+        status: MaintenanceRecordStatus.Draft,
+      });
+
+      await service.createForVehicle('user-1', 'vehicle-1', {
+        ...createInput,
+        status: MaintenanceRecordStatus.Draft,
+      });
+
+      expect(prisma.reminder.create).not.toHaveBeenCalled();
+    });
+
+    it('takes only the newest of each kind from an import, not every old row', async () => {
+      let next = 0;
+      prisma.maintenanceRecord.create = vi.fn().mockImplementation(async ({ data }) => ({
+        ...record,
+        id: `imported-${++next}`,
+        category: data.category,
+        serviceDate: new Date(data.serviceDate),
+        status: MaintenanceRecordStatus.Confirmed,
+        nextDueDate: data.nextDueDate ? new Date(data.nextDueDate) : null,
+        nextDueOdometer: data.nextDueOdometer ?? null,
+        lineItems: [],
+      }));
+      prisma.$transaction = vi
+        .fn()
+        .mockImplementation((arg: unknown) =>
+          typeof arg === 'function'
+            ? (arg as (tx: unknown) => unknown)(prisma)
+            : Promise.all(arg as Promise<unknown>[]),
+        );
+
+      await service.createBulkForVehicle('user-1', 'vehicle-1', [
+        {
+          category: MaintenanceCategory.EngineOil,
+          serviceDate: '2025-03-18T00:00:00.000Z',
+          odometer: 5000,
+          totalCost: 2000,
+          nextDueDate: '2025-09-18T00:00:00.000Z',
+        },
+        {
+          category: MaintenanceCategory.EngineOil,
+          serviceDate: '2026-03-18T00:00:00.000Z',
+          odometer: 12000,
+          totalCost: 2499,
+          nextDueOdometer: 17000,
+        },
+        {
+          category: MaintenanceCategory.BrakePads,
+          serviceDate: '2026-03-20T00:00:00.000Z',
+          odometer: 12100,
+          totalCost: 3400,
+        },
+      ]);
+
+      // One reminder, from the 2026 oil change: the 2025 one's date is long gone,
+      // and the brake pads carried no next-due at all.
+      expect(prisma.reminder.create).toHaveBeenCalledTimes(1);
+      expect(prisma.reminder.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          sourceMaintenanceRecordId: 'imported-2',
+          dueOdometer: 17000,
+        }),
+      });
+    });
+
+    it('fulfils the reminder an earlier service of the same kind left open', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
+      const earlier = { id: 'reminder-old', completedAt: null };
+      prisma.reminder.findMany.mockResolvedValue([earlier]);
+
+      await service.createForVehicle('user-1', 'vehicle-1', createInput);
+
+      expect(prisma.reminder.findMany).toHaveBeenCalledWith({
+        where: {
+          vehicleId: 'vehicle-1',
+          id: { not: 'reminder-1' },
+          completedAt: null,
+          sourceMaintenanceRecord: {
+            category: MaintenanceCategory.EngineOil,
+            serviceDate: { lt: serviceDate },
+          },
+        },
+      });
+      expect(prisma.reminder.update).toHaveBeenCalledWith({
+        where: { id: 'reminder-old' },
+        data: { completedAt: expect.any(Date), status: 'completed' },
+      });
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'reminder.completed', resourceId: 'reminder-old' }),
+      );
     });
   });
 });

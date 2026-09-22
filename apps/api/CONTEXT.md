@@ -50,7 +50,13 @@ An insurance claim on a **Vehicle**, tied to an **InsurancePolicy**, optionally 
 A financing record on a **Vehicle**: amortization schedule (EMI math in `vehicle-loans/amortization.ts`), prepayments, foreclosure, attachments, and its own extraction kind (`loan_document`).
 
 **Reminder**:
-A future-dated to-do tied to a **Vehicle**, timed by `dueDate`, `dueOdometer`, or both. Drives both UI surfaces and the alert engine. Service-schedule suggestions come from `ServiceScheduleService` + `service-schedule-catalog.ts`.
+A future-dated to-do tied to a **Vehicle**, timed by `dueDate`, `dueOdometer`, or both. Drives both UI surfaces and the alert engine. Service-schedule suggestions come from `ServiceScheduleService` + `service-schedule-catalog.ts`. A confirmed **MaintenanceRecord** carrying `nextDueDate`/`nextDueOdometer` (what the workshop wrote down, usually captured by the extractor) makes a reminder of its own. The reminder is linked back by the unique `Reminder.sourceMaintenanceRecordId` (set null if the record is deleted) and synced by `maintenance/next-due-reminder.ts` inside the record's transaction:
+
+- re-confirming or editing the record refreshes that reminder, unless it was completed;
+- a record with neither field makes nothing;
+- a newer confirmed service of the same category completes the record-made reminders older services left open (never manual ones);
+- an import takes only the newest record per category.
+  Status comes from `reminders/reminder-status.ts`, the rule the reminders service uses.
 
 Both timings alert. The **AlertEngine** judges each one it has — an odometer mark within 500 km, a due date within 7 days — and raises at most one **Notification** per reminder per run, overdue winning over due: a reminder carrying both is one task and should arrive once. Days are counted as whole UTC calendar days, the same arithmetic `RemindersService` uses to derive `ReminderStatus`, so a notification cannot contradict the status shown on the row it came from; due _today_ is due, not overdue. The two alert kinds render date copy or kilometre copy from the basis the engine chose (`ReminderAlertBasis`), never both — a date-only reminder has no kilometres to quote, and inventing them from the mileage forecast is what the engine refuses to do elsewhere.
 
