@@ -37,7 +37,7 @@ function insuranceDocument(): VehicleDocument {
 function renderPrompt({
   dismissedAt = null,
   role = VehicleRole.Owner,
-}: { dismissedAt?: string | null; role?: VehicleRole } = {}) {
+}: { dismissedAt?: string | null | undefined; role?: VehicleRole } = {}) {
   return render(
     <VehicleAccessProvider role={role}>
       <VehicleSetupPrompt dismissedAt={dismissedAt} vehicleId="vehicle-1" />
@@ -108,6 +108,17 @@ describe('VehicleSetupPrompt', () => {
 
   it('stays out of the way once the prompt has been answered or skipped', () => {
     renderPrompt({ dismissedAt: '2026-09-21T10:00:00.000Z' });
+
+    expect(screen.queryByText('Never miss a renewal')).not.toBeInTheDocument();
+  });
+
+  it('stays hidden against an API that predates the prompt and could not save it', () => {
+    // The field is omitted, not null: the web can ship before the API does.
+    render(
+      <VehicleAccessProvider role={VehicleRole.Owner}>
+        <VehicleSetupPrompt dismissedAt={undefined} vehicleId="vehicle-1" />
+      </VehicleAccessProvider>,
+    );
 
     expect(screen.queryByText('Never miss a renewal')).not.toBeInTheDocument();
   });

@@ -17,7 +17,10 @@ import { useDismissVehicleSetupPrompt } from '../hooks/use-dismiss-setup-prompt'
 
 type VehicleSetupPromptProps = {
   vehicleId: string;
-  /** Null until the prompt has been answered or skipped for this vehicle. */
+  /**
+   * Null until the prompt has been answered or skipped for this vehicle.
+   * Undefined from an API that predates the prompt, which cannot save it.
+   */
   dismissedAt: string | null | undefined;
 };
 
@@ -40,10 +43,13 @@ export function VehicleSetupPrompt({ dismissedAt, vehicleId }: VehicleSetupPromp
   const hasInsurance = documents.some((document) => document.kind === 'insurance');
   const hasPuc = documents.some((document) => document.kind === 'puc');
 
+  // Only an explicit null shows it: an API that predates the prompt omits the
+  // field and would refuse both the expiry-only documents and the dismissal,
+  // which is the web's state between its own deploy and the API's.
   // A viewer cannot create documents, so the prompt would only 403 on save.
   // Waiting for the documents query keeps it from flashing on a vehicle that
   // already has both, which is what a second browser tab would show.
-  if (!canEdit || dismissedAt || !documentsQuery.isSuccess || (hasInsurance && hasPuc)) {
+  if (!canEdit || dismissedAt !== null || !documentsQuery.isSuccess || (hasInsurance && hasPuc)) {
     return null;
   }
 
