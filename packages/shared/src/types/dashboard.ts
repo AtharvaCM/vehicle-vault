@@ -1,4 +1,5 @@
 import type {
+  FuelType,
   MaintenanceCategory,
   ReminderStatus,
   ReminderType,
@@ -36,8 +37,19 @@ export type DashboardLoanSummary = {
   nextEmiDate: string | null;
 };
 
-/** What kind of deadline a "Needs attention" row represents. */
-export type DashboardAttentionKind = 'reminder' | 'document' | 'loan_emi';
+/**
+ * What a "Needs attention" row is about. Reminders, documents and EMIs carry
+ * their own dates; tyres, service history and accessory warranties are the
+ * alert engine's verdicts, read from the same functions the bell raises them
+ * from, so the queue and the bell cannot disagree about a vehicle.
+ */
+export type DashboardAttentionKind =
+  | 'reminder'
+  | 'document'
+  | 'loan_emi'
+  | 'tyre'
+  | 'service_baseline'
+  | 'accessory';
 
 /**
  * Server-computed urgency bucket. Bucketing uses UTC calendar days — the same
@@ -48,11 +60,22 @@ export type DashboardAttentionKind = 'reminder' | 'document' | 'loan_emi';
  * - `today`: due today
  * - `this_week`: due in 1–7 days
  * - `this_month`: due in 8–30 days (rendered as a low-weight "Coming up" list)
+ *
+ * An undated verdict buckets by what it says, the way an odometer reminder
+ * does: a tyre past its replacement limit (tread or age) is `overdue`, like a
+ * reminder past its km; a first warning, or a question the app is asking
+ * (tyres not measured lately, service history unknown), is `this_month`, where
+ * a reminder approaching its km sits. An accessory warranty has a date and
+ * buckets like a document, from today to 30 days out.
  */
 export type DashboardUrgency = 'overdue' | 'today' | 'this_week' | 'this_month';
 
 export type DashboardAttentionItem = {
-  /** `reminder.id`, `document.id`, or `emi:${loanId}`. */
+  /**
+   * `reminder.id`, `document.id`, `emi:${loanId}`, `tyre:${tyreId}`,
+   * `tyre-check:${vehicleId}` (the inspection question),
+   * `service-history:${vehicleId}` or `accessory:${accessoryId}`.
+   */
   id: string;
   kind: DashboardAttentionKind;
   urgency: DashboardUrgency;
@@ -62,7 +85,10 @@ export type DashboardAttentionItem = {
   registrationNumber: string;
   /** The current user's role on the vehicle; viewers cannot complete reminders. */
   currentUserRole: VehicleRole;
-  /** Reminder title, document kind title (e.g. "Insurance policy"), or "Loan EMI". */
+  /**
+   * Reminder title, document kind title (e.g. "Insurance policy"), "Loan EMI",
+   * or the verdict (e.g. "Replace tyre").
+   */
   title: string;
   reminderType?: ReminderType;
   reminderStatus?: ReminderStatus;
@@ -73,13 +99,19 @@ export type DashboardAttentionItem = {
   loanId?: string;
   /** Loan EMI only: the EMI amount. */
   amount?: number;
-  /** ISO date; null only for odometer-only reminders. */
+  /** ISO date; null for odometer-only reminders and the undated verdicts (tyre, service history). */
   dueDate: string | null;
   /** Calendar days from today (UTC) to `dueDate`; negative when past. Null when `dueDate` is null. */
   daysUntilDue: number | null;
   dueOdometer?: number;
   /** `dueOdometer - vehicle.odometer`; negative when past. */
   kmUntilDue?: number;
+  /**
+   * Undated verdicts only (tyre, service history): what the verdict rests on,
+   * where a dated row says when it falls due. E.g. "Front left · 2.8 mm tread",
+   * or "Brake pads and coolant".
+   */
+  detail?: string;
 };
 
 /** Counts computed from the UNTRUNCATED attention list, so tiles never disagree with the queue. */
@@ -112,8 +144,9 @@ export type DashboardVehicleDocumentStatus = {
 };
 
 export type DashboardVehicleNextDue = {
-  kind: 'reminder' | 'document';
-  /** Reminder id or document id. */
+  /** EMIs never become "next due". */
+  kind: Exclude<DashboardAttentionKind, 'loan_emi'>;
+  /** The attention row's id. */
   targetId: string;
   title: string;
   dueDate: string | null;
@@ -130,12 +163,40 @@ export type DashboardVehicleLastService = {
 
 export type DashboardVehicleStatus = 'overdue' | 'due_soon' | 'ok';
 
+/** Something a vehicle's record is missing that the reminders and forecasts lean on. */
+export type DashboardDataGap =
+  | 'service_history'
+  | 'odometer'
+  | 'insurance'
+  | 'catalog_link'
+  | 'puc'
+  | 'tyres'
+  | 'purchase_price';
+
+/**
+ * How much the app knows about a vehicle, scored server-side from fields it
+ * already has. The weights, and why each is what it is, live in the API's
+ * `data-health.ts`.
+ */
+export type DashboardVehicleDataHealth = {
+  /** 0–100: the weighted share of the checks that apply to this vehicle it passes. */
+  score: number;
+  /** The unmet check whose filling would raise the score most; null when complete. */
+  nextGap: DashboardDataGap | null;
+};
+
 /** One vehicle with a health verdict — the "every vehicle at a glance" row. */
 export type DashboardVehicleHealth = {
   id: string;
   displayName: string;
   registrationNumber: string;
   vehicleType: VehicleType;
+  /**
+   * What the vehicle runs on, which decides whether it needs a PUC. Absent
+   * only from an API that predates it: the web deploys ahead of the API, and
+   * then asks every vehicle for a PUC, as that API does.
+   */
+  fuelType?: FuelType;
   odometer: number;
   /**
    * ISO datetime the odometer reading was last touched: the later of the
@@ -151,15 +212,21 @@ export type DashboardVehicleHealth = {
   overdueCount: number;
   /** Attention items for this vehicle with urgency today | this_week | this_month. */
   dueSoonCount: number;
-  /** Earliest open reminder or document expiry for the vehicle, by the queue's ordering. */
+  /** The vehicle's first attention row other than an EMI, by the queue's ordering. */
   nextDue: DashboardVehicleNextDue | null;
   /**
    * Latest document per kind. Only kinds present on the vehicle appear, except
-   * `insurance` and `puc`, which are always present (state `missing` when absent)
-   * because they are the two legally mandatory documents in India.
+   * the ones the law in India requires, which appear with state `missing` when
+   * none is on file: `insurance` always, and `puc` unless the vehicle is
+   * electric, which is exempt (`requiresPuc`).
    */
   documents: Partial<Record<VehicleDocumentKind, DashboardVehicleDocumentStatus>>;
   lastService: DashboardVehicleLastService | null;
+  /**
+   * The vehicle's data score. Absent only from an API that predates it: the
+   * web deploys ahead of the API, and the card then leaves the row out.
+   */
+  dataHealth?: DashboardVehicleDataHealth;
 };
 
 export type DashboardSummary = {
@@ -171,8 +238,9 @@ export type DashboardSummary = {
   insights: MaintenanceSuggestion[];
   loans: DashboardLoanSummary;
   /**
-   * Cross-vehicle queue of reminders, document expiries, and imminent EMIs,
-   * sorted by urgency then due date (odometer-only items last within a bucket),
+   * Cross-vehicle queue of reminders, document expiries, imminent EMIs, and
+   * the alert engine's tyre, service-history and accessory-warranty verdicts,
+   * sorted by urgency then due date (undated items last within a bucket),
    * capped at 25. `attentionTotal` carries the uncapped count.
    */
   attention: DashboardAttentionItem[];

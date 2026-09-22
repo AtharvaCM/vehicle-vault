@@ -15,8 +15,9 @@ import {
 import { cn } from '@/lib/utils/cn';
 import { formatDate } from '@/lib/utils/format-date';
 
-import type { DashboardVehicleHealth } from '../types/dashboard';
+import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
 import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
+import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
 import { OdometerQuickUpdate } from './odometer-quick-update';
 import {
@@ -59,6 +60,73 @@ function MicroRow({ label, children }: MicroRowProps) {
   );
 }
 
+/**
+ * How each gap in the vehicle's data reads, and where it is filled. The
+ * odometer has no link: its Update control is on the card itself.
+ */
+const DATA_GAPS: Record<
+  DashboardDataGap,
+  { text: string; fill: VehicleDetailTab | 'edit' | null }
+> = {
+  service_history: { text: 'Service history incomplete', fill: 'maintenance' },
+  odometer: { text: 'Odometer not updated lately', fill: null },
+  insurance: { text: 'No current insurance', fill: 'protection' },
+  catalog_link: { text: 'Not linked to a catalog model', fill: 'edit' },
+  puc: { text: 'No current PUC', fill: 'protection' },
+  tyres: { text: 'Tyres not tracked', fill: 'tyres' },
+  purchase_price: { text: 'No purchase price', fill: 'edit' },
+};
+
+const INLINE_LINK =
+  'rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+/** The score, and the one gap worth filling next: linked for someone who can fill it. */
+function DataHealthText({
+  vehicle,
+  canEdit,
+}: {
+  vehicle: DashboardVehicleHealth;
+  canEdit: boolean;
+}) {
+  const health = vehicle.dataHealth;
+  if (!health) return null;
+
+  if (health.nextGap === null) {
+    return <span className="text-emerald-700">Complete</span>;
+  }
+
+  const { text, fill } = DATA_GAPS[health.nextGap];
+  let gap: ReactNode = <span>{text}</span>;
+  if (canEdit && fill === 'edit') {
+    gap = (
+      <Link
+        className={INLINE_LINK}
+        params={{ vehicleId: vehicle.id }}
+        to="/vehicles/$vehicleId/edit"
+      >
+        {text}
+      </Link>
+    );
+  } else if (canEdit && fill !== null && fill !== 'edit') {
+    gap = (
+      <Link
+        className={INLINE_LINK}
+        params={{ vehicleId: vehicle.id }}
+        search={{ tab: fill }}
+        to="/vehicles/$vehicleId"
+      >
+        {text}
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <span className="tabular-nums">{health.score}%</span> · {gap}
+    </>
+  );
+}
+
 function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
   if (nextDue.dueDate) {
     const relative = formatRelativeDue({
@@ -84,19 +152,19 @@ function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
 
 export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   const canEdit = vehicle.currentUserRole !== 'viewer';
-  const documents = describeVehicleDocuments(vehicle.documents, today);
+  const documents = describeVehicleDocuments(vehicle, today);
   const statusTab: VehicleDetailTab | undefined =
     vehicle.status === 'ok' || !vehicle.nextDue
       ? undefined
-      : vehicle.nextDue.kind === 'document'
-        ? 'protection'
-        : 'reminders';
+      : vehicle.nextDue.kind === 'reminder'
+        ? 'reminders'
+        : ATTENTION_KIND_TABS[vehicle.nextDue.kind];
   const kmSinceService = vehicle.lastService ? vehicle.odometer - vehicle.lastService.odometer : 0;
 
   return (
     <Card
       className={cn(
-        'flex flex-col gap-3 border-slate-200/60 bg-white/70 shadow-premium-sm transition-colors hover:bg-white',
+        '@container flex flex-col gap-3 border-slate-200/60 bg-white/70 shadow-premium-sm transition-colors hover:bg-white',
         vehicle.status === 'overdue' && 'border-rose-200/60',
         vehicle.status === 'due_soon' && 'border-amber-200/60',
       )}
@@ -192,6 +260,11 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
             <span className="text-slate-400">No service logged</span>
           )}
         </MicroRow>
+        {vehicle.dataHealth ? (
+          <MicroRow label="Data">
+            <DataHealthText canEdit={canEdit} vehicle={vehicle} />
+          </MicroRow>
+        ) : null}
         <MicroRow label="Odometer">
           Updated {formatRelativeAgo(vehicle.odometerUpdatedAt, today)}
           {canEdit ? (
@@ -207,11 +280,22 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         </MicroRow>
       </div>
 
-      <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <span className="shrink-0 whitespace-nowrap text-[12px] tabular-nums text-slate-500">
+      {/* Where the grid adds a column (sm, then xl beside the sidebar), a card is narrower
+          than on a phone, so the footer goes by the card's own width: under 22rem the
+          reading gets a row to itself and the labelled actions take the row below. Icons
+          alone (on a phone) or the menu alone (for a viewer) fit beside the reading. Both
+          rows can still wrap, so a long reading or a wide font never pushes a button out
+          of the card. */}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+        <span
+          className={cn(
+            'shrink-0 whitespace-nowrap text-[12px] tabular-nums text-slate-500',
+            canEdit && 'sm:basis-full sm:@[22rem]:basis-auto',
+          )}
+        >
           {formatKm(vehicle.odometer)}
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {canEdit ? (
             <>
               <Link

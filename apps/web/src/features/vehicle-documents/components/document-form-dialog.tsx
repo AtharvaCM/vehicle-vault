@@ -49,6 +49,11 @@ interface DocumentFormDialogProps {
   /** When provided, the dialog operates in edit mode. */
   editingDocument?: VehicleDocument | null;
   /**
+   * Where `initialValues` came from: a scan (verify what the AI read) or the
+   * record being renewed (details copied, fresh dates suggested).
+   */
+  prefillSource?: 'scan' | 'renewal';
+  /**
    * Pre-fill values from a DocumentExtraction draft. Each field is
    * optional; only present values overwrite the empty defaults.
    * When present, the dialog renders an "AI-filled" banner.
@@ -167,6 +172,7 @@ export function DocumentFormDialog({
   defaultKind = 'insurance',
   editingDocument,
   initialValues,
+  prefillSource = 'scan',
 }: DocumentFormDialogProps) {
   const createMutation = useCreateVehicleDocument(vehicleId);
   const updateMutation = useUpdateVehicleDocument(vehicleId);
@@ -189,7 +195,8 @@ export function DocumentFormDialog({
   });
 
   const selectedKind = watch('kind');
-  const showAiBanner = !!initialValues && !editingDocument;
+  const showAiBanner = !!initialValues && !editingDocument && prefillSource === 'scan';
+  const showRenewalNote = !!initialValues && !editingDocument && prefillSource === 'renewal';
 
   useEffect(() => {
     if (isOpen) {
@@ -264,6 +271,12 @@ export function DocumentFormDialog({
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               Fields below were filled by AI from your uploaded document. Please verify before
               saving.
+            </div>
+          )}
+          {showRenewalNote && (
+            <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+              Renewing: details are copied from the current record, with the next term suggested.
+              The current record stays in the history.
             </div>
           )}
           {!isEditing && (

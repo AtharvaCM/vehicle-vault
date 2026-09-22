@@ -1,3 +1,4 @@
+import { requiresPuc, type FuelType } from '@vehicle-vault/shared';
 import { ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,6 +18,8 @@ import { useDismissVehicleSetupPrompt } from '../hooks/use-dismiss-setup-prompt'
 
 type VehicleSetupPromptProps = {
   vehicleId: string;
+  /** An electric vehicle is exempt from PUC, so it is asked for its insurance alone. */
+  fuelType: FuelType;
   /**
    * Null until the prompt has been answered or skipped for this vehicle.
    * Undefined from an API that predates the prompt, which cannot save it.
@@ -25,12 +28,14 @@ type VehicleSetupPromptProps = {
 };
 
 /**
- * The two dates an owner knows without fetching paperwork, asked once, on the
- * vehicle they have just added. Filling either starts the expiry alerts the
- * same minute instead of after a later visit to the Protection tab; the
- * insurer and the policy number are filled in later, by a scan or an edit.
+ * The two dates an owner knows without fetching paperwork, insurance and PUC
+ * expiry, asked once, on the vehicle they have just added; an electric vehicle
+ * is exempt from PUC and is asked for the first alone. Filling either starts
+ * the expiry alerts the same minute instead of after a later visit to the
+ * Protection tab; the insurer and the policy number are filled in later, by a
+ * scan or an edit.
  */
-export function VehicleSetupPrompt({ dismissedAt, vehicleId }: VehicleSetupPromptProps) {
+export function VehicleSetupPrompt({ dismissedAt, fuelType, vehicleId }: VehicleSetupPromptProps) {
   const { canEdit } = useVehicleAccess();
   const documentsQuery = useVehicleDocuments(vehicleId);
   const createDocument = useCreateVehicleDocument(vehicleId);
@@ -41,15 +46,15 @@ export function VehicleSetupPrompt({ dismissedAt, vehicleId }: VehicleSetupPromp
 
   const documents = documentsQuery.data ?? [];
   const hasInsurance = documents.some((document) => document.kind === 'insurance');
-  const hasPuc = documents.some((document) => document.kind === 'puc');
+  const asksPuc = requiresPuc(fuelType) && !documents.some((document) => document.kind === 'puc');
 
   // Only an explicit null shows it: an API that predates the prompt omits the
   // field and would refuse both the expiry-only documents and the dismissal,
   // which is the web's state between its own deploy and the API's.
   // A viewer cannot create documents, so the prompt would only 403 on save.
   // Waiting for the documents query keeps it from flashing on a vehicle that
-  // already has both, which is what a second browser tab would show.
-  if (!canEdit || dismissedAt !== null || !documentsQuery.isSuccess || (hasInsurance && hasPuc)) {
+  // already has what it asks for, which is what a second browser tab would show.
+  if (!canEdit || dismissedAt !== null || !documentsQuery.isSuccess || (hasInsurance && !asksPuc)) {
     return null;
   }
 
@@ -72,7 +77,7 @@ export function VehicleSetupPrompt({ dismissedAt, vehicleId }: VehicleSetupPromp
       if (insuranceExpiry && !hasInsurance) {
         await createDocument.mutateAsync({ kind: 'insurance', endDate: new Date(insuranceExpiry) });
       }
-      if (pucExpiry && !hasPuc) {
+      if (pucExpiry && asksPuc) {
         await createDocument.mutateAsync({ kind: 'puc', endDate: new Date(pucExpiry) });
       }
     } catch (error) {
@@ -97,8 +102,12 @@ export function VehicleSetupPrompt({ dismissedAt, vehicleId }: VehicleSetupPromp
           Never miss a renewal
         </CardTitle>
         <CardDescription>
-          Add the two expiry dates now and we will remind you before they run out. You can fill in
-          the insurer and policy number later.
+          {!hasInsurance && asksPuc
+            ? 'Add the two expiry dates now and we will remind you before they run out.'
+            : 'Add the expiry date now and we will remind you before it runs out.'}{' '}
+          {hasInsurance
+            ? 'You can fill in the testing centre and certificate number later.'
+            : 'You can fill in the insurer and policy number later.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -113,7 +122,7 @@ export function VehicleSetupPrompt({ dismissedAt, vehicleId }: VehicleSetupPromp
               />
             </FormField>
           )}
-          {!hasPuc && (
+          {asksPuc && (
             <FormField htmlFor="setup-puc-expiry" label="PUC expires on">
               <Input
                 id="setup-puc-expiry"

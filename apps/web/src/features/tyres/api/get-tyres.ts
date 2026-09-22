@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import type { Tyre, VehicleTyreCondition } from '@vehicle-vault/shared';
+import type { Tyre, TyreInspection, VehicleTyreCondition } from '@vehicle-vault/shared';
 
 import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
@@ -32,6 +32,23 @@ export function vehicleTyreConditionQueryOptions(vehicleId: string) {
   return queryOptions({
     queryKey: queryKeys.tyres.condition(vehicleId),
     queryFn: () => getVehicleTyreCondition(vehicleId),
+    enabled: vehicleId.length > 0,
+  });
+}
+
+/** Every reading on the vehicle, newest first: the API orders them. */
+export async function getVehicleTyreInspections(vehicleId: string) {
+  const response = await apiClient.get<ApiSuccessResponse<TyreInspection[]>>(
+    endpoints.tyres.inspections(vehicleId),
+  );
+
+  return response.data;
+}
+
+export function vehicleTyreInspectionsQueryOptions(vehicleId: string) {
+  return queryOptions({
+    queryKey: queryKeys.tyres.inspections(vehicleId),
+    queryFn: () => getVehicleTyreInspections(vehicleId),
     enabled: vehicleId.length > 0,
   });
 }

@@ -14,7 +14,7 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
     params: _params,
-    search: _search,
+    search,
     to,
     ...props
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
@@ -22,7 +22,7 @@ vi.mock('@tanstack/react-router', () => ({
     search?: Record<string, string>;
     to?: string;
   }) => (
-    <a href={to} {...props}>
+    <a data-search={search ? JSON.stringify(search) : undefined} href={to} {...props}>
       {children}
     </a>
   ),
@@ -93,6 +93,62 @@ const overdueDoc = makeAttentionItem({
 });
 
 describe('AttentionQueue', () => {
+  it('shows what the bell knows, each row leading to the tab that fixes it', () => {
+    const wornTyre = makeAttentionItem({
+      id: 'tyre:fl',
+      kind: 'tyre',
+      urgency: 'overdue',
+      title: 'Tyre not roadworthy',
+      detail: 'Front left · 1.4 mm tread',
+      dueDate: null,
+      daysUntilDue: null,
+      reminderType: undefined,
+      reminderStatus: undefined,
+    });
+    const dashcam = makeAttentionItem({
+      id: 'accessory:acc-1',
+      kind: 'accessory',
+      urgency: 'this_week',
+      title: '70mai Dashcam warranty',
+      dueDate: '2026-04-06T00:00:00.000Z',
+      daysUntilDue: 4,
+      reminderType: undefined,
+      reminderStatus: undefined,
+    });
+
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[wornTyre, dashcam]}
+        summary={makeSummary({
+          attention: [wornTyre, dashcam],
+          attentionTotal: 2,
+          attentionCounts: makeAttentionCounts({ overdue: 1, thisWeek: 1, total: 2 }),
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Tyre not roadworthy')).toBeInTheDocument();
+    expect(screen.getByText('Tyre')).toBeInTheDocument();
+    // Undated: what the verdict rests on, where a dated row says when it is due.
+    expect(screen.getByText('Front left · 1.4 mm tread')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View tyres' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'tyres' }),
+    );
+
+    expect(screen.getByText('Accessory')).toBeInTheDocument();
+    expect(screen.getByText('Expires in 4 days')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View accessory' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'accessories' }),
+    );
+
+    // Neither is ticked off or snoozed from here: the fix happens on the tab.
+    expect(screen.queryByRole('button', { name: /done/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /snooze/i })).not.toBeInTheDocument();
+  });
+
   it('renders group labels and rows with their actions', () => {
     renderWithProviders(
       <AttentionQueue
@@ -383,9 +439,7 @@ describe('AttentionQueue', () => {
     );
 
     expect(screen.getByText('Nothing needs attention')).toBeInTheDocument();
-    expect(
-      screen.getByText('No reminders are due and no documents expire in the next 7 days.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Nothing is overdue or due in the next 7 days.')).toBeInTheDocument();
     expect(screen.queryByText('Nothing is being tracked yet')).not.toBeInTheDocument();
   });
 

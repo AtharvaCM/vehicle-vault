@@ -24,6 +24,8 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { DocumentFormDialog } from '../../vehicle-documents/components/document-form-dialog';
+import { documentOfRecord } from '../../vehicle-documents/utils/document-of-record';
+import { renewalValues, type RenewalValues } from '../../vehicle-documents/utils/renewal-values';
 import {
   documentKindNouns,
   documentKindTitles,
@@ -31,7 +33,9 @@ import {
 } from '../../vehicle-documents/utils/document-kind-labels';
 import {
   complianceDocumentKinds,
+  requiresPuc,
   type Claim,
+  type FuelType,
   type VehicleDocument,
   type VehicleDocumentExtractionDraft,
   type VehicleDocumentKind,
@@ -81,9 +85,11 @@ const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanB
 
 interface ProtectionTabProps {
   vehicleId: string;
+  /** An electric vehicle is exempt from PUC, so the tab never asks it for one. */
+  fuelType: FuelType;
 }
 
-export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
+export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
   const { canEdit } = useVehicleAccess();
   const documentsQuery = useVehicleDocuments(vehicleId);
   const claimsQuery = useVehicleClaims(vehicleId);
@@ -92,6 +98,8 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const [defaultKind, setDefaultKind] = useState<VehicleDocumentKind>('insurance');
   const [editingDocument, setEditingDocument] = useState<VehicleDocument | null>(null);
   const [scannedDraft, setScannedDraft] = useState<VehicleDocumentExtractionDraft | null>(null);
+  // Prefill for "Renew": the current record's details with the next term.
+  const [renewalDraft, setRenewalDraft] = useState<RenewalValues | null>(null);
   // Which kind the file picker is currently collecting a scan for. The endpoint
   // needs it up front so the prompt can narrow to that document type.
   const [scanKind, setScanKind] = useState<VehicleDocumentKind>('insurance');
@@ -140,6 +148,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   const complianceDocuments = allDocuments.filter(
     (d) => d.kind === 'registration' || d.kind === 'puc' || d.kind === 'road_tax',
   );
+  const pucRequired = requiresPuc(fuelType);
   const claims = claimsQuery.data || [];
 
   function openDialog(kind: VehicleDocumentKind) {
@@ -152,13 +161,34 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
   function handleEdit(doc: VehicleDocument) {
     setEditingDocument(doc);
     setScannedDraft(null);
+    setRenewalDraft(null);
     setDefaultKind(doc.kind);
     setIsDialogOpen(true);
+  }
+
+  /**
+   * A renewal is a new record, not an edit: the old one stays as history, and
+   * the new one outranks it, so the dashboard and the alerts move over to it.
+   */
+  function handleRenew(doc: VehicleDocument) {
+    setEditingDocument(null);
+    setScannedDraft(null);
+    setRenewalDraft(renewalValues(doc));
+    setDefaultKind(doc.kind);
+    setIsDialogOpen(true);
+  }
+
+  /** Renew is offered only on each kind's document of record, never on history. */
+  function renewHandlerFor(doc: VehicleDocument) {
+    if (!canEdit) return undefined;
+    const sameKind = (documentsQuery.data ?? []).filter((other) => other.kind === doc.kind);
+    return documentOfRecord(sameKind)?.id === doc.id ? handleRenew : undefined;
   }
 
   function handleClose() {
     setEditingDocument(null);
     setScannedDraft(null);
+    setRenewalDraft(null);
     setIsDialogOpen(false);
   }
 
@@ -252,6 +282,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   document={policy}
                   vehicleId={vehicleId}
                   onEdit={canEdit ? handleEdit : undefined}
+                  onRenew={renewHandlerFor(policy)}
                 />
               ))
             ) : (
@@ -367,6 +398,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   document={warranty}
                   vehicleId={vehicleId}
                   onEdit={canEdit ? handleEdit : undefined}
+                  onRenew={renewHandlerFor(warranty)}
                 />
               ))
             ) : (
@@ -432,16 +464,24 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                   document={doc}
                   vehicleId={vehicleId}
                   onEdit={canEdit ? handleEdit : undefined}
+                  onRenew={renewHandlerFor(doc)}
                 />
               ))
             ) : (
               <EmptyState
                 title="No compliance documents"
-                description="Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due."
+                description={
+                  pucRequired
+                    ? 'Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due.'
+                    : 'Track your RC and road tax to get expiry alerts before renewals are due.'
+                }
                 action={
                   canEdit ? (
-                    <Button variant="secondary" onClick={() => openDialog('puc')}>
-                      Add PUC certificate
+                    <Button
+                      variant="secondary"
+                      onClick={() => openDialog(pucRequired ? 'puc' : 'registration')}
+                    >
+                      {pucRequired ? 'Add PUC certificate' : 'Add registration certificate'}
                     </Button>
                   ) : undefined
                 }
@@ -475,8 +515,10 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
               <p className="font-bold text-slate-700 mb-1">PUC &amp; Road Tax</p>
               <p>
-                PUC certificates typically last 6–12 months and are mandatory. Road tax is often
-                one-time (lifetime) — leave the end date blank for those.
+                {pucRequired
+                  ? 'PUC certificates typically last 6–12 months and are mandatory.'
+                  : 'Electric vehicles are exempt from PUC, so there is no certificate to keep.'}{' '}
+                Road tax is often one-time (lifetime) — leave the end date blank for those.
               </p>
             </div>
           </CardContent>
@@ -489,7 +531,8 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
         vehicleId={vehicleId}
         defaultKind={defaultKind}
         editingDocument={editingDocument}
-        initialValues={scannedDraft ?? undefined}
+        initialValues={scannedDraft ?? renewalDraft ?? undefined}
+        prefillSource={renewalDraft ? 'renewal' : 'scan'}
       />
 
       <ClaimFormDialog

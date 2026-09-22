@@ -57,6 +57,7 @@ const prisma = {
   vehicle: { findUnique: vi.fn() },
   reminder: { findMany: vi.fn() },
   auditEvent: { findFirst: vi.fn() },
+  warranty: { findMany: vi.fn() },
 };
 const insights = { getOdometerInsights: vi.fn() };
 const notify = { raise: vi.fn() };
@@ -87,6 +88,7 @@ function buildService(): MaintenanceAlertService {
 
   prisma.vehicle.findUnique.mockResolvedValue(VEHICLE);
   prisma.reminder.findMany.mockResolvedValue([]);
+  prisma.warranty.findMany.mockResolvedValue([]);
   // An active owner by default — a recent audited action — so prompts go to
   // every channel unless a test is specifically about dormancy.
   prisma.auditEvent.findFirst.mockResolvedValue({ id: 'evt-recent' });
@@ -1364,5 +1366,122 @@ describe('MaintenanceAlertService re-runs with several members', () => {
       copies.set(key, (copies.get(key) ?? 0) + 1);
     }
     expect([...copies.values()].every((count) => count === 1)).toBe(true);
+  });
+});
+
+describe('MaintenanceAlertService warranty distance', () => {
+  let service: MaintenanceAlertService;
+
+  /** A warranty on a vehicle at 40 000 km (the fixture's predicted odometer). */
+  const warranty = (overrides: Record<string, unknown> = {}) => ({
+    id: 'wty-1',
+    vehicleId: 'v1',
+    provider: 'Hyundai',
+    type: 'Manufacturer',
+    warrantyNumber: null,
+    startDate: new Date('2024-01-01T00:00:00.000Z'),
+    endDate: new Date('2027-01-01T00:00:00.000Z'),
+    endOdometer: 40_400,
+    notes: null,
+    createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    service = buildService();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('warns as the vehicle comes within the odometer window of the limit', async () => {
+    prisma.warranty.findMany.mockResolvedValue([warranty()]);
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('warranty-odometer')).toEqual([
+      {
+        warranty: {
+          id: 'wty-1',
+          vehicleId: 'v1',
+          provider: 'Hyundai',
+          type: 'Manufacturer',
+          endOdometer: 40_400,
+        },
+        remainingKm: 400,
+      },
+    ]);
+  });
+
+  it('says so once the limit has been passed', async () => {
+    prisma.warranty.findMany.mockResolvedValue([warranty({ endOdometer: 39_000 })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('warranty-odometer')).toEqual([
+      expect.objectContaining({ remainingKm: -1_000 }),
+    ]);
+  });
+
+  it('stays quiet while the limit is further off than the window', async () => {
+    prisma.warranty.findMany.mockResolvedValue([warranty({ endOdometer: 60_000 })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('warranty-odometer')).toEqual([]);
+  });
+
+  it('leaves a warranty with only a date to the expiry alert, as before', async () => {
+    prisma.warranty.findMany.mockResolvedValue([warranty({ endOdometer: null })]);
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('warranty-odometer')).toEqual([]);
+  });
+
+  it('watches the extended warranty, not the manufacturer one it took over from', async () => {
+    prisma.warranty.findMany.mockResolvedValue([
+      warranty({ id: 'wty-old', endOdometer: 39_000, endDate: new Date('2025-12-31') }),
+      warranty({
+        id: 'wty-extended',
+        type: 'Extended',
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endOdometer: 100_000,
+      }),
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('warranty-odometer')).toEqual([]);
+  });
+
+  it('says nothing of a warranty whose date has already run out', async () => {
+    prisma.warranty.findMany.mockResolvedValue([
+      warranty({ endDate: new Date('2026-01-01T00:00:00.000Z') }),
+    ]);
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('warranty-odometer')).toEqual([]);
+  });
+
+  it('reaches everyone the vehicle is shared with, viewers included', async () => {
+    prisma.vehicle.findUnique.mockResolvedValue({
+      ...VEHICLE,
+      members: [
+        { userId: 'u1', role: VehicleRole.owner },
+        { userId: 'u2', role: VehicleRole.viewer },
+      ],
+    });
+    prisma.warranty.findMany.mockResolvedValue([warranty()]);
+
+    await service.runAlertChecks('v1');
+
+    const recipients = notify.raise.mock.calls
+      .filter(([, , kind]) => kind === 'warranty-odometer')
+      .map(([userId]) => userId);
+    expect(recipients.sort()).toEqual(['u1', 'u2']);
   });
 });

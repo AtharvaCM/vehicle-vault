@@ -19,6 +19,7 @@ import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.re
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { UpsertServiceBaselineDto } from './dto/upsert-service-baseline.dto';
+import { unansweredCategories } from './service-history-coverage';
 
 type ServiceBaselineRow = Prisma.ServiceBaselineGetPayload<Record<string, never>>;
 
@@ -80,7 +81,7 @@ export class ServiceBaselineService {
     return {
       vehicleId,
       entries,
-      unansweredCount: entries.filter((entry) => entry.source === 'unset').length,
+      unansweredCount: unansweredCategories(intervals, records, baselines).length,
     };
   }
 

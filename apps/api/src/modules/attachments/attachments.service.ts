@@ -65,6 +65,26 @@ type AttachmentWithExtraction = Prisma.AttachmentGetPayload<{
 
 type StoredAttachmentExtraction = Prisma.AttachmentExtractionGetPayload<Record<string, never>>;
 
+/** Every vehicle document kind can own its files. */
+export type DocumentAttachmentKind = 'insurance' | 'warranty' | 'registration' | 'puc' | 'road_tax';
+
+/** Which Attachment column holds the owner, for each way an attachment is stored. */
+type AttachmentOwnerColumn =
+  | { vehicleLoanId: string }
+  | { insurancePolicyId: string }
+  | { warrantyId: string }
+  | { complianceDocumentId: string };
+
+function documentOwnerColumn(
+  kind: DocumentAttachmentKind,
+  documentId: string,
+): AttachmentOwnerColumn {
+  if (kind === 'insurance') return { insurancePolicyId: documentId };
+  if (kind === 'warranty') return { warrantyId: documentId };
+  // Registration, PUC and road tax share one table, told apart by its kind column.
+  return { complianceDocumentId: documentId };
+}
+
 @Injectable()
 export class AttachmentsService {
   constructor(
@@ -84,6 +104,42 @@ export class AttachmentsService {
     });
     if (!record) throw new BadRequestException('Maintenance record not found');
     await this.access.assertEditor(userId, record.vehicleId);
+  }
+
+  /** As resolveDocumentVehicle, for a compliance row reached from its file rather than a route. */
+  private async resolveComplianceVehicle(documentId: string) {
+    const document = await this.prisma.complianceDocument.findUnique({
+      where: { id: documentId },
+      select: { kind: true },
+    });
+    if (!document) {
+      throw new NotFoundException(`Document ${documentId} was not found`);
+    }
+    return this.resolveDocumentVehicle(document.kind, documentId);
+  }
+
+  /**
+   * The vehicle a document belongs to, and that vehicle's owner, whose
+   * trail the audit event belongs in. Access is then the vehicle's: any member
+   * may open a document's files, only an editor may add or remove them.
+   */
+  private async resolveDocumentVehicle(kind: DocumentAttachmentKind, documentId: string) {
+    const select = { vehicleId: true, vehicle: { select: { userId: true } } } as const;
+    const document =
+      kind === 'insurance'
+        ? await this.prisma.insurancePolicy.findUnique({ where: { id: documentId }, select })
+        : kind === 'warranty'
+          ? await this.prisma.warranty.findUnique({ where: { id: documentId }, select })
+          : // A compliance row answers only to its own kind: a PUC is not
+            // reachable as a registration.
+            await this.prisma.complianceDocument.findFirst({
+              where: { id: documentId, kind },
+              select,
+            });
+    if (!document) {
+      throw new NotFoundException(`Document ${documentId} was not found`);
+    }
+    return { vehicleId: document.vehicleId, vehicleOwnerId: document.vehicle.userId };
   }
 
   getExtractionStatus() {
@@ -129,6 +185,51 @@ export class AttachmentsService {
 
   async uploadLoanAttachments(userId: string, loanId: string, files: AttachmentUploadFile[]) {
     await this.vehicleLoansService.getById(userId, loanId);
+    return this.storeAttachments(userId, { vehicleLoanId: loanId }, loanId, userId, files);
+  }
+
+  async listByDocument(userId: string, kind: DocumentAttachmentKind, documentId: string) {
+    const { vehicleId } = await this.resolveDocumentVehicle(kind, documentId);
+    await this.access.assert(userId, vehicleId);
+    const attachments = await this.prisma.attachment.findMany({
+      where: documentOwnerColumn(kind, documentId),
+      include: attachmentInclude,
+      orderBy: { uploadedAt: 'desc' },
+    });
+    return attachments.map((attachment) => this.toAttachment(attachment));
+  }
+
+  async uploadDocumentAttachments(
+    userId: string,
+    kind: DocumentAttachmentKind,
+    documentId: string,
+    files: AttachmentUploadFile[],
+  ) {
+    const { vehicleId, vehicleOwnerId } = await this.resolveDocumentVehicle(kind, documentId);
+    await this.access.assertEditor(userId, vehicleId);
+    return this.storeAttachments(
+      userId,
+      documentOwnerColumn(kind, documentId),
+      documentId,
+      vehicleOwnerId,
+      files,
+    );
+  }
+
+  /**
+   * Uploads the files, then records them in one audited transaction. Storage
+   * goes first so a row never points at a file that is not there; if either
+   * step fails, what was uploaded is removed again. Files live under the
+   * uploader's own prefix, `attachments/<userId>/<ownerId>/`, which is what
+   * account deletion sweeps.
+   */
+  private async storeAttachments(
+    userId: string,
+    owner: AttachmentOwnerColumn,
+    ownerId: string,
+    auditOwnerUserId: string,
+    files: AttachmentUploadFile[],
+  ) {
     if (!files.length) {
       throw new BadRequestException('Add at least one attachment to upload.');
     }
@@ -139,13 +240,12 @@ export class AttachmentsService {
         const id = randomUUID();
         const fileName = buildStoredAttachmentPath(
           userId,
-          loanId,
+          ownerId,
           preparedFile.originalFileName,
           preparedFile.storageExtension,
         );
         return {
           id,
-          vehicleLoanId: loanId,
           kind: this.getAttachmentKind(preparedFile.mimeType),
           fileName,
           originalFileName: preparedFile.originalFileName,
@@ -176,7 +276,7 @@ export class AttachmentsService {
           const row = await tx.attachment.create({
             data: {
               id: file.id,
-              vehicleLoanId: file.vehicleLoanId,
+              ...owner,
               kind: file.kind,
               fileName: file.fileName,
               originalFileName: file.originalFileName,
@@ -189,7 +289,7 @@ export class AttachmentsService {
           });
           await this.auditService.track(tx, {
             actorUserId: userId,
-            ownerUserId: userId,
+            ownerUserId: auditOwnerUserId,
             action: AUDIT_ACTIONS.attachment.uploaded,
             resourceType: AuditResourceType.attachment,
             resourceId: row.id,
@@ -545,10 +645,23 @@ export class AttachmentsService {
 
   async deleteAttachment(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
+    let auditOwnerUserId = userId;
     if (attachment.maintenanceRecordId) {
       await this.assertEditorOnMaintenanceRecord(userId, attachment.maintenanceRecordId);
     }
     // Loan attachments stay owner-only via the upstream getStoredAttachmentById filter.
+    const documentOwner = attachment.insurancePolicyId
+      ? await this.resolveDocumentVehicle('insurance', attachment.insurancePolicyId)
+      : attachment.warrantyId
+        ? await this.resolveDocumentVehicle('warranty', attachment.warrantyId)
+        : attachment.complianceDocumentId
+          ? await this.resolveComplianceVehicle(attachment.complianceDocumentId)
+          : null;
+    if (documentOwner) {
+      // Opening is for any member; removing a file from a document is an edit.
+      await this.access.assertEditor(userId, documentOwner.vehicleId);
+      auditOwnerUserId = documentOwner.vehicleOwnerId;
+    }
 
     await this.storageService.deleteObject(attachment.fileName);
 
@@ -556,7 +669,7 @@ export class AttachmentsService {
       await tx.attachment.delete({ where: { id: attachmentId } });
       await this.auditService.track(tx, {
         actorUserId: userId,
-        ownerUserId: userId,
+        ownerUserId: auditOwnerUserId,
         action: AUDIT_ACTIONS.attachment.deleted,
         resourceType: AuditResourceType.attachment,
         resourceId: attachmentId,
@@ -627,6 +740,10 @@ export class AttachmentsService {
         OR: [
           { maintenanceRecord: { vehicle: { members: { some: { userId } } } } },
           { vehicleLoan: { vehicle: { members: { some: { userId, role: 'owner' } } } } },
+          // A document's files are the vehicle's: any member may open them.
+          { insurancePolicy: { vehicle: { members: { some: { userId } } } } },
+          { warranty: { vehicle: { members: { some: { userId } } } } },
+          { complianceDocument: { vehicle: { members: { some: { userId } } } } },
         ],
       },
       include: attachmentInclude,
@@ -652,15 +769,24 @@ export class AttachmentsService {
   }
 
   private toAttachment(attachment: AttachmentWithExtraction) {
-    if (!attachment.maintenanceRecordId && !attachment.vehicleLoanId) {
+    if (
+      !attachment.maintenanceRecordId &&
+      !attachment.vehicleLoanId &&
+      !attachment.insurancePolicyId &&
+      !attachment.warrantyId &&
+      !attachment.complianceDocumentId
+    ) {
       throw new Error(
-        `Cannot map attachment ${attachment.id}: no supported owner (expected maintenance record or vehicle loan).`,
+        `Cannot map attachment ${attachment.id}: no supported owner (expected a maintenance record, vehicle loan or vehicle document).`,
       );
     }
     return {
       id: attachment.id,
       maintenanceRecordId: attachment.maintenanceRecordId ?? undefined,
       vehicleLoanId: attachment.vehicleLoanId ?? undefined,
+      insurancePolicyId: attachment.insurancePolicyId ?? undefined,
+      warrantyId: attachment.warrantyId ?? undefined,
+      complianceDocumentId: attachment.complianceDocumentId ?? undefined,
       kind: attachment.kind as AttachmentKind,
       fileName: attachment.fileName,
       originalFileName: attachment.originalFileName,

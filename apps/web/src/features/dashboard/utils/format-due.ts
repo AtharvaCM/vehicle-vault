@@ -5,12 +5,17 @@ import type { DashboardAttentionKind, DashboardUrgency } from '../types/dashboar
 const MS_PER_DAY = 86_400_000;
 
 type FormatRelativeDueInput = {
-  kind: DashboardAttentionKind | 'reminder' | 'document';
+  kind: DashboardAttentionKind;
   daysUntilDue: number | null;
   dueDate: string | null;
   dueOdometer?: number;
   kmUntilDue?: number;
+  /** An undated verdict's own wording, e.g. "2.8 mm tread". */
+  detail?: string;
 };
+
+/** Kinds whose date is when something runs out, not when something is due. */
+const EXPIRING_KINDS: readonly DashboardAttentionKind[] = ['document', 'accessory'];
 
 export function formatKm(value: number) {
   return `${Math.round(value).toLocaleString('en-IN')} km`;
@@ -98,6 +103,8 @@ function formatReminderDue(days: number, dueDate: string) {
 /**
  * Human relative due string. When both a date and an odometer exist the date
  * string is primary — callers render the odometer as a separate meta segment.
+ * An undated verdict (a worn tyre, unknown service history) says what it rests
+ * on instead.
  */
 export function formatRelativeDue({
   kind,
@@ -105,20 +112,23 @@ export function formatRelativeDue({
   dueDate,
   dueOdometer,
   kmUntilDue,
+  detail,
 }: FormatRelativeDueInput) {
+  const expires = EXPIRING_KINDS.includes(kind);
+
   if (!dueDate) {
     if (dueOdometer === undefined) {
-      return 'No due date';
+      return detail ?? 'No due date';
     }
 
     return formatOdometerDue(dueOdometer, kmUntilDue);
   }
 
   if (daysUntilDue === null) {
-    return `${kind === 'document' ? 'Expires' : 'Due'} ${formatDate(dueDate)}`;
+    return `${expires ? 'Expires' : 'Due'} ${formatDate(dueDate)}`;
   }
 
-  if (kind === 'document') {
+  if (expires) {
     return formatDocumentDue(daysUntilDue, dueDate);
   }
 

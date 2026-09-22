@@ -35,6 +35,10 @@ export const ALERT_KIND_COPY: Record<AlertKind, AlertKindCopy> = {
     label: 'Accessory warranty ending',
     description: 'The warranty on something you bought for the vehicle ends within 7 days.',
   },
+  'warranty-odometer': {
+    label: 'Warranty distance',
+    description: 'The vehicle is within 500 km of its warranty’s distance limit, or past it.',
+  },
   'tyre-worn': {
     label: 'Tyre worn',
     description: 'A tyre’s tread is near or below the legal minimum.',
@@ -58,7 +62,7 @@ export const ALERT_KIND_GROUPS: { title: string; kinds: AlertKind[] }[] = [
   { title: 'Reminders', kinds: ['reminder-due', 'reminder-overdue'] },
   {
     title: 'Documents and warranties',
-    kinds: ['document-expiring', 'accessory-warranty-expiring'],
+    kinds: ['document-expiring', 'warranty-odometer', 'accessory-warranty-expiring'],
   },
   { title: 'Tyres', kinds: ['tyre-worn', 'tyre-aged', 'tyre-uninspected'] },
 ];

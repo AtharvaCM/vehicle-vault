@@ -112,6 +112,26 @@ async function expectReadableCard(card: Locator, title: string, figures: string[
 }
 
 /**
+ * A card can spill a button past its own edge without widening the page, as the
+ * dashboard's garage card did three across at 1280px. Every link and button in
+ * `card` has to sit inside it.
+ */
+async function expectControlsInsideCard(card: Locator, where: string) {
+  const cardBox = (await card.boundingBox())!;
+  for (const control of await card.locator('a, button').all()) {
+    const box = await control.boundingBox();
+    if (!box) continue;
+    const name = (await control.getAttribute('aria-label')) ?? (await control.innerText());
+    expect
+      .soft(
+        box.x >= cardBox.x && box.x + box.width <= cardBox.x + cardBox.width,
+        `${where}: "${name}" sticks out of the card.`,
+      )
+      .toBe(true);
+  }
+}
+
+/**
  * The shell was a desktop layout squeezed onto a phone. Below md the primary
  * navigation moves to a bottom bar; from md up nothing changes. jsdom cannot
  * evaluate a breakpoint, so the widths are checked here, in a real browser.
@@ -345,6 +365,18 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   await page.goto(`/reminders/${reminder.id}`);
   await expect(page.getByRole('main').getByText('Mark Complete').first()).toBeVisible();
   await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
+
+  // The dashboard's garage cards are narrowest where the grid adds a column: two
+  // across from sm, three beside the sidebar from xl. There a card must keep its
+  // footer's buttons inside it, without dropping their labels to make room.
+  const garageCard = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
+  for (const width of [640, DESKTOP.width]) {
+    await page.setViewportSize({ width, height: DESKTOP.height });
+    await page.goto('/dashboard');
+    await expect(garageCard.getByText('Log service', { exact: true })).toBeVisible();
+    await expectControlsInsideCard(garageCard, `The garage card at ${width}px`);
+    await expectNoSidewaysScroll(page, `/dashboard at ${width}px`);
+  }
 });
 
 test.afterAll(async () => {

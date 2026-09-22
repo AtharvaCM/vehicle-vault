@@ -24,6 +24,7 @@ import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import type { UpdateMaintenanceRecordDto } from './dto/update-maintenance-record.dto';
+import { syncNextDueReminder } from './next-due-reminder';
 
 const maintenanceRecordInclude = {
   lineItems: {
@@ -127,6 +128,7 @@ export class MaintenanceService {
           vehicleId,
         });
       }
+      await syncNextDueReminder(tx, this.auditService, userId, created);
       return created;
     });
 
@@ -217,6 +219,22 @@ export class MaintenanceService {
       await this.recordPartObservations(record.lineItems);
     }
 
+    // An import is history. Only the newest record of each kind speaks for when
+    // to come back; reminders from every older row would all be long overdue.
+    const newestPerCategory = new Map<string, (typeof created)[number]>();
+    for (const record of created) {
+      if (!record.nextDueDate && record.nextDueOdometer == null) continue;
+      const newest = newestPerCategory.get(record.category);
+      if (!newest || record.serviceDate > newest.serviceDate) {
+        newestPerCategory.set(record.category, record);
+      }
+    }
+    for (const record of newestPerCategory.values()) {
+      await this.prisma.$transaction((tx) =>
+        syncNextDueReminder(tx, this.auditService, userId, record),
+      );
+    }
+
     return {
       count: inputs.length,
     };
@@ -253,6 +271,8 @@ export class MaintenanceService {
           vehicleId: updated.vehicleId,
         });
       }
+      // Confirming, or editing a confirmed record, refreshes its next-due reminder.
+      await syncNextDueReminder(tx, this.auditService, userId, updated);
       return updated;
     });
 

@@ -10,7 +10,12 @@ import { cn } from '@/lib/utils/cn';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 
-import type { DashboardAttentionItem, DashboardUrgency } from '../types/dashboard';
+import type {
+  DashboardAttentionItem,
+  DashboardAttentionKind,
+  DashboardUrgency,
+} from '../types/dashboard';
+import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { formatOdometerMeta, formatRelativeDue } from '../utils/format-due';
 
 const URGENCY_BAR: Record<DashboardUrgency, string> = {
@@ -20,13 +25,21 @@ const URGENCY_BAR: Record<DashboardUrgency, string> = {
   this_month: 'bg-sky-400',
 };
 
+/** What each kind of row offers to do, beside the row's own link. */
+const KIND_ACTIONS: Partial<Record<DashboardAttentionKind, string>> = {
+  loan_emi: 'View loan',
+  tyre: 'View tyres',
+  service_baseline: 'Add history',
+  accessory: 'View accessory',
+};
+
 type AttentionItemLinkProps = {
   item: Pick<DashboardAttentionItem, 'id' | 'kind' | 'vehicleId'>;
   className?: string;
   children: ReactNode;
 };
 
-/** The deep link for an attention item: reminder detail, or the vehicle's protection / loans tab. */
+/** The deep link for an attention item: reminder detail, or the vehicle tab that fixes it. */
 export function AttentionItemLink({ item, className, children }: AttentionItemLinkProps) {
   if (item.kind === 'reminder') {
     return (
@@ -40,7 +53,7 @@ export function AttentionItemLink({ item, className, children }: AttentionItemLi
     <Link
       className={className}
       params={{ vehicleId: item.vehicleId }}
-      search={{ tab: item.kind === 'document' ? 'protection' : 'loans' }}
+      search={{ tab: ATTENTION_KIND_TABS[item.kind] }}
       to="/vehicles/$vehicleId"
     >
       {children}
@@ -49,15 +62,20 @@ export function AttentionItemLink({ item, className, children }: AttentionItemLi
 }
 
 export function attentionBadgeLabel(item: DashboardAttentionItem) {
-  if (item.kind === 'document') {
-    return item.documentKind ? documentKindNouns[item.documentKind] : 'Document';
+  switch (item.kind) {
+    case 'document':
+      return item.documentKind ? documentKindNouns[item.documentKind] : 'Document';
+    case 'loan_emi':
+      return 'EMI';
+    case 'tyre':
+      return 'Tyre';
+    case 'service_baseline':
+      return 'Service history';
+    case 'accessory':
+      return 'Accessory';
+    case 'reminder':
+      return formatReminderType(item.reminderType ?? 'custom');
   }
-
-  if (item.kind === 'loan_emi') {
-    return 'EMI';
-  }
-
-  return formatReminderType(item.reminderType ?? 'custom');
 }
 
 function MetaDot() {
@@ -230,14 +248,19 @@ export function AttentionRow({
             </Link>
           </>
         ) : null}
-        {item.kind === 'loan_emi' ? (
+        {item.kind !== 'reminder' && KIND_ACTIONS[item.kind] ? (
+          // The row already leads to the same tab; on a phone the title needs the room more.
           <Link
-            className={buttonVariants({ size: 'sm', variant: 'outline', className: 'h-10 sm:h-8' })}
+            className={buttonVariants({
+              size: 'sm',
+              variant: 'outline',
+              className: 'h-10 max-sm:hidden sm:h-8',
+            })}
             params={{ vehicleId: item.vehicleId }}
-            search={{ tab: 'loans' }}
+            search={{ tab: ATTENTION_KIND_TABS[item.kind] }}
             to="/vehicles/$vehicleId"
           >
-            View loan
+            {KIND_ACTIONS[item.kind]}
           </Link>
         ) : null}
       </div>

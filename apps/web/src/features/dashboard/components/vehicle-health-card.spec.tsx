@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
-import { MaintenanceCategory } from '@vehicle-vault/shared';
+import { FuelType, MaintenanceCategory } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { makeVehicle } from '../test/fixtures';
@@ -79,6 +79,112 @@ describe('VehicleHealthCard', () => {
     expect(screen.getByText('Insurance policy · Expires in 5 days')).toBeInTheDocument();
   });
 
+  it('points the pill at the tyres tab when a worn tyre is what is overdue', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({
+          status: 'overdue',
+          overdueCount: 1,
+          nextDue: {
+            kind: 'tyre',
+            targetId: 'tyre:fl',
+            title: 'Replace tyre',
+            dueDate: null,
+            daysUntilDue: null,
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: '1 overdue' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'tyres' }),
+    );
+    expect(screen.getByText('Replace tyre')).toBeInTheDocument();
+  });
+
+  describe('data score', () => {
+    it('reads as complete, with nothing to nag about, when everything is on file', () => {
+      renderWithProviders(
+        <VehicleHealthCard
+          today={today}
+          vehicle={makeVehicle({ dataHealth: { score: 100, nextGap: null } })}
+        />,
+      );
+
+      expect(screen.getByText('Data')).toBeInTheDocument();
+      expect(screen.getByText('Complete')).toBeInTheDocument();
+    });
+
+    it('names the gap worth filling, linked to where it is filled', () => {
+      renderWithProviders(
+        <VehicleHealthCard
+          today={today}
+          vehicle={makeVehicle({ dataHealth: { score: 70, nextGap: 'insurance' } })}
+        />,
+      );
+
+      expect(screen.getByText('70%')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'No current insurance' })).toHaveAttribute(
+        'data-search',
+        JSON.stringify({ tab: 'protection' }),
+      );
+    });
+
+    it('sends a missing catalog link or purchase price to the edit form', () => {
+      renderWithProviders(
+        <VehicleHealthCard
+          today={today}
+          vehicle={makeVehicle({ dataHealth: { score: 85, nextGap: 'catalog_link' } })}
+        />,
+      );
+
+      expect(screen.getByRole('link', { name: 'Not linked to a catalog model' })).toHaveAttribute(
+        'href',
+        '/vehicles/$vehicleId/edit',
+      );
+    });
+
+    it('leaves a stale odometer to the Update control already on the card', () => {
+      renderWithProviders(
+        <VehicleHealthCard
+          today={today}
+          vehicle={makeVehicle({ dataHealth: { score: 80, nextGap: 'odometer' } })}
+        />,
+      );
+
+      expect(screen.getByText('Odometer not updated lately')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: 'Odometer not updated lately' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Update odometer for Daily driver' }),
+      ).toBeInTheDocument();
+    });
+
+    it('tells a viewer the gap without offering to fill it', () => {
+      renderWithProviders(
+        <VehicleHealthCard
+          today={today}
+          vehicle={makeVehicle({
+            currentUserRole: 'viewer',
+            dataHealth: { score: 70, nextGap: 'insurance' },
+          })}
+        />,
+      );
+
+      expect(screen.getByText('No current insurance')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'No current insurance' })).not.toBeInTheDocument();
+    });
+
+    it('leaves the row out when the API does not send a score yet', () => {
+      renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
+
+      expect(screen.queryByText('Data')).not.toBeInTheDocument();
+    });
+  });
+
   it('shows All clear and Nothing scheduled for a healthy vehicle', () => {
     renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
 
@@ -137,6 +243,23 @@ describe('VehicleHealthCard', () => {
       expect(screen.getByText(expected)).toBeInTheDocument();
       unmount();
     }
+  });
+
+  it('does not ask an electric vehicle for a PUC, which it is exempt from', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({
+          fuelType: FuelType.Electric,
+          documents: { insurance: { state: 'active', endDate: '2026-12-01T00:00:00.000Z' } },
+          dataHealth: { score: 100, nextGap: null },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Insurance valid · to 01 Dec 2026')).toBeInTheDocument();
+    expect(screen.queryByText('No PUC on file')).not.toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 
   it('renders the last service with distance since', () => {
