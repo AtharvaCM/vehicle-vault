@@ -7,6 +7,7 @@ import { ServiceBaselineStatus, VehicleRole } from '@prisma/client';
 import { NotifyService } from './notify.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
+import { pickLatestDocument } from '../vehicle-documents/document-recency';
 import { AccessoriesService } from '../accessories/accessories.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
@@ -274,6 +275,11 @@ export class MaintenanceAlertService {
         daysUntilExpiry,
       });
     }
+
+    // 4b. A warranty's distance limit. Warranties usually end at a date or a
+    // distance, whichever comes first: the date is covered above, and this
+    // watches the distance, with the window distance-based services use.
+    await this.checkWarrantyDistance(audience, vehicle.id, currentOdo);
 
     // 5. Accessory warranty expiry. Same shape as document expiry: a calendar
     // date on a record, bucketed by the same template helper so the two alerts
@@ -638,6 +644,53 @@ export class MaintenanceAlertService {
    * Trigger checks for ALL vehicles.
    * This is called automatically every day at 6:00 AM.
    */
+  /**
+   * The vehicle's warranty of record against its distance limit. Only that one
+   * counts: an extended warranty supersedes the manufacturer's, whose limit is
+   * usually long past, and a warranty whose date has already run out is over
+   * whatever the odometer says. Everyone the vehicle is shared with hears it;
+   * see warranty-odometer.template.ts for the wording and dedup.
+   */
+  private async checkWarrantyDistance(
+    audience: Audience,
+    vehicleId: string,
+    currentOdometer: number,
+  ) {
+    const warranties = await this.prisma.warranty.findMany({ where: { vehicleId } });
+    const current = pickLatestDocument(
+      warranties.map((warranty) => ({
+        id: warranty.id,
+        vehicleId: warranty.vehicleId,
+        kind: 'warranty' as const,
+        provider: warranty.provider,
+        number: warranty.warrantyNumber,
+        startDate: warranty.startDate,
+        endDate: warranty.endDate,
+        notes: warranty.notes,
+        details: {},
+        createdAt: warranty.createdAt,
+        updatedAt: warranty.updatedAt,
+      })),
+    );
+    const warranty = warranties.find((row) => row.id === current?.id);
+    if (!warranty || warranty.endOdometer === null) return;
+    if (warranty.endDate && warranty.endDate.getTime() < Date.now()) return;
+
+    const remainingKm = warranty.endOdometer - currentOdometer;
+    if (remainingKm > ODOMETER_ALERT_WINDOW_KM) return;
+
+    await this.raiseToMembers(audience, vehicleId, 'warranty-odometer', {
+      warranty: {
+        id: warranty.id,
+        vehicleId: warranty.vehicleId,
+        provider: warranty.provider,
+        type: warranty.type,
+        endOdometer: warranty.endOdometer,
+      },
+      remainingKm,
+    });
+  }
+
   @Cron(process.env.MAINTENANCE_ALERT_CRON || '0 6 * * *')
   async runDailyChecks() {
     if (process.env.NODE_ENV === 'development') {
