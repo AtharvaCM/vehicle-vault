@@ -21,7 +21,8 @@ type MaintenanceDraftReviewCardProps = {
   recordId: string;
   /**
    * Applying writes the whole extraction over the record and leaves it a draft,
-   * so it is offered for a draft only.
+   * so it is offered for a draft only. A confirmed record is filled in from its
+   * record page instead, which adds only what it is missing.
    */
   isDraft: boolean;
 };
@@ -89,7 +90,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
             <CardDescription>
               {isDraft
                 ? 'Extract invoice and job card data, then apply the suggestions into the draft.'
-                : 'What was read from the invoice and job card. Change the record itself with the form.'}
+                : 'What was read from the invoice and job card. To add what this record is missing, use Fill in from photo on the record page.'}
             </CardDescription>
           </div>
           <Badge tone={extractionStatusQuery.data?.available ? 'accent' : 'warning'}>
@@ -260,6 +261,18 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
           value={
             typeof extraction.confidence === 'number'
               ? `${Math.round(extraction.confidence * 100)}%`
+              : undefined
+          }
+        />
+        <ExtractionField
+          label="Next due date"
+          value={extraction.nextDueDate ? formatDate(extraction.nextDueDate) : undefined}
+        />
+        <ExtractionField
+          label="Next due odometer"
+          value={
+            typeof extraction.nextDueOdometer === 'number'
+              ? `${extraction.nextDueOdometer.toLocaleString('en-IN')} km`
               : undefined
           }
         />

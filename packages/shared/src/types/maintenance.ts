@@ -16,6 +16,39 @@ export type CreateMaintenanceRecordInput = z.infer<typeof MaintenanceRecordCreat
 export type UpdateMaintenanceRecordInput = z.infer<typeof MaintenanceRecordUpdateSchema>;
 export type MaintenanceRecord = z.infer<typeof MaintenanceRecordSchema>;
 
+/**
+ * A field "Fill in from photo" can write on a confirmed record, and only ever
+ * while the record leaves it blank. The date, odometer and cost are not here:
+ * they are what was typed, and the photo never replaces them.
+ */
+export type MaintenanceFillField =
+  | 'category'
+  | 'workshopName'
+  | 'invoiceNumber'
+  | 'notes'
+  | 'lineItems'
+  | 'nextDueDate'
+  | 'nextDueOdometer';
+
+/** What filling a confirmed record in from an attachment's extraction would write. */
+export type MaintenanceFillPlan = {
+  /** The blanks the extraction fills, in the order to show them; empty when it adds nothing. */
+  fields: MaintenanceFillField[];
+  /** Those values, as the update that writes them. */
+  changes: UpdateMaintenanceRecordInput;
+  /**
+   * Line items the extraction found but the fill leaves out, because they add
+   * up to something other than the record's cost.
+   */
+  lineItemsLeftOut?: { count: number; total: number };
+};
+
+export type MaintenanceFillResult = {
+  record: MaintenanceRecord;
+  /** What the fill wrote; empty when the record had nothing left blank that the photo shows. */
+  filledFields: MaintenanceFillField[];
+};
+
 export interface MaintenanceSuggestion {
   category: MaintenanceCategory;
   reason: string;

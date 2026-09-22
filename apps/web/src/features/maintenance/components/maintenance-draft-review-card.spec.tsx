@@ -19,6 +19,8 @@ const scannedJobCard: Attachment = {
     attachmentId: 'attachment-1',
     status: AttachmentExtractionStatus.Completed,
     workshopName: 'Torque Garage',
+    nextDueDate: '2027-03-18T00:00:00.000Z',
+    nextDueOdometer: 18_200,
     createdAt: '2026-09-20T10:05:00.000Z',
     updatedAt: '2026-09-20T10:05:00.000Z',
   },
@@ -55,5 +57,12 @@ describe('MaintenanceDraftReviewCard', () => {
     expect(screen.queryByRole('button', { name: 'Apply to Draft' })).not.toBeInTheDocument();
     // What was read stays on show.
     expect(screen.getByText('Torque Garage')).toBeInTheDocument();
+  });
+
+  it('shows when the workshop says to come back', () => {
+    render(<MaintenanceDraftReviewCard isDraft recordId="record-1" />);
+
+    expect(screen.getByText('18 Mar 2027')).toBeInTheDocument();
+    expect(screen.getByText('18,200 km')).toBeInTheDocument();
   });
 });
