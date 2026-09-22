@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.46.0...v1.47.0) (2026-09-22)
+
+
+### Features
+
+* **documents:** renew an expiring document from its own record ([8cfd3de](https://github.com/AtharvaCM/vehicle-vault/commit/8cfd3de2f1cde02f45f11e610ea3d70a08dc83af))
+
 # [1.46.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.45.0...v1.46.0) (2026-09-22)
 
 
