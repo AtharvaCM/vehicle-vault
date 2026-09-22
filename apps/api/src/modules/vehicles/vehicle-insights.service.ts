@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { FuelType, VehicleFuelEconomy } from '@vehicle-vault/shared';
+
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { computeFuelEconomy } from './fuel-economy';
 import { VehicleAccessService } from './vehicle-access.service';
 
 export interface VehicleOdometerInsight {
@@ -19,6 +22,38 @@ export class VehicleInsightsService {
     private readonly prisma: PrismaService,
     private readonly access: VehicleAccessService,
   ) {}
+
+  /**
+   * Real economy from the vehicle's own fuel logs, beside what its catalog
+   * variant claims. The claim comes from the variant the vehicle is linked to,
+   * so a vehicle linked only to a generation, or not at all, shows its achieved
+   * figure on its own. See computeFuelEconomy for how the figure is measured.
+   */
+  async getFuelEconomy(userId: string, vehicleId: string): Promise<VehicleFuelEconomy> {
+    await this.access.assert(userId, vehicleId);
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: { fuelType: true, catalogVariantId: true },
+    });
+    if (!vehicle) {
+      throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
+    }
+
+    const [fills, spec] = await Promise.all([
+      this.prisma.fuelLog.findMany({
+        where: { vehicleId },
+        select: { odometer: true, quantity: true, date: true },
+      }),
+      vehicle.catalogVariantId
+        ? this.prisma.vehicleCatalogVariantSpec.findUnique({
+            where: { variantId: vehicle.catalogVariantId },
+            select: { mileageCombined: true },
+          })
+        : null,
+    ]);
+
+    return computeFuelEconomy(fills, vehicle.fuelType as FuelType, spec?.mileageCombined ?? null);
+  }
 
   async getOdometerInsights(userId: string, vehicleId: string): Promise<VehicleOdometerInsight> {
     await this.access.assert(userId, vehicleId);
