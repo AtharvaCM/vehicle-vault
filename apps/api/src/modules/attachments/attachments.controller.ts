@@ -20,6 +20,7 @@ import {
   ATTACHMENTS_MAX_FILE_SIZE_BYTES,
 } from './constants/attachment.constants';
 import { AttachmentIdParamDto } from './dto/attachment-id-param.dto';
+import { DocumentAttachmentsParamDto } from './dto/document-attachments-param.dto';
 import { ExtractAttachmentsDto } from './dto/extract-attachments.dto';
 import { MaintenanceRecordIdParamDto } from './dto/maintenance-record-id-param.dto';
 import { AttachmentsService } from './attachments.service';
@@ -90,6 +91,40 @@ export class AttachmentsController {
   ) {
     return successResponse(
       await this.attachmentsService.uploadLoanAttachments(user.id, loanId, files ?? []),
+    );
+  }
+
+  @Get('vehicle-documents/:kind/:documentId/attachments')
+  async listDocumentAttachments(
+    @Param() params: DocumentAttachmentsParamDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.listByDocument(user.id, params.kind, params.documentId),
+    );
+  }
+
+  @Post('vehicle-documents/:kind/:documentId/attachments')
+  @UseInterceptors(
+    FilesInterceptor('files', ATTACHMENTS_MAX_FILES, {
+      limits: {
+        fileSize: ATTACHMENTS_MAX_FILE_SIZE_BYTES,
+      },
+      fileFilter: attachmentFileFilter,
+    }),
+  )
+  async uploadDocumentAttachments(
+    @Param() params: DocumentAttachmentsParamDto,
+    @UploadedFiles() files: AttachmentUploadFile[],
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.uploadDocumentAttachments(
+        user.id,
+        params.kind,
+        params.documentId,
+        files ?? [],
+      ),
     );
   }
 

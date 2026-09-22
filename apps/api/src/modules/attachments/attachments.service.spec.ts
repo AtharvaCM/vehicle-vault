@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   AttachmentExtractionStatus,
   AttachmentKind,
@@ -638,5 +638,167 @@ describe('AttachmentsService', () => {
         totalCost: 2499,
       }),
     );
+  });
+  describe('files on insurance policies and warranties', () => {
+    const access = {
+      assert: vi.fn(),
+      assertEditor: vi.fn(),
+      assertOwner: vi.fn(),
+      resolve: vi.fn(),
+    };
+    const documents = {
+      insurancePolicy: { findUnique: vi.fn() },
+      warranty: { findUnique: vi.fn() },
+    };
+    const policyFile = {
+      originalname: 'policy.pdf',
+      mimetype: 'application/pdf',
+      size: 2048,
+      buffer: Buffer.from('%PDF-1.7 policy'),
+    };
+    let documentService: AttachmentsService;
+
+    beforeEach(() => {
+      access.assert.mockResolvedValue('editor');
+      access.assertEditor.mockResolvedValue('editor');
+      // The policy is on someone else's vehicle, shared with this user as an editor.
+      documents.insurancePolicy.findUnique.mockResolvedValue({
+        vehicleId: 'vehicle-1',
+        vehicle: { userId: 'owner-1' },
+      });
+      documents.warranty.findUnique.mockResolvedValue({
+        vehicleId: 'vehicle-1',
+        vehicle: { userId: 'owner-1' },
+      });
+      documentService = new AttachmentsService(
+        { ...prisma, ...documents } as never,
+        maintenanceService as never,
+        storageService as never,
+        extractionService as never,
+        auditService as never,
+        { getById: vi.fn(), listForUser: vi.fn() } as never,
+        access as never,
+      );
+    });
+
+    it("lists a policy's files for any member of its vehicle", async () => {
+      prisma.attachment.findMany.mockResolvedValue([]);
+
+      await documentService.listByDocument('user-1', 'insurance', 'pol-1');
+
+      expect(access.assert).toHaveBeenCalledWith('user-1', 'vehicle-1');
+      expect(prisma.attachment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { insurancePolicyId: 'pol-1' } }),
+      );
+    });
+
+    it("stores an upload against the policy, audited in the vehicle owner's trail", async () => {
+      const result = await documentService.uploadDocumentAttachments(
+        'user-1',
+        'insurance',
+        'pol-1',
+        [policyFile],
+      );
+
+      expect(access.assertEditor).toHaveBeenCalledWith('user-1', 'vehicle-1');
+      expect(storageService.uploadObject).toHaveBeenCalledWith(
+        'attachments/user-1/pol-1/attachment-1.pdf',
+        expect.any(Buffer),
+        'application/pdf',
+      );
+      expect(prisma.attachment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ insurancePolicyId: 'pol-1' }),
+        }),
+      );
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ actorUserId: 'user-1', ownerUserId: 'owner-1' }),
+      );
+      expect(result[0]).toMatchObject({
+        insurancePolicyId: 'pol-1',
+        originalFileName: 'policy.pdf',
+      });
+    });
+
+    it("files a warranty's upload under the warranty", async () => {
+      await documentService.uploadDocumentAttachments('user-1', 'warranty', 'wty-1', [policyFile]);
+
+      expect(prisma.attachment.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ warrantyId: 'wty-1' }) }),
+      );
+    });
+
+    it("refuses a viewer's upload before anything is stored", async () => {
+      access.assertEditor.mockRejectedValue(new ForbiddenException());
+
+      await expect(
+        documentService.uploadDocumentAttachments('viewer-1', 'insurance', 'pol-1', [policyFile]),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageService.uploadObject).not.toHaveBeenCalled();
+      expect(prisma.attachment.create).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 for a document that does not exist', async () => {
+      documents.insurancePolicy.findUnique.mockResolvedValue(null);
+
+      await expect(
+        documentService.listByDocument('user-1', 'insurance', 'missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it("lets any member of the vehicle open a document's file", async () => {
+      prisma.attachment.findFirst.mockResolvedValue({
+        id: 'attachment-1',
+        insurancePolicyId: 'pol-1',
+        maintenanceRecordId: null,
+        vehicleLoanId: null,
+        warrantyId: null,
+        claimId: null,
+        kind: AttachmentKind.Document,
+        fileName: 'attachments/owner-1/pol-1/a.pdf',
+        originalFileName: 'policy.pdf',
+        mimeType: 'application/pdf',
+        size: 2048,
+        url: '/api/attachments/attachment-1/file',
+        uploadedAt,
+        extraction: null,
+      });
+
+      await documentService.getAttachmentById('viewer-1', 'attachment-1');
+
+      const where = prisma.attachment.findFirst.mock.calls.at(-1)?.[0].where;
+      expect(where.OR).toEqual(
+        expect.arrayContaining([
+          { insurancePolicy: { vehicle: { members: { some: { userId: 'viewer-1' } } } } },
+          { warranty: { vehicle: { members: { some: { userId: 'viewer-1' } } } } },
+        ]),
+      );
+    });
+
+    it("removes a policy's file only for an editor", async () => {
+      prisma.attachment.findFirst.mockResolvedValue({
+        id: 'attachment-1',
+        insurancePolicyId: 'pol-1',
+        maintenanceRecordId: null,
+        vehicleLoanId: null,
+        warrantyId: null,
+        fileName: 'attachments/owner-1/pol-1/a.pdf',
+        extraction: null,
+      });
+      access.assertEditor.mockRejectedValueOnce(new ForbiddenException());
+
+      await expect(
+        documentService.deleteAttachment('viewer-1', 'attachment-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageService.deleteObject).not.toHaveBeenCalled();
+
+      await documentService.deleteAttachment('user-1', 'attachment-1');
+      expect(storageService.deleteObject).toHaveBeenCalledWith('attachments/owner-1/pol-1/a.pdf');
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'attachment.deleted', ownerUserId: 'owner-1' }),
+      );
+    });
   });
 });

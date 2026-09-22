@@ -71,6 +71,8 @@ export const queryKeys = {
     all: () => ['attachments'] as const,
     extractionStatus: () => [...queryKeys.attachments.all(), 'extraction-status'] as const,
     byRecord: (recordId: string) => [...queryKeys.attachments.all(), 'record', recordId] as const,
+    byDocument: (kind: string, documentId: string) =>
+      [...queryKeys.attachments.all(), 'document', kind, documentId] as const,
     detail: (attachmentId: string) =>
       [...queryKeys.attachments.all(), 'detail', attachmentId] as const,
   },

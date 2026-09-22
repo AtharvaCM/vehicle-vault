@@ -58,7 +58,10 @@ describe('VehicleDocumentsService', () => {
     ensureVehicleExists: vi.fn(),
   };
 
-  const prisma = {};
+  const prisma = {
+    attachment: { findMany: vi.fn().mockResolvedValue([]) },
+  };
+  const storageService = { deleteObject: vi.fn().mockResolvedValue('deleted') };
   const auditService = {
     track: vi.fn().mockResolvedValue(undefined),
   };
@@ -78,6 +81,8 @@ describe('VehicleDocumentsService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    prisma.attachment.findMany.mockResolvedValue([]);
+    storageService.deleteObject.mockResolvedValue('deleted');
     vehiclesService.ensureVehicleExists.mockResolvedValue(undefined);
     auditService.track.mockResolvedValue(undefined);
     accessService.assert.mockResolvedValue('owner');
@@ -95,6 +100,7 @@ describe('VehicleDocumentsService', () => {
       auditService as never,
       accessService as never,
       notificationsService as never,
+      storageService as never,
     );
   });
 
@@ -308,6 +314,48 @@ describe('VehicleDocumentsService', () => {
 
       expect(insurance.remove).toHaveBeenCalledWith('pol-1');
       expect(warranty.remove).not.toHaveBeenCalled();
+    });
+
+    it("removes a policy's stored files once the policy itself is gone", async () => {
+      (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: insuranceDoc(),
+        vehicleUserId: 'user-1',
+      });
+      prisma.attachment.findMany.mockResolvedValueOnce([
+        { fileName: 'attachments/user-1/pol-1/policy.pdf' },
+      ]);
+      const order: string[] = [];
+      (insurance.remove as ReturnType<typeof vi.fn>).mockImplementationOnce(async () => {
+        order.push('row');
+      });
+      storageService.deleteObject.mockImplementationOnce(async () => {
+        order.push('file');
+        return 'deleted';
+      });
+
+      await service.remove('user-1', 'insurance', 'pol-1');
+
+      expect(prisma.attachment.findMany).toHaveBeenCalledWith({
+        where: { insurancePolicyId: 'pol-1' },
+        select: { fileName: true },
+      });
+      expect(storageService.deleteObject).toHaveBeenCalledWith(
+        'attachments/user-1/pol-1/policy.pdf',
+      );
+      // Read first, delete the files last: the cascade takes the paths with the rows.
+      expect(order).toEqual(['row', 'file']);
+    });
+
+    it('still deletes the policy when storage refuses to remove a file', async () => {
+      (insurance.findForOwnerCheck as ReturnType<typeof vi.fn>).mockResolvedValue({
+        document: insuranceDoc(),
+        vehicleUserId: 'user-1',
+      });
+      prisma.attachment.findMany.mockResolvedValueOnce([{ fileName: 'a.pdf' }]);
+      storageService.deleteObject.mockRejectedValueOnce(new Error('storage is down'));
+
+      await expect(service.remove('user-1', 'insurance', 'pol-1')).resolves.toBeUndefined();
+      expect(insurance.remove).toHaveBeenCalledWith('pol-1');
     });
   });
 

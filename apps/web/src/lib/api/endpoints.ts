@@ -85,6 +85,8 @@ export const endpoints = {
     extractBatch: (recordId: string) => `/maintenance-records/${recordId}/attachments/extract`,
     applyExtraction: (attachmentId: string) => `/attachments/${attachmentId}/apply`,
     file: (attachmentId: string) => `/attachments/${attachmentId}/file`,
+    byDocument: (kind: string, documentId: string) =>
+      `/vehicle-documents/${kind}/${documentId}/attachments`,
     delete: (attachmentId: string) => `/attachments/${attachmentId}`,
   },
   reminders: {
