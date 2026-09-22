@@ -132,6 +132,30 @@ async function expectControlsInsideCard(card: Locator, where: string) {
 }
 
 /**
+ * A fill's three figures and its menu share one strip, which a phone leaves
+ * narrow. No label or figure may break over two lines, as "15,180 km" and
+ * "Total Cost" did at 375px: when the three do not fit, a whole figure moves to
+ * a second row. And a long location wraps beside its pin without squeezing it.
+ */
+async function expectFillFitsPhone(card: Locator, title: string, figures: string[]) {
+  for (const text of ['Odometer', 'Price/L', 'Total Cost', ...figures]) {
+    const lines = await card
+      .getByText(text, { exact: true })
+      .evaluate((node) =>
+        Math.round(
+          node.getBoundingClientRect().height / parseFloat(getComputedStyle(node).lineHeight),
+        ),
+      );
+    expect.soft(lines, `The card for "${title}" breaks "${text}" over ${lines} lines.`).toBe(1);
+  }
+  const pin = card.locator('svg.lucide-map-pin');
+  if (await pin.count()) {
+    const width = Math.round((await pin.boundingBox())!.width);
+    expect.soft(width, `The card for "${title}" squeezes its location pin to ${width}px.`).toBe(12);
+  }
+}
+
+/**
  * The shell was a desktop layout squeezed onto a phone. Below md the primary
  * navigation moves to a bottom bar; from md up nothing changes. jsdom cannot
  * evaluate a breakpoint, so the widths are checked here, in a real browser.
@@ -267,9 +291,18 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     totalCost: 4505,
     location: 'Indian Oil, Baner Road',
   });
+  await post(page, `fuel-logs/vehicle/${vehicleId}`, {
+    date: daysFromNow(-3),
+    odometer: 15410,
+    quantity: 25,
+    price: 104,
+    totalCost: 2600,
+    location: 'Hindustan Petroleum COCO outlet, Mumbai–Pune Expressway, Lonavala',
+  });
   const fills: Array<[string, string[]]> = [
     ['30 L Fuel Fill', ['14,950 km', '₹105', '₹3,150']],
     ['42.5 L Fuel Fill', ['15,180 km', '₹106', '₹4,505']],
+    ['25 L Fuel Fill', ['15,410 km', '₹104', '₹2,600']],
   ];
 
   await page.setViewportSize(PHONE);
@@ -321,6 +354,16 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await page.goto(path);
     await expect(page.getByRole('main').getByText(loaded).first()).toBeVisible();
     await expectNoSidewaysScroll(page, path);
+  }
+
+  // On a phone a fill's three figures and menu share one narrow strip.
+  await page.goto(`${vehicleUrl}?tab=fuel`);
+  for (const [title, figures] of fills) {
+    const card = page
+      .getByRole('main')
+      .locator('[data-slot="card"]', { has: page.getByText(title, { exact: true }) });
+    await expect(card).toBeVisible();
+    await expectFillFitsPhone(card, title, figures);
   }
 
   // From xl the sidebar opens and these panels split into two columns, which
