@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.42.0...v1.43.0) (2026-09-22)
+
+
+### Features
+
+* **web:** make the app installable, and open offline ([d68e8e3](https://github.com/AtharvaCM/vehicle-vault/commit/d68e8e328f3b447b1e2c8122a0b88e90c9cedbf7))
+
 # [1.42.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.41.0...v1.42.0) (2026-09-22)
 
 
