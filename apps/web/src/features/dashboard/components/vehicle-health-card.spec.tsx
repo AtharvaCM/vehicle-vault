@@ -160,7 +160,7 @@ describe('VehicleHealthCard', () => {
     ).toHaveAttribute('href', '/maintenance-records/$recordId');
   });
 
-  it('nudges to update a stale odometer, linking to the edit page', () => {
+  it('nudges to update a stale odometer, right there on the card', () => {
     renderWithProviders(
       <VehicleHealthCard
         today={today}
@@ -168,10 +168,10 @@ describe('VehicleHealthCard', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: 'Updated 1 week ago · Update' })).toHaveAttribute(
-      'href',
-      '/vehicles/$vehicleId/edit',
-    );
+    expect(screen.getByText(/Updated 1 week ago/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Update odometer for Daily driver' }),
+    ).toBeInTheDocument();
   });
 
   it('shows "today" right after the odometer is touched', () => {
@@ -182,7 +182,7 @@ describe('VehicleHealthCard', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: 'Updated today · Update' })).toBeInTheDocument();
+    expect(screen.getByText(/Updated today/)).toBeInTheDocument();
   });
 
   it('hides the write actions for viewers but keeps the shared badge and menu', () => {
@@ -192,6 +192,9 @@ describe('VehicleHealthCard', () => {
 
     expect(screen.queryByRole('link', { name: /log service for/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /add reminder for/i })).not.toBeInTheDocument();
+    // A viewer still sees how fresh the reading is, but cannot change it.
+    expect(screen.getByText(/Updated/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /update odometer/i })).not.toBeInTheDocument();
     expect(screen.getByText('Shared · viewer')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'More actions for Daily driver' }),

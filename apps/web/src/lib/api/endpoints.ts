@@ -26,6 +26,7 @@ export const endpoints = {
     forecast: (vehicleId: string) => `/vehicles/${vehicleId}/forecast`,
     intervals: (vehicleId: string) => `/vehicles/${vehicleId}/intervals`,
     dismissSetupPrompt: (vehicleId: string) => `/vehicles/${vehicleId}/setup-prompt/dismiss`,
+    odometer: (vehicleId: string) => `/vehicles/${vehicleId}/odometer`,
     serviceHistoryPdf: (vehicleId: string) => `/vehicles/${vehicleId}/service-history.pdf`,
     resaleReportPdf: (vehicleId: string, askingPrice?: number) =>
       askingPrice != null && askingPrice >= 0
