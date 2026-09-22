@@ -185,7 +185,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
           title="Unable to load reminders"
         />
       ) : remindersQuery.data.length ? (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <BulkReminderActions
             isCompleting={bulkCompleteMutation.isPending}
             isDeleting={bulkDeleteMutation.isPending}
@@ -211,7 +211,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
             type={type}
           />
           {filteredReminders.length ? (
-            <div className="grid gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <ReminderList
                 description="Items that need attention immediately."
                 emptyMessage="No overdue reminders."

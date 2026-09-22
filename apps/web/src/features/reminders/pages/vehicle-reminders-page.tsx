@@ -185,7 +185,7 @@ export function VehicleRemindersPage({
       <PageContainer>
         <PageTitle
           actions={
-            <div className="flex gap-3">
+            <>
               <Link
                 className={buttonVariants({ variant: 'secondary' })}
                 params={{ vehicleId }}
@@ -202,7 +202,7 @@ export function VehicleRemindersPage({
                   Add Reminder
                 </Link>
               ) : null}
-            </div>
+            </>
           }
           description="Keep service, insurance, PUC, and custom reminders tied to this vehicle."
           title={`${vehicleTitle} Reminders`}
@@ -229,7 +229,7 @@ export function VehicleRemindersPage({
             title="Unable to load reminders"
           />
         ) : remindersQuery.data.length ? (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <ServiceSchedulePanel vehicleId={vehicleId} />
             {canEdit ? (
               <BulkReminderActions
@@ -258,7 +258,7 @@ export function VehicleRemindersPage({
               type={type}
             />
             {filteredReminders.length ? (
-              <div className="grid gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <ReminderList
                   description="Items that need attention immediately."
                   emptyMessage="No overdue reminders."
@@ -305,7 +305,7 @@ export function VehicleRemindersPage({
             )}
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <ServiceSchedulePanel vehicleId={vehicleId} />
             <EmptyState
               action={

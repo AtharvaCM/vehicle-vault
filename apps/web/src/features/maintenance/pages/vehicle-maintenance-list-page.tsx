@@ -140,7 +140,7 @@ export function VehicleMaintenanceListPage({
       <PageContainer>
         <PageTitle
           actions={
-            <div className="flex gap-3">
+            <>
               <Link
                 className={buttonVariants({ variant: 'secondary' })}
                 params={{ vehicleId }}
@@ -162,7 +162,7 @@ export function VehicleMaintenanceListPage({
                   </Link>
                 </>
               ) : null}
-            </div>
+            </>
           }
           description="See every service entry tied to this vehicle."
           title={`${vehicleTitle} Maintenance`}
@@ -218,7 +218,7 @@ export function VehicleMaintenanceListPage({
               </div>
             ) : null}
 
-            <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.7fr]">
               {maintenanceQuery.data.length ? (
                 filteredRecords.length ? (
                   <MaintenanceRecordList

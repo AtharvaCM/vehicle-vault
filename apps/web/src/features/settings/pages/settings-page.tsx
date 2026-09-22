@@ -76,7 +76,7 @@ export function SettingsPage() {
           <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
             <div>
               <p className="font-semibold text-slate-900">{auth.user?.name}</p>
-              <p>{auth.user?.email}</p>
+              <p className="break-all">{auth.user?.email}</p>
             </div>
             <p>Everything in your garage is tied to this account.</p>
           </CardContent>
@@ -94,11 +94,11 @@ export function SettingsPage() {
             <div className="space-y-2">
               <p>Use this export as a backup of your ownership history outside the app.</p>
               <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3">
-                <ShieldCheck className="mt-0.5 h-4 w-4 text-slate-500" />
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
                 <p>
                   Only data saved under{' '}
-                  <span className="font-medium text-slate-900">{auth.user?.email}</span> is included
-                  in this export.
+                  <span className="break-all font-medium text-slate-900">{auth.user?.email}</span>{' '}
+                  is included in this export.
                 </p>
               </div>
             </div>

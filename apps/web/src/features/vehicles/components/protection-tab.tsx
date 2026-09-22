@@ -215,7 +215,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
       <div className="space-y-8">
         {/* Insurance Section */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Insurance Policies</h3>
@@ -272,7 +272,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
 
         {/* Claims Section */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ReceiptText className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Insurance Claims</h3>
@@ -338,7 +338,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
 
         {/* Warranty Section */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Car className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Warranty Coverage</h3>
@@ -387,7 +387,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
 
         {/* Registration & Compliance Section */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <FileBadge className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-slate-900">Registration &amp; Compliance</h3>

@@ -41,13 +41,13 @@ export function MaintenanceRecordCard({
           to="/maintenance-records/$recordId"
         >
           {/* Main Content */}
-          <div className="flex flex-1 items-center gap-4 p-4 sm:p-5">
+          <div className="flex min-w-0 flex-1 items-center gap-4 p-4 sm:p-5">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
               <ClipboardList className="h-5 w-5" />
             </div>
 
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <p className="truncate font-bold text-slate-900 group-hover:text-primary transition-colors">
                   {record.workshopName?.trim() || 'Direct Service / DIY'}
                 </p>

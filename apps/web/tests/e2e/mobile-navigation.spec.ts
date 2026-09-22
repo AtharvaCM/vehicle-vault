@@ -21,6 +21,59 @@ async function signIn(page: Page, label: string) {
   return suffix;
 }
 
+function daysFromNow(days: number) {
+  return new Date(Date.now() + days * 86_400_000).toISOString();
+}
+
+/** Seeds through the API as the signed-in user: far quicker than the forms. */
+async function post(page: Page, path: string, data: object) {
+  const token = await page.evaluate(() => {
+    const raw = window.localStorage.getItem('vehicle-vault.auth-session');
+    return raw ? (JSON.parse(raw) as { accessToken?: string }).accessToken : '';
+  });
+  const response = await page.request.post(`/api/${path}`, {
+    data,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(response.ok(), `POST ${path}: ${await response.text()}`).toBe(true);
+  return ((await response.json()) as { data: { id: string } }).data;
+}
+
+/**
+ * Fails, softly, when the page is wider than the phone — naming the outermost
+ * elements that stick out, so a failure points at a component rather than
+ * only reporting a width.
+ */
+async function expectNoSidewaysScroll(page: Page, where: string) {
+  const { width, culprits } = await page.evaluate(() => {
+    const edge = document.documentElement.clientWidth;
+    const width = document.documentElement.scrollWidth;
+    if (width <= edge) return { width, culprits: [] as string[] };
+
+    const sticksOut = (node: Element | null) =>
+      node !== null && node.getBoundingClientRect().right > edge + 1;
+    // Past the edge inside a scroller, like the tab strip, or a clipping card is fine.
+    const clipped = (node: Element) => {
+      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+        if (getComputedStyle(parent).overflowX !== 'visible') return true;
+      }
+      return false;
+    };
+    const culprits = Array.from(document.querySelectorAll('body *'))
+      .filter((node) => sticksOut(node) && !sticksOut(node.parentElement) && !clipped(node))
+      .slice(0, 3)
+      .map(
+        (node) =>
+          `<${node.tagName.toLowerCase()} class="${node.getAttribute('class') ?? ''}"> "${(node.textContent ?? '').trim().slice(0, 40)}"`,
+      );
+    return { width, culprits };
+  });
+
+  expect
+    .soft(width, `${where} is ${width}px wide on a ${PHONE.width}px phone. ${culprits.join(' ')}`)
+    .toBeLessThanOrEqual(PHONE.width);
+}
+
 /**
  * The shell was a desktop layout squeezed onto a phone. Below md the primary
  * navigation moves to a bottom bar; from md up nothing changes. jsdom cannot
@@ -92,13 +145,106 @@ test('the vehicle tabs scroll on a phone, with a linked tab brought into view', 
   // The strip scrolls rather than clipping or pushing the page sideways.
   const strip = page.getByRole('tablist');
   expect(await strip.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
-  // Measured on Overview: the Activity feed's own rows overflow a phone, which is
-  // content inside a tab rather than the strip, and is tracked separately.
-  await page.goto(`${vehicleUrl}?tab=overview`);
-  await expect(page.getByRole('tab', { name: 'Overview' })).toHaveAttribute('data-state', 'active');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-    PHONE.width,
-  );
+  await expect(page.getByRole('tabpanel').getByText('Vehicle created')).toBeVisible();
+  await expectNoSidewaysScroll(page, 'The activity tab');
+});
+
+/**
+ * Long, unbroken content is what pushes a phone sideways: a workshop's full
+ * name, an email address, a JSON diff. Every vehicle tab, the top-level pages
+ * and the lists the tabs link to are walked with some of it on screen, each
+ * measured once its content has loaded — any earlier, a page is only as wide
+ * as its loading state.
+ */
+test('no tab or page scrolls sideways on a phone', async ({ page }) => {
+  test.slow();
+  const suffix = await signIn(page, 'Overflow');
+  const nickname = `Overflow Garage ${suffix.slice(-4)}`;
+  const vehicleUrl = await createCatalogVehicle(page, {
+    nickname,
+    odometer: '15200',
+    registrationNumber: `MH12OV${suffix.slice(-4)}`,
+  });
+  const vehicleId = vehicleUrl.split('/').pop()!;
+
+  const workshop = 'Sai Service Hyundai Authorised Workshop, Baner Road';
+  const reminderTitle = 'Periodic service and brake fluid replacement';
+  const lender = 'HDFC Bank Vehicle Finance';
+  const invitee = `invitee.with.a.long.address.${suffix}@vehiclevault.dev`;
+  await post(page, `vehicles/${vehicleId}/maintenance-records`, {
+    category: 'periodic_service',
+    serviceDate: daysFromNow(-40),
+    odometer: 14800,
+    workshopName: workshop,
+    invoiceNumber: 'INV-2026-000184-BNR',
+    totalCost: 8450,
+    lineItems: [{ kind: 'part', name: 'Engine oil 5W-30 fully synthetic', lineTotal: 3200 }],
+  });
+  const reminder = await post(page, `vehicles/${vehicleId}/reminders`, {
+    title: reminderTitle,
+    type: 'service',
+    dueDate: daysFromNow(20),
+    dueOdometer: 24800,
+  });
+  await post(page, `vehicle-loans/vehicle/${vehicleId}`, {
+    lender,
+    principal: 1150000,
+    interestRate: 8.75,
+    tenureMonths: 60,
+    startDate: daysFromNow(-400),
+  });
+  await post(page, `vehicles/${vehicleId}/invites`, { email: invitee, role: 'viewer' });
+
+  await page.setViewportSize(PHONE);
+
+  // Each tab, with what it shows only once its data has loaded.
+  const tabs: Array<[string, Array<string | RegExp>]> = [
+    ['overview', [workshop, reminderTitle]],
+    ['maintenance', [workshop]],
+    ['specs', [/No specifications available|Engine & Drivetrain/]],
+    ['reminders', [reminderTitle]],
+    ['fuel', ['No fuel logs found']],
+    ['tyres', ['Log inspection']],
+    ['accessories', ['No accessories yet']],
+    ['protection', ['Add Policy']],
+    ['loans', [lender]],
+    ['members', [invitee]],
+    ['activity', ['Reminder created']],
+  ];
+  for (const [tab, loaded] of tabs) {
+    await page.goto(`${vehicleUrl}?tab=${tab}`);
+    for (const text of loaded) {
+      await expect(page.getByRole('tabpanel').getByText(text).first()).toBeVisible();
+    }
+    await expectNoSidewaysScroll(page, `The ${tab} tab`);
+  }
+
+  // Opened, an activity entry lists every changed value: ids and JSON with
+  // nowhere to wrap.
+  const closed = page.getByRole('tabpanel').locator('button[aria-expanded="false"]');
+  for (let remaining = await closed.count(); remaining > 0; remaining -= 1) {
+    await closed.first().click();
+  }
+  await expect(closed).toHaveCount(0);
+  await expectNoSidewaysScroll(page, 'The activity tab, every entry open');
+
+  const pages: Array<[string, string]> = [
+    ['/dashboard', workshop],
+    ['/vehicles', nickname],
+    ['/maintenance', workshop],
+    ['/reminders', reminderTitle],
+    ['/loans', lender],
+    ['/settings', 'Download JSON backup'],
+    ['/settings/activity', 'Reminder created'],
+    [`/vehicles/${vehicleId}/maintenance`, workshop],
+    [`/vehicles/${vehicleId}/reminders`, reminderTitle],
+    [`/reminders/${reminder.id}`, 'Mark Complete'],
+  ];
+  for (const [path, loaded] of pages) {
+    await page.goto(path);
+    await expect(page.getByRole('main').getByText(loaded).first()).toBeVisible();
+    await expectNoSidewaysScroll(page, path);
+  }
 });
 
 test.afterAll(async () => {

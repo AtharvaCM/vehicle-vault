@@ -48,17 +48,17 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           to="/reminders/$reminderId"
         >
           {/* Main Content */}
-          <div className="flex flex-1 items-center gap-4 p-4 sm:p-5 pl-5 sm:pl-6">
+          <div className="flex min-w-0 flex-1 items-center gap-4 p-4 sm:p-5 pl-5 sm:pl-6">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
               <BellRing className="h-5 w-5" />
             </div>
 
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <p className="truncate font-bold text-slate-900 group-hover:text-primary transition-colors">
                   {reminder.title}
                 </p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <Badge
                     variant="outline"
                     className="bg-white text-[10px] font-bold uppercase tracking-widest"

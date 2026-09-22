@@ -30,7 +30,7 @@ export function VehicleCard({ selectionControl, vehicle }: VehicleCardProps) {
           to="/vehicles/$vehicleId"
         >
           {/* Main Info Section */}
-          <div className="flex flex-1 items-center gap-4 p-5 sm:p-6">
+          <div className="flex min-w-0 flex-1 items-center gap-4 p-5 sm:p-6">
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-inner group-hover:bg-primary/10 group-hover:text-primary transition-colors">
               {[VehicleType.Car, VehicleType.SUV, VehicleType.Truck, VehicleType.Van].includes(
                 vehicle.vehicleType as VehicleType,
@@ -42,7 +42,7 @@ export function VehicleCard({ selectionControl, vehicle }: VehicleCardProps) {
             </div>
 
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                 <h3 className="truncate text-lg font-bold tracking-tight text-slate-900 group-hover:text-primary transition-colors">
                   {title}
                 </h3>
