@@ -520,6 +520,12 @@ export class AttachmentsService {
     }
   }
 
+  /**
+   * Writes a whole extraction into a draft: every field it read, over whatever
+   * the draft held, and the record stays a draft for someone to confirm. A
+   * confirmed record is refused: this would overwrite what was typed and turn
+   * it back into a draft, which nothing in the web app can confirm again.
+   */
   async applyExtraction(userId: string, attachmentId: string) {
     const attachment = await this.getStoredAttachmentById(userId, attachmentId);
     const extraction = attachment.extraction
@@ -539,6 +545,16 @@ export class AttachmentsService {
     if (!attachment.maintenanceRecordId) {
       throw new BadRequestException(
         'This attachment is not linked to a maintenance record and cannot apply extractions.',
+      );
+    }
+
+    const record = await this.maintenanceService.getRecordById(
+      userId,
+      attachment.maintenanceRecordId,
+    );
+    if (record.status === MaintenanceRecordStatus.Confirmed) {
+      throw new BadRequestException(
+        'This record is confirmed, so an extraction would overwrite what was typed. Edit the record instead.',
       );
     }
 

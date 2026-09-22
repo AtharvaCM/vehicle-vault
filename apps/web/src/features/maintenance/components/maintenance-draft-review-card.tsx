@@ -19,9 +19,14 @@ import { formatDate } from '@/lib/utils/format-date';
 
 type MaintenanceDraftReviewCardProps = {
   recordId: string;
+  /**
+   * Applying writes the whole extraction over the record and leaves it a draft,
+   * so it is offered for a draft only.
+   */
+  isDraft: boolean;
 };
 
-export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewCardProps) {
+export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDraftReviewCardProps) {
   const attachmentsQuery = useAttachments(recordId);
   const extractionStatusQuery = useAttachmentExtractionStatus();
   const extractAttachmentMutation = useExtractAttachment(recordId);
@@ -82,7 +87,9 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
           <div className="space-y-1">
             <CardTitle>Document Review</CardTitle>
             <CardDescription>
-              Extract invoice and job card data, then apply the suggestions into the draft.
+              {isDraft
+                ? 'Extract invoice and job card data, then apply the suggestions into the draft.'
+                : 'What was read from the invoice and job card. Change the record itself with the form.'}
             </CardDescription>
           </div>
           <Badge tone={extractionStatusQuery.data?.available ? 'accent' : 'warning'}>
@@ -173,7 +180,7 @@ export function MaintenanceDraftReviewCard({ recordId }: MaintenanceDraftReviewC
                     {attachment.extraction ? 'Re-run OCR' : 'Run OCR'}
                   </Button>
 
-                  {attachment.extraction?.status === 'completed' ? (
+                  {isDraft && attachment.extraction?.status === 'completed' ? (
                     <Button
                       disabled={applyAttachmentExtractionMutation.isPending}
                       onClick={() => handleApply(attachment.id)}

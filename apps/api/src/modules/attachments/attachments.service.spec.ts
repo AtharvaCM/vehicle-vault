@@ -639,6 +639,51 @@ describe('AttachmentsService', () => {
       }),
     );
   });
+
+  it('will not apply an extraction over a confirmed record, which it would turn back into a draft', async () => {
+    prisma.attachment.findFirst = vi.fn().mockResolvedValue({
+      id: 'attachment-1',
+      maintenanceRecordId: 'record-1',
+      kind: AttachmentKind.Image,
+      fileName: 'attachments/user-1/record-1/attachment-1.jpg',
+      originalFileName: 'job-card.jpg',
+      mimeType: 'image/jpeg',
+      size: 1024,
+      url: '/api/attachments/attachment-1/file',
+      uploadedAt,
+      extraction: {
+        id: 'extraction-1',
+        attachmentId: 'attachment-1',
+        status: AttachmentExtractionStatus.Completed,
+        provider: 'gemini',
+        confidence: null,
+        vendorName: null,
+        workshopName: 'Torque Garage',
+        invoiceNumber: null,
+        documentDate: null,
+        serviceDate: new Date('2026-03-20T00:00:00.000Z'),
+        odometer: 12500,
+        totalCost: 2499,
+        currencyCode: 'INR',
+        notes: null,
+        lineItems: null,
+        failureReason: null,
+        extractedAt: uploadedAt,
+        createdAt: uploadedAt,
+        updatedAt: uploadedAt,
+      },
+    });
+    maintenanceService.getRecordById.mockResolvedValue({
+      id: 'record-1',
+      status: MaintenanceRecordStatus.Confirmed,
+    });
+
+    await expect(service.applyExtraction('user-1', 'attachment-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(maintenanceService.updateRecord).not.toHaveBeenCalled();
+  });
+
   describe('files on insurance policies and warranties', () => {
     const access = {
       assert: vi.fn(),
