@@ -1,3 +1,10 @@
+## [1.57.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.1...v1.57.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **web:** keep the suggested schedule's icon from shrinking on a phone ([3b8cdad](https://github.com/AtharvaCM/vehicle-vault/commit/3b8cdada868ef7c4ef0160401797110d27cf2887)), closes [#164](https://github.com/AtharvaCM/vehicle-vault/issues/164)
+
 ## [1.57.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.0...v1.57.1) (2026-09-22)
 
 
