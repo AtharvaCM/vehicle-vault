@@ -244,6 +244,7 @@ export function LoansPage() {
               <input
                 ref={scanFileInputRef}
                 type="file"
+                capture="environment"
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
                 className="hidden"
                 onChange={handleScanFileChange}

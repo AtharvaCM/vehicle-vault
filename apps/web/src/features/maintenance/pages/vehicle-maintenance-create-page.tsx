@@ -279,6 +279,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
                   onChange={handleUploadFirst}
                   ref={uploadFirstInputRef}
                   type="file"
+                  capture="environment"
                 />
                 <p className="text-xs text-slate-500">
                   {extractionStatusQuery.data?.available === false

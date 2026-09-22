@@ -225,6 +225,7 @@ export function ProtectionTab({ vehicleId }: ProtectionTabProps) {
                 <input
                   ref={scanInputRef}
                   type="file"
+                  capture="environment"
                   accept="image/*,application/pdf"
                   onChange={handleScanFile}
                   className="hidden"

@@ -286,6 +286,7 @@ export function ClaimAttachmentsSection({
                   <input
                     ref={fileInputRef}
                     type="file"
+                    capture="environment"
                     multiple
                     accept={ACCEPT}
                     className="sr-only"
