@@ -46,6 +46,9 @@ Email and push switches per alert kind, grouped by `ALERT_KIND_GROUPS` with copy
 **Page width** (page grids, `PageHeader`, record and reminder cards):
 From `xl` the sidebar opens and the vehicle page's panels split into two columns, so a panel can be narrower at 1280px than full width on a tablet. A grid whose content should truncate rather than widen it gives every track a zero minimum (`grid-cols-1`, `xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]`): an `auto` minimum grows the column, and the page, to the widest line that cannot wrap. `MaintenanceRecordCard` and `ReminderCard` sit in both kinds of column, so they lay out by their own width rather than the screen's: each is an `@container`, and its figures move beside the text from `@xl` (36rem). `PageHeader` keeps its title at least 20rem wide beside the actions; where that doesn't fit, the actions wrap to a row below it.
 
+**Garage card footer** (`features/dashboard/components/vehicle-health-card.tsx`):
+The dashboard's garage grid adds a column at `sm` and again at `xl`, so its cards are narrowest just past each: about 275px inside the padding at 1280, less than on a phone. `VehicleHealthCard` is an `@container` for its footer: under 22rem the odometer reading gets a row of its own and the labelled actions take the row below. Phones (icons only) and viewers (the menu only) keep one row, and both rows wrap rather than spill.
+
 **Vehicle setup prompt** (`features/vehicles/components/vehicle-setup-prompt.tsx`):
 The insurance/PUC expiry card at the top of a vehicle's Overview tab. Shows while `vehicle.setupPromptDismissedAt` is null, the documents query has loaded, and at least one of the two kinds is missing; `canEdit` gates it, so a viewer never sees it. Saving posts one document per filled date (the expiry alone — the insurer and number come later) and then dismisses; "Not now" dismisses on its own. A failed save keeps the dates on screen instead of dismissing.
 
