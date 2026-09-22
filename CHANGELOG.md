@@ -1,3 +1,10 @@
+## [1.56.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.56.0...v1.56.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **api:** require editor to extract a maintenance attachment ([baf5ce4](https://github.com/AtharvaCM/vehicle-vault/commit/baf5ce481495ed189dc30b281907e4a7c6e779f0))
+
 # [1.56.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.55.2...v1.56.0) (2026-09-22)
 
 
