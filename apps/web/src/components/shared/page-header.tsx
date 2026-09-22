@@ -25,11 +25,13 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-end sm:justify-between',
+        'flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:flex-wrap sm:items-end',
         className,
       )}
     >
-      <div className="space-y-1.5">
+      {/* The title keeps at least 20rem beside the actions. Where that doesn't
+          fit, the actions drop to a row of their own below it. */}
+      <div className="space-y-1.5 sm:min-w-80 sm:flex-1">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
           {eyebrow}
         </p>
@@ -42,7 +44,7 @@ export function PageHeader({
       </div>
 
       {actions ? (
-        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
+        <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
           {actions}
         </div>
       ) : null}

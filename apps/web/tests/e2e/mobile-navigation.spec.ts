@@ -6,6 +6,7 @@ import { createCatalogVehicle } from './helpers/vehicle-form';
 
 const PHONE = { width: 375, height: 812 };
 const TABLET = { width: 1024, height: 768 };
+const PORTRAIT_TABLET = { width: 768, height: 1024 };
 const DESKTOP = { width: 1280, height: 800 };
 
 function uniqueSuffix() {
@@ -295,6 +296,13 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     }
     await expectNoSidewaysScroll(page, where);
   }
+
+  // From sm the page header puts its actions beside the title, and at 768px a
+  // long title and four actions do not fit on one row.
+  await page.setViewportSize(PORTRAIT_TABLET);
+  await page.goto(`/reminders/${reminder.id}`);
+  await expect(page.getByRole('main').getByText('Mark Complete').first()).toBeVisible();
+  await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
 });
 
 test.afterAll(async () => {
