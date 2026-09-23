@@ -62,6 +62,10 @@ describe('VehicleCatalogService', () => {
     },
     vehicleCatalogVariant: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    vehicleCatalogVariantAlias: {
+      findFirst: vi.fn(),
     },
     vehicleCatalogVariantOffering: {
       findMany: vi.fn(),
@@ -100,6 +104,7 @@ describe('VehicleCatalogService', () => {
     prisma.vehicleCatalogVariantOfferingOverride.findMany.mockResolvedValue([]);
     prisma.vehicleCatalogModel.findFirst.mockResolvedValue(null);
     prisma.vehicleCatalogGeneration.findFirst.mockResolvedValue({ id: 'exact' });
+    prisma.vehicleCatalogVariant.findFirst.mockResolvedValue({ id: 'exact' });
     service = new VehicleCatalogService(prisma as never);
   });
 
@@ -609,6 +614,102 @@ describe('VehicleCatalogService', () => {
               },
             },
           },
+        },
+      }),
+    );
+    expect(prisma.vehicleCatalogVariantOffering.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('does not archive a trim that was folded into another one', async () => {
+    const run = {
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 0,
+      notes: null,
+      publishedAt: null,
+      publishedByUserId: null,
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          // The source still names the trim "Creta SX (O)"; the catalog folded
+          // it into "SX (O)" and kept the old name as an alias.
+          payload: {
+            dataset: [
+              {
+                ...snapshotPayload.dataset[0],
+                models: [
+                  {
+                    ...snapshotPayload.dataset[0].models[0],
+                    generations: [
+                      {
+                        ...snapshotPayload.dataset[0].models[0].generations[0],
+                        variants: [
+                          {
+                            ...snapshotPayload.dataset[0].models[0].generations[0].variants[0],
+                            name: 'Creta SX (O)',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(run);
+    prisma.vehicleCatalogGeneration.findFirst.mockResolvedValue({ id: 'generation-1' });
+    prisma.vehicleCatalogVariant.findFirst.mockResolvedValue(null);
+    prisma.vehicleCatalogVariantAlias.findFirst.mockResolvedValue({
+      variant: { id: 'variant-1', name: 'SX (O)' },
+    });
+    prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([
+      {
+        id: 'offering-1',
+        fuelTypes: [FuelType.Petrol, FuelType.Diesel],
+        yearStart: 2024,
+        yearEnd: null,
+        isCurrent: true,
+        sourceUrl: 'https://example.com',
+        variant: {
+          name: 'SX (O)',
+          sourceUrl: 'https://example.com',
+          generation: {
+            name: 'Creta (2024 facelift)',
+            yearStart: 2024,
+            yearEnd: null,
+            isCurrent: true,
+            sourceUrl: 'https://example.com',
+            model: {
+              name: 'Creta',
+              sourceUrl: 'https://example.com',
+              make: {
+                name: 'Hyundai',
+                marketCode: 'IN',
+                vehicleType: VehicleType.SUV,
+                sourceUrl: 'https://example.com',
+              },
+            },
+          },
+        },
+      },
+    ]);
+    prisma.vehicleCatalogVariantOffering.updateMany = vi.fn();
+
+    await service.archiveMissingVariants(mockUser, 'run-1');
+
+    expect(prisma.vehicleCatalogVariantAlias.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          normalizedAlias: normalizeAlias('Creta SX (O)'),
+          variant: { generationId: 'generation-1' },
         },
       }),
     );

@@ -120,7 +120,58 @@ export async function findGenerationRedirect(
   };
 }
 
-type DatasetGeneration = { name: string };
+export type VariantRedirect = { variantId: string; name: string };
+
+/**
+ * Where a source's trim lands when the catalog has folded it into another trim
+ * of the same generation (see `catalog:merge-near-duplicate-trims`): CarWale's
+ * "3XO AX5" now lives as "AX5", Honda's bare "V" as "V | Petrol | Automatic".
+ * The folded name is an alias of the survivor. As with generations, the exact
+ * slug wins and the alias is only a fallback.
+ */
+export async function findVariantRedirect(
+  prisma: CatalogReader,
+  generationId: string,
+  variantName: string,
+): Promise<VariantRedirect | null> {
+  const exact = await prisma.vehicleCatalogVariant.findFirst({
+    where: { generationId, slug: slugify(variantName) },
+    select: { id: true },
+  });
+  if (exact) return null;
+
+  const normalizedAlias = normalizeAlias(variantName);
+  if (!normalizedAlias) return null;
+
+  const alias = await prisma.vehicleCatalogVariantAlias.findFirst({
+    where: { normalizedAlias, variant: { generationId } },
+    select: { variant: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'asc' },
+  });
+  return alias ? { variantId: alias.variant.id, name: alias.variant.name } : null;
+}
+
+/** The id of the generation a source's own make row files under this name, if it exists. */
+async function findExactGenerationId(prisma: CatalogReader, path: GenerationPath) {
+  const exact = await prisma.vehicleCatalogGeneration.findFirst({
+    where: {
+      slug: slugify(path.generationName),
+      model: {
+        slug: slugify(path.modelName),
+        make: {
+          slug: slugify(path.makeName),
+          marketCode: path.marketCode,
+          vehicleType: path.vehicleType as VehicleType,
+        },
+      },
+    },
+    select: { id: true },
+  });
+  return exact?.id ?? null;
+}
+
+type DatasetVariant = { name: string };
+type DatasetGeneration = { name: string; variants: ReadonlyArray<DatasetVariant> };
 type DatasetModel = { name: string; generations: ReadonlyArray<DatasetGeneration> };
 type DatasetMake = {
   marketCode: string;
@@ -130,14 +181,15 @@ type DatasetMake = {
 };
 
 /**
- * The dataset with each merged-away generation filed where the catalog now
- * keeps it: renamed to the generation that absorbed it, and moved under that
- * generation's make row and model when those differ. The import review keys
- * variants by make row, model and generation, so without this a re-import would
- * list every merged variant as missing, and archive-missing would end offerings
- * that are still on sale.
+ * The dataset filed the way the catalog now keeps it: each merged-away
+ * generation renamed to the generation that absorbed it (and moved under that
+ * generation's make row and model when those differ), and each folded trim
+ * renamed to the trim that absorbed it. The import review keys variants by make
+ * row, model, generation and trim, so without this a re-import would list every
+ * merged variant as missing, and archive-missing would end offerings that are
+ * still on sale.
  */
-export async function canonicalizeGenerationNames<T extends ReadonlyArray<DatasetMake>>(
+export async function canonicalizeCatalogNames<T extends ReadonlyArray<DatasetMake>>(
   prisma: CatalogReader,
   dataset: T,
 ): Promise<T> {
@@ -187,9 +239,29 @@ export async function canonicalizeGenerationNames<T extends ReadonlyArray<Datase
           ? makeFor(make, redirect.vehicleType, redirect.makeName)
           : makeFor(make, make.vehicleType, make.name);
         const targetModel = modelFor(targetMake, model, redirect?.modelName ?? model.name);
-        targetModel.generations.push(
-          redirect ? { ...generation, name: redirect.name } : generation,
-        );
+
+        const generationId =
+          redirect?.generationId ??
+          (await findExactGenerationId(prisma, {
+            marketCode: make.marketCode,
+            vehicleType: make.vehicleType,
+            makeName: make.name,
+            modelName: model.name,
+            generationName: generation.name,
+          }));
+        const variants = [];
+        for (const variant of generation.variants) {
+          const variantRedirect = generationId
+            ? await findVariantRedirect(prisma, generationId, variant.name)
+            : null;
+          variants.push(variantRedirect ? { ...variant, name: variantRedirect.name } : variant);
+        }
+
+        targetModel.generations.push({
+          ...generation,
+          ...(redirect ? { name: redirect.name } : {}),
+          variants,
+        });
       }
     }
   }
