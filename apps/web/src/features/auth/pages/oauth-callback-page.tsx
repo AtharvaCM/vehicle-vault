@@ -6,11 +6,15 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageContainer } from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
-import { afterSignInDestination } from '@/features/catalog-intent/lib/catalog-intent';
 import { appToast } from '@/lib/toast';
 
 import { getMe } from '../api/get-me';
 import { useAuth } from '../hooks/use-auth';
+import {
+  afterAuthDestination,
+  navigateAfterAuth,
+  validateReturnPathSearch,
+} from '../lib/return-path';
 
 /** What the API's callback reports when it has no tokens to hand over. */
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
@@ -26,12 +30,13 @@ function describeOAuthError(code: string) {
 /**
  * Reads access/refresh tokens out of the URL fragment that the API
  * callback redirects us to, hydrates the session, fetches the user
- * profile from /auth/me, then moves on: to the add-vehicle form while a
- * catalog intent is waiting ("Track this vehicle" before signing in), to the
- * dashboard otherwise.
+ * profile from /auth/me, then moves on: to the return path the sign-in
+ * began with (`next`, where the route guard was taking the visitor), else to
+ * the add-vehicle form while a catalog intent is waiting ("Track this
+ * vehicle" before signing in), else to the dashboard.
  *
  * Fragment carries: accessToken, refreshToken, or error (if OAuth flow
- * failed). Fragments stay on the client and are never sent to the
+ * failed), and `next` when the sign-in began with one. Fragments stay on the client and are never sent to the
  * server, so they're safe for token transport here.
  *
  * The catalog intent is only read here, never cleared: the add-vehicle form
@@ -41,6 +46,7 @@ export function OAuthCallbackPage() {
   const navigate = useNavigate();
   const auth = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [next, setNext] = useState<string | undefined>(undefined);
   // The fragment is read once: setting the session changes `auth`, and the
   // tokens are gone from the address by the time the effect could run again.
   const started = useRef(false);
@@ -56,6 +62,8 @@ export function OAuthCallbackPage() {
     const oauthError = params.get('error');
     const accessToken = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
+    const returnPath = validateReturnPathSearch({ next: params.get('next') }).next;
+    setNext(returnPath);
 
     // Tokens and error codes stay out of history and out of a copied address.
     window.history.replaceState(null, '', window.location.pathname);
@@ -91,15 +99,19 @@ export function OAuthCallbackPage() {
         // before the navigation below (see register-page.tsx).
         flushSync(() => auth.setSession({ accessToken, refreshToken, user: me }));
 
-        const destination = afterSignInDestination();
+        const destination = afterAuthDestination(returnPath);
         appToast.success({
           title: 'Signed in',
-          description:
-            destination === '/vehicles/new'
-              ? 'Add the rest of your vehicle’s details to start tracking it.'
-              : 'Opening your garage dashboard.',
+          ...('to' in destination
+            ? {
+                description:
+                  destination.to === '/vehicles/new'
+                    ? 'Add the rest of your vehicle’s details to start tracking it.'
+                    : 'Opening your garage dashboard.',
+              }
+            : {}),
         });
-        await navigate({ to: destination, replace: true });
+        await navigateAfterAuth(navigate, destination, { replace: true });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'OAuth login failed.');
       }
@@ -113,7 +125,10 @@ export function OAuthCallbackPage() {
           title="Sign-in failed"
           description={error}
           action={
-            <Button onClick={() => navigate({ to: '/login' })} variant="secondary">
+            <Button
+              onClick={() => navigate({ to: '/login', search: next ? { next } : {} })}
+              variant="secondary"
+            >
               Back to sign in
             </Button>
           }

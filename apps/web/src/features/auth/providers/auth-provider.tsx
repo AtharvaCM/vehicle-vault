@@ -16,6 +16,7 @@ import {
   setStoredAuthSession,
 } from '../lib/auth-session-storage';
 import { getTokenExpiryEpochMs, hasTokenExpiry, isTokenExpired } from '../lib/auth-token';
+import { loginHrefReturningTo } from '../lib/return-path';
 import type { AppAuthContextValue, AuthSession, AuthStatus } from '../types/auth-session';
 
 type AuthProviderProps = {
@@ -93,7 +94,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         window.location.pathname !== '/login' &&
         window.location.pathname !== '/register'
       ) {
-        window.location.replace('/login');
+        // Back here once signed in again.
+        window.location.replace(loginHrefReturningTo(window.location));
       }
     },
     [clearExpiryTimeout],

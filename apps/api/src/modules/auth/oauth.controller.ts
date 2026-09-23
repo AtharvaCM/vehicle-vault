@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { OAuthProvider } from '@prisma/client';
+import { toSafeReturnPath } from '@vehicle-vault/shared';
 
 import { Public } from '../../common/auth/decorators/public.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
@@ -31,11 +32,26 @@ const CATALOG_MODEL_QUERY = {
     'Slug of the catalog model whose public page led here. Carried in the signed OAuth state and used only to attribute a new account; an invalid slug is ignored.',
 };
 
+const NEXT_QUERY = {
+  name: 'next',
+  required: false,
+  description:
+    'Same-origin path the web app returns to after sign-in. Carried in the signed OAuth state and handed back in the callback fragment; anything but a same-origin path is ignored.',
+};
+
+function stateFrom(authInfo: unknown): OAuthStateInfo | undefined {
+  if (!authInfo || typeof authInfo !== 'object') return undefined;
+  return (authInfo as { state?: OAuthStateInfo }).state;
+}
+
 /** The model slug a verified OAuth state carried, if any. */
 function catalogModelFrom(authInfo: unknown): string | undefined {
-  if (!authInfo || typeof authInfo !== 'object') return undefined;
-  const state = (authInfo as { state?: OAuthStateInfo }).state;
-  return toCatalogModel(state?.catalogModel);
+  return toCatalogModel(stateFrom(authInfo)?.catalogModel);
+}
+
+/** The return path a verified OAuth state carried, if any. */
+function nextFrom(authInfo: unknown): string | undefined {
+  return toSafeReturnPath(stateFrom(authInfo)?.next);
 }
 
 @ApiTags('Auth')
@@ -61,6 +77,7 @@ export class OAuthController {
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Begin Google OAuth flow' })
   @ApiQuery(CATALOG_MODEL_QUERY)
+  @ApiQuery(NEXT_QUERY)
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   beginGoogle() {}
 
@@ -77,6 +94,7 @@ export class OAuthController {
   @UseGuards(AuthGuard('github'))
   @ApiOperation({ summary: 'Begin GitHub OAuth flow' })
   @ApiQuery(CATALOG_MODEL_QUERY)
+  @ApiQuery(NEXT_QUERY)
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   beginGithub() {}
 
@@ -103,8 +121,13 @@ export class OAuthController {
 
   private async handleCallback(req: RequestWithOAuthUser, res: RedirectResponse) {
     const profile = req.user;
+    // Handed back either way, so a failed attempt's "Back to sign in" keeps it.
+    const next = nextFrom(req.authInfo);
+    const withNext: Record<string, string> = next ? { next } : {};
     if (!profile) {
-      res.redirect(this.buildRedirect({ error: req.oauthFailure ?? 'oauth_no_profile' }));
+      res.redirect(
+        this.buildRedirect({ error: req.oauthFailure ?? 'oauth_no_profile', ...withNext }),
+      );
       return;
     }
     try {
@@ -115,12 +138,13 @@ export class OAuthController {
         this.buildRedirect({
           accessToken: response.accessToken,
           refreshToken: response.refreshToken,
+          ...withNext,
         }),
       );
     } catch (error) {
       const message =
         error instanceof Error && error.message ? error.message : 'oauth_login_failed';
-      res.redirect(this.buildRedirect({ error: message }));
+      res.redirect(this.buildRedirect({ error: message, ...withNext }));
     }
   }
 
