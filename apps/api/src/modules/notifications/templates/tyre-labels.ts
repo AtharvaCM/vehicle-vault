@@ -10,6 +10,8 @@ const POSITION_LABELS: Record<TyrePosition, string> = {
   [TyrePosition.RearLeft]: 'Rear left',
   [TyrePosition.RearRight]: 'Rear right',
   [TyrePosition.Spare]: 'Spare',
+  [TyrePosition.Front]: 'Front',
+  [TyrePosition.Rear]: 'Rear',
 };
 
 export function positionLabel(position: TyrePosition): string {

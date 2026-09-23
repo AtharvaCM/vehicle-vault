@@ -218,6 +218,10 @@ enum TyrePosition {
   rear_left
   rear_right
   spare
+  /// Two-wheeler (motorcycle/scooter) front tyre.
+  front
+  /// Two-wheeler (motorcycle/scooter) rear tyre.
+  rear
 }
 
 /// Something bought for a vehicle and optionally fitted to it — floor mats, a

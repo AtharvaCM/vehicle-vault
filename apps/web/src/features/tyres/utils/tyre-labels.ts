@@ -6,6 +6,8 @@ export const POSITION_LABEL: Record<TyrePosition, string> = {
   [TyrePosition.RearLeft]: 'Rear left',
   [TyrePosition.RearRight]: 'Rear right',
   [TyrePosition.Spare]: 'Spare',
+  [TyrePosition.Front]: 'Front',
+  [TyrePosition.Rear]: 'Rear',
 };
 
 export const CONDITION_LABEL: Record<TyreConditionLevel, string> = {
