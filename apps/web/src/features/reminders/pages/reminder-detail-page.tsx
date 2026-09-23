@@ -4,12 +4,11 @@ import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
-import { ErrorState } from '@/components/shared/error-state';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
@@ -87,29 +86,20 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   }
 
   if (reminderQuery.isError) {
-    const isNotFound =
-      reminderQuery.error instanceof ApiError && reminderQuery.error.status === 404;
-
     return (
-      <PageContainer>
-        <PageTitle
-          description="Review when this item is due and what it is for."
-          title={isNotFound ? 'Reminder not found' : 'Unable to load reminder'}
-        />
-        <ErrorState
-          action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/reminders">
-              Back to Reminders
-            </Link>
-          }
-          description={
-            isNotFound
-              ? 'The requested reminder does not exist or may have been removed.'
-              : "We couldn't load this reminder. Try again in a moment."
-          }
-          title={isNotFound ? 'Reminder not found' : 'Reminder request failed'}
-        />
-      </PageContainer>
+      <ResourceLoadError
+        error={reminderQuery.error}
+        isRetrying={reminderQuery.isRefetching}
+        listAction={
+          <Link className={buttonVariants({ variant: 'secondary' })} to="/reminders">
+            Your reminders
+          </Link>
+        }
+        onRetry={() => void reminderQuery.refetch()}
+        pageDescription="Review when this item is due and what it is for."
+        resourceLabel="Reminder"
+        subject="reminder"
+      />
     );
   }
 

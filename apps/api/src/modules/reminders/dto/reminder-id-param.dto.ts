@@ -1,7 +1,6 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsUuidRouteParam } from '../../../common/validators/is-uuid-route-param.validator';
 
 export class ReminderIdParamDto {
-  @IsString()
-  @MinLength(1)
+  @IsUuidRouteParam()
   reminderId!: string;
 }

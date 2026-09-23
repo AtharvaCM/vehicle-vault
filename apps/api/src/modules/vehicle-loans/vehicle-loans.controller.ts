@@ -17,6 +17,7 @@ import type { LoanDocumentExtractionDraft } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { ExtractionService } from '../extraction/extraction.service';
 import { CreateVehicleLoanDto } from './dto/create-vehicle-loan.dto';
 import { CreateLoanPrepaymentDto } from './dto/create-loan-prepayment.dto';
@@ -59,19 +60,25 @@ export class VehicleLoansController {
   }
 
   @Get('vehicle/:vehicleId')
-  async listByVehicle(@CurrentUser('id') userId: string, @Param('vehicleId') vehicleId: string) {
+  async listByVehicle(
+    @CurrentUser('id') userId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+  ) {
     return this.vehicleLoansService.listForVehicle(userId, vehicleId);
   }
 
   @Get(':id')
-  async getById(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async getById(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     return this.vehicleLoansService.getById(userId, id);
   }
 
   @Post('vehicle/:vehicleId')
   async create(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() dto: CreateVehicleLoanDto,
   ) {
     return this.vehicleLoansService.createForVehicle(userId, vehicleId, dto);
@@ -80,26 +87,32 @@ export class VehicleLoansController {
   @Patch(':id')
   async update(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
     @Body() dto: UpdateVehicleLoanDto,
   ) {
     return this.vehicleLoansService.updateLoan(userId, id, dto);
   }
 
   @Delete(':id')
-  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async delete(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     return this.vehicleLoansService.deleteLoan(userId, id);
   }
 
   @Get(':id/schedule')
-  async getSchedule(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async getSchedule(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     return this.vehicleLoansService.getSchedule(userId, id);
   }
 
   @Post(':id/prepayments')
   async addPrepayment(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
     @Body() dto: CreateLoanPrepaymentDto,
   ) {
     return this.vehicleLoansService.addPrepayment(userId, id, dto);
@@ -108,8 +121,8 @@ export class VehicleLoansController {
   @Delete(':id/prepayments/:prepaymentId')
   async deletePrepayment(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-    @Param('prepaymentId') prepaymentId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+    @Param('prepaymentId', new UuidRouteParamPipe()) prepaymentId: string,
   ) {
     return this.vehicleLoansService.deletePrepayment(userId, id, prepaymentId);
   }
@@ -117,7 +130,7 @@ export class VehicleLoansController {
   @Post(':id/foreclose')
   async foreclose(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
     @Body() dto: ForecloseLoanDto,
   ) {
     return this.vehicleLoansService.forecloseLoan(userId, id, dto);

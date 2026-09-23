@@ -1,3 +1,11 @@
+## [1.66.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.1...v1.66.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **notifications:** disable preference switches for channels that cannot deliver ([e8193d0](https://github.com/AtharvaCM/vehicle-vault/commit/e8193d0a10b5661b0afe02e501a6df8fc7569722))
+* **notifications:** refresh channel availability when push is toggled ([2d26b28](https://github.com/AtharvaCM/vehicle-vault/commit/2d26b28c878367bfe4d0c8b1acd4e192141b1459))
+
 ## [1.66.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.0...v1.66.1) (2026-09-23)
 
 

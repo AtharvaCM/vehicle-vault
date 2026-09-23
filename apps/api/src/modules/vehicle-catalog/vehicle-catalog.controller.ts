@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { CatalogOfferingIdParamDto } from './dto/catalog-offering-id-param.dto';
 import { CatalogImportRunIdParamDto } from './dto/catalog-import-run-id-param.dto';
@@ -37,7 +38,7 @@ export class VehicleCatalogController {
 
   @Get('variants/:variantId/specs')
   @ApiOperation({ summary: 'Get detailed technical specifications for a variant' })
-  async getVariantSpecs(@Param('variantId') variantId: string) {
+  async getVariantSpecs(@Param('variantId', new UuidRouteParamPipe()) variantId: string) {
     return successResponse(await this.vehicleCatalogService.getVariantSpecs(variantId));
   }
 

@@ -24,6 +24,7 @@ import {
 
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { ExtractionService } from '../extraction/extraction.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleDocumentsService } from './vehicle-documents.service';
@@ -61,7 +62,7 @@ export class VehicleDocumentsController {
   @Get()
   async list(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Query('kind') kind?: string,
   ) {
     const parsedKind = parseOptionalKind(kind);
@@ -71,7 +72,7 @@ export class VehicleDocumentsController {
   @Get('active')
   async listActive(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Query('date') date?: string,
     @Query('kind') kind?: string,
   ) {
@@ -101,7 +102,7 @@ export class VehicleDocumentsController {
   )
   async scan(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Query('kind') kind: string,
     @UploadedFile() file: Express.Multer.File | undefined,
   ) {
@@ -137,7 +138,7 @@ export class VehicleDocumentsController {
   @Post()
   async create(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() payload: CreateVehicleDocumentInput,
   ) {
     return this.vehicleDocumentsService.create(userId, vehicleId, payload);
@@ -146,7 +147,7 @@ export class VehicleDocumentsController {
   @Patch(':id')
   async update(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
     @Body() payload: UpdateVehicleDocumentInput,
   ) {
     return this.vehicleDocumentsService.update(userId, id, payload);
@@ -156,7 +157,7 @@ export class VehicleDocumentsController {
   async remove(
     @CurrentUser('id') userId: string,
     @Param('kind') kindParam: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
   ) {
     const kind = parseRequiredKind(kindParam);
     await this.vehicleDocumentsService.remove(userId, kind, id);

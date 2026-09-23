@@ -7,6 +7,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { DashboardService } from './dashboard.service';
 
@@ -27,7 +28,7 @@ export class DashboardController {
   async snoozeDocument(
     @CurrentUser() user: AuthUser,
     @Param('kind') kindParam: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
   ) {
     const kind = parseKind(kindParam);
     await this.dashboardService.snoozeDocumentAttention(user.id, kind, id);

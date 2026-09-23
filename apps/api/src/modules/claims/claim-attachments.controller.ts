@@ -15,6 +15,7 @@ import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import {
   ATTACHMENTS_MAX_FILES,
   ATTACHMENTS_MAX_FILE_SIZE_BYTES,
@@ -34,7 +35,10 @@ export class ClaimAttachmentsController {
   }
 
   @Get('claims/:claimId/attachments')
-  async list(@Param('claimId') claimId: string, @CurrentUser() user: AuthUser) {
+  async list(
+    @Param('claimId', new UuidRouteParamPipe()) claimId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.claimAttachmentsService.listByClaim(user.id, claimId);
   }
 
@@ -46,7 +50,7 @@ export class ClaimAttachmentsController {
     }),
   )
   async upload(
-    @Param('claimId') claimId: string,
+    @Param('claimId', new UuidRouteParamPipe()) claimId: string,
     @UploadedFiles() files: AttachmentUploadFile[],
     @CurrentUser() user: AuthUser,
   ) {
@@ -55,7 +59,7 @@ export class ClaimAttachmentsController {
 
   @Get('claim-attachments/:attachmentId/file')
   async getFile(
-    @Param('attachmentId') attachmentId: string,
+    @Param('attachmentId', new UuidRouteParamPipe()) attachmentId: string,
     @CurrentUser() user: AuthUser,
     @Res({ passthrough: true })
     response: { setHeader: (name: string, value: string) => void },
@@ -70,12 +74,18 @@ export class ClaimAttachmentsController {
   }
 
   @Post('claim-attachments/:attachmentId/extract')
-  async extract(@Param('attachmentId') attachmentId: string, @CurrentUser() user: AuthUser) {
+  async extract(
+    @Param('attachmentId', new UuidRouteParamPipe()) attachmentId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.claimAttachmentsService.extractFromAttachment(user.id, attachmentId);
   }
 
   @Delete('claim-attachments/:attachmentId')
-  async remove(@Param('attachmentId') attachmentId: string, @CurrentUser() user: AuthUser) {
+  async remove(
+    @Param('attachmentId', new UuidRouteParamPipe()) attachmentId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.claimAttachmentsService.remove(user.id, attachmentId);
   }
 }
