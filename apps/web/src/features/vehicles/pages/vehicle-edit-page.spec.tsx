@@ -4,6 +4,9 @@ import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const vehicleFormProps = vi.hoisted(() => ({
+  current: undefined as Record<string, unknown> | undefined,
+}));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -28,7 +31,10 @@ vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
   useUnsavedChangesGuard: () => ({ allowNextNavigation: () => () => undefined }),
 }));
 vi.mock('../components/vehicle-form', () => ({
-  VehicleForm: () => <div>vehicle form</div>,
+  VehicleForm: (props: Record<string, unknown>) => {
+    vehicleFormProps.current = props;
+    return <div>vehicle form</div>;
+  },
 }));
 
 import { VehicleEditPage } from './vehicle-edit-page';
@@ -45,6 +51,9 @@ const vehicle: Vehicle = {
   odometer: 40_000,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
+  purchaseDate: '2021-03-15T00:00:00.000Z',
+  purchasePrice: 145_000,
+  purchaseOdometer: 0,
 };
 
 function renderAs(role: VehicleRole) {
@@ -71,5 +80,20 @@ describe('VehicleEditPage roles', () => {
     expect(screen.queryByText('vehicle form')).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to Vehicle' })).toBeInTheDocument();
+  });
+});
+
+describe('VehicleEditPage prefill', () => {
+  it('prefills the saved purchase date, price and odometer, and submits in edit mode', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(vehicleFormProps.current?.mode).toBe('edit');
+    expect(vehicleFormProps.current?.initialValues).toMatchObject({
+      // Sliced to a bare date: a full ISO instant fails the date input's
+      // sanitization and would render blank instead of prefilled.
+      purchaseDate: '2021-03-15',
+      purchasePrice: 145_000,
+      purchaseOdometer: 0,
+    });
   });
 });

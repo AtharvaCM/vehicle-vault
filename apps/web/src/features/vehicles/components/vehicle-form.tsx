@@ -30,6 +30,7 @@ import { useVehicleCatalogMakes } from '../hooks/use-vehicle-catalog-makes';
 import { useVehicleCatalogModels } from '../hooks/use-vehicle-catalog-models';
 import { useVehicleCatalogVariants } from '../hooks/use-vehicle-catalog-variants';
 import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-form.schema';
+import { buildVehicleUpdatePayload } from '../utils/build-vehicle-update-payload';
 import { keepsCatalogSelection, type VariantYears } from '../utils/keeps-catalog-selection';
 
 const fuelOptions = Object.values(FuelType);
@@ -53,6 +54,13 @@ type VehicleFormProps = {
   submittingLabel?: string;
   submitHint?: string;
   successMessage?: string;
+  /**
+   * `'create'` (the default) sends the full validated object, since there is
+   * no prior vehicle to diff against. `'edit'` sends only what changed: a
+   * saved purchase date, price or odometer the owner never touched must not
+   * come back as an explicit `null` and wipe what is already stored.
+   */
+  mode?: 'create' | 'edit';
 };
 
 const defaultVehicleValues: VehicleFormValues = {
@@ -77,6 +85,7 @@ export function VehicleForm({
   submittingLabel = 'Saving vehicle...',
   submitHint = 'You can add service history and reminders as soon as this vehicle is saved.',
   successMessage = 'Vehicle details saved.',
+  mode = 'create',
 }: VehicleFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const resolvedInitialValues = useMemo(
@@ -219,8 +228,16 @@ export function VehicleForm({
       return;
     }
 
+    const payload =
+      mode === 'edit'
+        ? buildVehicleUpdatePayload(result.data, form.formState.dirtyFields)
+        : result.data;
+
     try {
-      await onSubmit(result.data);
+      // `onSubmit` is typed for the full create shape; in edit mode the
+      // payload is deliberately a partial subset (see buildVehicleUpdatePayload)
+      // that the API's partial-update handler accepts.
+      await onSubmit(payload as VehicleFormValues);
       setSubmissionState(successMessage);
     } catch (error) {
       if (error instanceof ApiError) {

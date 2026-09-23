@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 import { ViewOnlyNotice } from '../components/view-only-notice';
@@ -47,6 +48,11 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
             fuelType: vehicleQuery.data.fuelType,
             odometer: vehicleQuery.data.odometer,
             nickname: vehicleQuery.data.nickname ?? '',
+            // The date input only accepts `yyyy-MM-dd`; a full ISO instant
+            // fails its sanitization and renders blank instead of prefilled.
+            purchaseDate: toDateInputValue(vehicleQuery.data.purchaseDate ?? undefined),
+            purchasePrice: vehicleQuery.data.purchasePrice ?? null,
+            purchaseOdometer: vehicleQuery.data.purchaseOdometer ?? null,
           }
         : undefined,
     [vehicleQuery.data],
@@ -168,6 +174,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
           <VehicleForm
             initialValues={initialValues}
             isSubmitting={updateVehicleMutation.isPending}
+            mode="edit"
             onDirtyChange={setIsDirty}
             onSubmit={handleUpdateVehicle}
             submitError={
