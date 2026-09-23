@@ -165,6 +165,9 @@ The India make → model → generation → variant → offering reference datas
 **Public catalog**:
 The **Catalog** as strangers see it, with no sign-in (`public-catalog` module, `@Public`, rate-limited under the loose `catalog` bucket, `Cache-Control: public`). `PublicCatalogService` owns what is publishable (India market, a variant with at least one offering, a type with a public segment: car/SUV/van under `cars`, motorcycle under `bikes`, no trucks or `other`) and the spec allow-list `PUBLIC_SPEC_FIELDS`: factual columns picked by name, so `sourceName`/`sourceUrl`, free-text feature lists and import-run data never leave it, and a new spec column stays private until listed. A page's service schedule comes from `MaintenanceIntervalResolver.resolveForVariant`, the same resolution a tracked vehicle gets, and is labelled `variant` or `typical` by whether any interval came from the variant's own rows. Ended ("archived") offerings stay public as history: a page for a variant no longer sold is still a page its owners search for.
 
+**Public catalog index**:
+`GET /public-catalog/index` lists every publishable variant (segment, names and slugs down to the variant, newest `updatedAt`) in one unpaginated response, and `GET /public-catalog/variant-pages?page&pageSize` (at most `PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX`, 200) returns the same variant page payloads the per-variant route does, in the same `id` order. They exist for the web build's prerender, which would otherwise need one request per variant and run into the `catalog` rate limit; both share `PublicCatalogService`'s publishable rule with the slug lookup.
+
 **MaintenancePartCatalog**:
 A **global, cross-user** self-learning table mapping normalized part names → suggested `MaintenanceCategory`, harvested from user line items. Powers category suggestion and part search. Not user-scoped (mild data-leakage consideration for part numbers).
 
