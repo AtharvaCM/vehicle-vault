@@ -13,6 +13,7 @@ NestJS backend for vehicle-vault. Owns the persistence model and business rules 
 - Storage: `SupabaseStorageService` with dual backend (Supabase Storage or local FS via `attachmentStorageBackend` — local used in CI).
 - Config: `AppConfigService` typed wrapper. Note: JWT secrets have dev fallbacks with no prod startup assertion.
 - Tests: Vitest, co-located `*.spec.ts` unit tests; no API-level e2e harness (web Playwright smoke covers it).
+- Every `:id`-style route param backed by a UUID primary key 404s on a malformed value, matching the 404 an unknown-but-valid id already gets, instead of the 400 a plain validation failure would give or the 500 an invalid `uuid` literal throws from Postgres: DTO-shaped params (`@Param() params: XyzDto`) use the `@IsUuidRouteParam()` validator (`common/validators/is-uuid-route-param.validator.ts`), which `AppValidationPipe` (`common/pipes/app-validation.pipe.ts`, wired in `main.ts`) remaps from 400 to 404; bare scalar params use `UuidRouteParamPipe` (`common/pipes/uuid-route-param.pipe.ts`) directly on `@Param('x', ...)`. Non-UUID route params (catalog slugs, document `kind`, OAuth `provider`) are untouched.
 
 ## Language
 

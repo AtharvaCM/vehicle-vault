@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FuelType, VehicleRole, VehicleType, type Vehicle } from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiError } from '@/lib/api/api-error';
 
 import type { VehicleDetailSearch } from '../types/vehicle-detail-search';
 
@@ -186,5 +188,50 @@ describe('VehicleDetailPage roles', () => {
 
     expect(screen.getByRole('link', { name: 'Log' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Add first record' })).toBeInTheDocument();
+  });
+});
+
+function renderErrored(error: unknown, extra: Record<string, unknown> = {}) {
+  const refetch = vi.fn();
+  vehicleQuery.current = { isPending: false, isError: true, error, refetch, ...extra };
+
+  render(
+    <VehicleDetailPage onSearchStateChange={vi.fn()} searchState={{}} vehicleId="vehicle-1" />,
+  );
+
+  return { refetch };
+}
+
+describe('VehicleDetailPage errors', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('tells a malformed or unknown vehicle id apart from a real failure', () => {
+    renderErrored(new ApiError('Vehicle not found', 404));
+
+    expect(screen.getByText("This vehicle isn't in your garage.")).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Your vehicles' })).toHaveAttribute(
+      'href',
+      '/vehicles',
+    );
+  });
+
+  it('tells a viewer whose access was removed why, not just that it failed', () => {
+    renderErrored(new ApiError('Forbidden', 403));
+
+    expect(
+      screen.getByText('You no longer have access — the owner may have removed you.'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers a working Try again that refetches on a network/5xx failure', () => {
+    const { refetch } = renderErrored(new ApiError('Internal error', 500));
+
+    expect(screen.getByText("We couldn't load this vehicle.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });

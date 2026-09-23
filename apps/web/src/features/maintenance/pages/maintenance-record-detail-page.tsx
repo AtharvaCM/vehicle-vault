@@ -3,12 +3,11 @@ import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
-import { ErrorState } from '@/components/shared/error-state';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { buttonVariants } from '@/components/ui/button';
-import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
@@ -71,28 +70,20 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
   }
 
   if (recordQuery.isError) {
-    const isNotFound = recordQuery.error instanceof ApiError && recordQuery.error.status === 404;
-
     return (
-      <PageContainer>
-        <PageTitle
-          description="Review the full details for one logged service entry."
-          title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
-        />
-        <ErrorState
-          action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to Vehicles
-            </Link>
-          }
-          description={
-            isNotFound
-              ? 'The requested maintenance record does not exist or may have been removed.'
-              : "We couldn't load this maintenance record. Try again in a moment."
-          }
-          title={isNotFound ? 'Maintenance record not found' : 'Maintenance request failed'}
-        />
-      </PageContainer>
+      <ResourceLoadError
+        error={recordQuery.error}
+        isRetrying={recordQuery.isRefetching}
+        listAction={
+          <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
+            Your vehicles
+          </Link>
+        }
+        onRetry={() => void recordQuery.refetch()}
+        pageDescription="Review the full details for one logged service entry."
+        resourceLabel="Maintenance record"
+        subject="record"
+      />
     );
   }
 
