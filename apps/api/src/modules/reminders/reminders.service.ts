@@ -19,7 +19,6 @@ import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateReminderDto } from './dto/create-reminder.dto';
 import type { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import type { UpdateReminderDto } from './dto/update-reminder.dto';
-import { extractSlugFromNotes } from './catalog-marker';
 import { ServiceScheduleService } from './service-schedule.service';
 import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-projection';
 import { computeReminderStatus, reminderStatusPriority } from './reminder-status';
@@ -124,6 +123,8 @@ export class RemindersService {
           dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
           dueOdometer: input.dueOdometer,
           notes: input.notes,
+          repeatEveryMonths: input.repeatEveryMonths ?? null,
+          repeatEveryKm: input.repeatEveryKm ?? null,
           status: this.computeReminderStatus(
             { dueDate: input.dueDate, dueOdometer: input.dueOdometer },
             vehicle.odometer,
@@ -175,6 +176,9 @@ export class RemindersService {
           dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
           dueOdometer: input.dueOdometer,
           notes: input.notes,
+          // Undefined leaves the rule as it is; null stops that dimension.
+          repeatEveryMonths: input.repeatEveryMonths,
+          repeatEveryKm: input.repeatEveryKm,
           status: reminderStatus,
         },
       });
@@ -199,14 +203,8 @@ export class RemindersService {
 
     // Resolved before the transaction opens: it reads the catalog, the vehicle
     // and the vehicle's tyre observations, and none of that belongs inside a
-    // write transaction. Null for a hand-written reminder, which does not recur.
-    const next = await this.serviceScheduleService.buildNextOccurrence(
-      userId,
-      before.vehicleId,
-      extractSlugFromNotes(before.notes),
-      now,
-      reminderId,
-    );
+    // write transaction. Null for a reminder with no repeat rule.
+    const next = await this.serviceScheduleService.buildNextOccurrence(userId, before, now);
 
     await this.prisma.$transaction(async (tx) => {
       const updated = await tx.reminder.update({
@@ -365,6 +363,9 @@ export class RemindersService {
       status,
       completedAt: reminder.completedAt?.toISOString(),
       notes: reminder.notes ?? undefined,
+      catalogSlug: reminder.catalogSlug ?? undefined,
+      repeatEveryMonths: reminder.repeatEveryMonths ?? undefined,
+      repeatEveryKm: reminder.repeatEveryKm ?? undefined,
       createdAt: reminder.createdAt.toISOString(),
       updatedAt: reminder.updatedAt.toISOString(),
       usageProjection,

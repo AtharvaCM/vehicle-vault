@@ -86,6 +86,42 @@ describe('ReminderDetailPage roles', () => {
   });
 });
 
+describe('ReminderDetailPage repeat rule', () => {
+  it('says how the reminder repeats, and shows the notes as written', () => {
+    reminderQuery.current = {
+      data: {
+        ...reminder,
+        notes: 'Recommended every 10 000 km or 12 months, whichever comes first.',
+        catalogSlug: 'engine_oil_change',
+        repeatEveryKm: 10000,
+        repeatEveryMonths: 12,
+      },
+      isPending: false,
+      isError: false,
+    };
+    vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: VehicleRole.Owner } };
+
+    render(<ReminderDetailPage reminderId="reminder-1" />);
+
+    expect(
+      screen.getByText('Repeats every 10,000 km or 12 months, whichever comes first'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Recommended every 10 000 km or 12 months, whichever comes first.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\[catalog:/)).not.toBeInTheDocument();
+  });
+
+  it('says a one-off reminder does not repeat', () => {
+    reminderQuery.current = { data: reminder, isPending: false, isError: false };
+    vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: VehicleRole.Owner } };
+
+    render(<ReminderDetailPage reminderId="reminder-1" />);
+
+    expect(screen.getByText('Doesn’t repeat')).toBeInTheDocument();
+  });
+});
+
 function renderErrored(error: unknown) {
   const refetch = vi.fn();
   reminderQuery.current = { isPending: false, isError: true, error, refetch };

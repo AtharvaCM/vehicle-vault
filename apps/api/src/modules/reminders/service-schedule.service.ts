@@ -23,8 +23,12 @@ import {
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { TyresService } from '../tyres/tyres.service';
-import { composeCatalogNotes, extractSlugFromNotes, TYRE_INSPECTION_SLUG } from './catalog-marker';
-import { filterCatalogForVehicle, type ServiceScheduleItem } from './service-schedule-catalog';
+import { addMonths, nextOccurrenceDue, type RepeatAnchor } from './repeat-rule';
+import {
+  filterCatalogForVehicle,
+  TYRE_INSPECTION_SLUG,
+  type ServiceScheduleItem,
+} from './service-schedule-catalog';
 
 /**
  * Where a proposed interval is counted from: the last time the item was done,
@@ -39,6 +43,19 @@ interface ScheduleAnchor {
   at: Date;
   basis: ServiceScheduleAnchor;
 }
+
+/** What completion knows about the reminder whose successor is being built. */
+export type CompletedReminder = Pick<
+  Prisma.ReminderUncheckedCreateInput,
+  'title' | 'type' | 'notes'
+> & {
+  id: string;
+  vehicleId: string;
+  dueDate: Date | null;
+  catalogSlug: string | null;
+  repeatEveryMonths: number | null;
+  repeatEveryKm: number | null;
+};
 
 /**
  * What a suggestion was counted from, so the row can say it. `lastDone*` are
@@ -97,13 +114,12 @@ export class ServiceScheduleService {
         vehicleId,
         status: { not: ReminderStatus.Completed },
       },
-      select: { title: true, notes: true },
+      select: { title: true, catalogSlug: true },
     });
     const existingKeys = new Set<string>();
     for (const reminder of existing) {
       existingKeys.add(reminder.title.trim().toLowerCase());
-      const slug = extractSlugFromNotes(reminder.notes);
-      if (slug) existingKeys.add(`slug:${slug}`);
+      if (reminder.catalogSlug) existingKeys.add(`slug:${reminder.catalogSlug}`);
     }
 
     const now = new Date();
@@ -152,7 +168,12 @@ export class ServiceScheduleService {
             type: item.type as unknown as PrismaReminderType,
             dueOdometer,
             dueDate,
-            notes: composeCatalogNotes(item.slug, item.notes),
+            notes: item.notes ?? null,
+            // Its origin, and the cadence it follows from here on: the reminder
+            // form shows and edits the rule like any other.
+            catalogSlug: item.slug,
+            repeatEveryKm: item.intervalKm ?? null,
+            repeatEveryMonths: item.intervalMonths ?? null,
             status: ReminderStatus.Upcoming,
           },
         });
@@ -180,79 +201,89 @@ export class ServiceScheduleService {
   }
 
   /**
-   * The next occurrence of a catalog-derived reminder, or null when there is
-   * nothing to schedule.
+   * The next occurrence of a completed reminder, or null when there is nothing
+   * to schedule.
    *
-   * This is what makes an interval a cadence rather than a one-off: a catalog
-   * item says "every 10 000 km", and until now completing one produced nothing,
-   * so the schedule quietly stopped the first time someone acted on it. Only
-   * reminders carrying a catalog marker recur — a hand-written reminder states
-   * no interval and is not silently turned into a repeating one.
+   * The reminder's own repeat rule decides: a hand-written one repeats when its
+   * owner chose a rule on the form, and one made from this schedule carries the
+   * item's interval from the moment it is applied (see `applySuggestions`), so
+   * it keeps its cadence however many times it is completed. A reminder with no
+   * rule does not repeat.
+   *
+   * A schedule reminder also keeps what made it schedule-aware: nothing when
+   * its item no longer applies to the vehicle (an engine swapped to electric),
+   * nothing when another open reminder already covers the item. Completing
+   * one is the owner saying it was done now, so the next is counted from now,
+   * except for the tyre walk-around: ticking it off is not a measurement, so it
+   * keeps counting from the last tyre reading.
    */
   async buildNextOccurrence(
     userId: string,
-    vehicleId: string,
-    slug: string | null,
+    completed: CompletedReminder,
     now: Date,
-    /**
-     * The reminder this one succeeds, when called from completion. It is still
-     * active at this point — completion has not been committed yet — so without
-     * excluding it the duplicate check below sees the reminder as its own
-     * successor and nothing is ever scheduled.
-     */
-    excludeReminderId?: string,
   ): Promise<Prisma.ReminderUncheckedCreateInput | null> {
-    if (!slug) return null;
+    const rule = { everyMonths: completed.repeatEveryMonths, everyKm: completed.repeatEveryKm };
+    if (rule.everyMonths == null && rule.everyKm == null) return null;
 
-    const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
-    const item = (await this.itemsForVehicle(vehicle)).find((candidate) => candidate.slug === slug);
-    // Gone from the catalog, or no longer applicable to this vehicle (an engine
-    // swapped to electric). Either way there is no interval to trust.
-    if (!item) return null;
-    if (item.intervalKm == null && item.intervalMonths == null) return null;
+    const vehicle = await this.vehiclesService.ensureVehicleExists(userId, completed.vehicleId);
+    let anchor: RepeatAnchor = { odometer: vehicle.odometer, at: now };
 
-    // Something already covers this slug — a second row would double the nagging
-    // without doubling the information. The marker lives in free text, so this
-    // cannot be a WHERE clause and every active row has to be read.
-    const active = await this.prisma.reminder.findMany({
-      where: {
-        vehicleId,
-        status: { not: ReminderStatus.Completed },
-        ...(excludeReminderId ? { id: { not: excludeReminderId } } : {}),
-      },
-      select: { notes: true },
+    if (completed.catalogSlug) {
+      const slug = completed.catalogSlug;
+      const item = (await this.itemsForVehicle(vehicle)).find(
+        (candidate) => candidate.slug === slug,
+      );
+      if (!item) return null;
+
+      // Something already covers this item: a second row would double the
+      // nagging without doubling the information. The completed reminder is
+      // still open at this point (completion has not been committed yet), so
+      // it is excluded or it would count as its own successor.
+      const covering = await this.prisma.reminder.count({
+        where: {
+          vehicleId: completed.vehicleId,
+          catalogSlug: slug,
+          status: { not: ReminderStatus.Completed },
+          id: { not: completed.id },
+        },
+      });
+      if (covering > 0) return null;
+
+      if (slug === TYRE_INSPECTION_SLUG) {
+        const anchors = await this.resolveAnchors(
+          userId,
+          completed.vehicleId,
+          vehicle.odometer,
+          now,
+          [item],
+        );
+        anchor = anchors[slug] ?? anchor;
+      }
+    }
+
+    // Born already due, when the anchor has not moved on (the walk-around was
+    // ticked off without a reading), comes back null: `tyre-uninspected`
+    // already says the tyres have not been measured.
+    const due = nextOccurrenceDue({
+      rule,
+      type: completed.type as unknown as ServiceScheduleItem['type'],
+      previousDueDate: completed.dueDate,
+      anchor,
+      now,
+      currentOdometer: vehicle.odometer,
     });
-    if (active.some((reminder) => extractSlugFromNotes(reminder.notes) === slug)) return null;
-
-    // Completing a service reminder is itself the owner saying it was done now,
-    // which is later than any record or baseline, so only the walk-around keeps
-    // its own anchor: ticking it off is not a measurement of the tyres.
-    const measured =
-      slug === TYRE_INSPECTION_SLUG
-        ? (await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now, [item]))[slug]
-        : undefined;
-    const anchor = measured ?? { odometer: vehicle.odometer, at: now };
-
-    const dueOdometer = item.intervalKm != null ? anchor.odometer + item.intervalKm : null;
-    const dueDate = item.intervalMonths != null ? addMonths(anchor.at, item.intervalMonths) : null;
-
-    // A successor born already due repeats what the row just completed said,
-    // and completing that one would produce another — a treadmill of reminders
-    // rather than a schedule. It happens when the anchor has not moved on: the
-    // walk-around was ticked off without a measurement being logged, so "the
-    // last time anyone looked" is still where it was. The honest answer is no
-    // new row; `tyre-uninspected` already says the tyres have not been measured.
-    const odometerReached = dueOdometer == null || dueOdometer <= vehicle.odometer;
-    const dateReached = dueDate == null || dueDate.getTime() <= now.getTime();
-    if (odometerReached && dateReached) return null;
+    if (!due) return null;
 
     return {
-      vehicleId,
-      title: item.title,
-      type: item.type as unknown as PrismaReminderType,
-      dueOdometer,
-      dueDate,
-      notes: composeCatalogNotes(item.slug, item.notes),
+      vehicleId: completed.vehicleId,
+      title: completed.title,
+      type: completed.type,
+      notes: completed.notes ?? null,
+      dueOdometer: due.dueOdometer,
+      dueDate: due.dueDate,
+      catalogSlug: completed.catalogSlug,
+      repeatEveryMonths: completed.repeatEveryMonths,
+      repeatEveryKm: completed.repeatEveryKm,
       status: ReminderStatus.Upcoming,
     };
   }
@@ -407,10 +438,4 @@ export class ServiceScheduleService {
       alreadyScheduled,
     };
   }
-}
-
-function addMonths(date: Date, months: number): Date {
-  const next = new Date(date.getTime());
-  next.setMonth(next.getMonth() + months);
-  return next;
 }

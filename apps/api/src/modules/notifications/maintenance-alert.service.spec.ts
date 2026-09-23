@@ -289,7 +289,8 @@ describe('MaintenanceAlertService tyre checks', () => {
         vehicleId: 'v1',
         title: 'Tyre tread & pressure check',
         dueOdometer: 35_000,
-        notes: 'Measure tread depth at each corner.\n[catalog:tyre_inspection]',
+        notes: 'Measure tread depth at each corner.',
+        catalogSlug: 'tyre_inspection',
       },
     ]);
 
@@ -306,7 +307,7 @@ describe('MaintenanceAlertService tyre checks', () => {
         vehicleId: 'v1',
         title: 'Rotate tyres',
         dueOdometer: 35_000,
-        notes: '[catalog:tyre_rotation]',
+        catalogSlug: 'tyre_rotation',
       },
     ]);
 
@@ -761,7 +762,7 @@ describe('MaintenanceAlertService date reminders', () => {
       reminder({
         title: 'Tyre tread & pressure check',
         dueDate: new Date('2026-09-02T00:00:00.000Z'),
-        notes: '[catalog:tyre_inspection]',
+        catalogSlug: 'tyre_inspection',
       }),
     ]);
 

@@ -225,7 +225,10 @@ describe('RemindersService', () => {
       dueOdometer: 15000,
       status: ReminderStatus.Upcoming,
       completedAt: null,
-      notes: 'Every 10 000 km.\n[catalog:engine_oil_change]',
+      notes: 'Every 10 000 km.',
+      catalogSlug: 'engine_oil_change',
+      repeatEveryKm: 10000,
+      repeatEveryMonths: 12,
       createdAt,
       updatedAt: createdAt,
       vehicle: { odometer: 12000 },
@@ -246,20 +249,22 @@ describe('RemindersService', () => {
         type: ReminderType.Service,
         dueOdometer: 22000,
         dueDate: null,
-        notes: '[catalog:engine_oil_change]',
+        catalogSlug: 'engine_oil_change',
         status: ReminderStatus.Upcoming,
       });
 
       await service.completeReminder('user-1', 'reminder-4');
 
+      // The stored reminder, whose id keeps it from counting as its own
+      // successor and whose repeat rule decides the next one.
       expect(serviceScheduleService.buildNextOccurrence).toHaveBeenCalledWith(
         'user-1',
-        'vehicle-1',
-        'engine_oil_change',
+        expect.objectContaining({
+          id: 'reminder-4',
+          catalogSlug: 'engine_oil_change',
+          repeatEveryKm: 10000,
+        }),
         expect.any(Date),
-        // The reminder being completed, so it is not counted as already
-        // covering its own slug.
-        'reminder-4',
       );
       expect(prisma.reminder.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ dueOdometer: 22000 }),
@@ -273,7 +278,7 @@ describe('RemindersService', () => {
         type: ReminderType.Service,
         dueOdometer: 22000,
         dueDate: null,
-        notes: '[catalog:engine_oil_change]',
+        catalogSlug: 'engine_oil_change',
         status: ReminderStatus.Upcoming,
       });
 
@@ -295,20 +300,80 @@ describe('RemindersService', () => {
       expect(prisma.reminder.create).not.toHaveBeenCalled();
     });
 
-    it('passes a null slug on for a hand-written reminder', async () => {
-      prisma.reminder.findFirst = vi
-        .fn()
-        .mockResolvedValue({ ...catalogReminder, notes: 'Ask about the rattle' });
+    it('shows a reminder\u2019s origin and repeat rule, with notes as written', async () => {
+      const result = await service.getReminderById('user-1', 'reminder-4');
 
-      await service.completeReminder('user-1', 'reminder-4');
+      expect(result).toMatchObject({
+        notes: 'Every 10 000 km.',
+        catalogSlug: 'engine_oil_change',
+        repeatEveryKm: 10000,
+        repeatEveryMonths: 12,
+      });
+    });
+  });
 
-      expect(serviceScheduleService.buildNextOccurrence).toHaveBeenCalledWith(
-        'user-1',
-        'vehicle-1',
-        null,
-        expect.any(Date),
-        'reminder-4',
-      );
+  describe('repeat rule on the form', () => {
+    it('stores the rule a hand-written reminder is created with', async () => {
+      prisma.reminder.create = vi.fn().mockResolvedValue({ id: 'reminder-new' });
+      prisma.reminder.findFirst = vi.fn().mockResolvedValue({
+        id: 'reminder-new',
+        vehicleId: 'vehicle-1',
+        title: 'Insurance renewal',
+        type: ReminderType.Insurance,
+        dueDate: new Date('2027-03-01T00:00:00.000Z'),
+        dueOdometer: null,
+        status: ReminderStatus.Upcoming,
+        completedAt: null,
+        notes: null,
+        catalogSlug: null,
+        repeatEveryMonths: 12,
+        repeatEveryKm: null,
+        createdAt,
+        updatedAt: createdAt,
+        vehicle: { odometer: 12000 },
+      });
+
+      const result = await service.createReminder('user-1', 'vehicle-1', {
+        title: 'Insurance renewal',
+        type: ReminderType.Insurance,
+        dueDate: '2027-03-01T00:00:00.000Z',
+        repeatEveryMonths: 12,
+      });
+
+      expect(prisma.reminder.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ repeatEveryMonths: 12, repeatEveryKm: null }),
+      });
+      expect(result.repeatEveryMonths).toBe(12);
+      expect(result.repeatEveryKm).toBeUndefined();
+    });
+
+    it('clears a dimension of the rule with null and leaves an unsent one alone', async () => {
+      prisma.reminder.findFirst = vi.fn().mockResolvedValue({
+        id: 'reminder-4',
+        vehicleId: 'vehicle-1',
+        title: 'Engine oil change',
+        type: ReminderType.Service,
+        dueDate: null,
+        dueOdometer: 15000,
+        status: ReminderStatus.Upcoming,
+        completedAt: null,
+        notes: null,
+        catalogSlug: 'engine_oil_change',
+        repeatEveryMonths: 12,
+        repeatEveryKm: 10000,
+        createdAt,
+        updatedAt: createdAt,
+        vehicle: { odometer: 12000 },
+      });
+      prisma.reminder.update = vi.fn().mockResolvedValue({});
+
+      await service.updateReminder('user-1', 'reminder-4', { repeatEveryMonths: null });
+
+      const [{ data }] = prisma.reminder.update.mock.calls[0] as [
+        { data: Record<string, unknown> },
+      ];
+      expect(data.repeatEveryMonths).toBeNull();
+      expect(data.repeatEveryKm).toBeUndefined();
     });
   });
 

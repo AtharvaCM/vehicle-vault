@@ -1033,14 +1033,15 @@ describe('DashboardService', () => {
           title: 'Tyre tread & pressure check',
           dueDate: daysFromNow(-3),
           status: ReminderStatus.Overdue,
-          notes: 'Measure tread depth at each corner.\n[catalog:tyre_inspection]',
+          notes: 'Measure tread depth at each corner.',
+          catalogSlug: 'tyre_inspection',
         }),
         makeReminder({
           id: 'rotation',
           title: 'Tyre rotation',
           dueDate: daysFromNow(-3),
           status: ReminderStatus.Overdue,
-          notes: '[catalog:tyre_rotation]',
+          catalogSlug: 'tyre_rotation',
         }),
       ]);
 
