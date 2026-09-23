@@ -1,3 +1,10 @@
+## [1.69.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.69.1...v1.69.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** re-link the catalog when an edit changes only the variant ([b774faa](https://github.com/AtharvaCM/vehicle-vault/commit/b774faa90204565aee3d48ff2e2bfb7ba4824fcf)), closes [#232](https://github.com/AtharvaCM/vehicle-vault/issues/232)
+
 ## [1.69.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.69.0...v1.69.1) (2026-09-23)
 
 
