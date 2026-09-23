@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VehicleInsightsService } from './vehicle-insights.service';
 
@@ -28,7 +28,12 @@ describe('VehicleInsightsService', () => {
 
   it('ignores readings with odometer <= 0 so unknown placeholders do not poison predictions', async () => {
     const createdAt = new Date('2026-01-01T00:00:00Z');
-    prisma.vehicle.findUnique.mockResolvedValueOnce({ odometer: 4540, createdAt });
+    // The vehicle reads what the latest service raised it to, so adds no reading of its own.
+    prisma.vehicle.findUnique.mockResolvedValueOnce({
+      odometer: 4000,
+      createdAt,
+      updatedAt: createdAt,
+    });
     prisma.maintenanceRecord.findMany.mockResolvedValueOnce([
       { serviceDate: new Date('2026-02-01T00:00:00Z'), odometer: 2000 },
       { serviceDate: new Date('2026-03-01T00:00:00Z'), odometer: 4000 },
@@ -45,9 +50,13 @@ describe('VehicleInsightsService', () => {
     expect(result.dataPointsCount).toBe(2);
   });
 
-  it('falls back to the vehicle baseline when no positive readings exist', async () => {
+  it('falls back to the vehicle’s own odometer when no positive readings exist', async () => {
     const createdAt = new Date('2026-01-01T00:00:00Z');
-    prisma.vehicle.findUnique.mockResolvedValueOnce({ odometer: 4540, createdAt });
+    prisma.vehicle.findUnique.mockResolvedValueOnce({
+      odometer: 4540,
+      createdAt,
+      updatedAt: createdAt,
+    });
     prisma.maintenanceRecord.findMany.mockResolvedValueOnce([]);
     prisma.fuelLog.findMany.mockResolvedValueOnce([
       { date: new Date('2026-06-20T00:00:00Z'), odometer: 0 },
@@ -57,9 +66,121 @@ describe('VehicleInsightsService', () => {
 
     expect(result.lastRecordedOdometer).toBe(4540);
     expect(result.currentOdometerPredicted).toBe(4540);
-    expect(result.dataPointsCount).toBe(0);
+    expect(result.dataPointsCount).toBe(1);
     expect(result.confidence).toBe('low');
   });
+  describe('the odometer stored on the vehicle', () => {
+    const NOW = new Date('2026-09-23T06:30:00Z');
+    const daysAgo = (days: number) => new Date(NOW.getTime() - days * 86_400_000);
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('never predicts below the reading the owner entered (the demo Daily Hatch)', async () => {
+      // 32,000 typed on the vehicle 130 days ago; the only fill, 120 days ago,
+      // read 31,800. The fill alone used to be the "prediction".
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        odometer: 32_000,
+        createdAt: daysAgo(400),
+        updatedAt: daysAgo(130),
+      });
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([{ date: daysAgo(120), odometer: 31_800 }]);
+
+      const result = await service.getOdometerInsights('u', 'v');
+
+      expect(result.currentOdometerPredicted).toBe(32_000);
+      expect(result.lastRecordedOdometer).toBe(32_000);
+      expect(result.lastRecordedDate).toBe(daysAgo(130).toISOString());
+      // Readings that go backwards measure no rate, rather than a negative one.
+      expect(result.averageDailyMileage).toBe(0);
+    });
+
+    it('counts the stored odometer as the latest reading and predicts on from it', async () => {
+      // 30,000 at a service 100 days ago, 31,000 at a fill 50 days ago, and
+      // 31,500 typed on the vehicle 10 days ago: 15 km/day over 90 days.
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        odometer: 31_500,
+        createdAt: daysAgo(400),
+        updatedAt: daysAgo(10),
+      });
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([
+        { serviceDate: daysAgo(100), odometer: 30_000 },
+      ]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([{ date: daysAgo(50), odometer: 31_000 }]);
+
+      const result = await service.getOdometerInsights('u', 'v');
+
+      expect(result.dataPointsCount).toBe(3);
+      expect(result.lastRecordedOdometer).toBe(31_500);
+      expect(result.averageDailyMileage).toBeCloseTo(16.7, 1);
+      expect(result.currentOdometerPredicted).toBe(Math.round(31_500 + 10 * (1_500 / 90)));
+    });
+
+    it('does not add the stored odometer again when a fill already raised it', async () => {
+      // The fill bumped the vehicle to its own reading; dating that copy "now"
+      // would invent 60 days of standing still and halve the rate.
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        odometer: 21_000,
+        createdAt: daysAgo(400),
+        updatedAt: daysAgo(1),
+      });
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([
+        { serviceDate: daysAgo(100), odometer: 20_000 },
+      ]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([{ date: daysAgo(60), odometer: 21_000 }]);
+
+      const result = await service.getOdometerInsights('u', 'v');
+
+      expect(result.dataPointsCount).toBe(2);
+      expect(result.averageDailyMileage).toBe(25);
+      expect(result.currentOdometerPredicted).toBe(21_000 + 60 * 25);
+    });
+
+    it('keeps the highest reading when a later entry reads lower', async () => {
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        odometer: 45_000,
+        createdAt: daysAgo(400),
+        updatedAt: daysAgo(200),
+      });
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([
+        { serviceDate: daysAgo(150), odometer: 43_000 },
+      ]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([{ date: daysAgo(30), odometer: 44_125 }]);
+
+      const result = await service.getOdometerInsights('u', 'v');
+
+      expect(result.currentOdometerPredicted).toBeGreaterThanOrEqual(45_000);
+      expect(result.lastRecordedOdometer).toBe(45_000);
+    });
+
+    it('reports a single reading as it is, with no rate', async () => {
+      prisma.vehicle.findUnique.mockResolvedValueOnce({
+        odometer: 12_000,
+        createdAt: daysAgo(40),
+        updatedAt: daysAgo(40),
+      });
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([]);
+
+      const result = await service.getOdometerInsights('u', 'v');
+
+      expect(result).toMatchObject({
+        currentOdometerPredicted: 12_000,
+        lastRecordedOdometer: 12_000,
+        averageDailyMileage: 0,
+        averageMonthlyMileage: 0,
+        dataPointsCount: 1,
+      });
+    });
+  });
+
   describe('getFuelEconomy', () => {
     const fills = [
       { odometer: 15_000, quantity: 30, date: new Date('2026-09-01T00:00:00Z') },
