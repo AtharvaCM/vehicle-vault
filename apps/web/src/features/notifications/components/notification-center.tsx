@@ -11,6 +11,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate, Link } from '@tanstack/react-router';
 
+import { useDashboardSummary } from '@/features/dashboard/hooks/use-dashboard-summary';
+import { attentionCount } from '@/features/dashboard/utils/attention-set';
+
 import {
   useNotifications,
   useOpenNotification,
@@ -99,15 +102,7 @@ export function NotificationCenter() {
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-              <div className="rounded-full bg-slate-50 p-3 mb-3">
-                <Bell className="h-6 w-6 text-slate-300" />
-              </div>
-              <p className="text-sm font-medium text-slate-900">All caught up!</p>
-              <p className="text-xs text-slate-500 mt-1">
-                No new maintenance alerts for your vehicles.
-              </p>
-            </div>
+            <EmptyBell />
           ) : (
             <div className="divide-y divide-slate-50/80">
               {notifications.map((notif) => (
@@ -174,5 +169,40 @@ export function NotificationCenter() {
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/**
+ * No alerts is not the same as nothing due: the alert cron may not have run,
+ * or every alert may have been read while the item is still overdue. "All
+ * caught up" is only said when the dashboard's attention set is empty too.
+ */
+function EmptyBell() {
+  const { data: summary } = useDashboardSummary();
+  const pending = summary ? attentionCount(summary.attentionCounts) : 0;
+
+  return (
+    <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+      <div className="rounded-full bg-slate-50 p-3 mb-3">
+        <Bell className="h-6 w-6 text-slate-300" />
+      </div>
+      {pending > 0 ? (
+        <>
+          <p className="text-sm font-medium text-slate-900">No new alerts</p>
+          <Link to="/dashboard" className="text-xs text-primary font-semibold mt-1 hover:underline">
+            {pending === 1
+              ? '1 thing needs your attention on the dashboard'
+              : `${pending} things need your attention on the dashboard`}
+          </Link>
+        </>
+      ) : (
+        <>
+          <p className="text-sm font-medium text-slate-900">All caught up!</p>
+          <p className="text-xs text-slate-500 mt-1">
+            No new maintenance alerts for your vehicles.
+          </p>
+        </>
+      )}
+    </div>
   );
 }
