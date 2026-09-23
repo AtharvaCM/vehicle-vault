@@ -11,7 +11,6 @@ import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { useAuth } from '@/features/auth/hooks/use-auth';
 import { PushDeviceSetting } from '@/features/notifications/components/push-device-setting';
 import {
   UPDATE_NOTIFICATION_PREFERENCES_KEY,
@@ -19,12 +18,12 @@ import {
   useUpdateNotificationPreferences,
 } from '@/features/notifications/hooks/use-notification-preferences';
 import { ALERT_KIND_COPY, ALERT_KIND_GROUPS } from '@/features/notifications/utils/alert-kind-copy';
+import { channelUnavailableCopy } from '@/features/notifications/utils/channel-unavailable-copy';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 
 type Channel = 'email' | 'push';
 
 export function NotificationPreferencesPage() {
-  const { user } = useAuth();
   const query = useNotificationPreferences();
   const update = useUpdateNotificationPreferences();
   const isSaving = useIsMutating({ mutationKey: UPDATE_NOTIFICATION_PREFERENCES_KEY }) > 0;
@@ -60,22 +59,33 @@ export function NotificationPreferencesPage() {
   }
 
   const saved = query.data.preferences;
+  const channels = query.data.channels;
   const preferences = new Map<AlertKind, NotificationPreference>(
     saved.map((preference) => [preference.kind, preference]),
   );
   const everyKindOn = (channel: Channel) => saved.every((preference) => preference[channel]);
+  const isAvailable = (channel: Channel) => channels[channel].available;
 
+  // A channel that can't deliver never gets written to: the switch renders
+  // off without touching what is stored, so the real value shows again once
+  // the channel becomes available.
   function setOne(kind: AlertKind, channel: Channel, on: boolean) {
+    if (!isAvailable(channel)) return;
     const current = preferences.get(kind);
     if (!current) return;
     update.mutate({ preferences: [{ ...current, [channel]: on }] });
   }
 
   function setAll(channel: Channel, on: boolean) {
+    if (!isAvailable(channel)) return;
     update.mutate({
       preferences: saved.map((preference) => ({ ...preference, [channel]: on })),
     });
   }
+
+  const channelNotices = (['email', 'push'] as const)
+    .map((channel) => ({ channel, message: channelUnavailableCopy(channel, channels[channel]) }))
+    .filter((notice): notice is { channel: Channel; message: string } => notice.message !== null);
 
   return (
     <PageContainer>
@@ -113,11 +123,20 @@ export function NotificationPreferencesPage() {
               />
             ) : null}
 
-            {user && !user.emailVerified ? (
+            {channels.email.reason === 'email_unverified' ? (
               <p className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900">
                 Email alerts start once your address is verified.
               </p>
             ) : null}
+
+            {channelNotices.map(({ channel, message }) => (
+              <p
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-600"
+                key={channel}
+              >
+                {message}
+              </p>
+            ))}
 
             <table className="w-full text-sm">
               <thead>
@@ -142,18 +161,21 @@ export function NotificationPreferencesPage() {
                     // An action rather than a switch: with some kinds on and some
                     // off, a switch reading "off" would claim every alert was off.
                     const turnOn = !everyKindOn(channel);
+                    const available = isAvailable(channel);
 
                     return (
                       <td className="py-3 text-center" key={channel}>
-                        <Button
-                          aria-label={`Turn ${channel} ${turnOn ? 'on' : 'off'} for every alert`}
-                          className="h-7 px-2 text-xs"
-                          onClick={() => setAll(channel, turnOn)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          {turnOn ? 'Turn on' : 'Turn off'}
-                        </Button>
+                        {available ? (
+                          <Button
+                            aria-label={`Turn ${channel} ${turnOn ? 'on' : 'off'} for every alert`}
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setAll(channel, turnOn)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {turnOn ? 'Turn on' : 'Turn off'}
+                          </Button>
+                        ) : null}
                       </td>
                     );
                   })}
@@ -180,15 +202,24 @@ export function NotificationPreferencesPage() {
                             <span className="block font-medium text-slate-900">{copy.label}</span>
                             <span className="block text-slate-500">{copy.description}</span>
                           </th>
-                          {(['email', 'push'] as const).map((channel) => (
-                            <td className="py-3 text-center" key={channel}>
-                              <Switch
-                                aria-label={`${copy.label} by ${channel}`}
-                                checked={preference?.[channel] ?? true}
-                                onCheckedChange={(on) => setOne(kind, channel, on)}
-                              />
-                            </td>
-                          ))}
+                          {(['email', 'push'] as const).map((channel) => {
+                            const available = isAvailable(channel);
+                            // Never read on for a channel that can't deliver, even
+                            // when the stored preference says so: the stored value
+                            // is left untouched and shows again once available.
+                            const checked = available ? (preference?.[channel] ?? true) : false;
+
+                            return (
+                              <td className="py-3 text-center" key={channel}>
+                                <Switch
+                                  aria-label={`${copy.label} by ${channel}`}
+                                  checked={checked}
+                                  disabled={!available}
+                                  onCheckedChange={(on) => setOne(kind, channel, on)}
+                                />
+                              </td>
+                            );
+                          })}
                         </tr>
                       );
                     })}
@@ -203,7 +234,7 @@ export function NotificationPreferencesPage() {
           <CardHeader>
             <CardTitle>This device</CardTitle>
             <CardDescription>
-              Push goes to each browser you turn it on in. The switches on the left decide which
+              Push goes to each browser you turn it on in. The per-alert Push switches decide which
               alerts are pushed.
             </CardDescription>
           </CardHeader>

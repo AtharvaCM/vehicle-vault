@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 
+import { MailModule } from '../../common/mail/mail.module';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AccessoriesModule } from '../accessories/accessories.module';
 import { AuditModule } from '../audit/audit.module';
@@ -66,6 +67,7 @@ export const ALERT_TEMPLATE_PROVIDERS = [
     AccessoriesModule,
     TyresModule,
     AuditModule,
+    MailModule,
   ],
   controllers: [NotificationsController, UnsubscribeController],
   providers: [
