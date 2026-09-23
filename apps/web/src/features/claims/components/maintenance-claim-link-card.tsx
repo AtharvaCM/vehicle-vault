@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Link2, Link2Off, Plus, ReceiptText } from 'lucide-react';
-import { format } from 'date-fns';
 import { outOfPocket, type Claim } from '@vehicle-vault/shared';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
 import { InlineError } from '@/components/shared/inline-error';
 import { useVehicleDocuments } from '@/features/vehicle-documents/hooks/use-documents';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useUpdateClaim, useVehicleClaims } from '../hooks/use-claims';
@@ -24,14 +24,6 @@ interface MaintenanceClaimLinkCardProps {
   vehicleId: string;
   /** When omitted (e.g. create-mode), the card renders an informational hint instead. */
   maintenanceRecordId?: string;
-}
-
-function formatINR(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export function MaintenanceClaimLinkCard({
@@ -134,11 +126,11 @@ export function MaintenanceClaimLinkCard({
                   {linkedClaim.claimNumber ? `#${linkedClaim.claimNumber}` : 'Claim (no number)'}
                 </p>
                 <p className="text-xs text-slate-600">
-                  {formatINR(linkedClaim.grossAmount)} gross ·{' '}
+                  {format.money(linkedClaim.grossAmount)} gross ·{' '}
                   <span className="text-rose-600">
-                    {formatINR(outOfPocket(linkedClaim))} out of pocket
+                    {format.money(outOfPocket(linkedClaim))} out of pocket
                   </span>{' '}
-                  · filed {format(new Date(linkedClaim.filedDate), 'd MMM yyyy')}
+                  · filed {format.date(linkedClaim.filedDate)}
                 </p>
               </div>
               <Button
@@ -166,9 +158,8 @@ export function MaintenanceClaimLinkCard({
                       <SelectItem value="__none">— select a claim —</SelectItem>
                       {unlinkedClaims.map((claim) => (
                         <SelectItem key={claim.id} value={claim.id}>
-                          {claim.claimNumber ?? '(no number)'} ·{' '}
-                          {format(new Date(claim.filedDate), 'd MMM yyyy')} ·{' '}
-                          {formatINR(claim.grossAmount)}
+                          {claim.claimNumber ?? '(no number)'} · {format.date(claim.filedDate)} ·{' '}
+                          {format.money(claim.grossAmount)}
                         </SelectItem>
                       ))}
                     </SelectContent>

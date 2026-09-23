@@ -4,11 +4,9 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { formatReminderType } from '@/features/reminders/utils/format-reminder-type';
 import { documentKindNouns } from '@/features/vehicle-documents/utils/document-kind-labels';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type {
   DashboardAttentionItem,
@@ -74,7 +72,7 @@ export function attentionBadgeLabel(item: DashboardAttentionItem) {
     case 'accessory':
       return 'Accessory';
     case 'reminder':
-      return formatReminderType(item.reminderType ?? 'custom');
+      return format.enumLabel('reminderType', item.reminderType ?? 'custom');
   }
 }
 
@@ -128,7 +126,7 @@ export function AttentionRow({
         className="tabular-nums"
         dateTime={item.dueDate}
         key="relative"
-        title={formatDate(item.dueDate, { dateStyle: 'full' })}
+        title={format.date(item.dueDate, 'long')}
       >
         {relative}
       </time>
@@ -142,7 +140,7 @@ export function AttentionRow({
   if (item.dueDate) {
     meta.push(
       <span className="shrink-0 tabular-nums" key="date">
-        {formatDate(item.dueDate)}
+        {format.date(item.dueDate)}
       </span>,
     );
 
@@ -158,7 +156,7 @@ export function AttentionRow({
   if (item.kind === 'loan_emi' && item.amount !== undefined) {
     meta.push(
       <span className="shrink-0 font-medium tabular-nums text-slate-700" key="amount">
-        {formatCurrency(item.amount)}
+        {format.money(item.amount)}
       </span>,
     );
   }

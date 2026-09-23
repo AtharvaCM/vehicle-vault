@@ -7,9 +7,10 @@ import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { format } from '@/lib/format';
 
 import { loanFormSchema, type LoanFormValues } from '../schemas/loan-form.schema';
-import { computeEmiPreview, formatCurrencyInr } from '../utils/compute-emi';
+import { computeEmiPreview } from '../utils/compute-emi';
 
 type LoanFormProps = {
   isSubmitting?: boolean;
@@ -151,19 +152,19 @@ export function LoanForm({
           <div>
             <div className="text-[11px] uppercase tracking-wide">EMI</div>
             <div className="text-base font-semibold text-foreground">
-              {formatCurrencyInr(emiPreview)}
+              {format.money(emiPreview)}
             </div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide">Total interest</div>
             <div className="text-base font-semibold text-foreground">
-              {formatCurrencyInr(totalInterest)}
+              {format.money(totalInterest)}
             </div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide">Total payable</div>
             <div className="text-base font-semibold text-foreground">
-              {formatCurrencyInr(totalPayable)}
+              {format.money(totalPayable)}
             </div>
           </div>
         </div>

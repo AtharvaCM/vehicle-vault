@@ -128,7 +128,7 @@ describe('FillFromPhotoDialog', () => {
         'Only what this record is missing. The date, odometer and cost stay as you logged them.',
       ),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText('Engine Oil')).toBeInTheDocument();
+    expect(within(dialog).getByText('Engine oil')).toBeInTheDocument();
     expect(within(dialog).getByText('Torque Garage')).toBeInTheDocument();
     expect(within(dialog).getByText(/2 items, adding up to ₹1,500/)).toBeInTheDocument();
     expect(within(dialog).getByText('Engine oil, Labour')).toBeInTheDocument();

@@ -1,3 +1,10 @@
+# [1.71.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.70.0...v1.71.0) (2026-09-23)
+
+
+### Features
+
+* **web:** one format module for money, distance, dates, due times and enum labels ([4f281a0](https://github.com/AtharvaCM/vehicle-vault/commit/4f281a094c41bb820623363a1b52e232ae030af0))
+
 # [1.70.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.69.2...v1.70.0) (2026-09-23)
 
 

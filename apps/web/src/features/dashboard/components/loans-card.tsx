@@ -2,11 +2,10 @@ import { Link } from '@tanstack/react-router';
 
 import { SectionCard } from '@/components/shared/section-card';
 import { buttonVariants } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { DashboardLoanSummary } from '../types/dashboard';
-import { calendarDaysUntil, formatRelativeDue } from '../utils/format-due';
+import { formatRelativeDue } from '../utils/format-due';
 
 type LoansCardProps = {
   loans: DashboardLoanSummary;
@@ -19,20 +18,20 @@ export function LoansCard({ loans, today = new Date() }: LoansCardProps) {
   }
 
   const nextEmiHint = loans.nextEmiDate
-    ? `${formatDate(loans.nextEmiDate)} · ${formatRelativeDue({
+    ? `${format.date(loans.nextEmiDate)} · ${formatRelativeDue({
         kind: 'loan_emi',
         dueDate: loans.nextEmiDate,
-        daysUntilDue: calendarDaysUntil(loans.nextEmiDate, today),
+        daysUntilDue: format.daysUntil(loans.nextEmiDate, today),
       })}`
     : undefined;
 
   const tiles: Array<{ label: string; value: string; hint?: string }> = [
-    { label: 'Next EMI', value: formatCurrency(loans.monthlyEmi), hint: nextEmiHint },
-    { label: 'Outstanding', value: formatCurrency(loans.outstandingBalance) },
+    { label: 'Next EMI', value: format.money(loans.monthlyEmi), hint: nextEmiHint },
+    { label: 'Outstanding', value: format.money(loans.outstandingBalance) },
     {
       label: 'Interest paid',
-      value: formatCurrency(loans.interestPaidToDate),
-      hint: loans.prepaidToDate > 0 ? `Prepaid ${formatCurrency(loans.prepaidToDate)}` : undefined,
+      value: format.money(loans.interestPaidToDate),
+      hint: loans.prepaidToDate > 0 ? `Prepaid ${format.money(loans.prepaidToDate)}` : undefined,
     },
   ];
 

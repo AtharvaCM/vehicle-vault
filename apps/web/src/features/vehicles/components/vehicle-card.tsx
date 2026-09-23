@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import { CarFront, ChevronRight } from 'lucide-react';
+import { Bike, CarFront, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { VehicleType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
+import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
 import { getVehicleDisplayName } from '../utils/get-vehicle-display-name';
@@ -45,7 +46,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
               ) ? (
                 <CarFront className="h-6 w-6" />
               ) : (
-                <div className="text-sm font-bold">M/C</div>
+                <Bike aria-hidden className="h-6 w-6" />
               )}
             </div>
 
@@ -55,11 +56,11 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
                   {title}
                 </h3>
                 <Badge tone="accent" className="shrink-0">
-                  {vehicle.vehicleType}
+                  {format.enumLabel('vehicleType', vehicle.vehicleType)}
                 </Badge>
                 {vehicle.currentUserRole && vehicle.currentUserRole !== 'owner' ? (
                   <Badge className="shrink-0 bg-blue-100 text-blue-800">
-                    Shared • {vehicle.currentUserRole}
+                    Shared • {format.enumLabel('vehicleRole', vehicle.currentUserRole)}
                   </Badge>
                 ) : null}
               </div>
@@ -85,7 +86,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
                 Odometer
               </p>
               <p className="text-[13px] font-semibold tabular-nums text-slate-700">
-                {vehicle.odometer.toLocaleString('en-IN')} km
+                {format.odometer(vehicle.odometer)}
               </p>
             </div>
 
@@ -93,7 +94,9 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Fuel Type
               </p>
-              <p className="text-[13px] font-semibold text-slate-700">{vehicle.fuelType}</p>
+              <p className="text-[13px] font-semibold text-slate-700">
+                {format.enumLabel('fuelType', vehicle.fuelType)}
+              </p>
             </div>
 
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-300 shadow-premium-sm transition-all group-hover:translate-x-1 group-hover:text-primary sm:ml-4">

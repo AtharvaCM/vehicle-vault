@@ -1,6 +1,6 @@
 import type { PublicCatalogSchedule } from '@vehicle-vault/shared';
 
-import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
+import { format } from '@/lib/format';
 
 import { describeInterval, describeScheduleBasis } from '../utils/format-public-catalog';
 
@@ -43,7 +43,7 @@ export function PublicServiceSchedule({ schedule, heading, note }: PublicService
             key={item.category}
           >
             <span className="text-sm font-medium text-slate-900">
-              {formatMaintenanceCategory(item.category)}
+              {format.enumLabel('maintenanceCategory', item.category)}
             </span>
             <span className="text-sm text-slate-600">{describeInterval(item)}</span>
           </li>

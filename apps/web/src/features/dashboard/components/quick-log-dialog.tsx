@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
+import { format } from '@/lib/format';
 
 import { useQuickLog } from '../hooks/use-quick-log';
 import { quickLogSchema, type QuickLogValues } from '../schemas/quick-log.schema';
@@ -108,7 +108,7 @@ export function QuickLogDialog({ open, onOpenChange, vehicles }: QuickLogDialogP
       } else {
         appToast.success({
           title: 'Service logged',
-          description: `${formatCurrency(values.totalCost)} on ${vehicle.displayName}. Add the details from the record any time.`,
+          description: `${format.money(values.totalCost)} on ${vehicle.displayName}. Add the details from the record any time.`,
         });
       }
       onOpenChange(false);

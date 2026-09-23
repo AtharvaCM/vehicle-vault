@@ -1,9 +1,9 @@
 import { Calendar, Gauge, TrendingUp, Info } from 'lucide-react';
-import { format } from 'date-fns';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { format } from '@/lib/format';
 import { useVehicleInsights } from '../hooks/use-vehicle-insights';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -38,7 +38,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
   // zero (readings that never move forward) predicts nothing. Either way the
   // honest figure is the reading itself, not a prediction built on 0 km/day.
   const canPredict = insights.dataPointsCount >= 2 && insights.averageDailyMileage > 0;
-  const lastRecordedDate = format(new Date(insights.lastRecordedDate), 'MMM d, yyyy');
+  const lastRecordedDate = format.date(insights.lastRecordedDate);
 
   return (
     <Card className="overflow-hidden border-zinc-200/50 bg-white shadow-xs transition-all hover:shadow-md dark:border-zinc-800/50 dark:bg-zinc-900/50">
@@ -49,11 +49,9 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
           </CardTitle>
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {(canPredict
-                ? insights.currentOdometerPredicted
-                : insights.lastRecordedOdometer
-              ).toLocaleString()}{' '}
-              km
+              {format.odometer(
+                canPredict ? insights.currentOdometerPredicted : insights.lastRecordedOdometer,
+              )}
             </h3>
             {canPredict ? (
               <Badge
@@ -92,7 +90,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
                 <span>Avg. Monthly</span>
               </div>
               <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                {insights.averageMonthlyMileage.toLocaleString()} km
+                {format.distance(insights.averageMonthlyMileage)}
               </p>
             </div>
           </div>
@@ -103,7 +101,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
                 Last Recorded
               </span>
               <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                {insights.lastRecordedOdometer.toLocaleString()} km ({lastRecordedDate})
+                {format.odometer(insights.lastRecordedOdometer)} ({lastRecordedDate})
               </span>
             </div>
             <TooltipProvider>

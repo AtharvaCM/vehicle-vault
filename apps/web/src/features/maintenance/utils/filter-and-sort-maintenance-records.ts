@@ -1,8 +1,9 @@
 import { type MaintenanceCategory } from '@vehicle-vault/shared';
 
+import { format } from '@/lib/format';
+
 import type { MaintenanceRecord } from '../types/maintenance-record';
 import type { MaintenanceSortOption } from '../types/maintenance-list-search';
-import { formatMaintenanceCategory } from './format-maintenance-category';
 
 type FilterAndSortMaintenanceRecordsArgs = {
   records: MaintenanceRecord[];
@@ -36,7 +37,7 @@ export function filterAndSortMaintenanceRecords({
         record.notes ?? '',
         record.serviceDate,
         record.odometer.toString(),
-        formatMaintenanceCategory(record.category),
+        format.enumLabel('maintenanceCategory', record.category),
         vehicleLabelById[record.vehicleId] ?? '',
       ];
 

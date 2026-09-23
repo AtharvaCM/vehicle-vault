@@ -88,9 +88,7 @@ test('the dashboard lists what the bell knows about tyres, history and accessori
   await expect(queue.filter({ hasText: 'Tyre not roadworthy' })).toContainText(
     'Front left · 1.4 mm tread',
   );
-  await expect(queue.filter({ hasText: '70mai Dashcam warranty' })).toContainText(
-    'Expires in 5 days',
-  );
+  await expect(queue.filter({ hasText: '70mai Dashcam warranty' })).toContainText('5 days left');
 
   const comingUp = page.getByRole('region', { name: 'Coming up' });
   await expect(comingUp.getByRole('link', { name: /Unknown service history/ })).toContainText(

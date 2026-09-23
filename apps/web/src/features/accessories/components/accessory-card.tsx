@@ -4,8 +4,7 @@ import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import { daysUntilExpiry } from '../utils/warranty-status';
 
@@ -48,12 +47,12 @@ export function AccessoryCard({
           <div>
             <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Cost</dt>
             <dd className="mt-1 text-slate-900">
-              {formatCurrency(accessory.cost, accessory.currencyCode)}
+              {format.money(accessory.cost, { currency: accessory.currencyCode })}
             </dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Bought</dt>
-            <dd className="mt-1 text-slate-900">{formatDate(accessory.purchaseDate)}</dd>
+            <dd className="mt-1 text-slate-900">{format.date(accessory.purchaseDate)}</dd>
           </div>
           {accessory.category ? (
             <div>
@@ -65,9 +64,9 @@ export function AccessoryCard({
             <div>
               <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Removed</dt>
               <dd className="mt-1 text-slate-900">
-                {formatDate(accessory.removedDate)}
+                {format.date(accessory.removedDate)}
                 {accessory.removedOdometer != null
-                  ? ` · ${accessory.removedOdometer.toLocaleString('en-IN')} km`
+                  ? ` · ${format.distance(accessory.removedOdometer)}`
                   : ''}
               </dd>
             </div>
@@ -75,9 +74,9 @@ export function AccessoryCard({
             <div>
               <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Fitted</dt>
               <dd className="mt-1 text-slate-900">
-                {formatDate(accessory.fittedDate)}
+                {format.date(accessory.fittedDate)}
                 {accessory.fittedOdometer != null
-                  ? ` · ${accessory.fittedOdometer.toLocaleString('en-IN')} km`
+                  ? ` · ${format.distance(accessory.fittedOdometer)}`
                   : ''}
               </dd>
             </div>
@@ -93,8 +92,8 @@ export function AccessoryCard({
             }
           >
             {warrantyDays != null && warrantyDays < 0
-              ? `Warranty ended ${formatDate(accessory.warrantyExpiresAt)}`
-              : `Warranty until ${formatDate(accessory.warrantyExpiresAt)}`}
+              ? `Warranty ended ${format.date(accessory.warrantyExpiresAt)}`
+              : `Warranty until ${format.date(accessory.warrantyExpiresAt)}`}
           </p>
         ) : null}
 

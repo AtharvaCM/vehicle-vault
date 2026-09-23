@@ -3,7 +3,7 @@ import { BellRing, CircleDot, Coins, History, Package, ShieldCheck } from 'lucid
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { buttonVariants } from '@/components/ui/button';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { DashboardAttentionItem, DashboardAttentionKind } from '../types/dashboard';
 import { formatRelativeDue } from '../utils/format-due';
@@ -61,7 +61,7 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
               <span className="ml-auto shrink-0 text-[13px] tabular-nums text-slate-500">
                 {formatRelativeDue(item)}
                 {item.dueDate ? (
-                  <span className="hidden sm:inline"> · {formatDate(item.dueDate)}</span>
+                  <span className="hidden sm:inline"> · {format.date(item.dueDate)}</span>
                 ) : null}
               </span>
             </AttentionItemLink>

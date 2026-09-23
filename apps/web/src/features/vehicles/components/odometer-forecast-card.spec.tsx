@@ -46,7 +46,7 @@ describe('OdometerForecastCard', () => {
     render(<OdometerForecastCard vehicleId="vehicle-1" />);
 
     expect(screen.getByText(/12,000/)).toBeInTheDocument();
-    expect(screen.getByText(/^Last recorded \(Sep 13, 2026\)/)).toBeInTheDocument();
+    expect(screen.getByText(/^Last recorded \(13 Sep 2026\)/)).toBeInTheDocument();
     expect(screen.queryByText('Predicted current odometer')).not.toBeInTheDocument();
     expect(screen.queryByText(/km\/day/)).not.toBeInTheDocument();
     expect(screen.queryByText(/confidence/)).not.toBeInTheDocument();

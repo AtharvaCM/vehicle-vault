@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useCreateTyre, useUpdateTyre } from '../hooks/use-tyres';
@@ -39,7 +40,6 @@ import {
   tyreFormSchema,
   type TyreFormValues,
 } from '../schemas/tyre-form.schema';
-import { POSITION_LABEL } from '../utils/tyre-labels';
 
 interface TyreFormDialogProps {
   isOpen: boolean;
@@ -162,7 +162,7 @@ export function TyreFormDialog({
         await updateMutation.mutateAsync({ tyreId: tyre.id, input: changes });
         appToast.success({
           title: 'Tyre updated',
-          description: `${POSITION_LABEL[tyre.position]} tyre saved.`,
+          description: `${format.enumLabel('tyrePosition', tyre.position)} tyre saved.`,
         });
         onClose();
       } catch (error) {
@@ -194,7 +194,7 @@ export function TyreFormDialog({
       await createMutation.mutateAsync(payload);
       appToast.success({
         title: 'Tyre added',
-        description: `Fitted at ${POSITION_LABEL[values.position].toLowerCase()}.`,
+        description: `Fitted at ${format.enumLabel('tyrePosition', values.position).toLowerCase()}.`,
       });
       onClose();
     } catch (error) {
@@ -212,7 +212,7 @@ export function TyreFormDialog({
           <DialogTitle>{tyre ? 'Edit tyre' : 'Add a tyre'}</DialogTitle>
           <DialogDescription>
             {tyre
-              ? `Correct what was recorded for the ${POSITION_LABEL[tyre.position].toLowerCase()} tyre. Its readings stay with it.`
+              ? `Correct what was recorded for the ${format.enumLabel('tyrePosition', tyre.position).toLowerCase()} tyre. Its readings stay with it.`
               : 'Fitting a tyre to a corner retires whatever is already there, so a replacement or rotation stays accurate.'}
           </DialogDescription>
         </DialogHeader>
@@ -224,7 +224,11 @@ export function TyreFormDialog({
               htmlFor="tyre-position"
               label="Position"
             >
-              <Input disabled id="tyre-position" value={POSITION_LABEL[tyre.position]} />
+              <Input
+                disabled
+                id="tyre-position"
+                value={format.enumLabel('tyrePosition', tyre.position)}
+              />
             </FormField>
           ) : (
             <FormField error={errors.position?.message} htmlFor="tyre-position" label="Position">
@@ -239,7 +243,7 @@ export function TyreFormDialog({
                     <SelectContent>
                       {positionOptions.map((position) => (
                         <SelectItem key={position} value={position}>
-                          {POSITION_LABEL[position]}
+                          {format.enumLabel('tyrePosition', position)}
                         </SelectItem>
                       ))}
                     </SelectContent>

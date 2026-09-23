@@ -2,7 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import type { AuditEvent } from '../types/audit-event';
@@ -69,7 +69,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
             className="whitespace-nowrap text-xs tabular-nums text-slate-400"
             dateTime={event.occurredAt}
           >
-            {formatDate(event.occurredAt, { dateStyle: 'medium', timeStyle: 'short' })}
+            {format.date(event.occurredAt, 'dateTime')}
           </time>
           {hasDetail ? (
             <ChevronDown

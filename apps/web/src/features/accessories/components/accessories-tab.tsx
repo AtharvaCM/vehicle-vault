@@ -6,8 +6,8 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
 
 import { useDeleteAccessory, useVehicleAccessories } from '../hooks/use-accessories';
 import { AccessoryCard } from './accessory-card';
@@ -113,7 +113,7 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
             {accessories.length > 0
               ? `${accessories.length} item${accessories.length === 1 ? '' : 's'}${
                   totalSpend != null
-                    ? ` · ${formatCurrency(totalSpend, spendCurrency ?? undefined)} spent`
+                    ? ` · ${format.money(totalSpend, { currency: spendCurrency })} spent`
                     : ''
                 }`
               : 'Things bought for this vehicle, kept out of your service history.'}

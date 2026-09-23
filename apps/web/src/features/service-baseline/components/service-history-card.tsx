@@ -8,8 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import {
@@ -169,7 +169,7 @@ function BaselineRow({
   onToggleUnknown,
   readOnly = false,
 }: BaselineRowProps) {
-  const label = formatMaintenanceCategory(entry.category);
+  const label = format.enumLabel('maintenanceCategory', entry.category);
 
   if (readOnly && isEditable(entry)) {
     return (
@@ -185,7 +185,7 @@ function BaselineRow({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-slate-50/60 px-3 py-2">
         <span className="text-sm font-medium text-slate-700">{label}</span>
         <span className="text-xs text-slate-500">
-          Logged service at {entry.lastDoneOdometer?.toLocaleString('en-IN')} km
+          Logged service at {format.odometer(entry.lastDoneOdometer)}
         </span>
       </div>
     );
@@ -226,7 +226,7 @@ function BaselineRow({
 function describeAnswer(entry: VehicleServiceBaselineEntry): string {
   if (entry.source === 'declared-unknown') return 'Marked as not known';
   if (entry.source === 'baseline' && entry.lastDoneOdometer != null) {
-    return `Last done at ${entry.lastDoneOdometer.toLocaleString('en-IN')} km`;
+    return `Last done at ${format.odometer(entry.lastDoneOdometer)}`;
   }
   if (entry.source === 'baseline') return 'Answered without an odometer reading';
   return 'Not answered yet';

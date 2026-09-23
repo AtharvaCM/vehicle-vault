@@ -5,10 +5,8 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { SectionCard } from '@/components/shared/section-card';
 import { buttonVariants } from '@/components/ui/button';
 import { MaintenanceDraftBadge } from '@/features/maintenance/components/maintenance-draft-badge';
-import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
 import { isDraftRecord } from '@/features/maintenance/utils/is-draft-record';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { DashboardMaintenanceSummary } from '../types/dashboard';
 import { VehiclePickerMenu, type VehiclePickerVehicle } from './vehicle-picker-menu';
@@ -50,14 +48,14 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
               <div className="min-w-0 space-y-1">
                 <div className="flex min-w-0 items-center gap-2">
                   <p className="truncate font-semibold text-slate-900 transition-colors group-hover:text-primary">
-                    {formatMaintenanceCategory(record.category)}
+                    {format.enumLabel('maintenanceCategory', record.category)}
                   </p>
                   {isDraftRecord(record) ? <MaintenanceDraftBadge /> : null}
                 </div>
                 <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500">
                   <span className="min-w-0 truncate">{record.vehicleLabel}</span>
                   <MetaDot />
-                  <span className="tabular-nums">{formatDate(record.serviceDate)}</span>
+                  <span className="tabular-nums">{format.date(record.serviceDate)}</span>
                   {record.workshopName?.trim() ? (
                     <>
                       <MetaDot />
@@ -77,7 +75,7 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
                   </span>
                 ) : null}
                 <span className="font-semibold tabular-nums text-slate-900">
-                  {formatCurrency(record.totalCost)}
+                  {format.money(record.totalCost)}
                 </span>
               </div>
             </Link>

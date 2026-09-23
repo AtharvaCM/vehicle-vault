@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BellRing, CarFront, MoreHorizontal, Wrench } from 'lucide-react';
+import { BellRing, Bike, CarFront, MoreHorizontal, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { VehicleType } from '@vehicle-vault/shared';
 
@@ -13,20 +13,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
 
 import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
 import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
+import { format } from '@/lib/format';
 import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
 import { OdometerQuickUpdate } from './odometer-quick-update';
-import {
-  formatKm,
-  formatOdometerMeta,
-  formatRelativeAgo,
-  formatRelativeDue,
-} from '../utils/format-due';
+import { formatOdometerMeta, formatRelativeAgo, formatRelativeDue } from '../utils/format-due';
 
 const FOUR_WHEELER_TYPES: readonly string[] = [
   VehicleType.Car,
@@ -137,7 +131,7 @@ function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
     });
 
     return nextDue.amount !== undefined
-      ? `EMI ${formatCurrency(nextDue.amount)} · ${relative}`
+      ? `EMI ${format.money(nextDue.amount)} · ${relative}`
       : `EMI · ${relative}`;
   }
 
@@ -189,9 +183,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           {FOUR_WHEELER_TYPES.includes(vehicle.vehicleType) ? (
             <CarFront aria-hidden="true" className="h-5 w-5" />
           ) : (
-            <span aria-hidden="true" className="text-xs font-bold">
-              M/C
-            </span>
+            <Bike aria-hidden="true" className="h-5 w-5" />
           )}
         </div>
 
@@ -266,8 +258,8 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
               params={{ recordId: vehicle.lastService.recordId }}
               to="/maintenance-records/$recordId"
             >
-              Serviced {formatDate(vehicle.lastService.serviceDate)}
-              {kmSinceService > 0 ? ` · ${formatKm(kmSinceService)} ago` : ''}
+              Serviced {format.date(vehicle.lastService.serviceDate)}
+              {kmSinceService > 0 ? ` · ${format.distance(kmSinceService)} ago` : ''}
             </Link>
           ) : (
             <span className="text-slate-400">No service logged</span>
@@ -306,7 +298,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
             canEdit && 'sm:basis-full sm:@[22rem]:basis-auto',
           )}
         >
-          {formatKm(vehicle.odometer)}
+          {format.odometer(vehicle.odometer)}
         </span>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {canEdit ? (

@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  calendarDaysUntil,
-  formatKm,
   formatOdometerDue,
   formatRelativeAgo,
   formatRelativeDue,
@@ -12,39 +10,21 @@ import {
 const dueDate = '2026-04-02T00:00:00.000Z';
 
 describe('formatRelativeDue', () => {
-  it('describes reminders by calendar distance', () => {
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 0, dueDate })).toBe('Due today');
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 1, dueDate })).toBe('Due tomorrow');
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 12, dueDate })).toBe(
-      'Due in 12 days',
-    );
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 30, dueDate })).toBe(
-      'Due in 30 days',
-    );
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 31, dueDate })).toBe(
-      'Due 02 Apr 2026',
-    );
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: -1, dueDate })).toBe(
-      '1 day overdue',
-    );
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: -3, dueDate })).toBe(
-      '3 days overdue',
-    );
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: -30, dueDate })).toBe(
-      '30 days overdue',
-    );
+  it('says when a reminder is due in words that give the time', () => {
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 0, dueDate })).toBe('Today');
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 1, dueDate })).toBe('Tomorrow');
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 12, dueDate })).toBe('In 12 days');
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: 45, dueDate })).toBe('In 45 days');
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: -1, dueDate })).toBe('1 day late');
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: -3, dueDate })).toBe('3 days late');
     expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: -31, dueDate })).toBe(
-      'Overdue since 02 Apr 2026',
+      '31 days late',
     );
   });
 
   it('describes an accessory warranty as running out, like a document', () => {
-    expect(formatRelativeDue({ kind: 'accessory', daysUntilDue: 0, dueDate })).toBe(
-      'Expires today',
-    );
-    expect(formatRelativeDue({ kind: 'accessory', daysUntilDue: 5, dueDate })).toBe(
-      'Expires in 5 days',
-    );
+    expect(formatRelativeDue({ kind: 'accessory', daysUntilDue: 0, dueDate })).toBe('Ends today');
+    expect(formatRelativeDue({ kind: 'accessory', daysUntilDue: 5, dueDate })).toBe('5 days left');
   });
 
   it('lets an undated verdict say what it rests on', () => {
@@ -61,29 +41,21 @@ describe('formatRelativeDue', () => {
     );
   });
 
-  it('describes documents with expiry wording', () => {
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: -10, dueDate })).toBe(
-      'Expired 10 days ago',
+  it('describes documents by the days left, or the day they ended', () => {
+    expect(formatRelativeDue({ kind: 'document', daysUntilDue: -10, dueDate })).toMatch(
+      /^Ended 2 Apr( 2026)?$/,
     );
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: -1, dueDate })).toBe(
-      'Expired 1 day ago',
-    );
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: -45, dueDate })).toBe(
-      'Expired 02 Apr 2026',
-    );
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 0, dueDate })).toBe('Expires today');
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 1, dueDate })).toBe(
-      'Expires tomorrow',
-    );
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 7, dueDate })).toBe(
-      'Expires in 7 days',
+    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 0, dueDate })).toBe('Ends today');
+    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 1, dueDate })).toBe('1 day left');
+    expect(formatRelativeDue({ kind: 'document', daysUntilDue: 153, dueDate })).toBe(
+      '153 days left',
     );
   });
 
   it('describes loan EMIs like dated reminders', () => {
-    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 0, dueDate })).toBe('Due today');
-    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 1, dueDate })).toBe('Due tomorrow');
-    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 5, dueDate })).toBe('Due in 5 days');
+    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 0, dueDate })).toBe('Today');
+    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 1, dueDate })).toBe('Tomorrow');
+    expect(formatRelativeDue({ kind: 'loan_emi', daysUntilDue: 5, dueDate })).toBe('In 5 days');
   });
 
   it('falls back to the odometer for odometer-only reminders', () => {
@@ -124,31 +96,25 @@ describe('formatRelativeDue', () => {
         dueOdometer: 45000,
         kmUntilDue: 800,
       }),
-    ).toBe('Due in 3 days');
+    ).toBe('In 3 days');
   });
 
-  it('uses the absolute date when the day distance is unknown', () => {
-    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: null, dueDate })).toBe(
-      'Due 02 Apr 2026',
+  it('counts the days itself when the API did not', () => {
+    const inAWeek = new Date(Date.now() + 7 * 86_400_000).toISOString();
+
+    expect(formatRelativeDue({ kind: 'reminder', daysUntilDue: null, dueDate: inAWeek })).toBe(
+      'In 7 days',
     );
-    expect(formatRelativeDue({ kind: 'document', daysUntilDue: null, dueDate })).toBe(
-      'Expires 02 Apr 2026',
+    expect(formatRelativeDue({ kind: 'document', daysUntilDue: null, dueDate: inAWeek })).toBe(
+      '7 days left',
     );
   });
 });
 
-describe('formatKm / formatOdometerDue', () => {
-  it('formats kilometres with en-IN grouping', () => {
-    expect(formatKm(123456)).toBe('1,23,456 km');
+describe('formatOdometerDue', () => {
+  it('formats kilometres with Indian grouping', () => {
+    expect(formatOdometerDue(123456)).toBe('Due at 1,23,456 km');
     expect(formatOdometerDue(60000, 0)).toBe('Due at 60,000 km · 0 km to go');
-  });
-});
-
-describe('calendarDaysUntil', () => {
-  it('counts whole UTC calendar days regardless of time of day', () => {
-    expect(calendarDaysUntil('2026-04-05T23:59:00.000Z', '2026-04-02T00:01:00.000Z')).toBe(3);
-    expect(calendarDaysUntil('2026-03-30T00:00:00.000Z', '2026-04-02T12:00:00.000Z')).toBe(-3);
-    expect(calendarDaysUntil('2026-04-02T01:00:00.000Z', '2026-04-02T23:00:00.000Z')).toBe(0);
   });
 });
 

@@ -13,9 +13,8 @@ import { useExtractAttachment } from '@/features/attachments/hooks/use-extract-a
 import { useExtractAttachments } from '@/features/attachments/hooks/use-extract-attachments';
 import type { AttachmentExtraction } from '@/features/attachments/types/attachment';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
 
 type MaintenanceDraftReviewCardProps = {
   recordId: string;
@@ -157,11 +156,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
                     <ExtractionStatusBadge extraction={attachment.extraction} />
                   </div>
                   <p className="text-sm text-slate-500">
-                    Uploaded{' '}
-                    {formatDate(attachment.uploadedAt, {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
+                    Uploaded {format.date(attachment.uploadedAt, 'dateTime')}
                   </p>
                 </div>
 
@@ -238,13 +233,13 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
         <ExtractionField label="Invoice / job card" value={extraction.invoiceNumber} />
         <ExtractionField
           label="Service date"
-          value={serviceDate ? formatDate(serviceDate) : undefined}
+          value={serviceDate ? format.date(serviceDate) : undefined}
         />
         <ExtractionField
           label="Odometer"
           value={
             typeof extraction.odometer === 'number'
-              ? `${extraction.odometer.toLocaleString('en-IN')} km`
+              ? format.odometer(extraction.odometer)
               : undefined
           }
         />
@@ -252,7 +247,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
           label="Total"
           value={
             typeof extraction.totalCost === 'number'
-              ? formatCurrency(extraction.totalCost, extraction.currencyCode)
+              ? format.money(extraction.totalCost, { currency: extraction.currencyCode })
               : undefined
           }
         />
@@ -266,13 +261,13 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
         />
         <ExtractionField
           label="Next due date"
-          value={extraction.nextDueDate ? formatDate(extraction.nextDueDate) : undefined}
+          value={extraction.nextDueDate ? format.date(extraction.nextDueDate) : undefined}
         />
         <ExtractionField
           label="Next due odometer"
           value={
             typeof extraction.nextDueOdometer === 'number'
-              ? `${extraction.nextDueOdometer.toLocaleString('en-IN')} km`
+              ? format.odometer(extraction.nextDueOdometer)
               : undefined
           }
         />
@@ -298,9 +293,13 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-slate-900">{lineItem.name}</span>
-                    <Badge tone="neutral">{lineItem.kind}</Badge>
+                    <Badge tone="neutral">
+                      {format.enumLabel('maintenanceLineItemKind', lineItem.kind)}
+                    </Badge>
                     {lineItem.normalizedCategory ? (
-                      <Badge tone="neutral">{lineItem.normalizedCategory}</Badge>
+                      <Badge tone="neutral">
+                        {format.enumLabel('maintenanceCategory', lineItem.normalizedCategory)}
+                      </Badge>
                     ) : null}
                   </div>
                   <p className="text-sm text-slate-500">
@@ -317,7 +316,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
                 </div>
                 <div className="text-sm font-semibold text-slate-900">
                   {typeof lineItem.lineTotal === 'number'
-                    ? formatCurrency(lineItem.lineTotal, extraction.currencyCode)
+                    ? format.money(lineItem.lineTotal, { currency: extraction.currencyCode })
                     : 'No amount'}
                 </div>
               </div>

@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useCreateTyreInspections } from '../hooks/use-tyres';
@@ -24,7 +25,6 @@ import {
   tyreInspectionFormSchema,
   type TyreInspectionFormValues,
 } from '../schemas/tyre-form.schema';
-import { POSITION_LABEL } from '../utils/tyre-labels';
 
 interface TyreInspectionDialogProps {
   isOpen: boolean;
@@ -178,7 +178,7 @@ export function TyreInspectionDialog({
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-bold uppercase tracking-tight text-slate-900">
-                      {POSITION_LABEL[tyre.position]}
+                      {format.enumLabel('tyrePosition', tyre.position)}
                     </p>
                     <p className="truncate text-[11px] text-slate-500">
                       {[tyre.brand, tyre.model, tyre.size].filter(Boolean).join(' · ') ||

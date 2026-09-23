@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 
@@ -255,9 +255,7 @@ function RunRow({ run, onOpen }: { run: VehicleCatalogImportRunReview; onOpen: (
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
           <span>
             Captured{' '}
-            {run.snapshotCapturedAt
-              ? formatDate(run.snapshotCapturedAt, { dateStyle: 'medium', timeStyle: 'short' })
-              : 'Unknown'}
+            {run.snapshotCapturedAt ? format.date(run.snapshotCapturedAt, 'dateTime') : 'Unknown'}
           </span>
           <span>{run.diff.newModels.length} new models</span>
           <span>{run.diff.newVariants.length} new variants</span>
@@ -366,7 +364,7 @@ function CatalogImportDetail({
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-slate-900">{make.name}</p>
-                  <Badge tone="accent">{make.vehicleType}</Badge>
+                  <Badge tone="accent">{format.enumLabel('vehicleType', make.vehicleType)}</Badge>
                 </div>
                 <div className="mt-2 space-y-2 text-sm text-slate-600">
                   {make.models.map((model) => (
@@ -448,7 +446,7 @@ function CatalogImportDetail({
         ) : (
           <div className="rounded-xl border border-border/70 bg-slate-50 px-3 py-2 text-sm text-slate-600">
             {detail.publishedAt
-              ? `Published ${formatDate(detail.publishedAt, { dateStyle: 'medium', timeStyle: 'short' })}`
+              ? `Published ${format.date(detail.publishedAt, 'dateTime')}`
               : 'Only successful staged runs can be published.'}
           </div>
         )}
@@ -781,7 +779,7 @@ function formatSourceLabel(sourceKey: string) {
 }
 
 function formatFuelTypes(fuelTypes: string[]) {
-  return fuelTypes.map((fuelType) => fuelType.toUpperCase()).join(' / ');
+  return fuelTypes.map((fuelType) => format.enumLabel('fuelType', fuelType)).join(' / ');
 }
 
 function formatYearRange(yearStart?: number, yearEnd?: number, isCurrent?: boolean) {

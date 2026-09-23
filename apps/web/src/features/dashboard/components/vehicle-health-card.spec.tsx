@@ -51,7 +51,7 @@ describe('VehicleHealthCard', () => {
     const pill = screen.getByRole('link', { name: '2 overdue' });
 
     expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'reminders' }));
-    expect(screen.getByText('Brake pads · 3 days overdue')).toBeInTheDocument();
+    expect(screen.getByText('Brake pads · 3 days late')).toBeInTheDocument();
   });
 
   it('names the EMI behind a due soon pill, with its amount', () => {
@@ -102,7 +102,7 @@ describe('VehicleHealthCard', () => {
       'data-search',
       JSON.stringify({ tab: 'protection' }),
     );
-    expect(screen.getByText('Insurance policy · Expires in 5 days')).toBeInTheDocument();
+    expect(screen.getByText('Insurance policy · 5 days left')).toBeInTheDocument();
   });
 
   it('points the pill at the tyres tab when a worn tyre is what is overdue', () => {
@@ -216,7 +216,7 @@ describe('VehicleHealthCard', () => {
 
     expect(screen.getByRole('link', { name: 'All clear' })).toBeInTheDocument();
     expect(screen.getByText('Nothing scheduled')).toBeInTheDocument();
-    expect(screen.getByText('Insurance & PUC valid · to 15 Sept 2026')).toBeInTheDocument();
+    expect(screen.getByText('Insurance & PUC valid · to 15 Sep 2026')).toBeInTheDocument();
     expect(screen.getByText('No service logged')).toBeInTheDocument();
   });
 
@@ -228,7 +228,7 @@ describe('VehicleHealthCard', () => {
           puc: { state: 'expired', endDate: '2026-03-23T00:00:00.000Z' },
           registration: { state: 'expiring', endDate: '2026-04-10T00:00:00.000Z' },
         },
-        'PUC expired 10 days ago',
+        'PUC · Ended 23 Mar',
       ],
       [
         {
@@ -250,14 +250,14 @@ describe('VehicleHealthCard', () => {
           insurance: { state: 'expiring', endDate: '2026-04-10T00:00:00.000Z' },
           puc: { state: 'active', endDate: '2026-09-15T00:00:00.000Z' },
         },
-        'Insurance expires in 8 days',
+        'Insurance · 8 days left',
       ],
       [
         {
           insurance: { state: 'active', endDate: '2026-12-01T00:00:00.000Z' },
           puc: { state: 'active', endDate: null },
         },
-        'Insurance & PUC valid · to 01 Dec 2026',
+        'Insurance & PUC valid · to 1 Dec 2026',
       ],
     ];
 
@@ -283,7 +283,7 @@ describe('VehicleHealthCard', () => {
       />,
     );
 
-    expect(screen.getByText('Insurance valid · to 01 Dec 2026')).toBeInTheDocument();
+    expect(screen.getByText('Insurance valid · to 1 Dec 2026')).toBeInTheDocument();
     expect(screen.queryByText('No PUC on file')).not.toBeInTheDocument();
     expect(screen.getByText('Complete')).toBeInTheDocument();
   });

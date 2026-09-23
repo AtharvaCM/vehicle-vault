@@ -11,9 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { queryKeys } from '@/lib/query/query-keys';
 import { appToast } from '@/lib/toast';
-import { formatDate } from '@/lib/utils/format-date';
 
 import { forceLogoutUser } from '../api/force-logout-user';
 import { useAdminUsers } from '../hooks/use-admin-users';
@@ -123,7 +123,7 @@ export function AdminUsersPage() {
                       <CarFront className="h-3.5 w-3.5" />
                       {user.vehicleCount}
                     </span>
-                    <span>{formatDate(user.createdAt)}</span>
+                    <span>{format.date(user.createdAt)}</span>
                     <ConfirmActionDialog
                       confirmLabel="Force logout"
                       description={`Clears ${user.email}'s refresh token. They will need to log in again on their next session refresh.`}

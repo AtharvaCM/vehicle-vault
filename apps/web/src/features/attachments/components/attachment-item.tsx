@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatDate } from '@/lib/utils/format-date';
 
 import type { Attachment } from '../types/attachment';
 import { formatFileSize } from '../utils/format-file-size';
-import { getAttachmentKindLabel } from '../utils/get-attachment-kind-label';
 
 type AttachmentItemProps = {
   attachment: Attachment;
@@ -46,7 +45,7 @@ export function AttachmentItem({
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium text-slate-950">{attachment.originalFileName}</p>
-          <Badge>{getAttachmentKindLabel(attachment.kind)}</Badge>
+          <Badge>{format.enumLabel('attachmentKind', attachment.kind)}</Badge>
           {attachment.extraction ? (
             <Badge
               tone={
@@ -69,10 +68,7 @@ export function AttachmentItem({
           <p>
             {attachment.mimeType} • {formatFileSize(attachment.size)}
           </p>
-          <p>
-            Uploaded{' '}
-            {formatDate(attachment.uploadedAt, { dateStyle: 'medium', timeStyle: 'short' })}
-          </p>
+          <p>Uploaded {format.date(attachment.uploadedAt, 'dateTime')}</p>
         </div>
       </div>
 

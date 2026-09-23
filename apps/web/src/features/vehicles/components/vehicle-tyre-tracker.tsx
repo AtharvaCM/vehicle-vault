@@ -31,9 +31,9 @@ import { EmptyState, EmptyStateAction } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/utils/format-date';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
 import { TyreFormDialog } from '../../tyres/components/tyre-form-dialog';
@@ -108,7 +108,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       await deleteTyre.mutateAsync(tyre.id);
       appToast.success({
         title: 'Tyre deleted',
-        description: `${POSITION_LABEL[tyre.position]} tyre removed from the tracker.`,
+        description: `${format.enumLabel('tyrePosition', tyre.position)} tyre removed from the tracker.`,
       });
     } catch (error) {
       appToast.error({
@@ -314,11 +314,10 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                 <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                 <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-tight text-slate-900">
-                    {formatCategory(record.category)}
+                    {format.enumLabel('maintenanceCategory', record.category)}
                   </p>
                   <p className="text-[10px] text-slate-500">
-                    {new Date(record.serviceDate).toLocaleDateString()} •{' '}
-                    {record.odometer.toLocaleString()} km
+                    {format.date(record.serviceDate)} • {format.odometer(record.odometer)}
                   </p>
                 </div>
               </div>
@@ -339,10 +338,10 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-black tracking-tighter text-slate-900">
-                {insights.lastReplacement.odometer.toLocaleString()} km
+                {format.odometer(insights.lastReplacement.odometer)}
               </p>
               <p className="mt-1 text-[11px] font-medium text-slate-500">
-                fitted {new Date(insights.lastReplacement.serviceDate).toLocaleDateString()}
+                fitted {format.date(insights.lastReplacement.serviceDate)}
               </p>
             </CardContent>
           </Card>
@@ -449,16 +448,6 @@ const CONDITION_COPY: Record<
   },
 };
 
-const POSITION_LABEL: Record<TyrePosition, string> = {
-  [TyrePosition.FrontLeft]: 'Front left',
-  [TyrePosition.FrontRight]: 'Front right',
-  [TyrePosition.RearLeft]: 'Rear left',
-  [TyrePosition.RearRight]: 'Rear right',
-  [TyrePosition.Spare]: 'Spare',
-  [TyrePosition.Front]: 'Front',
-  [TyrePosition.Rear]: 'Rear',
-};
-
 /**
  * The diagram is the whole point of the tab, so its text alternative has to
  * carry the same information rather than just naming a colour.
@@ -485,7 +474,7 @@ function describeDiagram(
   }
 
   const corners = measured
-    .map((tyre) => `${POSITION_LABEL[tyre.position]}: ${tyre.summary}`)
+    .map((tyre) => `${format.enumLabel('tyrePosition', tyre.position)}: ${tyre.summary}`)
     .join(' ');
 
   return `Wheel diagram showing measured tyre condition. ${corners}`;
@@ -502,10 +491,6 @@ const STATUS_COPY: Record<TyreStatus, { label: string; icon: typeof ShieldCheck 
 function mergeStatus(...statuses: TyreStatus[]): TyreStatus {
   const rank: Record<TyreStatus, number> = { overdue: 0, due: 1, unknown: 2, healthy: 3 };
   return statuses.reduce((worst, next) => (rank[next] < rank[worst] ? next : worst));
-}
-
-function formatCategory(category: string) {
-  return category.replaceAll('_', ' ');
 }
 
 interface TyreGlyphProps {
@@ -591,7 +576,7 @@ function describeTyre(tyre: Tyre): string | null {
 function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }: CornerCardProps) {
   const appearance = CONDITION_COPY[condition.level];
   const Icon = appearance.icon;
-  const label = POSITION_LABEL[condition.position];
+  const label = format.enumLabel('tyrePosition', condition.position);
   const recorded = tyre ? describeTyre(tyre) : null;
 
   return (
@@ -619,7 +604,7 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
       <div className="mt-2 space-y-0.5">
         {condition.estimatedKmRemaining != null ? (
           <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
-            ~{condition.estimatedKmRemaining.toLocaleString()} km left at current wear
+            ~{format.distance(condition.estimatedKmRemaining)} left at current wear
           </p>
         ) : null}
         {condition.lastInspectedAt ? (
@@ -665,7 +650,7 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
 
 /** Reading values as they were recorded, not rounded to the card's one decimal. */
 function formatReading(reading: TyreInspection): string {
-  const figure = (value: number) => value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  const figure = (value: number) => format.number(value, { decimals: 2 });
 
   return [
     reading.treadDepthMm != null ? `${figure(reading.treadDepthMm)} mm tread` : null,
@@ -691,8 +676,8 @@ function TyreReadings({ label, readings }: { label: string; readings: TyreInspec
           <li className="px-3 py-2 text-[11px]" key={reading.id}>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <span className="text-slate-500">
-                <time dateTime={reading.inspectedAt}>{formatDate(reading.inspectedAt)}</time> ·{' '}
-                {reading.odometer.toLocaleString('en-IN')} km
+                <time dateTime={reading.inspectedAt}>{format.date(reading.inspectedAt)}</time> ·{' '}
+                {format.odometer(reading.odometer)}
               </span>
               <span className="font-bold tabular-nums text-slate-900">
                 {formatReading(reading)}
@@ -741,7 +726,7 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
       <div>
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
         <p className="mt-1 text-2xl font-black tracking-tighter text-slate-900">
-          {metric.kmSince === null ? '—' : `${metric.kmSince.toLocaleString()} km`}
+          {format.distance(metric.kmSince)}
         </p>
         <p className="mt-1 text-[11px] font-medium text-slate-500">{describeBaseline(metric)}</p>
         {metric.lastRecord ? (
@@ -753,8 +738,8 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
         {metric.status !== 'unknown' && metric.kmRemaining !== null ? (
           <p className="mt-2 text-[9px] font-bold uppercase tracking-tighter text-slate-400">
             {metric.kmRemaining >= 0
-              ? `${metric.kmRemaining.toLocaleString()} km to go`
-              : `${Math.abs(metric.kmRemaining).toLocaleString()} km past due`}
+              ? `${format.distance(metric.kmRemaining)} to go`
+              : `${format.distance(Math.abs(metric.kmRemaining))} past due`}
             {INTERVAL_SOURCE_NOTE[metric.intervalSource]}
           </p>
         ) : null}

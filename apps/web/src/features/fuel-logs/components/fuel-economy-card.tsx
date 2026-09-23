@@ -2,6 +2,7 @@ import type { FuelEconomyUnit, VehicleFuelEconomy } from '@vehicle-vault/shared'
 import { Fuel } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import { useVehicleFuelEconomy } from '../hooks/use-vehicle-fuel-economy';
@@ -14,7 +15,7 @@ const QUANTITY_UNIT: Record<FuelEconomyUnit, string> = {
 };
 
 function formatFigure(value: number) {
-  return value.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return format.number(value, { decimals: 1, fixed: true });
 }
 
 /** "14% below the claim", "6% above", or level with it. */
@@ -44,8 +45,8 @@ function EconomyFigures({ economy }: { economy: VehicleFuelEconomy }) {
             <span className="text-base font-bold text-slate-500">{unit}</span>
           </p>
           <p className="text-[13px] text-slate-500">
-            Real, over {achieved.distanceKm.toLocaleString('en-IN')} km and{' '}
-            {achieved.quantity.toLocaleString('en-IN')} {QUANTITY_UNIT[unit]}
+            Real, over {format.distance(achieved.distanceKm)} and {format.number(achieved.quantity)}{' '}
+            {QUANTITY_UNIT[unit]}
           </p>
         </div>
       ) : (

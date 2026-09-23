@@ -14,6 +14,7 @@ import { TrendingUp } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { format } from '@/lib/format';
 
 import { costTrendQueryOptions } from '../api/get-cost-trend';
 import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
@@ -26,12 +27,6 @@ const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
   { value: '2y', label: '2y' },
   { value: 'all', label: 'All' },
 ];
-
-const inr = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  maximumFractionDigits: 0,
-});
 
 type Mode = 'total' | 'costPerKm';
 
@@ -127,13 +122,13 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
                 <YAxis
                   fontSize={11}
                   stroke="#64748b"
-                  tickFormatter={(v: number) => inr.format(v)}
+                  tickFormatter={(v: number) => format.money(v)}
                   width={80}
                 />
                 <Tooltip
                   formatter={(value, name) => {
                     const n = Number(value ?? 0);
-                    return [inr.format(n), String(name)];
+                    return [format.money(n), String(name)];
                   }}
                   contentStyle={{ borderRadius: 8, fontSize: 12 }}
                 />
