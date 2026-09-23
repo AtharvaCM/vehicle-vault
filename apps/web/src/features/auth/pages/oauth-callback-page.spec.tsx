@@ -87,6 +87,40 @@ describe('OAuthCallbackPage', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/dashboard', replace: true }));
   });
 
+  it('returns to where the sign-in began, ahead of a waiting intent', async () => {
+    saveCatalogIntent(intent);
+    arriveWith(
+      `accessToken=access&refreshToken=refresh&next=${encodeURIComponent('/vehicle-invites/tok-1')}`,
+    );
+
+    render(<OAuthCallbackPage />);
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({ href: '/vehicle-invites/tok-1', replace: true }),
+    );
+    expect(window.location.hash).toBe('');
+  });
+
+  it('ignores a return path that would leave the site', async () => {
+    arriveWith(
+      `accessToken=access&refreshToken=refresh&next=${encodeURIComponent('//evil.example.test')}`,
+    );
+
+    render(<OAuthCallbackPage />);
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/dashboard', replace: true }));
+  });
+
+  it('keeps the return path on the way back to sign in after a failure', async () => {
+    arriveWith(`error=oauth_cancelled&next=${encodeURIComponent('/reminders')}`);
+
+    render(<OAuthCallbackPage />);
+
+    (await screen.findByRole('button', { name: 'Back to sign in' })).click();
+
+    expect(navigate).toHaveBeenCalledWith({ to: '/login', search: { next: '/reminders' } });
+  });
+
   it('opens the dashboard when the intent has expired', async () => {
     saveCatalogIntent(intent, Date.now() - CATALOG_INTENT_TTL_MS - 1);
     arriveWith('accessToken=access&refreshToken=refresh');

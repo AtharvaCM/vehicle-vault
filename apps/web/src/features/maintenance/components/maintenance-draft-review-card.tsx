@@ -178,7 +178,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
                     ) : (
                       <ScanText className="h-4 w-4" />
                     )}
-                    {attachment.extraction ? 'Re-run OCR' : 'Run OCR'}
+                    {attachment.extraction ? 'Read again' : 'Run OCR'}
                   </Button>
 
                   {isDraft && attachment.extraction?.status === 'completed' ? (

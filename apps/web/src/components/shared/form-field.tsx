@@ -10,6 +10,8 @@ type FormFieldProps = {
   error?: string;
   description?: string;
   className?: string;
+  /** Shown beside the label, e.g. where a value came from. */
+  labelAddon?: ReactNode;
 };
 
 type DescribableProps = { 'aria-describedby'?: string };
@@ -21,6 +23,7 @@ export function FormField({
   error,
   description,
   className,
+  labelAddon,
 }: FormFieldProps) {
   const message = error ?? description;
   const messageId = `${htmlFor}-message`;
@@ -33,9 +36,18 @@ export function FormField({
 
   return (
     <div className={cn('grid gap-1.5', className)}>
-      <Label className="text-[13px] font-medium text-foreground/90" htmlFor={htmlFor}>
-        {label}
-      </Label>
+      {labelAddon ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Label className="text-[13px] font-medium text-foreground/90" htmlFor={htmlFor}>
+            {label}
+          </Label>
+          {labelAddon}
+        </div>
+      ) : (
+        <Label className="text-[13px] font-medium text-foreground/90" htmlFor={htmlFor}>
+          {label}
+        </Label>
+      )}
       {control}
       {message ? (
         <p

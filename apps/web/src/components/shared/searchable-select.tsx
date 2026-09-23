@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, PencilLine } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,12 @@ type SearchableSelectProps = {
   placeholder: string;
   searchPlaceholder?: string;
   value: string;
+  /**
+   * Offers a last item that is always there, whatever the search: "Can't find
+   * it? Enter "{query}" manually". A catalog is never complete, so a picker
+   * that only knows its list must not be a dead end.
+   */
+  onManualEntry?: (query: string) => void;
 };
 
 export function SearchableSelect({
@@ -39,8 +45,11 @@ export function SearchableSelect({
   placeholder,
   searchPlaceholder = 'Search...',
   value,
+  onManualEntry,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const typedQuery = query.trim();
   const selectedOption = options.find((option) => option.value === value);
   const stableOptions = useMemo(
     () =>
@@ -52,7 +61,13 @@ export function SearchableSelect({
   );
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
+    <Popover
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setQuery('');
+      }}
+      open={open}
+    >
       <PopoverTrigger asChild>
         <Button
           aria-controls={id ? `${id}-content` : undefined}
@@ -75,7 +90,7 @@ export function SearchableSelect({
         id={id ? `${id}-content` : undefined}
       >
         <Command shouldFilter>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput onValueChange={setQuery} placeholder={searchPlaceholder} value={query} />
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
@@ -98,6 +113,26 @@ export function SearchableSelect({
                 </CommandItem>
               ))}
             </CommandGroup>
+            {onManualEntry ? (
+              <CommandGroup forceMount>
+                <CommandItem
+                  forceMount
+                  onSelect={() => {
+                    onManualEntry(typedQuery);
+                    setOpen(false);
+                    setQuery('');
+                  }}
+                  value="__manual-entry__"
+                >
+                  <PencilLine className="h-4 w-4 text-slate-500" />
+                  <span className="truncate">
+                    {typedQuery
+                      ? `Can't find it? Enter "${typedQuery}" manually`
+                      : "Can't find it? Enter it manually"}
+                  </span>
+                </CommandItem>
+              </CommandGroup>
+            ) : null}
           </CommandList>
         </Command>
       </PopoverContent>
