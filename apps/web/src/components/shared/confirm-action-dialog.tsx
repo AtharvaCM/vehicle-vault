@@ -24,6 +24,12 @@ type ConfirmActionDialogProps = {
   triggerSize?: React.ComponentProps<typeof Button>['size'];
   triggerIcon?: ReactNode;
   className?: string;
+  /**
+   * Extra content rendered between the description and the footer — e.g. the
+   * specific records an action affects. Kept out of `description` because
+   * Radix renders that as a `<p>`, which can't hold block-level content.
+   */
+  children?: ReactNode;
 };
 
 export function ConfirmActionDialog({
@@ -37,6 +43,7 @@ export function ConfirmActionDialog({
   triggerSize = 'sm',
   triggerIcon,
   className,
+  children,
 }: ConfirmActionDialogProps) {
   return (
     <AlertDialog>
@@ -51,6 +58,7 @@ export function ConfirmActionDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction

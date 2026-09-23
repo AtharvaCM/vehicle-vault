@@ -74,6 +74,10 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
     () => filteredVehicles.map((vehicle) => vehicle.id),
     [filteredVehicles],
   );
+  const selectedVehicles = useMemo(
+    () => filteredVehicles.filter((vehicle) => selectedVehicleIds.includes(vehicle.id)),
+    [filteredVehicles, selectedVehicleIds],
+  );
 
   useEffect(() => {
     setSelectedVehicleIds((current) =>
@@ -165,7 +169,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
             onClearSelection={() => setSelectedVehicleIds([])}
             onDeleteSelected={handleBulkDelete}
             onSelectAllVisible={() => setSelectedVehicleIds(visibleVehicleIds)}
-            selectedCount={selectedVehicleIds.length}
+            selectedVehicles={selectedVehicles}
             visibleCount={visibleVehicleIds.length}
           />
           {filteredVehicles.length ? (
