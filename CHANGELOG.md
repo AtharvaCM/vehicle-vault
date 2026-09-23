@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.62.0...v1.63.0) (2026-09-23)
+
+
+### Features
+
+* **auth:** keep a catalog intent through Google and GitHub sign-in ([a601656](https://github.com/AtharvaCM/vehicle-vault/commit/a601656a9dd20c4796793316877133bef9c328e7)), closes [#173](https://github.com/AtharvaCM/vehicle-vault/issues/173)
+
 # [1.62.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.61.0...v1.62.0) (2026-09-23)
 
 
