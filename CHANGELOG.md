@@ -1,3 +1,10 @@
+## [1.65.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.3...v1.65.4) (2026-09-23)
+
+
+### Bug Fixes
+
+* **catalog:** drop the model name CarWale repeats in trim names ([4924a5b](https://github.com/AtharvaCM/vehicle-vault/commit/4924a5b036fa5f9cfd5dc2d5aa039bad5cb2a27e))
+
 ## [1.65.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.2...v1.65.3) (2026-09-23)
 
 
