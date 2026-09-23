@@ -4,7 +4,6 @@ import {
   Header,
   Param,
   ParseFloatPipe,
-  ParseUUIDPipe,
   Query,
   StreamableFile,
   UseGuards,
@@ -13,6 +12,7 @@ import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { ResaleReportService } from './resale-report.service';
 import { ServiceHistoryService } from './service-history.service';
 
@@ -31,7 +31,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'Download a printable service history PDF for the vehicle' })
   async downloadServiceHistory(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
   ): Promise<StreamableFile> {
     const { buffer, fileName } = await this.serviceHistoryService.buildPdf(userId, vehicleId);
     return new StreamableFile(buffer, {
@@ -46,7 +46,7 @@ export class ReportsController {
   @ApiQuery({ name: 'askingPrice', required: false, type: Number })
   async downloadResaleReport(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Query('askingPrice', new ParseFloatPipe({ optional: true })) askingPrice?: number,
   ): Promise<StreamableFile> {
     const { buffer, fileName } = await this.resaleReportService.buildPdf(userId, vehicleId, {

@@ -1,8 +1,9 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AuditQueryService, type AuditQueryFilters } from './audit-query.service';
 import { AuditQueryDto } from './dto/audit-query.dto';
@@ -25,7 +26,7 @@ export class AuditController {
   @ApiOperation({ summary: 'List audit events for one vehicle and its descendants' })
   async listForVehicle(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Query() query: AuditQueryDto,
   ) {
     const result = await this.auditQueryService.listForVehicle(

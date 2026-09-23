@@ -3,6 +3,7 @@ import type { CreateClaimInput, UpdateClaimInput } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { ClaimsService } from './claims.service';
 
 @Controller()
@@ -11,14 +12,17 @@ export class ClaimsController {
   constructor(private readonly claimsService: ClaimsService) {}
 
   @Get('vehicles/:vehicleId/claims')
-  async listForVehicle(@CurrentUser('id') userId: string, @Param('vehicleId') vehicleId: string) {
+  async listForVehicle(
+    @CurrentUser('id') userId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+  ) {
     return this.claimsService.listForVehicle(userId, vehicleId);
   }
 
   @Post('vehicles/:vehicleId/claims')
   async create(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() payload: CreateClaimInput,
   ) {
     return this.claimsService.create(userId, vehicleId, payload);
@@ -27,14 +31,17 @@ export class ClaimsController {
   @Patch('claims/:id')
   async update(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
     @Body() payload: UpdateClaimInput,
   ) {
     return this.claimsService.update(userId, id, payload);
   }
 
   @Delete('claims/:id')
-  async remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async remove(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     await this.claimsService.remove(userId, id);
     return { removed: true };
   }

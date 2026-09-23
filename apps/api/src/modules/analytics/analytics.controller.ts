@@ -1,8 +1,9 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AnalyticsService } from './analytics.service';
 import { CostSplitQueryDto } from './dto/cost-split-query.dto';
@@ -40,7 +41,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Lifetime total cost of ownership for one vehicle' })
   async getTco(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
   ) {
     const result = await this.analyticsService.getTco(userId, vehicleId);
     return successResponse(result);

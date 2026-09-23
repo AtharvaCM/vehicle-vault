@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch, Param, Delete, Post, Put, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { UpdateNotificationPreferencesDto } from './dto/notification-preferences.dto';
 import { SubscribePushDto, UnsubscribePushDto } from './dto/push-subscription.dto';
 import { NotificationPreferencesService } from './notification-preferences.service';
@@ -69,12 +70,15 @@ export class NotificationsController {
 
   /** Opened from the bell: marks it read and counts the open. */
   @Post(':id/open')
-  async open(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async open(@CurrentUser('id') userId: string, @Param('id', new UuidRouteParamPipe()) id: string) {
     return this.notificationsService.open(userId, id);
   }
 
   @Patch(':id/read')
-  async markAsRead(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async markAsRead(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     return this.notificationsService.markAsRead(userId, id);
   }
 
@@ -85,7 +89,10 @@ export class NotificationsController {
   }
 
   @Delete(':id')
-  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async delete(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     await this.notificationsService.delete(userId, id);
     return { success: true };
   }
