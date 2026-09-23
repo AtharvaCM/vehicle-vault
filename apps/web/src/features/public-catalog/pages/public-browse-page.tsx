@@ -74,14 +74,14 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
         </p>
         <PublicCatalogLink
           address={{ segment: copy.other }}
-          className="-ml-1 mt-2 inline-flex rounded-lg px-1 py-1 text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="-ml-1 mt-2 inline-flex rounded-lg px-1 py-1 text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-950 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
         >
           {copy.otherLabel}
         </PublicCatalogLink>
       </header>
 
       {page.makes.length === 0 ? (
-        <p className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-sm">
+        <p className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-xs">
           Nothing here yet.
         </p>
       ) : (
@@ -94,10 +94,10 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
               <li key={make.slug}>
                 <PublicCatalogLink
                   address={{ segment: page.segment, make: make.slug }}
-                  className="flex h-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                  className="flex h-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xs hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium text-slate-900 [overflow-wrap:anywhere]">
+                    <span className="block text-sm font-medium text-slate-900 wrap-anywhere">
                       {make.name}
                     </span>
                     <span className="mt-0.5 block text-sm text-slate-600">

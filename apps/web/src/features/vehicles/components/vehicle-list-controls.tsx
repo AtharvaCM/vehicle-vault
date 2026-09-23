@@ -40,7 +40,7 @@ export function VehicleListControls({
   const hasFilters = searchValue.trim().length > 0 || sortBy !== 'updated-desc';
 
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-xs">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.2fr)_220px]">
           <div className="space-y-1.5">

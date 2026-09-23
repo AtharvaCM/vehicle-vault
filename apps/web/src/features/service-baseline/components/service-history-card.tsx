@@ -195,7 +195,7 @@ function BaselineRow({
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200/60 px-3 py-2">
-      <span className="min-w-[8rem] flex-1 text-sm font-medium text-slate-700">{label}</span>
+      <span className="min-w-32 flex-1 text-sm font-medium text-slate-700">{label}</span>
 
       <div className="flex items-center gap-2">
         <Input

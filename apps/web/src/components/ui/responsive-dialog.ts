@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
  * `useVisibleViewport`. The bottom padding clears the iOS home indicator.
  */
 export const sheetBelowMdContentClass = [
-  'max-md:inset-x-0 max-md:mx-auto max-md:top-auto max-md:bottom-[var(--keyboard-inset,0px)]',
+  'max-md:inset-x-0 max-md:mx-auto max-md:top-auto max-md:bottom-(--keyboard-inset,0px)',
   'max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0',
   'max-md:max-h-[calc(var(--visible-height,100dvh)-1.5rem)] max-md:overscroll-contain',
   'max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0',

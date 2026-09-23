@@ -67,10 +67,8 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-variant-page">
       <header>
         <PublicCatalogBreadcrumbs page={page} />
-        <p className="text-sm font-medium text-slate-600 [overflow-wrap:anywhere]">
-          {page.generation.name}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-4xl">
+        <p className="text-sm font-medium text-slate-600 wrap-anywhere">{page.generation.name}</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 wrap-anywhere sm:text-4xl">
           {heading}
         </h1>
         {page.offerings.length > 0 ? (

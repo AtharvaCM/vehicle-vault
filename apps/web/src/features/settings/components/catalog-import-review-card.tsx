@@ -329,7 +329,7 @@ function CatalogImportDetail({
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr,1fr]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <div className="space-y-4 rounded-2xl border border-border/70 bg-slate-50/70 p-4">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-slate-900">Diff summary</p>
@@ -604,7 +604,7 @@ function PublishedOfferingReviewRow({
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               checked={isCurrent}
-              className="h-4 w-4 rounded border border-slate-300 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-4 w-4 rounded border border-slate-300 text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
               onChange={(event) => {
                 const nextChecked = event.target.checked;
                 setIsCurrent(nextChecked);

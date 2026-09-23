@@ -37,7 +37,7 @@ export function MaintenanceRecordCard({
 
   return (
     <div className="group relative flex items-center gap-2 sm:gap-4">
-      {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
+      {selectionControl ? <div className="shrink-0">{selectionControl}</div> : null}
 
       {/* The card fills anything from a phone to half a desktop panel, so its figures
           move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
@@ -49,7 +49,7 @@ export function MaintenanceRecordCard({
         >
           {/* Main Content */}
           <div className="flex min-w-0 flex-1 items-center gap-4 p-3 sm:p-5">
-            <div className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
               <ClipboardList className="h-5 w-5" />
             </div>
 
@@ -117,7 +117,7 @@ export function MaintenanceRecordCard({
             </p>
             {canEdit ? (
               <Link
-                className="font-semibold text-amber-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="font-semibold text-amber-900 underline-offset-4 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 params={{ recordId: record.id }}
                 to="/maintenance-records/$recordId/edit"
               >

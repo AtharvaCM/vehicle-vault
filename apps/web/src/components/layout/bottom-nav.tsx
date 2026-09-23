@@ -18,7 +18,7 @@ const SHORT_LABELS: Partial<Record<(typeof BAR_DESTINATIONS)[number], string>> =
 // The active colour keys off the `data-status="active"` TanStack's Link sets: an
 // `activeProps` class would tie with `text-slate-500` and lose on stylesheet order.
 const ITEM_CLASS =
-  'flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-[status=active]:text-primary';
+  'flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-[status=active]:text-primary';
 
 /**
  * Primary navigation below `md`, within thumb reach. The sidebar only appears at

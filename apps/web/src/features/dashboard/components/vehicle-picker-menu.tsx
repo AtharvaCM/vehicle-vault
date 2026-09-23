@@ -81,7 +81,7 @@ export function VehiclePickerMenu({
           <ChevronDown aria-hidden="true" className="opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[14rem]">
+      <DropdownMenuContent align="end" className="min-w-56">
         {sortedVehicles.map((vehicle) => (
           <DropdownMenuItem asChild key={vehicle.id}>
             <Link

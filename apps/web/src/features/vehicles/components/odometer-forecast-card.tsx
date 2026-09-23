@@ -41,7 +41,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
   const lastRecordedDate = format(new Date(insights.lastRecordedDate), 'MMM d, yyyy');
 
   return (
-    <Card className="overflow-hidden border-zinc-200/50 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800/50 dark:bg-zinc-900/50">
+    <Card className="overflow-hidden border-zinc-200/50 bg-white shadow-xs transition-all hover:shadow-md dark:border-zinc-800/50 dark:bg-zinc-900/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardTitle className="text-sm font-medium text-zinc-500 dark:text-zinc-400">

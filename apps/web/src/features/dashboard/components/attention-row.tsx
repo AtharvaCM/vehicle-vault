@@ -177,7 +177,7 @@ export function AttentionRow({
       />
 
       <AttentionItemLink
-        className="group min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="group min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         item={item}
       >
         <div className="flex min-w-0 items-center gap-2">

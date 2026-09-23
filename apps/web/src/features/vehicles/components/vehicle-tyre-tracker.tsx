@@ -211,7 +211,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           <CardContent className="p-8 sm:p-12">
             <div
               aria-label={describeDiagram(insights, measured, hasMeasurements, twoWheeler)}
-              className="relative mx-auto flex aspect-[1/2] w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-slate-200 bg-slate-50/30"
+              className="relative mx-auto flex aspect-1/2 w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-slate-200 bg-slate-50/30"
               role="img"
             >
               {/* Horizontal axles */}
@@ -600,7 +600,7 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
       data-testid="tyre-corner"
     >
       <div className="mb-3 flex items-center justify-between">
-        <div className={cn('rounded-xl bg-white p-2 shadow-sm', appearance.icons)}>
+        <div className={cn('rounded-xl bg-white p-2 shadow-xs', appearance.icons)}>
           <Icon className="h-4 w-4" />
         </div>
         <Badge
@@ -730,7 +730,7 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
   return (
     <div className={cn('rounded-2xl border p-5 shadow-premium-sm transition-all', cardClasses)}>
       <div className="mb-3 flex items-center justify-between">
-        <div className={cn('rounded-xl bg-white p-2 shadow-sm', iconClasses)}>{icon}</div>
+        <div className={cn('rounded-xl bg-white p-2 shadow-xs', iconClasses)}>{icon}</div>
         <Badge
           variant="outline"
           className="bg-white text-[9px] font-black uppercase tracking-wider"

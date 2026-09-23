@@ -42,7 +42,7 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
         <div className="divide-y divide-slate-100">
           {records.map((record) => (
             <Link
-              className="group flex items-center justify-between gap-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="group flex items-center justify-between gap-3 py-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               key={record.id}
               params={{ recordId: record.id }}
               to="/maintenance-records/$recordId"

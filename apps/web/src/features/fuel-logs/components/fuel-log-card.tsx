@@ -31,7 +31,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
       <div className="flex flex-col @2xl:flex-row @2xl:items-center">
         {/* Main Info */}
         <div className="flex flex-1 items-center gap-4 p-3 sm:p-5">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
             <Fuel className="h-5 w-5" />
           </div>
 

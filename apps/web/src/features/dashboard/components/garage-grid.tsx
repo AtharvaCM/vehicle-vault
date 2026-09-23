@@ -35,7 +35,7 @@ export function GarageGrid({ vehicles, vehiclesTotal }: GarageGridProps) {
         ))}
         {hiddenCount > 0 ? (
           <Link
-            className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4 text-sm font-medium text-slate-600 transition-colors hover:border-primary/30 hover:bg-white hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4 text-sm font-medium text-slate-600 transition-colors hover:border-primary/30 hover:bg-white hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             to="/vehicles"
           >
             +{hiddenCount} more in Vehicles

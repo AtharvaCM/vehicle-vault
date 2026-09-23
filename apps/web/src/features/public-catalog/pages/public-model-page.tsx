@@ -85,7 +85,7 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-model-page">
       <header>
         <PublicCatalogBreadcrumbs page={page} />
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 wrap-anywhere sm:text-4xl">
           {modelName}
         </h1>
         <p className="mt-2 text-sm text-slate-600">{summary.join(' · ')}</p>
@@ -110,14 +110,11 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
           return (
             <section
               aria-labelledby={headingId}
-              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs"
               key={generation.slug}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-slate-100 px-4 py-3 sm:px-5">
-                <h3
-                  className="text-base font-semibold text-slate-950 [overflow-wrap:anywhere]"
-                  id={headingId}
-                >
+                <h3 className="text-base font-semibold text-slate-950 wrap-anywhere" id={headingId}>
                   {generation.name}
                 </h3>
                 <p className="flex items-center gap-2 text-sm text-slate-600">
@@ -140,10 +137,10 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
                         generation: generation.slug,
                         variant: variant.slug,
                       }}
-                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 sm:px-5"
+                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 sm:px-5"
                     >
                       <span className="min-w-0">
-                        <span className="block text-sm font-medium text-slate-900 [overflow-wrap:anywhere]">
+                        <span className="block text-sm font-medium text-slate-900 wrap-anywhere">
                           {modelName} {variant.name}
                         </span>
                         <span className="mt-0.5 block text-sm text-slate-600">

@@ -137,7 +137,7 @@ export function PublicSpecSections({ specs }: PublicSpecSectionsProps) {
       {sections.map((section) => (
         <section
           aria-label={section.title}
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs"
           key={section.title}
         >
           <h3 className="text-sm font-semibold text-slate-950">{section.title}</h3>
@@ -145,7 +145,7 @@ export function PublicSpecSections({ specs }: PublicSpecSectionsProps) {
             {section.rows.map(([label, value, unit]) => (
               <div className="flex justify-between gap-4 py-2" key={label}>
                 <dt className="text-slate-600">{label}</dt>
-                <dd className="min-w-0 text-right font-medium text-slate-900 [overflow-wrap:anywhere]">
+                <dd className="min-w-0 text-right font-medium text-slate-900 wrap-anywhere">
                   {formatValue(value, unit)}
                 </dd>
               </div>
