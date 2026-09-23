@@ -19,9 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
 
 import { useBulkCreateMaintenanceRecords } from '../hooks/use-bulk-create-maintenance-records';
 import {
@@ -252,12 +251,14 @@ export function MaintenanceImportDialog({
                         className="border-b border-slate-100 last:border-0"
                         key={`${record.serviceDate}-${index}`}
                       >
-                        <td className="px-3 py-3">{formatDate(record.serviceDate)}</td>
-                        <td className="px-3 py-3">{record.category}</td>
+                        <td className="px-3 py-3">{format.date(record.serviceDate)}</td>
+                        <td className="px-3 py-3">
+                          {format.enumLabel('maintenanceCategory', record.category)}
+                        </td>
                         <td className="px-3 py-3">{record.workshopName || 'Not specified'}</td>
                         <td className="px-3 py-3">{record.lineItems?.length ?? 0}</td>
                         <td className="px-3 py-3 font-semibold text-primary">
-                          {formatCurrency(record.totalCost, record.currencyCode)}
+                          {format.money(record.totalCost, { currency: record.currencyCode })}
                         </td>
                       </tr>
                     ))}

@@ -16,7 +16,7 @@ describe('describeVehicleDocuments', () => {
   it('reads an electric vehicle with insurance on file as valid, not missing a PUC', () => {
     expect(
       describeVehicleDocuments({ fuelType: FuelType.Electric, documents: { insurance } }, today),
-    ).toEqual({ text: 'Insurance valid · to 01 Dec 2026', tone: 'ok' });
+    ).toEqual({ text: 'Insurance valid · to 1 Dec 2026', tone: 'ok' });
   });
 
   it('still asks an electric vehicle for its insurance', () => {
@@ -40,7 +40,7 @@ describe('describeVehicleDocuments', () => {
         },
         today,
       ).text,
-    ).toBe('Insurance & PUC valid · to 15 Sept 2026');
+    ).toBe('Insurance & PUC valid · to 15 Sep 2026');
     expect(
       describeVehicleDocuments(
         {
@@ -52,7 +52,7 @@ describe('describeVehicleDocuments', () => {
         },
         today,
       ),
-    ).toEqual({ text: 'PUC expired 10 days ago', tone: 'danger' });
+    ).toEqual({ text: 'PUC · Ended 23 Mar', tone: 'danger' });
   });
 
   it('asks every vehicle that burns fuel for its PUC, hybrids included', () => {

@@ -141,9 +141,9 @@ test('user can import grouped maintenance CSV rows into a structured record', as
 
   await importedRecord.click();
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Engine Oil' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Engine oil' })).toBeVisible();
   await expect(page.getByText('INV-IMPORT-001')).toBeVisible();
-  await expect(page.getByText('Oil Filter', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Oil filter', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('₹1,400', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('₹450', { exact: true }).first()).toBeVisible();
 });

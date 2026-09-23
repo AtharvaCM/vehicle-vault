@@ -180,7 +180,7 @@ describe('VehicleTyreTracker', () => {
 
     renderTracker(settled(records));
 
-    expect(screen.getByText('puncture')).toBeInTheDocument();
+    expect(screen.getByText('Puncture')).toBeInTheDocument();
     // An unconfirmed scan must not appear as completed work.
     expect(screen.queryByText('tyre rotation')).not.toBeInTheDocument();
   });

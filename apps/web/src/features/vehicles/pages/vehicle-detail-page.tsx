@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { useActiveTabInView } from '@/hooks/use-active-tab-in-view';
@@ -212,19 +213,19 @@ export function VehicleDetailPage({
                   <HeroMetric
                     icon={<Gauge className="h-4 w-4" />}
                     label="Odometer"
-                    value={`${vehicle.odometer.toLocaleString('en-IN')} km`}
+                    value={format.odometer(vehicle.odometer)}
                   />
                   <div className="h-8 w-px bg-slate-100 hidden sm:block" />
                   <HeroMetric
                     icon={<Fuel className="h-4 w-4" />}
                     label="Fuel Type"
-                    value={vehicle.fuelType}
+                    value={format.enumLabel('fuelType', vehicle.fuelType)}
                   />
                   <div className="h-8 w-px bg-slate-100 hidden sm:block" />
                   <HeroMetric
                     icon={<CarFront className="h-4 w-4" />}
                     label="Vehicle Type"
-                    value={vehicle.vehicleType}
+                    value={format.enumLabel('vehicleType', vehicle.vehicleType)}
                   />
                 </div>
               </div>
@@ -500,9 +501,12 @@ export function VehicleDetailPage({
                 />
                 <SnapshotMetric
                   label="Official Odometer"
-                  value={`${vehicle.odometer.toLocaleString('en-IN')} km`}
+                  value={format.odometer(vehicle.odometer)}
                 />
-                <SnapshotMetric label="Engine Type" value={vehicle.fuelType} />
+                <SnapshotMetric
+                  label="Engine Type"
+                  value={format.enumLabel('fuelType', vehicle.fuelType)}
+                />
               </div>
 
               <FuelEconomyCard vehicleId={vehicleId} />

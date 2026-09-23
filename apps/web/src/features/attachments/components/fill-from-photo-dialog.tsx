@@ -12,11 +12,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
-import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
 
 import { useExtractAttachment } from '../hooks/use-extract-attachment';
 import { useFillFromAttachment } from '../hooks/use-fill-from-attachment';
@@ -157,9 +155,9 @@ function FillPlanSummary({
   const leftOut = plan.lineItemsLeftOut ? (
     <p className="text-sm text-slate-600">
       Line items left out: they come to{' '}
-      {formatCurrency(plan.lineItemsLeftOut.total, record.currencyCode)}, and this record&apos;s
-      cost is {formatCurrency(record.totalCost, record.currencyCode)}. Once a record has line items,
-      its cost is worked out from them.
+      {format.money(plan.lineItemsLeftOut.total, { currency: record.currencyCode })}, and this
+      record&apos;s cost is {format.money(record.totalCost, { currency: record.currencyCode })}.
+      Once a record has line items, its cost is worked out from them.
     </p>
   ) : null;
 
@@ -198,7 +196,7 @@ function describeChange(
 ): ReactNode {
   switch (field) {
     case 'category':
-      return changes.category ? formatMaintenanceCategory(changes.category) : null;
+      return changes.category ? format.enumLabel('maintenanceCategory', changes.category) : null;
     case 'workshopName':
       return changes.workshopName;
     case 'invoiceNumber':
@@ -210,7 +208,7 @@ function describeChange(
       return (
         <>
           {lineItems.length} item{lineItems.length === 1 ? '' : 's'}, adding up to{' '}
-          {formatCurrency(record.totalCost, record.currencyCode)}
+          {format.money(record.totalCost, { currency: record.currencyCode })}
           <span className="mt-0.5 line-clamp-2 block font-normal text-slate-500">
             {lineItems.map((lineItem) => lineItem.name).join(', ')}
           </span>
@@ -218,10 +216,10 @@ function describeChange(
       );
     }
     case 'nextDueDate':
-      return changes.nextDueDate ? formatDate(changes.nextDueDate) : null;
+      return changes.nextDueDate ? format.date(changes.nextDueDate) : null;
     case 'nextDueOdometer':
       return changes.nextDueOdometer !== undefined
-        ? `${changes.nextDueOdometer.toLocaleString('en-IN')} km`
+        ? format.odometer(changes.nextDueOdometer)
         : null;
   }
 }

@@ -9,12 +9,13 @@ import {
   FileBadge,
   RefreshCw,
 } from 'lucide-react';
-import { format, isBefore, addDays } from 'date-fns';
+import { isBefore, addDays } from 'date-fns';
 import { type VehicleDocument } from '@vehicle-vault/shared';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { format } from '@/lib/format';
 import { useDeleteVehicleDocument } from '../hooks/use-documents';
 import {
   documentKindNouns,
@@ -85,7 +86,11 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   );
 
   async function handleDelete() {
-    if (confirm(`Are you sure you want to delete this ${document.kind} record?`)) {
+    if (
+      confirm(
+        `Are you sure you want to delete this ${documentKindNouns[document.kind].toLowerCase()} record?`,
+      )
+    ) {
       try {
         await deleteMutation.mutateAsync({ id: document.id, kind: document.kind });
         appToast.success({
@@ -139,11 +144,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     Valid From
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {document.startDate ? (
-                      format(new Date(document.startDate), 'dd MMM yyyy')
-                    ) : (
-                      <NotRecorded />
-                    )}
+                    {document.startDate ? format.date(document.startDate) : <NotRecorded />}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -152,9 +153,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     Valid Till
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {document.endDate
-                      ? format(new Date(document.endDate), 'dd MMM yyyy')
-                      : 'No Date Limit'}
+                    {document.endDate ? format.date(document.endDate) : 'No Date Limit'}
                   </p>
                 </div>
               </div>
@@ -168,7 +167,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                       Premium Paid
                     </p>
                     <p className="text-lg font-black tracking-tight text-slate-900">
-                      ₹{document.details.premiumAmount.toLocaleString('en-IN')}
+                      {format.money(document.details.premiumAmount)}
                     </p>
                   </div>
                 )}
@@ -178,7 +177,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                       Insured Declared Value (IDV)
                     </p>
                     <p className="text-sm font-bold text-slate-600">
-                      ₹{document.details.insuredValue.toLocaleString('en-IN')}
+                      {format.money(document.details.insuredValue)}
                     </p>
                   </div>
                 )}
@@ -269,11 +268,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     Issued On
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {document.startDate ? (
-                      format(new Date(document.startDate), 'dd MMM yyyy')
-                    ) : (
-                      <NotRecorded />
-                    )}
+                    {document.startDate ? format.date(document.startDate) : <NotRecorded />}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -282,9 +277,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     Valid Till
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {document.endDate
-                      ? format(new Date(document.endDate), 'dd MMM yyyy')
-                      : 'No Date Limit'}
+                    {document.endDate ? format.date(document.endDate) : 'No Date Limit'}
                   </p>
                 </div>
               </div>
@@ -298,7 +291,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                       Amount Paid
                     </p>
                     <p className="text-lg font-black tracking-tight text-slate-900">
-                      ₹{amount.toLocaleString('en-IN')}
+                      {format.money(amount)}
                     </p>
                   </div>
                 )}
@@ -380,11 +373,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   Coverage Start
                 </div>
                 <p className="text-sm font-bold text-slate-700">
-                  {document.startDate ? (
-                    format(new Date(document.startDate), 'dd MMM yyyy')
-                  ) : (
-                    <NotRecorded />
-                  )}
+                  {document.startDate ? format.date(document.startDate) : <NotRecorded />}
                 </p>
               </div>
               <div className="space-y-1">
@@ -393,9 +382,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   Coverage End
                 </div>
                 <p className="text-sm font-bold text-slate-700">
-                  {document.endDate
-                    ? format(new Date(document.endDate), 'dd MMM yyyy')
-                    : 'No Date Limit'}
+                  {document.endDate ? format.date(document.endDate) : 'No Date Limit'}
                 </p>
               </div>
             </div>
@@ -411,7 +398,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <div className="flex items-center gap-2">
                     <Gauge className="h-4 w-4 text-slate-400" />
                     <p className="text-lg font-black tracking-tight text-slate-900">
-                      {document.details.endOdometer.toLocaleString()}
+                      {format.number(document.details.endOdometer)}
                     </p>
                     <span className="text-[10px] font-bold text-slate-400 uppercase">km</span>
                   </div>

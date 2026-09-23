@@ -1,6 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { VehicleServiceInsights } from '../utils/get-vehicle-service-insights';
 
@@ -23,16 +22,14 @@ export function ServiceTrendCard({ insights }: ServiceTrendCardProps) {
         <TrendMetric
           label="Average spend"
           value={
-            insights.averageSpend !== null
-              ? formatCurrency(insights.averageSpend)
-              : 'Not enough data'
+            insights.averageSpend !== null ? format.money(insights.averageSpend) : 'Not enough data'
           }
         />
         <TrendMetric
           label="Average gap"
           value={
             insights.averageKmBetweenServices !== null
-              ? `${Math.round(insights.averageKmBetweenServices).toLocaleString('en-IN')} km`
+              ? format.distance(Math.round(insights.averageKmBetweenServices))
               : 'Not enough data'
           }
           detail={
@@ -45,12 +42,12 @@ export function ServiceTrendCard({ insights }: ServiceTrendCardProps) {
           label="Since last service"
           value={
             insights.kmSinceLastService !== null
-              ? `${insights.kmSinceLastService.toLocaleString('en-IN')} km`
+              ? format.distance(insights.kmSinceLastService)
               : 'No service logged yet'
           }
           detail={
             insights.latestService
-              ? `Last service ${formatDate(insights.latestService.serviceDate)}`
+              ? `Last service ${format.date(insights.latestService.serviceDate)}`
               : undefined
           }
         />
@@ -76,7 +73,7 @@ function getNextDueLabel(insights: VehicleServiceInsights) {
   if (insights.nextDueOdometerDelta !== null) {
     if (insights.nextDueOdometerDelta > 0) {
       return {
-        value: `In ${insights.nextDueOdometerDelta.toLocaleString('en-IN')} km`,
+        value: `In ${format.distance(insights.nextDueOdometerDelta)}`,
         detail: 'Based on the latest logged next due odometer',
       };
     }
@@ -89,7 +86,7 @@ function getNextDueLabel(insights: VehicleServiceInsights) {
     }
 
     return {
-      value: `${Math.abs(insights.nextDueOdometerDelta).toLocaleString('en-IN')} km overdue`,
+      value: `${format.distance(Math.abs(insights.nextDueOdometerDelta))} overdue`,
       detail: 'Current odometer has passed the last recorded target',
     };
   }

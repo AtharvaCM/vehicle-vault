@@ -4,10 +4,7 @@ import type { MaintenanceSuggestion } from '@vehicle-vault/shared';
 import { SectionCard } from '@/components/shared/section-card';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { formatMaintenanceCategory } from '@/features/maintenance/utils/format-maintenance-category';
-import { formatDate } from '@/lib/utils/format-date';
-
-import { formatKm } from '../utils/format-due';
+import { format } from '@/lib/format';
 
 type SmartSuggestionsCardProps = {
   insights: MaintenanceSuggestion[];
@@ -32,9 +29,9 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
         {insights.map((insight) => {
           const meta = [
             insight.vehicleLabel,
-            insight.estimatedDateDue ? `~${formatDate(insight.estimatedDateDue)}` : undefined,
+            insight.estimatedDateDue ? `~${format.date(insight.estimatedDateDue)}` : undefined,
             insight.estimatedOdometerDue !== undefined
-              ? `~${formatKm(insight.estimatedOdometerDue)}`
+              ? `~${format.odometer(insight.estimatedOdometerDue)}`
               : undefined,
           ].filter((value): value is string => Boolean(value));
 
@@ -46,7 +43,7 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
               <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="min-w-0 truncate font-semibold text-slate-900">
-                    {formatMaintenanceCategory(insight.category)}
+                    {format.enumLabel('maintenanceCategory', insight.category)}
                   </p>
                   {insight.priority === 'high' ? (
                     <Badge className="shrink-0" tone="warning">

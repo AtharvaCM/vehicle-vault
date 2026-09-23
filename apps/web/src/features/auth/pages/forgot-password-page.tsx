@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,9 +166,7 @@ export function ForgotPasswordPage() {
 
             <div className="flex flex-col gap-2 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>
-                {preview.expiresAt
-                  ? `Expires ${new Date(preview.expiresAt).toLocaleString()}`
-                  : null}
+                {preview.expiresAt ? `Expires ${format.date(preview.expiresAt, 'dateTime')}` : null}
               </span>
               <Button asChild size="sm" variant="secondary">
                 <a href={`/reset-password?token=${encodeURIComponent(preview.token)}`}>

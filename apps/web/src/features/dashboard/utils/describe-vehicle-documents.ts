@@ -1,17 +1,8 @@
 import { requiresPuc, type VehicleDocumentKind } from '@vehicle-vault/shared';
 
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { DashboardVehicleHealth } from '../types/dashboard';
-import { calendarDaysUntil } from './format-due';
-
-const KIND_LABELS: Record<VehicleDocumentKind, string> = {
-  insurance: 'Insurance',
-  puc: 'PUC',
-  registration: 'Registration',
-  road_tax: 'Road tax',
-  warranty: 'Warranty',
-};
 
 /** Kinds that count as a lapse when expired — warranty running out is not a compliance problem. */
 const EXPIRY_KINDS: readonly VehicleDocumentKind[] = [
@@ -33,10 +24,6 @@ export type VehicleDocumentsDescription = {
   tone: 'danger' | 'warning' | 'ok';
 };
 
-function pluralDays(count: number) {
-  return `${count} day${count === 1 ? '' : 's'}`;
-}
-
 /**
  * One line for the vehicle card's "Documents" row, in precedence order:
  * expired > missing insurance > missing PUC > expiring > valid. An electric
@@ -56,10 +43,13 @@ export function describeVehicleDocuments(
     const document = documents[kind];
 
     if (document?.state === 'expired' && document.endDate) {
-      const daysAgo = Math.max(0, -calendarDaysUntil(document.endDate, today));
-
       return {
-        text: `${KIND_LABELS[kind]} expired ${pluralDays(daysAgo)} ago`,
+        text: `${format.enumLabel('documentKind', kind)} · ${format.relativeDue(document.endDate, {
+          mode: 'ends',
+          now: today,
+          // An expired paper ended in the past even if the day count says otherwise.
+          days: Math.min(-1, format.daysUntil(document.endDate, today) ?? -1),
+        })}`,
         tone: 'danger',
       };
     }
@@ -77,13 +67,12 @@ export function describeVehicleDocuments(
     const document = documents[kind];
 
     if (document?.state === 'expiring' && document.endDate) {
-      const days = Math.max(0, calendarDaysUntil(document.endDate, today));
-
       return {
-        text:
-          days === 0
-            ? `${KIND_LABELS[kind]} expires today`
-            : `${KIND_LABELS[kind]} expires in ${pluralDays(days)}`,
+        text: `${format.enumLabel('documentKind', kind)} · ${format.relativeDue(document.endDate, {
+          mode: 'ends',
+          now: today,
+          days: Math.max(0, format.daysUntil(document.endDate, today) ?? 0),
+        })}`,
         tone: 'warning',
       };
     }
@@ -97,7 +86,7 @@ export function describeVehicleDocuments(
   const valid = puc ? 'Insurance & PUC valid' : 'Insurance valid';
 
   return {
-    text: earliest ? `${valid} · to ${formatDate(earliest)}` : valid,
+    text: earliest ? `${valid} · to ${format.date(earliest)}` : valid,
     tone: 'ok',
   };
 }

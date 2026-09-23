@@ -22,6 +22,9 @@ Central `as const` map of every backend route the web app calls. Source of truth
 **Query key factory** (`src/lib/query/query-keys.ts`):
 Hierarchical `queryKeys.<domain>.<selector>(...)` factory; every key builds on `.all()`. Never inline query keys. (Known violation: the notifications feature uses inline `['notifications']` — treat as debt, not precedent.)
 
+**Format module** (`src/lib/format`):
+The only way a value becomes display text: `format.money` (₹, Indian grouping, whole rupees unless asked), `format.number`, `format.distance` / `format.odometer` ("31,800 km"), `format.date` (one style, "23 Sep 2026"; `'short'` "Wed 23 Sep"; `'dateTime'` for when something happened), `format.relativeDue` (`due`: "3 days late" / "Today" / "In 4 days"; `ends`: "153 days left" / "Ended 20 Sep") and `format.enumLabel` (a sentence-case label for every shared enum, via `satisfies Record<Enum, string>` so a new enum value fails the typecheck until labelled). Dates are read on the Indian calendar (fixed UTC+05:30) whatever the browser's zone; a date-only value is UTC midnight, so it keeps its day. Missing or unreadable input prints `format.EMPTY` ("—"), never "Invalid date" or "NaN km". Lint bans `toLocaleString`/`toLocaleDateString`, `new Intl.NumberFormat`/`DateTimeFormat` and date-fns `format` everywhere else in `src`.
+
 **Response envelope**:
 `{success, data, meta?}` on success; `{success:false, error:{code,message,details?}}` on failure. `api/` functions unwrap `.data`; errors become `ApiError` (carries `status` + body); user-facing text via `getApiErrorMessage()`.
 

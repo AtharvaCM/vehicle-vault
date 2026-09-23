@@ -5,6 +5,8 @@ import {
 } from '@vehicle-vault/shared';
 import { z } from 'zod';
 
+import { format } from '@/lib/format';
+
 export const reminderFormSchema = z
   .object({
     title: z
@@ -27,10 +29,7 @@ export const reminderFormSchema = z
       .number({ error: 'Enter a distance in km' })
       .int('Use whole kilometres')
       .min(1, 'Repeat at least every kilometre')
-      .max(
-        REMINDER_REPEAT_MAX_KM,
-        `At most every ${REMINDER_REPEAT_MAX_KM.toLocaleString('en-IN')} km`,
-      )
+      .max(REMINDER_REPEAT_MAX_KM, `At most every ${format.distance(REMINDER_REPEAT_MAX_KM)}`)
       .optional(),
   })
   .refine((value) => value.dueDate?.trim() || value.dueOdometer !== undefined, {

@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-const numberFormatter = new Intl.NumberFormat('en-IN');
+import { format } from '@/lib/format';
 
 function formatBound(value: number | bigint | Date) {
   if (value instanceof Date) {
-    return value.toLocaleDateString('en-IN');
+    return format.date(value);
   }
 
-  return numberFormatter.format(value);
+  return format.number(Number(value), { decimals: 3 });
 }
 
 function pluralize(count: number | bigint, word: string) {

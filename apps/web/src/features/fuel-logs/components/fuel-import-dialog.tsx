@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, Check, AlertCircle, ChevronRight, ArrowLeft } from 'lucide-react';
 import Papa from 'papaparse';
-import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,9 +19,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
 import { parseLocaleNumber } from '@/lib/utils/parse-locale-number';
+import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
 import { useBulkCreateFuelLogs } from '../hooks/use-bulk-create-fuel-logs';
 
 type FuelImportDialogProps = {
@@ -125,12 +125,12 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               const parsedDate = new Date(value);
               if (isNaN(parsedDate.getTime())) {
                 // Try common formats if standard parsing fails
-                value = format(new Date(), 'yyyy-MM-dd');
+                value = todayDateInputValue();
               } else {
                 value = parsedDate.toISOString();
               }
             } catch {
-              value = format(new Date(), 'yyyy-MM-dd');
+              value = todayDateInputValue();
             }
           }
           log[localField] = value;
@@ -346,7 +346,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                           {mapping['quantity'] ? row[mapping['quantity']] : '0'}
                         </td>
                         <td className="px-3 py-3 tabular-nums font-bold text-primary">
-                          {formatCurrency(
+                          {format.money(
                             parseLocaleNumber(
                               mapping['totalCost'] ? row[mapping['totalCost']] : '0',
                             ) || 0,

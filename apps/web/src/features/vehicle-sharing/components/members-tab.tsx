@@ -26,8 +26,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatDate } from '@/lib/utils/format-date';
 
 import {
   useCreateInvite,
@@ -233,9 +233,19 @@ function MemberRow({
 }
 
 function RoleBadge({ role }: { role: VehicleRole }) {
-  if (role === 'owner') return <Badge className="bg-amber-100 text-amber-800">Owner</Badge>;
-  if (role === 'editor') return <Badge className="bg-blue-100 text-blue-800">Editor</Badge>;
-  return <Badge className="bg-slate-100 text-slate-700">Viewer</Badge>;
+  if (role === 'owner') {
+    return (
+      <Badge className="bg-amber-100 text-amber-800">{format.enumLabel('vehicleRole', role)}</Badge>
+    );
+  }
+  if (role === 'editor') {
+    return (
+      <Badge className="bg-blue-100 text-blue-800">{format.enumLabel('vehicleRole', role)}</Badge>
+    );
+  }
+  return (
+    <Badge className="bg-slate-100 text-slate-700">{format.enumLabel('vehicleRole', role)}</Badge>
+  );
 }
 
 function InviteForm({ vehicleId }: { vehicleId: string }) {
@@ -419,7 +429,8 @@ function PendingInvitesCard({
               <div>
                 <p className="break-all text-sm font-semibold">{invite.email}</p>
                 <p className="text-xs text-slate-500">
-                  Role: {invite.role} · expires {formatDate(invite.expiresAt)}
+                  Role: {format.enumLabel('vehicleRole', invite.role)} · expires{' '}
+                  {format.date(invite.expiresAt)}
                 </p>
               </div>
             </div>

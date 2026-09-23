@@ -13,7 +13,6 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import type { Claim, ClaimExtractionSuggestion } from '@vehicle-vault/shared';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import { InlineError } from '@/components/shared/inline-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { Input } from '@/components/ui/input';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { getClaimAttachmentFilePath } from '../api/claim-attachments';
@@ -224,8 +224,7 @@ export function ClaimAttachmentsSection({
                               {att.originalFileName}
                             </p>
                             <p className="text-[10px] text-slate-400">
-                              {formatBytes(att.size)} ·{' '}
-                              {format(new Date(att.uploadedAt), 'd MMM yyyy')}
+                              {formatBytes(att.size)} · {format.date(att.uploadedAt)}
                             </p>
                           </div>
                           {ocrAvailable && canEdit ? (

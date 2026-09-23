@@ -8,8 +8,8 @@ import { AuthPageShell } from '@/features/auth/components/auth-page-shell';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatDate } from '@/lib/utils/format-date';
 
 import { useAcceptInvite, useDeclineInvite, useInvitePreview } from '../hooks/use-sharing';
 
@@ -156,7 +156,7 @@ export function AcceptInvitePage({ token }: Props) {
       </div>
       <div>
         <dt className="text-slate-500">Expires</dt>
-        <dd className="text-slate-900">{formatDate(invite.expiresAt)}</dd>
+        <dd className="text-slate-900">{format.date(invite.expiresAt)}</dd>
       </div>
     </dl>
   );

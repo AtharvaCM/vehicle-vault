@@ -10,9 +10,8 @@ import { StatCard } from '@/components/shared/stat-card';
 import { Button } from '@/components/ui/button';
 import { PageContainer } from '@/components/layout/page-container';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
 import { VehiclePickerDialog } from '@/features/vehicles/components/vehicle-picker-dialog';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import type { Vehicle } from '@/features/vehicles/types/vehicle';
@@ -215,14 +214,14 @@ export function MaintenanceOverviewPage({
               accent={
                 latestServiceDate ? (
                   <span className="text-xs font-medium text-slate-500">
-                    Latest {formatDate(latestServiceDate)}
+                    Latest {format.date(latestServiceDate)}
                   </span>
                 ) : null
               }
               description="Total recorded maintenance spend across all vehicles."
               icon={ReceiptText}
               label="Recorded spend"
-              value={formatCurrency(totalSpend)}
+              value={format.money(totalSpend)}
             />
           </div>
 

@@ -3,8 +3,7 @@ import type { FuelLog } from '@vehicle-vault/shared';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,12 +36,10 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
 
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <p className="font-bold text-slate-900">
-                {log.quantity.toLocaleString('en-IN')} L Fuel Fill
-              </p>
+              <p className="font-bold text-slate-900">{format.number(log.quantity)} L Fuel Fill</p>
             </div>
             <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
-              <span>{formatDate(log.date)}</span>
+              <span>{format.date(log.date)}</span>
               {log.location && (
                 <>
                   <span className="hidden text-slate-300 sm:inline">•</span>
@@ -64,7 +61,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                 Odometer
               </p>
               <p className="whitespace-nowrap text-[13px] font-semibold tabular-nums text-slate-700">
-                {log.odometer.toLocaleString('en-IN')} km
+                {format.odometer(log.odometer)}
               </p>
             </div>
 
@@ -73,7 +70,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                 Price/L
               </p>
               <p className="whitespace-nowrap text-[13px] font-semibold tabular-nums text-slate-700">
-                {formatCurrency(log.price)}
+                {format.money(log.price)}
               </p>
             </div>
 
@@ -82,7 +79,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                 Total Cost
               </p>
               <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-primary">
-                {formatCurrency(log.totalCost)}
+                {format.money(log.totalCost)}
               </p>
             </div>
           </div>

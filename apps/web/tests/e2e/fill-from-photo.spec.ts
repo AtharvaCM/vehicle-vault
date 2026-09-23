@@ -112,13 +112,13 @@ test('a quick-logged service is filled in from its job card photo, keeping what 
   await page.getByRole('button', { name: 'Fill in from photo' }).click();
   const dialog = page.getByRole('dialog', { name: 'Fill in from the photo' });
   await expect(dialog.getByText('Torque Garage', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Engine Oil', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Engine oil', { exact: true })).toBeVisible();
   await expect(dialog.getByText(/2 items, adding up to ₹1,500/)).toBeVisible();
   await expect(dialog.getByText('18,200 km', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'Fill in' }).click();
   await expect(dialog).toBeHidden();
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Engine Oil', exact: true }),
+    page.getByRole('heading', { level: 1, name: 'Engine oil', exact: true }),
   ).toBeVisible();
 
   const filled = await prisma.maintenanceRecord.findUniqueOrThrow({

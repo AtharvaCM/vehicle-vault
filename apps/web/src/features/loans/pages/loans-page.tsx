@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { LoanCard } from '../components/loan-card';
@@ -44,7 +45,6 @@ import { useLoans } from '../hooks/use-loans';
 import { useScanLoanDocument, useLoanScanStatus } from '../hooks/use-scan-loan-document';
 import { useUpdateLoan } from '../hooks/use-update-loan';
 import type { LoanFormValues } from '../schemas/loan-form.schema';
-import { formatCurrencyInr } from '../utils/compute-emi';
 
 export function LoansPage() {
   const loansQuery = useLoans();
@@ -188,9 +188,9 @@ export function LoansPage() {
 
       {loans.length ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <SummaryStat label="Monthly EMI (active)" value={formatCurrencyInr(totals.emi)} />
-          <SummaryStat label="Outstanding" value={formatCurrencyInr(totals.outstanding)} />
-          <SummaryStat label="Interest paid" value={formatCurrencyInr(totals.interestPaid)} />
+          <SummaryStat label="Monthly EMI (active)" value={format.money(totals.emi)} />
+          <SummaryStat label="Outstanding" value={format.money(totals.outstanding)} />
+          <SummaryStat label="Interest paid" value={format.money(totals.interestPaid)} />
         </div>
       ) : null}
 

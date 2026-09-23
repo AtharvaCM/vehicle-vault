@@ -133,11 +133,11 @@ describe('PublicVariantPageView', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Typical schedule for a petrol car' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Periodic Service')).toBeInTheDocument();
+    expect(screen.getByText('Periodic service')).toBeInTheDocument();
     expect(
       screen.getByText('Every 10,000 km or 12 months, whichever comes first'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Engine Oil')).toBeInTheDocument();
+    expect(screen.getByText('Engine oil')).toBeInTheDocument();
   });
 
   it("labels a schedule with the variant's own intervals as the variant's", () => {

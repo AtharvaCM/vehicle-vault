@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatCurrency } from '@/lib/utils/format-currency';
+import { format } from '@/lib/format';
 
 import { describeInterval, formatFuelType } from '../utils/format-public-catalog';
 
@@ -267,7 +267,7 @@ function EstimateView({
           >
             <h3 className="text-sm font-medium text-slate-600">{title}</h3>
             <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-950">
-              {formatCurrency(breakdown.total)}
+              {format.money(breakdown.total)}
             </p>
             <dl className="mt-2 space-y-1 text-sm">
               <BreakdownRow label={labels.energy} value={breakdown.energy} />
@@ -316,7 +316,7 @@ function BreakdownRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-slate-600">{label}</dt>
-      <dd className="tabular-nums text-slate-900">{formatCurrency(value)}</dd>
+      <dd className="tabular-nums text-slate-900">{format.money(value)}</dd>
     </div>
   );
 }
@@ -414,7 +414,7 @@ function describeAssumed(
     case 'energyPrice':
       return `${labels.energyPrice.label.toLowerCase()} of ₹${formatQuantity(inputs.energyPrice)} per ${units.priceUnit} (${formatAsOf()})`;
     case 'serviceCostPerVisit':
-      return `${formatCurrency(inputs.serviceCostPerVisit)} a service, typical for ${vehicleNoun(vehicleType)}`;
+      return `${format.money(inputs.serviceCostPerVisit)} a service, typical for ${vehicleNoun(vehicleType)}`;
     case 'servicesPerYear':
       return `${formatQuantity(inputs.servicesPerYear)} services a year`;
     case 'years':
@@ -435,19 +435,13 @@ function vehicleNoun(vehicleType: OwnershipCostInput['vehicleType']) {
   return VEHICLE_NOUNS[vehicleType] ?? 'vehicles';
 }
 
-const quantityFormat = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 });
-
 function formatQuantity(value: number) {
-  return quantityFormat.format(value);
+  return format.number(value, { decimals: 1 });
 }
 
 /** "September 2026", from the defaults' "2026-09". */
 function formatAsOf() {
-  return new Intl.DateTimeFormat('en-IN', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${OWNERSHIP_COST_DEFAULTS_AS_OF}-01T00:00:00Z`));
+  return format.date(`${OWNERSHIP_COST_DEFAULTS_AS_OF}-01`, 'monthYearLong');
 }
 
 /** The parts of the estimate the page supplies: the vehicle, its claims and its service interval. */

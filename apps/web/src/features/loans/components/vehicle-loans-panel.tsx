@@ -24,13 +24,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useCreateLoan } from '../hooks/use-create-loan';
 import { useDeleteLoan } from '../hooks/use-delete-loan';
 import { useVehicleLoans } from '../hooks/use-loans';
 import { useUpdateLoan } from '../hooks/use-update-loan';
-import { formatCurrencyInr } from '../utils/compute-emi';
 import { LoanCard } from './loan-card';
 import { LoanDetailDialog } from './loan-detail-dialog';
 import { LoanForm } from './loan-form';
@@ -130,9 +130,9 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
 
       {loans.length ? (
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryStat label="Monthly EMI (active)" value={formatCurrencyInr(totals.emi)} />
-          <SummaryStat label="Outstanding" value={formatCurrencyInr(totals.outstanding)} />
-          <SummaryStat label="Interest paid" value={formatCurrencyInr(totals.interestPaid)} />
+          <SummaryStat label="Monthly EMI (active)" value={format.money(totals.emi)} />
+          <SummaryStat label="Outstanding" value={format.money(totals.outstanding)} />
+          <SummaryStat label="Interest paid" value={format.money(totals.interestPaid)} />
         </div>
       ) : null}
 

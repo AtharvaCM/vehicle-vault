@@ -1,8 +1,6 @@
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { DashboardAttentionKind, DashboardUrgency } from '../types/dashboard';
-
-const MS_PER_DAY = 86_400_000;
 
 type FormatRelativeDueInput = {
   kind: DashboardAttentionKind;
@@ -17,34 +15,19 @@ type FormatRelativeDueInput = {
 /** Kinds whose date is when something runs out, not when something is due. */
 const EXPIRING_KINDS: readonly DashboardAttentionKind[] = ['document', 'accessory'];
 
-export function formatKm(value: number) {
-  return `${Math.round(value).toLocaleString('en-IN')} km`;
-}
-
 function pluralize(count: number, unit: string) {
   return `${count} ${unit}${count === 1 ? '' : 's'}`;
 }
 
-function toUtcDay(value: string | Date) {
-  const date = value instanceof Date ? value : new Date(value);
-
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-}
-
-/** Whole UTC calendar days from `today` to `target`; negative when `target` is in the past. */
-export function calendarDaysUntil(target: string | Date, today: string | Date) {
-  return Math.round((toUtcDay(target) - toUtcDay(today)) / MS_PER_DAY);
-}
-
 /** Odometer meta segment: "at 45,000 km · 800 km to go". */
 export function formatOdometerMeta(dueOdometer: number, kmUntilDue?: number) {
-  const base = `at ${formatKm(dueOdometer)}`;
+  const base = `at ${format.odometer(dueOdometer)}`;
 
   if (kmUntilDue === undefined) {
     return base;
   }
 
-  return `${base} · ${formatKm(Math.abs(kmUntilDue))} ${kmUntilDue < 0 ? 'past due' : 'to go'}`;
+  return `${base} · ${format.distance(Math.abs(kmUntilDue))} ${kmUntilDue < 0 ? 'past due' : 'to go'}`;
 }
 
 /** Odometer-only wording: "Due at 45,000 km · 800 km to go". */
@@ -52,59 +35,14 @@ export function formatOdometerDue(dueOdometer: number, kmUntilDue?: number) {
   return `Due ${formatOdometerMeta(dueOdometer, kmUntilDue)}`;
 }
 
-function formatDocumentDue(days: number, dueDate: string) {
-  if (days < -30) {
-    return `Expired ${formatDate(dueDate)}`;
-  }
-
-  if (days < 0) {
-    return `Expired ${pluralize(-days, 'day')} ago`;
-  }
-
-  if (days === 0) {
-    return 'Expires today';
-  }
-
-  if (days === 1) {
-    return 'Expires tomorrow';
-  }
-
-  if (days <= 30) {
-    return `Expires in ${days} days`;
-  }
-
-  return `Expires ${formatDate(dueDate)}`;
-}
-
-function formatReminderDue(days: number, dueDate: string) {
-  if (days < -30) {
-    return `Overdue since ${formatDate(dueDate)}`;
-  }
-
-  if (days < 0) {
-    return `${pluralize(-days, 'day')} overdue`;
-  }
-
-  if (days === 0) {
-    return 'Due today';
-  }
-
-  if (days === 1) {
-    return 'Due tomorrow';
-  }
-
-  if (days <= 30) {
-    return `Due in ${days} days`;
-  }
-
-  return `Due ${formatDate(dueDate)}`;
-}
-
 /**
- * Human relative due string. When both a date and an odometer exist the date
- * string is primary — callers render the odometer as a separate meta segment.
- * An undated verdict (a worn tyre, unknown service history) says what it rests
- * on instead.
+ * When a row is due, in words that give the time: "3 days late", "Today",
+ * "In 4 days" for things to do; "153 days left", "Ended 20 Sep" for papers and
+ * warranties that run out. The API's day count wins over a local one so the
+ * words agree with the group the row sits in. When both a date and an odometer
+ * exist the date is primary — callers render the odometer as a separate meta
+ * segment. An undated verdict (a worn tyre, unknown service history) says what
+ * it rests on instead.
  */
 export function formatRelativeDue({
   kind,
@@ -114,8 +52,6 @@ export function formatRelativeDue({
   kmUntilDue,
   detail,
 }: FormatRelativeDueInput) {
-  const expires = EXPIRING_KINDS.includes(kind);
-
   if (!dueDate) {
     if (dueOdometer === undefined) {
       return detail ?? 'No due date';
@@ -124,20 +60,15 @@ export function formatRelativeDue({
     return formatOdometerDue(dueOdometer, kmUntilDue);
   }
 
-  if (daysUntilDue === null) {
-    return `${expires ? 'Expires' : 'Due'} ${formatDate(dueDate)}`;
-  }
-
-  if (expires) {
-    return formatDocumentDue(daysUntilDue, dueDate);
-  }
-
-  return formatReminderDue(daysUntilDue, dueDate);
+  return format.relativeDue(dueDate, {
+    mode: EXPIRING_KINDS.includes(kind) ? 'ends' : 'due',
+    days: daysUntilDue,
+  });
 }
 
 /** "today" / "yesterday" / "N days/weeks/months/years ago", from a past ISO datetime. */
 export function formatRelativeAgo(dateIso: string, today: Date = new Date()) {
-  const daysAgo = Math.max(0, -calendarDaysUntil(dateIso, today));
+  const daysAgo = Math.max(0, -(format.daysUntil(dateIso, today) ?? 0));
 
   if (daysAgo === 0) return 'today';
   if (daysAgo === 1) return 'yesterday';

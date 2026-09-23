@@ -73,11 +73,11 @@ test.describe('public variant page', () => {
     await expect(
       page.getByRole('heading', { level: 2, name: 'Typical schedule for a petrol car' }),
     ).toBeVisible();
-    await expect(page.getByText('Periodic Service')).toBeVisible();
+    await expect(page.getByText('Periodic service')).toBeVisible();
     // A petrol car gets an oil change and a timing belt, and no chain service.
-    await expect(page.getByText('Engine Oil')).toBeVisible();
-    await expect(page.getByText('Timing Belt')).toBeVisible();
-    await expect(page.getByText('Chain Service')).toHaveCount(0);
+    await expect(page.getByText('Engine oil')).toBeVisible();
+    await expect(page.getByText('Timing belt')).toBeVisible();
+    await expect(page.getByText('Chain service')).toHaveCount(0);
 
     const engine = page.getByRole('region', { name: 'Engine and drivetrain' });
     await expect(engine.getByText('1,197 cc')).toBeVisible();

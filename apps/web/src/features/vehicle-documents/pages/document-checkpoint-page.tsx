@@ -4,7 +4,7 @@ import {
   type VehicleDocument,
   type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
-import { differenceInCalendarDays, format } from 'date-fns';
+import { differenceInCalendarDays } from 'date-fns';
 import { ArrowLeft, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import type { Attachment } from '@/features/attachments/types/attachment';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -38,7 +39,7 @@ const ISSUER_LABELS: Record<VehicleDocumentKind, string> = {
   road_tax: 'Paid to',
 };
 
-const day = (date: Date | string) => format(new Date(date), 'dd MMM yyyy');
+const day = (date: Date | string) => format.date(date);
 
 type Validity =
   | { state: 'expired'; endDate: Date }

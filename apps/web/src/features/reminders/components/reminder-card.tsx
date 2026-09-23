@@ -5,11 +5,10 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/utils/format-date';
 
 import type { Reminder } from '../types/reminder';
-import { formatReminderType } from '../utils/format-reminder-type';
 import { ReminderStatusBadge } from './reminder-status-badge';
 
 type ReminderCardProps = {
@@ -88,7 +87,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                     variant="outline"
                     className="bg-white text-[10px] font-bold uppercase tracking-widest"
                   >
-                    {formatReminderType(reminder.type)}
+                    {format.enumLabel('reminderType', reminder.type)}
                   </Badge>
                   <ReminderStatusBadge status={reminder.status} />
                 </div>
@@ -97,7 +96,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                 {vehicleLabel ? <span>{vehicleLabel}</span> : null}
                 {vehicleLabel ? <span className="hidden text-slate-300 sm:inline">•</span> : null}
                 {reminder.dueDate ? (
-                  <span>Due {formatDate(reminder.dueDate)}</span>
+                  <span>Due {format.date(reminder.dueDate)}</span>
                 ) : (
                   <span>No date set</span>
                 )}
@@ -106,9 +105,9 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                     <span className="hidden text-slate-300 sm:inline">•</span>
                     <span
                       className="text-slate-500"
-                      title={`Based on ${reminder.usageProjection.kmPerDay.toFixed(1)} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs (${reminder.usageProjection.confidence} confidence)`}
+                      title={`Based on ${format.number(reminder.usageProjection.kmPerDay, { decimals: 1, fixed: true })} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs (${reminder.usageProjection.confidence} confidence)`}
                     >
-                      Projected ~{formatDate(reminder.usageProjection.projectedDueDate)}
+                      Projected ~{format.date(reminder.usageProjection.projectedDueDate)}
                     </span>
                   </>
                 ) : null}
@@ -128,7 +127,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                     Target ODO
                   </p>
                   <p className="text-[13px] font-semibold tabular-nums text-slate-700">
-                    {dueOdometer.toLocaleString('en-IN')} km
+                    {format.odometer(dueOdometer)}
                   </p>
                 </div>
               </div>

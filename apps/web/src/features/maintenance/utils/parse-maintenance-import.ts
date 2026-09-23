@@ -6,6 +6,8 @@ import {
   type CreateMaintenanceLineItemInput,
 } from '@vehicle-vault/shared';
 
+import { format } from '@/lib/format';
+
 import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
 import { getMaintenanceLineItemBreakdown } from './get-maintenance-line-item-breakdown';
 
@@ -513,13 +515,10 @@ function formatFallbackLineItemName(
   normalizedCategory?: MaintenanceCategory,
 ) {
   if (normalizedCategory) {
-    return normalizedCategory
-      .split('_')
-      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-      .join(' ');
+    return format.enumLabel('maintenanceCategory', normalizedCategory);
   }
 
-  return kind.charAt(0).toUpperCase() + kind.slice(1);
+  return format.enumLabel('maintenanceLineItemKind', kind);
 }
 
 function headerMatchesField(header: string, synonyms: readonly string[]) {
