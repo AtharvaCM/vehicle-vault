@@ -1,3 +1,12 @@
+## [1.66.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.2...v1.66.3) (2026-09-23)
+
+
+### Bug Fixes
+
+* **api:** 404 malformed :id route params instead of 400 or 500 ([9ae82b9](https://github.com/AtharvaCM/vehicle-vault/commit/9ae82b9e8195331bdaa72fa0138d9ab4a833b9aa))
+* **api:** accept any UUID version in id route params ([198cd86](https://github.com/AtharvaCM/vehicle-vault/commit/198cd86e9ae240b2c1b486b21d5f7a33139a503e))
+* **web:** distinguish 404, 403 and retryable states on detail pages ([9f07a75](https://github.com/AtharvaCM/vehicle-vault/commit/9f07a75e897c27d80023930ac57677cbdad8c3ed))
+
 ## [1.66.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.1...v1.66.2) (2026-09-23)
 
 
