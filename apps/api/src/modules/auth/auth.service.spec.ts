@@ -653,10 +653,12 @@ describe('AuthService', () => {
   });
 
   it('returns accepted=true silently when resendVerification targets an unknown email', async () => {
+    mailService.isConfigured = true;
     prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
     await expect(service.resendVerification({ email: 'unknown@example.com' })).resolves.toEqual({
       accepted: true,
+      delivered: true,
     });
 
     expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
@@ -664,6 +666,7 @@ describe('AuthService', () => {
   });
 
   it('returns accepted=true silently when resendVerification targets an already-verified user', async () => {
+    mailService.isConfigured = true;
     prisma.user.findUnique = vi.fn().mockResolvedValue({
       id: 'user-1',
       name: 'Atharva',
@@ -675,6 +678,7 @@ describe('AuthService', () => {
 
     await expect(service.resendVerification({ email: 'atharva@example.com' })).resolves.toEqual({
       accepted: true,
+      delivered: true,
     });
 
     expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
@@ -682,6 +686,7 @@ describe('AuthService', () => {
   });
 
   it('issues a fresh verification token and sends mail on resendVerification', async () => {
+    mailService.isConfigured = true;
     prisma.user.findUnique = vi.fn().mockResolvedValue({
       id: 'user-1',
       name: 'Atharva',
@@ -693,6 +698,7 @@ describe('AuthService', () => {
 
     await expect(service.resendVerification({ email: ' ATHARVA@example.com ' })).resolves.toEqual({
       accepted: true,
+      delivered: true,
     });
 
     expect(tokenService.issueEmailVerification).toHaveBeenCalledWith('user-1');
@@ -704,6 +710,27 @@ describe('AuthService', () => {
           'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
       }),
     );
+  });
+
+  it('says no link went out, and issues none, when mail is not configured', async () => {
+    mailService.isConfigured = false;
+    prisma.user.findUnique = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      emailVerified: false,
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    await expect(service.resendVerification({ email: 'atharva@example.com' })).resolves.toEqual({
+      accepted: true,
+      delivered: false,
+    });
+    // The same answer whether or not the address has an account.
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(tokenService.issueEmailVerification).not.toHaveBeenCalled();
+    expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
   });
 
   it('returns the authenticated user from getMe', async () => {

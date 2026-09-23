@@ -1,49 +1,60 @@
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
 import { afterSignInDestination } from '@/features/catalog-intent/lib/catalog-intent';
+import { ApiError } from '@/lib/api/api-error';
 import { appToast } from '@/lib/toast';
 import { AuthPageShell, AuthPageLink } from '../components/auth-page-shell';
 import { verifyEmail } from '../api/verify-email';
 import { useAuth } from '../hooks/use-auth';
+import { useResendVerification } from '../hooks/use-resend-verification';
+
+/**
+ * Where a verification link ends up:
+ * - `verified`: this link verified the address (signed out; a signed-in visit
+ *   goes straight back into the app instead);
+ * - `already`: the signed-in account is verified already, so an old link is
+ *   not even tried;
+ * - `spent`: the API refused the link (expired, used, or never issued);
+ * - `missing`: the address carried no link token at all;
+ * - `failed`: anything else (offline, a server error), which is worth retrying.
+ *
+ * None of them touch the session: `verifyEmail` skips the unauthorized
+ * handler, so a refused link never signs anybody out.
+ */
+type VerifyState = 'loading' | 'verified' | 'already' | 'spent' | 'missing' | 'failed';
 
 export function VerifyEmailPage() {
   const { token } = useSearch({ strict: false }) as { token?: string };
-  const { isAuthenticated, refreshUser } = useAuth();
+  const { isAuthenticated, refreshUser, user } = useAuth();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const alreadyVerified = isAuthenticated && user?.emailVerified === true;
+  const [state, setState] = useState<VerifyState>(() => {
+    if (alreadyVerified) return 'already';
+    return token ? 'loading' : 'missing';
+  });
+  const { resend, isResending, hasSent, isUnavailable } = useResendVerification(
+    isAuthenticated && !alreadyVerified ? user?.email : undefined,
+  );
   // A token works once. StrictMode runs this effect twice in development, and
   // the second attempt would fail and overwrite the first one's success.
   const attemptedTokenRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setErrorMessage('Verification token is missing.');
-      return;
-    }
+  const performVerification = useCallback(
+    async (linkToken: string) => {
+      setState('loading');
 
-    if (attemptedTokenRef.current === token) {
-      return;
-    }
-    attemptedTokenRef.current = token;
-
-    const performVerification = async () => {
       try {
-        await verifyEmail({ token });
+        await verifyEmail({ token: linkToken });
       } catch (error) {
-        setStatus('error');
-        setErrorMessage(
-          error instanceof Error ? error.message : 'Failed to verify your email address.',
-        );
+        setState(error instanceof ApiError && error.status === 401 ? 'spent' : 'failed');
         return;
       }
 
       if (!isAuthenticated) {
-        setStatus('success');
+        setState('verified');
         return;
       }
 
@@ -57,10 +68,18 @@ export function VerifyEmailPage() {
       // Or on to the vehicle a catalog page's "Track this vehicle" was for,
       // when the add-vehicle form has not used that intent yet.
       await navigate({ to: afterSignInDestination(), replace: true });
-    };
+    },
+    [isAuthenticated, navigate, refreshUser],
+  );
 
-    void performVerification();
-  }, [isAuthenticated, navigate, refreshUser, token]);
+  useEffect(() => {
+    if (!token || alreadyVerified || attemptedTokenRef.current === token) {
+      return;
+    }
+    attemptedTokenRef.current = token;
+
+    void performVerification(token);
+  }, [alreadyVerified, performVerification, token]);
 
   const alternateAction = isAuthenticated ? (
     <p>
@@ -70,10 +89,10 @@ export function VerifyEmailPage() {
       </Link>
     </p>
   ) : (
-    <AuthPageLink label="Login" text="Back to" to="/login" />
+    <AuthPageLink label="Sign in" text="Back to" to="/login" />
   );
 
-  if (status === 'loading') {
+  if (state === 'loading') {
     return (
       <AuthPageShell
         description="Verifying your email address..."
@@ -88,11 +107,15 @@ export function VerifyEmailPage() {
     );
   }
 
-  if (status === 'success') {
+  if (state === 'verified' || state === 'already') {
     return (
       <AuthPageShell
-        description="Your email has been verified. You can now access your garage."
-        title="Email Verified!"
+        description={
+          state === 'already'
+            ? 'Your email is already verified. There is nothing more to do.'
+            : 'Your email has been verified. You can now access your garage.'
+        }
+        title={state === 'already' ? 'Already verified' : 'Email Verified!'}
         alternateAction={alternateAction}
       >
         <div className="flex flex-col items-center py-4">
@@ -100,38 +123,91 @@ export function VerifyEmailPage() {
             <CheckCircle2 className="h-10 w-10 text-green-600" />
           </div>
 
-          <Link to="/login" className="w-full">
-            <Button className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
-              Continue to Login
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button
+            asChild
+            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isAuthenticated ? (
+              <Link to="/dashboard">
+                Continue to your garage
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <Link to="/login">
+                Continue to Login
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
+          </Button>
         </div>
       </AuthPageShell>
     );
   }
 
+  const failure = describeFailure(state, isAuthenticated);
+  const canResend = isAuthenticated && !alreadyVerified && state !== 'failed';
+
   return (
     <AuthPageShell
-      description={
-        isAuthenticated
-          ? `${errorMessage || 'The verification link may be invalid or expired.'} You can send yourself a fresh link from the app.`
-          : errorMessage || 'The verification link may be invalid or expired.'
-      }
-      title="Verification Failed"
+      description={failure.description}
+      title={failure.title}
       alternateAction={alternateAction}
     >
-      <div className="flex flex-col items-center py-4">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 ring-8 ring-red-50/50">
+      <div className="flex flex-col items-center gap-3 py-4">
+        <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 ring-8 ring-red-50/50">
           <XCircle className="h-10 w-10 text-red-600" />
         </div>
 
-        <Link to={isAuthenticated ? '/dashboard' : '/login'} className="w-full">
-          <Button variant="outline" className="w-full h-11 rounded-xl">
-            {isAuthenticated ? 'Back to your garage' : 'Back to Login'}
+        {state === 'failed' && token ? (
+          <Button
+            className="w-full h-11 rounded-xl"
+            onClick={() => void performVerification(token)}
+          >
+            Try again
           </Button>
-        </Link>
+        ) : null}
+
+        {canResend ? (
+          <Button
+            className="w-full h-11 rounded-xl"
+            disabled={isResending || hasSent || isUnavailable}
+            onClick={() => void resend()}
+          >
+            {isUnavailable
+              ? 'Email isn’t available yet'
+              : hasSent
+                ? 'New link sent'
+                : isResending
+                  ? 'Sending…'
+                  : 'Send a new link'}
+          </Button>
+        ) : null}
+
+        <Button asChild className="w-full h-11 rounded-xl" variant="outline">
+          {isAuthenticated ? (
+            <Link to="/dashboard">Continue to your garage</Link>
+          ) : (
+            <Link to="/login">Sign in</Link>
+          )}
+        </Button>
       </div>
     </AuthPageShell>
   );
+}
+
+function describeFailure(state: 'spent' | 'missing' | 'failed', isAuthenticated: boolean) {
+  if (state === 'failed') {
+    return {
+      title: 'We couldn’t verify your email',
+      description: 'Something went wrong on our side or with the connection. Try again.',
+    };
+  }
+
+  const next = isAuthenticated
+    ? 'Send yourself a new link, or carry on in the app for now.'
+    : 'If you already verified, just sign in. Otherwise sign in and send yourself a new link.';
+
+  return state === 'missing'
+    ? { title: 'This verification link is incomplete', description: next }
+    : { title: 'This link has expired or was already used', description: next };
 }
