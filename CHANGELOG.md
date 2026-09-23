@@ -1,3 +1,10 @@
+# [1.67.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.4...v1.67.0) (2026-09-23)
+
+
+### Features
+
+* **sharing:** invite links preview publicly and accept explicitly ([2b0246a](https://github.com/AtharvaCM/vehicle-vault/commit/2b0246ac4cc5b0ce13691321c1e3ab30338de569))
+
 ## [1.66.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.3...v1.66.4) (2026-09-23)
 
 
