@@ -1,3 +1,10 @@
+## [1.65.13](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.12...v1.65.13) (2026-09-23)
+
+
+### Bug Fixes
+
+* **reminders:** count the suggested schedule from the last logged service ([fe73860](https://github.com/AtharvaCM/vehicle-vault/commit/fe738606ccdbd58fecdeceb5b4e602586f93adfb))
+
 ## [1.65.12](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.11...v1.65.12) (2026-09-23)
 
 
