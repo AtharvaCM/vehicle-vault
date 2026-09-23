@@ -1,6 +1,7 @@
 import type { FieldNamesMarkedBoolean } from 'react-hook-form';
 
 import type { VehicleFormValues } from '../schemas/vehicle-form.schema';
+import type { UpdateVehicleInput } from '../types/vehicle';
 
 /**
  * Fields that resolve `catalogVariantId`. It isn't a form field react-hook-form
@@ -19,6 +20,13 @@ const CATALOG_LINKED_FIELDS: Array<keyof VehicleFormValues> = [
 ];
 
 /**
+ * Optional text fields the form resolves to `undefined` when left blank. On an
+ * edit, a dirty one that is blank was cleared on purpose and must go as `null`:
+ * `undefined` drops out of the JSON body, and the API keeps the old value.
+ */
+const CLEARABLE_TEXT_FIELDS = ['nickname', 'variant'] as const;
+
+/**
  * Trims a fully-validated vehicle form submission down to what an edit should
  * send: only the fields the owner actually changed, plus the catalog link
  * when one of the fields it depends on changed. Editing a vehicle sends this;
@@ -28,8 +36,8 @@ const CATALOG_LINKED_FIELDS: Array<keyof VehicleFormValues> = [
 export function buildVehicleUpdatePayload(
   values: VehicleFormValues,
   dirtyFields: Partial<Readonly<FieldNamesMarkedBoolean<VehicleFormValues>>>,
-): Partial<VehicleFormValues> {
-  const payload: Partial<VehicleFormValues> = {};
+): UpdateVehicleInput {
+  const payload: UpdateVehicleInput = {};
   // Widened for the assignment below: TypeScript can't correlate an arbitrary
   // `keyof VehicleFormValues` with the matching value type on both sides at
   // once, even though every key here does come from `values` itself.
@@ -38,6 +46,12 @@ export function buildVehicleUpdatePayload(
   for (const key of Object.keys(dirtyFields) as Array<keyof VehicleFormValues>) {
     if (dirtyFields[key]) {
       target[key] = values[key];
+    }
+  }
+
+  for (const field of CLEARABLE_TEXT_FIELDS) {
+    if (dirtyFields[field] && values[field] === undefined) {
+      payload[field] = null;
     }
   }
 
