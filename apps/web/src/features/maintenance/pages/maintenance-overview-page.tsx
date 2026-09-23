@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { ClipboardList, ReceiptText, TrendingUp, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -8,12 +7,13 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageHeader } from '@/components/shared/page-header';
 import { SectionCard } from '@/components/shared/section-card';
 import { StatCard } from '@/components/shared/stat-card';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { PageContainer } from '@/components/layout/page-container';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
+import { VehiclePickerDialog } from '@/features/vehicles/components/vehicle-picker-dialog';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import type { Vehicle } from '@/features/vehicles/types/vehicle';
 
@@ -173,14 +173,17 @@ export function MaintenanceOverviewPage({
     <PageContainer>
       <PageHeader
         actions={
-          <div className="flex flex-wrap gap-2">
-            <Link className={buttonVariants({ variant: 'outline' })} to="/vehicles">
-              Choose a vehicle
-            </Link>
-            <Link className={buttonVariants()} to="/vehicles">
-              Log maintenance
-            </Link>
-          </div>
+          <VehiclePickerDialog
+            buildLink={(vehicleId) => ({
+              to: '/vehicles/$vehicleId/maintenance/new',
+              params: { vehicleId },
+            })}
+            dialogDescription="Choose which vehicle this service is for."
+            dialogTitle="Log maintenance"
+            isLoading={vehiclesQuery.isPending}
+            triggerLabel="Log maintenance"
+            vehicles={vehicles}
+          />
         }
         description="Review service history across your garage, then open any entry for full details and receipts."
         title="Maintenance"
@@ -285,9 +288,18 @@ export function MaintenanceOverviewPage({
         >
           <EmptyState
             action={
-              <Link className={buttonVariants()} to="/vehicles">
-                Log maintenance from a vehicle
-              </Link>
+              <VehiclePickerDialog
+                addVehicleLabel="Add your first vehicle"
+                buildLink={(vehicleId) => ({
+                  to: '/vehicles/$vehicleId/maintenance/new',
+                  params: { vehicleId },
+                })}
+                dialogDescription="Choose which vehicle this service is for."
+                dialogTitle="Log maintenance"
+                isLoading={vehiclesQuery.isPending}
+                triggerLabel="Log maintenance from a vehicle"
+                vehicles={vehicles}
+              />
             }
             description="Your service entries will appear here once you log the first visit or repair."
             icon={ClipboardList}
