@@ -1,10 +1,14 @@
-import { Controller, Get, Header, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Header, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { isPublicCatalogSegment } from '@vehicle-vault/shared';
+import {
+  isPublicCatalogSegment,
+  PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
+} from '@vehicle-vault/shared';
 
 import { Public } from '../../common/auth/decorators/public.decorator';
 import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
+import { VariantPageBatchQueryDto } from './dto/variant-page-batch-query.dto';
 import { PublicCatalogService } from './public-catalog.service';
 
 /**
@@ -23,6 +27,27 @@ export const PUBLIC_CATALOG_CACHE_CONTROL = 'public, max-age=3600';
 @Controller('public-catalog')
 export class PublicCatalogController {
   constructor(private readonly publicCatalogService: PublicCatalogService) {}
+
+  @Get('index')
+  @RateLimit('catalog')
+  @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)
+  @ApiOperation({ summary: 'Every publishable variant, for the build-time prerender' })
+  async getIndex() {
+    return successResponse(await this.publicCatalogService.getIndex());
+  }
+
+  @Get('variant-pages')
+  @RateLimit('catalog')
+  @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)
+  @ApiOperation({ summary: 'Variant page payloads in bulk, a page at a time, in index order' })
+  async getVariantPageBatch(@Query() query: VariantPageBatchQueryDto) {
+    return successResponse(
+      await this.publicCatalogService.getVariantPageBatch({
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
+      }),
+    );
+  }
 
   @Get(':segment/:make/:model/:generation/:variant')
   @RateLimit('catalog')

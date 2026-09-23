@@ -132,3 +132,50 @@ export interface PublicCatalogVariantPage {
   /** ISO timestamp of the newest change to the variant, its offerings or specs. */
   updatedAt: string;
 }
+
+/** The public segment a vehicle type is listed under, or null for types with no public pages. */
+export function publicCatalogSegmentFor(vehicleType: VehicleType): PublicCatalogSegment | null {
+  for (const [segment, vehicleTypes] of Object.entries(PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES)) {
+    if (vehicleTypes.includes(vehicleType)) return segment as PublicCatalogSegment;
+  }
+  return null;
+}
+
+/**
+ * One publishable variant in the catalog index: enough to build its URL and
+ * breadcrumbs, and to date it, without its page payload.
+ */
+export interface PublicCatalogIndexEntry {
+  segment: PublicCatalogSegment;
+  vehicleType: VehicleType;
+  make: PublicCatalogNamedSlug;
+  model: PublicCatalogNamedSlug;
+  generation: PublicCatalogNamedSlug;
+  variant: PublicCatalogNamedSlug;
+  /** ISO timestamp of the newest change to the variant, its offerings or specs. */
+  updatedAt: string;
+}
+
+/**
+ * Every publishable make → model → generation → variant, flat, in one response.
+ * It is what the build-time prerender walks, so it is never paginated.
+ */
+export interface PublicCatalogIndex {
+  variants: PublicCatalogIndexEntry[];
+}
+
+/**
+ * The most variant page payloads one bulk request returns. The prerender reads
+ * every page at build time; one request per variant would run into the public
+ * catalog rate limit long before the catalog ran out.
+ */
+export const PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX = 200;
+
+/** One page of variant page payloads, in the same order as the index. */
+export interface PublicCatalogVariantPageBatch {
+  items: PublicCatalogVariantPage[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+}
