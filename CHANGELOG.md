@@ -1,3 +1,10 @@
+## [1.65.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.2...v1.65.3) (2026-09-23)
+
+
+### Bug Fixes
+
+* **attachments:** say a file is gone instead of "could not open" ([aec63de](https://github.com/AtharvaCM/vehicle-vault/commit/aec63de50df752d57c1effb2f1a5378b86ba8c6b))
+
 ## [1.65.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.1...v1.65.2) (2026-09-23)
 
 
