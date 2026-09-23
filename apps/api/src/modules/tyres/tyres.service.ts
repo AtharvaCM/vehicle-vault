@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditResourceType, Prisma } from '@prisma/client';
 import {
+  isTwoWheeler,
   TyreCreateSchema,
   TyreInspectionCreateSchema,
   TyrePosition,
   TyreUpdateSchema,
+  VehicleType,
   type CreateTyreInput,
   type CreateTyreInspectionInput,
   type Tyre,
@@ -30,6 +32,17 @@ type FittedTyreRow = Prisma.TyreGetPayload<{ include: { inspections: true } }>;
 
 /** How many readings feed the wear-rate projection. Older ones reflect a different driving pattern. */
 const WEAR_RATE_SAMPLE = 5;
+
+/** Corners that only exist on a four-wheeler; a two-wheeler has no left/right pair. */
+const FOUR_WHEEL_ONLY_POSITIONS = new Set<TyrePosition>([
+  TyrePosition.FrontLeft,
+  TyrePosition.FrontRight,
+  TyrePosition.RearLeft,
+  TyrePosition.RearRight,
+]);
+
+/** Positions that only exist on a two-wheeler. */
+const TWO_WHEEL_ONLY_POSITIONS = new Set<TyrePosition>([TyrePosition.Front, TyrePosition.Rear]);
 
 /** The last time anyone had eyes on a tyre, and the odometer when they did. */
 export interface TyreObservation {
@@ -77,9 +90,12 @@ export class TyresService {
 
   async createForVehicle(userId: string, vehicleId: string, payload: CreateTyreDto): Promise<Tyre> {
     await this.access.assertEditor(userId, vehicleId);
-    await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
+    // Already needed to confirm the vehicle exists, so checking the position
+    // against its type here costs no extra query.
+    const vehicle = await this.vehiclesService.ensureVehicleExists(userId, vehicleId);
 
     const input: CreateTyreInput = TyreCreateSchema.parse(payload);
+    this.assertPositionValidForVehicle(input.position, vehicle.vehicleType);
 
     // Fitting a tyre to an occupied corner retires whatever was there, so a
     // rotation or replacement does not leave two tyres claiming one position.
@@ -149,6 +165,14 @@ export class TyresService {
   async updateTyre(userId: string, tyreId: string, payload: UpdateTyreDto): Promise<Tyre> {
     const existing = await this.getOwnedTyre(userId, tyreId, 'editor');
     const input: UpdateTyreInput = TyreUpdateSchema.parse(payload);
+
+    // The web form never lets a position through on edit -- moving a tyre goes
+    // through the add path instead -- but the API contract still allows it, so
+    // a direct caller cannot move a tyre onto a corner its vehicle doesn't have.
+    if (input.position !== undefined) {
+      const vehicle = await this.vehiclesService.ensureVehicleExists(userId, existing.vehicleId);
+      this.assertPositionValidForVehicle(input.position, vehicle.vehicleType);
+    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const row = await tx.tyre.update({
@@ -363,6 +387,25 @@ export class TyresService {
     }
 
     return oldest;
+  }
+
+  /**
+   * A four-wheeler has no `front`/`rear` corner and a two-wheeler has no
+   * left/right pair, so a position from the wrong layout is not a valid
+   * fitment regardless of what the enum otherwise allows.
+   */
+  private assertPositionValidForVehicle(position: TyrePosition, vehicleType: VehicleType): void {
+    const twoWheeler = isTwoWheeler(vehicleType);
+
+    if (twoWheeler && FOUR_WHEEL_ONLY_POSITIONS.has(position)) {
+      throw new BadRequestException(
+        `Position "${position}" is not valid for a two-wheeler; use "front" or "rear"`,
+      );
+    }
+
+    if (!twoWheeler && TWO_WHEEL_ONLY_POSITIONS.has(position)) {
+      throw new BadRequestException(`Position "${position}" is only valid for a two-wheeler`);
+    }
   }
 
   private async getOwnedTyre(userId: string, tyreId: string, role: 'editor' | 'viewer') {
