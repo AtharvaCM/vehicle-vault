@@ -118,6 +118,58 @@ export function modelPageStructuredData(
   });
 }
 
+/** A named, absolute URL: one step of a breadcrumb trail, or one entry of a list. */
+export type StructuredDataLink = { name: string; url: string };
+
+/**
+ * schema.org `BreadcrumbList` for a trail from the browse page down to the
+ * page itself, each step's `item` absolute on the canonical origin.
+ */
+export function breadcrumbListStructuredData(trail: StructuredDataLink[]): JsonLd {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((step, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: step.name,
+      item: step.url,
+    })),
+  };
+}
+
+/** schema.org `ItemList` of the pages a make or browse page links to, in its order. */
+export function itemListStructuredData(name: string, items: StructuredDataLink[]): JsonLd {
+  return {
+    '@type': 'ItemList',
+    name,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+    })),
+  };
+}
+
+/**
+ * Several JSON-LD nodes as one document: an `@graph` under one `@context`, so
+ * a page keeps its single JSON-LD script however many things it describes (a
+ * `Car` and its `BreadcrumbList`, say).
+ */
+export function structuredDataGraph(nodes: JsonLd[]): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': nodes.map(({ '@context': _context, ...node }) => node),
+  };
+}
+
+/** A JSON-LD document's nodes: the `@graph`'s, or the document itself when it has none. */
+export function structuredDataNodes(data: JsonLd): JsonLd[] {
+  const graph = data['@graph'];
+  return Array.isArray(graph) ? (graph as JsonLd[]) : [data];
+}
+
 /**
  * JSON for inside a `<script type="application/ld+json">`: still valid JSON,
  * but with nothing that can close the element (`</script>`), open a comment

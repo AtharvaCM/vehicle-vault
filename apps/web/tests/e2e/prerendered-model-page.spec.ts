@@ -15,7 +15,21 @@ const CANONICAL_ORIGIN = (
 
 const HYDRATION_ERROR = /hydrat|did not match|#418|#423|#425/i;
 
-type SeededModel = { path: string; heading: string; firstVariant: string };
+type SeededModel = {
+  path: string;
+  makePath: string;
+  heading: string;
+  makeName: string;
+  modelName: string;
+  firstVariant: string;
+};
+
+type JsonLdNode = Record<string, unknown>;
+
+/** The nodes of a page's JSON-LD: its `@graph`, or the document itself. */
+function jsonLdNodes(data: JsonLdNode): JsonLdNode[] {
+  return Array.isArray(data['@graph']) ? (data['@graph'] as JsonLdNode[]) : [data];
+}
 
 async function seededCarModel(): Promise<SeededModel> {
   const model = await prisma.vehicleCatalogModel.findFirstOrThrow({
@@ -35,7 +49,10 @@ async function seededCarModel(): Promise<SeededModel> {
 
   return {
     path: `/cars/${model.make.slug}/${model.slug}`,
+    makePath: `/cars/${model.make.slug}`,
     heading: `${model.make.name} ${model.name}`,
+    makeName: model.make.name,
+    modelName: model.name,
     firstVariant: variants[0] ?? '',
   };
 }
@@ -104,10 +121,30 @@ test.describe('prerendered model page', () => {
       ...html.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/g),
     ];
     expect(scripts).toHaveLength(1);
-    expect(JSON.parse(scripts[0]?.[1] ?? 'null')).toMatchObject({
-      '@type': 'Car',
+    const data = JSON.parse(scripts[0]?.[1] ?? 'null') as JsonLdNode;
+    expect(data['@context']).toBe('https://schema.org');
+    const nodes = jsonLdNodes(data);
+    expect(nodes.find((node) => node['@type'] === 'Car')).toMatchObject({
       name: model.heading,
       url: `${CANONICAL_ORIGIN}${model.path}`,
+    });
+    expect(nodes.find((node) => node['@type'] === 'BreadcrumbList')).toEqual({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Cars', item: `${CANONICAL_ORIGIN}/cars` },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: model.makeName,
+          item: `${CANONICAL_ORIGIN}${model.makePath}`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: model.modelName,
+          item: `${CANONICAL_ORIGIN}${model.path}`,
+        },
+      ],
     });
   });
 
@@ -135,7 +172,10 @@ test.describe('prerendered model page', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: `${model.heading} ${model.firstVariant}` }),
     ).toBeVisible();
-    await page.getByRole('link', { name: `All ${model.heading} variants` }).click();
+    await page
+      .getByRole('navigation', { name: 'Breadcrumb' })
+      .getByRole('link', { name: model.modelName, exact: true })
+      .click();
     await expect(page.getByRole('heading', { level: 1, name: model.heading })).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href',

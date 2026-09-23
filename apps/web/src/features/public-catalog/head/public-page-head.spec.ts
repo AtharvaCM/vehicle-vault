@@ -13,7 +13,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { isPageIndexed, parseIndexingFlag, PUBLIC_CATALOG_INDEXING } from './indexing';
 import { CANONICAL_ORIGIN, renderHeadTags, variantPageHead } from './public-page-head';
-import { serializeStructuredData, STRUCTURED_DATA_ELEMENT_ID } from './structured-data';
+import {
+  serializeStructuredData,
+  STRUCTURED_DATA_ELEMENT_ID,
+  structuredDataNodes,
+  type JsonLd,
+} from './structured-data';
 import {
   APP_DEFAULT_HEAD,
   applyPublicPageHead,
@@ -138,6 +143,15 @@ describe('the indexing flag', () => {
   });
 });
 
+/** The page's `Car` or `Motorcycle` node, out of its JSON-LD graph. */
+function vehicleNode(data: JsonLd | null | undefined): JsonLd {
+  const node = structuredDataNodes(data ?? {}).find((entry) =>
+    ['Car', 'Motorcycle'].includes(String(entry['@type'])),
+  );
+  expect(node).toBeDefined();
+  return node ?? {};
+}
+
 describe('structured data', () => {
   const jsonLd = (html: string) => {
     const match = html.match(
@@ -146,7 +160,7 @@ describe('structured data', () => {
       ),
     );
     expect(match).not.toBeNull();
-    return JSON.parse(match?.[1] ?? 'null') as Record<string, unknown>;
+    return JSON.parse(match?.[1] ?? 'null') as JsonLd;
   };
 
   it('describes a car with its engine and claimed mileage', () => {
@@ -165,8 +179,7 @@ describe('structured data', () => {
       }),
     );
 
-    expect(jsonLd(renderHeadTags(head))).toEqual({
-      '@context': 'https://schema.org',
+    expect(vehicleNode(jsonLd(renderHeadTags(head)))).toEqual({
       '@type': 'Car',
       name: 'Hyundai i20 Asta',
       url: 'https://vehicle-vault.middle-earth.in/cars/hyundai/i20/i20-lineup/asta',
@@ -195,7 +208,7 @@ describe('structured data', () => {
       page({ segment: 'bikes', vehicleType: VehicleType.Motorcycle, specs: specs({}) }),
     );
 
-    expect(head.structuredData?.['@type']).toBe('Motorcycle');
+    expect(vehicleNode(head.structuredData)['@type']).toBe('Motorcycle');
   });
 
   it('gives an EV its motor, range and battery, and no fuel efficiency or tank', () => {
@@ -213,7 +226,7 @@ describe('structured data', () => {
         specs: specs({ motorKw: 110, powerPs: 150, rangeKm: 489, batteryKwh: 45 }),
       }),
     );
-    const data = head.structuredData ?? {};
+    const data = vehicleNode(head.structuredData);
 
     expect(data.fuelType).toBe('Electric');
     expect(data.vehicleEngine).toEqual({
@@ -231,7 +244,7 @@ describe('structured data', () => {
   });
 
   it('leaves out what the catalog does not know', () => {
-    const data = variantPageHead(page()).structuredData ?? {};
+    const data = vehicleNode(variantPageHead(page()).structuredData);
 
     expect(data).not.toHaveProperty('vehicleEngine');
     expect(data).not.toHaveProperty('fuelEfficiency');
@@ -239,7 +252,7 @@ describe('structured data', () => {
   });
 
   it('lists every fuel a variant is sold with', () => {
-    const data =
+    const data = vehicleNode(
       variantPageHead(
         page({
           offerings: [
@@ -251,7 +264,8 @@ describe('structured data', () => {
             },
           ],
         }),
-      ).structuredData ?? {};
+      ).structuredData,
+    );
 
     expect(data.fuelType).toEqual(['Petrol', 'CNG']);
   });
@@ -266,7 +280,56 @@ describe('structured data', () => {
     expect(script.endsWith('</script>')).toBe(true);
     expect(script).not.toContain('<!--');
     // Still valid JSON, and the name comes back exactly.
-    expect(jsonLd(html).vehicleConfiguration).toBe(name);
+    expect(vehicleNode(jsonLd(html)).vehicleConfiguration).toBe(name);
+  });
+
+  it('puts the Car and its breadcrumbs in one graph, under one context', () => {
+    const data = variantPageHead(page()).structuredData ?? {};
+
+    expect(data['@context']).toBe('https://schema.org');
+    expect(structuredDataNodes(data).map((node) => node['@type'])).toEqual([
+      'Car',
+      'BreadcrumbList',
+    ]);
+    expect(structuredDataNodes(data).some((node) => '@context' in node)).toBe(false);
+  });
+
+  it('gives a variant a BreadcrumbList from the browse page down to itself', () => {
+    const data = variantPageHead(page(), {
+      origin: 'https://catalog.example.test/',
+    }).structuredData;
+
+    expect(
+      structuredDataNodes(data ?? {}).find((node) => node['@type'] === 'BreadcrumbList'),
+    ).toEqual({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Cars',
+          item: 'https://catalog.example.test/cars',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Hyundai',
+          item: 'https://catalog.example.test/cars/hyundai',
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: 'i20',
+          item: 'https://catalog.example.test/cars/hyundai/i20',
+        },
+        {
+          '@type': 'ListItem',
+          position: 4,
+          name: 'Asta',
+          item: 'https://catalog.example.test/cars/hyundai/i20/i20-lineup/asta',
+        },
+      ],
+    });
   });
 
   it('serializes to JSON that parses back to the same data', () => {
@@ -337,8 +400,9 @@ describe('client head updates', () => {
     expect(document.head.querySelectorAll('meta[name="description"]')).toHaveLength(1);
     expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1);
     expect(
-      JSON.parse(document.getElementById(STRUCTURED_DATA_ELEMENT_ID)?.textContent ?? '{}')
-        .vehicleConfiguration,
+      vehicleNode(
+        JSON.parse(document.getElementById(STRUCTURED_DATA_ELEMENT_ID)?.textContent ?? '{}'),
+      ).vehicleConfiguration,
     ).toBe('Sportz');
     expect(canonical()).toBe(
       'https://vehicle-vault.middle-earth.in/cars/hyundai/i20/i20-lineup/sportz',

@@ -179,7 +179,10 @@ test.describe('public model page', () => {
     await expect(page).toHaveURL(new RegExp(`^[^?]*${model.path}/[^/]+/[^/]+$`));
     await expectNoSidewaysScroll(page);
 
-    await page.getByRole('link', { name: `All ${heading} variants` }).click();
+    await page
+      .getByRole('navigation', { name: 'Breadcrumb' })
+      .getByRole('link', { name: model.modelName, exact: true })
+      .click();
     await expect(page).toHaveURL(new RegExp(`${model.path}$`));
     await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
     await expect(page).toHaveTitle(new RegExp(`^${literal(heading)} — variants`));

@@ -75,6 +75,9 @@ export const queryKeys = {
       ] as const,
     model: (segment: string, make: string, model: string) =>
       [...queryKeys.publicCatalog.all(), 'model', segment, make, model] as const,
+    make: (segment: string, make: string) =>
+      [...queryKeys.publicCatalog.all(), 'make', segment, make] as const,
+    browse: (segment: string) => [...queryKeys.publicCatalog.all(), 'browse', segment] as const,
   },
   maintenance: {
     all: () => ['maintenance'] as const,

@@ -7,6 +7,7 @@ import { NotFoundScreen } from '@/components/errors/not-found-screen';
 import { ApiError } from '@/lib/api/api-error';
 
 import { usePublicModelPage, type PublicModelSlugs } from '../api/use-public-model-page';
+import { PublicCatalogBreadcrumbs } from '../components/public-catalog-breadcrumbs';
 import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
@@ -83,8 +84,8 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
   return (
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-model-page">
       <header>
-        <p className="text-sm font-medium text-slate-600">{page.make.name}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-4xl">
+        <PublicCatalogBreadcrumbs page={page} />
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-4xl">
           {modelName}
         </h1>
         <p className="mt-2 text-sm text-slate-600">{summary.join(' · ')}</p>

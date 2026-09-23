@@ -153,6 +153,49 @@ describe('PublicCatalogController', () => {
     expect(await errorsFor({ page: '0' })).toEqual(['page']);
   });
 
+  it('covers the browse and make pages', () => {
+    expect(handlers).toEqual(expect.arrayContaining(['getBrowsePage', 'getMakePage']));
+  });
+
+  it('declares the browse route after the fixed one-segment routes, so they keep their paths', () => {
+    const order = handlers.filter((name) =>
+      ['getIndex', 'getVariantPageBatch', 'getModelPageBatch', 'getBrowsePage'].includes(name),
+    );
+
+    expect(order.at(-1)).toBe('getBrowsePage');
+  });
+
+  it('is not found for a browse or make page outside cars or bikes, without a lookup', async () => {
+    const service = { getBrowsePage: vi.fn(), getMakePage: vi.fn() };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getBrowsePage('trucks')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.getMakePage('trucks', 'tata')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(service.getBrowsePage).not.toHaveBeenCalled();
+    expect(service.getMakePage).not.toHaveBeenCalled();
+  });
+
+  it('wraps the browse and make pages in the success envelope', async () => {
+    const service = {
+      getBrowsePage: vi.fn().mockResolvedValue({ segment: 'bikes', makes: [] }),
+      getMakePage: vi.fn().mockResolvedValue({ make: { slug: 'hyundai' } }),
+    };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getBrowsePage('bikes')).resolves.toEqual({
+      success: true,
+      data: { segment: 'bikes', makes: [] },
+    });
+    expect(service.getBrowsePage).toHaveBeenCalledWith('bikes');
+    await expect(controller.getMakePage('cars', 'hyundai')).resolves.toEqual({
+      success: true,
+      data: { make: { slug: 'hyundai' } },
+    });
+    expect(service.getMakePage).toHaveBeenCalledWith({ segment: 'cars', make: 'hyundai' });
+  });
+
   it('wraps the page in the success envelope', async () => {
     const service = { getVariantPage: vi.fn().mockResolvedValue({ variant: { slug: 'asta' } }) };
     const controller = new PublicCatalogController(service as never);

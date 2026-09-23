@@ -1,10 +1,18 @@
 import {
   APP_NAME,
   MaintenanceCategory,
+  type PublicCatalogBrowsePage,
+  type PublicCatalogMakePage,
   type PublicCatalogModelPage,
+  type PublicCatalogSegment,
   type PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
 
+import {
+  publicCatalogBreadcrumbs,
+  SEGMENT_NAMES,
+  type BreadcrumbSource,
+} from '../utils/breadcrumbs';
 import {
   describeInterval,
   describeModelScheduleBasis,
@@ -18,9 +26,12 @@ import {
 } from '../utils/format-public-catalog';
 import { isPageIndexed, PUBLIC_CATALOG_INDEXING } from './indexing';
 import {
+  breadcrumbListStructuredData,
+  itemListStructuredData,
   modelPageStructuredData,
   serializeStructuredData,
   STRUCTURED_DATA_ELEMENT_ID,
+  structuredDataGraph,
   variantPageStructuredData,
   type JsonLd,
 } from './structured-data';
@@ -61,6 +72,50 @@ type HeadOptions = {
 };
 
 type Slugged = { slug: string };
+
+/**
+ * Where a public catalog page lives, by its slugs: a browse page names only
+ * its segment, a make page its make, a model page its model, and a variant
+ * page its generation and variant too.
+ */
+export type PublicCatalogAddress =
+  | {
+      segment: PublicCatalogSegment;
+      make?: undefined;
+      model?: undefined;
+      generation?: undefined;
+      variant?: undefined;
+    }
+  | {
+      segment: PublicCatalogSegment;
+      make: string;
+      model?: undefined;
+      generation?: undefined;
+      variant?: undefined;
+    }
+  | {
+      segment: PublicCatalogSegment;
+      make: string;
+      model: string;
+      generation?: undefined;
+      variant?: undefined;
+    }
+  | {
+      segment: PublicCatalogSegment;
+      make: string;
+      model: string;
+      generation: string;
+      variant: string;
+    };
+
+/** `/cars`, `/cars/hyundai`, `/cars/hyundai/i20` or a variant's path: whatever the address names. */
+export function publicCatalogPath(address: PublicCatalogAddress) {
+  const { segment, make, model, generation, variant } = address;
+  return `/${[segment, make, model, generation, variant]
+    .filter((part): part is string => part !== undefined)
+    .map(encodeURIComponent)
+    .join('/')}`;
+}
 
 /** `/cars/{make}/{model}/{generation}/{variant}`, from a page payload or an index entry. */
 export function publicVariantPath(page: {
@@ -118,7 +173,10 @@ export function variantPageHead(
     canonicalUrl,
     imageUrl: `${base}/web-app-manifest-512x512.png`,
     robots: isPageIndexed(page, indexing) ? 'index, follow' : 'noindex',
-    structuredData: variantPageStructuredData(page, canonicalUrl),
+    structuredData: structuredDataGraph([
+      variantPageStructuredData(page, canonicalUrl),
+      breadcrumbListStructuredData(breadcrumbTrail(page, base)),
+    ]),
   };
 }
 
@@ -167,8 +225,108 @@ export function modelPageHead(
     canonicalUrl,
     imageUrl: `${base}/web-app-manifest-512x512.png`,
     robots: isPageIndexed(page, indexing) ? 'index, follow' : 'noindex',
-    structuredData: modelPageStructuredData(page, canonicalUrl),
+    structuredData: structuredDataGraph([
+      modelPageStructuredData(page, canonicalUrl),
+      breadcrumbListStructuredData(breadcrumbTrail(page, base)),
+    ]),
   };
+}
+
+const SEGMENT_NOUNS: Record<PublicCatalogSegment, string> = { cars: 'cars', bikes: 'bikes' };
+
+export function makePageTitle(page: PublicCatalogMakePage) {
+  return `${page.make.name} ${SEGMENT_NOUNS[page.segment]} — models, service schedules and specs | ${APP_NAME}`;
+}
+
+/** One line a link preview can show: the make's models, the first few by name. */
+export function makePageDescription(page: PublicCatalogMakePage) {
+  const count = page.models.length;
+  return `Service schedules, running costs and specs for ${count} ${page.make.name} ${
+    count === 1 ? 'model' : 'models'
+  }: ${listSome(page.models.map((model) => model.name))}. Pick a model for its variants.`;
+}
+
+export function makePageHead(
+  page: PublicCatalogMakePage,
+  { origin = CANONICAL_ORIGIN, indexing = PUBLIC_CATALOG_INDEXING }: HeadOptions = {},
+): PublicPageHead {
+  const base = normalizeOrigin(origin);
+  const canonicalUrl = `${base}${publicCatalogPath({ segment: page.segment, make: page.make.slug })}`;
+  const models = page.models.map((model) => ({
+    name: `${page.make.name} ${model.name}`,
+    url: `${base}${publicCatalogPath({ segment: page.segment, make: page.make.slug, model: model.slug })}`,
+  }));
+
+  return {
+    title: makePageTitle(page),
+    description: makePageDescription(page),
+    canonicalUrl,
+    imageUrl: `${base}/web-app-manifest-512x512.png`,
+    robots: isPageIndexed(page, indexing) ? 'index, follow' : 'noindex',
+    structuredData: structuredDataGraph([
+      itemListStructuredData(`${page.make.name} ${SEGMENT_NOUNS[page.segment]}`, models),
+      breadcrumbListStructuredData(breadcrumbTrail(page, base)),
+    ]),
+  };
+}
+
+export function browsePageTitle(page: PublicCatalogBrowsePage) {
+  return `${SEGMENT_NAMES[page.segment]} by make — models, service schedules and specs | ${APP_NAME}`;
+}
+
+/** One line a link preview can show: how many makes, and the first few by name. */
+export function browsePageDescription(page: PublicCatalogBrowsePage) {
+  const count = page.makes.length;
+  const noun = SEGMENT_NOUNS[page.segment];
+  if (count === 0) return `Service schedules, running costs and specs for ${noun} sold in India.`;
+  return `Service schedules, running costs and specs for ${noun} from ${count} ${
+    count === 1 ? 'make' : 'makes'
+  } sold in India: ${listSome(page.makes.map((make) => make.name))}.`;
+}
+
+/**
+ * A browse page is indexed whenever indexing is on and it lists anything: it
+ * is the way in to every make, so the page-quality gate does not judge it.
+ */
+export function browsePageHead(
+  page: PublicCatalogBrowsePage,
+  { origin = CANONICAL_ORIGIN, indexing = PUBLIC_CATALOG_INDEXING }: HeadOptions = {},
+): PublicPageHead {
+  const base = normalizeOrigin(origin);
+  const canonicalUrl = `${base}${publicCatalogPath({ segment: page.segment })}`;
+  const makes = page.makes.map((make) => ({
+    name: make.name,
+    url: `${base}${publicCatalogPath({ segment: page.segment, make: make.slug })}`,
+  }));
+
+  return {
+    title: browsePageTitle(page),
+    description: browsePageDescription(page),
+    canonicalUrl,
+    imageUrl: `${base}/web-app-manifest-512x512.png`,
+    robots: isPageIndexed({ indexable: page.makes.length > 0 }, indexing)
+      ? 'index, follow'
+      : 'noindex',
+    structuredData: {
+      '@context': 'https://schema.org',
+      ...itemListStructuredData(`${SEGMENT_NAMES[page.segment]} by make`, makes),
+    },
+  };
+}
+
+/** The page's breadcrumbs as named absolute URLs, for its `BreadcrumbList`. */
+function breadcrumbTrail(page: BreadcrumbSource, base: string) {
+  return publicCatalogBreadcrumbs(page).map((crumb) => ({
+    name: crumb.name,
+    url: `${base}${publicCatalogPath(crumb.address)}`,
+  }));
+}
+
+/** "A, B and C", or "A, B, C and 9 more" past three. */
+function listSome(names: string[], shown = 3) {
+  if (names.length <= 1) return names.join('');
+  if (names.length <= shown) return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  return `${names.slice(0, shown).join(', ')} and ${names.length - shown} more`;
 }
 
 /**

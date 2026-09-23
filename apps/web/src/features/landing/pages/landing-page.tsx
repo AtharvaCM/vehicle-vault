@@ -133,6 +133,27 @@ export function LandingPage() {
           ))}
         </section>
 
+        <section
+          aria-labelledby="catalog-heading"
+          className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24"
+        >
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950" id="catalog-heading">
+            Look up a car or bike
+          </h2>
+          <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
+            Its service schedule, a running-cost estimate and its specs, by make and model. No
+            account needed.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" variant="outline">
+              <Link to="/cars">Browse cars</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/bikes">Browse bikes</Link>
+            </Button>
+          </div>
+        </section>
+
         <section className="border-t border-slate-200 bg-white">
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
             <p className="max-w-3xl text-lg leading-8 text-slate-700">

@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import {
+  buildPublicCatalogBrowsePage,
+  buildPublicCatalogMakePage,
   DEFAULT_VEHICLE_CATALOG_MARKET,
   FuelType,
   PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES,
   publicCatalogSegmentFor,
   type MaintenanceCategory,
+  type PublicCatalogBrowsePage,
   type PublicCatalogIndex,
   type PublicCatalogIndexEntry,
+  type PublicCatalogMakePage,
   type PublicCatalogModelGeneration,
   type PublicCatalogModelPage,
   type PublicCatalogModelPageBatch,
@@ -134,6 +138,11 @@ export type PublicVariantSlugs = {
   variant: string;
 };
 
+export type PublicMakeSlugs = {
+  segment: PublicCatalogSegment;
+  make: string;
+};
+
 export type PublicModelSlugs = {
   segment: PublicCatalogSegment;
   make: string;
@@ -198,8 +207,59 @@ export class PublicCatalogService {
    * walks it to decide which pages to write and which go in the sitemap.
    */
   async getIndex(): Promise<PublicCatalogIndex> {
+    return { variants: await this.indexEntries(PUBLISHABLE_VARIANT_WHERE) };
+  }
+
+  /**
+   * The browse page at `/{segment}`: every make with a public page there. Built
+   * from the segment's index entries by the same function the web build's
+   * prerender runs over the whole index, so the two cannot disagree.
+   */
+  async getBrowsePage(segment: PublicCatalogSegment): Promise<PublicCatalogBrowsePage> {
+    const entries = await this.indexEntries({
+      ...PUBLISHABLE_VARIANT_WHERE,
+      generation: {
+        model: {
+          make: {
+            marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+            vehicleType: { in: PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES[segment] },
+          },
+        },
+      },
+    });
+    return buildPublicCatalogBrowsePage(entries, segment);
+  }
+
+  /**
+   * The make page at `/{segment}/{make}`: its models, from every make row with
+   * that slug in the segment (Hyundai is a car and an SUV make with one slug).
+   */
+  async getMakePage(slugs: PublicMakeSlugs): Promise<PublicCatalogMakePage> {
+    const entries = await this.indexEntries({
+      ...PUBLISHABLE_VARIANT_WHERE,
+      generation: {
+        model: {
+          make: {
+            slug: slugs.make,
+            marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+            vehicleType: { in: PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES[slugs.segment] },
+          },
+        },
+      },
+    });
+    const page = buildPublicCatalogMakePage(entries, slugs.segment, slugs.make);
+    if (!page) {
+      throw new NotFoundException('No public catalog page at this address.');
+    }
+    return page;
+  }
+
+  /** Index entries for the publishable variants `where` picks, in index order. */
+  private async indexEntries(
+    where: Prisma.VehicleCatalogVariantWhereInput,
+  ): Promise<PublicCatalogIndexEntry[]> {
     const variants = await this.prisma.vehicleCatalogVariant.findMany({
-      where: PUBLISHABLE_VARIANT_WHERE,
+      where,
       orderBy: PUBLISHABLE_VARIANT_ORDER,
       select: {
         name: true,
@@ -243,7 +303,8 @@ export class PublicCatalogService {
       if (!segment) continue;
 
       const specs = variant.spec ? pickPublicSpec(variant.spec as unknown as SpecRow) : null;
-      const fuelType = primaryFuelType(sortOfferings(variant.offerings));
+      const offerings = sortOfferings(variant.offerings);
+      const fuelType = primaryFuelType(offerings);
 
       entries.push({
         segment,
@@ -252,6 +313,7 @@ export class PublicCatalogService {
         model: { name: model.name, slug: model.slug },
         generation: { name: generation.name, slug: generation.slug },
         variant: { name: variant.name, slug: variant.slug },
+        ...offeringSpan(offerings),
         indexable: evaluateVariantPageQuality({ fuelType, specs }).indexable,
         updatedAt: newest([
           variant.updatedAt,
@@ -261,7 +323,7 @@ export class PublicCatalogService {
       });
     }
 
-    return { variants: entries };
+    return entries;
   }
 
   /**
@@ -663,18 +725,30 @@ function isOnSale(variant: ModelPageVariant) {
 }
 
 function toModelVariant(variant: ModelPageVariant): PublicCatalogModelVariant {
-  const { offerings } = variant;
-  const isCurrent = isOnSale(variant);
-  const starts = offerings.flatMap((offering) => offering.yearStart ?? []);
-  const ends = offerings.flatMap((offering) => offering.yearEnd ?? []);
-
   return {
     name: variant.row.name,
     slug: variant.row.slug,
-    fuelTypes: [...new Set(offerings.flatMap((offering) => offering.fuelTypes))] as FuelType[],
+    ...offeringSpan(variant.offerings),
+    transmission: variant.specs?.transmission ?? null,
+  };
+}
+
+/**
+ * What a variant's offerings add up to, newest first: its fuels (the newest
+ * offering's first), its first and last years, and whether it is on sale. A
+ * model page's variant list and each index entry say the same.
+ */
+function offeringSpan(sortedOfferings: OfferingRow[]) {
+  const isCurrent = sortedOfferings.some((offering) => offering.isCurrent);
+  const starts = sortedOfferings.flatMap((offering) => offering.yearStart ?? []);
+  const ends = sortedOfferings.flatMap((offering) => offering.yearEnd ?? []);
+
+  return {
+    fuelTypes: [
+      ...new Set(sortedOfferings.flatMap((offering) => offering.fuelTypes)),
+    ] as FuelType[],
     yearStart: starts.length > 0 ? Math.min(...starts) : null,
     yearEnd: isCurrent || ends.length === 0 ? null : Math.max(...ends),
     isCurrent,
-    transmission: variant.specs?.transmission ?? null,
   };
 }

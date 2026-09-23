@@ -66,3 +66,61 @@ export const bikesModelRoute = createRoute({
     return <PublicModelRoutePage slugs={{ segment: 'bikes', ...params }} />;
   },
 });
+
+const PublicMakeRoutePage = createLazyPage(
+  () =>
+    import('@/features/public-catalog/pages/public-make-page').then((module) => ({
+      default: module.PublicMakeRoutePage,
+    })),
+  {
+    title: 'Loading',
+    description: 'Loading the models.',
+  },
+);
+
+/** A make page: its models, on sale first, merged across its make rows. */
+export const carsMakeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'cars/$make',
+  component: function CarsMakeRoute() {
+    const params = carsMakeRoute.useParams();
+    return <PublicMakeRoutePage slugs={{ segment: 'cars', ...params }} />;
+  },
+});
+
+export const bikesMakeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'bikes/$make',
+  component: function BikesMakeRoute() {
+    const params = bikesMakeRoute.useParams();
+    return <PublicMakeRoutePage slugs={{ segment: 'bikes', ...params }} />;
+  },
+});
+
+const PublicBrowseRoutePage = createLazyPage(
+  () =>
+    import('@/features/public-catalog/pages/public-browse-page').then((module) => ({
+      default: module.PublicBrowseRoutePage,
+    })),
+  {
+    title: 'Loading',
+    description: 'Loading the makes.',
+  },
+);
+
+/** A browse page: every make with public pages in the segment. */
+export const carsBrowseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'cars',
+  component: function CarsBrowseRoute() {
+    return <PublicBrowseRoutePage segment="cars" />;
+  },
+});
+
+export const bikesBrowseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'bikes',
+  component: function BikesBrowseRoute() {
+    return <PublicBrowseRoutePage segment="bikes" />;
+  },
+});
