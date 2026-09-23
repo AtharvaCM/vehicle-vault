@@ -1,3 +1,10 @@
+## [1.65.6](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.5...v1.65.6) (2026-09-23)
+
+
+### Bug Fixes
+
+* **dashboard:** use one definition of needs attention everywhere ([59b2bce](https://github.com/AtharvaCM/vehicle-vault/commit/59b2bce75c96541665f030fc3e6b6551b413fe6b))
+
 ## [1.65.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.4...v1.65.5) (2026-09-23)
 
 
