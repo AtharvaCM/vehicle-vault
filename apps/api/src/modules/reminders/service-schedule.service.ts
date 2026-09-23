@@ -6,6 +6,7 @@ import {
 } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  isTwoWheeler,
   FuelType,
   MaintenanceRecordStatus,
   ReminderStatus,
@@ -292,6 +293,11 @@ export class ServiceScheduleService {
    * Catalog items for this vehicle, with generic intervals replaced by
    * per-variant `ServiceInterval` data when the vehicle is linked to a
    * catalog variant. Curated defaults stay untouched otherwise.
+   *
+   * The curated catalog is written for cars, so a two-wheeler takes every
+   * interval from the resolver's two-wheeler table instead, and loses any item
+   * the resolver says does not apply to it — tyre rotation always, chain and
+   * coolant unless its spec says chain drive or liquid cooling.
    */
   private async itemsForVehicle(
     vehicle: IntervalVehicleShape & { fuelType: string; vehicleType: string },
@@ -300,18 +306,22 @@ export class ServiceScheduleService {
       vehicle.fuelType as FuelType,
       vehicle.vehicleType as VehicleType,
     );
-    if (!vehicle.catalogVariantId) return items;
+    const twoWheeler = isTwoWheeler(vehicle.vehicleType as VehicleType);
+    if (!vehicle.catalogVariantId && !twoWheeler) return items;
 
     const intervals = await this.intervalResolver.resolveForVehicle(vehicle);
-    return items.map((item) => {
-      if (!item.category) return item;
+    return items.flatMap((item) => {
+      if (!item.category) return [item];
       const resolved = intervals[item.category];
-      if (!resolved || resolved.source !== 'variant') return item;
-      return {
-        ...item,
-        intervalKm: resolved.km ?? item.intervalKm,
-        intervalMonths: resolved.months ?? item.intervalMonths,
-      };
+      if (!resolved) return twoWheeler ? [] : [item];
+      if (resolved.source !== 'variant' && !twoWheeler) return [item];
+      return [
+        {
+          ...item,
+          intervalKm: resolved.km ?? item.intervalKm,
+          intervalMonths: resolved.months ?? item.intervalMonths,
+        },
+      ];
     });
   }
 

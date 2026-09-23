@@ -36,6 +36,8 @@ function petrolCar(overrides: Partial<OwnershipCostInput> = {}): OwnershipCostIn
     efficiency: 20,
     energyPrice: 100,
     serviceCostPerVisit: 6000,
+    // 12,000 km a year against the 10,000 km interval: 1.2 visits.
+    servicesPerYear: 1.2,
     ...overrides,
   };
 }
@@ -51,6 +53,7 @@ function electricCar(overrides: Partial<OwnershipCostInput> = {}): OwnershipCost
     efficiency: 12,
     energyPrice: 8,
     serviceCostPerVisit: 3000,
+    servicesPerYear: 1.2,
     ...overrides,
   };
 }
@@ -171,37 +174,43 @@ describe('estimateOwnershipCost — electric', () => {
 });
 
 describe('estimateOwnershipCost — service visits from the interval', () => {
-  it('counts visits by distance when that limit comes first', () => {
+  it('lets a visitor override the computed visits a year directly', () => {
     const estimate = expectEstimate(
-      estimateOwnershipCost(petrolCar({ kmPerMonth: 2500, serviceCostPerVisit: 1000 })),
+      estimateOwnershipCost(petrolCar({ servicesPerYear: 3, serviceCostPerVisit: 1000 })),
     );
 
-    // 30,000 km a year against 10,000 km: 3 visits, more than the 1 a year by time.
     expect(estimate.serviceVisitsPerYear).toBe(3);
     expect(estimate.perYear.service).toBe(3000);
+    expect(estimate.defaulted).not.toContain('servicesPerYear');
   });
 
-  it('counts visits by time when that limit comes first', () => {
+  it('defaults the visits a year from a time-dominant interval', () => {
     const estimate = expectEstimate(
-      estimateOwnershipCost(petrolCar({ kmPerMonth: 200, serviceCostPerVisit: 1000 })),
+      estimateOwnershipCost(
+        petrolCar({ serviceInterval: { km: 50000, months: 6 }, servicesPerYear: undefined }),
+      ),
     );
 
-    // 2,400 km a year is 0.24 visits by distance, but it still needs its yearly service.
-    expect(estimate.serviceVisitsPerYear).toBe(1);
-    expect(estimate.perYear.service).toBe(1000);
+    // 12,000 typical km a year is 0.24 visits by distance; the 6-month limit wins.
+    expect(estimate.serviceVisitsPerYear).toBe(2);
   });
 
   it('uses a distance-only interval', () => {
     const estimate = expectEstimate(
-      estimateOwnershipCost(petrolCar({ serviceInterval: { km: 5000, months: null } })),
+      estimateOwnershipCost(
+        petrolCar({ serviceInterval: { km: 5000, months: null }, servicesPerYear: undefined }),
+      ),
     );
 
     expect(estimate.serviceVisitsPerYear).toBeCloseTo(2.4);
+    expect(estimate.defaulted).toContain('servicesPerYear');
   });
 
   it('uses a time-only interval', () => {
     const estimate = expectEstimate(
-      estimateOwnershipCost(petrolCar({ serviceInterval: { km: null, months: 6 } })),
+      estimateOwnershipCost(
+        petrolCar({ serviceInterval: { km: null, months: 6 }, servicesPerYear: undefined }),
+      ),
     );
 
     expect(estimate.serviceVisitsPerYear).toBe(2);
@@ -300,6 +309,7 @@ describe('estimateOwnershipCost — defaulted inputs', () => {
       'efficiency',
       'energyPrice',
       'serviceCostPerVisit',
+      'servicesPerYear',
     ]);
     expect(estimate.inputs).toEqual({
       kmPerMonth: DEFAULT_KM_PER_MONTH[VehicleType.Car],
@@ -307,6 +317,8 @@ describe('estimateOwnershipCost — defaulted inputs', () => {
       efficiency: 18.5,
       energyPrice: DEFAULT_ENERGY_PRICE_INR[FuelType.Petrol],
       serviceCostPerVisit: DEFAULT_SERVICE_COST_PER_VISIT_INR[VehicleType.Car],
+      // 12,000 km a year (the car default) against the 10,000 km interval.
+      servicesPerYear: 1.2,
       onRoadPrice: null,
       serviceInterval: EVERY_10K_OR_12_MONTHS,
     });
@@ -337,6 +349,8 @@ describe('estimateOwnershipCost — defaulted inputs', () => {
       efficiency: 45,
       energyPrice: DEFAULT_ENERGY_PRICE_INR[FuelType.Petrol],
       serviceCostPerVisit: DEFAULT_SERVICE_COST_PER_VISIT_INR[VehicleType.Motorcycle],
+      // No serviceInterval was given, so there's nothing to derive a count from.
+      servicesPerYear: null,
     });
     expect(dieselSuv.energyPrice).toBe(DEFAULT_ENERGY_PRICE_INR[FuelType.Diesel]);
     expect(dieselSuv.serviceCostPerVisit).toBe(DEFAULT_SERVICE_COST_PER_VISIT_INR[VehicleType.SUV]);

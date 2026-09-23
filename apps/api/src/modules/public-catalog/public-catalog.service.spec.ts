@@ -120,6 +120,7 @@ describe('PublicCatalogService', () => {
     vehicleCatalogVariant: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn() },
     vehicleCatalogModel: { findMany: vi.fn() },
     serviceInterval: { findMany: vi.fn() },
+    vehicleCatalogVariantSpec: { findUnique: vi.fn() },
   };
 
   let service: PublicCatalogService;
@@ -127,6 +128,7 @@ describe('PublicCatalogService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prisma.serviceInterval.findMany.mockResolvedValue([]);
+    prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValue(null);
     prisma.vehicleCatalogVariant.findFirst.mockResolvedValue(variantRow());
     service = new PublicCatalogService(
       prisma as never,
@@ -297,16 +299,48 @@ describe('PublicCatalogService', () => {
       });
     });
 
-    it('gives a motorcycle chain service and no timing belt', async () => {
+    it('gives a chain-drive motorcycle chain service and no timing belt, tyre rotation or alignment', async () => {
       const row = variantRow();
       row.generation.model.make.vehicleType = 'motorcycle';
       prisma.vehicleCatalogVariant.findFirst.mockResolvedValue(row);
+      prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValue({
+        transmission: '5 Speed',
+        driveType: 'Chain',
+        coolingType: 'air-cooled',
+      });
 
       const page = await service.getVariantPage({ ...slugs, segment: 'bikes' });
       const categories = page.schedule.items.map((item) => item.category);
 
       expect(categories).toContain(MaintenanceCategory.ChainService);
       expect(categories).not.toContain(MaintenanceCategory.TimingBelt);
+      expect(categories).not.toContain(MaintenanceCategory.TyreRotation);
+      expect(categories).not.toContain(MaintenanceCategory.WheelAlignment);
+    });
+
+    it('gives a TVS-Jupiter-shaped scooter no chain service, coolant, tyre rotation or alignment', async () => {
+      const row = variantRow();
+      row.generation.model.make.vehicleType = 'motorcycle';
+      prisma.vehicleCatalogVariant.findFirst.mockResolvedValue(row);
+      prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValue({
+        transmission: 'CVT',
+        driveType: null,
+        coolingType: 'air-cooled',
+      });
+
+      const page = await service.getVariantPage({ ...slugs, segment: 'bikes' });
+      const categories = page.schedule.items.map((item) => item.category);
+
+      expect(categories).not.toContain(MaintenanceCategory.ChainService);
+      expect(categories).not.toContain(MaintenanceCategory.Coolant);
+      expect(categories).not.toContain(MaintenanceCategory.TyreRotation);
+      expect(categories).not.toContain(MaintenanceCategory.WheelAlignment);
+      expect(page.schedule.items).toContainEqual({
+        category: MaintenanceCategory.PeriodicService,
+        km: 3000,
+        months: 6,
+        source: 'default',
+      });
     });
 
     it('seeds the calculator with the claimed combined mileage for a combustion variant', async () => {

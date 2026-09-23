@@ -1,3 +1,16 @@
+# [1.69.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.68.0...v1.69.0) (2026-09-23)
+
+
+### Bug Fixes
+
+* **catalog:** give two-wheelers their own maintenance interval defaults ([ac430f6](https://github.com/AtharvaCM/vehicle-vault/commit/ac430f66b8842d7eb31a6eaca52aab95104b554a))
+* **reminders:** give two-wheelers the two-wheeler schedule in the suggestions panel ([127dd2e](https://github.com/AtharvaCM/vehicle-vault/commit/127dd2e0efde03aa02daa514d72c2de5a1568249))
+
+
+### Features
+
+* **catalog:** expose services-per-year as an editable calculator assumption ([a908f43](https://github.com/AtharvaCM/vehicle-vault/commit/a908f431ae16b4cb3e3efb33543719de00c4642a))
+
 # [1.68.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.67.0...v1.68.0) (2026-09-23)
 
 

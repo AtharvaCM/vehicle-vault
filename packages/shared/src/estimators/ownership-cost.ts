@@ -77,6 +77,8 @@ export const OWNERSHIP_COST_LIMITS = {
   onRoadPrice: { min: 1, max: 100_000_000 },
   serviceIntervalKm: { min: 100, max: 1_000_000 },
   serviceIntervalMonths: { min: 1, max: 240 },
+  /** Fractional so a two-year interval (0.5 a year) is still enterable. */
+  servicesPerYear: { min: 0.1, max: 24 },
 } as const;
 
 /** How the vehicle turns money into distance. */
@@ -116,6 +118,7 @@ export type OwnershipCostVisitorField =
   | 'efficiency'
   | 'energyPrice'
   | 'serviceCostPerVisit'
+  | 'servicesPerYear'
   | 'onRoadPrice';
 
 /** Every input an estimate can be refused over. */
@@ -147,6 +150,14 @@ export interface OwnershipCostInput {
   /** Rupees per litre, kg or kWh. */
   energyPrice?: number | null;
   serviceCostPerVisit?: number | null;
+  /**
+   * How many periodic services a year the visitor expects, overriding the
+   * count `serviceInterval` would otherwise imply. Left alone, it defaults to
+   * that implied count at a typical distance for the vehicle type — not to
+   * whatever `kmPerMonth` is given, so it reads the same whether or not the
+   * visitor has touched other fields.
+   */
+  servicesPerYear?: number | null;
   onRoadPrice?: number | null;
 }
 
@@ -171,6 +182,7 @@ export interface OwnershipCostEstimate {
     efficiency: number;
     energyPrice: number;
     serviceCostPerVisit: number;
+    servicesPerYear: number;
     onRoadPrice: number | null;
     serviceInterval: { km: number | null; months: number | null };
   };
@@ -221,7 +233,9 @@ export function claimedEfficiency(
 
 /** What each input falls back to for this vehicle when the visitor leaves it alone. */
 export function ownershipCostDefaults(
-  input: Pick<OwnershipCostInput, 'fuelType' | 'vehicleType' | 'claimed'>,
+  input: Pick<OwnershipCostInput, 'fuelType' | 'vehicleType' | 'claimed'> & {
+    serviceInterval?: OwnershipCostInput['serviceInterval'];
+  },
 ): OwnershipCostDefaults {
   return {
     kmPerMonth: DEFAULT_KM_PER_MONTH[input.vehicleType] ?? null,
@@ -229,7 +243,27 @@ export function ownershipCostDefaults(
     efficiency: claimedEfficiency(input.fuelType, input.claimed),
     energyPrice: DEFAULT_ENERGY_PRICE_INR[input.fuelType] ?? null,
     serviceCostPerVisit: DEFAULT_SERVICE_COST_PER_VISIT_INR[input.vehicleType] ?? null,
+    servicesPerYear: defaultServicesPerYear(input.vehicleType, input.serviceInterval ?? null),
   };
+}
+
+/**
+ * How many services a year `serviceInterval` implies, at a typical monthly
+ * distance for the vehicle type — not the visitor's own distance, so this
+ * reads the same regardless of what else they've entered, like every other
+ * assumed figure. Null when there's no interval to work from.
+ */
+function defaultServicesPerYear(
+  vehicleType: VehicleType,
+  serviceInterval: OwnershipCostInput['serviceInterval'] | undefined,
+): number | null {
+  if (!serviceInterval) return null;
+  const { km, months } = serviceInterval;
+  const typicalKmPerMonth = DEFAULT_KM_PER_MONTH[vehicleType] ?? null;
+  const visitsByDistance = km && typicalKmPerMonth ? (typicalKmPerMonth * 12) / km : 0;
+  const visitsByTime = months ? 12 / months : 0;
+  const visits = Math.max(visitsByDistance, visitsByTime);
+  return visits > 0 ? Math.round(visits * 100) / 100 : null;
 }
 
 export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostResult {
@@ -267,6 +301,25 @@ export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostR
     OWNERSHIP_COST_LIMITS.serviceCostPerVisit,
   );
 
+  // Not run through `take()`: its default isn't in `defaults` to be range-
+  // checked against (a malformed serviceInterval already reports its own
+  // problem below), only a visitor-given figure is. Left alone, it falls
+  // back to what the interval implies at a typical distance.
+  let serviceVisitsPerYear: number;
+  if (input.servicesPerYear !== undefined) {
+    const checked = check(
+      'servicesPerYear',
+      input.servicesPerYear,
+      OWNERSHIP_COST_LIMITS.servicesPerYear,
+      problems,
+    );
+    serviceVisitsPerYear = checked ?? 0;
+  } else {
+    const defaultVisits = defaults.servicesPerYear;
+    if (defaultVisits !== null) defaulted.push('servicesPerYear');
+    serviceVisitsPerYear = defaultVisits ?? 0;
+  }
+
   // A blank or absent on-road price leaves the purchase out; a given one must make sense.
   const onRoadPrice =
     input.onRoadPrice === undefined || input.onRoadPrice === null
@@ -279,16 +332,11 @@ export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostR
     return { kind: 'cannot-estimate', problems };
   }
 
-  const kmPerYear = kmPerMonth * 12;
   const energyPerMonth =
     units.kind === 'electric'
       ? ((kmPerMonth * efficiency) / 100) * energyPrice
       : (kmPerMonth / efficiency) * energyPrice;
 
-  // "Whichever comes first": the service falls due as often as the more frequent limit.
-  const visitsByDistance = serviceInterval.km ? kmPerYear / serviceInterval.km : 0;
-  const visitsByTime = serviceInterval.months ? 12 / serviceInterval.months : 0;
-  const serviceVisitsPerYear = Math.max(visitsByDistance, visitsByTime);
   const servicePerYear = serviceVisitsPerYear * serviceCostPerVisit;
 
   const months = years * 12;
@@ -302,6 +350,7 @@ export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostR
       efficiency,
       energyPrice,
       serviceCostPerVisit,
+      servicesPerYear: serviceVisitsPerYear,
       onRoadPrice,
       serviceInterval,
     },

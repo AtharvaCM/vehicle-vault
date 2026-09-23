@@ -95,6 +95,28 @@ describe('RunningCostCalculator', () => {
     expect(screen.getByLabelText('On-road price (optional)')).toHaveValue('');
   });
 
+  it('shows services per year as an assumed, editable figure derived from the schedule', () => {
+    render(<RunningCostCalculator page={variantPage()} />);
+
+    // 12,000 km a year (the car default) against the 10,000 km periodic-service interval.
+    expect(screen.getByLabelText('Services per year')).toHaveValue('1.2');
+    expect(screen.getByLabelText('Services per year')).toHaveAccessibleDescription(
+      /Assumed · what the schedule’s regular service interval implies/,
+    );
+
+    type('Services per year', '4');
+
+    // 1,000 km ÷ 25 km/L × ₹103 = ₹4,120 of fuel; 4 services a year at ₹5,000 = ₹1,66,667/12.
+    expect(within(period('Per month')).getByText('Service').nextSibling).toHaveTextContent(
+      '₹1,667',
+    );
+    expect(within(period('Per year')).getByText('Service').nextSibling).toHaveTextContent(
+      '₹20,000',
+    );
+    expect(screen.getByLabelText('Services per year')).toHaveAccessibleDescription(/Your figure/);
+    expect(screen.getByText(/Assumed, not entered:/)).not.toHaveTextContent('services a year');
+  });
+
   it('shows monthly, yearly and N-year totals split into fuel and service', () => {
     render(<RunningCostCalculator page={variantPage()} />);
 
