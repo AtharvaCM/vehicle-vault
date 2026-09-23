@@ -10,7 +10,8 @@ export const quickLogSchema = z.object({
   odometer: z
     .number({ invalid_type_error: 'Enter the odometer reading' })
     .int('Enter the reading in whole kilometres')
-    .nonnegative('Odometer cannot be negative'),
+    // 0 km is never a service reading, only a default nobody changed.
+    .positive('Enter the odometer reading at the service'),
   totalCost: z
     .number({ invalid_type_error: 'Enter what it cost' })
     .nonnegative('Cost cannot be negative'),

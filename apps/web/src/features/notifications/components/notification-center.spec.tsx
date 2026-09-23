@@ -4,12 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const navigate = vi.hoisted(() => vi.fn());
 const openNotification = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }));
 const notificationsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const summaryQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => navigate,
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
     <a href={to}>{children}</a>
   ),
+}));
+vi.mock('@/features/dashboard/hooks/use-dashboard-summary', () => ({
+  useDashboardSummary: () => summaryQuery.current,
 }));
 vi.mock('../hooks/use-notifications', () => ({
   useNotifications: () => notificationsQuery.current,
@@ -34,6 +38,51 @@ describe('NotificationCenter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     openNotification.mutateAsync.mockResolvedValue(undefined);
+    summaryQuery.current = { data: undefined };
+  });
+
+  const attentionCounts = (overrides: Record<string, number>) => ({
+    overdue: 0,
+    today: 0,
+    thisWeek: 0,
+    thisMonth: 0,
+    documentsExpiring30d: 0,
+    vehiclesNeedingAttention: 0,
+    urgentVehicles: 0,
+    total: 0,
+    ...overrides,
+  });
+
+  it('never says all caught up while the dashboard has something due', async () => {
+    notificationsQuery.current = {
+      data: { notifications: [], unreadCount: 0 },
+      isLoading: false,
+    };
+    summaryQuery.current = {
+      data: { attentionCounts: attentionCounts({ overdue: 1, thisWeek: 4 }) },
+    };
+    render(<NotificationCenter />);
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+
+    expect(
+      await screen.findByRole('link', { name: '5 things need your attention on the dashboard' }),
+    ).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByText('No new alerts')).toBeInTheDocument();
+    expect(screen.queryByText('All caught up!')).not.toBeInTheDocument();
+  });
+
+  it('is all caught up when only things coming up later remain', async () => {
+    notificationsQuery.current = {
+      data: { notifications: [], unreadCount: 0 },
+      isLoading: false,
+    };
+    summaryQuery.current = { data: { attentionCounts: attentionCounts({ thisMonth: 2 }) } };
+    render(<NotificationCenter />);
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+
+    expect(await screen.findByText('All caught up!')).toBeInTheDocument();
   });
 
   const openBellAndClick = async (title: string) => {

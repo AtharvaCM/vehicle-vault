@@ -82,7 +82,8 @@ function buildDefaults(
     insurancePolicyId: policies[0]?.id ?? '',
     maintenanceRecordId: defaultMaintenanceRecordId ?? null,
     claimNumber: '',
-    grossAmount: 0,
+    // The bill starts empty rather than 0; nothing paid yet is a real 0.
+    grossAmount: undefined as unknown as number,
     insurerPaidAmount: 0,
     status: 'filed',
     filedDate: toFormDate(new Date()),
