@@ -34,6 +34,7 @@ import {
   type UserRole,
   type VerifyEmailInput,
   type ResendVerificationInput,
+  type ResendVerificationResponse,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -302,8 +303,16 @@ export class AuthService {
     return { verified: true };
   }
 
-  async resendVerification(payload: ResendVerificationDto) {
+  async resendVerification(payload: ResendVerificationDto): Promise<ResendVerificationResponse> {
     const input = this.validateResendVerificationInput(payload);
+    // Without a mail transport nothing can go out: say so, and do not issue a
+    // token nobody will receive. Answered the same for every address.
+    const delivered = this.mailService.isConfigured;
+
+    if (!delivered) {
+      return { accepted: true, delivered };
+    }
+
     const user = await this.prisma.user.findUnique({
       where: {
         email: input.email.trim().toLowerCase(),
@@ -311,7 +320,7 @@ export class AuthService {
     });
 
     if (!user || user.emailVerified) {
-      return { accepted: true };
+      return { accepted: true, delivered };
     }
 
     const { url } = await this.tokenService.issueEmailVerification(user.id);
@@ -322,7 +331,7 @@ export class AuthService {
       verificationUrl: url,
     });
 
-    return { accepted: true };
+    return { accepted: true, delivered };
   }
 
   async logout(payload: RefreshTokenDto) {

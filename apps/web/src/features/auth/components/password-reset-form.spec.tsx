@@ -9,7 +9,7 @@ describe('PasswordResetForm', () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
 
-    render(<PasswordResetForm initialToken="preview-token" onSubmit={onSubmit} />);
+    render(<PasswordResetForm token="preview-token" onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText(/^new password$/i), 'updated-password123');
     await user.type(screen.getByLabelText(/confirm new password/i), 'updated-password123');
@@ -25,7 +25,7 @@ describe('PasswordResetForm', () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
 
-    render(<PasswordResetForm initialToken="preview-token" onSubmit={onSubmit} />);
+    render(<PasswordResetForm token="preview-token" onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText(/^new password$/i), 'updated-password123');
     await user.type(screen.getByLabelText(/confirm new password/i), 'different-password123');
@@ -33,5 +33,12 @@ describe('PasswordResetForm', () => {
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText('Passwords do not match.')).toBeInTheDocument();
+  });
+
+  it('never shows the link token as a field', () => {
+    render(<PasswordResetForm token="preview-token" onSubmit={vi.fn()} />);
+
+    expect(screen.queryByLabelText(/token/i)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('preview-token')).not.toBeInTheDocument();
   });
 });

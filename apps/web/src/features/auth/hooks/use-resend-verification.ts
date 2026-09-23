@@ -15,6 +15,7 @@ export const RESEND_COOLDOWN_MS = 60_000;
 export function useResendVerification(email: string | undefined) {
   const [isResending, setIsResending] = useState(false);
   const [hasSent, setHasSent] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -29,7 +30,16 @@ export function useResendVerification(email: string | undefined) {
 
     setIsResending(true);
     try {
-      await resendVerification({ email });
+      const response = await resendVerification({ email });
+      // An API from before `delivered` existed sent the mail or failed loudly.
+      if (response.delivered === false) {
+        setIsUnavailable(true);
+        appToast.info({
+          title: 'Email isn’t available yet',
+          description: 'No link was sent. Every alert still appears in the app.',
+        });
+        return;
+      }
       setHasSent(true);
       appToast.success({
         title: 'Verification email sent',
@@ -46,5 +56,5 @@ export function useResendVerification(email: string | undefined) {
     }
   }, [email]);
 
-  return { resend, isResending, hasSent };
+  return { resend, isResending, hasSent, isUnavailable };
 }

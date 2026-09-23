@@ -6,19 +6,21 @@ import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-type PasswordResetFormValues = PasswordResetConfirmInput & {
+type PasswordResetFormValues = {
+  password: string;
   confirmPassword: string;
 };
 
 type PasswordResetFormProps = {
-  initialToken?: string;
+  /** From the emailed link's address; never shown or typed. */
+  token: string;
   isSubmitting?: boolean;
   onSubmit: (values: PasswordResetConfirmInput) => Promise<void> | void;
   submitError?: string | null;
 };
 
 export function PasswordResetForm({
-  initialToken = '',
+  token,
   isSubmitting = false,
   onSubmit,
   submitError,
@@ -27,21 +29,20 @@ export function PasswordResetForm({
     defaultValues: {
       confirmPassword: '',
       password: '',
-      token: initialToken,
     },
   });
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = PasswordResetConfirmSchema.safeParse({
       password: values.password,
-      token: values.token.trim(),
+      token,
     });
 
     if (!result.success) {
       result.error.issues.forEach((issue) => {
         const field = issue.path[0];
 
-        if (typeof field === 'string') {
+        if (field === 'password') {
           form.setError(field as Path<PasswordResetFormValues>, {
             message: issue.message,
           });
@@ -63,20 +64,6 @@ export function PasswordResetForm({
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <FormField
-        htmlFor="password-reset-token"
-        label="Reset token"
-        error={form.formState.errors.token?.message}
-      >
-        <Input
-          autoComplete="one-time-code"
-          id="password-reset-token"
-          placeholder="Paste the reset token"
-          {...form.register('token')}
-          aria-invalid={Boolean(form.formState.errors.token)}
-        />
-      </FormField>
-
       <FormField
         htmlFor="password-reset-new-password"
         label="New password"
