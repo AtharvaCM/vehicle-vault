@@ -164,10 +164,11 @@ export function AttentionSummary({ summary, focus }: AttentionSummaryProps) {
           value={String(counts.documentsExpiring30d)}
         />
         <GarageTile
-          description="Something overdue or due soon"
+          description="Something overdue or due within 7 days"
           label="Vehicles needing attention"
           tone="neutral"
-          value={`${counts.vehiclesNeedingAttention} of ${summary.vehiclesTotal}`}
+          // `urgentVehicles` is the headline's own count, so the two always agree.
+          value={`${counts.urgentVehicles} of ${summary.vehiclesTotal}`}
         />
       </div>
     );
