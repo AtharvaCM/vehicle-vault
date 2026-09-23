@@ -4,13 +4,18 @@ import path from 'node:path';
 import type {
   PublicCatalogIndex,
   PublicCatalogIndexEntry,
+  PublicCatalogModelPage,
   PublicCatalogVariantPage,
-  PublicCatalogVariantPageBatch,
 } from '@vehicle-vault/shared';
-import { PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX } from '@vehicle-vault/shared';
+import {
+  PUBLIC_CATALOG_MODEL_PAGE_BATCH_MAX,
+  PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
+} from '@vehicle-vault/shared';
 
 import {
   CANONICAL_ORIGIN,
+  modelPageHead,
+  publicModelPath,
   publicVariantPath,
   renderHeadTags,
   variantPageHead,
@@ -21,7 +26,7 @@ import { queryKeys } from '@/lib/query/query-keys';
 
 import { composeDocument } from './compose-document';
 import { renderAppAtUrl, type RenderedApp, type SeededQuery } from './render-app';
-import { renderRobots, renderSitemap } from './sitemap';
+import { newestUpdatedAt, renderRobots, renderSitemap } from './sitemap';
 
 /** The slice of `fetch` the prerender uses, so a test can hand it fixtures. */
 export type PrerenderFetch = (
@@ -52,6 +57,7 @@ export type PrerenderSummary = {
   /** Site paths written, e.g. `/cars/honda/city/city-lineup/vx`. */
   paths: string[];
   variantPages: number;
+  modelPages: number;
   /** Pages without `noindex`: the flag is on and the gate passed them. The sitemap lists exactly these. */
   indexablePages: number;
   /** Whether `sitemap.xml` was written. It is when indexing is on, even if it lists nothing. */
@@ -64,8 +70,8 @@ export class PrerenderError extends Error {
 
 /**
  * A page the prerender writes: where it lives, the queries its route reads,
- * and its head. Variant pages are the first kind; model, make and browse pages
- * (#176, #177) become jobs the same way, with their own payloads and heads.
+ * and its head. Variant and model pages are jobs; make and browse pages (#177)
+ * become jobs the same way, with their own payloads and heads.
  */
 type PageJob = {
   path: string;
@@ -86,8 +92,9 @@ const MAX_RETRY_AFTER_MS = 60_000;
 const SAFE_SEGMENT = /^[a-z0-9][a-z0-9_-]*$/i;
 
 /**
- * Writes a static `index.html` for every publishable catalog variant into the
- * client build, so the page's content and link preview exist before any
+ * Writes a static `index.html` for every publishable catalog variant, and for
+ * every model with one, into the client build, so the page's content and link
+ * preview exist before any
  * JavaScript runs. Fails — and so fails the deploy — when the catalog API
  * cannot be read or has nothing in it, rather than shipping an empty catalog.
  */
@@ -116,7 +123,15 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
   log(`Catalog index: ${index.variants.length} variants.`);
 
   const payloads = await fetchAllVariantPages(apiBaseUrl, index.variants.length, getData);
-  const jobs = variantJobs(index.variants, payloads, { origin, indexing });
+  // Variant jobs first: they refuse an unsafe slug before any path is built from one.
+  const variantPageJobs = variantJobs(index.variants, payloads, { origin, indexing });
+  const modelPayloads = await fetchAllModelPages(
+    apiBaseUrl,
+    variantsByModelAddress(index.variants).size,
+    getData,
+  );
+  const modelPageJobs = modelJobs(index.variants, modelPayloads, { origin, indexing });
+  const jobs = [...variantPageJobs, ...modelPageJobs];
 
   let written = 0;
   for (const job of jobs) {
@@ -161,7 +176,10 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
 
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
   const passing = jobs.filter((job) => job.passesGate).length;
-  log(`Prerendered ${written} pages (${written} variant pages) into ${distDir} in ${seconds}s.`);
+  log(
+    `Prerendered ${written} pages (${variantPageJobs.length} variant pages, ` +
+      `${modelPageJobs.length} model pages) into ${distDir} in ${seconds}s.`,
+  );
   log(
     indexing
       ? `Indexable: ${indexed.length} of ${written} pages. Indexing is on: sitemap.xml lists ` +
@@ -172,7 +190,8 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
 
   return {
     paths: jobs.map((job) => job.path),
-    variantPages: written,
+    variantPages: variantPageJobs.length,
+    modelPages: modelPageJobs.length,
     indexablePages: indexed.length,
     sitemap: indexing,
   };
@@ -183,27 +202,62 @@ async function fetchAllVariantPages(
   expected: number,
   getData: <T>(url: string) => Promise<T>,
 ): Promise<PublicCatalogVariantPage[]> {
-  const pageSize = PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX;
+  return fetchAllBatches<PublicCatalogVariantPage>({
+    label: 'variant pages',
+    url: `${apiBaseUrl}/public-catalog/variant-pages`,
+    pageSize: PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
+    expected,
+    getData,
+  });
+}
+
+async function fetchAllModelPages(
+  apiBaseUrl: string,
+  expected: number,
+  getData: <T>(url: string) => Promise<T>,
+): Promise<PublicCatalogModelPage[]> {
+  return fetchAllBatches<PublicCatalogModelPage>({
+    label: 'model pages',
+    url: `${apiBaseUrl}/public-catalog/model-pages`,
+    pageSize: PUBLIC_CATALOG_MODEL_PAGE_BATCH_MAX,
+    expected,
+    getData,
+  });
+}
+
+async function fetchAllBatches<T>({
+  label,
+  url,
+  pageSize,
+  expected,
+  getData,
+}: {
+  label: string;
+  url: string;
+  pageSize: number;
+  expected: number;
+  getData: <D>(url: string) => Promise<D>;
+}): Promise<T[]> {
   // A few pages of slack for rows published between the index and the batches;
   // past that something is wrong, and looping on would never end.
   const maxPages = Math.ceil(expected / pageSize) + 5;
-  const pages: PublicCatalogVariantPage[] = [];
+  const items: T[] = [];
 
   for (let page = 1; ; page += 1) {
     if (page > maxPages) {
-      throw new PrerenderError(`The variant pages did not end after ${maxPages} batches.`);
+      throw new PrerenderError(`The ${label} did not end after ${maxPages} batches.`);
     }
-    const batch = await getData<PublicCatalogVariantPageBatch>(
-      `${apiBaseUrl}/public-catalog/variant-pages?page=${page}&pageSize=${pageSize}`,
+    const batch = await getData<{ items?: T[]; hasMore?: boolean }>(
+      `${url}?page=${page}&pageSize=${pageSize}`,
     );
     if (!Array.isArray(batch?.items)) {
-      throw new PrerenderError(`Batch ${page} of the variant pages had no items.`);
+      throw new PrerenderError(`Batch ${page} of the ${label} had no items.`);
     }
-    pages.push(...batch.items);
+    items.push(...batch.items);
     if (!batch.hasMore) break;
   }
 
-  return pages;
+  return items;
 }
 
 function variantJobs(
@@ -277,6 +331,80 @@ function variantJobs(
   }
 
   return [...jobs.values()];
+}
+
+/**
+ * The index's variants by model address, each variant address once (the first
+ * index row wins, as for variant pages). Hyundai's car and SUV make rows share
+ * a slug, so one model address can gather rows from both.
+ */
+function variantsByModelAddress(entries: PublicCatalogIndexEntry[]) {
+  const models = new Map<string, Map<string, PublicCatalogIndexEntry>>();
+  for (const entry of entries) {
+    const modelPath = publicModelPath(entry);
+    const variants = models.get(modelPath) ?? new Map<string, PublicCatalogIndexEntry>();
+    const variantPath = publicVariantPath(entry);
+    if (!variants.has(variantPath)) variants.set(variantPath, entry);
+    models.set(modelPath, variants);
+  }
+  return new Map([...models].map(([modelPath, variants]) => [modelPath, [...variants.values()]]));
+}
+
+function modelJobs(
+  entries: PublicCatalogIndexEntry[],
+  payloads: PublicCatalogModelPage[],
+  { origin, indexing }: { origin: string; indexing: boolean },
+): PageJob[] {
+  const payloadsByPath = new Map(payloads.map((payload) => [publicModelPath(payload), payload]));
+  const jobs: PageJob[] = [];
+
+  for (const [pagePath, children] of variantsByModelAddress(entries)) {
+    const payload = payloadsByPath.get(pagePath);
+    if (!payload) {
+      throw new PrerenderError(
+        `The index lists variants of ${pagePath} but the model pages did not include it. ` +
+          'The catalog may have changed mid-build; run the build again.',
+      );
+    }
+    if (indexing && typeof payload.indexable !== 'boolean') {
+      throw new PrerenderError(
+        `Indexing is on, but the catalog API gave ${pagePath} no page-quality verdict. ` +
+          'Deploy the API with the page-quality gate first.',
+      );
+    }
+    // The API's gate passes a model page when it passes any of its variants. A
+    // model page that disagrees with its own variants' verdicts would leave
+    // the sitemap and the pages it links to telling different stories.
+    if (
+      typeof payload.indexable === 'boolean' &&
+      payload.indexable !== children.some((child) => child.indexable)
+    ) {
+      throw new PrerenderError(
+        `The model page ${pagePath} and its variants disagree on whether it is indexable. ` +
+          'The catalog may have changed mid-build; run the build again.',
+      );
+    }
+
+    jobs.push({
+      path: pagePath,
+      queries: [
+        {
+          queryKey: queryKeys.publicCatalog.model(
+            payload.segment,
+            payload.make.slug,
+            payload.model.slug,
+          ),
+          data: payload,
+        },
+      ],
+      head: modelPageHead(payload, { origin, indexing }),
+      passesGate: payload.indexable,
+      indexed: isPageIndexed(payload, indexing),
+      lastmod: newestUpdatedAt(children.map((child) => child.updatedAt)),
+    });
+  }
+
+  return jobs;
 }
 
 type ApiEnvelope<T> = { success?: boolean; data?: T };

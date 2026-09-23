@@ -107,6 +107,25 @@ type IndexEntry = {
 const entryPath = (entry: IndexEntry) =>
   `/${entry.segment}/${entry.make.slug}/${entry.model.slug}/${entry.generation.slug}/${entry.variant.slug}`;
 
+const modelPathOf = (entry: IndexEntry) =>
+  `/${entry.segment}/${entry.make.slug}/${entry.model.slug}`;
+
+/**
+ * Every model page and the gate's verdict on it: indexable when any of its
+ * variants is, each variant address counted once (the first index row wins).
+ */
+function modelVerdicts(index: IndexEntry[]) {
+  const seen = new Set<string>();
+  const verdicts = new Map<string, boolean>();
+  for (const entry of index) {
+    if (seen.has(entryPath(entry))) continue;
+    seen.add(entryPath(entry));
+    const modelPath = modelPathOf(entry);
+    verdicts.set(modelPath, (verdicts.get(modelPath) ?? false) || entry.indexable);
+  }
+  return verdicts;
+}
+
 function robotsOf(html: string) {
   return html.match(/<meta name="robots" content="([^"]*)" \/>/)?.[1];
 }
@@ -170,9 +189,24 @@ test.describe('prerendered indexing', () => {
       prerenderLog,
       'run build:prerendered with VITE_PUBLIC_CATALOG_INDEXING=on for this spec',
     ).toContain('Indexing is on');
+    const models = modelVerdicts(index);
+    const indexableModels = [...models.values()].filter(Boolean).length;
     const indexable = new Set(index.filter((entry) => entry.indexable).map(entryPath));
     const pages = new Set(index.map(entryPath));
-    expect(prerenderLog).toContain(`Indexable: ${indexable.size} of ${pages.size} pages.`);
+    expect(prerenderLog).toContain(
+      `Indexable: ${indexable.size + indexableModels} of ${pages.size + models.size} pages.`,
+    );
+  });
+
+  test('a model page is indexable exactly when one of its variants is', async ({ request }) => {
+    const models = modelVerdicts(index);
+    const richModel = modelPathOf(index.find((entry) => entryPath(entry) === rich.path)!);
+    expect(models.get(richModel)).toBe(true);
+
+    for (const [modelPath, indexable] of models) {
+      const html = await fetchHtml(request, modelPath);
+      expect(robotsOf(html), modelPath).toBe(indexable ? 'index, follow' : 'noindex');
+    }
   });
 
   test('the gate passes the rich variants and rejects the thin and bare ones', () => {
@@ -191,9 +225,13 @@ test.describe('prerendered indexing', () => {
     const xml = await response.text();
 
     const listed = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-    const expected = [...new Set(index.filter((entry) => entry.indexable).map(entryPath))].map(
-      (pagePath) => `${CANONICAL_ORIGIN}${pagePath}`,
-    );
+    const indexableModels = [...modelVerdicts(index)]
+      .filter(([, indexable]) => indexable)
+      .map(([modelPath]) => modelPath);
+    const expected = [
+      ...new Set(index.filter((entry) => entry.indexable).map(entryPath)),
+      ...indexableModels,
+    ].map((pagePath) => `${CANONICAL_ORIGIN}${pagePath}`);
     expect(listed.sort()).toEqual(expected.sort());
     expect(listed).toContain(`${CANONICAL_ORIGIN}${rich.path}`);
     expect(listed).not.toContain(`${CANONICAL_ORIGIN}${thin.path}`);

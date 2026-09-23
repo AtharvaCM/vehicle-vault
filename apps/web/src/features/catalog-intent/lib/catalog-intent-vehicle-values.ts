@@ -1,5 +1,6 @@
 import type {
   CreateVehicleInput,
+  PublicCatalogModelPage,
   PublicCatalogOffering,
   PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
@@ -26,6 +27,44 @@ export function catalogIntentVehicleValues(
     model: page.model.name,
     variant: page.variant.name,
     fuelType: page.calculatorSeed.fuelType,
+  };
+}
+
+/**
+ * The add-vehicle form's starting values for a catalog model, from a model
+ * page's "Track this vehicle": make and model chosen, the variant left empty
+ * for the owner to pick or skip. The year is the latest any of its variants
+ * was on sale, so the model pickers list it; type and fuel are those of the
+ * variant the model page shows its schedule for.
+ */
+export function catalogModelIntentVehicleValues(
+  page: PublicCatalogModelPage,
+  now: Date = new Date(),
+): CatalogIntentVehicleValues {
+  const currentYear = now.getFullYear();
+  const years = page.generations.flatMap((generation) =>
+    generation.variants.map((variant) =>
+      latestYearOnSale(
+        [
+          {
+            fuelTypes: variant.fuelTypes,
+            yearStart: variant.yearStart,
+            yearEnd: variant.yearEnd,
+            isCurrent: variant.isCurrent,
+          },
+        ],
+        currentYear,
+      ),
+    ),
+  );
+
+  return {
+    vehicleType: page.vehicleType,
+    year: years.length > 0 ? Math.max(...years) : currentYear,
+    make: page.make.name,
+    model: page.model.name,
+    variant: '',
+    fuelType: page.schedule.fuelType,
   };
 }
 

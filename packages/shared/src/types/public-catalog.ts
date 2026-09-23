@@ -187,3 +187,82 @@ export interface PublicCatalogVariantPageBatch {
   total: number;
   hasMore: boolean;
 }
+
+/**
+ * One variant as a model page lists it: enough to tell it from its siblings and
+ * link to its own page, which has everything else.
+ */
+export interface PublicCatalogModelVariant extends PublicCatalogNamedSlug {
+  /** Every fuel it was offered with, its newest offering's first. */
+  fuelTypes: FuelType[];
+  /** The first year of its earliest offering. */
+  yearStart: number | null;
+  /** The last year of its latest offering; null while any offering is on sale. */
+  yearEnd: number | null;
+  /** Any of its offerings is on sale now. */
+  isCurrent: boolean;
+  /** From its spec row, when the catalog has one. */
+  transmission: string | null;
+}
+
+/** A generation on a model page, with its variants: on sale first, then by name. */
+export interface PublicCatalogModelGeneration extends PublicCatalogNamedSlug {
+  yearStart: number | null;
+  yearEnd: number | null;
+  isCurrent: boolean;
+  variants: PublicCatalogModelVariant[];
+}
+
+/**
+ * The public page for a model, `/cars/{make}/{model}`. It lists every
+ * publishable variant at that address, grouped by generation (the current
+ * generation first, then the most recent), and shows one schedule and one set
+ * of specs.
+ *
+ * Those two belong to a single variant, the **representative**: a model has no
+ * spec row or schedule of its own, and averaging its variants would invent
+ * figures no variant has. The page says whose they are.
+ */
+export interface PublicCatalogModelPage {
+  segment: PublicCatalogSegment;
+  /** The representative variant's type, the one its schedule was resolved for. */
+  vehicleType: VehicleType;
+  make: PublicCatalogNamedSlug;
+  model: PublicCatalogNamedSlug;
+  /** Current first, then by most recent years. Never empty. */
+  generations: PublicCatalogModelGeneration[];
+  /**
+   * The variant the specs and schedule come from: the newest variant on sale in
+   * the current generation, preferring one the page-quality gate passes (see
+   * `PublicCatalogService` for the full order).
+   */
+  representative: {
+    generation: PublicCatalogNamedSlug;
+    variant: PublicCatalogNamedSlug;
+    specs: PublicCatalogSpec | null;
+  };
+  /** The representative variant's resolved schedule, exactly as its own page has it. */
+  schedule: PublicCatalogSchedule;
+  /**
+   * The page-quality gate's verdict: indexable when any of its variants is.
+   * The web build's indexing flag still has the last word.
+   */
+  indexable: boolean;
+  /** ISO timestamp of the newest change to any of its variants, their offerings or specs. */
+  updatedAt: string;
+}
+
+/**
+ * The most model page payloads one bulk request returns. Like the variant
+ * batches, they let the prerender read every model page in a few requests.
+ */
+export const PUBLIC_CATALOG_MODEL_PAGE_BATCH_MAX = 100;
+
+/** One page of model page payloads, ordered by address: segment, make slug, model slug. */
+export interface PublicCatalogModelPageBatch {
+  items: PublicCatalogModelPage[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+}

@@ -5,6 +5,7 @@ import {
   afterSignInDestination,
   catalogIntentAttribution,
   clearCatalogIntent,
+  isCatalogVariantIntent,
   parseCatalogIntentParam,
   readCatalogIntent,
   saveCatalogIntent,
@@ -20,6 +21,9 @@ const intent: CatalogIntent = {
   generation: 'city-lineup',
   variant: 'vx-cvt',
 };
+
+/** From a model page: make and model, no variant. */
+const modelIntent: CatalogIntent = { segment: 'cars', make: 'honda', model: 'city' };
 
 const saved = Date.UTC(2026, 8, 20);
 
@@ -41,9 +45,29 @@ describe('the catalog search parameter', () => {
     });
   });
 
+  it('is the model page path for a model intent, which reads back with no variant', () => {
+    const param = toCatalogIntentParam(modelIntent);
+
+    expect(param).toBe('/cars/honda/city');
+    expect(parseCatalogIntentParam(param)).toEqual(modelIntent);
+    expect(parseCatalogIntentParam('bikes/royal-enfield/classic-350')).toEqual({
+      segment: 'bikes',
+      make: 'royal-enfield',
+      model: 'classic-350',
+    });
+  });
+
+  it('tells a variant intent from a model intent', () => {
+    expect(isCatalogVariantIntent(intent)).toBe(true);
+    expect(isCatalogVariantIntent(modelIntent)).toBe(false);
+  });
+
   it.each([
     ['a truck segment', '/trucks/tata/ace/gen/base'],
-    ['a model page', '/cars/honda/city'],
+    ['a truck model', '/trucks/tata/ace'],
+    ['a make page', '/cars/honda'],
+    ['a generation with no variant', '/cars/honda/city/city-lineup'],
+    ['a model with capitals', '/cars/honda/City'],
     ['too many parts', '/cars/honda/city/gen/vx/extra'],
     ['a slug with capitals', '/cars/Honda/city/gen/vx'],
     ['a slug with a space', '/cars/honda/city/gen/vx cvt'],
@@ -94,6 +118,22 @@ describe('the stored intent', () => {
     expect(readCatalogIntent(saved)?.variant).toBe('zx');
   });
 
+  it('keeps a model intent the same way, with no variant', () => {
+    saveCatalogIntent(modelIntent, saved);
+
+    expect(readCatalogIntent(saved + 1000)).toEqual(modelIntent);
+    expect(afterSignInDestination(saved + 1000)).toBe('/vehicles/new');
+  });
+
+  it('reads an intent saved before model intents existed', () => {
+    window.localStorage.setItem(
+      'vehicle-vault.catalog-intent',
+      JSON.stringify({ version: 1, intent, savedAt: saved }),
+    );
+
+    expect(readCatalogIntent(saved)).toEqual(intent);
+  });
+
   it.each([
     ['not JSON', '{'],
     ['another version', JSON.stringify({ version: 2, intent, savedAt: saved })],
@@ -102,6 +142,14 @@ describe('the stored intent', () => {
     [
       'a tampered slug',
       JSON.stringify({ version: 1, intent: { ...intent, model: 'a@b.test' }, savedAt: saved }),
+    ],
+    [
+      'a generation with no variant',
+      JSON.stringify({
+        version: 1,
+        intent: { ...modelIntent, generation: 'city-lineup' },
+        savedAt: saved,
+      }),
     ],
   ])('reads as none, and is removed, when it is %s', (_label, raw) => {
     window.localStorage.setItem('vehicle-vault.catalog-intent', raw);
@@ -127,6 +175,7 @@ describe('the stored intent', () => {
 describe('what signing up and signing in do with it', () => {
   it('attributes a sign-up to the model, and sends nothing without an intent', () => {
     expect(catalogIntentAttribution(intent)).toEqual({ catalogModel: 'city' });
+    expect(catalogIntentAttribution(modelIntent)).toEqual({ catalogModel: 'city' });
     expect(catalogIntentAttribution(null)).toEqual({});
   });
 

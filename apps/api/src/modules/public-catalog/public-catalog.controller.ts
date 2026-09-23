@@ -2,12 +2,14 @@ import { Controller, Get, Header, NotFoundException, Param, Query } from '@nestj
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   isPublicCatalogSegment,
+  PUBLIC_CATALOG_MODEL_PAGE_BATCH_MAX,
   PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
 } from '@vehicle-vault/shared';
 
 import { Public } from '../../common/auth/decorators/public.decorator';
 import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
+import { ModelPageBatchQueryDto } from './dto/model-page-batch-query.dto';
 import { VariantPageBatchQueryDto } from './dto/variant-page-batch-query.dto';
 import { PublicCatalogService } from './public-catalog.service';
 
@@ -47,6 +49,37 @@ export class PublicCatalogController {
         pageSize: query.pageSize ?? PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
       }),
     );
+  }
+
+  @Get('model-pages')
+  @RateLimit('catalog')
+  @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)
+  @ApiOperation({ summary: 'Model page payloads in bulk, a page at a time, by address' })
+  async getModelPageBatch(@Query() query: ModelPageBatchQueryDto) {
+    return successResponse(
+      await this.publicCatalogService.getModelPageBatch({
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? PUBLIC_CATALOG_MODEL_PAGE_BATCH_MAX,
+      }),
+    );
+  }
+
+  @Get(':segment/:make/:model')
+  @RateLimit('catalog')
+  @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)
+  @ApiOperation({
+    summary: 'A catalog model, its variants by generation, as its public page shows it',
+  })
+  async getModelPage(
+    @Param('segment') segment: string,
+    @Param('make') make: string,
+    @Param('model') model: string,
+  ) {
+    if (!isPublicCatalogSegment(segment)) {
+      throw new NotFoundException('No public catalog page at this address.');
+    }
+
+    return successResponse(await this.publicCatalogService.getModelPage({ segment, make, model }));
   }
 
   @Get(':segment/:make/:model/:generation/:variant')

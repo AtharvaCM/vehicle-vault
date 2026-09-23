@@ -2,18 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 
+import { getPublicModelPage } from '@/features/public-catalog/api/use-public-model-page';
 import { getPublicVariantPage } from '@/features/public-catalog/api/use-public-variant-page';
 import { queryKeys } from '@/lib/query/query-keys';
 
 import {
   catalogIntentVehicleValues,
+  catalogModelIntentVehicleValues,
   type CatalogIntentVehicleValues,
 } from '../lib/catalog-intent-vehicle-values';
 import {
   clearCatalogIntent,
+  isCatalogVariantIntent,
   parseCatalogIntentParam,
   readCatalogIntent,
   type CatalogIntent,
+  type CatalogModelIntent,
+  type CatalogVariantIntent,
 } from '../lib/catalog-intent';
 
 export type CatalogIntentPrefill =
@@ -30,7 +35,8 @@ export type CatalogIntentPrefill =
  * the parameter dropped from the address as soon as the form opens, so the next
  * add-vehicle starts empty whether or not this one is saved.
  *
- * The variant is resolved through its public page endpoint. One that has gone
+ * The variant is resolved through its public page endpoint, and a model intent
+ * through the model page's, which fills make and model only. One that has gone
  * from the catalog, or cannot be reached, leaves the form empty and says
  * nothing: the visitor can still pick it by hand.
  */
@@ -52,24 +58,43 @@ export function useCatalogIntentPrefill(catalogParam: string | undefined): Catal
     }
   }, [catalogParam, navigate]);
 
-  const query = useQuery({
+  const variantIntent = intent && isCatalogVariantIntent(intent) ? intent : null;
+  const modelIntent = intent && !isCatalogVariantIntent(intent) ? intent : null;
+
+  const variantQuery = useQuery({
     queryKey: queryKeys.publicCatalog.variant(
-      intent?.segment ?? '',
-      intent?.make ?? '',
-      intent?.model ?? '',
-      intent?.generation ?? '',
-      intent?.variant ?? '',
+      variantIntent?.segment ?? '',
+      variantIntent?.make ?? '',
+      variantIntent?.model ?? '',
+      variantIntent?.generation ?? '',
+      variantIntent?.variant ?? '',
     ),
-    queryFn: () => getPublicVariantPage(intent as CatalogIntent),
-    enabled: intent !== null,
+    queryFn: () => getPublicVariantPage(variantIntent as CatalogVariantIntent),
+    enabled: variantIntent !== null,
     staleTime: 1000 * 60 * 60,
     retry: false,
   });
 
-  const values = useMemo(
-    () => (query.data ? catalogIntentVehicleValues(query.data) : null),
-    [query.data],
-  );
+  // A model intent resolves through the model page: make and model, no variant.
+  const modelQuery = useQuery({
+    queryKey: queryKeys.publicCatalog.model(
+      modelIntent?.segment ?? '',
+      modelIntent?.make ?? '',
+      modelIntent?.model ?? '',
+    ),
+    queryFn: () => getPublicModelPage(modelIntent as CatalogModelIntent),
+    enabled: modelIntent !== null,
+    staleTime: 1000 * 60 * 60,
+    retry: false,
+  });
+
+  const values = useMemo(() => {
+    if (variantQuery.data) return catalogIntentVehicleValues(variantQuery.data);
+    if (modelQuery.data) return catalogModelIntentVehicleValues(modelQuery.data);
+    return null;
+  }, [variantQuery.data, modelQuery.data]);
+
+  const query = variantIntent ? variantQuery : modelQuery;
 
   if (!intent || query.isError) {
     return { status: 'none' };

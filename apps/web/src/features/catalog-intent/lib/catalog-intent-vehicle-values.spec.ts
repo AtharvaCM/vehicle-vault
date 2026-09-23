@@ -1,12 +1,18 @@
 import {
   FuelType,
   VehicleType,
+  type PublicCatalogModelPage,
+  type PublicCatalogModelVariant,
   type PublicCatalogOffering,
   type PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
 import { describe, expect, it } from 'vitest';
 
-import { catalogIntentVehicleValues, latestYearOnSale } from './catalog-intent-vehicle-values';
+import {
+  catalogIntentVehicleValues,
+  catalogModelIntentVehicleValues,
+  latestYearOnSale,
+} from './catalog-intent-vehicle-values';
 
 function offering(overrides: Partial<PublicCatalogOffering>): PublicCatalogOffering {
   return {
@@ -37,6 +43,55 @@ describe('catalogIntentVehicleValues', () => {
       variant: 'SX (O)',
       fuelType: FuelType.Diesel,
     });
+  });
+});
+
+describe('catalogModelIntentVehicleValues', () => {
+  const variant = (overrides: Partial<PublicCatalogModelVariant>): PublicCatalogModelVariant => ({
+    name: 'SX',
+    slug: 'sx',
+    fuelTypes: [FuelType.Petrol],
+    yearStart: 2020,
+    yearEnd: null,
+    isCurrent: true,
+    transmission: null,
+    ...overrides,
+  });
+
+  function modelPage(variants: PublicCatalogModelVariant[]) {
+    return {
+      vehicleType: VehicleType.SUV,
+      make: { name: 'Hyundai', slug: 'hyundai' },
+      model: { name: 'Creta', slug: 'creta' },
+      generations: [
+        { name: 'Creta lineup', slug: 'creta-lineup', isCurrent: true, variants: variants },
+      ],
+      schedule: { fuelType: FuelType.Diesel },
+    } as unknown as PublicCatalogModelPage;
+  }
+
+  it('fills in make and model, leaves the variant empty, and takes type and fuel from the page', () => {
+    expect(
+      catalogModelIntentVehicleValues(modelPage([variant({})]), new Date('2026-09-23T00:00:00Z')),
+    ).toEqual({
+      vehicleType: VehicleType.SUV,
+      year: 2026,
+      make: 'Hyundai',
+      model: 'Creta',
+      variant: '',
+      fuelType: FuelType.Diesel,
+    });
+  });
+
+  it('picks the latest year any of its variants was on sale', () => {
+    const ended = modelPage([
+      variant({ yearStart: 2015, yearEnd: 2019, isCurrent: false }),
+      variant({ yearStart: 2018, yearEnd: 2022, isCurrent: false }),
+    ]);
+
+    expect(catalogModelIntentVehicleValues(ended, new Date('2026-09-23T00:00:00Z')).year).toBe(
+      2022,
+    );
   });
 });
 

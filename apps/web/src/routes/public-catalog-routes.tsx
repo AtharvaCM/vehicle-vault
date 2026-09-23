@@ -36,3 +36,33 @@ export const bikesVariantRoute = createRoute({
     return <PublicVariantRoutePage slugs={{ segment: 'bikes', ...params }} />;
   },
 });
+
+const PublicModelRoutePage = createLazyPage(
+  () =>
+    import('@/features/public-catalog/pages/public-model-page').then((module) => ({
+      default: module.PublicModelRoutePage,
+    })),
+  {
+    title: 'Loading',
+    description: 'Loading the variants and service schedule.',
+  },
+);
+
+/** A model page: its variants by generation, and a representative schedule and specs. */
+export const carsModelRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'cars/$make/$model',
+  component: function CarsModelRoute() {
+    const params = carsModelRoute.useParams();
+    return <PublicModelRoutePage slugs={{ segment: 'cars', ...params }} />;
+  },
+});
+
+export const bikesModelRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'bikes/$make/$model',
+  component: function BikesModelRoute() {
+    const params = bikesModelRoute.useParams();
+    return <PublicModelRoutePage slugs={{ segment: 'bikes', ...params }} />;
+  },
+});

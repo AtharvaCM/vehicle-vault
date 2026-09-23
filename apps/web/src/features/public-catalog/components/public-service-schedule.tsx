@@ -6,6 +6,10 @@ import { describeInterval, describeScheduleBasis } from '../utils/format-public-
 
 type PublicServiceScheduleProps = {
   schedule: PublicCatalogSchedule;
+  /** In place of the basis heading, for a page showing one of several variants' schedules. */
+  heading?: string;
+  /** A line after the usual one, saying whose schedule this is. */
+  note?: string;
 };
 
 /**
@@ -14,7 +18,7 @@ type PublicServiceScheduleProps = {
  * typical one for its type and fuel — most pages are the second kind, and
  * nobody should read it as the maker's.
  */
-export function PublicServiceSchedule({ schedule }: PublicServiceScheduleProps) {
+export function PublicServiceSchedule({ schedule, heading, note }: PublicServiceScheduleProps) {
   return (
     <section
       aria-labelledby="service-schedule-heading"
@@ -24,13 +28,14 @@ export function PublicServiceSchedule({ schedule }: PublicServiceScheduleProps) 
         className="text-lg font-semibold tracking-tight text-slate-950"
         id="service-schedule-heading"
       >
-        {describeScheduleBasis(schedule)}
+        {heading ?? describeScheduleBasis(schedule)}
       </h2>
       <p className="mt-1 text-sm leading-6 text-slate-600">
         {schedule.basis === 'variant'
           ? 'Intervals recorded for this variant. Your owner’s manual has the final word.'
           : 'Common intervals for vehicles of this type and fuel, not this maker’s own figures. Check your owner’s manual.'}
       </p>
+      {note ? <p className="mt-1 text-sm leading-6 text-slate-600">{note}</p> : null}
       <ul className="mt-4 divide-y divide-slate-100">
         {schedule.items.map((item) => (
           <li

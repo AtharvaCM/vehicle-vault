@@ -37,6 +37,8 @@ import {
   acceptInviteRoute,
   bikesVariantRoute,
   carsVariantRoute,
+  bikesModelRoute,
+  carsModelRoute,
 } from '@/routes';
 
 const protectedRouteTree = appRoute.addChildren([
@@ -75,6 +77,8 @@ export const routeTree = rootRoute.addChildren([
   verifyEmailRoute,
   carsVariantRoute,
   bikesVariantRoute,
+  carsModelRoute,
+  bikesModelRoute,
   protectedRouteTree,
 ]);
 

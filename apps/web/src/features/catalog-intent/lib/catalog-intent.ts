@@ -16,14 +16,32 @@ import {
  * It is the variant's public page address, not its database id: that is what
  * the page has, and the public page endpoint resolves it back to the names the
  * form's catalog pickers use.
+ *
+ * A model page's button carries a **model intent** instead: the model page's
+ * address, which prefills make and model and leaves the variant empty, as the
+ * form allows.
  */
-export type CatalogIntent = {
+export type CatalogIntent = CatalogVariantIntent | CatalogModelIntent;
+
+export type CatalogVariantIntent = {
   segment: PublicCatalogSegment;
   make: string;
   model: string;
   generation: string;
   variant: string;
 };
+
+export type CatalogModelIntent = {
+  segment: PublicCatalogSegment;
+  make: string;
+  model: string;
+  generation?: undefined;
+  variant?: undefined;
+};
+
+export function isCatalogVariantIntent(intent: CatalogIntent): intent is CatalogVariantIntent {
+  return intent.variant !== undefined;
+}
 
 export type CatalogIntentSearch = {
   catalog?: string;
@@ -57,8 +75,8 @@ function toCatalogIntent(value: {
   segment: unknown;
   make: unknown;
   model: unknown;
-  generation: unknown;
-  variant: unknown;
+  generation?: unknown;
+  variant?: unknown;
 }): CatalogIntent | null {
   const { segment, make, model, generation, variant } = value;
 
@@ -66,28 +84,45 @@ function toCatalogIntent(value: {
     typeof segment !== 'string' ||
     !isPublicCatalogSegment(segment) ||
     !isCatalogSlug(make) ||
-    !isCatalogSlug(model) ||
-    !isCatalogSlug(generation) ||
-    !isCatalogSlug(variant)
+    !isCatalogSlug(model)
   ) {
+    return null;
+  }
+
+  // A model intent names neither; a variant intent names both.
+  if (generation === undefined && variant === undefined) {
+    return { segment, make, model };
+  }
+
+  if (!isCatalogSlug(generation) || !isCatalogSlug(variant)) {
     return null;
   }
 
   return { segment, make, model, generation, variant };
 }
 
-/** The `catalog` search parameter for an intent: the variant page's own path. */
+/** The `catalog` search parameter for an intent: the variant or model page's own path. */
 export function toCatalogIntentParam(intent: CatalogIntent): string {
-  return `/${intent.segment}/${intent.make}/${intent.model}/${intent.generation}/${intent.variant}`;
+  return isCatalogVariantIntent(intent)
+    ? `/${intent.segment}/${intent.make}/${intent.model}/${intent.generation}/${intent.variant}`
+    : `/${intent.segment}/${intent.make}/${intent.model}`;
 }
 
-/** The intent in a `catalog` search parameter, or null for anything that is not a variant path. */
+/**
+ * The intent in a `catalog` search parameter, or null for anything that is not
+ * a variant path or a model path.
+ */
 export function parseCatalogIntentParam(value: unknown): CatalogIntent | null {
   if (typeof value !== 'string') {
     return null;
   }
 
   const parts = value.replace(/^\//, '').split('/');
+
+  if (parts.length === 3) {
+    const [segment, make, model] = parts;
+    return toCatalogIntent({ segment, make, model });
+  }
 
   if (parts.length !== 5) {
     return null;
