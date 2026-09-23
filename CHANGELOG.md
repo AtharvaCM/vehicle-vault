@@ -1,3 +1,10 @@
+# [1.73.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.72.0...v1.73.0) (2026-09-23)
+
+
+### Features
+
+* **web:** lint guardrails that keep the design system honest ([b2af894](https://github.com/AtharvaCM/vehicle-vault/commit/b2af89447d1b45f1428cf81629c27fd4c0f3f57f)), closes [#238](https://github.com/AtharvaCM/vehicle-vault/issues/238)
+
 # [1.72.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.71.2...v1.72.0) (2026-09-23)
 
 
