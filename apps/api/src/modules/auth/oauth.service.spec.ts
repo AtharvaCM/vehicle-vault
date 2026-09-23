@@ -177,4 +177,60 @@ describe('OAuthService.loginOrLink', () => {
       properties: { method: 'google' },
     });
   });
+
+  describe('catalog attribution', () => {
+    const fromCatalog = { catalogModel: 'city' };
+
+    beforeEach(() => {
+      productEvents.record.mockClear();
+    });
+
+    it('attributes an account created from a catalog page to the catalog and its model', async () => {
+      prisma.oAuthAccount.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ ...baseUser(), id: 'user-99' });
+
+      await service.loginOrLink({ ...profile, provider: OAuthProvider.github }, fromCatalog);
+
+      expect(productEvents.record).toHaveBeenCalledOnce();
+      expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+        name: 'account_created',
+        userId: 'user-99',
+        properties: { method: 'github', source: 'catalog', catalogModel: 'city' },
+      });
+    });
+
+    it('records no source for a new account that did not come from a catalog page', async () => {
+      prisma.oAuthAccount.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ ...baseUser(), id: 'user-99' });
+
+      await service.loginOrLink(profile, {});
+
+      expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+        name: 'account_created',
+        userId: 'user-99',
+        properties: { method: 'google' },
+      });
+    });
+
+    it('records nothing when an existing linked user signs in from a catalog page', async () => {
+      prisma.oAuthAccount.findUnique.mockResolvedValue({ user: baseUser() });
+
+      const response = await service.loginOrLink(profile, fromCatalog);
+
+      expect(response.accessToken).toBe('access-token');
+      expect(productEvents.record).not.toHaveBeenCalled();
+    });
+
+    it('records nothing when a catalog sign-in links an existing account by email', async () => {
+      prisma.oAuthAccount.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(baseUser());
+
+      await service.loginOrLink(profile, fromCatalog);
+
+      expect(prisma.user.create).not.toHaveBeenCalled();
+      expect(productEvents.record).not.toHaveBeenCalled();
+    });
+  });
 });

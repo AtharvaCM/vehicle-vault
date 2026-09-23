@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
+import {
+  catalogIntentAttribution,
+  readCatalogIntent,
+  type CatalogIntent,
+} from '@/features/catalog-intent/lib/catalog-intent';
 import { getEnv } from '@/lib/env/env';
 
 import { oauthProvidersQueryOptions, type OAuthProvider } from '../api/get-oauth-providers';
@@ -10,14 +15,25 @@ const LABEL: Record<OAuthProvider, string> = {
   github: 'Continue with GitHub',
 };
 
-function providerHref(provider: OAuthProvider) {
+/**
+ * Where a provider's sign-in begins. While a catalog intent is waiting, the
+ * model slug goes along: the API carries it through the provider inside the
+ * signed OAuth state, so a new account is attributed to the catalog. The
+ * intent itself stays in this browser for the callback page to act on.
+ */
+function providerHref(provider: OAuthProvider, intent: CatalogIntent | null) {
   const { apiBaseUrl } = getEnv();
-  return `${apiBaseUrl}/auth/oauth/${provider}`;
+  const { catalogModel } = catalogIntentAttribution(intent);
+  const query = catalogModel ? `?${new URLSearchParams({ catalogModel }).toString()}` : '';
+  return `${apiBaseUrl}/auth/oauth/${provider}${query}`;
 }
 
 export function OAuthButtons() {
   const query = useQuery(oauthProvidersQueryOptions());
   const providers = query.data ?? [];
+  // Read on every render: the register page saves an intent from its address
+  // in an effect, then re-renders as it drops the parameter.
+  const catalogIntent = readCatalogIntent();
 
   if (query.isLoading || providers.length === 0) {
     return null;
@@ -32,7 +48,7 @@ export function OAuthButtons() {
       </div>
       <div className="space-y-2">
         {providers.map((provider) => (
-          <a key={provider} href={providerHref(provider)} className="block">
+          <a key={provider} href={providerHref(provider, catalogIntent)} className="block">
             <Button type="button" variant="outline" className="w-full">
               {LABEL[provider]}
             </Button>

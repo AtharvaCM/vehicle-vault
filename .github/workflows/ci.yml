@@ -80,6 +80,12 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/vehicle_vault?schema=public
       DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/vehicle_vault?schema=public
       FRONTEND_ORIGIN: http://127.0.0.1:4307
+      # Not a real Google client: enough for the API to offer Google and run its
+      # own begin and callback steps, which oauth-catalog-intent.spec.ts drives
+      # with the test answering for Google.
+      GOOGLE_OAUTH_CALLBACK_URL: http://127.0.0.1:4307/api/auth/oauth/google/callback
+      GOOGLE_OAUTH_CLIENT_ID: e2e-google-client
+      GOOGLE_OAUTH_CLIENT_SECRET: e2e-not-a-secret
       JWT_EXPIRES_IN: 1h
       JWT_SECRET: vehicle-vault-ci-secret
       NODE_ENV: test
