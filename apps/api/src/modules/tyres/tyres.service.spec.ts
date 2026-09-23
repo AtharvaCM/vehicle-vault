@@ -1,5 +1,6 @@
+import { BadRequestException } from '@nestjs/common';
 import { AuditResourceType } from '@prisma/client';
-import { TyrePosition } from '@vehicle-vault/shared';
+import { TyrePosition, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -190,6 +191,108 @@ describe('TyresService audit coverage', () => {
         resourceId: 'tyre-1',
       }),
     ]);
+  });
+});
+
+describe('TyresService position validation', () => {
+  let prisma: ReturnType<typeof makeFakePrisma>;
+  let service: TyresService;
+
+  const vehiclesService = { ensureVehicleExists: vi.fn() };
+  const access = { assertEditor: vi.fn() };
+  const conditionResolver = { resolve: vi.fn(), worstLevel: vi.fn() };
+
+  beforeEach(() => {
+    prisma = makeFakePrisma();
+    access.assertEditor.mockResolvedValue('owner');
+    prisma.tyre.findMany.mockResolvedValue([]);
+    prisma.tyre.updateMany.mockResolvedValue({ count: 0 });
+    prisma.tyre.create.mockResolvedValue(TYRE_ROW);
+
+    service = new TyresService(
+      prisma as never,
+      vehiclesService as never,
+      access as never,
+      conditionResolver as never,
+      new AuditService(prisma as never),
+    );
+  });
+
+  it('fits a four-wheel corner on a car', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 42_000,
+      vehicleType: VehicleType.Car,
+    });
+
+    await expect(service.createForVehicle('u1', 'v1', CREATE_PAYLOAD)).resolves.toMatchObject({
+      id: 'tyre-1',
+    });
+  });
+
+  it('rejects front/rear on a car, which has no such position', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 42_000,
+      vehicleType: VehicleType.Car,
+    });
+
+    await expect(
+      service.createForVehicle('u1', 'v1', { ...CREATE_PAYLOAD, position: TyrePosition.Front }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('fits front/rear on a motorcycle', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 12_000,
+      vehicleType: VehicleType.Motorcycle,
+    });
+    prisma.tyre.create.mockResolvedValue({ ...TYRE_ROW, position: TyrePosition.Front });
+
+    await expect(
+      service.createForVehicle('u1', 'v1', { ...CREATE_PAYLOAD, position: TyrePosition.Front }),
+    ).resolves.toMatchObject({ position: TyrePosition.Front });
+    expect(prisma.tyre.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ position: TyrePosition.Front }) }),
+    );
+  });
+
+  it('rejects a four-wheel corner on a motorcycle, which has no left/right pair', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 12_000,
+      vehicleType: VehicleType.Motorcycle,
+    });
+
+    await expect(
+      service.createForVehicle('u1', 'v1', {
+        ...CREATE_PAYLOAD,
+        position: TyrePosition.FrontLeft,
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects moving a tyre onto a position its vehicle does not have', async () => {
+    prisma.tyre.findUnique.mockResolvedValue(TYRE_ROW);
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 42_000,
+      vehicleType: VehicleType.Car,
+    });
+
+    await expect(
+      service.updateTyre('u1', 'tyre-1', { position: TyrePosition.Front }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('does not need the vehicle at all when an update carries no position', async () => {
+    prisma.tyre.findUnique.mockResolvedValue(TYRE_ROW);
+    prisma.tyre.update.mockResolvedValue({ ...TYRE_ROW, brand: 'Bridgestone' });
+
+    await service.updateTyre('u1', 'tyre-1', { brand: 'Bridgestone' });
+
+    expect(vehiclesService.ensureVehicleExists).not.toHaveBeenCalled();
   });
 });
 

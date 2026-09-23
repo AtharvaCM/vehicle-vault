@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Wallet } from 'lucide-react';
-import type { TcoResponse } from '@vehicle-vault/shared';
+import { TCO_MIN_COST_PER_KM_DISTANCE_KM, type TcoResponse } from '@vehicle-vault/shared';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -10,6 +10,14 @@ const inr = new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',
   maximumFractionDigits: 0,
+});
+
+// Whole rupees are too coarse per kilometre: ₹8 and ₹8.4 are 5% apart.
+const inrPerKm = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
 });
 
 const intFmt = new Intl.NumberFormat('en-IN');
@@ -98,8 +106,8 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
       <div className="grid gap-3 sm:grid-cols-3">
         <Metric
           label="₹ / km"
-          value={tco.derived.costPerKm ? inr.format(Number(tco.derived.costPerKm)) : '—'}
-          hint={`${intFmt.format(tco.kmSincePurchase)} km`}
+          value={tco.derived.costPerKm ? inrPerKm.format(Number(tco.derived.costPerKm)) : '—'}
+          hint={costPerKmHint(tco)}
         />
         <Metric
           label="₹ / month"
@@ -124,6 +132,12 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
       ) : null}
     </div>
   );
+}
+
+function costPerKmHint(tco: TcoResponse): string {
+  if (tco.derived.costPerKm) return `${intFmt.format(tco.kmSincePurchase)} km`;
+  if (tco.purchaseOdometer == null) return 'Add the odometer at purchase to see cost per km';
+  return `${intFmt.format(tco.kmSincePurchase)} km so far; shown from ${intFmt.format(TCO_MIN_COST_PER_KM_DISTANCE_KM)} km`;
 }
 
 function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {

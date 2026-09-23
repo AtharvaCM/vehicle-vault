@@ -8,6 +8,7 @@ import { queryKeys } from '@/lib/query/query-keys';
 import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import type { MaintenanceFormValues } from '../schemas/maintenance-form.schema';
+import type { BillField } from '../utils/get-fields-from-bill';
 import { MaintenanceForm } from './maintenance-form';
 
 /** A record already on file, as the edit page hands it to the form. */
@@ -27,6 +28,7 @@ type ShowOptions = {
   /** The vehicle's history, as the records query would return it. */
   history?: { id: string; serviceDate: string; odometer: number; status?: string }[];
   onDirtyChange?: (isDirty: boolean) => void;
+  fieldsFromBill?: ReadonlySet<BillField>;
 };
 
 function show(initialValues?: Partial<MaintenanceFormValues>, options: ShowOptions = {}) {
@@ -42,6 +44,7 @@ function show(initialValues?: Partial<MaintenanceFormValues>, options: ShowOptio
   render(
     <MaintenanceForm
       currentOdometer={options.currentOdometer}
+      fieldsFromBill={options.fieldsFromBill}
       initialValues={initialValues}
       onDirtyChange={options.onDirtyChange}
       onSubmit={onSubmit}
@@ -188,6 +191,16 @@ describe('MaintenanceForm', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(screen.queryByText(/save anyway/)).not.toBeInTheDocument();
+  });
+
+  it('marks each value read from the bill until it is edited', () => {
+    show(loaded, { fieldsFromBill: new Set<BillField>(['odometer', 'totalCost']) });
+
+    expect(screen.getAllByText('from bill')).toHaveLength(2);
+
+    fireEvent.change(screen.getByLabelText('Total cost'), { target: { value: '2400' } });
+
+    expect(screen.getAllByText('from bill')).toHaveLength(1);
   });
 
   it('sends the resolved qty x unit price as the line item amount, not just what was typed', async () => {

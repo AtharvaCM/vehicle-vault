@@ -67,6 +67,39 @@ describe('OAuthController callback', () => {
     }
   });
 
+  it('hands the return path a verified state carried back to the web app', async () => {
+    await controller.googleCallback(
+      { user: profile, authInfo: { state: { next: '/vehicle-invites/tok-1' } } },
+      res,
+    );
+
+    expect(fragment()).toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      next: '/vehicle-invites/tok-1',
+    });
+  });
+
+  it('never hands back a return path that leaves the site', async () => {
+    await controller.googleCallback(
+      { user: profile, authInfo: { state: { next: '//evil.example.test' } } },
+      res,
+    );
+
+    expect(fragment()).toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+  });
+
+  it('keeps the return path on a failed sign-in so the retry still has it', async () => {
+    oauthService.loginOrLink.mockRejectedValueOnce(new Error('oauth_email_conflict'));
+
+    await controller.githubCallback(
+      { user: profile, authInfo: { state: { next: '/reminders' } } },
+      res,
+    );
+
+    expect(fragment()).toEqual({ error: 'oauth_email_conflict', next: '/reminders' });
+  });
+
   it('sends a cancelled or refused sign-in back to the web app with its reason', async () => {
     await controller.googleCallback({ oauthFailure: 'oauth_cancelled' }, res);
 

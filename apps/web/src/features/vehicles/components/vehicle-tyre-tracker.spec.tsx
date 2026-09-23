@@ -57,6 +57,22 @@ const newVirtus: Vehicle = {
   updatedAt: '2026-08-25T00:00:00.000Z',
 };
 
+/** A two-wheeler: the demo Royal Enfield the issue calls out by name. */
+const royalEnfield: Vehicle = {
+  id: 'vehicle-2',
+  registrationNumber: 'KA01AB5678',
+  make: 'Royal Enfield',
+  model: 'Classic 350',
+  year: 2026,
+  fuelType: FuelType.Petrol,
+  vehicleType: VehicleType.Motorcycle,
+  odometer: 4200,
+  purchaseDate: '2026-08-15T00:00:00.000Z',
+  purchaseOdometer: 0,
+  createdAt: '2026-08-15T00:00:00.000Z',
+  updatedAt: '2026-08-25T00:00:00.000Z',
+};
+
 type QueryStub = Record<string, unknown>;
 
 function settled(data: MaintenanceRecord[]): QueryStub {
@@ -423,5 +439,89 @@ describe('VehicleTyreTracker', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /add a tyre/i }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+describe('VehicleTyreTracker two-wheeler layout', () => {
+  beforeEach(() => {
+    intervalsQuery.current = {
+      data: {
+        [MaintenanceCategory.TyreRotation]: { km: 10_000, months: 12, source: 'default' },
+        [MaintenanceCategory.WheelAlignment]: { km: 10_000, months: 12, source: 'default' },
+      },
+    };
+    conditionQuery.current = { data: undefined };
+  });
+
+  it('hides tyre rotation and relabels alignment for a motorcycle', () => {
+    render(<VehicleTyreTracker maintenanceQuery={settled([]) as never} vehicle={royalEnfield} />);
+
+    // A two-wheeler has no left/right pair to rotate, so the card must not
+    // claim a rotation status it cannot support.
+    expect(screen.queryByText('Tyre Rotation')).not.toBeInTheDocument();
+    expect(screen.getByText('Wheel Alignment / Balancing')).toBeInTheDocument();
+  });
+
+  it('keeps both cards, unrelabelled, for a car', () => {
+    renderTracker(settled([]));
+
+    expect(screen.getByText('Tyre Rotation')).toBeInTheDocument();
+    expect(screen.getByText('Wheel Alignment')).toBeInTheDocument();
+    expect(screen.queryByText('Wheel Alignment / Balancing')).not.toBeInTheDocument();
+  });
+
+  it('gives the wheel diagram a front/rear description, not a four-corner one', () => {
+    render(<VehicleTyreTracker maintenanceQuery={settled([]) as never} vehicle={royalEnfield} />);
+
+    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
+    expect(diagram).toHaveAccessibleName(/wheel alignment \/ balancing: healthy/i);
+    // No rotation claim of any kind for a vehicle that has no rotation service.
+    expect(diagram).not.toHaveAccessibleName(/tyre rotation/i);
+  });
+
+  it('shows Front and Rear corners with their measured condition, not FL/FR/RL/RR', () => {
+    conditionQuery.current = {
+      data: {
+        vehicleId: 'vehicle-2',
+        overall: 'healthy',
+        tyres: [
+          {
+            tyreId: 't-front',
+            position: TyrePosition.Front,
+            level: 'healthy',
+            reason: 'none',
+            summary: '5.5 mm remaining.',
+            treadDepthMm: 5.5,
+            ageYears: 1,
+            kmOnTyre: 4200,
+            estimatedKmRemaining: 12_000,
+            lastInspectedAt: '2026-08-20T00:00:00.000Z',
+          },
+          {
+            tyreId: 't-rear',
+            position: TyrePosition.Rear,
+            level: 'warn',
+            reason: 'tread',
+            summary: '3.2 mm tread — plan a replacement in the next few thousand kilometres.',
+            treadDepthMm: 3.2,
+            ageYears: 1,
+            kmOnTyre: 4200,
+            estimatedKmRemaining: 2_000,
+            lastInspectedAt: '2026-08-20T00:00:00.000Z',
+          },
+        ],
+      },
+    };
+
+    render(<VehicleTyreTracker maintenanceQuery={settled([]) as never} vehicle={royalEnfield} />);
+
+    expect(screen.getByText('Front')).toBeInTheDocument();
+    expect(screen.getByText('Rear')).toBeInTheDocument();
+    expect(screen.queryByText('Front left')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rear right')).not.toBeInTheDocument();
+
+    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
+    expect(diagram).toHaveAccessibleName(/front: 5.5 mm remaining/i);
+    expect(diagram).toHaveAccessibleName(/rear: 3.2 mm tread/i);
   });
 });

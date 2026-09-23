@@ -15,13 +15,14 @@ import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
 import { OAuthButtons } from '../components/oauth-buttons';
 import { RegisterForm } from '../components/register-form';
 import { useAuth } from '../hooks/use-auth';
+import { afterAuthDestination, navigateAfterAuth } from '../lib/return-path';
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const auth = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { catalog } = useSearch({ from: '/register' });
+  const { catalog, next } = useSearch({ from: '/register' });
 
   useKeepCatalogIntent(catalog);
 
@@ -31,7 +32,8 @@ export function RegisterPage() {
 
     try {
       // Came from a catalog page's "Track this vehicle": attribute the sign-up
-      // to it, then carry on to that vehicle rather than the dashboard.
+      // to it, then carry on to that vehicle rather than the dashboard, unless
+      // a return path says where they were going.
       const catalogIntent = readCatalogIntent();
       const authResponse = await register({
         ...values,
@@ -42,13 +44,19 @@ export function RegisterPage() {
       // navigation below: the add-vehicle form's route checks it, and a stale
       // "signed out" would bounce through /login to the dashboard.
       flushSync(() => auth.setSession(authResponse));
+      const destination = afterAuthDestination(next);
       appToast.success({
         title: 'Account created',
-        description: catalogIntent
-          ? 'Add the rest of your vehicle’s details to start tracking it.'
-          : 'Your dashboard is ready.',
+        ...('to' in destination
+          ? {
+              description:
+                destination.to === '/vehicles/new'
+                  ? 'Add the rest of your vehicle’s details to start tracking it.'
+                  : 'Your dashboard is ready.',
+            }
+          : {}),
       });
-      await navigate({ to: catalogIntent ? '/vehicles/new' : '/dashboard' });
+      await navigateAfterAuth(navigate, destination);
     } catch (error) {
       const message = getApiErrorMessage(error, 'Unable to create the account right now.');
 
@@ -64,7 +72,9 @@ export function RegisterPage() {
 
   return (
     <AuthPageShell
-      alternateAction={<AuthPageLink label="Sign in" text="Already have an account?" to="/login" />}
+      alternateAction={
+        <AuthPageLink label="Sign in" next={next} text="Already have an account?" to="/login" />
+      }
       description="Create an account to keep your vehicles, maintenance history, reminders, and receipts in one place."
       title="Create your account"
     >
@@ -74,7 +84,7 @@ export function RegisterPage() {
           onSubmit={handleSubmit}
           submitError={submitError}
         />
-        <OAuthButtons />
+        <OAuthButtons next={next} />
       </div>
     </AuthPageShell>
   );

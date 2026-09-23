@@ -19,16 +19,21 @@ const LABEL: Record<OAuthProvider, string> = {
  * Where a provider's sign-in begins. While a catalog intent is waiting, the
  * model slug goes along: the API carries it through the provider inside the
  * signed OAuth state, so a new account is attributed to the catalog. The
- * intent itself stays in this browser for the callback page to act on.
+ * intent itself stays in this browser for the callback page to act on. A
+ * return path (`next`) travels the same way and comes back in the callback's
+ * fragment.
  */
-function providerHref(provider: OAuthProvider, intent: CatalogIntent | null) {
+function providerHref(provider: OAuthProvider, intent: CatalogIntent | null, next?: string) {
   const { apiBaseUrl } = getEnv();
   const { catalogModel } = catalogIntentAttribution(intent);
-  const query = catalogModel ? `?${new URLSearchParams({ catalogModel }).toString()}` : '';
-  return `${apiBaseUrl}/auth/oauth/${provider}${query}`;
+  const params = new URLSearchParams({
+    ...(catalogModel ? { catalogModel } : {}),
+    ...(next ? { next } : {}),
+  }).toString();
+  return `${apiBaseUrl}/auth/oauth/${provider}${params ? `?${params}` : ''}`;
 }
 
-export function OAuthButtons() {
+export function OAuthButtons({ next }: { next?: string }) {
   const query = useQuery(oauthProvidersQueryOptions());
   const providers = query.data ?? [];
   // Read on every render: the register page saves an intent from its address
@@ -48,7 +53,7 @@ export function OAuthButtons() {
       </div>
       <div className="space-y-2">
         {providers.map((provider) => (
-          <a key={provider} href={providerHref(provider, catalogIntent)} className="block">
+          <a key={provider} href={providerHref(provider, catalogIntent, next)} className="block">
             <Button type="button" variant="outline" className="w-full">
               {LABEL[provider]}
             </Button>
