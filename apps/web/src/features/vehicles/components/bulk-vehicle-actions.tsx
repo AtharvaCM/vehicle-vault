@@ -46,7 +46,7 @@ export function BulkVehicleActions({
             </p>
             <p className="text-sm text-muted-foreground">
               {hasSelection
-                ? 'Deleting vehicles also removes linked maintenance records, reminders, and receipts.'
+                ? 'Deleting vehicles also removes linked service records, reminders, and receipts.'
                 : `You can select all ${visibleCount} visible vehicles from the current filtered view.`}
             </p>
           </div>
@@ -63,7 +63,7 @@ export function BulkVehicleActions({
               </Button>
               <ConfirmActionDialog
                 confirmLabel={`Delete ${selectedCount} vehicle${selectedCount === 1 ? '' : 's'}`}
-                description="This removes the selected vehicles and all linked maintenance history, reminders, and receipts."
+                description="This removes the selected vehicles and all linked service history, reminders, and receipts."
                 isPending={isDeleting}
                 onConfirm={onDeleteSelected}
                 title="Delete selected vehicles?"

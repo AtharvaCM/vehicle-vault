@@ -96,7 +96,7 @@ export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
                 <Link className="w-full" to="/vehicles/new">
                   <Button className="w-full" size="sm">
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Vehicle
+                    Add vehicle
                   </Button>
                 </Link>
               </SheetClose>
@@ -110,7 +110,7 @@ export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
                 variant="ghost"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                Sign out
               </Button>
             </div>
           </div>

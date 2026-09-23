@@ -9,8 +9,8 @@ const MaintenanceRecordEditPage = createLazyPage(
       default: module.MaintenanceRecordEditPage,
     })),
   {
-    title: 'Loading maintenance form',
-    description: 'Loading this service entry for editing.',
+    title: 'Loading service form',
+    description: 'Loading this service record for editing.',
   },
 );
 

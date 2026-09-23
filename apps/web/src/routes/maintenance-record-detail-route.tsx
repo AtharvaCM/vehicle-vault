@@ -9,8 +9,8 @@ const MaintenanceRecordDetailPage = createLazyPage(
       default: module.MaintenanceRecordDetailPage,
     })),
   {
-    title: 'Loading maintenance record',
-    description: 'Loading this service entry.',
+    title: 'Loading service record',
+    description: 'Loading this service record.',
   },
 );
 

@@ -16,7 +16,7 @@ describe('VehicleSpecsCard', () => {
 
     expect(screen.getByText('No variant on file')).toBeInTheDocument();
     expect(
-      screen.getByText(/Add the variant for your Hyundai Creta from Edit Vehicle/),
+      screen.getByText(/Add the variant for your Hyundai Creta from Edit vehicle/),
     ).toBeInTheDocument();
     expect(screen.queryByText('Looking up specifications…')).not.toBeInTheDocument();
   });

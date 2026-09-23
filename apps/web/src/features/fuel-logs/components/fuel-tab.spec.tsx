@@ -65,15 +65,15 @@ describe('FuelTab roles', () => {
 
       await user.click(screen.getByRole('button', { name: 'Fuel log actions' }));
 
-      expect(await screen.findByRole('menuitem', { name: 'Edit Entry' })).toBeVisible();
-      expect(screen.getByRole('menuitem', { name: 'Delete Entry' })).toBeVisible();
+      expect(await screen.findByRole('menuitem', { name: 'Edit entry' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Delete entry' })).toBeVisible();
     },
   );
 
   it('shows a viewer the fills without any way to change them', () => {
     renderAs(VehicleRole.Viewer, [log]);
 
-    expect(screen.getByText('8 L Fuel Fill')).toBeInTheDocument();
+    expect(screen.getByText('8 L fuel fill')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Fuel log actions' })).not.toBeInTheDocument();
     for (const name of [/log fuel/i, /scan receipt/i, /import csv/i]) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();

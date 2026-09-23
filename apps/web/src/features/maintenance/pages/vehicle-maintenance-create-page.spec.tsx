@@ -101,7 +101,7 @@ describe('VehicleMaintenanceCreatePage roles', () => {
       screen.queryByRole('button', { name: /upload job card first/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Maintenance History' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to maintenance' })).toBeInTheDocument();
   });
 });
 

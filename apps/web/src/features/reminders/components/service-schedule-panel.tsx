@@ -96,7 +96,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
             <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
           </div>
           <Badge variant="outline" className="text-[10px] uppercase tracking-widest">
-            Generic intervals
+            Typical intervals
           </Badge>
         </div>
         <CardDescription>

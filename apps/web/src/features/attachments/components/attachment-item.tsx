@@ -94,7 +94,7 @@ export function AttachmentItem({
         {onDelete ? (
           <ConfirmActionDialog
             confirmLabel="Delete attachment"
-            description={`This removes ${attachment.originalFileName} from this service entry. If available, the stored file is deleted too.`}
+            description={`This removes ${attachment.originalFileName} from this service record. If available, the stored file is deleted too.`}
             isPending={isDeleting}
             onConfirm={() => onDelete(attachment.id)}
             title="Delete this attachment?"

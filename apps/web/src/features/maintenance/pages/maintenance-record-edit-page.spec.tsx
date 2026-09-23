@@ -140,22 +140,22 @@ describe('MaintenanceRecordEditPage roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])('gives an %s the form', (role) => {
     renderAs(role);
 
-    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
     expect(screen.queryByText('You have view-only access')).not.toBeInTheDocument();
   });
 
   it('replaces the form with an explanation for a viewer', () => {
     renderAs(VehicleRole.Viewer);
 
-    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Record' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to record' })).toBeInTheDocument();
   });
 
   it('offers a viewer no way to confirm a draft either', () => {
     renderAs(VehicleRole.Viewer, draft);
 
-    expect(screen.queryByRole('button', { name: 'Confirm Record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirm record' })).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
   });
 });
@@ -164,7 +164,7 @@ describe('MaintenanceRecordEditPage draft confirmation', () => {
   it('asks an editor to confirm a draft rather than save it', () => {
     renderAs(VehicleRole.Editor, draft);
 
-    expect(screen.getByRole('button', { name: 'Confirm Record' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm record' })).toBeInTheDocument();
     expect(
       screen.getByText(
         'This draft does not count anywhere yet. Check the details, then confirm it.',
@@ -175,25 +175,25 @@ describe('MaintenanceRecordEditPage draft confirmation', () => {
   it('confirms the draft with the edited details in one save', async () => {
     renderAs(VehicleRole.Editor, draft);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm Record' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm record' }));
 
     expect(updateRecord).toHaveBeenCalledWith({
       ...formBody,
       status: MaintenanceRecordStatus.Confirmed,
     });
     expect(appToast.success).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Maintenance record confirmed' }),
+      expect.objectContaining({ title: 'Service record confirmed' }),
     );
   });
 
   it('leaves the status of an already confirmed record alone', async () => {
     renderAs(VehicleRole.Editor);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(updateRecord).toHaveBeenCalledWith(formBody);
     expect(appToast.success).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Maintenance record updated' }),
+      expect.objectContaining({ title: 'Service record updated' }),
     );
   });
 });

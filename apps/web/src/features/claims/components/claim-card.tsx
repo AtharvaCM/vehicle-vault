@@ -96,11 +96,11 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
           <div className="text-xs text-slate-500 flex items-center gap-2">
             {claim.maintenanceRecordId ? (
               <span className="flex items-center gap-1">
-                <Wrench className="h-3 w-3" /> Linked to maintenance record
+                <Wrench className="h-3 w-3" /> Linked to service record
               </span>
             ) : (
               <span className="flex items-center gap-1 text-slate-400">
-                <Link2 className="h-3 w-3" /> No maintenance record linked
+                <Link2 className="h-3 w-3" /> No service record linked
               </span>
             )}
           </div>

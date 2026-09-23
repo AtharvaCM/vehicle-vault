@@ -128,8 +128,8 @@ describe('MaintenanceRecordDetailPage roles', () => {
     (role) => {
       renderAs(role);
 
-      expect(screen.getByRole('link', { name: 'Edit Record' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Delete Record' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Edit record' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Delete record' })).toBeInTheDocument();
     },
   );
 
@@ -138,7 +138,7 @@ describe('MaintenanceRecordDetailPage roles', () => {
     (role) => {
       renderAs(role);
 
-      expect(screen.getByRole('button', { name: 'Upload Files' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Upload files' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     },
   );
@@ -146,9 +146,9 @@ describe('MaintenanceRecordDetailPage roles', () => {
   it('shows a viewer the record without any way to change it', () => {
     renderAs(VehicleRole.Viewer);
 
-    expect(screen.queryByRole('link', { name: 'Edit Record' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete Record' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Maintenance History' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Edit record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete record' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to maintenance' })).toBeInTheDocument();
   });
 
   it('leaves a viewer the receipts to open but not to change', () => {
@@ -157,7 +157,7 @@ describe('MaintenanceRecordDetailPage roles', () => {
     expect(screen.getByText('invoice.pdf')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View file' })).toBeInTheDocument();
 
-    expect(screen.queryByRole('button', { name: 'Upload Files' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Upload files' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
   });
 });

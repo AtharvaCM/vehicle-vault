@@ -25,7 +25,7 @@ export function LoanForm({
   onSubmit,
   submitError,
   initialValues,
-  submitLabel = 'Save Loan',
+  submitLabel = 'Save loan',
 }: LoanFormProps) {
   const form = useForm<LoanFormValues>({
     resolver: zodResolver(loanFormSchema),

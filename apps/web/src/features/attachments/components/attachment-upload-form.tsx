@@ -43,7 +43,7 @@ export function AttachmentUploadForm({
               <div>
                 <p className="font-medium text-slate-950">Upload receipts or service documents</p>
                 <p className="text-sm text-slate-500">
-                  Add invoices, job cards, or service photos directly to this maintenance record.
+                  Add invoices, job cards, or service photos directly to this service record.
                 </p>
               </div>
             </div>
@@ -58,7 +58,7 @@ export function AttachmentUploadForm({
           </div>
 
           <Button onClick={() => inputRef.current?.click()} type="button" variant="secondary">
-            {isUploading ? 'Uploading...' : 'Upload Files'}
+            {isUploading ? 'Uploading...' : 'Upload files'}
           </Button>
         </div>
         <input

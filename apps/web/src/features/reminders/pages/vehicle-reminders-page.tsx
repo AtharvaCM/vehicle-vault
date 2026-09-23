@@ -170,7 +170,7 @@ export function VehicleRemindersPage({
         <EmptyState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to Vehicles
+              Back to vehicles
             </Link>
           }
           description="The requested vehicle could not be found, so its reminders are unavailable."
@@ -191,7 +191,7 @@ export function VehicleRemindersPage({
                 params={{ vehicleId }}
                 to="/vehicles/$vehicleId"
               >
-                Back to Vehicle
+                Back to vehicle
               </Link>
               {canEdit ? (
                 <Link
@@ -199,13 +199,13 @@ export function VehicleRemindersPage({
                   params={{ vehicleId }}
                   to="/vehicles/$vehicleId/reminders/new"
                 >
-                  Add Reminder
+                  Add reminder
                 </Link>
               ) : null}
             </>
           }
           description="Keep service, insurance, PUC, and custom reminders tied to this vehicle."
-          title={`${vehicleTitle} Reminders`}
+          title={`${vehicleTitle} reminders`}
         />
 
         {remindersQuery.isPending ? (
@@ -273,7 +273,7 @@ export function VehicleRemindersPage({
                   onSelectionChange={canEdit ? handleSelectionChange : undefined}
                   reminders={groupedReminders[ReminderStatus.DueToday]}
                   selectedReminderIds={selectedReminderIds}
-                  title="Due Today"
+                  title="Due today"
                 />
                 <ReminderList
                   description="Upcoming reminders for this vehicle."

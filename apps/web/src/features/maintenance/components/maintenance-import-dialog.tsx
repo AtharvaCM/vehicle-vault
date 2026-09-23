@@ -98,7 +98,7 @@ export function MaintenanceImportDialog({
     if (!preview.records.length) {
       appToast.error({
         title: 'Nothing to import',
-        description: 'Map the CSV first so at least one valid maintenance record is produced.',
+        description: 'Map the CSV first so at least one valid service record is produced.',
       });
       return;
     }
@@ -108,8 +108,8 @@ export function MaintenanceImportDialog({
     try {
       const result = await bulkCreateMutation.mutateAsync(preview.records);
       appToast.success({
-        title: 'Maintenance import complete',
-        description: `Imported ${result.count} maintenance record${result.count === 1 ? '' : 's'}.`,
+        title: 'Service import complete',
+        description: `Imported ${result.count} service record${result.count === 1 ? '' : 's'}.`,
       });
       onOpenChange(false);
       reset();
@@ -117,7 +117,7 @@ export function MaintenanceImportDialog({
       setStep('preview');
       appToast.error({
         title: 'Import failed',
-        description: 'The maintenance records could not be saved.',
+        description: 'The service records could not be saved.',
       });
     }
   }
@@ -139,10 +139,10 @@ export function MaintenanceImportDialog({
             {step === 'upload' ? <Upload className="h-5 w-5 text-primary" /> : null}
             {step === 'map' ? <FileText className="h-5 w-5 text-primary" /> : null}
             {step === 'preview' ? <Check className="h-5 w-5 text-emerald-500" /> : null}
-            Import Maintenance CSV
+            Import service CSV
           </DialogTitle>
           <DialogDescription>
-            Map your workshop export or spreadsheet into structured maintenance records.
+            Map your workshop export or spreadsheet into structured service records.
           </DialogDescription>
         </DialogHeader>
 
@@ -154,8 +154,8 @@ export function MaintenanceImportDialog({
               </div>
               <h4 className="text-lg font-bold text-slate-900">Select a CSV file</h4>
               <p className="mt-2 max-w-[420px] text-sm text-slate-500">
-                Supports one row per maintenance event or multiple rows per invoice when you map a
-                group key or invoice number.
+                Supports one row per service event or multiple rows per invoice when you map a group
+                key or invoice number.
               </p>
               <input
                 accept=".csv"
@@ -212,7 +212,7 @@ export function MaintenanceImportDialog({
                     Ready to import
                   </h4>
                   <p className="text-xs text-slate-500">
-                    {preview.records.length} maintenance record
+                    {preview.records.length} service record
                     {preview.records.length === 1 ? '' : 's'} will be created.
                   </p>
                 </div>
@@ -294,7 +294,7 @@ export function MaintenanceImportDialog({
           {step === 'importing' ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <h4 className="text-lg font-bold text-slate-900">Importing maintenance records...</h4>
+              <h4 className="text-lg font-bold text-slate-900">Importing service records...</h4>
               <p className="mt-2 text-sm text-slate-500">
                 Processing {preview.records.length} records into the service history.
               </p>

@@ -164,7 +164,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
     : mergeStatus(insights.rotation.status, insights.alignment.status);
   const byPosition = new Map(measured.map((tyre) => [tyre.position, tyre]));
   const diagramCorners = twoWheeler ? TWO_WHEEL_DIAGRAM_CORNERS : FOUR_WHEEL_DIAGRAM_CORNERS;
-  const alignmentLabel = twoWheeler ? 'Wheel Alignment / Balancing' : 'Wheel Alignment';
+  const alignmentLabel = twoWheeler ? 'Wheel alignment / balancing' : 'Wheel alignment';
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
@@ -173,7 +173,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           <CardHeader className="bg-slate-50/50 border-b border-slate-100">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle className="text-lg font-bold">Wheel &amp; Tyre Geometry</CardTitle>
+                <CardTitle className="text-lg font-bold">Wheel &amp; tyre geometry</CardTitle>
                 <CardDescription>
                   {hasMeasurements
                     ? 'Per-corner condition from recorded tread depth and tyre age.'
@@ -282,7 +282,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           {twoWheeler ? null : (
             <MetricCard
               icon={<RotateCw className="h-4 w-4" />}
-              label="Tyre Rotation"
+              label="Tyre rotation"
               metric={insights.rotation}
             />
           )}
@@ -297,7 +297,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       <div className="space-y-6">
         <Card className="border-slate-200/60 bg-white">
           <CardHeader>
-            <CardTitle className="text-base font-bold">Tyre Records</CardTitle>
+            <CardTitle className="text-base font-bold">Tyre records</CardTitle>
             <CardDescription>
               Rotations, alignments, replacements and punctures.
               {insights.records.length > TYRE_RECORD_PREVIEW
@@ -333,7 +333,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
         {insights.lastReplacement ? (
           <Card className="border-slate-200/60 bg-white">
             <CardHeader>
-              <CardTitle className="text-base font-bold">Current Tyres</CardTitle>
+              <CardTitle className="text-base font-bold">Current tyres</CardTitle>
               <CardDescription>Fitted at the last recorded replacement.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -755,6 +755,6 @@ function describeBaseline(metric: TyreMetric): string {
     case 'purchase':
       return 'since purchase — earlier history unknown';
     case 'none':
-      return 'no service logged yet';
+      return 'No service logged yet';
   }
 }

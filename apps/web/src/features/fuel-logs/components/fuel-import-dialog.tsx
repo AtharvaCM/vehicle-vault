@@ -37,7 +37,7 @@ const REQUIRED_FIELDS = [
   { id: 'date', label: 'Date', description: 'Date of fueling' },
   { id: 'odometer', label: 'Odometer', description: 'Mileage at the pump' },
   { id: 'quantity', label: 'Quantity (L)', description: 'Litres filled' },
-  { id: 'totalCost', label: 'Total Cost', description: 'Amount paid' },
+  { id: 'totalCost', label: 'Total cost', description: 'Amount paid' },
 ];
 
 const OPTIONAL_FIELDS = [
@@ -174,7 +174,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
             {step === 'upload' && <Upload className="h-5 w-5 text-primary" />}
             {step === 'map' && <FileText className="h-5 w-5 text-primary" />}
             {step === 'preview' && <Check className="h-5 w-5 text-emerald-500" />}
-            Bulk Import Fuel Logs
+            Bulk import fuel logs
           </DialogTitle>
           <DialogDescription>
             High-speed ingestion for your historical fueling records.
@@ -188,7 +188,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                 <Upload className="h-8 w-8 text-primary" />
               </div>
               <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">
-                Select CSV File
+                Select CSV file
               </h4>
               <p className="text-sm text-zinc-500 text-center max-w-[300px] mb-6">
                 Upload your fuel registry. We&apos;ll help you map the columns in the next step.
@@ -202,7 +202,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               />
               <Button asChild>
                 <label htmlFor="csv-upload" className="cursor-pointer">
-                  Browse Files
+                  Browse files
                 </label>
               </Button>
             </div>
@@ -212,7 +212,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
             <div className="space-y-6">
               <div className="flex items-center justify-between px-1">
                 <div className="space-y-0.5">
-                  <h4 className="text-sm font-bold">Column Mapping</h4>
+                  <h4 className="text-sm font-bold">Column mapping</h4>
                   <p className="text-xs text-zinc-500">
                     Map your CSV headers to our registry fields.
                   </p>
@@ -226,7 +226,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                 <div className="space-y-6">
                   <section className="space-y-4">
                     <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
-                      Required Fields
+                      Required fields
                     </h5>
                     <div className="grid gap-4 sm:grid-cols-2">
                       {REQUIRED_FIELDS.map((field) => (
@@ -256,7 +256,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
 
                   <section className="space-y-4">
                     <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
-                      Optional Fields
+                      Optional fields
                     </h5>
                     <div className="grid gap-4 sm:grid-cols-2">
                       {OPTIONAL_FIELDS.map((field) => (
@@ -304,7 +304,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               <div className="flex items-center justify-between px-1">
                 <div className="space-y-0.5">
                   <h4 className="text-sm font-bold text-emerald-600 flex items-center gap-2">
-                    <Check className="h-4 w-4" /> Ready for Ingestion
+                    <Check className="h-4 w-4" /> Ready for ingestion
                   </h4>
                   <p className="text-xs text-zinc-500">
                     Previewing first 5 of {csvRows.length} records.
@@ -371,7 +371,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
               <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <h4 className="text-lg font-bold">Ingesting Data...</h4>
+              <h4 className="text-lg font-bold">Ingesting data...</h4>
               <p className="text-sm text-zinc-500">
                 Processing {csvRows.length} records across the registry.
               </p>
@@ -383,12 +383,12 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
           <div>
             {step === 'map' && (
               <Button variant="ghost" size="sm" onClick={() => setStep('upload')} className="gap-2">
-                <ArrowLeft className="h-4 w-4" /> Back to Upload
+                <ArrowLeft className="h-4 w-4" /> Back to upload
               </Button>
             )}
             {step === 'preview' && (
               <Button variant="ghost" size="sm" onClick={() => setStep('map')} className="gap-2">
-                <ArrowLeft className="h-4 w-4" /> Back to Mapping
+                <ArrowLeft className="h-4 w-4" /> Back to mapping
               </Button>
             )}
           </div>
@@ -398,12 +398,12 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
             </Button>
             {step === 'map' && (
               <Button size="sm" onClick={handleMap} className="gap-2">
-                Next: Preview <ChevronRight className="h-4 w-4" />
+                Next: preview <ChevronRight className="h-4 w-4" />
               </Button>
             )}
             {step === 'preview' && (
               <Button size="sm" onClick={handleImport} className="gap-2">
-                Complete Ingestion
+                Complete ingestion
               </Button>
             )}
           </div>

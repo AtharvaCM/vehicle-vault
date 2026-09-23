@@ -4,7 +4,7 @@ export type AuditActionTone = 'accent' | 'neutral' | 'warning' | 'danger';
 
 const NAMESPACE_LABELS: Record<string, string> = {
   vehicle: 'Vehicle',
-  maintenance: 'Maintenance',
+  maintenance: 'Service',
   reminder: 'Reminder',
   insurance: 'Insurance',
   warranty: 'Warranty',
@@ -38,7 +38,7 @@ const VERB_LABELS: Record<string, string> = {
 
 const RESOURCE_TYPE_LABELS: Record<AuditResourceType, string> = {
   vehicle: 'Vehicle',
-  maintenance_record: 'Maintenance record',
+  maintenance_record: 'Service record',
   reminder: 'Reminder',
   insurance_policy: 'Insurance policy',
   warranty: 'Warranty',

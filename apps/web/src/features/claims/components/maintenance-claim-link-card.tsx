@@ -58,7 +58,7 @@ export function MaintenanceClaimLinkCard({
         id: pickerValue,
         data: { maintenanceRecordId },
       });
-      appToast.success({ title: 'Claim linked', description: 'Maintenance record attached.' });
+      appToast.success({ title: 'Claim linked', description: 'Service record attached.' });
       setPickerValue('__none');
     } catch {
       appToast.error({
@@ -85,7 +85,7 @@ export function MaintenanceClaimLinkCard({
       <Card className="border-dashed">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <ReceiptText className="h-4 w-4 text-primary" /> Insurance Claim
+            <ReceiptText className="h-4 w-4 text-primary" /> Insurance claim
           </CardTitle>
           <CardDescription>
             Save this record first to link or create an insurance claim.
@@ -99,7 +99,7 @@ export function MaintenanceClaimLinkCard({
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <ReceiptText className="h-4 w-4 text-primary" /> Insurance Claim
+          <ReceiptText className="h-4 w-4 text-primary" /> Insurance claim
         </CardTitle>
         <CardDescription>
           Tie this repair to an insurance claim so cost analytics reflect what you actually paid.

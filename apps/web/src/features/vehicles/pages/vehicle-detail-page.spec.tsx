@@ -117,9 +117,9 @@ describe('VehicleDetailPage roles', () => {
     renderAs(VehicleRole.Viewer);
 
     for (const name of [
-      'Edit Vehicle',
-      'Log Maintenance',
-      'Add Reminder',
+      'Edit vehicle',
+      'Log service',
+      'Add reminder',
       'Log',
       'Add',
       'Add first record',
@@ -136,9 +136,9 @@ describe('VehicleDetailPage roles', () => {
     renderAs(VehicleRole.Editor);
 
     for (const name of [
-      'Edit Vehicle',
-      'Log Maintenance',
-      'Add Reminder',
+      'Edit vehicle',
+      'Log service',
+      'Add reminder',
       'Log',
       'Add',
       'Add first record',

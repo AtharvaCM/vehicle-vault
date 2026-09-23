@@ -79,7 +79,7 @@ export function MaintenanceLineItemsEditor({
           </div>
           <Button onClick={() => append(emptyLineItem)} size="sm" type="button" variant="secondary">
             <Plus className="h-4 w-4" />
-            Add Item
+            Add item
           </Button>
         </div>
       </CardHeader>
@@ -104,7 +104,7 @@ export function MaintenanceLineItemsEditor({
                     </p>
                   </div>
                   <Button
-                    aria-label={`Remove maintenance line item ${index + 1}`}
+                    aria-label={`Remove service line item ${index + 1}`}
                     onClick={() => remove(index)}
                     size="icon-xs"
                     type="button"
@@ -182,7 +182,7 @@ export function MaintenanceLineItemsEditor({
                   >
                     <Input
                       id={`maintenance-line-item-name-${index}`}
-                      placeholder="Engine oil, labor, GST, oil filter"
+                      placeholder="Engine oil, labour, GST, oil filter"
                       {...register(`lineItems.${index}.name`)}
                     />
                   </FormField>
@@ -306,7 +306,7 @@ export function MaintenanceLineItemsEditor({
                       type="button"
                       variant="outline"
                     >
-                      Use Derived Total
+                      Use derived total
                     </Button>
                   </div>
                 ) : null}

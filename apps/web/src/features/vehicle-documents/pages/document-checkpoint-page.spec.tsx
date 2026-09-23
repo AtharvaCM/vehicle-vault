@@ -94,7 +94,7 @@ describe('DocumentCheckpointPage', () => {
   it('puts the number up large, with who issued it and how long it runs', () => {
     show();
 
-    expect(screen.getByRole('heading', { name: 'PUC Certificate' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'PUC certificate' })).toBeInTheDocument();
     expect(screen.getByText('MH12AB1234')).toBeInTheDocument();
     const number = screen.getByText('MH12-PUC-440192');
     expect(number).toHaveClass('text-4xl');

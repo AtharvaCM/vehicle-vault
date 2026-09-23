@@ -59,7 +59,7 @@ export function VehiclePickerDialog({
   isLoading = false,
   buildLink,
   triggerLabel,
-  addVehicleLabel = 'Add a vehicle',
+  addVehicleLabel = 'Add vehicle',
   dialogTitle = 'Choose a vehicle',
   dialogDescription = 'Pick which vehicle this is for.',
   variant = 'default',

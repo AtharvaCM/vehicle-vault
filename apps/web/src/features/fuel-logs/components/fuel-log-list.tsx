@@ -33,7 +33,7 @@ export function FuelLogList({ logs, onEdit, onDelete, onAdd, isLoading }: FuelLo
         action={
           onAdd ? (
             <Button onClick={onAdd} variant="outline">
-              Add Fuel Log
+              Add fuel log
             </Button>
           ) : undefined
         }

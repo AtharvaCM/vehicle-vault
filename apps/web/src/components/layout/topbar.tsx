@@ -31,7 +31,7 @@ import { adminNavigation, appNavigation } from './sidebar';
 
 const sectionTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/maintenance-records': 'Maintenance record',
+  '/maintenance-records': 'Service record',
   '/maintenance': 'Maintenance',
   '/vehicles': 'Garage',
   '/reminders': 'Reminders',
@@ -88,8 +88,6 @@ export function Topbar() {
 
           <div className="flex items-baseline gap-2">
             <h2 className="text-base font-bold tracking-tight text-slate-900">{activeSection}</h2>
-            <div className="h-1 w-1 rounded-full bg-slate-300" />
-            <span className="text-xs font-medium text-slate-400">Manage your vault</span>
           </div>
         </div>
 
@@ -102,7 +100,7 @@ export function Topbar() {
             to="/vehicles/new"
           >
             <Plus className="mr-2 h-3.5 w-3.5" />
-            New Vehicle
+            Add vehicle
           </Link>
 
           <div className="hidden h-8 w-px bg-slate-200/60 xl:block" />
@@ -136,13 +134,13 @@ export function Topbar() {
               <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-slate-100">
                 <Link to="/settings">
                   <Settings className="mr-2.5 h-4 w-4 text-slate-500" />
-                  Account Settings
+                  Account settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-slate-100">
                 <Link to="/maintenance">
                   <Wrench className="mr-2.5 h-4 w-4 text-slate-500" />
-                  Service History
+                  Service history
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1.5" />
@@ -151,7 +149,7 @@ export function Topbar() {
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2.5 h-4 w-4" />
-                Logout
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
