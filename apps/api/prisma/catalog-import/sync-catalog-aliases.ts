@@ -267,7 +267,7 @@ async function upsertAliases(
   return count;
 }
 
-function normalizeAlias(value: string) {
+export function normalizeAlias(value: string) {
   return value
     .trim()
     .toLowerCase()

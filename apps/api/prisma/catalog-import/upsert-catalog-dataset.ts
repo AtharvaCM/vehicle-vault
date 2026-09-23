@@ -1,7 +1,11 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 
+import { slugify } from './catalog-slug';
+import { findGenerationRedirect, type GenerationRedirect } from './generation-redirects';
 import { isPseudoCatalogVariant } from './pseudo-variants';
 import type { CatalogDataset } from './types';
+
+export { slugify };
 
 type CatalogWriter = PrismaClient | Prisma.TransactionClient;
 
@@ -42,55 +46,78 @@ export async function upsertCatalogDataset(
     recordsUpserted += 1;
 
     for (const model of make.models) {
-      const modelRecord = await prisma.vehicleCatalogModel.upsert({
-        where: {
-          makeId_slug: {
-            makeId: makeRecord.id,
-            slug: slugify(model.name),
-          },
-        },
-        update: {
-          name: model.name,
-          sourceName: defaultSourceName,
-          sourceUrl: model.sourceUrl ?? make.sourceUrl,
-        },
-        create: {
-          makeId: makeRecord.id,
-          name: model.name,
-          slug: slugify(model.name),
-          sourceName: defaultSourceName,
-          sourceUrl: model.sourceUrl ?? make.sourceUrl,
-        },
-      });
-      recordsUpserted += 1;
+      // A generation merged into another one keeps landing there, under the
+      // absorbing generation's own name and years, possibly in another make
+      // row of the same address; see generation-redirects.
+      const redirects = new Map<string, GenerationRedirect>();
+      for (const generation of model.generations) {
+        const redirect = await findGenerationRedirect(prisma, {
+          marketCode: make.marketCode,
+          vehicleType: make.vehicleType,
+          makeName: make.name,
+          modelName: model.name,
+          generationName: generation.name,
+        });
+        if (redirect) redirects.set(generation.name, redirect);
+      }
+
+      // A model whose every generation now lives in another make row's model is
+      // not recreated here as an empty duplicate.
+      const modelRecord =
+        model.generations.length > 0 && redirects.size === model.generations.length
+          ? null
+          : await prisma.vehicleCatalogModel.upsert({
+              where: {
+                makeId_slug: {
+                  makeId: makeRecord.id,
+                  slug: slugify(model.name),
+                },
+              },
+              update: {
+                name: model.name,
+                sourceName: defaultSourceName,
+                sourceUrl: model.sourceUrl ?? make.sourceUrl,
+              },
+              create: {
+                makeId: makeRecord.id,
+                name: model.name,
+                slug: slugify(model.name),
+                sourceName: defaultSourceName,
+                sourceUrl: model.sourceUrl ?? make.sourceUrl,
+              },
+            });
+      if (modelRecord) recordsUpserted += 1;
 
       for (const generation of model.generations) {
-        const generationRecord = await prisma.vehicleCatalogGeneration.upsert({
-          where: {
-            modelId_slug: {
-              modelId: modelRecord.id,
-              slug: slugify(generation.name),
-            },
-          },
-          update: {
-            name: generation.name,
-            yearStart: generation.yearStart,
-            yearEnd: generation.yearEnd,
-            isCurrent: generation.isCurrent ?? false,
-            sourceName: defaultSourceName,
-            sourceUrl: generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
-          },
-          create: {
-            modelId: modelRecord.id,
-            name: generation.name,
-            slug: slugify(generation.name),
-            yearStart: generation.yearStart,
-            yearEnd: generation.yearEnd,
-            isCurrent: generation.isCurrent ?? false,
-            sourceName: defaultSourceName,
-            sourceUrl: generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
-          },
-        });
+        const redirect = redirects.get(generation.name);
+        const generationRecord = redirect
+          ? { id: redirect.generationId }
+          : await prisma.vehicleCatalogGeneration.upsert({
+              where: {
+                modelId_slug: {
+                  modelId: modelRecord!.id,
+                  slug: slugify(generation.name),
+                },
+              },
+              update: {
+                name: generation.name,
+                yearStart: generation.yearStart,
+                yearEnd: generation.yearEnd,
+                isCurrent: generation.isCurrent ?? false,
+                sourceName: defaultSourceName,
+                sourceUrl: generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+              },
+              create: {
+                modelId: modelRecord!.id,
+                name: generation.name,
+                slug: slugify(generation.name),
+                yearStart: generation.yearStart,
+                yearEnd: generation.yearEnd,
+                isCurrent: generation.isCurrent ?? false,
+                sourceName: defaultSourceName,
+                sourceUrl: generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+              },
+            });
         recordsUpserted += 1;
 
         for (const variant of generation.variants) {
@@ -166,15 +193,6 @@ export async function upsertCatalogDataset(
   }
 
   return recordsUpserted;
-}
-
-export function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 }
 
 function buildFuelTypeSignature(fuelTypes: readonly string[]) {
