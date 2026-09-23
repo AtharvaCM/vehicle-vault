@@ -1,3 +1,11 @@
+## [1.71.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.71.0...v1.71.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **web:** headings for record lists say service records ([b7a3b1a](https://github.com/AtharvaCM/vehicle-vault/commit/b7a3b1a9fab874c6985209bfafb5dc041b29298e))
+* **web:** sentence case, one name per concept, no system words on screen ([c9aa81a](https://github.com/AtharvaCM/vehicle-vault/commit/c9aa81ab34fce7cff9a330e6b84a24290e86663e))
+
 # [1.71.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.70.0...v1.71.0) (2026-09-23)
 
 
