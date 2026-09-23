@@ -1,5 +1,4 @@
 import type { Prisma, PrismaClient, VehicleType } from '@prisma/client';
-import { PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES } from '@vehicle-vault/shared';
 
 import { slugify } from './catalog-slug';
 import { normalizeAlias } from './sync-catalog-aliases';
@@ -25,16 +24,23 @@ export type GenerationRedirect = {
 };
 
 /**
+ * Body types one public catalog address spans: cars, SUVs and vans all live
+ * under `/cars` (`PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES` in the shared package).
+ * Spelled out here because the catalog scripts run before the shared package is
+ * built (CI seeds the database first), so they cannot import it at runtime.
+ */
+const CARS_SEGMENT_TYPES: VehicleType[] = ['car', 'suv', 'van'];
+
+/**
  * The make rows one catalog address spans. Sources disagree on body type (the
  * CarWale scrape files the Honda Elevate as a car, Honda's own site as an SUV),
  * and a public page groups cars, SUVs and vans under `/cars`, so a merge can
  * cross those make rows. Any other type stays on its own.
  */
 export function pathVehicleTypes(vehicleType: string): VehicleType[] {
-  for (const types of Object.values(PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES)) {
-    if ((types as string[]).includes(vehicleType)) return types as unknown as VehicleType[];
-  }
-  return [vehicleType as VehicleType];
+  return (CARS_SEGMENT_TYPES as string[]).includes(vehicleType)
+    ? CARS_SEGMENT_TYPES
+    : [vehicleType as VehicleType];
 }
 
 /**
