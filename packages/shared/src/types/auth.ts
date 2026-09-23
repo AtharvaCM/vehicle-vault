@@ -36,4 +36,10 @@ export type VerifyEmailResponse = {
 
 export type ResendVerificationResponse = {
   accepted: boolean;
+  /**
+   * Whether this server can send mail at all. Said the same way for every
+   * address, known or not, so it reveals nothing about accounts; false means no
+   * link went out and the page should not say one did.
+   */
+  delivered: boolean;
 };
