@@ -227,6 +227,47 @@ describe('AuthService', () => {
     expect(productEvents.record).not.toHaveBeenCalled();
   });
 
+  it('attributes a sign-up from a catalog page to the catalog and its model', async () => {
+    prisma.user.create = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      createdAt,
+      updatedAt: createdAt,
+    });
+    jwtService.signAsync.mockResolvedValueOnce('access-token');
+    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
+
+    await service.register({
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      password: 'password123',
+      catalogModel: 'city',
+    });
+
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'account_created',
+      userId: 'user-1',
+      properties: { method: 'password', source: 'catalog', catalogModel: 'city' },
+    });
+    // Attribution only: nothing about it is stored on the account.
+    expect(prisma.user.create.mock.calls[0]?.[0]?.data).not.toHaveProperty('catalogModel');
+  });
+
+  it('refuses a catalog model that is not a slug', async () => {
+    await expect(
+      service.register({
+        name: 'Atharva',
+        email: 'atharva@example.com',
+        password: 'password123',
+        catalogModel: 'someone@example.com',
+      }),
+    ).rejects.toThrow();
+
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(productEvents.record).not.toHaveBeenCalled();
+  });
+
   it('still registers when the verification email cannot be delivered', async () => {
     prisma.user.create = vi.fn().mockResolvedValue({
       id: 'user-1',

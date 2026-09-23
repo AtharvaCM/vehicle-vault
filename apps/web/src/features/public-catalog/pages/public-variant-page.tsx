@@ -12,6 +12,7 @@ import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
 import { RunningCostCalculator } from '../components/running-cost-calculator';
 import { describeOffering } from '../utils/format-public-catalog';
+import { TrackThisVehicle } from '../components/track-this-vehicle';
 
 export function variantPageTitle(page: PublicCatalogVariantPage) {
   return `${page.make.name} ${page.model.name} ${page.variant.name} — service schedule and specs | ${APP_NAME}`;
@@ -97,6 +98,8 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
           <PublicSpecSections specs={page.specs} />
         </section>
       ) : null}
+
+      <TrackThisVehicle page={page} />
     </article>
   );
 }

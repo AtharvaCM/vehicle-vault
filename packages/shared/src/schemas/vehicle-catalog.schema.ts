@@ -7,6 +7,18 @@ import {
   VehicleType,
 } from '../enums';
 
+/**
+ * A catalog `slug` column's shape: lowercase letters and digits in runs joined
+ * by single hyphens, as the importer's `slugify` writes them.
+ */
+export const CATALOG_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const CATALOG_SLUG_MAX_LENGTH = 120;
+
+export const CatalogSlugSchema = z
+  .string()
+  .max(CATALOG_SLUG_MAX_LENGTH)
+  .regex(CATALOG_SLUG_PATTERN, 'Must be a catalog slug');
+
 export const VehicleCatalogMakeOptionSchema = z.object({
   id: z.string().trim().min(1),
   keywords: z.array(z.string().trim().min(1)).optional(),

@@ -1,6 +1,7 @@
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  Equals,
   IsDateString,
   IsEnum,
   IsInt,
@@ -78,4 +79,15 @@ export class CreateVehicleDto {
   @IsInt()
   @Min(0)
   purchaseOdometer?: number | null;
+
+  /**
+   * Set only when the form was opened prefilled from a catalog intent. The raw
+   * body value is kept rather than the implicit conversion's `Boolean(value)`,
+   * which would turn the string `"false"` into `true`; anything but `true`
+   * fails.
+   */
+  @IsOptional()
+  @Transform(({ obj }: { obj: Record<string, unknown> }) => obj.fromCatalogIntent)
+  @Equals(true)
+  fromCatalogIntent?: true;
 }

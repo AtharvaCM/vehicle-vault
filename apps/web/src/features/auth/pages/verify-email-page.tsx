@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
+import { afterSignInDestination } from '@/features/catalog-intent/lib/catalog-intent';
 import { appToast } from '@/lib/toast';
 import { AuthPageShell, AuthPageLink } from '../components/auth-page-shell';
 import { verifyEmail } from '../api/verify-email';
@@ -53,7 +54,9 @@ export function VerifyEmailPage() {
         title: 'Email verified',
         description: 'Your account is all set.',
       });
-      await navigate({ to: '/dashboard', replace: true });
+      // Or on to the vehicle a catalog page's "Track this vehicle" was for,
+      // when the add-vehicle form has not used that intent yet.
+      await navigate({ to: afterSignInDestination(), replace: true });
     };
 
     void performVerification();
