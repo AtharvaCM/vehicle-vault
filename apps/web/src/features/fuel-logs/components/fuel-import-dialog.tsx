@@ -222,7 +222,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                 </Badge>
               </div>
 
-              <div className="h-[350px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
+              <div className="h-[350px] overflow-y-auto pr-4">
                 <div className="space-y-6">
                   <section className="space-y-4">
                     <h5 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">

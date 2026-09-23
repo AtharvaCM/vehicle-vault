@@ -57,7 +57,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
         </div>
 
         {/* Metrics */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent @2xl:px-6 @2xl:py-0">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent max-sm:@2xl:px-6 max-sm:@2xl:py-0">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 @md:gap-x-8 @2xl:gap-x-10">
             <div className="space-y-0.5">
               <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-400">

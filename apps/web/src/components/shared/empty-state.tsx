@@ -29,7 +29,7 @@ export function EmptyState({
       )}
     >
       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-xs">
-        <Icon className="h-4.5 w-4.5 text-slate-500" />
+        <Icon className="h-6 w-6 text-slate-500" />
       </div>
       <div className="space-y-2">
         <h3 className="text-base font-semibold text-foreground">{title}</h3>

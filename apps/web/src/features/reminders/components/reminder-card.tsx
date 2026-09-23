@@ -119,7 +119,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           {/* Metrics & Action */}
           {hasFigures ? (
             <div
-              className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent @xl:px-6 @xl:py-0"
+              className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent max-sm:@xl:px-6 max-sm:@xl:py-0"
               data-testid="reminder-figures"
             >
               <div className="flex items-center gap-8 @xl:gap-10">

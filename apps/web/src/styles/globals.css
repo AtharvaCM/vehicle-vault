@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import './tailwind-3-palette.css';
+@import './tailwind-3-compat.css';
 
 @custom-variant dark (&:is(.dark *));
 
