@@ -59,7 +59,7 @@ export class VehicleInsightsService {
     await this.access.assert(userId, vehicleId);
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      select: { odometer: true, createdAt: true },
+      select: { odometer: true, createdAt: true, updatedAt: true },
     });
 
     if (!vehicle) {
@@ -93,12 +93,23 @@ export class VehicleInsightsService {
     // Combine and sort all readings. Entries with odometer <= 0 are treated as
     // "unknown" placeholders (user didn't record the reading) and excluded so
     // they don't poison the regression / last-reading lookup.
-    const readings = [
+    const logged = [
       ...maintenanceRecords.map((r) => ({ date: r.serviceDate, odometer: r.odometer })),
       ...fuelLogs.map((f) => ({ date: f.date, odometer: f.odometer })),
-    ]
-      .filter((r) => r.odometer > 0)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    ].filter((r) => r.odometer > 0);
+
+    // The odometer on the vehicle itself is a reading too, dated by the
+    // vehicle's last update (the "updated ago" the dashboard shows beside it).
+    // It only counts when it is ahead of every logged reading: when it merely
+    // equals one, it is that fill or service pushed onto the vehicle, and
+    // dating it "now" would invent days of standing still.
+    const loggedMax = logged.reduce((max, r) => Math.max(max, r.odometer), 0);
+    const readings = [
+      ...logged,
+      ...(vehicle.odometer > loggedMax
+        ? [{ date: vehicle.updatedAt, odometer: vehicle.odometer }]
+        : []),
+    ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // If no readings, return baseline using vehicle creation date
     if (readings.length === 0) {
@@ -124,6 +135,14 @@ export class VehicleInsightsService {
       throw new Error('Unexpected empty readings after check');
     }
 
+    // The highest reading is what the vehicle is known to have covered, and the
+    // prediction counts on from it. In consistent data it is also the latest;
+    // when a later-dated entry reads lower (a typo, a back-dated fill), the
+    // odometer cannot have gone backwards, so the highest one still wins.
+    const known = readings.reduce((best, r) =>
+      r.odometer > best.odometer || (r.odometer === best.odometer && r.date > best.date) ? r : best,
+    );
+
     const totalDistance = lastReading.odometer - firstReading.odometer;
     const totalDays = Math.max(
       1,
@@ -132,21 +151,24 @@ export class VehicleInsightsService {
       ),
     );
 
-    const averageDailyMileage = totalDistance / totalDays;
-    const daysSinceLastReading = Math.floor(
-      (Date.now() - lastReading.date.getTime()) / (1000 * 60 * 60 * 24),
+    // One reading has no rate; neither does a set whose latest entry reads
+    // lower than its first.
+    const averageDailyMileage = readings.length < 2 ? 0 : Math.max(0, totalDistance / totalDays);
+    const daysSinceLastReading = Math.max(
+      0,
+      Math.floor((Date.now() - known.date.getTime()) / (1000 * 60 * 60 * 24)),
     );
 
     const predictedCurrentOdometer = Math.round(
-      lastReading.odometer + Math.max(0, daysSinceLastReading * averageDailyMileage),
+      known.odometer + daysSinceLastReading * averageDailyMileage,
     );
 
     return {
       averageDailyMileage: Math.round(averageDailyMileage * 10) / 10,
       averageMonthlyMileage: Math.round(averageDailyMileage * 30.44),
       currentOdometerPredicted: predictedCurrentOdometer,
-      lastRecordedOdometer: lastReading.odometer,
-      lastRecordedDate: lastReading.date.toISOString(),
+      lastRecordedOdometer: known.odometer,
+      lastRecordedDate: known.date.toISOString(),
       daysSinceLastReading,
       dataPointsCount: readings.length,
       confidence: readings.length > 5 ? 'high' : readings.length > 2 ? 'medium' : 'low',
