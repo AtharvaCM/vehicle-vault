@@ -78,7 +78,6 @@ export class OAuthController {
   @ApiOperation({ summary: 'Begin Google OAuth flow' })
   @ApiQuery(CATALOG_MODEL_QUERY)
   @ApiQuery(NEXT_QUERY)
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   beginGoogle() {}
 
   @Public()
@@ -95,7 +94,6 @@ export class OAuthController {
   @ApiOperation({ summary: 'Begin GitHub OAuth flow' })
   @ApiQuery(CATALOG_MODEL_QUERY)
   @ApiQuery(NEXT_QUERY)
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   beginGithub() {}
 
   @Public()

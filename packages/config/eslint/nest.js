@@ -1,7 +1,3 @@
-module.exports = {
-  extends: [require.resolve('./base')],
-  env: {
-    node: true,
-    es2022: true,
-  },
-};
+import base from './base.js';
+
+export default base;

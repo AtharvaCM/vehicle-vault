@@ -12,7 +12,7 @@ import { VitePWA } from 'vite-plugin-pwa';
  * extension-less address the app shell.
  */
 function servePrerenderedPages(): Plugin {
-  const outDir = path.resolve(__dirname, 'dist');
+  const outDir = path.resolve(import.meta.dirname, 'dist');
 
   return {
     name: 'vehicle-vault:serve-prerendered-pages',
@@ -51,7 +51,7 @@ export default defineConfig({
     }),
   ],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) {
@@ -77,8 +77,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@vehicle-vault/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
+      '@': path.resolve(import.meta.dirname, './src'),
+      '@vehicle-vault/shared': path.resolve(
+        import.meta.dirname,
+        '../../packages/shared/src/index.ts',
+      ),
     },
   },
   server: {

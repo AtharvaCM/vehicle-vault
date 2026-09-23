@@ -285,6 +285,7 @@ export function VehicleForm({
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = vehicleFormSchema.safeParse({
       ...values,
+      purchaseDate: values.purchaseDate ? new Date(values.purchaseDate).toISOString() : null,
       nickname: values.nickname?.trim() ? values.nickname.trim() : undefined,
       // Optional: an untouched combobox or input means "I don't know it".
       variant: values.variant?.trim() ? values.variant.trim() : undefined,
@@ -618,9 +619,10 @@ export function VehicleForm({
               <Input
                 id="vehicle-purchase-date"
                 type="date"
-                {...form.register('purchaseDate', {
-                  setValueAs: (v) => (v ? new Date(v).toISOString() : null),
-                })}
+                // Held as the input's own yyyy-MM-dd, the form the default
+                // arrives in, so an untouched date never reads as dirty; it
+                // becomes an ISO instant on submit.
+                {...form.register('purchaseDate')}
                 aria-invalid={Boolean(form.formState.errors.purchaseDate)}
               />
             </FormField>
