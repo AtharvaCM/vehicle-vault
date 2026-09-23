@@ -330,6 +330,27 @@ describe('VehiclesService', () => {
     });
   });
 
+  it('clears the nickname and variant when the edit sends an explicit null', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(vehicleRecord);
+    prisma.vehicle.update = vi
+      .fn()
+      .mockResolvedValue({ ...vehicleRecord, nickname: null, variant: null });
+
+    const vehicle = await service.updateVehicle('user-1', 'vehicle-1', {
+      nickname: null,
+      variant: null,
+    });
+
+    // Prisma reads `undefined` as "leave unchanged"; only `null` clears the column.
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: { nickname: null, variant: null },
+    });
+    expect(vehicle.nickname).toBeUndefined();
+    expect(vehicle.variant).toBeUndefined();
+  });
+
   it('maps duplicate registration errors to conflict', async () => {
     prisma.vehicle.create = vi.fn().mockRejectedValue(
       new PrismaClientKnownRequestError('duplicate', {

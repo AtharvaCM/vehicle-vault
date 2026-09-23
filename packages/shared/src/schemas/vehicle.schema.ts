@@ -33,12 +33,18 @@ export const VehicleCreateRequestSchema = VehicleCreateSchema.extend({
   fromCatalogIntent: z.literal(true).optional(),
 });
 
-export const VehicleUpdateSchema = VehicleCreateSchema.partial().refine(
-  (value) => Object.keys(value).length > 0,
-  {
+/**
+ * An edit can clear the optional text fields, which only an explicit `null`
+ * does: an absent (`undefined`) field means "leave it as it is".
+ */
+export const VehicleUpdateSchema = VehicleCreateSchema.extend({
+  variant: VehicleCreateSchema.shape.variant.nullable(),
+  nickname: VehicleCreateSchema.shape.nickname.nullable(),
+})
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one vehicle field must be provided',
-  },
-);
+  });
 
 export const VehicleSchema = VehicleCreateSchema.extend({
   id: z.string().trim().min(1),

@@ -106,6 +106,24 @@ describe('VehicleForm edit mode', () => {
     expect(payload).not.toHaveProperty('purchaseOdometer');
   });
 
+  it('sends an explicit null for a nickname or variant the owner cleared, so the API wipes it', async () => {
+    render(
+      <VehicleForm
+        initialValues={{ ...savedVehicleValues, variant: 'HT' }}
+        mode="edit"
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Nickname'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('Variant (optional)'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    // `undefined` would be dropped from the JSON body and read as "leave it".
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ nickname: null, variant: null });
+  });
+
   it('sends the full object when nothing has changed to diff against (create mode)', async () => {
     render(<VehicleForm initialValues={savedVehicleValues} onSubmit={onSubmit} />);
 
