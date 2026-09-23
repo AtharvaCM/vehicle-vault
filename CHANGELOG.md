@@ -1,3 +1,16 @@
+# [1.61.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.60.0...v1.61.0) (2026-09-23)
+
+
+### Bug Fixes
+
+* **web:** keep a prerendered page's data fresh on arrival ([4315589](https://github.com/AtharvaCM/vehicle-vault/commit/43155892e749edb8a32b01b13e68cbd4656de4ad)), closes [#174](https://github.com/AtharvaCM/vehicle-vault/issues/174)
+
+
+### Features
+
+* **catalog:** catalog index and bulk variant pages for the prerender ([272cf4a](https://github.com/AtharvaCM/vehicle-vault/commit/272cf4a61d2f5c2f36bba4971f52a9d5a75c8ffa)), closes [#174](https://github.com/AtharvaCM/vehicle-vault/issues/174)
+* **web:** prerender public variant pages to static HTML ([0011eeb](https://github.com/AtharvaCM/vehicle-vault/commit/0011eeb6d5c63533430555bbb22656f721e34a15)), closes [#174](https://github.com/AtharvaCM/vehicle-vault/issues/174)
+
 # [1.60.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.59.0...v1.60.0) (2026-09-23)
 
 
