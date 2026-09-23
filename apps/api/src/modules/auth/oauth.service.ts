@@ -21,6 +21,12 @@ import {
 import { TokenService } from './token.service';
 import type { JwtPayload } from './auth.types';
 
+/** Where an OAuth sign-in came from, for `account_created`. */
+export type OAuthAttribution = {
+  /** A validated catalog model slug from the signed OAuth state. */
+  catalogModel?: string;
+};
+
 export type OAuthProfile = {
   provider: OAuthProvider;
   providerAccountId: string;
@@ -49,7 +55,10 @@ export class OAuthService {
     private readonly productEvents: ProductEventsService,
   ) {}
 
-  async loginOrLink(profile: OAuthProfile): Promise<AuthResponse> {
+  async loginOrLink(
+    profile: OAuthProfile,
+    attribution: OAuthAttribution = {},
+  ): Promise<AuthResponse> {
     if (!profile.providerAccountId) {
       throw new UnauthorizedException('OAuth provider did not return an account id.');
     }
@@ -85,7 +94,14 @@ export class OAuthService {
       await this.productEvents.record(this.prisma, {
         name: 'account_created',
         userId: user.id,
-        properties: { method: profile.provider },
+        properties: {
+          method: profile.provider,
+          // Signed up from a public catalog page's "Track this vehicle", as a
+          // password sign-up would be. Only a new account is attributed.
+          ...(attribution.catalogModel
+            ? { source: 'catalog', catalogModel: attribution.catalogModel }
+            : {}),
+        },
       });
     }
 

@@ -9,18 +9,34 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { OAuthProvider } from '@prisma/client';
 
 import { Public } from '../../common/auth/decorators/public.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AppConfigService } from '../../config/app-config.service';
+import { OAuthCallbackGuard, type OAuthCallbackRequest } from './oauth-callback.guard';
+import { toCatalogModel, type OAuthStateInfo } from './oauth-state';
 import { OAuthService, type OAuthProfile } from './oauth.service';
 
-type RequestWithOAuthUser = { user?: OAuthProfile };
+type RequestWithOAuthUser = OAuthCallbackRequest & { user?: OAuthProfile };
 type RedirectResponse = { redirect: (url: string) => void };
 
 const PROVIDERS: ReadonlyArray<OAuthProvider> = [OAuthProvider.google, OAuthProvider.github];
+
+const CATALOG_MODEL_QUERY = {
+  name: 'catalogModel',
+  required: false,
+  description:
+    'Slug of the catalog model whose public page led here. Carried in the signed OAuth state and used only to attribute a new account; an invalid slug is ignored.',
+};
+
+/** The model slug a verified OAuth state carried, if any. */
+function catalogModelFrom(authInfo: unknown): string | undefined {
+  if (!authInfo || typeof authInfo !== 'object') return undefined;
+  const state = (authInfo as { state?: OAuthStateInfo }).state;
+  return toCatalogModel(state?.catalogModel);
+}
 
 @ApiTags('Auth')
 @Controller('auth/oauth')
@@ -44,12 +60,13 @@ export class OAuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Begin Google OAuth flow' })
+  @ApiQuery(CATALOG_MODEL_QUERY)
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   beginGoogle() {}
 
   @Public()
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(OAuthCallbackGuard(OAuthProvider.google))
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleCallback(@Req() req: RequestWithOAuthUser, @Res() res: RedirectResponse) {
     await this.handleCallback(req, res);
@@ -59,12 +76,13 @@ export class OAuthController {
   @Get('github')
   @UseGuards(AuthGuard('github'))
   @ApiOperation({ summary: 'Begin GitHub OAuth flow' })
+  @ApiQuery(CATALOG_MODEL_QUERY)
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   beginGithub() {}
 
   @Public()
   @Get('github/callback')
-  @UseGuards(AuthGuard('github'))
+  @UseGuards(OAuthCallbackGuard(OAuthProvider.github))
   @ApiOperation({ summary: 'GitHub OAuth callback' })
   async githubCallback(@Req() req: RequestWithOAuthUser, @Res() res: RedirectResponse) {
     await this.handleCallback(req, res);
@@ -86,11 +104,13 @@ export class OAuthController {
   private async handleCallback(req: RequestWithOAuthUser, res: RedirectResponse) {
     const profile = req.user;
     if (!profile) {
-      res.redirect(this.buildRedirect({ error: 'oauth_no_profile' }));
+      res.redirect(this.buildRedirect({ error: req.oauthFailure ?? 'oauth_no_profile' }));
       return;
     }
     try {
-      const response = await this.oauthService.loginOrLink(profile);
+      const response = await this.oauthService.loginOrLink(profile, {
+        catalogModel: catalogModelFrom(req.authInfo),
+      });
       res.redirect(
         this.buildRedirect({
           accessToken: response.accessToken,
