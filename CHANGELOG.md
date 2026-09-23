@@ -1,3 +1,16 @@
+# [1.65.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.64.0...v1.65.0) (2026-09-23)
+
+
+### Bug Fixes
+
+* **web:** fail the prerender on an index without make summaries ([fa2971c](https://github.com/AtharvaCM/vehicle-vault/commit/fa2971cb32aa48fb4debb7b2d4b126040167eedd)), closes [#177](https://github.com/AtharvaCM/vehicle-vault/issues/177)
+
+
+### Features
+
+* **catalog:** make and browse page payloads from the catalog index ([6c2996d](https://github.com/AtharvaCM/vehicle-vault/commit/6c2996d66cb9d2fa38e083a1328c9343c984431b)), closes [#177](https://github.com/AtharvaCM/vehicle-vault/issues/177)
+* **web:** public make and browse pages with breadcrumbs, prerendered ([91a92e1](https://github.com/AtharvaCM/vehicle-vault/commit/91a92e1aa3705d3e69f7045053d83adc01e61437)), closes [#177](https://github.com/AtharvaCM/vehicle-vault/issues/177)
+
 # [1.64.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.63.0...v1.64.0) (2026-09-23)
 
 
