@@ -1,3 +1,10 @@
+# [1.68.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.67.0...v1.68.0) (2026-09-23)
+
+
+### Features
+
+* **reminders:** a repeat rule any reminder can carry ([0e80a77](https://github.com/AtharvaCM/vehicle-vault/commit/0e80a77679706b7ddf5395e5c01947ab487f3135))
+
 # [1.67.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.4...v1.67.0) (2026-09-23)
 
 
