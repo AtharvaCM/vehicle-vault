@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { VehicleType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
 import { getVehicleDisplayName } from '../utils/get-vehicle-display-name';
 import { Card } from '@/components/ui/card';

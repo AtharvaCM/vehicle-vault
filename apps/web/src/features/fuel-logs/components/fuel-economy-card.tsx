@@ -2,7 +2,7 @@ import type { FuelEconomyUnit, VehicleFuelEconomy } from '@vehicle-vault/shared'
 import { Fuel } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import { useVehicleFuelEconomy } from '../hooks/use-vehicle-fuel-economy';
 

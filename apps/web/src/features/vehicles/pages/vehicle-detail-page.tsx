@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { useActiveTabInView } from '@/hooks/use-active-tab-in-view';
 
 import { MaintenanceRecordCard } from '@/features/maintenance/components/maintenance-record-card';

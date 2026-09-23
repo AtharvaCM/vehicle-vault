@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { appToast } from '@/lib/toast';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/features/notifications/components/notification-center';
 
 import { MobileNavSheetContent } from './mobile-nav-sheet';

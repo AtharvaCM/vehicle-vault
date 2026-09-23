@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import type { Reminder } from '../types/reminder';
 import { ReminderCard } from './reminder-card';

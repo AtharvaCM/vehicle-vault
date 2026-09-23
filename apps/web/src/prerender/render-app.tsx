@@ -2,7 +2,7 @@ import { StrictMode, type ReactNode } from 'react';
 import { prerenderToNodeStream } from 'react-dom/static';
 import { QueryClient, dehydrate, type DehydratedState, type QueryKey } from '@tanstack/react-query';
 import { createMemoryHistory, createRouter } from '@tanstack/react-router';
-import { attachRouterServerSsrUtils } from '@tanstack/react-router/ssr/server';
+import { attachRouterServerSsrUtils, getSsrStatus } from '@tanstack/react-router/ssr/server';
 
 import { AppProviders } from '@/app/providers';
 import { router as appRouter } from '@/app/router';
@@ -52,17 +52,28 @@ export async function renderAppAtUrl(url: string, queries: SeededQuery[]): Promi
 
   try {
     await router.load();
-    if (router.state.statusCode !== 200) {
-      throw new Error(`${url} rendered with status ${router.state.statusCode}`);
+    // A redirect is a server result of its own and reports status 200, so it
+    // is checked by type rather than by status.
+    const result = router._serverResult;
+    if (result?.type !== 'render' || getSsrStatus(router) !== 200) {
+      throw new Error(
+        `${url} rendered as ${result?.type ?? 'nothing'} with status ${getSsrStatus(router)}`,
+      );
     }
     const leaf = router.state.matches.at(-1);
-    if (!leaf || leaf.status !== 'success' || leaf.globalNotFound) {
+    if (!leaf || leaf.status !== 'success') {
       throw new Error(`${url} did not match a page (${leaf?.status ?? 'no match'})`);
     }
 
+    // Every query is seeded, so serialization settles inside `dehydrate()` and
+    // the initial take holds the whole bootstrap, ending in `$_TSR.e()`. Its
+    // tags are meant to stand side by side in the document; one script joining
+    // them runs the same code (the last part's cleanup then removes only it).
     await ssr.dehydrate();
-    if (!ssr.isSerializationFinished()) {
-      await new Promise<void>((resolve) => ssr.onSerializationFinished(resolve));
+    const initialTags = ssr.takeInitialHydrationScriptTags();
+    const routerScript = (initialTags?.before ?? []).map((tag) => tag.children ?? '').join(';');
+    if (!routerScript.includes('$_TSR.e()')) {
+      throw new Error(`${url} produced no complete router hydration data`);
     }
 
     const appHtml = await renderToHtml(
@@ -70,12 +81,7 @@ export async function renderAppAtUrl(url: string, queries: SeededQuery[]): Promi
         <AppProviders queryClient={queryClient} router={router} />
       </StrictMode>,
     );
-
-    const routerScript = ssr.takeBufferedScripts()?.children ?? '';
     ssr.setRenderFinished();
-    if (!routerScript) {
-      throw new Error(`${url} produced no router hydration data`);
-    }
 
     return {
       appHtml,

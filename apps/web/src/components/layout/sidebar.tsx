@@ -18,7 +18,7 @@ import { APP_NAME } from '@vehicle-vault/shared';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 type NavigationItem = {
   label: string;

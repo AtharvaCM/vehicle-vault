@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { formatReminderType } from '@/features/reminders/utils/format-reminder-type';
 import { documentKindNouns } from '@/features/vehicle-documents/utils/document-kind-labels';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 

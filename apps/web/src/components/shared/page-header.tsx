@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { APP_NAME } from '@vehicle-vault/shared';
 
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 type PageHeaderProps = {
   title: string;

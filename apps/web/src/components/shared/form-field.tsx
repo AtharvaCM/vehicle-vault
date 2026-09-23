@@ -1,7 +1,7 @@
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 type FormFieldProps = {
   label: string;

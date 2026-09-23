@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils/format-date';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import type { AuditEvent } from '../types/audit-event';
 import { formatAuditAction, formatResourceType } from '../utils/format-audit-action';

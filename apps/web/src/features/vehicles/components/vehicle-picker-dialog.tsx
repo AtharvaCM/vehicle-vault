@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import { accessFor } from '../context/vehicle-access';
 import type { Vehicle } from '../types/vehicle';

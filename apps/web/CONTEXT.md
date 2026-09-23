@@ -127,6 +127,4 @@ Adding a route: create `routes/x-route.tsx` → export from `routes/index.ts` �
 ## Known debt / ambiguities
 
 - `notifications` feature breaks slice conventions (inline keys, no `api/` folder, inline type).
-- Duplicate layout components: `app-header.tsx` / `app-sidebar.tsx` / `app-navigation.ts` are legacy; the active layout is `topbar.tsx` + `sidebar.tsx`.
-- Duplicate util locations: `lib/utils.ts` vs `lib/utils/cn.ts`.
 - Vehicle-catalog admin curation UI (import-run review/publish/archive) lives under the `settings` slice, not `vehicles` — non-obvious placement.
