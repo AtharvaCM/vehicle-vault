@@ -27,11 +27,11 @@ const intent: CatalogIntent = {
   variant: 'v-cvt',
 };
 
-function renderButtons() {
+function renderButtons(next?: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <OAuthButtons />
+      <OAuthButtons next={next} />
     </QueryClientProvider>,
   );
 }
@@ -62,6 +62,16 @@ describe('OAuthButtons', () => {
     expect(await hrefOf('Continue with GitHub')).toBe('/api/auth/oauth/github?catalogModel=city');
     // The intent stays here for the callback page and the form.
     expect(readCatalogIntent()).toEqual(intent);
+  });
+
+  it('sends the return path with the sign-in, beside a waiting intent', async () => {
+    saveCatalogIntent(intent);
+
+    renderButtons('/vehicle-invites/tok-1');
+
+    expect(await hrefOf('Continue with Google')).toBe(
+      `/api/auth/oauth/google?catalogModel=city&next=${encodeURIComponent('/vehicle-invites/tok-1')}`,
+    );
   });
 
   it('sends nothing for an intent past its expiry', async () => {

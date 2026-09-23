@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
+import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 import { ViewOnlyNotice } from '../components/view-only-notice';
@@ -47,6 +48,11 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
             fuelType: vehicleQuery.data.fuelType,
             odometer: vehicleQuery.data.odometer,
             nickname: vehicleQuery.data.nickname ?? '',
+            // The date input only accepts `yyyy-MM-dd`; a full ISO instant
+            // fails its sanitization and renders blank instead of prefilled.
+            purchaseDate: toDateInputValue(vehicleQuery.data.purchaseDate ?? undefined),
+            purchasePrice: vehicleQuery.data.purchasePrice ?? null,
+            purchaseOdometer: vehicleQuery.data.purchaseOdometer ?? null,
           }
         : undefined,
     [vehicleQuery.data],
@@ -55,13 +61,22 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   async function handleUpdateVehicle(
     values: Parameters<typeof updateVehicleMutation.mutateAsync>[0],
   ) {
+    // The form only sends what changed, so a save with nothing touched sends
+    // an empty body. VehicleUpdateSchema refuses that ("at least one field"),
+    // and there is nothing to write anyway: treat it as a no-op success
+    // rather than calling the API.
+    const hasChanges = Object.keys(values).length > 0;
+
     try {
-      await updateVehicleMutation.mutateAsync(values);
+      if (hasChanges) {
+        await updateVehicleMutation.mutateAsync(values);
+      }
       const restoreNavigationGuard = allowNextNavigation();
-      appToast.success({
-        title: 'Vehicle updated',
-        description: 'Vehicle details were saved.',
-      });
+      appToast.success(
+        hasChanges
+          ? { title: 'Vehicle updated', description: 'Vehicle details were saved.' }
+          : { title: 'No changes to save', description: 'Nothing on this vehicle changed.' },
+      );
 
       try {
         await navigate({
@@ -168,6 +183,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
           <VehicleForm
             initialValues={initialValues}
             isSubmitting={updateVehicleMutation.isPending}
+            mode="edit"
             onDirtyChange={setIsDirty}
             onSubmit={handleUpdateVehicle}
             submitError={

@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  isTwoWheeler,
   TyrePosition,
+  VehicleType,
   type CreateTyreInput,
   type Tyre,
   type UpdateTyreInput,
@@ -45,6 +47,8 @@ interface TyreFormDialogProps {
   vehicleId: string;
   /** Current vehicle reading, used as the default fitted odometer. */
   vehicleOdometer: number;
+  /** Decides whether the position picker offers corners or a front/rear pair. */
+  vehicleType: VehicleType;
   /** Corner to preselect, e.g. when fitting from an empty position. */
   defaultPosition?: TyrePosition;
   /**
@@ -52,6 +56,24 @@ interface TyreFormDialogProps {
    * new one, and its readings stay with it.
    */
   tyre?: Tyre;
+}
+
+/** A two-wheeler has one front and one rear tyre; carrying a spare is not modelled. */
+const TWO_WHEEL_POSITIONS = [TyrePosition.Front, TyrePosition.Rear] as const;
+
+/** Four corners plus the spare, unchanged from before two-wheelers were supported. */
+const FOUR_WHEEL_POSITIONS = [
+  TyrePosition.FrontLeft,
+  TyrePosition.FrontRight,
+  TyrePosition.RearLeft,
+  TyrePosition.RearRight,
+  TyrePosition.Spare,
+] as const;
+
+export function positionOptionsFor(
+  vehicleType: VehicleType,
+): readonly [TyrePosition, ...TyrePosition[]] {
+  return isTwoWheeler(vehicleType) ? TWO_WHEEL_POSITIONS : FOUR_WHEEL_POSITIONS;
 }
 
 /** What was recorded for the tyre, as the form shows it. */
@@ -88,12 +110,15 @@ export function TyreFormDialog({
   onClose,
   vehicleId,
   vehicleOdometer,
-  defaultPosition = TyrePosition.FrontLeft,
+  vehicleType,
+  defaultPosition,
   tyre,
 }: TyreFormDialogProps) {
   const createMutation = useCreateTyre(vehicleId);
   const updateMutation = useUpdateTyre(vehicleId);
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const positionOptions = positionOptionsFor(vehicleType);
+  const resolvedDefaultPosition = defaultPosition ?? positionOptions[0];
 
   const {
     control,
@@ -103,14 +128,16 @@ export function TyreFormDialog({
     reset,
   } = useForm<TyreFormValues>({
     resolver: zodResolver(tyreFormSchema),
-    defaultValues: tyre ? valuesFromTyre(tyre) : buildDefaults(vehicleOdometer, defaultPosition),
+    defaultValues: tyre
+      ? valuesFromTyre(tyre)
+      : buildDefaults(vehicleOdometer, resolvedDefaultPosition),
   });
 
   useEffect(() => {
     if (isOpen) {
-      reset(tyre ? valuesFromTyre(tyre) : buildDefaults(vehicleOdometer, defaultPosition));
+      reset(tyre ? valuesFromTyre(tyre) : buildDefaults(vehicleOdometer, resolvedDefaultPosition));
     }
-  }, [isOpen, tyre, vehicleOdometer, defaultPosition, reset]);
+  }, [isOpen, tyre, vehicleOdometer, resolvedDefaultPosition, reset]);
 
   async function onSubmit(values: TyreFormValues) {
     const dot = parseDotCode(values.dotCode);
@@ -210,7 +237,7 @@ export function TyreFormDialog({
                       <SelectValue placeholder="Select a position" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(TyrePosition).map((position) => (
+                      {positionOptions.map((position) => (
                         <SelectItem key={position} value={position}>
                           {POSITION_LABEL[position]}
                         </SelectItem>

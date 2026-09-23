@@ -22,6 +22,11 @@ export function useKeepCatalogIntent(catalogParam: string | undefined) {
       saveCatalogIntent(intent);
     }
 
-    void navigate({ to: '/register', search: {}, replace: true });
+    // Only `catalog` goes: a return path (`next`) stays for after sign-up.
+    void navigate({
+      to: '/register',
+      search: (previous) => ({ next: previous.next }),
+      replace: true,
+    });
   }, [catalogParam, navigate]);
 }
