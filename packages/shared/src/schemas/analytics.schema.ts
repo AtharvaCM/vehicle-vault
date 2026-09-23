@@ -58,6 +58,14 @@ export const CostTrendResponseSchema = z.object({
   points: z.array(CostTrendPointSchema),
 });
 
+/**
+ * The least distance ₹/km is worth dividing by. Below it, a year's insurance or
+ * a single service spread over a few hundred kilometres reads as a running
+ * cost several times the real one, so the card asks for the purchase odometer
+ * instead of showing a number.
+ */
+export const TCO_MIN_COST_PER_KM_DISTANCE_KM = 1_000;
+
 export const TcoResponseSchema = z.object({
   currency: z.literal('INR'),
   vehicleId: z.string().uuid(),

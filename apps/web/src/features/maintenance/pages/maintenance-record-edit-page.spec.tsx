@@ -15,6 +15,7 @@ import { appToast } from '@/lib/toast';
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const recordQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const updateRecord = vi.hoisted(() => vi.fn());
+const attachmentsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -46,19 +47,36 @@ vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
 vi.mock('@/lib/toast', () => ({
   appToast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
+vi.mock('@/features/attachments/hooks/use-attachments', () => ({
+  useAttachments: () => attachmentsQuery.current,
+}));
+vi.mock('@/features/attachments/hooks/use-attachment-extraction-status', () => ({
+  useAttachmentExtractionStatus: () => ({ data: { available: true } }),
+}));
 // Stands in for the real form: its button carries whatever label the page chose,
-// and pressing it submits the body the form would have built.
+// pressing it submits the body the form would have built, and it lists the
+// fields the page marked as read from the bill.
 vi.mock('../components/maintenance-form', () => ({
   MaintenanceForm: ({
+    fieldsFromBill,
     onSubmit,
     submitLabel,
   }: {
+    fieldsFromBill?: ReadonlySet<string>;
     onSubmit: (values: Record<string, unknown>) => void;
     submitLabel: string;
   }) => (
-    <button onClick={() => onSubmit({ ...formBody })} type="button">
-      {submitLabel}
-    </button>
+    <>
+      <button onClick={() => onSubmit({ ...formBody })} type="button">
+        {submitLabel}
+      </button>
+      <p>from bill: {[...(fieldsFromBill ?? [])].sort().join(', ') || 'none'}</p>
+    </>
+  ),
+}));
+vi.mock('../components/draft-bill-summary', () => ({
+  DraftBillSummary: ({ fieldsFromBillCount }: { fieldsFromBillCount: number }) => (
+    <p>bill summary: {fieldsFromBillCount}</p>
   ),
 }));
 // Cards that fetch their own data; a viewer never reaches them here.
@@ -101,8 +119,13 @@ const draft: MaintenanceRecord = {
   status: MaintenanceRecordStatus.Draft,
 };
 
-function renderAs(role: VehicleRole, data: MaintenanceRecord = record) {
+function renderAs(
+  role: VehicleRole,
+  data: MaintenanceRecord = record,
+  attachments: unknown[] = [],
+) {
   recordQuery.current = { data, isPending: false, isError: false };
+  attachmentsQuery.current = { data: attachments };
   vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: role } };
 
   return render(<MaintenanceRecordEditPage recordId="record-1" />);
@@ -172,5 +195,45 @@ describe('MaintenanceRecordEditPage draft confirmation', () => {
     expect(appToast.success).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Maintenance record updated' }),
     );
+  });
+});
+
+describe('MaintenanceRecordEditPage filled from the bill', () => {
+  const extraction = {
+    id: 'extraction-1',
+    attachmentId: 'attachment-1',
+    status: 'completed',
+    workshopName: 'Torque Garage',
+    odometer: 12_000,
+    totalCost: 9_999,
+    createdAt: '2026-03-21T00:00:00.000Z',
+    updatedAt: '2026-03-21T00:00:00.000Z',
+  };
+  const bill = {
+    id: 'attachment-1',
+    maintenanceRecordId: 'record-1',
+    kind: 'receipt',
+    fileName: 'bill.png',
+    originalFileName: 'bill.png',
+    mimeType: 'image/png',
+    size: 10,
+    url: '/bill.png',
+    uploadedAt: '2026-03-21T00:00:00.000Z',
+    extraction,
+  };
+
+  it('marks the draft fields that still hold what the bill says', () => {
+    // The total was changed and saved since, so it is no longer "from bill".
+    renderAs(VehicleRole.Editor, draft, [bill]);
+
+    expect(screen.getByText('from bill: odometer, workshopName')).toBeInTheDocument();
+    expect(screen.getByText('bill summary: 2')).toBeInTheDocument();
+  });
+
+  it('marks nothing on a confirmed record, and shows no bill summary', () => {
+    renderAs(VehicleRole.Editor, record, [bill]);
+
+    expect(screen.getByText('from bill: none')).toBeInTheDocument();
+    expect(screen.queryByText(/bill summary/)).not.toBeInTheDocument();
   });
 });
