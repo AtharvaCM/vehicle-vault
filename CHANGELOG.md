@@ -1,3 +1,11 @@
+## [1.65.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.0...v1.65.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **catalog:** keep the seed's import chain free of the shared package ([94171cf](https://github.com/AtharvaCM/vehicle-vault/commit/94171cf3ef96e7fd293d0eebc74714f0b09c88be)), closes [#187](https://github.com/AtharvaCM/vehicle-vault/issues/187)
+* **catalog:** merge duplicate current generations into one ([c76c47d](https://github.com/AtharvaCM/vehicle-vault/commit/c76c47dcdb5db568804a7bcfd46b5549a4d6a848))
+
 # [1.65.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.64.0...v1.65.0) (2026-09-23)
 
 
