@@ -126,6 +126,35 @@ function modelVerdicts(index: IndexEntry[]) {
   return verdicts;
 }
 
+/**
+ * Every make page and the gate's verdict on it: indexable when any variant
+ * under it is, across its make rows (Hyundai's car and SUV rows share a slug).
+ */
+function makeVerdicts(index: IndexEntry[]) {
+  const seen = new Set<string>();
+  const verdicts = new Map<string, boolean>();
+  for (const entry of index) {
+    if (seen.has(entryPath(entry))) continue;
+    seen.add(entryPath(entry));
+    const makePath = `/${entry.segment}/${entry.make.slug}`;
+    verdicts.set(makePath, (verdicts.get(makePath) ?? false) || entry.indexable);
+  }
+  return verdicts;
+}
+
+/** The browse pages: one per segment the index has anything in, always indexed. */
+function browsePaths(index: IndexEntry[]) {
+  return [...new Set(index.map((entry) => `/${entry.segment}`))];
+}
+
+type JsonLdNode = Record<string, unknown>;
+
+/** The page's `Car` or `Motorcycle` node, out of its JSON-LD graph. */
+function vehicleNode(data: JsonLdNode) {
+  const nodes = Array.isArray(data['@graph']) ? (data['@graph'] as JsonLdNode[]) : [data];
+  return nodes.find((node) => node['@type'] === 'Car' || node['@type'] === 'Motorcycle');
+}
+
 function robotsOf(html: string) {
   return html.match(/<meta name="robots" content="([^"]*)" \/>/)?.[1];
 }
@@ -133,7 +162,9 @@ function robotsOf(html: string) {
 function structuredData(html: string) {
   const scripts = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/g)];
   expect(scripts).toHaveLength(1);
-  return JSON.parse(scripts[0]?.[1] ?? 'null') as Record<string, unknown>;
+  const data = JSON.parse(scripts[0]?.[1] ?? 'null') as JsonLdNode;
+  expect(data['@context']).toBe('https://schema.org');
+  return vehicleNode(data);
 }
 
 async function fetchHtml(request: APIRequestContext, pagePath: string) {
@@ -191,10 +222,19 @@ test.describe('prerendered indexing', () => {
     ).toContain('Indexing is on');
     const models = modelVerdicts(index);
     const indexableModels = [...models.values()].filter(Boolean).length;
+    const makes = makeVerdicts(index);
+    const indexableMakes = [...makes.values()].filter(Boolean).length;
+    const browse = browsePaths(index).length;
     const indexable = new Set(index.filter((entry) => entry.indexable).map(entryPath));
     const pages = new Set(index.map(entryPath));
     expect(prerenderLog).toContain(
-      `Indexable: ${indexable.size + indexableModels} of ${pages.size + models.size} pages.`,
+      `Indexable: ${indexable.size + indexableModels + indexableMakes + browse} of ${
+        pages.size + models.size + makes.size + browse
+      } pages.`,
+    );
+    expect(prerenderLog).toContain(
+      `(${pages.size} variant pages, ${models.size} model pages, ${makes.size} make pages, ` +
+        `${browse} browse pages)`,
     );
   });
 
@@ -206,6 +246,22 @@ test.describe('prerendered indexing', () => {
     for (const [modelPath, indexable] of models) {
       const html = await fetchHtml(request, modelPath);
       expect(robotsOf(html), modelPath).toBe(indexable ? 'index, follow' : 'noindex');
+    }
+  });
+
+  test('a make page is indexable exactly when a variant under it is; browse pages always are', async ({
+    request,
+  }) => {
+    const makes = makeVerdicts(index);
+    const richMake = rich.path.split('/').slice(0, 3).join('/');
+    expect(makes.get(richMake)).toBe(true);
+
+    for (const [makePath, indexable] of makes) {
+      const html = await fetchHtml(request, makePath);
+      expect(robotsOf(html), makePath).toBe(indexable ? 'index, follow' : 'noindex');
+    }
+    for (const browsePath of browsePaths(index)) {
+      expect(robotsOf(await fetchHtml(request, browsePath)), browsePath).toBe('index, follow');
     }
   });
 
@@ -228,9 +284,14 @@ test.describe('prerendered indexing', () => {
     const indexableModels = [...modelVerdicts(index)]
       .filter(([, indexable]) => indexable)
       .map(([modelPath]) => modelPath);
+    const indexableMakes = [...makeVerdicts(index)]
+      .filter(([, indexable]) => indexable)
+      .map(([makePath]) => makePath);
     const expected = [
       ...new Set(index.filter((entry) => entry.indexable).map(entryPath)),
       ...indexableModels,
+      ...indexableMakes,
+      ...browsePaths(index),
     ].map((pagePath) => `${CANONICAL_ORIGIN}${pagePath}`);
     expect(listed.sort()).toEqual(expected.sort());
     expect(listed).toContain(`${CANONICAL_ORIGIN}${rich.path}`);
@@ -271,7 +332,6 @@ test.describe('prerendered indexing', () => {
   }) => {
     const car = structuredData(await fetchHtml(request, rich.path));
     expect(car).toMatchObject({
-      '@context': 'https://schema.org',
       '@type': 'Car',
       name: rich.name,
       url: `${CANONICAL_ORIGIN}${rich.path}`,
@@ -310,7 +370,7 @@ test.describe('prerendered indexing', () => {
     const data = JSON.parse(
       (await page.locator('script[type="application/ld+json"]').textContent()) ?? 'null',
     );
-    expect(data).toMatchObject({ '@type': 'Car', name: rich.name });
+    expect(vehicleNode(data)).toMatchObject({ '@type': 'Car', name: rich.name });
 
     // An SPA navigation to a gated page swaps both in place.
     await page.evaluate(() => {
@@ -327,8 +387,10 @@ test.describe('prerendered indexing', () => {
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
     await expect
       .poll(async () =>
-        JSON.parse(
-          (await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}',
+        vehicleNode(
+          JSON.parse(
+            (await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}',
+          ),
         ),
       )
       .toMatchObject({ name: thin.name });
