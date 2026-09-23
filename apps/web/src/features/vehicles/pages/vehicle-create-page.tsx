@@ -1,18 +1,23 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
+import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCatalogIntentPrefill } from '@/features/catalog-intent/hooks/use-catalog-intent-prefill';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 import { VehicleForm } from '../components/vehicle-form';
 import { useCreateVehicle } from '../hooks/use-create-vehicle';
+import type { VehicleFormValues } from '../schemas/vehicle-form.schema';
 
 export function VehicleCreatePage() {
   const navigate = useNavigate();
+  const { catalog } = useSearch({ from: '/app/vehicles/new' });
+  const catalogIntent = useCatalogIntentPrefill(catalog);
   const [isDirty, setIsDirty] = useState(false);
   const createVehicleMutation = useCreateVehicle();
   const { allowNextNavigation } = useUnsavedChangesGuard({
@@ -20,11 +25,18 @@ export function VehicleCreatePage() {
     message: 'You have unsaved vehicle changes. Leave without saving?',
   });
 
-  async function handleCreateVehicle(
-    values: Parameters<typeof createVehicleMutation.mutateAsync>[0],
-  ) {
+  async function handleCreateVehicle(values: VehicleFormValues) {
+    const prefill = catalogIntent.status === 'ready' ? catalogIntent.values : null;
+    // Still the vehicle the intent named: re-picking the make or model makes it
+    // a vehicle the visitor chose by hand.
+    const fromCatalogIntent =
+      prefill !== null && values.make === prefill.make && values.model === prefill.model;
+
     try {
-      const vehicle = await createVehicleMutation.mutateAsync(values);
+      const vehicle = await createVehicleMutation.mutateAsync({
+        ...values,
+        ...(fromCatalogIntent ? { fromCatalogIntent: true } : {}),
+      });
       const restoreNavigationGuard = allowNextNavigation();
 
       appToast.success({
@@ -64,12 +76,20 @@ export function VehicleCreatePage() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <VehicleForm
-          isSubmitting={createVehicleMutation.isPending}
-          onDirtyChange={setIsDirty}
-          onSubmit={handleCreateVehicle}
-          submitError={submitError}
-        />
+        {catalogIntent.status === 'resolving' ? (
+          <LoadingState
+            description="Filling in the vehicle you picked from the catalog."
+            title="Loading vehicle"
+          />
+        ) : (
+          <VehicleForm
+            initialValues={catalogIntent.status === 'ready' ? catalogIntent.values : undefined}
+            isSubmitting={createVehicleMutation.isPending}
+            onDirtyChange={setIsDirty}
+            onSubmit={handleCreateVehicle}
+            submitError={submitError}
+          />
+        )}
 
         <Card>
           <CardHeader>

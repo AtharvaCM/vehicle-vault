@@ -1,6 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 
+import { afterSignInDestination } from '@/features/catalog-intent/lib/catalog-intent';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
@@ -23,12 +25,15 @@ export function LoginPage() {
     try {
       const authResponse = await login(values);
 
-      auth.setSession(authResponse);
+      // Rendered now, so the router's auth context is signed in before the
+      // navigation below (see register-page.tsx).
+      flushSync(() => auth.setSession(authResponse));
       appToast.success({
         title: 'Signed in',
         description: 'Opening your garage dashboard.',
       });
-      await navigate({ to: '/dashboard' });
+      // On to a vehicle picked on a catalog page before signing in, if any.
+      await navigate({ to: afterSignInDestination() });
     } catch (error) {
       const message = getApiErrorMessage(error, 'Unable to sign in with those credentials.');
 

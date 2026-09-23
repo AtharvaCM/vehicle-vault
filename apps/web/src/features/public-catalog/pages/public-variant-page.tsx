@@ -10,6 +10,7 @@ import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
+import { TrackThisVehicle } from '../components/track-this-vehicle';
 import { describeOffering } from '../utils/format-public-catalog';
 
 export function variantPageTitle(page: PublicCatalogVariantPage) {
@@ -94,6 +95,8 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
           <PublicSpecSections specs={page.specs} />
         </section>
       ) : null}
+
+      <TrackThisVehicle page={page} />
     </article>
   );
 }
