@@ -10,6 +10,7 @@ import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
+import { RunningCostCalculator } from '../components/running-cost-calculator';
 import { describeOffering } from '../utils/format-public-catalog';
 
 export function variantPageTitle(page: PublicCatalogVariantPage) {
@@ -85,6 +86,8 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
       </header>
 
       <PublicServiceSchedule schedule={page.schedule} />
+
+      <RunningCostCalculator page={page} />
 
       {page.specs ? (
         <section aria-labelledby="specs-heading" className="space-y-3">
