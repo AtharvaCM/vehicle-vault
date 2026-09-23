@@ -1,3 +1,10 @@
+# [1.58.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.3...v1.58.0) (2026-09-23)
+
+
+### Features
+
+* **catalog:** public variant page with specs and service schedule ([d42be2d](https://github.com/AtharvaCM/vehicle-vault/commit/d42be2d8d70bab077920e0ae01a7a8d66902593a)), closes [#170](https://github.com/AtharvaCM/vehicle-vault/issues/170)
+
 ## [1.57.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.2...v1.57.3) (2026-09-22)
 
 
