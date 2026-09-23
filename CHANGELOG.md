@@ -1,3 +1,10 @@
+# [1.70.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.69.2...v1.70.0) (2026-09-23)
+
+
+### Features
+
+* **maintenance:** spark plug and CVT belt service items for two-wheelers ([7e427dd](https://github.com/AtharvaCM/vehicle-vault/commit/7e427ddc79cc93bc682efe8a6a1af856fbde9fde)), closes [#195](https://github.com/AtharvaCM/vehicle-vault/issues/195)
+
 ## [1.69.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.69.1...v1.69.2) (2026-09-23)
 
 
