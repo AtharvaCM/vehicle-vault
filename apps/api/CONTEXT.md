@@ -169,6 +169,9 @@ The **Catalog** as strangers see it, with no sign-in (`public-catalog` module, `
 **Public catalog index**:
 `GET /public-catalog/index` lists every publishable variant (segment, names and slugs down to the variant, newest `updatedAt`) in one unpaginated response, and `GET /public-catalog/variant-pages?page&pageSize` (at most `PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX`, 200) returns the same variant page payloads the per-variant route does, in the same `id` order. They exist for the web build's prerender, which would otherwise need one request per variant and run into the `catalog` rate limit; both share `PublicCatalogService`'s publishable rule with the slug lookup.
 
+**Page-quality gate**:
+`public-catalog/page-quality.ts`, pure: whether a public page has enough facts to be worth indexing. A variant passes with a spec row holding at least `MIN_FILLED_PUBLIC_SPEC_FIELDS` (10) filled public fields, a claimed mileage (`mileageCombined`) and engine data (`engineCc` or `powerPs`); an EV, told apart by the fuel of its newest offering (never by having a `rangeKm`, which on a bike is its tank range), needs a claimed `rangeKm` and motor data (`motorKw` or `powerPs`) instead. `evaluateVariantPageQuality` returns `{indexable, reasons}`; the variant page payload and each index entry carry `indexable`, computed by the same call so they cannot disagree (the prerender fails if they do). `evaluateModelPageQuality` (any variant indexable) is ready for model pages. The web build's indexing flag overrides the gate; with it off, nothing is indexed whatever the gate says.
+
 **MaintenancePartCatalog**:
 A **global, cross-user** self-learning table mapping normalized part names → suggested `MaintenanceCategory`, harvested from user line items. Powers category suggestion and part search. Not user-scoped (mild data-leakage consideration for part numbers).
 

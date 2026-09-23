@@ -11,7 +11,9 @@ import {
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { isPageIndexed, parseIndexingFlag, PUBLIC_CATALOG_INDEXING } from './indexing';
 import { CANONICAL_ORIGIN, renderHeadTags, variantPageHead } from './public-page-head';
+import { serializeStructuredData, STRUCTURED_DATA_ELEMENT_ID } from './structured-data';
 import {
   APP_DEFAULT_HEAD,
   applyPublicPageHead,
@@ -49,6 +51,7 @@ function page(overrides: Partial<PublicCatalogVariantPage> = {}): PublicCatalogV
       claimedRangeKm: null,
       batteryKwh: null,
     },
+    indexable: false,
     updatedAt: '2026-07-10T00:00:00.000Z',
     ...overrides,
   };
@@ -75,9 +78,17 @@ describe('variantPageHead', () => {
     );
   });
 
-  it('is noindex unless the page is marked indexable', () => {
+  it('is noindex by default: indexing is off unless the build turns it on', () => {
+    expect(PUBLIC_CATALOG_INDEXING).toBe(false);
     expect(variantPageHead(page()).robots).toBe('noindex');
-    expect(variantPageHead(page(), { indexable: true }).robots).toBe('index, follow');
+    expect(variantPageHead(page({ indexable: true })).robots).toBe('noindex');
+  });
+
+  it('with indexing on, follows the page-quality gate', () => {
+    expect(variantPageHead(page({ indexable: true }), { indexing: true }).robots).toBe(
+      'index, follow',
+    );
+    expect(variantPageHead(page({ indexable: false }), { indexing: true }).robots).toBe('noindex');
   });
 
   it('summarises headline specs when the catalog has them', () => {
@@ -112,6 +123,158 @@ describe('variantPageHead', () => {
   });
 });
 
+describe('the indexing flag', () => {
+  it('is on only for on, true or 1', () => {
+    for (const value of ['on', 'ON', ' true ', '1']) expect(parseIndexingFlag(value)).toBe(true);
+    for (const value of [undefined, '', 'off', 'false', '0', 'yes', 'no'])
+      expect(parseIndexingFlag(value)).toBe(false);
+  });
+
+  it('overrides the gate: off, even a page the gate passes is not indexed', () => {
+    expect(isPageIndexed({ indexable: true }, false)).toBe(false);
+    expect(isPageIndexed({ indexable: false }, false)).toBe(false);
+    expect(isPageIndexed({ indexable: true }, true)).toBe(true);
+    expect(isPageIndexed({ indexable: false }, true)).toBe(false);
+  });
+});
+
+describe('structured data', () => {
+  const jsonLd = (html: string) => {
+    const match = html.match(
+      new RegExp(
+        `<script type="application/ld\\+json" id="${STRUCTURED_DATA_ELEMENT_ID}">(.*?)</script>`,
+      ),
+    );
+    expect(match).not.toBeNull();
+    return JSON.parse(match?.[1] ?? 'null') as Record<string, unknown>;
+  };
+
+  it('describes a car with its engine and claimed mileage', () => {
+    const head = variantPageHead(
+      page({
+        specs: specs({
+          engineCc: 1197,
+          powerPs: 83,
+          torqueNm: 115,
+          engineType: '1.2L Kappa',
+          mileageCombined: 20.3,
+          transmission: 'Manual',
+          seatingCapacity: 5,
+          fuelCapLitres: 37,
+        }),
+      }),
+    );
+
+    expect(jsonLd(renderHeadTags(head))).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'Car',
+      name: 'Hyundai i20 Asta',
+      url: 'https://vehicle-vault.middle-earth.in/cars/hyundai/i20/i20-lineup/asta',
+      brand: { '@type': 'Brand', name: 'Hyundai' },
+      model: 'i20',
+      vehicleConfiguration: 'Asta',
+      fuelType: 'Petrol',
+      vehicleModelDate: '2020',
+      vehicleEngine: {
+        '@type': 'EngineSpecification',
+        fuelType: 'Petrol',
+        engineType: '1.2L Kappa',
+        engineDisplacement: { '@type': 'QuantitativeValue', value: 1197, unitCode: 'CMQ' },
+        enginePower: { '@type': 'QuantitativeValue', value: 83, unitText: 'PS' },
+        torque: { '@type': 'QuantitativeValue', value: 115, unitCode: 'NU' },
+      },
+      fuelEfficiency: { '@type': 'QuantitativeValue', value: 20.3, unitText: 'km/L' },
+      vehicleTransmission: 'Manual',
+      seatingCapacity: 5,
+      fuelCapacity: { '@type': 'QuantitativeValue', value: 37, unitCode: 'LTR' },
+    });
+  });
+
+  it('makes a bike a Motorcycle', () => {
+    const head = variantPageHead(
+      page({ segment: 'bikes', vehicleType: VehicleType.Motorcycle, specs: specs({}) }),
+    );
+
+    expect(head.structuredData?.['@type']).toBe('Motorcycle');
+  });
+
+  it('gives an EV its motor, range and battery, and no fuel efficiency or tank', () => {
+    const head = variantPageHead(
+      page({
+        offerings: [
+          { fuelTypes: [FuelType.Electric], yearStart: 2024, yearEnd: null, isCurrent: true },
+        ],
+        calculatorSeed: {
+          fuelType: FuelType.Electric,
+          claimedMileage: null,
+          claimedRangeKm: 489,
+          batteryKwh: 45,
+        },
+        specs: specs({ motorKw: 110, powerPs: 150, rangeKm: 489, batteryKwh: 45 }),
+      }),
+    );
+    const data = head.structuredData ?? {};
+
+    expect(data.fuelType).toBe('Electric');
+    expect(data.vehicleEngine).toEqual({
+      '@type': 'EngineSpecification',
+      engineType: 'Electric motor',
+      fuelType: 'Electric',
+      enginePower: { '@type': 'QuantitativeValue', value: 110, unitCode: 'KWT' },
+    });
+    expect(data).not.toHaveProperty('fuelEfficiency');
+    expect(data).not.toHaveProperty('fuelCapacity');
+    expect(data.additionalProperty).toEqual([
+      { '@type': 'PropertyValue', name: 'Claimed range', value: 489, unitCode: 'KMT' },
+      { '@type': 'PropertyValue', name: 'Battery capacity', value: 45, unitCode: 'KWH' },
+    ]);
+  });
+
+  it('leaves out what the catalog does not know', () => {
+    const data = variantPageHead(page()).structuredData ?? {};
+
+    expect(data).not.toHaveProperty('vehicleEngine');
+    expect(data).not.toHaveProperty('fuelEfficiency');
+    expect(JSON.stringify(data)).not.toContain('null');
+  });
+
+  it('lists every fuel a variant is sold with', () => {
+    const data =
+      variantPageHead(
+        page({
+          offerings: [
+            {
+              fuelTypes: [FuelType.Petrol, FuelType.CNG],
+              yearStart: 2023,
+              yearEnd: null,
+              isCurrent: true,
+            },
+          ],
+        }),
+      ).structuredData ?? {};
+
+    expect(data.fuelType).toEqual(['Petrol', 'CNG']);
+  });
+
+  it('cannot be broken out of by a catalog name', () => {
+    const name = '</script><script>alert(1)</script> <!-- & \u2028';
+    const html = renderHeadTags(variantPageHead(page({ variant: { name, slug: 'odd' } })));
+    const script = html.slice(html.indexOf('<script type="application/ld+json"'));
+
+    // One script element, closed once, at its own end.
+    expect(script.match(/<\/script>/gi)).toHaveLength(1);
+    expect(script.endsWith('</script>')).toBe(true);
+    expect(script).not.toContain('<!--');
+    // Still valid JSON, and the name comes back exactly.
+    expect(jsonLd(html).vehicleConfiguration).toBe(name);
+  });
+
+  it('serializes to JSON that parses back to the same data', () => {
+    const data = { '@type': 'Car', name: 'A <b> & "c"' };
+    expect(JSON.parse(serializeStructuredData(data))).toEqual(data);
+  });
+});
+
 describe('renderHeadTags', () => {
   it('escapes names from the catalog', () => {
     const html = renderHeadTags(
@@ -141,14 +304,26 @@ describe('client head updates', () => {
     expect(meta('meta[name="robots"]')).toBe('noindex');
     expect(meta('meta[property="og:title"]')).toBe(head.title);
     expect(meta('meta[name="description"]')).toBe(head.description);
+    const script = document.getElementById(STRUCTURED_DATA_ELEMENT_ID);
+    expect(script?.getAttribute('type')).toBe('application/ld+json');
+    expect(JSON.parse(script?.textContent ?? 'null')).toEqual(head.structuredData);
 
     unmount();
 
+    expect(document.getElementById(STRUCTURED_DATA_ELEMENT_ID)).toBeNull();
     expect(document.title).toBe(APP_DEFAULT_HEAD.title);
     expect(canonical()).toBeNull();
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
     expect(document.head.querySelector('meta[property="og:url"]')).toBeNull();
     expect(meta('meta[property="og:title"]')).toBe(APP_DEFAULT_HEAD.title);
+  });
+
+  it('sets robots from the flag and the gate, the same as the static HTML', () => {
+    applyPublicPageHead(document, variantPageHead(page({ indexable: true }), { indexing: true }));
+    expect(meta('meta[name="robots"]')).toBe('index, follow');
+
+    applyPublicPageHead(document, variantPageHead(page({ indexable: true }), { indexing: false }));
+    expect(meta('meta[name="robots"]')).toBe('noindex');
   });
 
   it('updates existing tags in place rather than adding more', () => {
@@ -160,6 +335,11 @@ describe('client head updates', () => {
 
     expect(document.head.querySelectorAll('link[rel="canonical"]')).toHaveLength(1);
     expect(document.head.querySelectorAll('meta[name="description"]')).toHaveLength(1);
+    expect(document.head.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1);
+    expect(
+      JSON.parse(document.getElementById(STRUCTURED_DATA_ELEMENT_ID)?.textContent ?? '{}')
+        .vehicleConfiguration,
+    ).toBe('Sportz');
     expect(canonical()).toBe(
       'https://vehicle-vault.middle-earth.in/cars/hyundai/i20/i20-lineup/sportz',
     );

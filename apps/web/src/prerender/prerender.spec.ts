@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -8,6 +8,7 @@ import {
   MaintenanceCategory,
   VehicleType,
   type PublicCatalogIndexEntry,
+  type PublicCatalogSpec,
   type PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -49,6 +50,7 @@ function carPage(): PublicCatalogVariantPage {
       claimedRangeKm: null,
       batteryKwh: null,
     },
+    indexable: false,
     updatedAt: '2026-07-10T00:00:00.000Z',
   };
 }
@@ -70,6 +72,10 @@ function bikePage(): PublicCatalogVariantPage {
         { category: MaintenanceCategory.ChainService, km: 1000, months: 1, source: 'default' },
       ],
     },
+    // The one page the page-quality gate passes.
+    specs: { engineCc: 349, powerPs: 20.2, mileageCombined: 35 } as PublicCatalogSpec,
+    indexable: true,
+    updatedAt: '2026-08-01T12:34:56.789Z',
   };
 }
 
@@ -81,6 +87,7 @@ function indexEntry(page: PublicCatalogVariantPage): PublicCatalogIndexEntry {
     model: page.model,
     generation: { name: page.generation.name, slug: page.generation.slug },
     variant: page.variant,
+    indexable: page.indexable,
     updatedAt: page.updatedAt,
   };
 }
@@ -136,7 +143,7 @@ describe('prerenderPublicCatalog', () => {
     await rm(distDir, { recursive: true, force: true });
   });
 
-  const run = (fetcher: PrerenderFetch) =>
+  const run = (fetcher: PrerenderFetch, options: { indexing?: boolean } = {}) =>
     prerenderPublicCatalog({
       apiBaseUrl: API,
       distDir,
@@ -144,7 +151,25 @@ describe('prerenderPublicCatalog', () => {
       origin: ORIGIN,
       log,
       sleep,
+      ...options,
     });
+
+  const exists = (file: string) =>
+    access(path.join(distDir, file)).then(
+      () => true,
+      () => false,
+    );
+
+  /** The page's JSON-LD, parsed. Fails the test when it is missing or not JSON. */
+  const structuredData = (html: string) => {
+    const scripts = [
+      ...html.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/g),
+    ];
+    expect(scripts).toHaveLength(1);
+    return JSON.parse(scripts[0]?.[1] ?? 'null') as Record<string, unknown>;
+  };
+
+  const robotsOf = (html: string) => html.match(/<meta name="robots" content="([^"]*)" \/>/)?.[1];
 
   const readPage = (pagePath: string) =>
     readFile(path.join(distDir, ...pagePath.split('/').filter(Boolean), 'index.html'), 'utf8');
@@ -217,12 +242,167 @@ describe('prerenderPublicCatalog', () => {
     expect(head).not.toContain('One record of your car or two-wheeler');
   });
 
-  it('marks every page noindex', async () => {
-    const summary = await run(fixtureFetch(catalogRoutes));
+  describe('with indexing off, the default', () => {
+    it('marks every page noindex, even one the page-quality gate passes', async () => {
+      const summary = await run(fixtureFetch(catalogRoutes));
 
-    for (const pagePath of summary.paths) {
-      expect(await readPage(pagePath)).toContain('<meta name="robots" content="noindex" />');
-    }
+      for (const pagePath of summary.paths) {
+        expect(robotsOf(await readPage(pagePath))).toBe('noindex');
+      }
+      expect(summary).toMatchObject({ indexablePages: 0, sitemap: false });
+    });
+
+    it('writes no sitemap, and removes one a previous build left', async () => {
+      await writeFile(path.join(distDir, 'sitemap.xml'), '<urlset>stale</urlset>');
+
+      await run(fixtureFetch(catalogRoutes));
+
+      expect(await exists('sitemap.xml')).toBe(false);
+    });
+
+    it('writes a robots.txt that allows everything and names no sitemap', async () => {
+      await run(fixtureFetch(catalogRoutes));
+
+      expect(await readFile(path.join(distDir, 'robots.txt'), 'utf8')).toBe(
+        'User-agent: *\nAllow: /\n',
+      );
+    });
+
+    it('prints the indexable count, and how many the gate would pass', async () => {
+      await run(fixtureFetch(catalogRoutes));
+
+      expect(log).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^Indexable: 0 of 2 pages\. Indexing is off .*; 1 pass the page-quality gate\.$/,
+        ),
+      );
+    });
+  });
+
+  describe('with indexing on', () => {
+    const bikePath = '/bikes/royal-enfield/classic-350/classic-lineup/chrome-and-red';
+    const carPath = '/cars/hyundai/i20/i20-lineup/asta';
+
+    it('puts noindex exactly on the pages the gate rejects', async () => {
+      const summary = await run(fixtureFetch(catalogRoutes), { indexing: true });
+
+      expect(robotsOf(await readPage(carPath))).toBe('noindex');
+      expect(robotsOf(await readPage(bikePath))).toBe('index, follow');
+      expect(summary).toMatchObject({ indexablePages: 1, sitemap: true });
+    });
+
+    it('lists exactly the indexable pages in the sitemap, absolute, with lastmod', async () => {
+      await run(fixtureFetch(catalogRoutes), { indexing: true });
+      const sitemap = await readFile(path.join(distDir, 'sitemap.xml'), 'utf8');
+
+      expect(sitemap).toBe(
+        '<?xml version="1.0" encoding="UTF-8"?>\n' +
+          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+          '  <url>\n' +
+          `    <loc>${ORIGIN}${bikePath}</loc>\n` +
+          '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
+          '  </url>\n' +
+          '</urlset>\n',
+      );
+      expect(sitemap).not.toContain(carPath);
+    });
+
+    it('points robots.txt at the sitemap on the canonical origin', async () => {
+      await run(fixtureFetch(catalogRoutes), { indexing: true });
+
+      expect(await readFile(path.join(distDir, 'robots.txt'), 'utf8')).toBe(
+        `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`,
+      );
+    });
+
+    it('still writes a sitemap when no page passes the gate', async () => {
+      const thin = { ...bikePage(), indexable: false };
+      const fetcher = fixtureFetch({
+        '/public-catalog/index': () => ok({ variants: [indexEntry(thin)] }),
+        '/public-catalog/variant-pages?page=1&pageSize=200': () =>
+          ok({ items: [thin], page: 1, pageSize: 200, total: 1, hasMore: false }),
+      });
+
+      await run(fetcher, { indexing: true });
+
+      const sitemap = await readFile(path.join(distDir, 'sitemap.xml'), 'utf8');
+      expect(sitemap).not.toContain('<url>');
+      expect(sitemap).toContain('</urlset>');
+    });
+
+    it('prints the indexable count', async () => {
+      await run(fixtureFetch(catalogRoutes), { indexing: true });
+
+      expect(log).toHaveBeenCalledWith(
+        expect.stringMatching(/^Indexable: 1 of 2 pages\. Indexing is on/),
+      );
+    });
+  });
+
+  it('fails with indexing on when the API sends no gate verdict, and not with it off', async () => {
+    const withoutVerdict = (page: PublicCatalogVariantPage) => {
+      const { indexable: _dropped, ...rest } = page;
+      return rest;
+    };
+    const oldApi = {
+      '/public-catalog/index': () =>
+        ok({
+          variants: pages.map((page) => {
+            const { indexable: _dropped, ...rest } = indexEntry(page);
+            return rest;
+          }),
+        }),
+      '/public-catalog/variant-pages?page=1&pageSize=200': () =>
+        ok({
+          items: pages.map(withoutVerdict),
+          page: 1,
+          pageSize: 200,
+          total: 2,
+          hasMore: false,
+        }),
+    };
+
+    await expect(run(fixtureFetch(oldApi), { indexing: true })).rejects.toThrow(
+      /no page-quality verdict/,
+    );
+    await expect(run(fixtureFetch(oldApi))).resolves.toMatchObject({ indexablePages: 0 });
+  });
+
+  it('fails when the index and a page payload disagree on the gate', async () => {
+    const fetcher = fixtureFetch({
+      ...catalogRoutes,
+      '/public-catalog/index': () =>
+        ok({ variants: pages.map((page) => ({ ...indexEntry(page), indexable: true })) }),
+    });
+
+    await expect(run(fetcher, { indexing: true })).rejects.toThrow(/disagree/);
+  });
+
+  it('gives every page parseable JSON-LD of the right schema.org type', async () => {
+    await run(fixtureFetch(catalogRoutes));
+
+    const car = structuredData(await readPage('/cars/hyundai/i20/i20-lineup/asta'));
+    expect(car).toMatchObject({
+      '@context': 'https://schema.org',
+      '@type': 'Car',
+      name: 'Hyundai i20 Asta',
+      url: `${ORIGIN}/cars/hyundai/i20/i20-lineup/asta`,
+    });
+
+    const bikeHtml = await readPage(
+      '/bikes/royal-enfield/classic-350/classic-lineup/chrome-and-red',
+    );
+    // In the head, where a crawler reading the static HTML finds it.
+    expect(bikeHtml.indexOf('application/ld+json')).toBeLessThan(bikeHtml.indexOf('</head>'));
+    expect(structuredData(bikeHtml)).toMatchObject({
+      '@type': 'Motorcycle',
+      name: 'Royal Enfield Classic 350 Chrome & Red',
+      vehicleEngine: {
+        '@type': 'EngineSpecification',
+        engineDisplacement: { value: 349, unitCode: 'CMQ' },
+      },
+      fuelEfficiency: { '@type': 'QuantitativeValue', value: 35, unitText: 'km/L' },
+    });
   });
 
   it('escapes catalog names in the head', async () => {
