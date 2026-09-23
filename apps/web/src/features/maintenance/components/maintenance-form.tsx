@@ -39,6 +39,7 @@ import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
 import {
   getMaintenanceLineItemBreakdown,
   isMeaningfulMaintenanceLineItem,
+  resolveMaintenanceLineItemTotalOrUndefined,
   roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
 import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
@@ -134,8 +135,10 @@ function toCreateMaintenanceLineItems(values: MaintenanceFormValues) {
       unit: lineItem.unit?.trim() ? lineItem.unit.trim() : undefined,
       unitPrice:
         typeof lineItem.unitPrice === 'number' ? roundMoney(lineItem.unitPrice) : undefined,
-      lineTotal:
-        typeof lineItem.lineTotal === 'number' ? roundMoney(lineItem.lineTotal) : undefined,
+      // Resolved rather than the raw typed value: an item entered as qty x unit
+      // price must save that amount even when the total field was never touched
+      // directly, or the item renders as if it cost nothing.
+      lineTotal: resolveMaintenanceLineItemTotalOrUndefined(lineItem),
       brand: lineItem.brand?.trim() ? lineItem.brand.trim() : undefined,
       partNumber: lineItem.partNumber?.trim() ? lineItem.partNumber.trim() : undefined,
       notes: lineItem.notes?.trim() ? lineItem.notes.trim() : undefined,

@@ -1,3 +1,10 @@
+## [1.65.8](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.7...v1.65.8) (2026-09-23)
+
+
+### Bug Fixes
+
+* **maintenance:** save every line item's amount, not only typed ones ([c2931f1](https://github.com/AtharvaCM/vehicle-vault/commit/c2931f1f18f241adee5c4d57f766761535d542c4))
+
 ## [1.65.7](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.6...v1.65.7) (2026-09-23)
 
 
