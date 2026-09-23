@@ -5,6 +5,10 @@
  * Opt-in: with no `PRERENDER_API_BASE_URL` it does nothing, so CI and local
  * builds need no API. Set, it fails the build on an unreachable API or an
  * empty catalog. The Vercel production build sets it (see `vercel.json`).
+ *
+ * It also writes `robots.txt`, and `sitemap.xml` when the build's
+ * `VITE_PUBLIC_CATALOG_INDEXING` is `on`. That flag is read when the bundles
+ * are built, so set it for the whole `build:prerendered`, not just this step.
  */
 import path from 'node:path';
 

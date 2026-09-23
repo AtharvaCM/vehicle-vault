@@ -19,6 +19,7 @@ import {
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
+import { evaluateVariantPageQuality } from './page-quality';
 
 /**
  * The spec columns a public page may carry, and nothing else. Picked by name
@@ -165,8 +166,9 @@ export class PublicCatalogService {
   }
 
   /**
-   * Every publishable variant with its names, slugs and last change, in one
-   * response. The build-time prerender walks it to decide which pages to write.
+   * Every publishable variant with its names, slugs, last change and the
+   * page-quality gate's verdict, in one response. The build-time prerender
+   * walks it to decide which pages to write and which go in the sitemap.
    */
   async getIndex(): Promise<PublicCatalogIndex> {
     const variants = await this.prisma.vehicleCatalogVariant.findMany({
@@ -176,8 +178,18 @@ export class PublicCatalogService {
         name: true,
         slug: true,
         updatedAt: true,
-        offerings: { select: { updatedAt: true } },
-        spec: { select: { updatedAt: true } },
+        offerings: {
+          select: {
+            fuelTypes: true,
+            yearStart: true,
+            yearEnd: true,
+            isCurrent: true,
+            updatedAt: true,
+          },
+        },
+        // The whole row, for the page-quality gate; only the allow-listed
+        // fields are read from it, and none of it goes into the entry.
+        spec: true,
         generation: {
           select: {
             name: true,
@@ -203,6 +215,9 @@ export class PublicCatalogService {
       const segment = publicCatalogSegmentFor(vehicleType);
       if (!segment) continue;
 
+      const specs = variant.spec ? pickPublicSpec(variant.spec as unknown as SpecRow) : null;
+      const fuelType = primaryFuelType(sortOfferings(variant.offerings));
+
       entries.push({
         segment,
         vehicleType,
@@ -210,6 +225,7 @@ export class PublicCatalogService {
         model: { name: model.name, slug: model.slug },
         generation: { name: generation.name, slug: generation.slug },
         variant: { name: variant.name, slug: variant.slug },
+        indexable: evaluateVariantPageQuality({ fuelType, specs }).indexable,
         updatedAt: newest([
           variant.updatedAt,
           ...variant.offerings.map((offering) => offering.updatedAt),
@@ -293,6 +309,7 @@ export class PublicCatalogService {
         claimedRangeKm: fuelType === FuelType.Electric ? (specs?.rangeKm ?? null) : null,
         batteryKwh: specs?.batteryKwh ?? null,
       },
+      indexable: evaluateVariantPageQuality({ fuelType, specs }).indexable,
       updatedAt: newest([
         variant.updatedAt,
         ...variant.offerings.map((offering) => offering.updatedAt),

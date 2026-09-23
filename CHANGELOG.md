@@ -1,3 +1,11 @@
+# [1.62.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.61.0...v1.62.0) (2026-09-23)
+
+
+### Features
+
+* **catalog:** page-quality gate for public catalog pages ([d68c309](https://github.com/AtharvaCM/vehicle-vault/commit/d68c3094cb5ecf37ce1df7bfc165d00473ad15f4)), closes [#175](https://github.com/AtharvaCM/vehicle-vault/issues/175)
+* **web:** indexing flag, JSON-LD, sitemap and robots for catalog pages ([b31f384](https://github.com/AtharvaCM/vehicle-vault/commit/b31f384965cc5af8f55541a71b1a58e54b32b644)), closes [#175](https://github.com/AtharvaCM/vehicle-vault/issues/175)
+
 # [1.61.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.60.0...v1.61.0) (2026-09-23)
 
 
