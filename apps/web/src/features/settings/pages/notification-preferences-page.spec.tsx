@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   ALERT_KINDS,
+  type NotificationChannelAvailability,
+  type NotificationChannelsAvailability,
   type NotificationPreference,
   type NotificationPreferences,
 } from '@vehicle-vault/shared';
@@ -15,7 +17,6 @@ const api = vi.hoisted(() => ({
   getNotificationPreferences: vi.fn(),
   updateNotificationPreferences: vi.fn(),
 }));
-const auth = vi.hoisted(() => ({ current: { user: { emailVerified: true } } }));
 const push = vi.hoisted(() => ({
   current: { status: 'off', enable: vi.fn(), disable: vi.fn() },
 }));
@@ -33,7 +34,6 @@ vi.mock('@/features/notifications/api/notification-preferences', async () => {
     }),
   };
 });
-vi.mock('@/features/auth/hooks/use-auth', () => ({ useAuth: () => auth.current }));
 vi.mock('@/features/notifications/hooks/use-push-notifications', () => ({
   usePushNotifications: () => push.current,
 }));
@@ -47,8 +47,23 @@ vi.mock('@tanstack/react-router', () => ({
 
 import { NotificationPreferencesPage } from './notification-preferences-page';
 
-function every(delivery: { email: boolean; push: boolean }): NotificationPreferences {
-  return { preferences: ALERT_KINDS.map((kind) => ({ kind, ...delivery })) };
+const AVAILABLE: NotificationChannelAvailability = { available: true, reason: null };
+
+/** Both channels available unless a reason overrides one of them. */
+function channels(
+  overrides: Partial<NotificationChannelsAvailability> = {},
+): NotificationChannelsAvailability {
+  return { email: AVAILABLE, push: AVAILABLE, ...overrides };
+}
+
+function every(
+  delivery: { email: boolean; push: boolean },
+  channelsAvailability: NotificationChannelsAvailability = channels(),
+): NotificationPreferences {
+  return {
+    preferences: ALERT_KINDS.map((kind) => ({ kind, ...delivery })),
+    channels: channelsAvailability,
+  };
 }
 
 /** What the API answers after applying `changes` to `base`. */
@@ -56,6 +71,7 @@ function applied(base: NotificationPreferences, changes: NotificationPreference[
   const byKind = new Map(changes.map((change) => [change.kind, change]));
   return {
     preferences: base.preferences.map((preference) => byKind.get(preference.kind) ?? preference),
+    channels: base.channels,
   };
 }
 
@@ -76,7 +92,6 @@ const lastSaved = () => api.updateNotificationPreferences.mock.calls.at(-1)?.[0]
 describe('NotificationPreferencesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    auth.current = { user: { emailVerified: true } };
     push.current = { status: 'off', enable: vi.fn(), disable: vi.fn() };
     api.getNotificationPreferences.mockResolvedValue(every({ email: true, push: true }));
     api.updateNotificationPreferences.mockImplementation(
@@ -221,7 +236,12 @@ describe('NotificationPreferencesPage', () => {
   });
 
   it('warns an unverified account that email waits for verification', async () => {
-    auth.current = { user: { emailVerified: false } };
+    api.getNotificationPreferences.mockResolvedValue(
+      every(
+        { email: true, push: true },
+        channels({ email: { available: false, reason: 'email_unverified' } }),
+      ),
+    );
     renderPage();
 
     expect(
@@ -235,5 +255,135 @@ describe('NotificationPreferencesPage', () => {
 
     expect(await screen.findByText('Unable to load preferences')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  describe('channel availability', () => {
+    it('keeps both columns interactive when both channels are available', async () => {
+      renderPage();
+
+      await screen.findByText('Every alert');
+      expect(switchFor('Service overdue by email')).not.toBeDisabled();
+      expect(switchFor('Service overdue by push')).not.toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: 'Turn email off for every alert' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Turn push off for every alert' }),
+      ).toBeInTheDocument();
+    });
+
+    it('disables the email column, explains why, and never writes when mail is not configured', async () => {
+      api.getNotificationPreferences.mockResolvedValue(
+        every(
+          { email: true, push: true },
+          channels({ email: { available: false, reason: 'not_configured' } }),
+        ),
+      );
+      renderPage();
+
+      expect(
+        await screen.findByText(
+          "Email alerts aren't available yet — every alert still appears in the bell",
+        ),
+      ).toBeInTheDocument();
+
+      for (const kind of ALERT_KINDS) {
+        const emailSwitch = switchFor(`${ALERT_KIND_COPY[kind].label} by email`);
+        expect(emailSwitch).toBeDisabled();
+        expect(emailSwitch).toHaveAttribute('aria-checked', 'false');
+      }
+      expect(switchFor('Service overdue by push')).not.toBeDisabled();
+      expect(
+        screen.queryByRole('button', { name: 'Turn email off for every alert' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Turn push off for every alert' }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(switchFor('Service overdue by email'));
+      expect(api.updateNotificationPreferences).not.toHaveBeenCalled();
+    });
+
+    it('disables the push column and explains why when push is not configured on the server', async () => {
+      api.getNotificationPreferences.mockResolvedValue(
+        every(
+          { email: true, push: true },
+          channels({ push: { available: false, reason: 'not_configured' } }),
+        ),
+      );
+      renderPage();
+
+      expect(
+        await screen.findByText('Push notifications aren’t set up on the server yet.'),
+      ).toBeInTheDocument();
+
+      const pushSwitch = switchFor('Service overdue by push');
+      expect(pushSwitch).toBeDisabled();
+      expect(pushSwitch).toHaveAttribute('aria-checked', 'false');
+      expect(switchFor('Service overdue by email')).not.toBeDisabled();
+      expect(
+        screen.queryByRole('button', { name: 'Turn push off for every alert' }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(pushSwitch);
+      expect(api.updateNotificationPreferences).not.toHaveBeenCalled();
+    });
+
+    it('disables the push column and explains why there is no device to push to', async () => {
+      api.getNotificationPreferences.mockResolvedValue(
+        every(
+          { email: true, push: true },
+          channels({ push: { available: false, reason: 'no_device' } }),
+        ),
+      );
+      renderPage();
+
+      expect(
+        await screen.findByText('Turn on push for this device to choose which alerts are pushed'),
+      ).toBeInTheDocument();
+      expect(switchFor('Service overdue by push')).toBeDisabled();
+
+      fireEvent.click(switchFor('Service overdue by push'));
+      expect(api.updateNotificationPreferences).not.toHaveBeenCalled();
+    });
+
+    it('disables both columns, explains both, and keeps every stored preference when neither channel is available', async () => {
+      // The stored value has email and push both on for every kind; since
+      // neither channel can deliver, every switch must still read off.
+      api.getNotificationPreferences.mockResolvedValue(
+        every(
+          { email: true, push: true },
+          channels({
+            email: { available: false, reason: 'not_configured' },
+            push: { available: false, reason: 'no_device' },
+          }),
+        ),
+      );
+      renderPage();
+
+      expect(
+        await screen.findByText(
+          "Email alerts aren't available yet — every alert still appears in the bell",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Turn on push for this device to choose which alerts are pushed'),
+      ).toBeInTheDocument();
+
+      for (const kind of ALERT_KINDS) {
+        const { label } = ALERT_KIND_COPY[kind];
+        const emailSwitch = switchFor(`${label} by email`);
+        const pushSwitch = switchFor(`${label} by push`);
+        expect(emailSwitch).toBeDisabled();
+        expect(emailSwitch).toHaveAttribute('aria-checked', 'false');
+        expect(pushSwitch).toBeDisabled();
+        expect(pushSwitch).toHaveAttribute('aria-checked', 'false');
+      }
+      expect(screen.queryByRole('button', { name: /for every alert$/ })).not.toBeInTheDocument();
+
+      fireEvent.click(switchFor('Service overdue by email'));
+      fireEvent.click(switchFor('Service overdue by push'));
+      expect(api.updateNotificationPreferences).not.toHaveBeenCalled();
+    });
   });
 });
