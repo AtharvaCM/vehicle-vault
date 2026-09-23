@@ -10,6 +10,8 @@ import {
 import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ApiError } from '@/lib/api/api-error';
+
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const attachmentsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const extractionStatusQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
@@ -250,5 +252,45 @@ describe('MaintenanceRecordDetailPage filling in from a photo', () => {
     });
 
     expect(screen.queryByRole('button', { name: 'Fill in from photo' })).not.toBeInTheDocument();
+  });
+});
+
+function renderErrored(error: unknown) {
+  const refetch = vi.fn();
+  record.current = { isPending: false, isError: true, error, refetch };
+  vehicleQuery.current = {};
+
+  render(<MaintenanceRecordDetailPage recordId="record-1" />);
+
+  return { refetch };
+}
+
+describe('MaintenanceRecordDetailPage errors', () => {
+  it('tells a malformed or unknown record id apart from a real failure', () => {
+    renderErrored(new ApiError('Maintenance record not found', 404));
+
+    expect(screen.getByText("This record isn't in your garage.")).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Your vehicles' })).toHaveAttribute(
+      'href',
+      '/vehicles',
+    );
+  });
+
+  it('tells a viewer whose access was removed why, not just that it failed', () => {
+    renderErrored(new ApiError('Forbidden', 403));
+
+    expect(
+      screen.getByText('You no longer have access — the owner may have removed you.'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers a working Try again that refetches on a network/5xx failure', () => {
+    const { refetch } = renderErrored(new ApiError('Internal error', 500));
+
+    expect(screen.getByText("We couldn't load this record.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });

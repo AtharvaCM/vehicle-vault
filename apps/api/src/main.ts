@@ -2,13 +2,14 @@ import 'reflect-metadata';
 // Side-effect import: initialises error reporting before any app module loads.
 import './instrument';
 
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { API_PREFIX } from './common/constants/app.constants';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { AppValidationPipe } from './common/pipes/app-validation.pipe';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
 
@@ -48,7 +49,7 @@ async function bootstrap() {
     credentials: true,
   });
   app.useGlobalPipes(
-    new ValidationPipe({
+    new AppValidationPipe({
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,

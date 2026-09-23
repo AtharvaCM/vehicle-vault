@@ -1,18 +1,9 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
@@ -35,7 +26,7 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'List members of a shared vehicle' })
   async listMembers(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
   ) {
     const data = await this.membersService.list(user.id, vehicleId);
     return successResponse(data);
@@ -45,8 +36,8 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'Change a member role (owner only, non-owner roles)' })
   async updateMember(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-    @Param('memberId', new ParseUUIDPipe()) memberId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+    @Param('memberId', new UuidRouteParamPipe()) memberId: string,
     @Body() body: UpdateMemberDto,
   ) {
     return this.membersService.updateRole(user.id, vehicleId, memberId, body.role);
@@ -57,8 +48,8 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'Remove a member or leave a shared vehicle' })
   async removeMember(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-    @Param('memberId', new ParseUUIDPipe()) memberId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+    @Param('memberId', new UuidRouteParamPipe()) memberId: string,
   ) {
     await this.membersService.remove(user.id, vehicleId, memberId);
   }
@@ -68,7 +59,7 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'Transfer ownership of a vehicle to another member' })
   async transferOwnership(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() body: TransferOwnershipDto,
   ) {
     await this.membersService.transferOwnership(user.id, vehicleId, body.memberId);
@@ -78,7 +69,7 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'List invitations for a vehicle (owner only)' })
   async listInvites(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
   ) {
     const data = await this.invitesService.listForVehicle(user.id, vehicleId);
     return successResponse(data);
@@ -88,7 +79,7 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'Invite a user to a vehicle (owner only)' })
   async createInvite(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() body: CreateInviteDto,
   ) {
     return this.invitesService.createInvite(user.id, vehicleId, body);
@@ -99,8 +90,8 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'Revoke a pending invitation (owner only)' })
   async revokeInvite(
     @CurrentUser() user: AuthUser,
-    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-    @Param('inviteId', new ParseUUIDPipe()) inviteId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+    @Param('inviteId', new UuidRouteParamPipe()) inviteId: string,
   ) {
     await this.invitesService.revoke(user.id, vehicleId, inviteId);
   }

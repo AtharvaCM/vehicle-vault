@@ -5,10 +5,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageContainer } from '@/components/layout/page-container';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
-import { ErrorState } from '@/components/shared/error-state';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils/cn';
@@ -141,28 +140,20 @@ export function VehicleDetailPage({
   }
 
   if (vehicleQuery.isError) {
-    const isNotFound = vehicleQuery.error instanceof ApiError && vehicleQuery.error.status === 404;
-
     return (
-      <PageContainer>
-        <PageTitle
-          description="Review one vehicle's details, service history, reminders, and receipts in one place."
-          title={isNotFound ? 'Vehicle not found' : 'Unable to load vehicle'}
-        />
-        <ErrorState
-          action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to Vehicles
-            </Link>
-          }
-          description={
-            isNotFound
-              ? 'The requested vehicle does not exist or may have been removed.'
-              : "We couldn't load this vehicle. Try again in a moment."
-          }
-          title={isNotFound ? 'Vehicle not found' : 'Vehicle request failed'}
-        />
-      </PageContainer>
+      <ResourceLoadError
+        error={vehicleQuery.error}
+        isRetrying={vehicleQuery.isRefetching}
+        listAction={
+          <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
+            Your vehicles
+          </Link>
+        }
+        onRetry={() => void vehicleQuery.refetch()}
+        pageDescription="Review one vehicle's details, service history, reminders, and receipts in one place."
+        resourceLabel="Vehicle"
+        subject="vehicle"
+      />
     );
   }
 

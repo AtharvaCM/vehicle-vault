@@ -14,6 +14,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import {
   ATTACHMENTS_MAX_FILES,
@@ -71,7 +72,10 @@ export class AttachmentsController {
   }
 
   @Get('vehicle-loans/:loanId/attachments')
-  async listLoanAttachments(@Param('loanId') loanId: string, @CurrentUser() user: AuthUser) {
+  async listLoanAttachments(
+    @Param('loanId', new UuidRouteParamPipe()) loanId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return successResponse(await this.attachmentsService.listByVehicleLoan(user.id, loanId));
   }
 
@@ -85,7 +89,7 @@ export class AttachmentsController {
     }),
   )
   async uploadLoanAttachments(
-    @Param('loanId') loanId: string,
+    @Param('loanId', new UuidRouteParamPipe()) loanId: string,
     @UploadedFiles() files: AttachmentUploadFile[],
     @CurrentUser() user: AuthUser,
   ) {
