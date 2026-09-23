@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { Public } from '../../common/auth/decorators/public.decorator';
 import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
@@ -101,5 +102,30 @@ export class VehicleSharingController {
   @ApiOperation({ summary: 'Accept a vehicle invitation by token' })
   async acceptInvite(@CurrentUser() user: AuthUser, @Body() body: AcceptInviteDto) {
     return this.invitesService.accept(user.id, body.token);
+  }
+
+  @RateLimit('token')
+  @Post('vehicle-invites/decline')
+  @ApiOperation({ summary: 'Decline a vehicle invitation by token (the invited account only)' })
+  async declineInvite(@CurrentUser() user: AuthUser, @Body() body: AcceptInviteDto) {
+    return this.invitesService.decline(user.id, body.token);
+  }
+
+  // The token travels in the body, as for accept, so it stays out of access logs.
+  @Public()
+  @RateLimit('token')
+  @Post('vehicle-invites/preview')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Preview an invitation by token, signed out' })
+  async previewInvite(@Body() body: AcceptInviteDto) {
+    return successResponse(await this.invitesService.preview(body.token));
+  }
+
+  @RateLimit('token')
+  @Post('vehicle-invites/preview/mine')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Preview an invitation by token, and whether it is for this account' })
+  async previewInviteForMe(@CurrentUser() user: AuthUser, @Body() body: AcceptInviteDto) {
+    return successResponse(await this.invitesService.preview(body.token, user.id));
   }
 }

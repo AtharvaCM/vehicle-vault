@@ -21,10 +21,11 @@ export const VehicleInviteSchema = z.object({
   vehicleId: z.string().uuid(),
   email: z.string().email(),
   role: VehicleRoleSchema,
-  status: z.enum(['pending', 'accepted', 'revoked', 'expired']),
+  status: z.enum(['pending', 'accepted', 'revoked', 'expired', 'declined']),
   expiresAt: z.string(),
   acceptedAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
+  declinedAt: z.string().nullable(),
   invitedByUserId: z.string().uuid(),
   createdAt: z.string(),
 });
@@ -40,6 +41,35 @@ export const AcceptVehicleInviteSchema = z.object({
   token: z.string().min(16),
 });
 export type AcceptVehicleInviteInput = z.infer<typeof AcceptVehicleInviteSchema>;
+
+/**
+ * What the owner gets back after inviting someone: the invite, the link to
+ * share it with (always, since email may not reach them), and whether an
+ * email actually went out.
+ */
+export const VehicleInviteCreatedSchema = z.object({
+  invite: VehicleInviteSchema,
+  acceptUrl: z.string().url(),
+  emailSent: z.boolean(),
+});
+export type VehicleInviteCreated = z.infer<typeof VehicleInviteCreatedSchema>;
+
+/**
+ * An invite as the person holding its link sees it, signed in or not: enough
+ * to decide, without revealing the invited address in full.
+ */
+export const VehicleInvitePreviewSchema = z.object({
+  status: VehicleInviteSchema.shape.status,
+  vehicleLabel: z.string(),
+  inviterName: z.string(),
+  role: VehicleRoleSchema,
+  /** `r***@gmail.com`. */
+  emailMasked: z.string(),
+  expiresAt: z.string(),
+  /** Only when asked signed in: whether the invite is addressed to this account. */
+  addressedToYou: z.boolean().optional(),
+});
+export type VehicleInvitePreview = z.infer<typeof VehicleInvitePreviewSchema>;
 
 export const UpdateVehicleMemberSchema = z.object({
   role: z.union([z.literal(VehicleRole.Editor), z.literal(VehicleRole.Viewer)]),

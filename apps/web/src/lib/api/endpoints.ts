@@ -162,6 +162,9 @@ export const endpoints = {
     invite: (vehicleId: string, inviteId: string) => `/vehicles/${vehicleId}/invites/${inviteId}`,
     transferOwnership: (vehicleId: string) => `/vehicles/${vehicleId}/transfer-ownership`,
     accept: () => `/vehicle-invites/accept`,
+    decline: () => `/vehicle-invites/decline`,
+    preview: () => `/vehicle-invites/preview`,
+    previewMine: () => `/vehicle-invites/preview/mine`,
   },
   notifications: {
     list: () => '/notifications',
