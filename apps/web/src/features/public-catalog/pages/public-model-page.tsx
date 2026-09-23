@@ -102,7 +102,9 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
 
         {page.generations.map((generation) => {
           const headingId = `generation-${generation.slug}`;
-          const years = formatYearSpan(generation);
+          // With no years, "On sale now" would only repeat the Current badge.
+          const years =
+            generation.yearStart || generation.yearEnd ? formatYearSpan(generation) : null;
 
           return (
             <section

@@ -123,6 +123,16 @@ describe('PublicModelPageView', () => {
     );
   });
 
+  it('gives a current generation with no years only its Current badge', () => {
+    const page = modelPage();
+    page.generations[0] = { ...page.generations[0]!, yearStart: null, yearEnd: null };
+    render(<PublicModelPageView page={page} />);
+
+    const current = screen.getByRole('region', { name: 'Third generation' });
+    expect(within(current).getByText('Current')).toBeInTheDocument();
+    expect(within(current).queryByText('On sale now')).not.toBeInTheDocument();
+  });
+
   it('says whose schedule and specs it shows', () => {
     render(<PublicModelPageView page={modelPage()} />);
 
