@@ -8,10 +8,10 @@ import { ApiError } from '@/lib/api/api-error';
 import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public-variant-page';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
-import { variantPageHead } from '../head/public-page-head';
-import { usePublicPageHead } from '../head/use-public-page-head';
 import { PublicSpecSections } from '../components/public-spec-sections';
 import { RunningCostCalculator } from '../components/running-cost-calculator';
+import { variantPageHead } from '../head/public-page-head';
+import { usePublicPageHead } from '../head/use-public-page-head';
 import { describeOffering } from '../utils/format-public-catalog';
 
 export { variantPageTitle } from '../head/public-page-head';

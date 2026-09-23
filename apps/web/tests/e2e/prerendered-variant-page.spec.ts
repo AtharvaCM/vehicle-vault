@@ -152,6 +152,38 @@ test.describe('prerendered variant page', () => {
     expect(errors).toEqual([]);
   });
 
+  test('the calculator is live after hydration, with saved inputs and no mismatch', async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    const storageKey = `vehicle-vault.running-cost:${variant.path.slice(1)}`;
+    // Inputs saved on an earlier visit: read after hydration, never during it.
+    await page.addInitScript((key) => {
+      window.localStorage.setItem(
+        key,
+        JSON.stringify({ kmPerMonth: '1500', efficiency: '20', energyPrice: '100' }),
+      );
+    }, storageKey);
+    await rememberPrerenderedHeading(page);
+
+    await page.goto(variant.path);
+    await expect.poll(async () => (await isReactOwned(page)).hydrated).toBe(true);
+    expect(await isReactOwned(page)).toEqual({ sameNode: true, hydrated: true });
+
+    const calculator = page.getByRole('region', { name: 'Running cost' });
+    await expect(calculator.getByLabel('Distance per month')).toHaveValue('1500');
+    const monthlyFuel = calculator
+      .getByRole('region', { name: 'Per month' })
+      .getByRole('definition')
+      .first();
+    // 1,500 km ÷ 20 km/L × ₹100.
+    await expect(monthlyFuel).toHaveText('₹7,500');
+
+    await calculator.getByLabel('Distance per month').fill('3000');
+    await expect(monthlyFuel).toHaveText('₹15,000');
+    expect(errors.filter((error) => HYDRATION_ERROR.test(error))).toEqual([]);
+  });
+
   test('a returning signed-in visitor gets a clean client render, not a mismatch', async ({
     page,
   }) => {
