@@ -238,6 +238,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <MaintenanceForm
+            currentOdometer={vehicleQuery.data?.odometer}
             isSubmitting={createMaintenanceMutation.isPending || isUploadFirstPending}
             onDirtyChange={setIsDirty}
             onSubmit={handleCreateMaintenanceRecord}

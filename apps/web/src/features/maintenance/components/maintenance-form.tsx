@@ -6,8 +6,8 @@ import {
   type CreateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
 import { Sparkles, Clock, Calendar, WalletCards, Wrench } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { Controller, type Path, useForm, useWatch } from 'react-hook-form';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Controller, type DefaultValues, type Path, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { FormField } from '@/components/shared/form-field';
@@ -27,6 +27,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { vehicleForecastQueryOptions } from '@/features/vehicles/api/get-vehicle-forecast';
 import { ApiError } from '@/lib/api/api-error';
 import { formatCurrency } from '@/lib/utils/format-currency';
+import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
+
+import { maintenanceRecordsQueryOptions } from '../api/get-maintenance-records';
 
 import {
   maintenanceFormSchema,
@@ -38,24 +41,34 @@ import {
   isMeaningfulMaintenanceLineItem,
   roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
+import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
 
 const categoryOptions = Object.values(MaintenanceCategory);
-const defaultMaintenanceValues: MaintenanceFormValues = {
-  entryMode: 'quick',
-  serviceDate: '',
-  odometer: 0,
-  category: MaintenanceCategory.PeriodicService,
-  workshopName: '',
-  invoiceNumber: '',
-  currencyCode: 'INR',
-  totalCost: 0,
-  notes: '',
-  nextDueDate: '',
-  nextDueOdometer: undefined,
-  lineItems: [],
-};
+const kilometres = new Intl.NumberFormat('en-IN');
+
+/**
+ * A new record starts on today with the numbers empty, never 0: a service saved
+ * at 0 km resets "last done at", the next-due reminder and the forecast. The
+ * vehicle's current reading fills the odometer once it has loaded.
+ */
+function emptyMaintenanceValues(): DefaultValues<MaintenanceFormValues> {
+  return {
+    entryMode: 'quick',
+    serviceDate: todayDateInputValue(),
+    odometer: undefined,
+    category: MaintenanceCategory.PeriodicService,
+    workshopName: '',
+    invoiceNumber: '',
+    currencyCode: 'INR',
+    totalCost: undefined,
+    notes: '',
+    nextDueDate: '',
+    nextDueOdometer: undefined,
+    lineItems: [],
+  };
+}
 
 const quickPresets = [
   {
@@ -82,6 +95,10 @@ const quickPresets = [
 
 type MaintenanceFormProps = {
   vehicleId?: string;
+  /** The record being edited, so it is not compared with itself. */
+  recordId?: string;
+  /** The vehicle's odometer on file: a new record's default and the field's hint. */
+  currentOdometer?: number;
   isSubmitting?: boolean;
   onSubmit: (values: CreateMaintenanceRecordBody) => Promise<void> | void;
   submitError?: string | null;
@@ -168,6 +185,8 @@ function setFormIssueErrors(
 
 export function MaintenanceForm({
   vehicleId,
+  recordId,
+  currentOdometer,
   isSubmitting = false,
   onSubmit,
   submitError,
@@ -179,11 +198,21 @@ export function MaintenanceForm({
   successMessage = 'Maintenance record saved.',
 }: MaintenanceFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
+  const [lowOdometerWarning, setLowOdometerWarning] = useState<{
+    odometer: number;
+    previousOdometer: number;
+  } | null>(null);
+  // The reading the owner has already said to save although it is lower.
+  const confirmedLowOdometer = useRef<number | null>(null);
 
   const forecastQuery = useQuery(vehicleForecastQueryOptions(vehicleId || ''));
+  const recordsQuery = useQuery({
+    ...maintenanceRecordsQueryOptions(vehicleId ?? ''),
+    enabled: Boolean(vehicleId),
+  });
 
   const form = useForm<MaintenanceFormValues>({
-    defaultValues: defaultMaintenanceValues,
+    defaultValues: emptyMaintenanceValues(),
   });
 
   const entryMode = useWatch({
@@ -216,10 +245,27 @@ export function MaintenanceForm({
 
   useEffect(() => {
     form.reset({
-      ...defaultMaintenanceValues,
+      ...emptyMaintenanceValues(),
       ...initialValues,
     });
   }, [form, initialValues]);
+
+  useEffect(() => {
+    if (
+      currentOdometer === undefined ||
+      initialValues?.odometer !== undefined ||
+      form.getFieldState('odometer').isDirty
+    ) {
+      return;
+    }
+
+    // Not marked dirty, so an untouched form still leaves without a prompt.
+    // (`resetField` would be the natural call, but right after the reset above
+    // the fields are not registered yet and it does nothing.)
+    form.setValue('odometer', currentOdometer, { shouldDirty: false });
+  }, [currentOdometer, form, initialValues?.odometer]);
+
+  const enteredOdometer = useWatch({ control: form.control, name: 'odometer' });
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
@@ -258,6 +304,26 @@ export function MaintenanceForm({
       setSubmissionState(null);
       return;
     }
+
+    const previousService = findPreviousConfirmedService(recordsQuery.data ?? [], {
+      serviceDate: localResult.data.serviceDate,
+      excludeRecordId: recordId,
+    });
+
+    if (
+      previousService &&
+      localResult.data.odometer < previousService.odometer &&
+      confirmedLowOdometer.current !== localResult.data.odometer
+    ) {
+      setLowOdometerWarning({
+        odometer: localResult.data.odometer,
+        previousOdometer: previousService.odometer,
+      });
+      setSubmissionState(null);
+      return;
+    }
+
+    setLowOdometerWarning(null);
 
     try {
       await onSubmit(contractResult.data);
@@ -425,6 +491,11 @@ export function MaintenanceForm({
               </FormField>
 
               <FormField
+                description={
+                  currentOdometer === undefined
+                    ? undefined
+                    : `Current: ${kilometres.format(currentOdometer)} km`
+                }
                 error={form.formState.errors.odometer?.message}
                 htmlFor="maintenance-odometer"
                 label="Odometer"
@@ -646,6 +717,41 @@ export function MaintenanceForm({
             ) : null}
 
             {submitError ? <InlineError message={submitError} /> : null}
+
+            {lowOdometerWarning && lowOdometerWarning.odometer === enteredOdometer ? (
+              <div
+                className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm leading-5 text-amber-800"
+                role="alert"
+              >
+                <p>
+                  Lower than your last service at{' '}
+                  {kilometres.format(lowOdometerWarning.previousOdometer)} km — save anyway?
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => {
+                      confirmedLowOdometer.current = lowOdometerWarning.odometer;
+                      void handleSubmit();
+                    }}
+                    size="sm"
+                    type="button"
+                  >
+                    Save anyway
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setLowOdometerWarning(null);
+                      form.setFocus('odometer');
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Change odometer
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
             {submissionState ? (
               <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">

@@ -31,8 +31,9 @@ export function LoanForm({
     defaultValues: {
       lender: '',
       accountNumber: '',
-      principal: 0,
-      interestRate: 0,
+      // Empty rather than 0, so there is nothing to clear before typing.
+      principal: undefined,
+      interestRate: undefined,
       tenureMonths: 60,
       startDate: new Date().toISOString().split('T')[0],
       notes: '',
@@ -44,8 +45,8 @@ export function LoanForm({
   const interestRate = form.watch('interestRate');
   const tenureMonths = form.watch('tenureMonths');
   const emiPreview = computeEmiPreview(principal, interestRate, tenureMonths);
-  const totalPayable = emiPreview * tenureMonths;
-  const totalInterest = Math.max(0, totalPayable - principal);
+  const totalPayable = emiPreview > 0 ? emiPreview * tenureMonths : 0;
+  const totalInterest = emiPreview > 0 ? Math.max(0, totalPayable - principal) : 0;
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {

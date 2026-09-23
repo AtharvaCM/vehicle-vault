@@ -41,7 +41,7 @@ function buildDefaults(editing?: Accessory | null): AccessoryFormValues {
       brand: '',
       category: '',
       purchaseDate: new Date().toISOString().slice(0, 10),
-      cost: 0,
+      cost: undefined as unknown as number,
       fittedDate: '',
       fittedOdometer: undefined,
       removedDate: '',
