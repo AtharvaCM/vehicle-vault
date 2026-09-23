@@ -76,7 +76,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
+      <Card className="border-slate-200/60 bg-white/70">
         <CardHeader>
           <CardTitle className="text-lg font-bold">Members</CardTitle>
           <CardDescription>
@@ -273,7 +273,7 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
   }
 
   return (
-    <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white/70">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <UserPlus className="h-5 w-5" /> Invite a collaborator
@@ -411,7 +411,7 @@ function PendingInvitesCard({
   const revokeMutation = useRevokeInvite(vehicleId);
 
   return (
-    <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white/70">
       <CardHeader>
         <CardTitle className="text-lg font-bold">Pending invitations</CardTitle>
         <CardDescription>Invites that have not been accepted yet.</CardDescription>

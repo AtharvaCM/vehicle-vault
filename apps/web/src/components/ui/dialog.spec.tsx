@@ -60,7 +60,7 @@ describe('DialogContent', () => {
       'translate-y-[-50%]',
       'max-w-lg',
       'max-h-[85vh]',
-      'rounded-2xl',
+      'rounded-sheet',
     );
   });
 

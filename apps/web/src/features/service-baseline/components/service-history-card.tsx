@@ -107,7 +107,7 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
   const unanswered = coverageQuery.data?.unansweredCount ?? 0;
 
   return (
-    <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white/70">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg font-bold">Service history baseline</CardTitle>

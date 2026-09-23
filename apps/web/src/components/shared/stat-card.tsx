@@ -20,7 +20,7 @@ export function StatCard({
   icon: Icon = ArrowUpRight,
 }: StatCardProps) {
   return (
-    <Card className="group border-slate-200/60 bg-white/70 shadow-premium-sm transition-all hover:translate-y-[-2px] hover:shadow-premium-md">
+    <Card className="group border-slate-200/60 bg-white/70 transition-all hover:translate-y-[-2px]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500 shadow-inner group-hover:bg-primary/5 group-hover:text-primary group-hover:shadow-none transition-colors">

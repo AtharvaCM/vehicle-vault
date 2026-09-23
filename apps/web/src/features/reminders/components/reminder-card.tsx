@@ -27,7 +27,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
   const chevron = (
     <div
       className={cn(
-        'ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-300 shadow-premium-sm transition-all group-hover:translate-x-1 group-hover:text-primary',
+        'ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-primary',
         // With no strip to sit in, it rides the text's row, at the distance from the
         // card's edge the strip would have kept. A stacked card has no room to spare:
         // there it goes, rather than take 60px from a title that already truncates.
@@ -55,7 +55,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
       <Card
         className={cn(
-          '@container relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md sm:p-5',
+          '@container relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 transition-all duration-300 hover:border-primary/20 hover:bg-white sm:p-5',
           reminder.status === ReminderStatus.Overdue && 'border-rose-200/60',
           reminder.status === ReminderStatus.DueToday && 'border-amber-200/60',
         )}

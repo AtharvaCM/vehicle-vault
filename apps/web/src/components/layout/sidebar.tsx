@@ -111,7 +111,7 @@ export function Sidebar() {
           className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
           to="/dashboard"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-[13px] font-bold text-primary-foreground shadow-premium-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-[13px] font-bold text-primary-foreground">
             VV
           </div>
           <div className="min-w-0">
@@ -133,7 +133,7 @@ export function Sidebar() {
                 key={item.to}
                 activeOptions={{ exact: item.exact ?? false }}
                 activeProps={{
-                  className: 'bg-white text-primary shadow-premium-sm border-slate-200/60',
+                  className: 'bg-white text-primary border-slate-200/60',
                 }}
                 className={cn(
                   'group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-white/50 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
@@ -151,7 +151,7 @@ export function Sidebar() {
         </nav>
 
         <div className="px-2">
-          <div className="rounded-xl border border-slate-200/50 bg-white/50 p-4 shadow-premium-sm">
+          <div className="rounded-xl border border-slate-200/50 bg-white/50 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                 <span className="text-xs font-bold">{auth.user?.name?.charAt(0)}</span>

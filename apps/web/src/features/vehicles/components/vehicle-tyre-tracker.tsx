@@ -169,7 +169,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
       <div className="space-y-6">
-        <Card className="border-slate-200/60 bg-white shadow-premium-sm overflow-hidden">
+        <Card className="border-slate-200/60 bg-white overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b border-slate-100">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -295,7 +295,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       </div>
 
       <div className="space-y-6">
-        <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+        <Card className="border-slate-200/60 bg-white">
           <CardHeader>
             <CardTitle className="text-base font-bold">Tyre Records</CardTitle>
             <CardDescription>
@@ -331,7 +331,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
         </Card>
 
         {insights.lastReplacement ? (
-          <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+          <Card className="border-slate-200/60 bg-white">
             <CardHeader>
               <CardTitle className="text-base font-bold">Current Tyres</CardTitle>
               <CardDescription>Fitted at the last recorded replacement.</CardDescription>
@@ -524,7 +524,7 @@ function TyreGlyph({ corner, measured, status }: TyreGlyphProps) {
     <div aria-hidden="true" className={cn('absolute flex flex-col items-center', posClasses)}>
       <div
         className={cn(
-          'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2 bg-slate-900 shadow-premium-md',
+          'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2 bg-slate-900',
           appearance.border,
         )}
       >
@@ -580,10 +580,7 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
   const recorded = tyre ? describeTyre(tyre) : null;
 
   return (
-    <div
-      className={cn('rounded-2xl border p-5 shadow-premium-sm', appearance.card)}
-      data-testid="tyre-corner"
-    >
+    <div className={cn('rounded-2xl border p-5', appearance.card)} data-testid="tyre-corner">
       <div className="mb-3 flex items-center justify-between">
         <div className={cn('rounded-xl bg-white p-2 shadow-xs', appearance.icons)}>
           <Icon className="h-4 w-4" />
@@ -713,7 +710,7 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
   }[metric.status];
 
   return (
-    <div className={cn('rounded-2xl border p-5 shadow-premium-sm transition-all', cardClasses)}>
+    <div className={cn('rounded-2xl border p-5 transition-all', cardClasses)}>
       <div className="mb-3 flex items-center justify-between">
         <div className={cn('rounded-xl bg-white p-2 shadow-xs', iconClasses)}>{icon}</div>
         <Badge

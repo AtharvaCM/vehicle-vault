@@ -171,7 +171,7 @@ export function VehicleDetailPage({
     <VehicleAccessProvider role={currentUserRole}>
       <div className="min-h-screen">
         {/* Premium Hero Section */}
-        <div className="border-b border-slate-200/60 bg-white shadow-premium-sm">
+        <div className="border-b border-slate-200/60 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-4">
@@ -235,7 +235,7 @@ export function VehicleDetailPage({
                   {access.canEdit ? (
                     <>
                       <Link
-                        className={cn(buttonVariants({ variant: 'outline' }), 'shadow-premium-sm')}
+                        className={buttonVariants({ variant: 'outline' })}
                         params={{ vehicleId }}
                         to="/vehicles/$vehicleId/edit"
                       >
@@ -243,10 +243,7 @@ export function VehicleDetailPage({
                       </Link>
                       <div className="h-10 w-px bg-slate-200/60 hidden sm:block" />
                       <Link
-                        className={cn(
-                          buttonVariants({ variant: 'default' }),
-                          'shadow-premium-sm bg-primary',
-                        )}
+                        className={cn(buttonVariants({ variant: 'default' }), ' bg-primary')}
                         params={{ vehicleId }}
                         to="/vehicles/$vehicleId/maintenance/new"
                       >
@@ -254,10 +251,7 @@ export function VehicleDetailPage({
                         Log Maintenance
                       </Link>
                       <Link
-                        className={cn(
-                          buttonVariants({ variant: 'secondary' }),
-                          'shadow-premium-sm',
-                        )}
+                        className={cn(buttonVariants({ variant: 'secondary' }), '')}
                         params={{ vehicleId }}
                         to="/vehicles/$vehicleId/reminders/new"
                       >
@@ -268,18 +262,13 @@ export function VehicleDetailPage({
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        aria-label="More vehicle actions"
-                        className="shadow-premium-sm"
-                        size="icon"
-                        variant="outline"
-                      >
+                      <Button aria-label="More vehicle actions" size="icon" variant="outline">
                         <LayoutGrid className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-56 rounded-xl shadow-premium-lg border-slate-200/60"
+                      className="w-56 rounded-xl border-slate-200/60"
                     >
                       <DropdownMenuItem asChild>
                         <Link
@@ -409,69 +398,69 @@ export function VehicleDetailPage({
               ref={tabListRef}
             >
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="overview"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="maintenance"
               >
                 Service Log
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="specs"
               >
                 Tech Specs
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="reminders"
               >
                 Reminders
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="fuel"
               >
                 Fuel
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="tyres"
               >
                 Tyres
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="accessories"
               >
                 Accessories
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="protection"
               >
                 Protection
               </TabsTrigger>
               {isOwner ? (
                 <TabsTrigger
-                  className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                  className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                   value="loans"
                 >
                   Loans
                 </TabsTrigger>
               ) : null}
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="members"
               >
                 Members
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
                 value="activity"
               >
                 Activity
@@ -547,7 +536,7 @@ export function VehicleDetailPage({
                   vehicleId={vehicleId}
                   visibleCount={undefined}
                 />
-                <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
+                <Card className="h-fit border-slate-200/60 bg-white/70">
                   <CardHeader>
                     <CardTitle className="text-lg font-bold">Vehicle Health</CardTitle>
                     <CardDescription>Maintain a perfect digital service record.</CardDescription>
@@ -587,7 +576,7 @@ export function VehicleDetailPage({
                   visibleCount={undefined}
                   visibleReminders={activeReminders}
                 />
-                <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
+                <Card className="h-fit border-slate-200/60 bg-white/70">
                   <CardHeader>
                     <CardTitle className="text-lg font-bold">Preventative Care</CardTitle>
                     <CardDescription>Stay ahead of maintenance tasks.</CardDescription>
@@ -608,7 +597,7 @@ export function VehicleDetailPage({
                 <FuelTab vehicleId={vehicleId} />
                 <div className="h-fit space-y-6">
                   <FuelEconomyCard vehicleId={vehicleId} />
-                  <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
+                  <Card className="h-fit border-slate-200/60 bg-white/70">
                     <CardHeader>
                       <CardTitle className="text-lg font-bold">
                         Getting an accurate figure
@@ -658,7 +647,7 @@ export function VehicleDetailPage({
               <MembersTab vehicleId={vehicleId} currentUserRole={currentUserRole} />
             </TabsContent>
             <TabsContent value="activity" className="animate-in fade-in duration-500">
-              <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+              <Card className="border-slate-200/60 bg-white">
                 <CardHeader className="border-b border-slate-100 pb-4">
                   <CardTitle className="text-lg font-bold">Activity log</CardTitle>
                   <CardDescription>
@@ -732,7 +721,7 @@ function MaintenancePanel({
       : (maintenanceQuery.data ?? []).slice(0, visibleCount);
 
   return (
-    <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white">
       <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
         <div>
           <CardTitle className="text-lg font-bold">{title}</CardTitle>
@@ -819,7 +808,7 @@ function ReminderPanel({
       : (visibleReminders ?? []).slice(0, visibleCount);
 
   return (
-    <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white">
       <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
         <div>
           <CardTitle className="text-lg font-bold">{title}</CardTitle>

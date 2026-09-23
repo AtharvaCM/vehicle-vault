@@ -48,7 +48,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
   }
 
   return (
-    <Card className="border-slate-200/60 bg-white shadow-premium-sm overflow-hidden hover:border-primary/20 transition-all">
+    <Card className="border-slate-200/60 bg-white overflow-hidden hover:border-primary/20 transition-all">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">

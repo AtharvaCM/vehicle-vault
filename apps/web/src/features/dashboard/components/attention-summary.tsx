@@ -22,7 +22,7 @@ const TILE_VALUE_TONE: Record<TileTone, string> = {
 };
 
 const TILE_BASE =
-  'group flex flex-col gap-1.5 rounded-xl border border-slate-200/60 bg-white/70 p-4 shadow-premium-sm transition-colors hover:border-primary/20 hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-5';
+  'group flex flex-col gap-1.5 rounded-xl border border-slate-200/60 bg-white/70 p-4 transition-colors hover:border-primary/20 hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-5';
 const TILE_ACTIVE = 'border-primary/40 bg-white ring-1 ring-primary/20';
 
 type TileBodyProps = {

@@ -48,7 +48,7 @@ export function SpendSection() {
     <section aria-labelledby="spend-heading" className="space-y-3">
       <SpendHeading />
       <details
-        className="group rounded-xl border border-slate-200/60 bg-white/70 shadow-premium-sm"
+        className="group rounded-xl border border-slate-200/60 bg-white/70"
         onToggle={(event: SyntheticEvent<HTMLDetailsElement>) => setOpen(event.currentTarget.open)}
         open={open}
       >

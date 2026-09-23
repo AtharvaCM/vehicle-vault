@@ -26,7 +26,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
     event.changedFields.length > 0 || Boolean(event.ipAddress) || Boolean(event.userAgent);
 
   return (
-    <li className="rounded-xl border border-slate-200/60 bg-white shadow-premium-sm">
+    <li className="rounded-xl border border-slate-200/60 bg-white">
       <button
         type="button"
         disabled={!hasDetail}

@@ -492,7 +492,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
       </div>
 
       <aside className="space-y-6">
-        <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm sticky top-24">
+        <Card className="border-slate-200/60 bg-white/70 sticky top-24">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Document Guide</CardTitle>
             <CardDescription>Managing your vehicle protection.</CardDescription>
