@@ -33,6 +33,22 @@ import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-fo
 import { keepsCatalogSelection, type VariantYears } from '../utils/keeps-catalog-selection';
 
 const fuelOptions = Object.values(FuelType);
+
+/**
+ * Car and SUV are one decision to an owner (most would call a Creta or a Nexon
+ * "a car"), but the catalog files each model under one of them. Searching one
+ * searches both, and picking a model the catalog files under the other type
+ * switches the type to it: the catalog's body type decides what is stored.
+ */
+function siblingCatalogType(vehicleType: VehicleType) {
+  if (vehicleType === VehicleType.Car) return VehicleType.SUV;
+  if (vehicleType === VehicleType.SUV) return VehicleType.Car;
+  return null;
+}
+
+/** The catalog pickers, in order: entering one by hand frees it and the ones after it. */
+const catalogFields = ['make', 'model', 'variant'] as const;
+type CatalogField = (typeof catalogFields)[number];
 const vehicleTypeOptions = Object.values(VehicleType);
 
 function formatOptionLabel(value: string) {
@@ -99,6 +115,21 @@ export function VehicleForm({
   const selectedFuelType = form.watch('fuelType');
   const usesCatalog = supportsVehicleCatalog(selectedVehicleType);
   const catalogYear = Number.isFinite(selectedYear) ? selectedYear : undefined;
+  const siblingType = siblingCatalogType(selectedVehicleType);
+  // The first catalog field the owner chose to type by hand; it and every field
+  // after it are free text, whatever the type.
+  const [manualFrom, setManualFrom] = useState<CatalogField | null>(null);
+  const isManual = (field: CatalogField) =>
+    manualFrom !== null && catalogFields.indexOf(field) >= catalogFields.indexOf(manualFrom);
+  const enterManually = (field: CatalogField, typed: string) => {
+    form.setValue(field, typed, { shouldDirty: true });
+    for (const later of catalogFields.slice(catalogFields.indexOf(field) + 1)) {
+      form.setValue(later, '', { shouldDirty: true });
+    }
+    setManualFrom(field);
+    // Focus the now-editable input once it has rendered.
+    window.setTimeout(() => form.setFocus(field), 0);
+  };
 
   const makesQuery = useVehicleCatalogMakes(
     {
@@ -117,6 +148,23 @@ export function VehicleForm({
     },
     usesCatalog && Boolean(selectedMake),
   );
+  const siblingMakesQuery = useVehicleCatalogMakes(
+    {
+      marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+      vehicleType: siblingType ?? selectedVehicleType,
+      year: catalogYear,
+    },
+    usesCatalog && siblingType !== null,
+  );
+  const siblingModelsQuery = useVehicleCatalogModels(
+    {
+      make: selectedMake,
+      marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+      vehicleType: siblingType ?? selectedVehicleType,
+      year: catalogYear,
+    },
+    usesCatalog && siblingType !== null && Boolean(selectedMake),
+  );
   const variantsQuery = useVehicleCatalogVariants(
     {
       make: selectedMake,
@@ -131,13 +179,43 @@ export function VehicleForm({
   const catalogError = getCatalogError([makesQuery.error, modelsQuery.error, variantsQuery.error]);
   const canUseCatalogSelectors = usesCatalog && !catalogError;
 
+  // A sibling-type list that fails only narrows the search; it never takes the
+  // pickers away the way a failure of the type's own list does.
   const makeOptions = useMemo(
-    () => mergeSelectedOption((makesQuery.data ?? []).map(toMakeOption), selectedMake),
-    [makesQuery.data, selectedMake],
+    () =>
+      mergeSelectedOption(
+        uniqueByValue([
+          ...(makesQuery.data ?? []).map(toMakeOption),
+          ...(siblingMakesQuery.data ?? []).map(toMakeOption),
+        ]).sort((left, right) => left.label.localeCompare(right.label)),
+        selectedMake,
+      ),
+    [makesQuery.data, selectedMake, siblingMakesQuery.data],
   );
+  const siblingOnlyModels = useMemo(() => {
+    const ownNames = new Set((modelsQuery.data ?? []).map((model) => model.name));
+
+    return new Set(
+      (siblingModelsQuery.data ?? [])
+        .map((model) => model.name)
+        .filter((name) => !ownNames.has(name)),
+    );
+  }, [modelsQuery.data, siblingModelsQuery.data]);
   const modelOptions = useMemo(
-    () => mergeSelectedOption((modelsQuery.data ?? []).map(toModelOption), selectedModel),
-    [modelsQuery.data, selectedModel],
+    () =>
+      mergeSelectedOption(
+        [
+          ...(modelsQuery.data ?? []).map(toModelOption),
+          ...(siblingModelsQuery.data ?? [])
+            .filter((model) => siblingOnlyModels.has(model.name))
+            .map((model) => ({
+              ...toModelOption(model),
+              label: `${model.name} · listed under ${formatOptionLabel(siblingType ?? '')}`,
+            })),
+        ],
+        selectedModel,
+      ),
+    [modelsQuery.data, selectedModel, siblingModelsQuery.data, siblingOnlyModels, siblingType],
   );
   const variantOptions = useMemo(
     () =>
@@ -268,9 +346,19 @@ export function VehicleForm({
                   <Select
                     onValueChange={(nextVehicleType) => {
                       field.onChange(nextVehicleType);
-                      form.setValue('make', '', { shouldDirty: true });
+
+                      // Typed by hand, the names do not depend on the type.
+                      if (manualFrom === 'make') {
+                        return;
+                      }
+
+                      // Car and SUV search the same makes, so the make stays.
+                      if (siblingCatalogType(nextVehicleType as VehicleType) !== field.value) {
+                        form.setValue('make', '', { shouldDirty: true });
+                      }
                       form.setValue('model', '', { shouldDirty: true });
                       form.setValue('variant', '', { shouldDirty: true });
+                      setManualFrom(null);
                     }}
                     value={field.value}
                   >
@@ -303,6 +391,7 @@ export function VehicleForm({
                   valueAsNumber: true,
                   onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
                     if (
+                      manualFrom !== null ||
                       keepsCatalogSelection(
                         Number(event.target.value),
                         chosenVariantYearsRef.current,
@@ -327,7 +416,7 @@ export function VehicleForm({
               label="Make"
               error={form.formState.errors.make?.message}
             >
-              {canUseCatalogSelectors ? (
+              {canUseCatalogSelectors && !isManual('make') ? (
                 <Controller
                   control={form.control}
                   name="make"
@@ -339,6 +428,7 @@ export function VehicleForm({
                         form.setValue('model', '', { shouldDirty: true });
                         form.setValue('variant', '', { shouldDirty: true });
                       }}
+                      onManualEntry={(typed) => enterManually('make', typed)}
                       options={makeOptions}
                       placeholder={makesQuery.isLoading ? 'Loading makes...' : 'Select make'}
                       searchPlaceholder="Search makes..."
@@ -361,7 +451,7 @@ export function VehicleForm({
               label="Model"
               error={form.formState.errors.model?.message}
             >
-              {canUseCatalogSelectors ? (
+              {canUseCatalogSelectors && !isManual('model') ? (
                 <Controller
                   control={form.control}
                   name="model"
@@ -373,9 +463,15 @@ export function VehicleForm({
                       }
                       id="vehicle-model"
                       onChange={(nextModel) => {
+                        // A model the catalog files under the sibling type takes
+                        // that type, keeping the make.
+                        if (siblingType && siblingOnlyModels.has(nextModel)) {
+                          form.setValue('vehicleType', siblingType, { shouldDirty: true });
+                        }
                         field.onChange(nextModel);
                         form.setValue('variant', '', { shouldDirty: true });
                       }}
+                      onManualEntry={(typed) => enterManually('model', typed)}
                       options={modelOptions}
                       placeholder={
                         !selectedMake
@@ -404,7 +500,7 @@ export function VehicleForm({
               label="Variant (optional)"
               error={form.formState.errors.variant?.message}
             >
-              {canUseCatalogSelectors ? (
+              {canUseCatalogSelectors && !isManual('variant') ? (
                 <Controller
                   control={form.control}
                   name="variant"
@@ -418,6 +514,7 @@ export function VehicleForm({
                       }
                       id="vehicle-variant"
                       onChange={field.onChange}
+                      onManualEntry={(typed) => enterManually('variant', typed)}
                       options={variantOptions}
                       placeholder={
                         !selectedModel
@@ -548,7 +645,24 @@ export function VehicleForm({
             </FormField>
           </div>
 
-          {canUseCatalogSelectors ? (
+          {canUseCatalogSelectors && manualFrom ? (
+            <p className="text-sm leading-5 text-slate-500">
+              You are entering the{' '}
+              {formatFieldList(catalogFields.slice(catalogFields.indexOf(manualFrom)))} by hand.{' '}
+              <button
+                className="font-medium text-slate-700 underline underline-offset-2"
+                onClick={() => {
+                  for (const field of catalogFields.slice(catalogFields.indexOf(manualFrom))) {
+                    form.setValue(field, '', { shouldDirty: true });
+                  }
+                  setManualFrom(null);
+                }}
+                type="button"
+              >
+                Choose from the catalog instead
+              </button>
+            </p>
+          ) : canUseCatalogSelectors ? (
             <p className="text-sm leading-5 text-slate-500">
               Start with vehicle type and year, then search the India catalog for the correct make,
               model, and variant.
@@ -618,6 +732,25 @@ function toVariantOption(option: VehicleCatalogVariantOption): SearchableSelectO
       ...(yearLabel ? [yearLabel] : []),
     ]),
   };
+}
+
+function formatFieldList(fields: readonly string[]) {
+  return fields.length > 1
+    ? `${fields.slice(0, -1).join(', ')} and ${fields[fields.length - 1]}`
+    : (fields[0] ?? '');
+}
+
+function uniqueByValue(options: SearchableSelectOption[]) {
+  const seen = new Set<string>();
+
+  return options.filter((option) => {
+    if (seen.has(option.value)) {
+      return false;
+    }
+
+    seen.add(option.value);
+    return true;
+  });
 }
 
 function mergeSelectedOption(options: SearchableSelectOption[], selectedValue: string) {
