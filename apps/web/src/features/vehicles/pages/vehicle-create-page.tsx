@@ -85,6 +85,7 @@ export function VehicleCreatePage() {
           <VehicleForm
             initialValues={catalogIntent.status === 'ready' ? catalogIntent.values : undefined}
             isSubmitting={createVehicleMutation.isPending}
+            mode="create"
             onDirtyChange={setIsDirty}
             onSubmit={handleCreateVehicle}
             submitError={submitError}

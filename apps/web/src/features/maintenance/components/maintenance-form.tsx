@@ -6,8 +6,8 @@ import {
   type CreateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
 import { Sparkles, Clock, Calendar, WalletCards, Wrench } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { Controller, type Path, useForm, useWatch } from 'react-hook-form';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Controller, type DefaultValues, type Path, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { FormField } from '@/components/shared/form-field';
@@ -27,6 +27,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { vehicleForecastQueryOptions } from '@/features/vehicles/api/get-vehicle-forecast';
 import { ApiError } from '@/lib/api/api-error';
 import { formatCurrency } from '@/lib/utils/format-currency';
+import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
+
+import { maintenanceRecordsQueryOptions } from '../api/get-maintenance-records';
 
 import {
   maintenanceFormSchema,
@@ -36,26 +39,38 @@ import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
 import {
   getMaintenanceLineItemBreakdown,
   isMeaningfulMaintenanceLineItem,
+  resolveMaintenanceLineItemTotalOrUndefined,
   roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
+import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
+import type { BillField } from '../utils/get-fields-from-bill';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
 
 const categoryOptions = Object.values(MaintenanceCategory);
-const defaultMaintenanceValues: MaintenanceFormValues = {
-  entryMode: 'quick',
-  serviceDate: '',
-  odometer: 0,
-  category: MaintenanceCategory.PeriodicService,
-  workshopName: '',
-  invoiceNumber: '',
-  currencyCode: 'INR',
-  totalCost: 0,
-  notes: '',
-  nextDueDate: '',
-  nextDueOdometer: undefined,
-  lineItems: [],
-};
+const kilometres = new Intl.NumberFormat('en-IN');
+
+/**
+ * A new record starts on today with the numbers empty, never 0: a service saved
+ * at 0 km resets "last done at", the next-due reminder and the forecast. The
+ * vehicle's current reading fills the odometer once it has loaded.
+ */
+function emptyMaintenanceValues(): DefaultValues<MaintenanceFormValues> {
+  return {
+    entryMode: 'quick',
+    serviceDate: todayDateInputValue(),
+    odometer: undefined,
+    category: MaintenanceCategory.PeriodicService,
+    workshopName: '',
+    invoiceNumber: '',
+    currencyCode: 'INR',
+    totalCost: undefined,
+    notes: '',
+    nextDueDate: '',
+    nextDueOdometer: undefined,
+    lineItems: [],
+  };
+}
 
 const quickPresets = [
   {
@@ -82,6 +97,12 @@ const quickPresets = [
 
 type MaintenanceFormProps = {
   vehicleId?: string;
+  /** The record being edited, so it is not compared with itself. */
+  recordId?: string;
+  /** The vehicle's odometer on file: a new record's default and the field's hint. */
+  currentOdometer?: number;
+  /** Fields a draft took from its bill; each is marked "from bill" until edited. */
+  fieldsFromBill?: ReadonlySet<BillField>;
   isSubmitting?: boolean;
   onSubmit: (values: CreateMaintenanceRecordBody) => Promise<void> | void;
   submitError?: string | null;
@@ -114,8 +135,10 @@ function toCreateMaintenanceLineItems(values: MaintenanceFormValues) {
       unit: lineItem.unit?.trim() ? lineItem.unit.trim() : undefined,
       unitPrice:
         typeof lineItem.unitPrice === 'number' ? roundMoney(lineItem.unitPrice) : undefined,
-      lineTotal:
-        typeof lineItem.lineTotal === 'number' ? roundMoney(lineItem.lineTotal) : undefined,
+      // Resolved rather than the raw typed value: an item entered as qty x unit
+      // price must save that amount even when the total field was never touched
+      // directly, or the item renders as if it cost nothing.
+      lineTotal: resolveMaintenanceLineItemTotalOrUndefined(lineItem),
       brand: lineItem.brand?.trim() ? lineItem.brand.trim() : undefined,
       partNumber: lineItem.partNumber?.trim() ? lineItem.partNumber.trim() : undefined,
       notes: lineItem.notes?.trim() ? lineItem.notes.trim() : undefined,
@@ -168,6 +191,9 @@ function setFormIssueErrors(
 
 export function MaintenanceForm({
   vehicleId,
+  recordId,
+  currentOdometer,
+  fieldsFromBill,
   isSubmitting = false,
   onSubmit,
   submitError,
@@ -179,11 +205,21 @@ export function MaintenanceForm({
   successMessage = 'Maintenance record saved.',
 }: MaintenanceFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
+  const [lowOdometerWarning, setLowOdometerWarning] = useState<{
+    odometer: number;
+    previousOdometer: number;
+  } | null>(null);
+  // The reading the owner has already said to save although it is lower.
+  const confirmedLowOdometer = useRef<number | null>(null);
 
   const forecastQuery = useQuery(vehicleForecastQueryOptions(vehicleId || ''));
+  const recordsQuery = useQuery({
+    ...maintenanceRecordsQueryOptions(vehicleId ?? ''),
+    enabled: Boolean(vehicleId),
+  });
 
   const form = useForm<MaintenanceFormValues>({
-    defaultValues: defaultMaintenanceValues,
+    defaultValues: emptyMaintenanceValues(),
   });
 
   const entryMode = useWatch({
@@ -216,10 +252,30 @@ export function MaintenanceForm({
 
   useEffect(() => {
     form.reset({
-      ...defaultMaintenanceValues,
+      ...emptyMaintenanceValues(),
       ...initialValues,
     });
   }, [form, initialValues]);
+
+  useEffect(() => {
+    if (
+      currentOdometer === undefined ||
+      initialValues?.odometer !== undefined ||
+      form.getFieldState('odometer').isDirty
+    ) {
+      return;
+    }
+
+    // Not marked dirty, so an untouched form still leaves without a prompt.
+    // (`resetField` would be the natural call, but right after the reset above
+    // the fields are not registered yet and it does nothing.)
+    form.setValue('odometer', currentOdometer, { shouldDirty: false });
+  }, [currentOdometer, form, initialValues?.odometer]);
+
+  const enteredOdometer = useWatch({ control: form.control, name: 'odometer' });
+  const { dirtyFields } = form.formState;
+  const fromBill = (field: BillField) =>
+    fieldsFromBill?.has(field) && !dirtyFields[field] ? <FromBillMarker /> : undefined;
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
@@ -258,6 +314,26 @@ export function MaintenanceForm({
       setSubmissionState(null);
       return;
     }
+
+    const previousService = findPreviousConfirmedService(recordsQuery.data ?? [], {
+      serviceDate: localResult.data.serviceDate,
+      excludeRecordId: recordId,
+    });
+
+    if (
+      previousService &&
+      localResult.data.odometer < previousService.odometer &&
+      confirmedLowOdometer.current !== localResult.data.odometer
+    ) {
+      setLowOdometerWarning({
+        odometer: localResult.data.odometer,
+        previousOdometer: previousService.odometer,
+      });
+      setSubmissionState(null);
+      return;
+    }
+
+    setLowOdometerWarning(null);
 
     try {
       await onSubmit(contractResult.data);
@@ -414,6 +490,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.serviceDate?.message}
                 htmlFor="maintenance-service-date"
+                labelAddon={fromBill('serviceDate')}
                 label="Service date"
               >
                 <Input
@@ -425,8 +502,14 @@ export function MaintenanceForm({
               </FormField>
 
               <FormField
+                description={
+                  currentOdometer === undefined
+                    ? undefined
+                    : `Current: ${kilometres.format(currentOdometer)} km`
+                }
                 error={form.formState.errors.odometer?.message}
                 htmlFor="maintenance-odometer"
+                labelAddon={fromBill('odometer')}
                 label="Odometer"
               >
                 <Input
@@ -441,6 +524,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.category?.message}
                 htmlFor="maintenance-category"
+                labelAddon={fromBill('category')}
                 label="Category"
               >
                 <Controller
@@ -469,6 +553,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.workshopName?.message}
                 htmlFor="maintenance-workshop-name"
+                labelAddon={fromBill('workshopName')}
                 label="Workshop or garage"
               >
                 <Input
@@ -484,6 +569,7 @@ export function MaintenanceForm({
                   <FormField
                     error={form.formState.errors.invoiceNumber?.message}
                     htmlFor="maintenance-invoice-number"
+                    labelAddon={fromBill('invoiceNumber')}
                     label="Invoice or job card number"
                   >
                     <Input
@@ -497,6 +583,7 @@ export function MaintenanceForm({
                   <FormField
                     error={form.formState.errors.currencyCode?.message}
                     htmlFor="maintenance-currency-code"
+                    labelAddon={fromBill('currencyCode')}
                     label="Currency"
                   >
                     <Input
@@ -518,6 +605,7 @@ export function MaintenanceForm({
                 }
                 error={form.formState.errors.totalCost?.message}
                 htmlFor="maintenance-total-cost"
+                labelAddon={fromBill('totalCost')}
                 label="Total cost"
               >
                 <Input
@@ -534,6 +622,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.nextDueDate?.message}
                 htmlFor="maintenance-next-due-date"
+                labelAddon={fromBill('nextDueDate')}
                 label="Next due date"
               >
                 <Input
@@ -547,6 +636,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.nextDueOdometer?.message}
                 htmlFor="maintenance-next-due-odometer"
+                labelAddon={fromBill('nextDueOdometer')}
                 label="Next due odometer"
               >
                 <Input
@@ -564,6 +654,7 @@ export function MaintenanceForm({
             <FormField
               error={form.formState.errors.notes?.message}
               htmlFor="maintenance-notes"
+              labelAddon={fromBill('notes')}
               label="Notes"
             >
               <Textarea
@@ -647,6 +738,41 @@ export function MaintenanceForm({
 
             {submitError ? <InlineError message={submitError} /> : null}
 
+            {lowOdometerWarning && lowOdometerWarning.odometer === enteredOdometer ? (
+              <div
+                className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm leading-5 text-amber-800"
+                role="alert"
+              >
+                <p>
+                  Lower than your last service at{' '}
+                  {kilometres.format(lowOdometerWarning.previousOdometer)} km — save anyway?
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => {
+                      confirmedLowOdometer.current = lowOdometerWarning.odometer;
+                      void handleSubmit();
+                    }}
+                    size="sm"
+                    type="button"
+                  >
+                    Save anyway
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setLowOdometerWarning(null);
+                      form.setFocus('odometer');
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Change odometer
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
             {submissionState ? (
               <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
                 {submissionState}
@@ -669,6 +795,14 @@ export function MaintenanceForm({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function FromBillMarker() {
+  return (
+    <span className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-inset ring-sky-200">
+      from bill
+    </span>
   );
 }
 
