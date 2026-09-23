@@ -42,6 +42,7 @@ import {
   roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
 import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
+import type { BillField } from '../utils/get-fields-from-bill';
 import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
 
@@ -99,6 +100,8 @@ type MaintenanceFormProps = {
   recordId?: string;
   /** The vehicle's odometer on file: a new record's default and the field's hint. */
   currentOdometer?: number;
+  /** Fields a draft took from its bill; each is marked "from bill" until edited. */
+  fieldsFromBill?: ReadonlySet<BillField>;
   isSubmitting?: boolean;
   onSubmit: (values: CreateMaintenanceRecordBody) => Promise<void> | void;
   submitError?: string | null;
@@ -187,6 +190,7 @@ export function MaintenanceForm({
   vehicleId,
   recordId,
   currentOdometer,
+  fieldsFromBill,
   isSubmitting = false,
   onSubmit,
   submitError,
@@ -266,6 +270,9 @@ export function MaintenanceForm({
   }, [currentOdometer, form, initialValues?.odometer]);
 
   const enteredOdometer = useWatch({ control: form.control, name: 'odometer' });
+  const { dirtyFields } = form.formState;
+  const fromBill = (field: BillField) =>
+    fieldsFromBill?.has(field) && !dirtyFields[field] ? <FromBillMarker /> : undefined;
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
@@ -480,6 +487,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.serviceDate?.message}
                 htmlFor="maintenance-service-date"
+                labelAddon={fromBill('serviceDate')}
                 label="Service date"
               >
                 <Input
@@ -498,6 +506,7 @@ export function MaintenanceForm({
                 }
                 error={form.formState.errors.odometer?.message}
                 htmlFor="maintenance-odometer"
+                labelAddon={fromBill('odometer')}
                 label="Odometer"
               >
                 <Input
@@ -512,6 +521,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.category?.message}
                 htmlFor="maintenance-category"
+                labelAddon={fromBill('category')}
                 label="Category"
               >
                 <Controller
@@ -540,6 +550,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.workshopName?.message}
                 htmlFor="maintenance-workshop-name"
+                labelAddon={fromBill('workshopName')}
                 label="Workshop or garage"
               >
                 <Input
@@ -555,6 +566,7 @@ export function MaintenanceForm({
                   <FormField
                     error={form.formState.errors.invoiceNumber?.message}
                     htmlFor="maintenance-invoice-number"
+                    labelAddon={fromBill('invoiceNumber')}
                     label="Invoice or job card number"
                   >
                     <Input
@@ -568,6 +580,7 @@ export function MaintenanceForm({
                   <FormField
                     error={form.formState.errors.currencyCode?.message}
                     htmlFor="maintenance-currency-code"
+                    labelAddon={fromBill('currencyCode')}
                     label="Currency"
                   >
                     <Input
@@ -589,6 +602,7 @@ export function MaintenanceForm({
                 }
                 error={form.formState.errors.totalCost?.message}
                 htmlFor="maintenance-total-cost"
+                labelAddon={fromBill('totalCost')}
                 label="Total cost"
               >
                 <Input
@@ -605,6 +619,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.nextDueDate?.message}
                 htmlFor="maintenance-next-due-date"
+                labelAddon={fromBill('nextDueDate')}
                 label="Next due date"
               >
                 <Input
@@ -618,6 +633,7 @@ export function MaintenanceForm({
               <FormField
                 error={form.formState.errors.nextDueOdometer?.message}
                 htmlFor="maintenance-next-due-odometer"
+                labelAddon={fromBill('nextDueOdometer')}
                 label="Next due odometer"
               >
                 <Input
@@ -635,6 +651,7 @@ export function MaintenanceForm({
             <FormField
               error={form.formState.errors.notes?.message}
               htmlFor="maintenance-notes"
+              labelAddon={fromBill('notes')}
               label="Notes"
             >
               <Textarea
@@ -775,6 +792,14 @@ export function MaintenanceForm({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function FromBillMarker() {
+  return (
+    <span className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-inset ring-sky-200">
+      from bill
+    </span>
   );
 }
 
