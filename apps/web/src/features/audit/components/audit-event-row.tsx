@@ -74,7 +74,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
           {hasDetail ? (
             <ChevronDown
               className={cn(
-                'h-4 w-4 flex-shrink-0 text-slate-400 transition-transform',
+                'h-4 w-4 shrink-0 text-slate-400 transition-transform',
                 expanded && 'rotate-180',
               )}
             />
@@ -93,13 +93,13 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
                 >
                   {/* Field names, ids and JSON have nowhere to wrap, so they may break
                       mid-word rather than widen the page. */}
-                  <dt className="font-mono text-slate-500 [overflow-wrap:anywhere]">{field}</dt>
+                  <dt className="font-mono text-slate-500 wrap-anywhere">{field}</dt>
                   <dd className="flex flex-wrap items-center gap-2 text-slate-700">
-                    <span className="rounded bg-rose-50 px-1.5 py-0.5 text-rose-700 line-through decoration-rose-300 [overflow-wrap:anywhere]">
+                    <span className="rounded bg-rose-50 px-1.5 py-0.5 text-rose-700 line-through decoration-rose-300 wrap-anywhere">
                       {renderValue(event.before?.[field])}
                     </span>
                     <span className="text-slate-300">→</span>
-                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700 [overflow-wrap:anywhere]">
+                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700 wrap-anywhere">
                       {renderValue(event.after?.[field])}
                     </span>
                   </dd>

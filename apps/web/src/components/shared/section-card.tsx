@@ -28,7 +28,7 @@ export function SectionCard({
   contentClassName,
 }: SectionCardProps) {
   return (
-    <Card className={cn('rounded-xl border-border/70 shadow-sm', className)}>
+    <Card className={cn('rounded-xl border-border/70 shadow-xs', className)}>
       <CardHeader className="gap-2.5 border-b border-border/60 pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">

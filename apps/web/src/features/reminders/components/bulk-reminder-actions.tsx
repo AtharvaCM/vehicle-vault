@@ -29,7 +29,7 @@ export function BulkReminderActions({
   const hasSelection = selectedCount > 0;
 
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-xs">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-3">
           <div className="rounded-xl border border-border/70 bg-slate-50 p-2">

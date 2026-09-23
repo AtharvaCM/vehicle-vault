@@ -42,7 +42,7 @@ describe('DialogContent', () => {
 
     expect(screen.getByRole('dialog')).toHaveClass(
       'max-md:inset-x-0',
-      'max-md:bottom-[var(--keyboard-inset,0px)]',
+      'max-md:bottom-(--keyboard-inset,0px)',
       'max-md:w-full',
       'max-md:rounded-b-none',
       'max-md:data-[state=open]:slide-in-from-bottom',

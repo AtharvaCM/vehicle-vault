@@ -32,7 +32,7 @@ export function MaintenanceRecordList({
             record={record}
             selectionControl={
               onSelectionChange ? (
-                <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm">
+                <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs">
                   <input
                     aria-label={`Select service record ${record.workshopName?.trim() || format.enumLabel('maintenanceCategory', record.category)} on ${record.serviceDate}`}
                     checked={selectedRecordIds.includes(record.id)}

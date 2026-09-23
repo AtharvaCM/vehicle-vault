@@ -30,7 +30,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
       <div className="flex flex-col @2xl:flex-row @2xl:items-center">
         {/* Main Info */}
         <div className="flex flex-1 items-center gap-4 p-3 sm:p-5">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
             <Fuel className="h-5 w-5" />
           </div>
 
@@ -54,7 +54,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
         </div>
 
         {/* Metrics */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent @2xl:px-6 @2xl:py-0">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent max-sm:@2xl:px-6 max-sm:@2xl:py-0">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 @md:gap-x-8 @2xl:gap-x-10">
             <div className="space-y-0.5">
               <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-400">

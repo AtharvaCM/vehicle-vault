@@ -37,7 +37,7 @@ export function AttachmentUploadForm({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 shadow-xs ring-1 ring-slate-200">
                 <FileUp className="h-4 w-4" />
               </div>
               <div>

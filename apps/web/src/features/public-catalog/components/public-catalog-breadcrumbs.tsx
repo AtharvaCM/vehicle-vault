@@ -27,14 +27,14 @@ export function PublicCatalogBreadcrumbs({ page }: PublicCatalogBreadcrumbsProps
               {isCurrent ? (
                 <span
                   aria-current="page"
-                  className="px-1 py-1 font-medium text-slate-900 [overflow-wrap:anywhere]"
+                  className="px-1 py-1 font-medium text-slate-900 wrap-anywhere"
                 >
                   {crumb.name}
                 </span>
               ) : (
                 <PublicCatalogLink
                   address={crumb.address}
-                  className="rounded-lg px-1 py-1 font-medium text-slate-600 underline-offset-4 [overflow-wrap:anywhere] hover:text-slate-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                  className="rounded-lg px-1 py-1 font-medium text-slate-600 underline-offset-4 wrap-anywhere hover:text-slate-950 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                   {crumb.name}
                 </PublicCatalogLink>

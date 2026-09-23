@@ -24,7 +24,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
   return (
     <div className="group relative flex items-center gap-4">
       {selectionControl ? (
-        <div className="flex-shrink-0 transition-opacity duration-200">{selectionControl}</div>
+        <div className="shrink-0 transition-opacity duration-200">{selectionControl}</div>
       ) : null}
 
       <Card
@@ -40,7 +40,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
         >
           {/* Main Info Section */}
           <div className="flex min-w-0 flex-1 items-center gap-4 p-5 sm:p-6">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-inner group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-inner group-hover:bg-primary/10 group-hover:text-primary transition-colors">
               {[VehicleType.Car, VehicleType.SUV, VehicleType.Truck, VehicleType.Van].includes(
                 vehicle.vehicleType as VehicleType,
               ) ? (

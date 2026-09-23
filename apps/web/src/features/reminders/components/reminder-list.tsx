@@ -37,7 +37,7 @@ export function ReminderList({
               reminder={reminder}
               selectionControl={
                 onSelectionChange ? (
-                  <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm">
+                  <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs">
                     <input
                       aria-label={`Select reminder ${reminder.title}`}
                       checked={selectedReminderIds.includes(reminder.id)}

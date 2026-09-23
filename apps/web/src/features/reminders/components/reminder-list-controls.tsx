@@ -52,7 +52,7 @@ export function ReminderListControls({
     searchValue.trim().length > 0 || status !== 'all' || type !== 'all' || sortBy !== 'urgency';
 
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-xs">
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_200px_200px_220px_auto] xl:items-end">
         <div className="space-y-1.5">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">

@@ -86,7 +86,7 @@ export function OdometerQuickUpdate({
       <PopoverTrigger asChild>
         <button
           aria-label={`Update odometer for ${displayName}`}
-          className="rounded-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-sm font-semibold text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           type="button"
         >
           Update

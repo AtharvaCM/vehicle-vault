@@ -154,7 +154,7 @@ export function DocumentCheckpointPage({
   const backLink = (
     <Link
       aria-label="Back to the vehicle"
-      className="flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       params={{ vehicleId }}
       search={{ tab: 'protection' }}
       to="/vehicles/$vehicleId"

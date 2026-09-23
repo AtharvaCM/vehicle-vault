@@ -175,7 +175,7 @@ export function AttentionRow({
       />
 
       <AttentionItemLink
-        className="group min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="group min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         item={item}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -233,11 +233,7 @@ export function AttentionRow({
               </Button>
             ) : null}
             <Link
-              className={buttonVariants({
-                size: 'sm',
-                variant: 'outline',
-                className: 'h-10 sm:h-8',
-              })}
+              className={buttonVariants({ size: 'sm', variant: 'outline' })}
               params={{ vehicleId: item.vehicleId }}
               search={{ tab: 'protection' }}
               to="/vehicles/$vehicleId"
@@ -252,7 +248,7 @@ export function AttentionRow({
             className={buttonVariants({
               size: 'sm',
               variant: 'outline',
-              className: 'h-10 max-sm:hidden sm:h-8',
+              className: 'max-sm:hidden',
             })}
             params={{ vehicleId: item.vehicleId }}
             search={{ tab: ATTENTION_KIND_TABS[item.kind] }}

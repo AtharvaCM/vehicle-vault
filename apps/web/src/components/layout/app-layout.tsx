@@ -27,7 +27,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   return (
     <div className="min-h-screen bg-slate-50/70 text-foreground" data-clarity-mask="True">
       <a
-        className="sr-only left-4 top-4 z-50 rounded-lg bg-slate-950 px-3 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
+        className="sr-only left-4 top-4 z-50 rounded-lg bg-slate-950 px-3 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950"
         href="#main-content"
       >
         Skip to main content

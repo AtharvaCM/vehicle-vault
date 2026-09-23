@@ -73,7 +73,7 @@ const DATA_GAPS: Record<
 };
 
 const INLINE_LINK =
-  'rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  'rounded-sm hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring';
 
 /** The score, and the one gap worth filling next: linked for someone who can fill it. */
 function DataHealthText({
@@ -188,7 +188,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         </div>
 
         <Link
-          className="group min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="group min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           params={{ vehicleId: vehicle.id }}
           to="/vehicles/$vehicleId"
         >
@@ -212,7 +212,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
             }
           >
             <Link
-              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               params={{ vehicleId: vehicle.id }}
               search={statusTab ? { tab: statusTab } : {}}
               to="/vehicles/$vehicleId"
@@ -241,7 +241,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         <MicroRow label="Documents">
           <Link
             className={cn(
-              'rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'rounded-sm hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
               DOCUMENT_TONE[documents.tone],
             )}
             params={{ vehicleId: vehicle.id }}
@@ -254,7 +254,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         <MicroRow label="Last service">
           {vehicle.lastService ? (
             <Link
-              className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-sm hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
               params={{ recordId: vehicle.lastService.recordId }}
               to="/maintenance-records/$recordId"
             >

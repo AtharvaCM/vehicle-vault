@@ -21,21 +21,21 @@ export function PublicCatalogShell({ children }: PublicCatalogShellProps) {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
         <Link
-          className="rounded-lg text-xs font-semibold uppercase tracking-[0.28em] text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="rounded-lg text-xs font-semibold uppercase tracking-[0.28em] text-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
           to="/"
         >
           {APP_NAME}
         </Link>
         {isAuthenticated ? (
           <Link
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             to="/dashboard"
           >
             Open your garage
           </Link>
         ) : (
           <Link
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             to="/login"
           >
             Sign in

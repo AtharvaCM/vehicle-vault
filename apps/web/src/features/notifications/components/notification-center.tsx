@@ -110,8 +110,8 @@ export function NotificationCenter() {
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={cn(
-                    'w-full text-left p-4 transition-colors hover:bg-slate-50/80 focus:outline-none focus:bg-slate-50',
-                    !notif.isRead && 'bg-primary/[0.02]',
+                    'w-full text-left p-4 transition-colors hover:bg-slate-50/80 focus:outline-hidden focus:bg-slate-50',
+                    !notif.isRead && 'bg-primary/2',
                   )}
                 >
                   <div className="flex gap-3">

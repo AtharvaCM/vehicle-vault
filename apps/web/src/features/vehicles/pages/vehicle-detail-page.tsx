@@ -399,7 +399,7 @@ export function VehicleDetailPage({
             {/* Eleven tabs are wider than a phone, and than some desktops: the strip
                 scrolls sideways rather than clipping, with the selected tab kept in view. */}
             <TabsList
-              className="relative inline-flex h-auto min-h-11 max-w-full items-center justify-start overflow-x-auto overscroll-x-contain rounded-xl bg-slate-100/80 p-1 shadow-inner [scrollbar-width:thin]"
+              className="relative inline-flex h-auto min-h-11 max-w-full items-center justify-start overflow-x-auto overscroll-x-contain rounded-xl bg-slate-100/80 p-1 shadow-inner scrollbar-thin"
               ref={tabListRef}
             >
               <TabsTrigger
@@ -545,7 +545,7 @@ export function VehicleDetailPage({
                   </CardHeader>
                   <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
                     <div className="flex gap-3">
-                      <div className="mt-1 flex-shrink-0 text-primary">
+                      <div className="mt-1 shrink-0 text-primary">
                         <ClipboardList className="h-4 w-4" />
                       </div>
                       <p>
@@ -553,13 +553,13 @@ export function VehicleDetailPage({
                       </p>
                     </div>
                     <div className="flex gap-3">
-                      <div className="mt-1 flex-shrink-0 text-primary">
+                      <div className="mt-1 shrink-0 text-primary">
                         <Plus className="h-4 w-4" />
                       </div>
                       <p>Open a service record to attach receipts, invoices, or photos.</p>
                     </div>
                     <div className="flex gap-3">
-                      <div className="mt-1 flex-shrink-0 text-primary">
+                      <div className="mt-1 shrink-0 text-primary">
                         <Gauge className="h-4 w-4" />
                       </div>
                       <p>Use next due fields to capture what should happen next.</p>
@@ -608,7 +608,7 @@ export function VehicleDetailPage({
                     </CardHeader>
                     <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
                       <div className="flex gap-3">
-                        <div className="mt-1 flex-shrink-0 text-primary">
+                        <div className="mt-1 shrink-0 text-primary">
                           <Fuel className="h-4 w-4" />
                         </div>
                         <p>
@@ -616,7 +616,7 @@ export function VehicleDetailPage({
                         </p>
                       </div>
                       <div className="flex gap-3">
-                        <div className="mt-1 flex-shrink-0 text-primary">
+                        <div className="mt-1 shrink-0 text-primary">
                           <Gauge className="h-4 w-4" />
                         </div>
                         <p>

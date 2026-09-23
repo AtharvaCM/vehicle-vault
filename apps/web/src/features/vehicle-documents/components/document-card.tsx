@@ -76,7 +76,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   const showLink = (
     <Link
       aria-label={`Show ${documentKindTitles[document.kind]} full screen`}
-      className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       params={{ vehicleId, kind: document.kind, documentId: document.id }}
       to="/vehicles/$vehicleId/documents/$kind/$documentId"
     >

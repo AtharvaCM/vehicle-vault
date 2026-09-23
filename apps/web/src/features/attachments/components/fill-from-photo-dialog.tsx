@@ -178,7 +178,7 @@ function FillPlanSummary({
         {plan.fields.map((field) => (
           <div className="grid gap-1 px-4 py-3 sm:grid-cols-[9rem_minmax(0,1fr)]" key={field}>
             <dt className="text-sm text-slate-500">{FIELD_LABELS[field]}</dt>
-            <dd className="min-w-0 break-words text-sm font-medium text-slate-950">
+            <dd className="min-w-0 wrap-break-word text-sm font-medium text-slate-950">
               {describeChange(field, plan.changes, record)}
             </dd>
           </div>

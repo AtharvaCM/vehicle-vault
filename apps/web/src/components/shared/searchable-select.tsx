@@ -86,7 +86,7 @@ export function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
+        className="w-(--radix-popover-trigger-width) p-0"
         id={id ? `${id}-content` : undefined}
       >
         <Command shouldFilter>

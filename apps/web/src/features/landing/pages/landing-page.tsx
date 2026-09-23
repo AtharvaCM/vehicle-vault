@@ -69,7 +69,7 @@ export function LandingPage() {
           {APP_NAME}
         </span>
         <Link
-          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
           to="/login"
         >
           Sign in
@@ -118,7 +118,7 @@ export function LandingPage() {
                 </h3>
                 <p className="mt-3 text-base leading-7 text-slate-600">{feature.body}</p>
               </div>
-              <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
                 <img
                   alt={feature.alt}
                   className="h-auto w-full"

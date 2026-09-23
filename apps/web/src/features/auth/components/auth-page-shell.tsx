@@ -43,7 +43,7 @@ export function AuthPageShell({
             </div>
           </div>
 
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-slate-200 shadow-xs">
             <CardHeader>
               <CardTitle>{title}</CardTitle>
               <CardDescription>{description}</CardDescription>

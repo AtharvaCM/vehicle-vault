@@ -88,7 +88,7 @@ function Calculator({ page, storageKey }: RunningCostCalculatorProps & { storage
   return (
     <section
       aria-labelledby="running-cost-heading"
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5"
       data-testid="running-cost-calculator"
     >
       <h2 className="text-lg font-semibold tracking-tight text-slate-950" id="running-cost-heading">
@@ -210,7 +210,7 @@ function CalculatorField({
           aria-describedby={describedBy}
           aria-invalid={invalid || undefined}
           autoComplete="off"
-          className="h-10 min-w-0 flex-1 bg-white text-base tabular-nums aria-[invalid=true]:border-red-500 sm:text-sm"
+          className="h-10 min-w-0 flex-1 bg-white text-base tabular-nums aria-invalid:border-red-500 sm:text-sm"
           id={id}
           inputMode="decimal"
           onChange={(event) => onChange(event.target.value)}

@@ -368,7 +368,7 @@ export function MaintenanceForm({
               {suggestions.map((suggestion) => (
                 <div
                   key={suggestion.category}
-                  className="flex flex-col rounded-lg border border-indigo-100 bg-white p-3 shadow-sm"
+                  className="flex flex-col rounded-lg border border-indigo-100 bg-white p-3 shadow-xs"
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-xs font-bold uppercase text-indigo-900">

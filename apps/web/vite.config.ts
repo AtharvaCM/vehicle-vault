@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -34,6 +35,7 @@ function servePrerenderedPages(): Plugin {
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     servePrerenderedPages(),
     // src/sw.ts, built to /sw.js with this build's precache list injected.
     // The manifest stays public/site.webmanifest, registration happens in

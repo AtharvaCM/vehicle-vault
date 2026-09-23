@@ -56,7 +56,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
 
   return (
     <div className="group relative flex items-center gap-2 sm:gap-4">
-      {selectionControl ? <div className="flex-shrink-0">{selectionControl}</div> : null}
+      {selectionControl ? <div className="shrink-0">{selectionControl}</div> : null}
 
       {/* The card fills anything from a phone to half a desktop panel, so its figures
           move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
@@ -80,7 +80,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
         >
           {/* Main Content */}
           <div className="flex min-w-0 flex-1 items-center gap-4 p-3 pl-4 sm:p-5 sm:pl-6">
-            <div className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
               <BellRing className="h-5 w-5" />
             </div>
 
@@ -125,7 +125,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           {/* Metrics & Action */}
           {hasFigures ? (
             <div
-              className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent @xl:px-6 @xl:py-0"
+              className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent max-sm:@xl:px-6 max-sm:@xl:py-0"
               data-testid="reminder-figures"
             >
               <div className="flex items-center gap-8 @xl:gap-10">

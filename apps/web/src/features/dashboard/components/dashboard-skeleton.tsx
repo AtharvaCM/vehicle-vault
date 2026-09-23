@@ -6,7 +6,7 @@ export function DashboardSkeleton() {
     <div aria-busy="true" aria-label="Loading dashboard" className="space-y-5" role="status">
       <Skeleton className="h-[108px] w-full" />
 
-      <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
         <div className="space-y-2 border-b border-border/60 px-5 pb-4 pt-5">
           <Skeleton className="h-5 w-36" />
           <Skeleton className="h-4 w-72 max-w-full" />

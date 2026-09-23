@@ -22,7 +22,7 @@ export function PublicServiceSchedule({ schedule, heading, note }: PublicService
   return (
     <section
       aria-labelledby="service-schedule-heading"
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5"
     >
       <h2
         className="text-lg font-semibold tracking-tight text-slate-950"

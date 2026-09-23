@@ -257,7 +257,7 @@ export function AttentionQueue({
   }
 
   return (
-    <Card className="overflow-hidden rounded-xl border-border/70 p-0 shadow-sm">
+    <Card className="overflow-hidden rounded-xl border-border/70 p-0 shadow-xs">
       <CardHeader className="gap-2.5 border-b border-border/60 px-5 pb-4 pt-5">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">

@@ -133,7 +133,7 @@ export function Sidebar() {
                   className: 'bg-white text-primary shadow-premium-sm border-slate-200/60',
                 }}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-white/50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-white/50 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
                 )}
                 to={item.to}
               >

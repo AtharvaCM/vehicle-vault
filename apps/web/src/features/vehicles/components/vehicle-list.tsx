@@ -28,7 +28,7 @@ export function VehicleList({
             selectionControl={
               onSelectionChange ? (
                 <label
-                  className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm"
+                  className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs"
                   onClick={(event) => {
                     // Only stop the click from bubbling to the card/link below —
                     // preventDefault() here would also cancel the checkbox's own
