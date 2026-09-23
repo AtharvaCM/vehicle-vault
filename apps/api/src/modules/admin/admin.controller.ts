@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthUser } from '@vehicle-vault/shared';
 
@@ -6,6 +6,7 @@ import { CurrentUser } from '../../common/auth/decorators/current-user.decorator
 import { Roles } from '../../common/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/auth/guards/roles.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { AdminService } from './admin.service';
 import { ListAdminUsersQueryDto } from './dto/list-users-query.dto';
@@ -47,7 +48,7 @@ export class AdminController {
     summary: 'Invalidate target user refresh token; next refresh attempt fails (admin only)',
   })
   async forceLogout(
-    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @Param('userId', new UuidRouteParamPipe()) userId: string,
     @CurrentUser() admin: AuthUser,
   ) {
     return successResponse(await this.adminService.forceLogout(admin.id, userId));
