@@ -35,7 +35,7 @@ export const maintenanceFormSchema = z
     // 0 km is never a service reading: it is a default nobody changed, and it
     // would reset "last done at", the next-due reminder and the forecast.
     odometer: z
-      .number({ invalid_type_error: 'Enter the odometer reading' })
+      .number({ error: 'Enter the odometer reading' })
       .int('Enter the reading in whole kilometres')
       .positive('Enter the odometer reading at the service'),
     category: z.nativeEnum(MaintenanceCategory),
@@ -51,12 +51,12 @@ export const maintenanceFormSchema = z
       .optional(),
     currencyCode: z.string().trim().length(3, 'Currency code must be 3 characters long'),
     totalCost: z
-      .number({ invalid_type_error: 'Enter the total cost, or 0 if it was free' })
+      .number({ error: 'Enter the total cost, or 0 if it was free' })
       .nonnegative('Total cost cannot be negative'),
     notes: z.string().trim().max(1000, 'Notes can be at most 1000 characters').optional(),
     nextDueDate: z.string().trim().optional(),
     nextDueOdometer: z
-      .number({ invalid_type_error: 'Enter the next due reading in kilometres' })
+      .number({ error: 'Enter the next due reading in kilometres' })
       .int('Enter the reading in whole kilometres')
       .nonnegative('Next due odometer cannot be negative')
       .optional(),

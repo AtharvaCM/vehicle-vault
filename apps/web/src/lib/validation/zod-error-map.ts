@@ -14,114 +14,104 @@ function pluralize(count: number | bigint, word: string) {
   return `${formatBound(count)} ${word}${Number(count) === 1 ? '' : 's'}`;
 }
 
+/** A value that never reached the schema: an empty number input reads as NaN. */
+function isMissing(input: unknown) {
+  return input === undefined || input === null || Number.isNaN(input);
+}
+
 /**
  * The words every form falls back on when a schema gives no message of its own.
- * Zod's defaults ("Expected number, received nan", "String must contain at least
- * 8 character(s)") read like a crash to someone logging a fill at the pump, and
- * a schema message always wins over this map, so a field that knows better
- * ("Enter the litres") still says so.
+ * Zod's defaults ("Invalid input: expected number, received NaN", "Too small:
+ * expected string to have >=8 characters") read like a crash to someone logging
+ * a fill at the pump, and a schema message always wins over this map, so a field
+ * that knows better ("Enter the litres") still says so.
  */
-export const zodErrorMap: z.ZodErrorMap = (issue) => {
+export const zodErrorMap: z.core.$ZodErrorMap = (issue) => {
   switch (issue.code) {
-    case z.ZodIssueCode.invalid_type:
+    case 'invalid_type':
       // An empty number input reaches the schema as NaN or undefined: it is missing, not wrong.
-      if (
-        issue.received === z.ZodParsedType.undefined ||
-        issue.received === z.ZodParsedType.null ||
-        issue.received === z.ZodParsedType.nan
-      ) {
-        return { message: 'This field is required' };
+      if (isMissing(issue.input)) {
+        return 'This field is required';
       }
 
-      // `.int()` reports a decimal as a type error, expecting "integer".
-      if (issue.expected === z.ZodParsedType.integer) {
-        return { message: 'Enter a whole number' };
+      // `.int()` reports a decimal as a type error, expecting "int".
+      if (issue.expected === 'int') {
+        return 'Enter a whole number';
       }
 
-      if (issue.expected === z.ZodParsedType.number) {
-        return { message: 'Enter a number' };
+      if (issue.expected === 'number') {
+        return 'Enter a number';
       }
 
-      if (issue.expected === z.ZodParsedType.date) {
-        return { message: 'Enter a valid date' };
+      if (issue.expected === 'date') {
+        return 'Enter a valid date';
       }
 
-      return { message: 'Check this value' };
+      return 'Check this value';
 
-    case z.ZodIssueCode.too_small:
-      if (issue.type === 'string') {
-        return {
-          message:
-            Number(issue.minimum) <= 1
-              ? 'This field is required'
-              : `Use at least ${pluralize(issue.minimum, 'character')}`,
-        };
+    case 'too_small':
+      if (issue.origin === 'string') {
+        return Number(issue.minimum) <= 1
+          ? 'This field is required'
+          : `Use at least ${pluralize(issue.minimum, 'character')}`;
       }
 
-      if (issue.type === 'array' || issue.type === 'set') {
-        return { message: `Add at least ${formatBound(issue.minimum)}` };
+      if (issue.origin === 'array' || issue.origin === 'set') {
+        return `Add at least ${formatBound(issue.minimum)}`;
       }
 
-      if (issue.type === 'date') {
-        return { message: `Choose a date on or after ${formatBound(issue.minimum)}` };
+      if (issue.origin === 'date') {
+        return `Choose a date on or after ${formatBound(new Date(Number(issue.minimum)))}`;
       }
 
       if (issue.inclusive) {
-        return {
-          message:
-            Number(issue.minimum) === 0
-              ? 'Enter 0 or more'
-              : `Enter ${formatBound(issue.minimum)} or more`,
-        };
+        return Number(issue.minimum) === 0
+          ? 'Enter 0 or more'
+          : `Enter ${formatBound(issue.minimum)} or more`;
       }
 
-      return { message: `Enter more than ${formatBound(issue.minimum)}` };
+      return `Enter more than ${formatBound(issue.minimum)}`;
 
-    case z.ZodIssueCode.too_big:
-      if (issue.type === 'string') {
-        return { message: `Use at most ${pluralize(issue.maximum, 'character')}` };
+    case 'too_big':
+      if (issue.origin === 'string') {
+        return `Use at most ${pluralize(issue.maximum, 'character')}`;
       }
 
-      if (issue.type === 'array' || issue.type === 'set') {
-        return { message: `Add at most ${formatBound(issue.maximum)}` };
+      if (issue.origin === 'array' || issue.origin === 'set') {
+        return `Add at most ${formatBound(issue.maximum)}`;
       }
 
-      if (issue.type === 'date') {
-        return { message: `Choose a date on or before ${formatBound(issue.maximum)}` };
+      if (issue.origin === 'date') {
+        return `Choose a date on or before ${formatBound(new Date(Number(issue.maximum)))}`;
       }
 
-      return {
-        message: issue.inclusive
-          ? `Enter ${formatBound(issue.maximum)} or less`
-          : `Enter less than ${formatBound(issue.maximum)}`,
-      };
+      return issue.inclusive
+        ? `Enter ${formatBound(issue.maximum)} or less`
+        : `Enter less than ${formatBound(issue.maximum)}`;
 
-    case z.ZodIssueCode.invalid_string:
-      if (issue.validation === 'email') {
-        return { message: 'Enter a valid email address' };
+    case 'invalid_format':
+      if (issue.format === 'email') {
+        return 'Enter a valid email address';
       }
 
-      if (issue.validation === 'url') {
-        return { message: 'Enter a valid link, starting with https://' };
+      if (issue.format === 'url') {
+        return 'Enter a valid link, starting with https://';
       }
 
-      if (issue.validation === 'datetime' || issue.validation === 'date') {
-        return { message: 'Enter a valid date' };
+      if (issue.format === 'datetime' || issue.format === 'date') {
+        return 'Enter a valid date';
       }
 
-      return { message: 'Check the format of this value' };
+      return 'Check the format of this value';
 
-    case z.ZodIssueCode.invalid_enum_value:
-      return { message: 'Choose one of the options' };
+    case 'invalid_value':
+      return 'Choose one of the options';
 
-    case z.ZodIssueCode.invalid_date:
-      return { message: 'Enter a valid date' };
-
-    case z.ZodIssueCode.not_multiple_of:
-      return { message: 'Enter a whole number' };
+    case 'not_multiple_of':
+      return 'Enter a whole number';
 
     default:
-      return { message: 'Check this value' };
+      return 'Check this value';
   }
 };
 
@@ -133,6 +123,6 @@ export function installZodErrorMap() {
     return;
   }
 
-  z.setErrorMap(zodErrorMap);
+  z.config({ customError: zodErrorMap });
   installed = true;
 }

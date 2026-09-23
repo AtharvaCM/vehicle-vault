@@ -18,13 +18,13 @@ export const reminderFormSchema = z
     notes: z.string().trim().max(1000, 'Notes can be at most 1000 characters').optional(),
     repeat: z.enum(['none', 'six-months', 'yearly', 'distance', 'custom']),
     repeatEveryMonths: z
-      .number({ invalid_type_error: 'Enter a number of months' })
+      .number({ error: 'Enter a number of months' })
       .int('Use whole months')
       .min(1, 'Repeat at least every month')
       .max(REMINDER_REPEAT_MAX_MONTHS, `At most every ${REMINDER_REPEAT_MAX_MONTHS} months`)
       .optional(),
     repeatEveryKm: z
-      .number({ invalid_type_error: 'Enter a distance in km' })
+      .number({ error: 'Enter a distance in km' })
       .int('Use whole kilometres')
       .min(1, 'Repeat at least every kilometre')
       .max(

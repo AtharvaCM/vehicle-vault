@@ -41,9 +41,7 @@ type Props = {
 
 const prepaymentSchema = z.object({
   date: z.string().min(1, 'Date is required'),
-  amount: z
-    .number({ invalid_type_error: 'Enter the amount prepaid' })
-    .positive('Amount must be more than 0'),
+  amount: z.number({ error: 'Enter the amount prepaid' }).positive('Amount must be more than 0'),
   notes: z.string().trim().optional(),
 });
 
