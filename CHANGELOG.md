@@ -1,3 +1,10 @@
+# [1.72.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.71.2...v1.72.0) (2026-09-23)
+
+
+### Features
+
+* **web:** design tokens and self-hosted fonts for the Glovebox folder look ([3ace1ff](https://github.com/AtharvaCM/vehicle-vault/commit/3ace1ff465ed963a6fb7dc6f687861b9fe0cadc3)), closes [#1C7A47](https://github.com/AtharvaCM/vehicle-vault/issues/1C7A47) [#1E7F4A](https://github.com/AtharvaCM/vehicle-vault/issues/1E7F4A)
+
 ## [1.71.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.71.1...v1.71.2) (2026-09-23)
 
 
