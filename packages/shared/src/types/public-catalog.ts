@@ -129,6 +129,12 @@ export interface PublicCatalogVariantPage {
   specs: PublicCatalogSpec | null;
   schedule: PublicCatalogSchedule;
   calculatorSeed: PublicCatalogCalculatorSeed;
+  /**
+   * What the page-quality gate says: the page has enough facts to be worth a
+   * search engine's time. The web build's indexing flag still has the last
+   * word; with it off, every page is `noindex` whatever this says.
+   */
+  indexable: boolean;
   /** ISO timestamp of the newest change to the variant, its offerings or specs. */
   updatedAt: string;
 }
@@ -152,6 +158,8 @@ export interface PublicCatalogIndexEntry {
   model: PublicCatalogNamedSlug;
   generation: PublicCatalogNamedSlug;
   variant: PublicCatalogNamedSlug;
+  /** The page-quality gate's verdict, the same one the variant's page payload carries. */
+  indexable: boolean;
   /** ISO timestamp of the newest change to the variant, its offerings or specs. */
   updatedAt: string;
 }

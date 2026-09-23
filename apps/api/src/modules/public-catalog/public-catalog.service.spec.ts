@@ -93,6 +93,20 @@ function variantRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** Enough public facts for the page-quality gate, combustion or electric. */
+const richSpec = {
+  engineCyl: 4,
+  torqueNm: 115,
+  lengthMm: 3995,
+  widthMm: 1775,
+  heightMm: 1505,
+  seatingCapacity: 5,
+  tyreSize: '195/55 R16',
+  rangeKm: 489,
+  motorKw: 110,
+  batteryKwh: 45,
+};
+
 const slugs = {
   segment: 'cars' as const,
   make: 'hyundai',
@@ -349,6 +363,7 @@ describe('PublicCatalogService', () => {
           model: { name: 'i20', slug: 'i20' },
           generation: { name: 'i20 lineup', slug: 'i20-lineup' },
           variant: { name: 'Asta', slug: 'asta' },
+          indexable: false,
           updatedAt: '2026-07-10T00:00:00.000Z',
         },
         expect.objectContaining({
@@ -361,6 +376,49 @@ describe('PublicCatalogService', () => {
       for (const forbidden of ['sourceName', 'sourceUrl', 'carwale', 'variant-1', 'make-1']) {
         expect(serialized).not.toContain(forbidden);
       }
+    });
+
+    it("reports the page-quality gate's verdict, the same one the variant's page carries", async () => {
+      const thin = variantRow({ id: 'variant-thin', slug: 'thin' });
+      const rich = variantRow({ id: 'variant-rich', slug: 'rich', spec: specRow(richSpec) });
+      const bare = variantRow({ id: 'variant-bare', slug: 'bare', spec: null });
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([thin, rich, bare]);
+
+      const index = await service.getIndex();
+
+      expect(index.variants.map((entry) => [entry.variant.slug, entry.indexable])).toEqual([
+        ['thin', false],
+        ['rich', true],
+        ['bare', false],
+      ]);
+      for (const row of [thin, rich, bare]) {
+        prisma.vehicleCatalogVariant.findFirst.mockResolvedValueOnce(row);
+        const page = await service.getVariantPage(slugs);
+        expect(page.indexable).toBe(
+          index.variants.find((entry) => entry.variant.slug === row.slug)?.indexable,
+        );
+      }
+      expect(JSON.stringify(index)).not.toContain('Six airbags');
+    });
+
+    it('judges an EV on its range, by the fuel of its newest offering', async () => {
+      const ev = variantRow({
+        spec: specRow({ ...richSpec, mileageCombined: null, engineCc: null, powerPs: null }),
+        offerings: [
+          {
+            fuelTypes: ['electric'],
+            yearStart: 2024,
+            yearEnd: null,
+            isCurrent: true,
+            updatedAt: at('2026-06-04T00:00:00Z'),
+          },
+        ],
+      });
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([ev]);
+
+      await expect(service.getIndex()).resolves.toMatchObject({
+        variants: [{ indexable: true }],
+      });
     });
 
     it('drops a row of a type with no public segment', async () => {
