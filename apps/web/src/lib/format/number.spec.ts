@@ -45,10 +45,16 @@ describe('number', () => {
     expect(number(1_00_00_000)).toBe('1,00,00,000');
   });
 
+  it('keeps up to two decimals by default, so a fuel fill of 42.5 litres is not rounded', () => {
+    expect(number(42.5)).toBe('42.5');
+    expect(number(30)).toBe('30');
+    expect(number(12.345)).toBe('12.35');
+  });
+
   it('trims decimals unless asked to keep them fixed', () => {
     expect(number(12, { decimals: 1 })).toBe('12');
     expect(number(12, { decimals: 1, fixed: true })).toBe('12.0');
-    expect(number(12.345, { decimals: 2 })).toBe('12.35');
+    expect(number(12.6, { decimals: 0 })).toBe('13');
   });
 
   it('shows the empty state for a missing value', () => {

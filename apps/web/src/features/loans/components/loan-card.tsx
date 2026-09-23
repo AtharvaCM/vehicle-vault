@@ -2,8 +2,7 @@ import type { VehicleLoan } from '@vehicle-vault/shared';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-import { formatCurrencyInr } from '../utils/compute-emi';
+import { format } from '@/lib/format';
 
 type LoanCardProps = {
   loan: VehicleLoan;
@@ -33,17 +32,17 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
               : 'bg-muted text-muted-foreground'
           }`}
         >
-          {loan.status}
+          {format.enumLabel('loanStatus', loan.status)}
         </span>
       </CardHeader>
       <CardContent className="space-y-3 pt-0 text-sm">
         <div className="grid grid-cols-3 gap-3">
-          <Metric label="EMI" value={formatCurrencyInr(loan.emiAmount)} />
+          <Metric label="EMI" value={format.money(loan.emiAmount)} />
           <Metric label="Rate" value={`${loan.interestRate}% /yr`} />
           <Metric label="Tenure" value={`${loan.tenureMonths} mo`} />
-          <Metric label="Principal" value={formatCurrencyInr(loan.principal)} />
-          <Metric label="Outstanding" value={formatCurrencyInr(loan.outstandingBalance)} />
-          <Metric label="Interest paid" value={formatCurrencyInr(loan.interestPaidToDate)} />
+          <Metric label="Principal" value={format.money(loan.principal)} />
+          <Metric label="Outstanding" value={format.money(loan.outstandingBalance)} />
+          <Metric label="Interest paid" value={format.money(loan.interestPaidToDate)} />
         </div>
 
         <div>

@@ -5,6 +5,7 @@ import { PieChart as PieIcon } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { format } from '@/lib/format';
 
 import { costSplitQueryOptions } from '../api/get-cost-split';
 import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
@@ -25,12 +26,6 @@ const BUCKET_COLORS: Record<string, string> = {
   Insurance: '#10b981',
   'Loan interest': '#f43f5e',
 };
-
-const inrFormatter = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  maximumFractionDigits: 0,
-});
 
 type Props = {
   vehicleId?: string;
@@ -105,7 +100,7 @@ export function CostSplitDonut({ vehicleId, defaultRange = '1y' }: Props) {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => inrFormatter.format(Number(value ?? 0))}
+                    formatter={(value) => format.money(Number(value ?? 0))}
                     contentStyle={{ borderRadius: 8, fontSize: 12 }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -113,7 +108,7 @@ export function CostSplitDonut({ vehicleId, defaultRange = '1y' }: Props) {
               </ResponsiveContainer>
             </div>
             <p className="text-center text-sm font-medium text-slate-700">
-              Total: {inrFormatter.format(total)}
+              Total: {format.money(total)}
             </p>
           </div>
         )}

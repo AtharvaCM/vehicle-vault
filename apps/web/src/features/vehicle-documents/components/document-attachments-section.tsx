@@ -8,6 +8,7 @@ import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import type { DocumentWithFilesKind } from '../api/document-attachments';
@@ -134,8 +135,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
                   {attachment.originalFileName}
                 </span>
                 <span className="text-xs text-slate-400">
-                  {formatFileSize(attachment.size)} ·{' '}
-                  {new Date(attachment.uploadedAt).toLocaleDateString('en-IN')}
+                  {formatFileSize(attachment.size)} · {format.date(attachment.uploadedAt)}
                 </span>
               </button>
               {canEdit ? (

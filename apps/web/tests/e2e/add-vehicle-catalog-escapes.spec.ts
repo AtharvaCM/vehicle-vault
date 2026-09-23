@@ -22,7 +22,7 @@ async function startAddingACar(page: import('@playwright/test').Page, label: str
     .click();
   await expect(page).toHaveURL(/\/vehicles\/new$/);
   // The type stays at its default, Car: most owners call a Creta "a car".
-  await expect(page.getByLabel(/^vehicle type$/i)).toContainText('CAR');
+  await expect(page.getByLabel(/^vehicle type$/i)).toContainText('Car');
   await page.getByLabel(/registration number/i).fill(`MH12AV${suffix.slice(-4)}`);
 
   const makes = page.waitForResponse(

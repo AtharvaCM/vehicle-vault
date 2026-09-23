@@ -103,7 +103,7 @@ const maintenanceLineItemKind = {
 
 const maintenanceRecordStatus = {
   [MaintenanceRecordStatus.Draft]: 'Draft',
-  [MaintenanceRecordStatus.Confirmed]: 'Saved',
+  [MaintenanceRecordStatus.Confirmed]: 'Confirmed',
 } satisfies Record<MaintenanceRecordStatus, string>;
 
 const maintenanceSource = {

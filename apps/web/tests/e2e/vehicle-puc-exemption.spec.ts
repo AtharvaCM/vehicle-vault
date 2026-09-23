@@ -61,7 +61,7 @@ test('an electric vehicle is never asked for a PUC certificate', async ({ page }
   // With its insurance on file, the dashboard reads its papers as in order.
   await page.goto('/dashboard');
   const card = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
-  const documents = card.getByRole('link', { name: 'Insurance valid · to 01 Mar 2027' });
+  const documents = card.getByRole('link', { name: 'Insurance valid · to 1 Mar 2027' });
   await expect(documents).toBeVisible();
   await expect(card).not.toContainText('PUC');
 

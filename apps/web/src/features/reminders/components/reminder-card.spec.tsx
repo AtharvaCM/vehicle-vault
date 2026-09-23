@@ -38,6 +38,6 @@ describe('ReminderCard', () => {
     render(<ReminderCard reminder={dateOnly} />);
 
     expect(screen.queryByTestId('reminder-figures')).not.toBeInTheDocument();
-    expect(screen.getByText('Due 06 Nov 2026')).toBeInTheDocument();
+    expect(screen.getByText('Due 6 Nov 2026')).toBeInTheDocument();
   });
 });

@@ -14,11 +14,3 @@ export function computeEmiPreview(
   const pow = Math.pow(1 + r, tenureMonths);
   return (principal * r * pow) / (pow - 1);
 }
-
-export function formatCurrencyInr(value: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(value);
-}

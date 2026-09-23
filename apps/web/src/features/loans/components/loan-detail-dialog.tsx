@@ -26,10 +26,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useAddPrepayment, useDeletePrepayment, useForecloseLoan } from '../hooks/use-loan-actions';
-import { formatCurrencyInr } from '../utils/compute-emi';
 import { LoanAttachmentsSection } from './loan-attachments-section';
 import { LoanScheduleChart } from './loan-schedule-chart';
 
@@ -119,19 +119,16 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
               ) : null}
             </DialogTitle>
             <DialogDescription>
-              EMI {formatCurrencyInr(loan.emiAmount)} · {loan.interestRate}%/yr ·{' '}
-              {loan.tenureMonths} mo
-              {isClosed && loan.closedAt
-                ? ` · closed ${new Date(loan.closedAt).toLocaleDateString()}`
-                : ''}
+              EMI {format.money(loan.emiAmount)} · {loan.interestRate}%/yr · {loan.tenureMonths} mo
+              {isClosed && loan.closedAt ? ` · closed ${format.date(loan.closedAt)}` : ''}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Principal" value={formatCurrencyInr(loan.principal)} />
-            <Stat label="Outstanding" value={formatCurrencyInr(loan.outstandingBalance)} />
-            <Stat label="Interest paid" value={formatCurrencyInr(loan.interestPaidToDate)} />
-            <Stat label="Prepaid" value={formatCurrencyInr(loan.prepaidToDate)} />
+            <Stat label="Principal" value={format.money(loan.principal)} />
+            <Stat label="Outstanding" value={format.money(loan.outstandingBalance)} />
+            <Stat label="Interest paid" value={format.money(loan.interestPaidToDate)} />
+            <Stat label="Prepaid" value={format.money(loan.prepaidToDate)} />
           </div>
 
           <section className="space-y-2 rounded-md border border-border p-4">
@@ -159,9 +156,9 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
                 {loan.prepayments.map((p) => (
                   <li key={p.id} className="flex items-center justify-between py-2">
                     <div>
-                      <div className="font-medium">{formatCurrencyInr(p.amount)}</div>
+                      <div className="font-medium">{format.money(p.amount)}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(p.date).toLocaleDateString()}
+                        {format.date(p.date)}
                         {p.notes ? ` · ${p.notes}` : ''}
                       </div>
                     </div>
@@ -233,7 +230,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
               <div>
                 <div className="font-medium text-amber-900">Foreclose loan</div>
                 <div className="text-xs text-amber-700">
-                  Pay off outstanding {formatCurrencyInr(loan.outstandingBalance)} and close.
+                  Pay off outstanding {format.money(loan.outstandingBalance)} and close.
                 </div>
               </div>
               <Button
@@ -254,7 +251,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
             <AlertDialogTitle>Foreclose loan?</AlertDialogTitle>
             <AlertDialogDescription>
               Marks loan as closed today and treats outstanding{' '}
-              {formatCurrencyInr(loan.outstandingBalance)} as paid in full. No further EMIs accrue.
+              {format.money(loan.outstandingBalance)} as paid in full. No further EMIs accrue.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

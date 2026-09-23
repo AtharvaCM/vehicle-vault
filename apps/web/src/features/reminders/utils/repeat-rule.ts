@@ -1,3 +1,5 @@
+import { format } from '@/lib/format';
+
 /**
  * The reminder form's "Repeats" choice, and how it maps to the API's repeat
  * rule (`repeatEveryMonths` / `repeatEveryKm`, whichever comes first when
@@ -75,7 +77,7 @@ export function describeRepeatRule(rule: {
     return 'Doesn’t repeat';
   }
 
-  const distance = km === null ? null : `${km.toLocaleString('en-IN')} km`;
+  const distance = km === null ? null : format.distance(km);
 
   if (months === null) {
     return `Repeats every ${distance}`;

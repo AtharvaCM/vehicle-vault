@@ -11,13 +11,9 @@ import {
   YAxis,
 } from 'recharts';
 
-import { useLoanSchedule } from '../hooks/use-loan-schedule';
+import { format } from '@/lib/format';
 
-const inr = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  maximumFractionDigits: 0,
-});
+import { useLoanSchedule } from '../hooks/use-loan-schedule';
 
 type Props = {
   loanId: string;
@@ -57,7 +53,7 @@ export function LoanScheduleChart({ loanId }: Props) {
             yAxisId="left"
             fontSize={10}
             stroke="#64748b"
-            tickFormatter={(v: number) => inr.format(v)}
+            tickFormatter={(v: number) => format.money(v)}
             width={70}
           />
           <YAxis
@@ -65,11 +61,11 @@ export function LoanScheduleChart({ loanId }: Props) {
             orientation="right"
             fontSize={10}
             stroke="#64748b"
-            tickFormatter={(v: number) => inr.format(v)}
+            tickFormatter={(v: number) => format.money(v)}
             width={70}
           />
           <Tooltip
-            formatter={(value, name) => [inr.format(Number(value ?? 0)), String(name)]}
+            formatter={(value, name) => [format.money(Number(value ?? 0)), String(name)]}
             contentStyle={{ borderRadius: 8, fontSize: 12 }}
           />
           <Legend wrapperStyle={{ fontSize: 11 }} />

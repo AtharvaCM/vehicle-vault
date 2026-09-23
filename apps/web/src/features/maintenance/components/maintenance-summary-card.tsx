@@ -2,11 +2,9 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { MaintenanceRecord } from '../types/maintenance-record';
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 
 type MaintenanceSummaryCardProps = {
   record: MaintenanceRecord;
@@ -29,11 +27,14 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
       <CardContent className="grid gap-4 md:grid-cols-2">
         <Detail
           label="Category"
-          value={<Badge>{formatMaintenanceCategory(record.category)}</Badge>}
+          value={<Badge>{format.enumLabel('maintenanceCategory', record.category)}</Badge>}
         />
-        <Detail label="Service date" value={formatDate(record.serviceDate)} />
-        <Detail label="Odometer" value={`${record.odometer.toLocaleString('en-IN')} km`} />
-        <Detail label="Total cost" value={formatCurrency(record.totalCost, record.currencyCode)} />
+        <Detail label="Service date" value={format.date(record.serviceDate)} />
+        <Detail label="Odometer" value={format.odometer(record.odometer)} />
+        <Detail
+          label="Total cost"
+          value={format.money(record.totalCost, { currency: record.currencyCode })}
+        />
         <Detail
           label="Workshop or garage"
           value={record.workshopName?.trim() || 'Workshop not specified'}
@@ -44,32 +45,34 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
         />
         <Detail
           label="Next due date"
-          value={record.nextDueDate ? formatDate(record.nextDueDate) : 'Not specified'}
+          value={record.nextDueDate ? format.date(record.nextDueDate) : 'Not specified'}
         />
         <Detail
           label="Next due odometer"
           value={
             record.nextDueOdometer !== undefined
-              ? `${record.nextDueOdometer.toLocaleString('en-IN')} km`
+              ? format.odometer(record.nextDueOdometer)
               : 'Not specified'
           }
         />
         <Detail
           label="Entry source"
-          value={<Badge tone="neutral">{formatLabel(record.source ?? 'manual')}</Badge>}
+          value={
+            <Badge tone="neutral">
+              {format.enumLabel('maintenanceSource', record.source ?? 'manual')}
+            </Badge>
+          }
         />
         <Detail
           label="Status"
-          value={<Badge tone="neutral">{formatLabel(record.status ?? 'confirmed')}</Badge>}
+          value={
+            <Badge tone="neutral">
+              {format.enumLabel('maintenanceRecordStatus', record.status ?? 'confirmed')}
+            </Badge>
+          }
         />
-        <Detail
-          label="Added"
-          value={formatDate(record.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}
-        />
-        <Detail
-          label="Last updated"
-          value={formatDate(record.updatedAt, { dateStyle: 'medium', timeStyle: 'short' })}
-        />
+        <Detail label="Added" value={format.date(record.createdAt, 'dateTime')} />
+        <Detail label="Last updated" value={format.date(record.updatedAt, 'dateTime')} />
         <Detail
           label="Notes"
           value={record.notes?.trim() || 'No additional service notes were recorded.'}
@@ -84,23 +87,25 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
               <div className="grid gap-3 sm:grid-cols-2">
                 <BreakdownRow
                   label="Parts"
-                  value={formatCurrency(record.partsCost ?? 0, record.currencyCode)}
+                  value={format.money(record.partsCost ?? 0, { currency: record.currencyCode })}
                 />
                 <BreakdownRow
                   label="Fluids"
-                  value={formatCurrency(record.fluidsCost ?? 0, record.currencyCode)}
+                  value={format.money(record.fluidsCost ?? 0, { currency: record.currencyCode })}
                 />
                 <BreakdownRow
                   label="Labor"
-                  value={formatCurrency(record.laborCost ?? 0, record.currencyCode)}
+                  value={format.money(record.laborCost ?? 0, { currency: record.currencyCode })}
                 />
                 <BreakdownRow
                   label="Tax"
-                  value={formatCurrency(record.taxCost ?? 0, record.currencyCode)}
+                  value={format.money(record.taxCost ?? 0, { currency: record.currencyCode })}
                 />
                 <BreakdownRow
                   label="Discount"
-                  value={formatCurrency(record.discountAmount ?? 0, record.currencyCode)}
+                  value={format.money(record.discountAmount ?? 0, {
+                    currency: record.currencyCode,
+                  })}
                 />
               </div>
             }
@@ -122,9 +127,13 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium text-slate-900">{lineItem.name}</span>
-                          <Badge tone="neutral">{formatLabel(lineItem.kind)}</Badge>
+                          <Badge tone="neutral">
+                            {format.enumLabel('maintenanceLineItemKind', lineItem.kind)}
+                          </Badge>
                           {lineItem.normalizedCategory ? (
-                            <Badge>{formatMaintenanceCategory(lineItem.normalizedCategory)}</Badge>
+                            <Badge>
+                              {format.enumLabel('maintenanceCategory', lineItem.normalizedCategory)}
+                            </Badge>
                           ) : null}
                         </div>
                         <p className="text-xs text-slate-500">
@@ -135,7 +144,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                               ? `${lineItem.quantity}${lineItem.unit ? ` ${lineItem.unit}` : ''}`
                               : undefined,
                             typeof lineItem.unitPrice === 'number'
-                              ? `${formatCurrency(lineItem.unitPrice, record.currencyCode)} / unit`
+                              ? `${format.money(lineItem.unitPrice, { currency: record.currencyCode })} / unit`
                               : undefined,
                           ]
                             .filter(Boolean)
@@ -144,7 +153,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                       </div>
                       <div className="text-sm font-semibold text-slate-900">
                         {typeof lineItem.lineTotal === 'number'
-                          ? formatCurrency(lineItem.lineTotal, record.currencyCode)
+                          ? format.money(lineItem.lineTotal, { currency: record.currencyCode })
                           : '—'}
                       </div>
                     </div>
@@ -186,11 +195,4 @@ function BreakdownRow({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-sm text-slate-900">{value}</p>
     </div>
   );
-}
-
-function formatLabel(value: string) {
-  return value
-    .split('_')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
 }

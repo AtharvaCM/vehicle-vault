@@ -10,9 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { format } from '@/lib/format';
 
-import { formatReminderStatus } from '../utils/format-reminder-status';
-import { formatReminderType } from '../utils/format-reminder-type';
 import { reminderSortOptions, type ReminderSortOption } from '../types/reminder-list-search';
 
 type ReminderListControlsProps = {
@@ -85,7 +84,7 @@ export function ReminderListControls({
               <SelectItem value="all">All statuses</SelectItem>
               {Object.values(ReminderStatus).map((option) => (
                 <SelectItem key={option} value={option}>
-                  {formatReminderStatus(option)}
+                  {format.enumLabel('reminderStatus', option)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -107,7 +106,7 @@ export function ReminderListControls({
               <SelectItem value="all">All types</SelectItem>
               {Object.values(ReminderType).map((option) => (
                 <SelectItem key={option} value={option}>
-                  {formatReminderType(option)}
+                  {format.enumLabel('reminderType', option)}
                 </SelectItem>
               ))}
             </SelectContent>

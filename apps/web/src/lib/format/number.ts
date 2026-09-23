@@ -21,14 +21,14 @@ function isReadable(value: NumberInput): value is number {
 }
 
 export type NumberOptions = {
-  /** Most digits after the point. Default 0. */
+  /** Most digits after the point, trimmed when zero. Default 2, so 42.5 litres never reads as 43. */
   decimals?: number;
   /** Always print `decimals` digits ("12.0"), for figures read down a column. */
   fixed?: boolean;
 };
 
 /** A plain figure in Indian grouping: 1,31,624. */
-export function number(value: NumberInput, { decimals = 0, fixed = false }: NumberOptions = {}) {
+export function number(value: NumberInput, { decimals = 2, fixed = false }: NumberOptions = {}) {
   if (!isReadable(value)) return EMPTY;
 
   const minimumFractionDigits = fixed ? decimals : 0;
@@ -61,11 +61,11 @@ export function money(value: NumberInput, { currency, decimals }: MoneyOptions =
   }).format(value);
 }
 
-/** "12,480 km", or "4.5 km" when asked for decimals. For distances travelled or still to go. */
-export function distance(km: NumberInput, options: Pick<NumberOptions, 'decimals'> = {}) {
+/** "12,480 km": whole kilometres, or "4.5 km" when asked for decimals. For distances travelled or still to go. */
+export function distance(km: NumberInput, { decimals = 0 }: Pick<NumberOptions, 'decimals'> = {}) {
   if (!isReadable(km)) return EMPTY;
 
-  return `${number(km, options)} km`;
+  return `${number(km, { decimals })} km`;
 }
 
 /** "31,800 km": an odometer reading, always whole kilometres. */

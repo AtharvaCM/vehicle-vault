@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { Vehicle } from '../types/vehicle';
 
@@ -18,8 +18,8 @@ export function VehicleSummaryCard({ vehicle }: VehicleSummaryCardProps) {
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle>{title}</CardTitle>
-          <Badge tone="accent">{vehicle.vehicleType}</Badge>
-          <Badge>{vehicle.fuelType}</Badge>
+          <Badge tone="accent">{format.enumLabel('vehicleType', vehicle.vehicleType)}</Badge>
+          <Badge>{format.enumLabel('fuelType', vehicle.fuelType)}</Badge>
         </div>
         <CardDescription>
           {vehicle.registrationNumber} • {describeVehicleModel(vehicle)}
@@ -27,9 +27,9 @@ export function VehicleSummaryCard({ vehicle }: VehicleSummaryCardProps) {
       </CardHeader>
       <CardContent className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
         <p>Year: {vehicle.year}</p>
-        <p>Odometer: {vehicle.odometer.toLocaleString('en-IN')} km</p>
-        <p>Added: {formatDate(vehicle.createdAt)}</p>
-        <p>Last updated: {formatDate(vehicle.updatedAt)}</p>
+        <p>Odometer: {format.odometer(vehicle.odometer)}</p>
+        <p>Added: {format.date(vehicle.createdAt)}</p>
+        <p>Last updated: {format.date(vehicle.updatedAt)}</p>
       </CardContent>
     </Card>
   );

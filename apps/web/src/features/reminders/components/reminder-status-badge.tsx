@@ -1,8 +1,8 @@
 import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
+import { format } from '@/lib/format';
 
-import { formatReminderStatus } from '../utils/format-reminder-status';
 import type { ReminderStatus as ReminderStatusType } from '../types/reminder';
 
 type ReminderStatusBadgeProps = {
@@ -19,5 +19,5 @@ export function ReminderStatusBadge({ status }: ReminderStatusBadgeProps) {
           ? 'accent'
           : 'neutral';
 
-  return <Badge tone={tone}>{formatReminderStatus(status)}</Badge>;
+  return <Badge tone={tone}>{format.enumLabel('reminderStatus', status)}</Badge>;
 }

@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ApiError } from '@/lib/api/api-error';
+import { format } from '@/lib/format';
 
 import { supportsVehicleCatalog } from '../data/vehicle-catalog';
 import { useVehicleCatalogMakes } from '../hooks/use-vehicle-catalog-makes';
@@ -51,14 +52,6 @@ function siblingCatalogType(vehicleType: VehicleType) {
 const catalogFields = ['make', 'model', 'variant'] as const;
 type CatalogField = (typeof catalogFields)[number];
 const vehicleTypeOptions = Object.values(VehicleType);
-
-function formatOptionLabel(value: string) {
-  if (value.length <= 3) {
-    return value.toUpperCase();
-  }
-
-  return value.replace(/_/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
-}
 
 type VehicleFormProps = {
   isSubmitting?: boolean;
@@ -219,7 +212,7 @@ export function VehicleForm({
             .filter((model) => siblingOnlyModels.has(model.name))
             .map((model) => ({
               ...toModelOption(model),
-              label: `${model.name} · listed under ${formatOptionLabel(siblingType ?? '')}`,
+              label: `${model.name} · listed under ${format.enumLabel('vehicleType', siblingType)}`,
             })),
         ],
         selectedModel,
@@ -389,7 +382,7 @@ export function VehicleForm({
                     <SelectContent>
                       {vehicleTypeOptions.map((vehicleType) => (
                         <SelectItem key={vehicleType} value={vehicleType}>
-                          {formatOptionLabel(vehicleType)}
+                          {format.enumLabel('vehicleType', vehicleType)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -575,7 +568,7 @@ export function VehicleForm({
                     <SelectContent>
                       {availableFuelOptions.map((fuelType) => (
                         <SelectItem key={fuelType} value={fuelType}>
-                          {formatOptionLabel(fuelType)}
+                          {format.enumLabel('fuelType', fuelType)}
                         </SelectItem>
                       ))}
                     </SelectContent>

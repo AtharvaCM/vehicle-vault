@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
+import { format } from '@/lib/format';
+
 import {
   maintenanceSortOptions,
   type MaintenanceSortOption,
@@ -85,7 +86,7 @@ export function MaintenanceListControls({
               <SelectItem value="all">All categories</SelectItem>
               {Object.values(MaintenanceCategory).map((option) => (
                 <SelectItem key={option} value={option}>
-                  {formatMaintenanceCategory(option)}
+                  {format.enumLabel('maintenanceCategory', option)}
                 </SelectItem>
               ))}
             </SelectContent>

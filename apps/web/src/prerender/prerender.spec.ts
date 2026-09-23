@@ -278,14 +278,14 @@ describe('prerenderPublicCatalog', () => {
 
     expect(root).toMatch(/<h1[^>]*>Hyundai i20 Asta<\/h1>/);
     expect(root).toContain('Typical schedule for a petrol car');
-    expect(root).toContain('Periodic Service');
+    expect(root).toContain('Periodic service');
     expect(root).toContain('Every 10,000 km or 12 months, whichever comes first');
-    expect(root).toContain('Timing Belt');
+    expect(root).toContain('Timing belt');
     // The finished page, not a lazy route's loading fallback.
     expect(root).not.toContain('Loading the specs and service schedule');
 
     const bike = await readPage('/bikes/royal-enfield/classic-350/classic-lineup/chrome-and-red');
-    expect(bike).toContain('Chain Service');
+    expect(bike).toContain('Chain service');
   });
 
   it('gives each page its own title, description, absolute canonical and preview tags', async () => {

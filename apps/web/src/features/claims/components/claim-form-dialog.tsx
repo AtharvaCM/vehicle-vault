@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
 import {
   CreateClaimSchema,
   type Claim,
@@ -29,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useCreateClaim, useUpdateClaim } from '../hooks/use-claims';
@@ -227,8 +227,10 @@ export function ClaimFormDialog({
                     <SelectItem value="__none">No maintenance record linked</SelectItem>
                     {maintenanceRecords.map((record) => (
                       <SelectItem key={record.id} value={record.id}>
-                        {format(new Date(record.serviceDate), 'd MMM yyyy')} ·{' '}
-                        {record.workshopName ?? record.category} · ₹{Math.round(record.totalCost)}
+                        {format.date(record.serviceDate)} ·{' '}
+                        {record.workshopName ??
+                          format.enumLabel('maintenanceCategory', record.category)}{' '}
+                        · {format.money(record.totalCost, { currency: record.currencyCode })}
                       </SelectItem>
                     ))}
                   </SelectContent>

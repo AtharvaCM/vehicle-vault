@@ -12,8 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { MaintenanceRecord } from '@/features/maintenance/types/maintenance-record';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { formatDate } from '@/lib/utils/format-date';
 
 import { useAttachmentExtractionStatus } from '../hooks/use-attachment-extraction-status';
 import { useAttachments } from '../hooks/use-attachments';
@@ -144,7 +144,7 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
             accent={
               latestAttachment ? (
                 <span className="text-xs font-medium text-slate-500">
-                  Latest {formatDate(latestAttachment.uploadedAt)}
+                  Latest {format.date(latestAttachment.uploadedAt)}
                 </span>
               ) : null
             }

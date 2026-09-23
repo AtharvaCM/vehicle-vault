@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { vehicleForecastQueryOptions } from '@/features/vehicles/api/get-vehicle-forecast';
 import { ApiError } from '@/lib/api/api-error';
-import { formatCurrency } from '@/lib/utils/format-currency';
+import { format } from '@/lib/format';
 import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { maintenanceRecordsQueryOptions } from '../api/get-maintenance-records';
@@ -44,11 +44,9 @@ import {
 } from '../utils/get-maintenance-line-item-breakdown';
 import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
 import type { BillField } from '../utils/get-fields-from-bill';
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
 
 const categoryOptions = Object.values(MaintenanceCategory);
-const kilometres = new Intl.NumberFormat('en-IN');
 
 /**
  * A new record starts on today with the numbers empty, never 0: a service saved
@@ -374,7 +372,7 @@ export function MaintenanceForm({
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-xs font-bold uppercase text-indigo-900">
-                      {suggestion.category.replace('_', ' ')}
+                      {format.enumLabel('maintenanceCategory', suggestion.category)}
                     </span>
                     <span
                       className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
@@ -400,7 +398,7 @@ export function MaintenanceForm({
                       {suggestion.estimatedDateDue ? (
                         <div className="flex items-center gap-1 text-[10px] text-slate-500">
                           <Calendar className="h-2.5 w-2.5" />
-                          <span>~{new Date(suggestion.estimatedDateDue).toLocaleDateString()}</span>
+                          <span>~{format.date(suggestion.estimatedDateDue)}</span>
                         </div>
                       ) : null}
                     </div>
@@ -409,7 +407,9 @@ export function MaintenanceForm({
                       onClick={() => {
                         form.setValue('category', suggestion.category, { shouldDirty: true });
                         form.setValue('notes', suggestion.reason, { shouldDirty: true });
-                        toast.info(`Applied ${suggestion.category.replace('_', ' ')} suggestion`);
+                        toast.info(
+                          `Applied ${format.enumLabel('maintenanceCategory', suggestion.category)} suggestion`,
+                        );
                       }}
                       size="sm"
                       type="button"
@@ -505,7 +505,7 @@ export function MaintenanceForm({
                 description={
                   currentOdometer === undefined
                     ? undefined
-                    : `Current: ${kilometres.format(currentOdometer)} km`
+                    : `Current: ${format.odometer(currentOdometer)}`
                 }
                 error={form.formState.errors.odometer?.message}
                 htmlFor="maintenance-odometer"
@@ -541,7 +541,7 @@ export function MaintenanceForm({
                       <SelectContent>
                         {categoryOptions.map((category) => (
                           <SelectItem key={category} value={category}>
-                            {formatMaintenanceCategory(category)}
+                            {format.enumLabel('maintenanceCategory', category)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -681,32 +681,40 @@ export function MaintenanceForm({
                     <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       <BreakdownMetric
                         label="Grand total"
-                        value={formatCurrency(
+                        value={format.money(
                           hasStructuredLineItems
                             ? lineItemBreakdown.totalCost
                             : form.getValues('totalCost') || 0,
-                          currencyCode,
+                          { currency: currencyCode },
                         )}
                       />
                       <BreakdownMetric
                         label="Parts"
-                        value={formatCurrency(lineItemBreakdown.partsCost, currencyCode)}
+                        value={format.money(lineItemBreakdown.partsCost, {
+                          currency: currencyCode,
+                        })}
                       />
                       <BreakdownMetric
                         label="Fluids"
-                        value={formatCurrency(lineItemBreakdown.fluidsCost, currencyCode)}
+                        value={format.money(lineItemBreakdown.fluidsCost, {
+                          currency: currencyCode,
+                        })}
                       />
                       <BreakdownMetric
                         label="Labor"
-                        value={formatCurrency(lineItemBreakdown.laborCost, currencyCode)}
+                        value={format.money(lineItemBreakdown.laborCost, {
+                          currency: currencyCode,
+                        })}
                       />
                       <BreakdownMetric
                         label="Tax"
-                        value={formatCurrency(lineItemBreakdown.taxCost, currencyCode)}
+                        value={format.money(lineItemBreakdown.taxCost, { currency: currencyCode })}
                       />
                       <BreakdownMetric
                         label="Discount"
-                        value={formatCurrency(lineItemBreakdown.discountAmount, currencyCode)}
+                        value={format.money(lineItemBreakdown.discountAmount, {
+                          currency: currencyCode,
+                        })}
                       />
                     </CardContent>
                   </Card>
@@ -745,7 +753,7 @@ export function MaintenanceForm({
               >
                 <p>
                   Lower than your last service at{' '}
-                  {kilometres.format(lowOdometerWarning.previousOdometer)} km — save anyway?
+                  {format.odometer(lowOdometerWarning.previousOdometer)} — save anyway?
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button

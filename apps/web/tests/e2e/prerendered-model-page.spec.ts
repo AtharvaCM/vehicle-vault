@@ -109,7 +109,7 @@ test.describe('prerendered model page', () => {
 
     expect(html).toContain(`>${model.heading}</h1>`);
     expect(html).toMatch(new RegExp(`<a[^>]*href="${model.path}/[^"/]+/[^"/]+"`));
-    expect(html).toContain('Periodic Service');
+    expect(html).toContain('Periodic service');
     expect(html).toContain(
       `<title>${model.heading} — variants, service schedule and specs | Vehicle Vault</title>`,
     );
