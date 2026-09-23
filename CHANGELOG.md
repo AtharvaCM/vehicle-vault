@@ -1,3 +1,10 @@
+## [1.65.12](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.11...v1.65.12) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** find every model and offer manual entry when adding a vehicle ([0ae993f](https://github.com/AtharvaCM/vehicle-vault/commit/0ae993fae3238b055385e5d07414f5d236a77cb1))
+
 ## [1.65.11](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.10...v1.65.11) (2026-09-23)
 
 
