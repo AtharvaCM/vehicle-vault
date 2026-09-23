@@ -68,6 +68,8 @@ export const endpoints = {
   publicCatalog: {
     variant: (segment: string, make: string, model: string, generation: string, variant: string) =>
       `/public-catalog/${[segment, make, model, generation, variant].map(encodeURIComponent).join('/')}`,
+    model: (segment: string, make: string, model: string) =>
+      `/public-catalog/${[segment, make, model].map(encodeURIComponent).join('/')}`,
   },
   maintenance: {
     all: '/maintenance-records',

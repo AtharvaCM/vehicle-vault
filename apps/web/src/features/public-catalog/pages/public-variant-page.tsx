@@ -1,4 +1,5 @@
 import type { PublicCatalogVariantPage } from '@vehicle-vault/shared';
+import { ChevronLeft } from 'lucide-react';
 
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -6,6 +7,7 @@ import { NotFoundScreen } from '@/components/errors/not-found-screen';
 import { ApiError } from '@/lib/api/api-error';
 
 import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public-variant-page';
+import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
@@ -65,6 +67,13 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
   return (
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-variant-page">
       <header>
+        <PublicCatalogLink
+          address={{ segment: page.segment, make: page.make.slug, model: page.model.slug }}
+          className="-ml-1 mb-3 inline-flex items-center gap-1 rounded-lg px-1 py-1 text-sm font-medium text-slate-700 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        >
+          <ChevronLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
+          All {page.make.name} {page.model.name} variants
+        </PublicCatalogLink>
         <p className="text-sm font-medium text-slate-600">
           {page.make.name} · {page.model.name} · {page.generation.name}
         </p>

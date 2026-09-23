@@ -1,5 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { VehicleType, type PublicCatalogVariantPage } from '@vehicle-vault/shared';
+import {
+  VehicleType,
+  type PublicCatalogModelPage,
+  type PublicCatalogVariantPage,
+} from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AuthContext } from '@/features/auth/providers/auth-provider';
@@ -39,6 +43,31 @@ describe('TrackThisVehicle', () => {
     );
 
     expect(cta()).toHaveAttribute('href', `/vehicles/new?${intentQuery}`);
+  });
+
+  it('carries only make and model from a model page, leaving the variant to the owner', () => {
+    const modelPage = {
+      segment: 'cars',
+      vehicleType: VehicleType.Car,
+      make: { name: 'Honda', slug: 'honda' },
+      model: { name: 'City', slug: 'city' },
+      generations: [],
+    } as unknown as PublicCatalogModelPage;
+    const modelQuery = `catalog=${encodeURIComponent('/cars/honda/city')}`;
+
+    const { unmount } = render(<TrackThisVehicle page={modelPage} />);
+
+    expect(screen.getByRole('heading', { name: 'Own a Honda City?' })).toBeInTheDocument();
+    expect(screen.getByText(/fill in the make and model for you/)).toBeInTheDocument();
+    expect(cta()).toHaveAttribute('href', `/register?${modelQuery}`);
+    unmount();
+
+    render(
+      <AuthContext.Provider value={{ isAuthenticated: true } as AppAuthContextValue}>
+        <TrackThisVehicle page={modelPage} />
+      </AuthContext.Provider>,
+    );
+    expect(cta()).toHaveAttribute('href', `/vehicles/new?${modelQuery}`);
   });
 
   it('leaves storage alone while rendering', () => {

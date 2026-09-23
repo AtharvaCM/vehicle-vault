@@ -112,6 +112,15 @@ describe('PublicVariantPageView', () => {
     expect(document.title).toBe(variantPageTitle(pageFixture()));
   });
 
+  it('links back to its model page', () => {
+    render(<PublicVariantPageView page={pageFixture()} />);
+
+    expect(screen.getByRole('link', { name: 'All Hyundai i20 variants' })).toHaveAttribute(
+      'href',
+      '/cars/hyundai/i20',
+    );
+  });
+
   it('labels a default schedule as typical and lists each item with its interval', () => {
     render(<PublicVariantPageView page={pageFixture()} />);
 

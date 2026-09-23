@@ -1,17 +1,24 @@
 import {
   APP_NAME,
   MaintenanceCategory,
+  type PublicCatalogModelPage,
   type PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
 
 import {
   describeInterval,
+  describeModelScheduleBasis,
   describeOffering,
   describeScheduleBasis,
+  formatFuelTypes,
   formatSpecNumber,
+  modelFuelTypes,
+  modelVariants,
+  modelYearSpan,
 } from '../utils/format-public-catalog';
 import { isPageIndexed, PUBLIC_CATALOG_INDEXING } from './indexing';
 import {
+  modelPageStructuredData,
   serializeStructuredData,
   STRUCTURED_DATA_ELEMENT_ID,
   variantPageStructuredData,
@@ -112,6 +119,55 @@ export function variantPageHead(
     imageUrl: `${base}/web-app-manifest-512x512.png`,
     robots: isPageIndexed(page, indexing) ? 'index, follow' : 'noindex',
     structuredData: variantPageStructuredData(page, canonicalUrl),
+  };
+}
+
+/** `/cars/{make}/{model}`, from a model page payload, a variant page or an index entry. */
+export function publicModelPath(page: { segment: string; make: Slugged; model: Slugged }) {
+  return `/${[page.segment, page.make.slug, page.model.slug].map(encodeURIComponent).join('/')}`;
+}
+
+export function modelPageTitle(page: PublicCatalogModelPage) {
+  return `${page.make.name} ${page.model.name} — variants, service schedule and specs | ${APP_NAME}`;
+}
+
+/**
+ * One line a link preview can show: how many variants the model has and over
+ * which years, and what its schedule asks for.
+ */
+export function modelPageDescription(page: PublicCatalogModelPage) {
+  const name = `${page.make.name} ${page.model.name}`;
+  const count = modelVariants(page).length;
+  const years = modelYearSpan(page);
+  const fuels = formatFuelTypes(modelFuelTypes(page));
+  const detail = [years, fuels].filter(Boolean).join(' · ');
+  const periodic = page.schedule.items.find(
+    (item) => item.category === MaintenanceCategory.PeriodicService,
+  );
+  const basis = describeModelScheduleBasis(page);
+  const schedule = periodic
+    ? `${basis}: a periodic service ${lowerFirst(describeInterval(periodic))}.`
+    : `${basis}, item by item.`;
+
+  return `All ${count} ${count === 1 ? 'variant' : 'variants'} of the ${name}${
+    detail ? ` (${detail})` : ''
+  }, by generation, with a service schedule and specs. ${schedule}`;
+}
+
+export function modelPageHead(
+  page: PublicCatalogModelPage,
+  { origin = CANONICAL_ORIGIN, indexing = PUBLIC_CATALOG_INDEXING }: HeadOptions = {},
+): PublicPageHead {
+  const base = normalizeOrigin(origin);
+  const canonicalUrl = `${base}${publicModelPath(page)}`;
+
+  return {
+    title: modelPageTitle(page),
+    description: modelPageDescription(page),
+    canonicalUrl,
+    imageUrl: `${base}/web-app-manifest-512x512.png`,
+    robots: isPageIndexed(page, indexing) ? 'index, follow' : 'noindex',
+    structuredData: modelPageStructuredData(page, canonicalUrl),
   };
 }
 

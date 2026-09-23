@@ -6,7 +6,7 @@ import { parseCatalogIntentParam, saveCatalogIntent } from '../lib/catalog-inten
 /**
  * Keeps the intent a `catalog` search parameter carries, for the add-vehicle
  * form to use after the visitor has signed up, then drops the parameter from
- * the address. A parameter that is not a variant path is dropped and ignored.
+ * the address. A parameter that is not a variant or model path is dropped and ignored.
  */
 export function useKeepCatalogIntent(catalogParam: string | undefined) {
   const navigate = useNavigate();

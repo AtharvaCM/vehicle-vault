@@ -1,6 +1,8 @@
 import {
   FuelType,
   VehicleType,
+  type PublicCatalogModelPage,
+  type PublicCatalogModelVariant,
   type PublicCatalogOffering,
   type PublicCatalogSchedule,
   type PublicCatalogScheduleItem,
@@ -95,4 +97,46 @@ export function describeInterval(item: Pick<PublicCatalogScheduleItem, 'km' | 'm
 
 export function formatSpecNumber(value: number) {
   return numberFormat.format(value);
+}
+
+/** Every variant a model page lists, across its generations. */
+export function modelVariants(page: Pick<PublicCatalogModelPage, 'generations'>) {
+  return page.generations.flatMap((generation) => generation.variants);
+}
+
+/** The years a model spans: its earliest generation's start to its latest's end, or "present". */
+export function modelYearSpan(page: Pick<PublicCatalogModelPage, 'generations'>) {
+  const starts = page.generations.flatMap((generation) => generation.yearStart ?? []);
+  const ends = page.generations.flatMap((generation) => generation.yearEnd ?? []);
+  const isCurrent = page.generations.some((generation) => generation.isCurrent);
+  return formatYearSpan({
+    yearStart: starts.length > 0 ? Math.min(...starts) : null,
+    yearEnd: isCurrent || ends.length === 0 ? null : Math.max(...ends),
+    isCurrent,
+  });
+}
+
+/** Every fuel any of a model's variants is offered with, in the order they first appear. */
+export function modelFuelTypes(page: Pick<PublicCatalogModelPage, 'generations'>) {
+  return [...new Set(modelVariants(page).flatMap((variant) => variant.fuelTypes))];
+}
+
+/** "Petrol, CNG · Manual · 2023 – present": what tells a variant from its siblings. */
+export function describeModelVariant(variant: PublicCatalogModelVariant) {
+  return [formatFuelTypes(variant.fuelTypes), variant.transmission, formatYearSpan(variant)]
+    .filter((part): part is string => Boolean(part))
+    .join(' · ');
+}
+
+/**
+ * The heading of a model page's schedule. It belongs to one variant: a typical
+ * schedule reads the same for any of them, but the variant's own intervals are
+ * named as that variant's.
+ */
+export function describeModelScheduleBasis(
+  page: Pick<PublicCatalogModelPage, 'model' | 'representative' | 'schedule'>,
+) {
+  return page.schedule.basis === 'variant'
+    ? `Schedule for the ${page.model.name} ${page.representative.variant.name}`
+    : describeScheduleBasis(page.schedule);
 }

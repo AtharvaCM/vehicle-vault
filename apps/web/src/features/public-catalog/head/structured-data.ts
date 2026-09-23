@@ -1,6 +1,10 @@
-import { FuelType, type PublicCatalogVariantPage } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  type PublicCatalogModelPage,
+  type PublicCatalogVariantPage,
+} from '@vehicle-vault/shared';
 
-import { formatFuelType } from '../utils/format-public-catalog';
+import { formatFuelType, modelFuelTypes } from '../utils/format-public-catalog';
 
 /** A schema.org JSON-LD object. */
 export type JsonLd = { [key: string]: JsonLdValue };
@@ -87,6 +91,31 @@ export function variantPageStructuredData(
   }
 
   return data;
+}
+
+/**
+ * schema.org `Car` or `Motorcycle` for a model page: the model as a whole, so
+ * only what holds for all of it — make, model, the fuels it comes with and the
+ * year its earliest generation began. The representative variant's specs stay
+ * out; they describe one variant, and that variant's own page says so.
+ */
+export function modelPageStructuredData(
+  page: PublicCatalogModelPage,
+  canonicalUrl: string,
+): JsonLd {
+  const fuels = modelFuelTypes(page).map(formatFuelType);
+  const starts = page.generations.flatMap((generation) => generation.yearStart ?? []);
+
+  return compact({
+    '@context': 'https://schema.org',
+    '@type': page.segment === 'bikes' ? 'Motorcycle' : 'Car',
+    name: `${page.make.name} ${page.model.name}`,
+    url: canonicalUrl,
+    brand: { '@type': 'Brand', name: page.make.name },
+    model: page.model.name,
+    fuelType: fuels.length === 0 ? undefined : fuels.length === 1 ? fuels[0] : fuels,
+    vehicleModelDate: starts.length > 0 ? String(Math.min(...starts)) : undefined,
+  });
 }
 
 /**

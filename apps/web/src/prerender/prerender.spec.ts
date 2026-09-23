@@ -8,6 +8,7 @@ import {
   MaintenanceCategory,
   VehicleType,
   type PublicCatalogIndexEntry,
+  type PublicCatalogModelPage,
   type PublicCatalogSpec,
   type PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
@@ -120,11 +121,51 @@ function fixtureFetch(
   return Object.assign(fetcher, { calls });
 }
 
+/** The model page the API would build over these variants, all of one model, the first representative. */
+function modelPageOf(variants: PublicCatalogVariantPage[]): PublicCatalogModelPage {
+  const [first] = variants;
+  if (!first) throw new Error('A model page needs a variant.');
+  return {
+    segment: first.segment,
+    vehicleType: first.vehicleType,
+    make: first.make,
+    model: first.model,
+    generations: [
+      {
+        ...first.generation,
+        variants: variants.map((page) => ({
+          ...page.variant,
+          fuelTypes: page.offerings[0]?.fuelTypes ?? [],
+          yearStart: page.offerings[0]?.yearStart ?? null,
+          yearEnd: page.offerings[0]?.yearEnd ?? null,
+          isCurrent: page.offerings[0]?.isCurrent ?? false,
+          transmission: page.specs?.transmission ?? null,
+        })),
+      },
+    ],
+    representative: {
+      generation: { name: first.generation.name, slug: first.generation.slug },
+      variant: first.variant,
+      specs: first.specs,
+    },
+    schedule: first.schedule,
+    indexable: variants.some((page) => page.indexable),
+    updatedAt: first.updatedAt,
+  };
+}
+
+const MODEL_PAGES = '/public-catalog/model-pages?page=1&pageSize=100';
+
+function modelPagesBody(models: PublicCatalogModelPage[]) {
+  return { items: models, page: 1, pageSize: 100, total: models.length, hasMore: false };
+}
+
 const pages = [carPage(), bikePage()];
 const catalogRoutes = {
   '/public-catalog/index': () => ok({ variants: pages.map(indexEntry) }),
   '/public-catalog/variant-pages?page=1&pageSize=200': () =>
     ok({ items: pages, page: 1, pageSize: 200, total: 2, hasMore: false }),
+  [MODEL_PAGES]: () => ok(modelPagesBody([modelPageOf([carPage()]), modelPageOf([bikePage()])])),
 };
 
 describe('prerenderPublicCatalog', () => {
@@ -174,22 +215,25 @@ describe('prerenderPublicCatalog', () => {
   const readPage = (pagePath: string) =>
     readFile(path.join(distDir, ...pagePath.split('/').filter(Boolean), 'index.html'), 'utf8');
 
-  it('writes an index.html for every variant in the index, and says how many', async () => {
+  it('writes an index.html for every variant and model in the index, and says how many', async () => {
     const summary = await run(fixtureFetch(catalogRoutes));
 
     expect(summary.paths).toEqual([
       '/cars/hyundai/i20/i20-lineup/asta',
       '/bikes/royal-enfield/classic-350/classic-lineup/chrome-and-red',
+      '/cars/hyundai/i20',
+      '/bikes/royal-enfield/classic-350',
     ]);
+    expect(summary).toMatchObject({ variantPages: 2, modelPages: 2 });
     for (const pagePath of summary.paths) {
       await expect(readPage(pagePath)).resolves.toContain('<html');
     }
     expect(log).toHaveBeenCalledWith(
-      expect.stringMatching(/^Prerendered 2 pages \(2 variant pages\)/),
+      expect.stringMatching(/^Prerendered 4 pages \(2 variant pages, 2 model pages\)/),
     );
   });
 
-  it('reads the catalog in two requests, not one per page', async () => {
+  it('reads the catalog in three requests, not one per page', async () => {
     const fetcher = fixtureFetch(catalogRoutes);
 
     await run(fetcher);
@@ -197,6 +241,7 @@ describe('prerenderPublicCatalog', () => {
     expect(fetcher.calls).toEqual([
       `${API}/public-catalog/index`,
       `${API}/public-catalog/variant-pages?page=1&pageSize=200`,
+      `${API}${MODEL_PAGES}`,
     ]);
   });
 
@@ -273,7 +318,7 @@ describe('prerenderPublicCatalog', () => {
 
       expect(log).toHaveBeenCalledWith(
         expect.stringMatching(
-          /^Indexable: 0 of 2 pages\. Indexing is off .*; 1 pass the page-quality gate\.$/,
+          /^Indexable: 0 of 4 pages\. Indexing is off .*; 2 pass the page-quality gate\.$/,
         ),
       );
     });
@@ -288,7 +333,10 @@ describe('prerenderPublicCatalog', () => {
 
       expect(robotsOf(await readPage(carPath))).toBe('noindex');
       expect(robotsOf(await readPage(bikePath))).toBe('index, follow');
-      expect(summary).toMatchObject({ indexablePages: 1, sitemap: true });
+      // A model page follows its variants: indexable when any of them is.
+      expect(robotsOf(await readPage('/cars/hyundai/i20'))).toBe('noindex');
+      expect(robotsOf(await readPage('/bikes/royal-enfield/classic-350'))).toBe('index, follow');
+      expect(summary).toMatchObject({ indexablePages: 2, sitemap: true });
     });
 
     it('lists exactly the indexable pages in the sitemap, absolute, with lastmod', async () => {
@@ -299,12 +347,17 @@ describe('prerenderPublicCatalog', () => {
         '<?xml version="1.0" encoding="UTF-8"?>\n' +
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
           '  <url>\n' +
+          `    <loc>${ORIGIN}/bikes/royal-enfield/classic-350</loc>\n` +
+          '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
+          '  </url>\n' +
+          '  <url>\n' +
           `    <loc>${ORIGIN}${bikePath}</loc>\n` +
           '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
           '  </url>\n' +
           '</urlset>\n',
       );
       expect(sitemap).not.toContain(carPath);
+      expect(sitemap).not.toContain('/cars/hyundai/i20<');
     });
 
     it('points robots.txt at the sitemap on the canonical origin', async () => {
@@ -321,6 +374,7 @@ describe('prerenderPublicCatalog', () => {
         '/public-catalog/index': () => ok({ variants: [indexEntry(thin)] }),
         '/public-catalog/variant-pages?page=1&pageSize=200': () =>
           ok({ items: [thin], page: 1, pageSize: 200, total: 1, hasMore: false }),
+        [MODEL_PAGES]: () => ok(modelPagesBody([modelPageOf([thin])])),
       });
 
       await run(fetcher, { indexing: true });
@@ -334,7 +388,7 @@ describe('prerenderPublicCatalog', () => {
       await run(fixtureFetch(catalogRoutes), { indexing: true });
 
       expect(log).toHaveBeenCalledWith(
-        expect.stringMatching(/^Indexable: 1 of 2 pages\. Indexing is on/),
+        expect.stringMatching(/^Indexable: 2 of 4 pages\. Indexing is on/),
       );
     });
   });
@@ -360,6 +414,15 @@ describe('prerenderPublicCatalog', () => {
           total: 2,
           hasMore: false,
         }),
+      [MODEL_PAGES]: () =>
+        ok(
+          modelPagesBody(
+            pages.map((page) => {
+              const { indexable: _dropped, ...rest } = modelPageOf([page]);
+              return rest as PublicCatalogModelPage;
+            }),
+          ),
+        ),
     };
 
     await expect(run(fixtureFetch(oldApi), { indexing: true })).rejects.toThrow(
@@ -501,5 +564,128 @@ describe('prerenderPublicCatalog', () => {
     });
 
     await expect(run(fetcher)).rejects.toThrow(/unsafe slug/);
+  });
+
+  describe('model pages', () => {
+    const modelPath = '/cars/hyundai/i20';
+
+    it('puts the heading, the variants by generation and the schedule in the static markup', async () => {
+      await run(fixtureFetch(catalogRoutes));
+      const html = await readPage(modelPath);
+      const root = html.slice(html.indexOf('<div id="root">'));
+
+      expect(root).toMatch(/<h1[^>]*>Hyundai i20<\/h1>/);
+      expect(root).toMatch(/<h3[^>]*>i20 lineup<\/h3>/);
+      expect(root).toContain('href="/cars/hyundai/i20/i20-lineup/asta"');
+      expect(root).toContain('Typical schedule for a petrol car');
+      expect(root).toContain('Shown for the Hyundai i20 Asta');
+      expect(root).toContain(`catalog=${encodeURIComponent(modelPath)}`);
+      expect(root).not.toContain('Loading the variants and service schedule');
+    });
+
+    it('gives a model page its own title, absolute canonical, preview tags and JSON-LD', async () => {
+      await run(fixtureFetch(catalogRoutes));
+      const html = await readPage(modelPath);
+      const head = html.slice(0, html.indexOf('</head>'));
+      const title = 'Hyundai i20 — variants, service schedule and specs | Vehicle Vault';
+
+      expect(head).toContain(`<title>${title}</title>`);
+      expect(head).toContain(`<link rel="canonical" href="${ORIGIN}${modelPath}" />`);
+      expect(head).toContain(`<meta property="og:url" content="${ORIGIN}${modelPath}" />`);
+      expect(head).toContain(`<meta property="og:title" content="${title}" />`);
+      expect(head).toContain(
+        '<meta name="description" content="All 1 variant of the Hyundai i20 (2020 – present · Petrol), by generation',
+      );
+      expect(head.match(/name="description"/g)).toHaveLength(1);
+      expect(structuredData(html)).toEqual({
+        '@context': 'https://schema.org',
+        '@type': 'Car',
+        name: 'Hyundai i20',
+        url: `${ORIGIN}${modelPath}`,
+        brand: { '@type': 'Brand', name: 'Hyundai' },
+        model: 'i20',
+        fuelType: 'Petrol',
+        vehicleModelDate: '2020',
+      });
+      expect(structuredData(await readPage('/bikes/royal-enfield/classic-350'))).toMatchObject({
+        '@type': 'Motorcycle',
+        name: 'Royal Enfield Classic 350',
+      });
+    });
+
+    it('embeds the model page data the browser hydrates from', async () => {
+      await run(fixtureFetch(catalogRoutes));
+      const html = await readPage(modelPath);
+
+      const state = html.match(
+        new RegExp(
+          `<script type="application/json" id="${PRERENDER_STATE_ELEMENT_ID}">(.*?)</script>`,
+        ),
+      );
+      const [query, ...others] = JSON.parse(state?.[1] ?? '{}').queries as {
+        queryKey: unknown[];
+        state: { data: unknown };
+      }[];
+      expect(others).toHaveLength(0);
+      expect(query?.queryKey).toEqual(['publicCatalog', 'model', 'cars', 'hyundai', 'i20']);
+      expect(query?.state.data).toEqual(modelPageOf([carPage()]));
+    });
+
+    it('writes one page for a model under two make rows, dated by its newest variant', async () => {
+      const asta = carPage();
+      const sportz: PublicCatalogVariantPage = {
+        ...carPage(),
+        vehicleType: VehicleType.SUV,
+        variant: { name: 'Sportz', slug: 'sportz' },
+        specs: { engineCc: 1197 } as PublicCatalogSpec,
+        indexable: true,
+        updatedAt: '2026-09-01T00:00:00.000Z',
+      };
+      // The same address again from the SUV make row: the first index row wins,
+      // so its later date and verdict count for nothing.
+      const astaAgain = {
+        ...indexEntry(asta),
+        vehicleType: VehicleType.SUV,
+        indexable: true,
+        updatedAt: '2026-12-01T00:00:00.000Z',
+      };
+      const fetcher = fixtureFetch({
+        '/public-catalog/index': () =>
+          ok({ variants: [indexEntry(asta), indexEntry(sportz), astaAgain] }),
+        '/public-catalog/variant-pages?page=1&pageSize=200': () =>
+          ok({ items: [asta, sportz], page: 1, pageSize: 200, total: 2, hasMore: false }),
+        [MODEL_PAGES]: () => ok(modelPagesBody([modelPageOf([asta, sportz])])),
+      });
+
+      const summary = await run(fetcher, { indexing: true });
+
+      expect(summary.paths.filter((pagePath) => pagePath === modelPath)).toHaveLength(1);
+      expect(summary).toMatchObject({ variantPages: 2, modelPages: 1 });
+      expect(robotsOf(await readPage(modelPath))).toBe('index, follow');
+      const sitemap = await readFile(path.join(distDir, 'sitemap.xml'), 'utf8');
+      expect(sitemap).toContain(
+        `<loc>${ORIGIN}${modelPath}</loc>\n    <lastmod>2026-09-01T00:00:00Z</lastmod>`,
+      );
+    });
+
+    it('fails when the index lists a model the model pages do not include', async () => {
+      const fetcher = fixtureFetch({
+        ...catalogRoutes,
+        [MODEL_PAGES]: () => ok(modelPagesBody([modelPageOf([carPage()])])),
+      });
+
+      await expect(run(fetcher)).rejects.toThrow(
+        /lists variants of \/bikes\/royal-enfield\/classic-350 but the model pages did not include it/,
+      );
+    });
+
+    it('fails when a model page and its variants disagree on the gate', async () => {
+      const fetcher = fixtureFetch({
+        ...catalogRoutes,
+        [MODEL_PAGES]: () => ok(modelPagesBody([{ ...modelPageOf([carPage()]), indexable: true }])),
+      });
+
+      await expect(run(fetcher)).rejects.toThrow(/\/cars\/hyundai\/i20 and its variants disagree/);
+    });
   });
 });
