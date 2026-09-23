@@ -41,7 +41,7 @@ export function VehicleCreatePage() {
 
       appToast.success({
         title: 'Vehicle created',
-        description: 'You can now add maintenance history, reminders, and receipts.',
+        description: 'You can now add service history, reminders, and receipts.',
       });
 
       try {
@@ -71,8 +71,8 @@ export function VehicleCreatePage() {
   return (
     <PageContainer>
       <PageTitle
-        description="Add a car or bike so you can track its maintenance, reminders, and documents."
-        title="Add Vehicle"
+        description="Add a car or bike so you can track its service, reminders, and documents."
+        title="Add vehicle"
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

@@ -17,6 +17,13 @@ type ReminderCardProps = {
   vehicleLabel?: string;
 };
 
+/** Plain wording for a projection's confidence, instead of the raw enum value. */
+const PROJECTION_CONFIDENCE_LABEL: Record<'low' | 'medium' | 'high', string> = {
+  low: 'a rough estimate',
+  medium: 'an estimate',
+  high: 'a confident estimate',
+};
+
 export function ReminderCard({ reminder, selectionControl, vehicleLabel }: ReminderCardProps) {
   // The target odometer is the card's only figure, and a reminder needs either that
   // or a date, so a date-only one has nothing to put in a figures strip. It gets no
@@ -105,7 +112,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                     <span className="hidden text-slate-300 sm:inline">•</span>
                     <span
                       className="text-slate-500"
-                      title={`Based on ${format.number(reminder.usageProjection.kmPerDay, { decimals: 1, fixed: true })} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs (${reminder.usageProjection.confidence} confidence)`}
+                      title={`Based on ${format.number(reminder.usageProjection.kmPerDay, { decimals: 1, fixed: true })} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs — ${PROJECTION_CONFIDENCE_LABEL[reminder.usageProjection.confidence]}`}
                     >
                       Projected ~{format.date(reminder.usageProjection.projectedDueDate)}
                     </span>

@@ -101,7 +101,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   if (vehicleQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle description="Loading this vehicle before you edit it." title="Edit Vehicle" />
+        <PageTitle description="Loading this vehicle before you edit it." title="Edit vehicle" />
         <LoadingState description="Getting the latest vehicle details." title="Loading vehicle" />
       </PageContainer>
     );
@@ -120,7 +120,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
           <EmptyState
             action={
               <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-                Back to Vehicles
+                Back to vehicles
               </Link>
             }
             description="The requested vehicle could not be found, so it cannot be edited."
@@ -130,7 +130,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
           <ErrorState
             action={
               <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-                Back to Vehicles
+                Back to vehicles
               </Link>
             }
             description="We couldn't load this vehicle. Try again in a moment."
@@ -151,11 +151,11 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
               params={{ vehicleId }}
               to="/vehicles/$vehicleId"
             >
-              Back to Vehicle
+              Back to vehicle
             </Link>
           }
           description="This vehicle is shared with you for reading."
-          title="Edit Vehicle"
+          title="Edit vehicle"
         />
         <ViewOnlyNotice description="You can see this vehicle but not change its registration, odometer, or other details." />
       </PageContainer>
@@ -172,11 +172,11 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
               params={{ vehicleId }}
               to="/vehicles/$vehicleId"
             >
-              Back to Vehicle
+              Back to vehicle
             </Link>
           }
           description="Update the details that identify this vehicle across your garage."
-          title="Edit Vehicle"
+          title="Edit vehicle"
         />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -192,7 +192,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
                 : null
             }
             submitHint="Keep the odometer and key details current so reminders stay accurate."
-            submitLabel="Save Changes"
+            submitLabel="Save changes"
             submittingLabel="Saving changes..."
             successMessage="Vehicle details updated."
           />

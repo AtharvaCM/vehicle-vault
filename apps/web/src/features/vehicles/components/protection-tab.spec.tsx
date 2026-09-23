@@ -151,7 +151,7 @@ describe('ProtectionTab', () => {
 
     const dialog = await screen.findByRole('dialog');
     expect(
-      within(dialog).getByRole('heading', { name: 'Add Registration Certificate' }),
+      within(dialog).getByRole('heading', { name: 'Add Registration certificate' }),
     ).toBeInTheDocument();
   });
 });
@@ -210,11 +210,11 @@ function renderAs(role: VehicleRole) {
 }
 
 const sectionActions = [
-  'Add Policy',
-  'Scan Policy',
-  'Record Claim',
-  'Add Warranty',
-  'Add Document',
+  'Add policy',
+  'Scan policy',
+  'Record claim',
+  'Add warranty',
+  'Add document',
 ];
 // Empty-state prompts, shown here because this vehicle has no warranty or compliance papers.
 const emptyStateActions = ['Add warranty details', 'Add PUC certificate'];
@@ -241,7 +241,7 @@ describe('ProtectionTab roles', () => {
     expect(screen.getByText('Acme General')).toBeInTheDocument();
     expect(screen.getByText('#CLM-7')).toBeInTheDocument();
     // Showing a document is reading it: the viewer may be the one at the checkpoint.
-    expect(screen.getByRole('link', { name: 'Show Insurance Policy full screen' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Show Insurance policy full screen' })).toHaveAttribute(
       'href',
       '/vehicles/$vehicleId/documents/$kind/$documentId',
     );

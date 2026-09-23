@@ -43,7 +43,7 @@ test('a new account uses the app for a week before it has to verify', async ({ p
   });
 
   await page
-    .getByRole('link', { name: /log maintenance/i })
+    .getByRole('link', { name: /log service/i })
     .first()
     .click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);

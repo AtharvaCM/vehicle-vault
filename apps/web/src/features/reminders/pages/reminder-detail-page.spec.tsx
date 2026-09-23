@@ -64,9 +64,9 @@ describe('ReminderDetailPage roles', () => {
     (role) => {
       renderAs(role);
 
-      expect(screen.getByRole('link', { name: 'Edit Reminder' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Mark Complete' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Delete Reminder' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Edit reminder' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Mark complete' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Delete reminder' })).toBeInTheDocument();
     },
   );
 
@@ -78,11 +78,11 @@ describe('ReminderDetailPage roles', () => {
       screen.getByRole('heading', { level: 1, name: 'Insurance renewal' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Bajaj Pulsar NS 200 • MH12AB1234')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Vehicle Reminders' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to vehicle reminders' })).toBeInTheDocument();
 
-    expect(screen.queryByRole('link', { name: 'Edit Reminder' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Mark Complete' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete Reminder' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Edit reminder' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mark complete' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete reminder' })).not.toBeInTheDocument();
   });
 });
 

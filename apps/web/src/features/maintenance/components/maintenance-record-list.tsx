@@ -17,7 +17,7 @@ export function MaintenanceRecordList({
   onSelectionChange,
   records,
   selectedRecordIds = [],
-  title = 'Maintenance history',
+  title = 'Service records',
   vehicleLabelById,
 }: MaintenanceRecordListProps) {
   return (
@@ -34,7 +34,7 @@ export function MaintenanceRecordList({
               onSelectionChange ? (
                 <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs">
                   <input
-                    aria-label={`Select maintenance record ${record.workshopName?.trim() || format.enumLabel('maintenanceCategory', record.category)} on ${record.serviceDate}`}
+                    aria-label={`Select service record ${record.workshopName?.trim() || format.enumLabel('maintenanceCategory', record.category)} on ${record.serviceDate}`}
                     checked={selectedRecordIds.includes(record.id)}
                     className={cn(
                       'h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-400',

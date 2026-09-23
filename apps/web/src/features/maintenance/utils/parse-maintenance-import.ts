@@ -31,7 +31,7 @@ export const maintenanceImportFieldDefinitions = [
   {
     id: 'category',
     label: 'Category',
-    description: 'Mapped maintenance category',
+    description: 'Mapped service category',
     required: false,
     section: 'record',
     synonyms: ['category', 'service type', 'maintenance type'],
@@ -55,7 +55,7 @@ export const maintenanceImportFieldDefinitions = [
   {
     id: 'recordKey',
     label: 'Group key',
-    description: 'Use this to group multiple CSV rows into one maintenance record',
+    description: 'Use this to group multiple CSV rows into one service record',
     required: false,
     section: 'record',
     synonyms: ['group key', 'record key', 'external key', 'job id'],
@@ -78,8 +78,8 @@ export const maintenanceImportFieldDefinitions = [
   },
   {
     id: 'laborCost',
-    label: 'Labor cost',
-    description: 'Explicit labor total',
+    label: 'Labour cost',
+    description: 'Explicit labour total',
     required: false,
     section: 'record',
     synonyms: ['labor', 'labour', 'labor cost', 'labour cost'],
@@ -159,7 +159,7 @@ export const maintenanceImportFieldDefinitions = [
   {
     id: 'itemKind',
     label: 'Item kind',
-    description: 'job, part, fluid, labor, fee, tax, discount, or other',
+    description: 'job, part, fluid, labour, fee, tax, discount, or other',
     required: false,
     section: 'item',
     synonyms: ['item kind', 'line type', 'item type'],
@@ -175,7 +175,7 @@ export const maintenanceImportFieldDefinitions = [
   {
     id: 'itemCategory',
     label: 'Item category',
-    description: 'Mapped maintenance category for the item',
+    description: 'Mapped service category for the item',
     required: false,
     section: 'item',
     synonyms: ['item category', 'part category'],

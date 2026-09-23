@@ -42,7 +42,7 @@ export function FuelLogForm({
   onSubmit,
   submitError,
   initialValues,
-  submitLabel = 'Save Fuel Log',
+  submitLabel = 'Save fuel log',
 }: FuelLogFormProps) {
   const form = useForm<FuelLogFormValues>({
     resolver: zodResolver(fuelLogFormSchema),
@@ -81,7 +81,7 @@ export function FuelLogForm({
   return (
     <Card className="border-0 shadow-none">
       <CardHeader className="px-0 pb-6 pt-0">
-        <CardTitle>Fuel Fill Detail</CardTitle>
+        <CardTitle>Fuel fill detail</CardTitle>
         <CardDescription>Log your fuel purchase to track costs and efficiency.</CardDescription>
       </CardHeader>
       <CardContent className="px-0">
@@ -106,7 +106,7 @@ export function FuelLogForm({
 
             <FormField
               htmlFor="fuel-quantity"
-              label="Quantity (Litres)"
+              label="Quantity (litres)"
               error={form.formState.errors.quantity?.message}
             >
               <Input
@@ -120,7 +120,7 @@ export function FuelLogForm({
 
             <FormField
               htmlFor="fuel-price"
-              label="Price per Litre"
+              label="Price per litre"
               error={form.formState.errors.price?.message}
             >
               <Input
@@ -134,7 +134,7 @@ export function FuelLogForm({
 
             <FormField
               htmlFor="fuel-total-cost"
-              label="Total Cost"
+              label="Total cost"
               error={form.formState.errors.totalCost?.message}
             >
               <Input
@@ -148,13 +148,13 @@ export function FuelLogForm({
 
             <FormField
               htmlFor="fuel-location"
-              label="Location / Fuel Station"
+              label="Location / fuel station"
               error={form.formState.errors.location?.message}
             >
               <Input
                 id="fuel-location"
                 {...form.register('location')}
-                placeholder="HP / BP Petrol Pump"
+                placeholder="HP / BP petrol pump"
               />
             </FormField>
           </div>

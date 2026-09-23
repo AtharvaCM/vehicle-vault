@@ -237,7 +237,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
                 onSelectionChange={handleSelectionChange}
                 reminders={groupedReminders[ReminderStatus.DueToday]}
                 selectedReminderIds={selectedReminderIds}
-                title="Due Today"
+                title="Due today"
                 vehicleLabelById={vehicleLabelById}
               />
               <ReminderList

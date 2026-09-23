@@ -28,7 +28,7 @@ test('user can manage insurance and warranty documents via unified route', async
   await page.getByRole('tab', { name: /protection/i }).click();
 
   // ── 3. Create Insurance ────────────────────────────────────────────
-  await page.getByRole('button', { name: 'Add Policy', exact: true }).click();
+  await page.getByRole('button', { name: 'Add policy', exact: true }).click();
   await expect(page.getByRole('heading', { name: /add insurance policy/i })).toBeVisible();
   await page.getByLabel(/provider name/i).fill('Test Insurance Corp');
   await page.getByLabel(/policy number/i).fill('INS12345');
@@ -42,7 +42,7 @@ test('user can manage insurance and warranty documents via unified route', async
   await expect(page.getByText('#INS12345')).toBeVisible();
 
   // ── 4. Create Warranty ─────────────────────────────────────────────
-  await page.getByRole('button', { name: 'Add Warranty', exact: true }).click();
+  await page.getByRole('button', { name: 'Add warranty', exact: true }).click();
   await expect(page.getByRole('heading', { name: /add warranty coverage/i })).toBeVisible();
   await page.getByLabel(/provider\/brand/i).fill('Test Motors Warranty');
   await page.getByLabel(/warranty #/i).fill('WAR98765');

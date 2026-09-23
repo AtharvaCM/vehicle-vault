@@ -120,7 +120,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
                 params={{ vehicleId: reminder.vehicleId }}
                 to="/vehicles/$vehicleId/reminders"
               >
-                Back to Vehicle Reminders
+                Back to vehicle reminders
               </Link>
               {canEdit ? (
                 <>
@@ -129,7 +129,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
                     params={{ reminderId: reminder.id }}
                     to="/reminders/$reminderId/edit"
                   >
-                    Edit Reminder
+                    Edit reminder
                   </Link>
                   {reminder.status !== ReminderStatus.Completed ? (
                     <Button
@@ -138,7 +138,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
                       size="sm"
                       type="button"
                     >
-                      {completeReminderMutation.isPending ? 'Completing...' : 'Mark Complete'}
+                      {completeReminderMutation.isPending ? 'Completing...' : 'Mark complete'}
                     </Button>
                   ) : null}
                   <ConfirmActionDialog
@@ -147,7 +147,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
                     isPending={deleteReminderMutation.isPending}
                     onConfirm={() => handleDeleteReminder(reminder.vehicleId)}
                     title="Delete this reminder?"
-                    triggerLabel="Delete Reminder"
+                    triggerLabel="Delete reminder"
                     triggerVariant="secondary"
                   />
                 </>

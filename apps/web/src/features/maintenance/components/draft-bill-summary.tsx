@@ -82,7 +82,7 @@ function getNote({
 
     if (fieldsFromBillCount === 0) {
       return {
-        text: 'The bill was read, but not filled in. Use Apply to Draft in Document Review, or fill in the details below.',
+        text: 'The bill was read, but not filled in. Use Apply to draft in Document review, or fill in the details below.',
         tone: 'warning',
       };
     }
@@ -99,7 +99,7 @@ function getNote({
     return {
       text: `The bill could not be read${
         failed.extraction?.failureReason ? ` (${failed.extraction.failureReason})` : ''
-      }. Fill in the details below, or use Read again in Document Review.`,
+      }. Fill in the details below, or use Read again in Document review.`,
       tone: 'warning',
     };
   }
@@ -112,7 +112,7 @@ function getNote({
   }
 
   return {
-    text: "The bill hasn't been read yet. Fill in the details below, or use Read again in Document Review.",
+    text: "The bill hasn't been read yet. Fill in the details below, or use Read again in Document review.",
     tone: 'warning',
   };
 }

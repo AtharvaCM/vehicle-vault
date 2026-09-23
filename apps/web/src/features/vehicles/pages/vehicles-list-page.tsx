@@ -129,7 +129,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
       <PageTitle
         actions={
           <Link className={buttonVariants()} to="/vehicles/new">
-            Add Vehicle
+            Add vehicle
           </Link>
         }
         description="Keep every vehicle in one place so service history, reminders, and receipts stay connected."
@@ -146,7 +146,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
                 Retry
               </Button>
               <Link className={buttonVariants()} to="/vehicles/new">
-                Add Vehicle
+                Add vehicle
               </Link>
             </div>
           }
@@ -186,7 +186,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
                     Clear filters
                   </Button>
                   <Link className={buttonVariants()} to="/vehicles/new">
-                    Add Vehicle
+                    Add vehicle
                   </Link>
                 </div>
               }
@@ -202,7 +202,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
               Add your first vehicle
             </Link>
           }
-          description="Add your first car or bike to start tracking maintenance, reminders, and receipts."
+          description="Add your first car or bike to start tracking service, reminders, and receipts."
           title="No vehicles yet"
         />
       )}

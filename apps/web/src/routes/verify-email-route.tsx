@@ -10,7 +10,7 @@ const VerifyEmailPage = createLazyPage(
       default: module.VerifyEmailPage,
     })),
   {
-    title: 'Verifying Email',
+    title: 'Verifying email',
     description: 'We are verifying your email address.',
   },
 );

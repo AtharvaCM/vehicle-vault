@@ -34,6 +34,12 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
     high: 'Robust data. High accuracy predictions.',
   };
 
+  const confidenceLabels = {
+    low: 'Rough estimate',
+    medium: 'Fair estimate',
+    high: 'Solid estimate',
+  };
+
   // Two dated readings are the least a rate can be measured from, and a rate of
   // zero (readings that never move forward) predicts nothing. Either way the
   // honest figure is the reading itself, not a prediction built on 0 km/day.
@@ -45,7 +51,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardTitle className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Intelligence
+            Odometer estimate
           </CardTitle>
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -58,7 +64,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
                 variant="outline"
                 className={`text-[10px] uppercase tracking-wider ${confidenceColors[insights.confidence]}`}
               >
-                {insights.confidence} confidence
+                {confidenceLabels[insights.confidence]}
               </Badge>
             ) : null}
           </div>
@@ -78,7 +84,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                 <Calendar className="h-3.5 w-3.5" />
-                <span>Avg. Daily</span>
+                <span>Avg. daily</span>
               </div>
               <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {insights.averageDailyMileage} km/day
@@ -87,7 +93,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                 <Gauge className="h-3.5 w-3.5" />
-                <span>Avg. Monthly</span>
+                <span>Avg. monthly</span>
               </div>
               <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {format.distance(insights.averageMonthlyMileage)}
@@ -98,7 +104,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
           <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
             <div className="flex flex-col gap-0.5">
               <span className="text-[10px] uppercase tracking-wider text-zinc-400">
-                Last Recorded
+                Last recorded
               </span>
               <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 {format.odometer(insights.lastRecordedOdometer)} ({lastRecordedDate})

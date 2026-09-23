@@ -97,7 +97,7 @@ function buildHistory(vehicle: Vehicle, sortedRecords: MaintenanceRecord[]) {
     .reverse()
     .map((record) => ({
       id: record.id,
-      label: record.workshopName?.trim() || 'Service entry',
+      label: record.workshopName?.trim() || 'Service record',
       date: record.serviceDate,
       odometer: record.odometer,
       kind: 'service',

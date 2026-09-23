@@ -60,7 +60,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 
   await page.getByRole('button', { name: new RegExp(name) }).click();
-  await page.getByRole('menuitem', { name: /logout/i }).click();
+  await page.getByRole('menuitem', { name: /sign out/i }).click();
 
   await expect(page).toHaveURL(/\/login$/);
 
@@ -130,7 +130,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page.getByText('Odometer: 16,250 km')).toBeVisible();
 
   await page
-    .getByRole('link', { name: /log maintenance/i })
+    .getByRole('link', { name: /log service/i })
     .first()
     .click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);

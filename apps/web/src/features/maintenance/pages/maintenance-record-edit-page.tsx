@@ -50,7 +50,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   const isDraft = recordQuery.data?.status === MaintenanceRecordStatus.Draft;
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
-    message: 'You have unsaved maintenance edits. Leave without saving?',
+    message: 'You have unsaved service edits. Leave without saving?',
   });
   const initialValues = useMemo<Partial<MaintenanceFormValues> | undefined>(
     () =>
@@ -112,10 +112,10 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
       );
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
-        title: isDraft ? 'Maintenance record confirmed' : 'Maintenance record updated',
+        title: isDraft ? 'Service record confirmed' : 'Service record updated',
         description: isDraft
           ? 'This service now counts towards costs, reports and its next service.'
-          : 'Changes to this service entry were saved.',
+          : 'Changes to this service record were saved.',
       });
 
       try {
@@ -131,14 +131,12 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
       }
     } catch (error) {
       appToast.error({
-        title: isDraft
-          ? 'Unable to confirm maintenance record'
-          : 'Unable to update maintenance record',
+        title: isDraft ? 'Unable to confirm service record' : 'Unable to update service record',
         description: getApiErrorMessage(
           error,
           isDraft
-            ? 'Unable to confirm the maintenance record.'
-            : 'Unable to update the maintenance record.',
+            ? 'Unable to confirm the service record.'
+            : 'Unable to update the service record.',
         ),
       });
       throw error;
@@ -149,12 +147,12 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     return (
       <PageContainer>
         <PageTitle
-          description="Loading this service entry before you edit it."
-          title="Edit Maintenance Record"
+          description="Loading this service record before you edit it."
+          title="Edit service record"
         />
         <LoadingState
-          description="Getting the latest maintenance details."
-          title="Loading maintenance record"
+          description="Getting the latest service details."
+          title="Loading service record"
         />
       </PageContainer>
     );
@@ -166,21 +164,21 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     return (
       <PageContainer>
         <PageTitle
-          description="You can only edit a maintenance record that still exists."
-          title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
+          description="You can only edit a service record that still exists."
+          title={isNotFound ? 'Service record not found' : 'Unable to load service record'}
         />
         <ErrorState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/maintenance">
-              Back to Maintenance
+              Back to maintenance
             </Link>
           }
           description={
             isNotFound
-              ? 'The requested maintenance record could not be found, so it cannot be edited.'
-              : "We couldn't load this maintenance record. Try again in a moment."
+              ? 'The requested service record could not be found, so it cannot be edited.'
+              : "We couldn't load this service record. Try again in a moment."
           }
-          title={isNotFound ? 'Maintenance record not found' : 'Unable to load maintenance record'}
+          title={isNotFound ? 'Service record not found' : 'Unable to load service record'}
         />
       </PageContainer>
     );
@@ -196,13 +194,13 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               params={{ recordId }}
               to="/maintenance-records/$recordId"
             >
-              Back to Record
+              Back to record
             </Link>
           }
           description="This vehicle is shared with you for reading."
-          title="Edit Maintenance Record"
+          title="Edit service record"
         />
-        <ViewOnlyNotice description="You can read this service entry and open its receipts, but not change them." />
+        <ViewOnlyNotice description="You can read this service record and open its receipts, but not change them." />
       </PageContainer>
     );
   }
@@ -217,7 +215,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               params={{ recordId }}
               to="/maintenance-records/$recordId"
             >
-              Back to Record
+              Back to record
             </Link>
           }
           description={
@@ -225,7 +223,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               ? 'This draft does not count anywhere yet. Check the details, then confirm it.'
               : 'Correct service details without losing the linked receipts or history.'
           }
-          title={isDraft ? 'Confirm Maintenance Record' : 'Edit Maintenance Record'}
+          title={isDraft ? 'Confirm service record' : 'Edit service record'}
         />
 
         {isDraft ? (
@@ -250,21 +248,19 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
                 ? getApiErrorMessage(
                     updateRecordMutation.error,
                     isDraft
-                      ? 'Unable to confirm the maintenance record.'
-                      : 'Unable to update the maintenance record.',
+                      ? 'Unable to confirm the service record.'
+                      : 'Unable to update the service record.',
                   )
                 : null
             }
             submitHint={
               isDraft
                 ? 'Confirming logs this service: it starts counting in costs and reports, and any next-due the workshop wrote down becomes a reminder.'
-                : 'Edits keep the same receipts linked to this service entry.'
+                : 'Edits keep the same receipts linked to this service record.'
             }
-            submitLabel={isDraft ? 'Confirm Record' : 'Save Changes'}
+            submitLabel={isDraft ? 'Confirm record' : 'Save changes'}
             submittingLabel={isDraft ? 'Confirming record...' : 'Saving changes...'}
-            successMessage={
-              isDraft ? 'Maintenance record confirmed.' : 'Maintenance record updated.'
-            }
+            successMessage={isDraft ? 'Service record confirmed.' : 'Service record updated.'}
             recordId={recordId}
             vehicleId={recordQuery.data?.vehicleId}
           />
@@ -285,7 +281,9 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
                     Update the date, odometer, and cost whenever the original entry needs
                     correction.
                   </p>
-                  <p>Receipts and documents stay attached to the same service entry after edits.</p>
+                  <p>
+                    Receipts and documents stay attached to the same service record after edits.
+                  </p>
                   <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
                 </CardContent>
               </Card>

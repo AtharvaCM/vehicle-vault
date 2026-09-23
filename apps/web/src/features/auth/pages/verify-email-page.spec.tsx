@@ -64,14 +64,14 @@ describe('VerifyEmailPage', () => {
     expect(auth.current.refreshUser.mock.invocationCallOrder[0]).toBeLessThan(
       navigate.mock.invocationCallOrder[0]!,
     );
-    expect(screen.queryByText(/continue to login/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/continue to sign in/i)).not.toBeInTheDocument();
   });
 
   it('sends a signed-out user to sign in, as before', async () => {
     render(<VerifyEmailPage />);
 
-    expect(await screen.findAllByText('Email Verified!')).not.toHaveLength(0);
-    expect(screen.getByRole('link', { name: /continue to login/i })).toHaveAttribute(
+    expect(await screen.findAllByText('Email verified')).not.toHaveLength(0);
+    expect(screen.getByRole('link', { name: /continue to sign in/i })).toHaveAttribute(
       'href',
       '/login',
     );
@@ -164,7 +164,7 @@ describe('VerifyEmailPage', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Try again' }));
 
-    expect(await screen.findAllByText('Email Verified!')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Email verified')).not.toHaveLength(0);
     expect(verifyEmail).toHaveBeenCalledTimes(2);
   });
 
@@ -175,7 +175,7 @@ describe('VerifyEmailPage', () => {
       </StrictMode>,
     );
 
-    expect(await screen.findAllByText('Email Verified!')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Email verified')).not.toHaveLength(0);
     expect(verifyEmail).toHaveBeenCalledTimes(1);
   });
 });

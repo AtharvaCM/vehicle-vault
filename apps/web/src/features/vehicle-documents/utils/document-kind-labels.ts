@@ -5,11 +5,11 @@ import {
 } from '@vehicle-vault/shared';
 
 export const documentKindTitles: Record<VehicleDocumentKind, string> = {
-  insurance: 'Insurance Policy',
-  warranty: 'Warranty Coverage',
-  registration: 'Registration Certificate',
-  puc: 'PUC Certificate',
-  road_tax: 'Road Tax',
+  insurance: 'Insurance policy',
+  warranty: 'Warranty coverage',
+  registration: 'Registration certificate',
+  puc: 'PUC certificate',
+  road_tax: 'Road tax',
 };
 
 /** Short noun for toasts: "Registration added", "PUC certificate removed". */
@@ -22,9 +22,9 @@ export const documentKindNouns: Record<VehicleDocumentKind, string> = {
 };
 
 export const complianceNumberLabels: Record<ComplianceDocumentKind, string> = {
-  registration: 'RC Number',
-  puc: 'Certificate Number',
-  road_tax: 'Receipt Number',
+  registration: 'RC number',
+  puc: 'Certificate number',
+  road_tax: 'Receipt number',
 };
 
 export function isComplianceKind(kind: VehicleDocumentKind): kind is ComplianceDocumentKind {

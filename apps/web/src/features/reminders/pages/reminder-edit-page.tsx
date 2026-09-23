@@ -90,7 +90,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
   if (reminderQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle description="Loading this reminder before you edit it." title="Edit Reminder" />
+        <PageTitle description="Loading this reminder before you edit it." title="Edit reminder" />
         <LoadingState description="Getting the latest reminder details." title="Loading reminder" />
       </PageContainer>
     );
@@ -109,7 +109,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
         <ErrorState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/reminders">
-              Back to Reminders
+              Back to reminders
             </Link>
           }
           description={
@@ -133,11 +133,11 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
               params={{ reminderId }}
               to="/reminders/$reminderId"
             >
-              Back to Reminder
+              Back to reminder
             </Link>
           }
           description="This vehicle is shared with you for reading."
-          title="Edit Reminder"
+          title="Edit reminder"
         />
         <ViewOnlyNotice description="You can read this reminder, but not change when it is due or what it says." />
       </PageContainer>
@@ -154,11 +154,11 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
               params={{ reminderId }}
               to="/reminders/$reminderId"
             >
-              Back to Reminder
+              Back to reminder
             </Link>
           }
           description="Update timing, kilometre targets, or notes for this reminder."
-          title="Edit Reminder"
+          title="Edit reminder"
         />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -173,7 +173,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
                 : null
             }
             submitHint="Use edits when the title, due date, or due kilometre changes."
-            submitLabel="Save Changes"
+            submitLabel="Save changes"
             submittingLabel="Saving changes..."
             successMessage="Reminder updated."
           />

@@ -65,7 +65,7 @@ const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanB
       variant="outline"
       onClick={onClick}
       disabled={isScanning}
-      title={available ? 'AI Ready' : 'AI Plugin Missing'}
+      title={available ? 'AI ready' : 'AI plugin missing'}
       {...triggerProps}
     >
       {isScanning ? (
@@ -248,7 +248,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Insurance Policies</h3>
+              <h3 className="text-xl font-bold text-slate-900">Insurance policies</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -263,12 +263,12 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
                 <ScanButton
                   available={insuranceScanStatus.data?.available}
                   isScanning={scanMutation.isPending && scanKind === 'insurance'}
-                  label="Scan Policy"
+                  label="Scan policy"
                   onClick={() => triggerScan('insurance', insuranceScanStatus.data?.available)}
                 />
                 <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Policy
+                  Add policy
                 </Button>
               </div>
             ) : null}
@@ -306,7 +306,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ReceiptText className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Insurance Claims</h3>
+              <h3 className="text-xl font-bold text-slate-900">Insurance claims</h3>
             </div>
             {canEdit ? (
               <Button
@@ -317,7 +317,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
                 title={policies.length === 0 ? 'Add an insurance policy first' : undefined}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Record Claim
+                Record claim
               </Button>
             ) : null}
           </div>
@@ -372,19 +372,19 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Car className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Warranty Coverage</h3>
+              <h3 className="text-xl font-bold text-slate-900">Warranty coverage</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
                 <ScanButton
                   available={warrantyScanStatus.data?.available}
                   isScanning={scanMutation.isPending && scanKind === 'warranty'}
-                  label="Scan Warranty"
+                  label="Scan warranty"
                   onClick={() => triggerScan('warranty', warrantyScanStatus.data?.available)}
                 />
                 <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Warranty
+                  Add warranty
                 </Button>
               </div>
             ) : null}
@@ -422,7 +422,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <FileBadge className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Registration &amp; Compliance</h3>
+              <h3 className="text-xl font-bold text-slate-900">Registration &amp; papers</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
                 </DropdownMenu>
                 <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Document
+                  Add document
                 </Button>
               </div>
             ) : null}
@@ -469,7 +469,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
               ))
             ) : (
               <EmptyState
-                title="No compliance documents"
+                title="No papers on file"
                 description={
                   pucRequired
                     ? 'Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due.'
@@ -494,7 +494,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
       <aside className="space-y-6">
         <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm sticky top-24">
           <CardHeader>
-            <CardTitle className="text-lg font-bold">Document Guide</CardTitle>
+            <CardTitle className="text-lg font-bold">Papers guide</CardTitle>
             <CardDescription>Managing your vehicle protection.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
@@ -513,7 +513,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
               </p>
             </div>
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <p className="font-bold text-slate-700 mb-1">PUC &amp; Road Tax</p>
+              <p className="font-bold text-slate-700 mb-1">PUC &amp; road tax</p>
               <p>
                 {pucRequired
                   ? 'PUC certificates typically last 6–12 months and are mandatory.'

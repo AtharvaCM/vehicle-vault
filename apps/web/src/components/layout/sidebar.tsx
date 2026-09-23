@@ -116,9 +116,6 @@ export function Sidebar() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-bold tracking-tight text-slate-900">{APP_NAME}</p>
-            <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-500/80">
-              Garage Management
-            </p>
           </div>
         </Link>
       </div>
@@ -177,7 +174,7 @@ export function Sidebar() {
                 variant="ghost"
               >
                 <LogOut className="mr-1.5 h-3 w-3" />
-                Logout
+                Sign out
               </Button>
             </div>
           </div>

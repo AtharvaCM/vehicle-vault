@@ -42,14 +42,14 @@ export function AdminUsersPage() {
       appToast.success({
         title: 'Session invalidated',
         description: result.refreshTokenCleared
-          ? 'Refresh token cleared. User must log in again.'
+          ? 'Refresh token cleared. User must sign in again.'
           : 'User had no active session.',
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.admin.all() });
     },
     onError: (error) => {
       appToast.error({
-        title: 'Force logout failed',
+        title: 'Force sign-out failed',
         description: getApiErrorMessage(error),
       });
     },
@@ -61,7 +61,7 @@ export function AdminUsersPage() {
 
   return (
     <PageContainer>
-      <PageTitle description="Search, audit, and force-log-out user accounts." title="Users" />
+      <PageTitle description="Search, audit, and force-sign-out user accounts." title="Users" />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -125,14 +125,14 @@ export function AdminUsersPage() {
                     </span>
                     <span>{format.date(user.createdAt)}</span>
                     <ConfirmActionDialog
-                      confirmLabel="Force logout"
-                      description={`Clears ${user.email}'s refresh token. They will need to log in again on their next session refresh.`}
+                      confirmLabel="Force sign-out"
+                      description={`Clears ${user.email}'s refresh token. They will need to sign in again on their next session refresh.`}
                       isPending={
                         forceLogoutMutation.isPending && forceLogoutMutation.variables === user.id
                       }
                       onConfirm={() => forceLogoutMutation.mutate(user.id)}
-                      title="Force this user to log out?"
-                      triggerLabel="Force logout"
+                      title="Force this user to sign out?"
+                      triggerLabel="Force sign-out"
                       triggerIcon={<LogOut className="h-3.5 w-3.5" />}
                       triggerVariant="ghost"
                     />
