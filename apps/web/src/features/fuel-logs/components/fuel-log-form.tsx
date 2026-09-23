@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { type DefaultValues, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { CreateFuelLogInput } from '@vehicle-vault/shared';
 
@@ -9,8 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { fuelLogFormSchema, type FuelLogFormValues } from '../schemas/fuel-log-form.schema';
+
+/**
+ * Numbers start empty rather than 0: a pre-filled 0 has to be cleared before
+ * typing, and one left in place would save a fill at 0 km.
+ */
+function emptyFuelLogValues(): DefaultValues<FuelLogFormValues> {
+  return {
+    date: todayDateInputValue(),
+    odometer: undefined,
+    quantity: undefined,
+    price: undefined,
+    totalCost: undefined,
+    location: '',
+    notes: '',
+  };
+}
 
 type FuelLogFormProps = {
   isSubmitting?: boolean;
@@ -29,31 +46,13 @@ export function FuelLogForm({
 }: FuelLogFormProps) {
   const form = useForm<FuelLogFormValues>({
     resolver: zodResolver(fuelLogFormSchema),
-    defaultValues: {
-      date: new Date().toISOString().split('T')[0],
-      odometer: 0,
-      quantity: 0,
-      price: 0,
-      totalCost: 0,
-      location: '',
-      notes: '',
-      ...initialValues,
-    },
+    defaultValues: { ...emptyFuelLogValues(), ...initialValues },
   });
 
   // Reset form when initialValues change (e.g. from OCR)
   useEffect(() => {
     if (initialValues) {
-      form.reset({
-        date: new Date().toISOString().split('T')[0],
-        odometer: 0,
-        quantity: 0,
-        price: 0,
-        totalCost: 0,
-        location: '',
-        notes: '',
-        ...initialValues,
-      });
+      form.reset({ ...emptyFuelLogValues(), ...initialValues });
     }
   }, [initialValues, form]);
 

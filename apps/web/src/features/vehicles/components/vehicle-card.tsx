@@ -4,18 +4,21 @@ import type { ReactNode } from 'react';
 import { VehicleType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils/cn';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
+import { getVehicleDisplayName } from '../utils/get-vehicle-display-name';
 import { Card } from '@/components/ui/card';
 
 import type { Vehicle } from '../types/vehicle';
 
 type VehicleCardProps = {
+  selected?: boolean;
   selectionControl?: ReactNode;
   vehicle: Vehicle;
 };
 
-export function VehicleCard({ selectionControl, vehicle }: VehicleCardProps) {
-  const title = vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
+export function VehicleCard({ selected = false, selectionControl, vehicle }: VehicleCardProps) {
+  const title = getVehicleDisplayName(vehicle);
 
   return (
     <div className="group relative flex items-center gap-4">
@@ -23,7 +26,12 @@ export function VehicleCard({ selectionControl, vehicle }: VehicleCardProps) {
         <div className="flex-shrink-0 transition-opacity duration-200">{selectionControl}</div>
       ) : null}
 
-      <Card className="flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md">
+      <Card
+        className={cn(
+          'flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md',
+          selected && 'ring-2 ring-primary',
+        )}
+      >
         <Link
           className="flex flex-col p-0 sm:flex-row sm:items-center"
           params={{ vehicleId: vehicle.id }}

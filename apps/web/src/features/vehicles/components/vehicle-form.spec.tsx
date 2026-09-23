@@ -68,3 +68,51 @@ describe('VehicleForm variant', () => {
     expect(onSubmit.mock.calls[0]?.[0].variant).toBe('HT');
   });
 });
+
+describe('VehicleForm edit mode', () => {
+  const onSubmit = vi.fn();
+  const savedVehicleValues = {
+    ...initialValues,
+    nickname: 'Highway cruiser',
+    purchaseDate: '2022-01-01',
+    purchasePrice: 850_000,
+    purchaseOdometer: 10,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    onSubmit.mockResolvedValue(undefined);
+  });
+
+  it('prefills the saved purchase date, price and odometer', () => {
+    render(<VehicleForm initialValues={savedVehicleValues} mode="edit" onSubmit={onSubmit} />);
+
+    expect(screen.getByLabelText('Purchase date (optional)')).toHaveValue('2022-01-01');
+    expect(screen.getByLabelText('Purchase price (₹, optional)')).toHaveValue(850_000);
+    expect(screen.getByLabelText('Odometer at purchase (optional)')).toHaveValue(10);
+  });
+
+  it('sends only the nickname when that is all that changed, leaving purchase details out', async () => {
+    render(<VehicleForm initialValues={savedVehicleValues} mode="edit" onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText('Nickname'), { target: { value: 'Family SUV' } });
+    fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    const payload = onSubmit.mock.calls[0]?.[0];
+    expect(payload).toEqual({ nickname: 'Family SUV' });
+    expect(payload).not.toHaveProperty('purchaseDate');
+    expect(payload).not.toHaveProperty('purchasePrice');
+    expect(payload).not.toHaveProperty('purchaseOdometer');
+  });
+
+  it('sends the full object when nothing has changed to diff against (create mode)', async () => {
+    render(<VehicleForm initialValues={savedVehicleValues} onSubmit={onSubmit} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    const payload = onSubmit.mock.calls[0]?.[0];
+    expect(payload).toMatchObject({ purchasePrice: 850_000, purchaseOdometer: 10 });
+  });
+});

@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { VehiclePickerDialog } from '@/features/vehicles/components/vehicle-picker-dialog';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -161,9 +162,18 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
     <PageContainer>
       <PageTitle
         actions={
-          <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-            Create reminder from vehicle
-          </Link>
+          <VehiclePickerDialog
+            buildLink={(vehicleId) => ({
+              to: '/vehicles/$vehicleId/reminders/new',
+              params: { vehicleId },
+            })}
+            dialogDescription="Choose which vehicle this reminder is for."
+            dialogTitle="Create reminder"
+            isLoading={vehiclesQuery.isPending}
+            triggerLabel="Create reminder"
+            variant="secondary"
+            vehicles={vehiclesQuery.data ?? []}
+          />
         }
         description="Track overdue, due today, upcoming, and completed reminders across your garage."
         title="Reminders"

@@ -8,6 +8,8 @@ describe('ServiceScheduleService', () => {
   const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   const prisma = {
     reminder: { findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
+    maintenanceRecord: { findMany: vi.fn() },
+    serviceBaseline: { findMany: vi.fn() },
     $transaction: vi.fn(),
   };
   const vehiclesService = { ensureVehicleExists: vi.fn() };
@@ -28,6 +30,8 @@ describe('ServiceScheduleService', () => {
     vi.clearAllMocks();
     prisma.reminder.findMany.mockResolvedValue([]);
     prisma.reminder.count.mockResolvedValue(0);
+    prisma.maintenanceRecord.findMany.mockResolvedValue([]);
+    prisma.serviceBaseline.findMany.mockResolvedValue([]);
     prisma.$transaction.mockImplementation(async (cb: (tx: typeof prisma) => Promise<unknown>) =>
       cb(prisma),
     );
@@ -190,7 +194,7 @@ describe('ServiceScheduleService', () => {
       expect(suggestions.find((s) => s.slug === 'tyre_inspection')?.dueOdometer).toBe(45_000);
     });
 
-    it('leaves every other item anchored to now', async () => {
+    it('leaves every other item without history anchored to now', async () => {
       // The anchor is per-slug: a stale tyre reading must not drag the oil
       // change forward with it.
       tyresService.getAlertState.mockResolvedValue({
@@ -234,6 +238,122 @@ describe('ServiceScheduleService', () => {
       await service.applySuggestions('u1', 'v1', ['tyre_inspection']);
 
       expect(prisma.reminder.create.mock.calls[0][0].data.dueOdometer).toBe(41_000);
+    });
+  });
+
+  describe('anchoring on the last logged service', () => {
+    // The demo Family SUV: engine oil logged at 17,500 km on 25-07-2026, 18,500 km now.
+    const vehicle = {
+      id: 'v1',
+      odometer: 18_500,
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.SUV,
+    };
+    const OIL_RECORD = {
+      category: 'engine_oil',
+      odometer: 17_500,
+      serviceDate: new Date('2026-07-25T00:00:00.000Z'),
+    };
+
+    beforeEach(() => {
+      vehiclesService.ensureVehicleExists.mockResolvedValue(vehicle);
+    });
+
+    it('counts from the latest confirmed record and says so', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValue([OIL_RECORD]);
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const oil = suggestions.find((s) => s.slug === 'engine_oil_change')!;
+
+      expect(oil.dueOdometer).toBe(27_500);
+      expect(oil.dueDate?.slice(0, 10)).toBe('2027-07-25');
+      expect(oil.anchor).toEqual({
+        source: 'record',
+        lastDoneOdometer: 17_500,
+        lastDoneDate: '2026-07-25T00:00:00.000Z',
+      });
+    });
+
+    it('never lets a draft anchor', async () => {
+      await service.getSuggestions('u1', 'v1');
+
+      expect(prisma.maintenanceRecord.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ status: 'confirmed' }) }),
+      );
+    });
+
+    it('falls back to the owner’s baseline answer', async () => {
+      prisma.serviceBaseline.findMany.mockResolvedValue([
+        {
+          category: 'brake_pads',
+          lastDoneOdometer: 12_000,
+          lastDoneDate: new Date('2025-11-01T00:00:00.000Z'),
+        },
+      ]);
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const brakes = suggestions.find((s) => s.slug === 'brake_inspection')!;
+
+      expect(brakes.dueOdometer).toBe(32_000);
+      expect(brakes.dueDate?.slice(0, 10)).toBe('2027-11-01');
+      expect(brakes.anchor).toMatchObject({ source: 'baseline', lastDoneOdometer: 12_000 });
+    });
+
+    it('counts the dimension a baseline does not know from now', async () => {
+      prisma.serviceBaseline.findMany.mockResolvedValue([
+        { category: 'air_filter', lastDoneOdometer: 10_000, lastDoneDate: null },
+      ]);
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const filter = suggestions.find((s) => s.slug === 'air_filter')!;
+
+      expect(filter.dueOdometer).toBe(30_000);
+      expect(filter.anchor).toEqual({ source: 'baseline', lastDoneOdometer: 10_000 });
+      expect(Date.parse(filter.dueDate!)).toBeGreaterThan(Date.now());
+    });
+
+    it('lets a logged service win over the baseline', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValue([OIL_RECORD]);
+      prisma.serviceBaseline.findMany.mockResolvedValue([
+        { category: 'engine_oil', lastDoneOdometer: 9_000, lastDoneDate: null },
+      ]);
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+
+      expect(suggestions.find((s) => s.slug === 'engine_oil_change')?.dueOdometer).toBe(27_500);
+    });
+
+    it('says an item with no history is counted from today', async () => {
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const coolant = suggestions.find((s) => s.slug === 'coolant_flush')!;
+
+      expect(coolant.dueOdometer).toBe(58_500);
+      expect(coolant.anchor).toEqual({ source: 'now' });
+    });
+
+    it('creates the reminder from the same anchor the row showed', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValue([OIL_RECORD]);
+      prisma.reminder.create.mockImplementation(
+        async (args: { data: Record<string, unknown> }) => ({ id: 'rem-1', ...args.data }),
+      );
+
+      await service.applySuggestions('u1', 'v1', ['engine_oil_change']);
+
+      const data = prisma.reminder.create.mock.calls[0][0].data;
+      expect(data.dueOdometer).toBe(27_500);
+      expect((data.dueDate as Date).toISOString().slice(0, 10)).toBe('2027-07-25');
+    });
+
+    it('never anchors ahead of the vehicle on a record logged past its odometer', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValue([
+        { ...OIL_RECORD, odometer: 19_000, serviceDate: new Date('2099-01-01T00:00:00.000Z') },
+      ]);
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const oil = suggestions.find((s) => s.slug === 'engine_oil_change')!;
+
+      expect(oil.dueOdometer).toBe(28_500);
+      expect(Date.parse(oil.dueDate!)).toBeLessThan(Date.parse('2099-01-01T00:00:00.000Z'));
     });
   });
 
@@ -359,6 +479,18 @@ describe('ServiceScheduleService', () => {
             now,
           ),
         ).resolves.toMatchObject({ dueOdometer: 44_000 });
+      });
+    });
+
+    it('counts a completed service reminder from its completion, not an older record', async () => {
+      // Ticking the reminder off says the oil was changed now; the record from
+      // 10,000 km ago would make the successor born due.
+      prisma.maintenanceRecord.findMany.mockResolvedValue([
+        { category: 'engine_oil', odometer: 30_000, serviceDate: new Date('2025-09-01') },
+      ]);
+
+      await expect(service.buildNextOccurrence('u1', completed(), now)).resolves.toMatchObject({
+        dueOdometer: 50_000,
       });
     });
 

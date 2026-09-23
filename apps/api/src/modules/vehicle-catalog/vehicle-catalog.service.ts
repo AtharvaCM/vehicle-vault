@@ -31,6 +31,7 @@ import { ListVehicleCatalogMakesDto } from './dto/list-vehicle-catalog-makes.dto
 import { ListVehicleCatalogModelsDto } from './dto/list-vehicle-catalog-models.dto';
 import { ListVehicleCatalogVariantsDto } from './dto/list-vehicle-catalog-variants.dto';
 import { canSeeCatalogSource, visibleCatalogSources } from './catalog-source-visibility';
+import { describeVariantChanges } from './describe-variant-changes';
 
 type ImportRunRecord = {
   id: string;
@@ -112,6 +113,10 @@ type NormalizedCatalogSummary = {
   variantKeys: Set<string>;
   variantLabels: Map<string, string>;
   variantOfferingSignatures: Map<string, string[]>;
+  variantOfferings: Map<
+    string,
+    VehicleCatalogImportDataset[number]['models'][number]['generations'][number]['variants'][number]['offerings']
+  >;
 };
 
 @Injectable()
@@ -1273,6 +1278,26 @@ function buildImportDiff(
 ) {
   const incoming = summarizeImportDataset(incomingDataset);
   const published = summarizeImportDataset(publishedDataset);
+  const changedVariantKeys = [...incoming.variantKeys]
+    .filter((key) => published.variantKeys.has(key))
+    .filter((key) => {
+      const incomingSignatures = [...(incoming.variantOfferingSignatures.get(key) ?? [])].sort();
+      const publishedSignatures = [...(published.variantOfferingSignatures.get(key) ?? [])].sort();
+
+      return incomingSignatures.join('|') !== publishedSignatures.join('|');
+    });
+  const changedVariantDetails = changedVariantKeys
+    .map((key) => ({
+      variant: incoming.variantLabels.get(key) ?? key,
+      changes: describeVariantChanges(
+        published.variantOfferings.get(key) ?? [],
+        incoming.variantOfferings.get(key) ?? [],
+      ),
+    }))
+    // Code-unit order, as `changedVariants` always had.
+    .sort((left, right) =>
+      left.variant < right.variant ? -1 : left.variant > right.variant ? 1 : 0,
+    );
 
   return {
     incomingCounts: incoming.counts,
@@ -1285,18 +1310,8 @@ function buildImportDiff(
       .filter((key) => !published.variantKeys.has(key))
       .map((key) => incoming.variantLabels.get(key) ?? key)
       .sort(),
-    changedVariants: [...incoming.variantKeys]
-      .filter((key) => published.variantKeys.has(key))
-      .filter((key) => {
-        const incomingSignatures = [...(incoming.variantOfferingSignatures.get(key) ?? [])].sort();
-        const publishedSignatures = [
-          ...(published.variantOfferingSignatures.get(key) ?? []),
-        ].sort();
-
-        return incomingSignatures.join('|') !== publishedSignatures.join('|');
-      })
-      .map((key) => incoming.variantLabels.get(key) ?? key)
-      .sort(),
+    changedVariants: changedVariantDetails.map((detail) => detail.variant),
+    changedVariantDetails,
     missingVariants: [...published.variantKeys]
       .filter((key) => !incoming.variantKeys.has(key))
       .map((key) => published.variantLabels.get(key) ?? key)
@@ -1355,6 +1370,7 @@ function summarizeImportDataset(dataset: VehicleCatalogImportDataset): Normalize
   const variantKeys = new Set<string>();
   const variantLabels = new Map<string, string>();
   const variantOfferingSignatures = new Map<string, string[]>();
+  const variantOfferings: NormalizedCatalogSummary['variantOfferings'] = new Map();
   let offeringCount = 0;
 
   for (const make of dataset) {
@@ -1381,6 +1397,7 @@ function summarizeImportDataset(dataset: VehicleCatalogImportDataset): Normalize
             variantKey,
             variant.offerings.map((offering) => buildOfferingSignature(offering)).sort(),
           );
+          variantOfferings.set(variantKey, variant.offerings);
           offeringCount += variant.offerings.length;
         }
       }
@@ -1400,6 +1417,7 @@ function summarizeImportDataset(dataset: VehicleCatalogImportDataset): Normalize
     variantKeys,
     variantLabels,
     variantOfferingSignatures,
+    variantOfferings,
   };
 }
 
