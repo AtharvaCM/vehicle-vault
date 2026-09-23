@@ -1,17 +1,19 @@
 import { Link, useRouter } from '@tanstack/react-router';
-import type { PublicCatalogSegment } from '@vehicle-vault/shared';
 import type { ReactNode } from 'react';
 
-import { publicModelPath, publicVariantPath } from '../head/public-page-head';
+import { publicCatalogPath, type PublicCatalogAddress } from '../head/public-page-head';
 
-/** A model page's address, or a variant page's when it names a generation and variant. */
-export type PublicCatalogAddress = {
-  segment: PublicCatalogSegment;
-  make: string;
-  model: string;
-} & ({ generation: string; variant: string } | { generation?: undefined; variant?: undefined });
+export type { PublicCatalogAddress } from '../head/public-page-head';
+
+/**
+ * Active only on its own page. The router's default also marks a link active
+ * (with `aria-current="page"`) on every page below it, which would call each
+ * breadcrumb above the page the current one.
+ */
+const EXACT = { exact: true } as const;
 
 type PublicCatalogLinkProps = {
+  /** A browse, make, model or variant page, by what the address names. */
   address: PublicCatalogAddress;
   className?: string;
   children: ReactNode;
@@ -24,45 +26,73 @@ type PublicCatalogLinkProps = {
  */
 export function PublicCatalogLink({ address, className, children }: PublicCatalogLinkProps) {
   const router = useRouter({ warn: false });
-  const { segment, make, model, generation, variant } = address;
 
   if (!router) {
-    const href =
-      generation !== undefined
-        ? publicVariantPath({
-            segment,
-            make: { slug: make },
-            model: { slug: model },
-            generation: { slug: generation },
-            variant: { slug: variant },
-          })
-        : publicModelPath({ segment, make: { slug: make }, model: { slug: model } });
     return (
-      <a className={className} href={href}>
+      <a className={className} href={publicCatalogPath(address)}>
         {children}
       </a>
     );
   }
 
-  if (generation !== undefined) {
+  const bikes = address.segment === 'bikes';
+
+  if (address.generation !== undefined) {
+    const { make, model, generation, variant } = address;
     const params = { make, model, generation, variant };
-    return segment === 'bikes' ? (
-      <Link className={className} params={params} to="/bikes/$make/$model/$generation/$variant">
+    return bikes ? (
+      <Link
+        activeOptions={EXACT}
+        className={className}
+        params={params}
+        to="/bikes/$make/$model/$generation/$variant"
+      >
         {children}
       </Link>
     ) : (
-      <Link className={className} params={params} to="/cars/$make/$model/$generation/$variant">
+      <Link
+        activeOptions={EXACT}
+        className={className}
+        params={params}
+        to="/cars/$make/$model/$generation/$variant"
+      >
         {children}
       </Link>
     );
   }
 
-  return segment === 'bikes' ? (
-    <Link className={className} params={{ make, model }} to="/bikes/$make/$model">
+  if (address.model !== undefined) {
+    const params = { make: address.make, model: address.model };
+    return bikes ? (
+      <Link activeOptions={EXACT} className={className} params={params} to="/bikes/$make/$model">
+        {children}
+      </Link>
+    ) : (
+      <Link activeOptions={EXACT} className={className} params={params} to="/cars/$make/$model">
+        {children}
+      </Link>
+    );
+  }
+
+  if (address.make !== undefined) {
+    const params = { make: address.make };
+    return bikes ? (
+      <Link activeOptions={EXACT} className={className} params={params} to="/bikes/$make">
+        {children}
+      </Link>
+    ) : (
+      <Link activeOptions={EXACT} className={className} params={params} to="/cars/$make">
+        {children}
+      </Link>
+    );
+  }
+
+  return bikes ? (
+    <Link activeOptions={EXACT} className={className} to="/bikes">
       {children}
     </Link>
   ) : (
-    <Link className={className} params={{ make, model }} to="/cars/$make/$model">
+    <Link activeOptions={EXACT} className={className} to="/cars">
       {children}
     </Link>
   );

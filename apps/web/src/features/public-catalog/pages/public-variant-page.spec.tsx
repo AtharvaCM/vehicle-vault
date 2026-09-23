@@ -112,13 +112,19 @@ describe('PublicVariantPageView', () => {
     expect(document.title).toBe(variantPageTitle(pageFixture()));
   });
 
-  it('links back to its model page', () => {
+  it('has breadcrumbs up to its model, make and browse pages, ending on itself', () => {
     render(<PublicVariantPageView page={pageFixture()} />);
+    const trail = within(screen.getByRole('navigation', { name: 'Breadcrumb' }));
 
-    expect(screen.getByRole('link', { name: 'All Hyundai i20 variants' })).toHaveAttribute(
-      'href',
-      '/cars/hyundai/i20',
-    );
+    expect(
+      trail.getAllByRole('link').map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['Cars', '/cars'],
+      ['Hyundai', '/cars/hyundai'],
+      ['i20', '/cars/hyundai/i20'],
+    ]);
+    expect(trail.getByText('Asta')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('i20 lineup')).toBeInTheDocument();
   });
 
   it('labels a default schedule as typical and lists each item with its interval', () => {

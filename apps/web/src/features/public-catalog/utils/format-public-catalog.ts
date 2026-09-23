@@ -1,6 +1,7 @@
 import {
   FuelType,
   VehicleType,
+  type PublicCatalogMakeModel,
   type PublicCatalogModelPage,
   type PublicCatalogModelVariant,
   type PublicCatalogOffering,
@@ -119,6 +120,17 @@ export function modelYearSpan(page: Pick<PublicCatalogModelPage, 'generations'>)
 /** Every fuel any of a model's variants is offered with, in the order they first appear. */
 export function modelFuelTypes(page: Pick<PublicCatalogModelPage, 'generations'>) {
   return [...new Set(modelVariants(page).flatMap((variant) => variant.fuelTypes))];
+}
+
+/** "Petrol, CNG · 2014 – present · 12 variants": what tells a model from the make's others. */
+export function describeMakeModel(model: PublicCatalogMakeModel) {
+  return [
+    formatFuelTypes(model.fuelTypes),
+    formatYearSpan(model),
+    `${model.variantCount} ${model.variantCount === 1 ? 'variant' : 'variants'}`,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(' · ');
 }
 
 /** "Petrol, CNG · Manual · 2023 – present": what tells a variant from its siblings. */

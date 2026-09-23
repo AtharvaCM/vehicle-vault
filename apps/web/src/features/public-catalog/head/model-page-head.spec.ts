@@ -8,6 +8,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { modelPageHead, publicModelPath, renderHeadTags } from './public-page-head';
+import { structuredDataNodes } from './structured-data';
 
 const currentGeneration: PublicCatalogModelGeneration = {
   name: 'Third generation',
@@ -136,13 +137,40 @@ describe('modelPageHead', () => {
 
     expect(head.structuredData).toEqual({
       '@context': 'https://schema.org',
-      '@type': 'Car',
-      name: 'Hyundai i20',
-      url: 'https://catalog.example.test/cars/hyundai/i20',
-      brand: { '@type': 'Brand', name: 'Hyundai' },
-      model: 'i20',
-      fuelType: ['Petrol', 'CNG', 'Diesel'],
-      vehicleModelDate: '2014',
+      '@graph': [
+        {
+          '@type': 'Car',
+          name: 'Hyundai i20',
+          url: 'https://catalog.example.test/cars/hyundai/i20',
+          brand: { '@type': 'Brand', name: 'Hyundai' },
+          model: 'i20',
+          fuelType: ['Petrol', 'CNG', 'Diesel'],
+          vehicleModelDate: '2014',
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Cars',
+              item: 'https://catalog.example.test/cars',
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Hyundai',
+              item: 'https://catalog.example.test/cars/hyundai',
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: 'i20',
+              item: 'https://catalog.example.test/cars/hyundai/i20',
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -155,7 +183,12 @@ describe('modelPageHead', () => {
       }),
     );
 
-    expect(head.structuredData).toMatchObject({ '@type': 'Motorcycle', fuelType: 'Diesel' });
+    const [vehicle, breadcrumbs] = structuredDataNodes(head.structuredData ?? {});
+    expect(vehicle).toMatchObject({ '@type': 'Motorcycle', fuelType: 'Diesel' });
+    expect(breadcrumbs).toMatchObject({
+      '@type': 'BreadcrumbList',
+      itemListElement: [{ name: 'Bikes' }, { name: 'Hyundai' }, { name: 'i20' }],
+    });
   });
 
   it('escapes catalog names in the rendered tags', () => {

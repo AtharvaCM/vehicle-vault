@@ -14,6 +14,8 @@ import {
 } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { structuredDataNodes, type JsonLd } from '@/features/public-catalog/head/structured-data';
+
 import { PRERENDER_STATE_ELEMENT_ID } from './prerendered-state';
 import { prerenderPublicCatalog, PrerenderError, type PrerenderFetch } from './prerender';
 
@@ -88,6 +90,10 @@ function indexEntry(page: PublicCatalogVariantPage): PublicCatalogIndexEntry {
     model: page.model,
     generation: { name: page.generation.name, slug: page.generation.slug },
     variant: page.variant,
+    fuelTypes: page.offerings[0]?.fuelTypes ?? [],
+    yearStart: page.offerings[0]?.yearStart ?? null,
+    yearEnd: page.offerings[0]?.yearEnd ?? null,
+    isCurrent: page.offerings[0]?.isCurrent ?? false,
     indexable: page.indexable,
     updatedAt: page.updatedAt,
   };
@@ -207,15 +213,29 @@ describe('prerenderPublicCatalog', () => {
       ...html.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/g),
     ];
     expect(scripts).toHaveLength(1);
-    return JSON.parse(scripts[0]?.[1] ?? 'null') as Record<string, unknown>;
+    return JSON.parse(scripts[0]?.[1] ?? 'null') as JsonLd;
   };
+
+  /** One node of the page's JSON-LD graph, by its schema.org type. */
+  const nodeOf = (data: JsonLd, type: string) =>
+    structuredDataNodes(data).find((node) => node['@type'] === type);
+
+  /** The page's `BreadcrumbList`, as the names and URLs of its steps. */
+  const breadcrumbsOf = (html: string) =>
+    (
+      (nodeOf(structuredData(html), 'BreadcrumbList')?.itemListElement ?? []) as {
+        position: number;
+        name: string;
+        item: string;
+      }[]
+    ).map((step) => [step.position, step.name, step.item]);
 
   const robotsOf = (html: string) => html.match(/<meta name="robots" content="([^"]*)" \/>/)?.[1];
 
   const readPage = (pagePath: string) =>
     readFile(path.join(distDir, ...pagePath.split('/').filter(Boolean), 'index.html'), 'utf8');
 
-  it('writes an index.html for every variant and model in the index, and says how many', async () => {
+  it('writes an index.html for every variant, model, make and segment, and says how many', async () => {
     const summary = await run(fixtureFetch(catalogRoutes));
 
     expect(summary.paths).toEqual([
@@ -223,17 +243,23 @@ describe('prerenderPublicCatalog', () => {
       '/bikes/royal-enfield/classic-350/classic-lineup/chrome-and-red',
       '/cars/hyundai/i20',
       '/bikes/royal-enfield/classic-350',
+      '/cars/hyundai',
+      '/bikes/royal-enfield',
+      '/cars',
+      '/bikes',
     ]);
-    expect(summary).toMatchObject({ variantPages: 2, modelPages: 2 });
+    expect(summary).toMatchObject({ variantPages: 2, modelPages: 2, makePages: 2, browsePages: 2 });
     for (const pagePath of summary.paths) {
       await expect(readPage(pagePath)).resolves.toContain('<html');
     }
     expect(log).toHaveBeenCalledWith(
-      expect.stringMatching(/^Prerendered 4 pages \(2 variant pages, 2 model pages\)/),
+      expect.stringMatching(
+        /^Prerendered 8 pages \(2 variant pages, 2 model pages, 2 make pages, 2 browse pages\)/,
+      ),
     );
   });
 
-  it('reads the catalog in three requests, not one per page', async () => {
+  it('reads the catalog in three requests, not one per page, make and browse pages included', async () => {
     const fetcher = fixtureFetch(catalogRoutes);
 
     await run(fetcher);
@@ -318,7 +344,7 @@ describe('prerenderPublicCatalog', () => {
 
       expect(log).toHaveBeenCalledWith(
         expect.stringMatching(
-          /^Indexable: 0 of 4 pages\. Indexing is off .*; 2 pass the page-quality gate\.$/,
+          /^Indexable: 0 of 8 pages\. Indexing is off .*; 5 pass the page-quality gate\.$/,
         ),
       );
     });
@@ -336,7 +362,12 @@ describe('prerenderPublicCatalog', () => {
       // A model page follows its variants: indexable when any of them is.
       expect(robotsOf(await readPage('/cars/hyundai/i20'))).toBe('noindex');
       expect(robotsOf(await readPage('/bikes/royal-enfield/classic-350'))).toBe('index, follow');
-      expect(summary).toMatchObject({ indexablePages: 2, sitemap: true });
+      // A make page follows its models, and a browse page is always indexed.
+      expect(robotsOf(await readPage('/cars/hyundai'))).toBe('noindex');
+      expect(robotsOf(await readPage('/bikes/royal-enfield'))).toBe('index, follow');
+      expect(robotsOf(await readPage('/cars'))).toBe('index, follow');
+      expect(robotsOf(await readPage('/bikes'))).toBe('index, follow');
+      expect(summary).toMatchObject({ indexablePages: 5, sitemap: true });
     });
 
     it('lists exactly the indexable pages in the sitemap, absolute, with lastmod', async () => {
@@ -347,6 +378,14 @@ describe('prerenderPublicCatalog', () => {
         '<?xml version="1.0" encoding="UTF-8"?>\n' +
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
           '  <url>\n' +
+          `    <loc>${ORIGIN}/bikes</loc>\n` +
+          '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
+          '  </url>\n' +
+          '  <url>\n' +
+          `    <loc>${ORIGIN}/bikes/royal-enfield</loc>\n` +
+          '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
+          '  </url>\n' +
+          '  <url>\n' +
           `    <loc>${ORIGIN}/bikes/royal-enfield/classic-350</loc>\n` +
           '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
           '  </url>\n' +
@@ -354,10 +393,15 @@ describe('prerenderPublicCatalog', () => {
           `    <loc>${ORIGIN}${bikePath}</loc>\n` +
           '    <lastmod>2026-08-01T12:34:56Z</lastmod>\n' +
           '  </url>\n' +
+          '  <url>\n' +
+          `    <loc>${ORIGIN}/cars</loc>\n` +
+          '    <lastmod>2026-07-10T00:00:00Z</lastmod>\n' +
+          '  </url>\n' +
           '</urlset>\n',
       );
       expect(sitemap).not.toContain(carPath);
       expect(sitemap).not.toContain('/cars/hyundai/i20<');
+      expect(sitemap).not.toContain('/cars/hyundai<');
     });
 
     it('points robots.txt at the sitemap on the canonical origin', async () => {
@@ -368,7 +412,7 @@ describe('prerenderPublicCatalog', () => {
       );
     });
 
-    it('still writes a sitemap when no page passes the gate', async () => {
+    it('lists only the browse page when no page passes the gate', async () => {
       const thin = { ...bikePage(), indexable: false };
       const fetcher = fixtureFetch({
         '/public-catalog/index': () => ok({ variants: [indexEntry(thin)] }),
@@ -380,7 +424,9 @@ describe('prerenderPublicCatalog', () => {
       await run(fetcher, { indexing: true });
 
       const sitemap = await readFile(path.join(distDir, 'sitemap.xml'), 'utf8');
-      expect(sitemap).not.toContain('<url>');
+      expect([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])).toEqual([
+        `${ORIGIN}/bikes`,
+      ]);
       expect(sitemap).toContain('</urlset>');
     });
 
@@ -388,7 +434,7 @@ describe('prerenderPublicCatalog', () => {
       await run(fixtureFetch(catalogRoutes), { indexing: true });
 
       expect(log).toHaveBeenCalledWith(
-        expect.stringMatching(/^Indexable: 2 of 4 pages\. Indexing is on/),
+        expect.stringMatching(/^Indexable: 5 of 8 pages\. Indexing is on/),
       );
     });
   });
@@ -445,8 +491,8 @@ describe('prerenderPublicCatalog', () => {
     await run(fixtureFetch(catalogRoutes));
 
     const car = structuredData(await readPage('/cars/hyundai/i20/i20-lineup/asta'));
-    expect(car).toMatchObject({
-      '@context': 'https://schema.org',
+    expect(car['@context']).toBe('https://schema.org');
+    expect(nodeOf(car, 'Car')).toMatchObject({
       '@type': 'Car',
       name: 'Hyundai i20 Asta',
       url: `${ORIGIN}/cars/hyundai/i20/i20-lineup/asta`,
@@ -457,7 +503,7 @@ describe('prerenderPublicCatalog', () => {
     );
     // In the head, where a crawler reading the static HTML finds it.
     expect(bikeHtml.indexOf('application/ld+json')).toBeLessThan(bikeHtml.indexOf('</head>'));
-    expect(structuredData(bikeHtml)).toMatchObject({
+    expect(nodeOf(structuredData(bikeHtml), 'Motorcycle')).toMatchObject({
       '@type': 'Motorcycle',
       name: 'Royal Enfield Classic 350 Chrome & Red',
       vehicleEngine: {
@@ -597,8 +643,7 @@ describe('prerenderPublicCatalog', () => {
         '<meta name="description" content="All 1 variant of the Hyundai i20 (2020 – present · Petrol), by generation',
       );
       expect(head.match(/name="description"/g)).toHaveLength(1);
-      expect(structuredData(html)).toEqual({
-        '@context': 'https://schema.org',
+      expect(nodeOf(structuredData(html), 'Car')).toEqual({
         '@type': 'Car',
         name: 'Hyundai i20',
         url: `${ORIGIN}${modelPath}`,
@@ -607,7 +652,9 @@ describe('prerenderPublicCatalog', () => {
         fuelType: 'Petrol',
         vehicleModelDate: '2020',
       });
-      expect(structuredData(await readPage('/bikes/royal-enfield/classic-350'))).toMatchObject({
+      expect(
+        nodeOf(structuredData(await readPage('/bikes/royal-enfield/classic-350')), 'Motorcycle'),
+      ).toMatchObject({
         '@type': 'Motorcycle',
         name: 'Royal Enfield Classic 350',
       });
@@ -686,6 +733,151 @@ describe('prerenderPublicCatalog', () => {
       });
 
       await expect(run(fetcher)).rejects.toThrow(/\/cars\/hyundai\/i20 and its variants disagree/);
+    });
+  });
+
+  describe('make and browse pages', () => {
+    const rootOf = (html: string) => html.slice(html.indexOf('<div id="root">'));
+    const headOf = (html: string) => html.slice(0, html.indexOf('</head>'));
+
+    it('puts a make page’s models and breadcrumbs in the static markup', async () => {
+      await run(fixtureFetch(catalogRoutes));
+      const root = rootOf(await readPage('/cars/hyundai'));
+
+      expect(root).toMatch(/<h1[^>]*>Hyundai cars<\/h1>/);
+      expect(root).toMatch(/<a[^>]*href="\/cars\/hyundai\/i20"[^>]*>.*Hyundai i20/);
+      expect(root).toContain('Petrol · 2023 – present · 1 variant');
+      expect(root).toMatch(/<nav aria-label="Breadcrumb"[^>]*>.*href="\/cars".*>Cars</);
+      expect(root).not.toContain('Loading the models');
+    });
+
+    it('puts a browse page’s makes in the static markup', async () => {
+      await run(fixtureFetch(catalogRoutes));
+
+      const cars = rootOf(await readPage('/cars'));
+      expect(cars).toMatch(/<h1[^>]*>Cars by make<\/h1>/);
+      expect(cars).toMatch(/<a[^>]*href="\/cars\/hyundai"[^>]*>.*Hyundai.*1 model/);
+      expect(cars).not.toContain('royal-enfield');
+      expect(cars).not.toContain('Loading the makes');
+
+      const bikes = rootOf(await readPage('/bikes'));
+      expect(bikes).toMatch(/<h1[^>]*>Bikes by make<\/h1>/);
+      expect(bikes).toContain('href="/bikes/royal-enfield"');
+    });
+
+    it('gives make and browse pages their own title, absolute canonical and preview tags', async () => {
+      await run(fixtureFetch(catalogRoutes));
+
+      const make = headOf(await readPage('/bikes/royal-enfield'));
+      const makeTitle = 'Royal Enfield bikes — models, service schedules and specs | Vehicle Vault';
+      expect(make).toContain(`<title>${makeTitle}</title>`);
+      expect(make).toContain(`<link rel="canonical" href="${ORIGIN}/bikes/royal-enfield" />`);
+      expect(make).toContain(`<meta property="og:url" content="${ORIGIN}/bikes/royal-enfield" />`);
+      expect(make).toContain(`<meta property="og:title" content="${makeTitle}" />`);
+      expect(make.match(/name="description"/g)).toHaveLength(1);
+
+      const browse = headOf(await readPage('/cars'));
+      const browseTitle = 'Cars by make — models, service schedules and specs | Vehicle Vault';
+      expect(browse).toContain(`<title>${browseTitle}</title>`);
+      expect(browse).toContain(`<link rel="canonical" href="${ORIGIN}/cars" />`);
+      expect(browse).toContain(`<meta property="og:url" content="${ORIGIN}/cars" />`);
+      expect(browse).toContain(
+        '<meta name="description" content="Service schedules, running costs and specs for cars from 1 make sold in India: Hyundai." />',
+      );
+    });
+
+    it('gives make, model and variant pages a valid BreadcrumbList down to themselves', async () => {
+      await run(fixtureFetch(catalogRoutes));
+
+      expect(breadcrumbsOf(await readPage('/cars/hyundai'))).toEqual([
+        [1, 'Cars', `${ORIGIN}/cars`],
+        [2, 'Hyundai', `${ORIGIN}/cars/hyundai`],
+      ]);
+      expect(breadcrumbsOf(await readPage('/bikes/royal-enfield/classic-350'))).toEqual([
+        [1, 'Bikes', `${ORIGIN}/bikes`],
+        [2, 'Royal Enfield', `${ORIGIN}/bikes/royal-enfield`],
+        [3, 'Classic 350', `${ORIGIN}/bikes/royal-enfield/classic-350`],
+      ]);
+      expect(breadcrumbsOf(await readPage('/cars/hyundai/i20/i20-lineup/asta'))).toEqual([
+        [1, 'Cars', `${ORIGIN}/cars`],
+        [2, 'Hyundai', `${ORIGIN}/cars/hyundai`],
+        [3, 'i20', `${ORIGIN}/cars/hyundai/i20`],
+        [4, 'Asta', `${ORIGIN}/cars/hyundai/i20/i20-lineup/asta`],
+      ]);
+      // A browse page is the top: its JSON-LD lists its makes and has no trail.
+      const browse = structuredData(await readPage('/cars'));
+      expect(browse).toMatchObject({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        itemListElement: [{ position: 1, name: 'Hyundai', url: `${ORIGIN}/cars/hyundai` }],
+      });
+      expect(nodeOf(browse, 'BreadcrumbList')).toBeUndefined();
+    });
+
+    it('embeds the make and browse data the browser hydrates from', async () => {
+      await run(fixtureFetch(catalogRoutes));
+      const queriesOf = (html: string) =>
+        JSON.parse(
+          html.match(
+            new RegExp(
+              `<script type="application/json" id="${PRERENDER_STATE_ELEMENT_ID}">(.*?)</script>`,
+            ),
+          )?.[1] ?? '{}',
+        ).queries as { queryKey: unknown[]; state: { data: unknown } }[];
+
+      const [make, ...otherMakeQueries] = queriesOf(await readPage('/cars/hyundai'));
+      expect(otherMakeQueries).toHaveLength(0);
+      expect(make?.queryKey).toEqual(['publicCatalog', 'make', 'cars', 'hyundai']);
+      expect(make?.state.data).toMatchObject({
+        make: { name: 'Hyundai', slug: 'hyundai' },
+        models: [{ slug: 'i20', variantCount: 1 }],
+      });
+
+      const [browse, ...otherBrowseQueries] = queriesOf(await readPage('/bikes'));
+      expect(otherBrowseQueries).toHaveLength(0);
+      expect(browse?.queryKey).toEqual(['publicCatalog', 'browse', 'bikes']);
+      expect(browse?.state.data).toEqual({
+        segment: 'bikes',
+        makes: [{ name: 'Royal Enfield', slug: 'royal-enfield', modelCount: 1 }],
+      });
+    });
+
+    it('merges a make’s car and SUV rows into one make page, dated by its newest variant', async () => {
+      const i20 = carPage();
+      const creta: PublicCatalogVariantPage = {
+        ...carPage(),
+        vehicleType: VehicleType.SUV,
+        model: { name: 'Creta', slug: 'creta' },
+        generation: { ...carPage().generation, name: 'Creta lineup', slug: 'creta-lineup' },
+        variant: { name: 'SX', slug: 'sx' },
+        specs: { engineCc: 1497 } as PublicCatalogSpec,
+        indexable: true,
+        updatedAt: '2026-09-01T00:00:00.000Z',
+      };
+      const fetcher = fixtureFetch({
+        '/public-catalog/index': () => ok({ variants: [indexEntry(i20), indexEntry(creta)] }),
+        '/public-catalog/variant-pages?page=1&pageSize=200': () =>
+          ok({ items: [i20, creta], page: 1, pageSize: 200, total: 2, hasMore: false }),
+        [MODEL_PAGES]: () => ok(modelPagesBody([modelPageOf([i20]), modelPageOf([creta])])),
+      });
+
+      const summary = await run(fetcher, { indexing: true });
+
+      expect(summary).toMatchObject({ makePages: 1, browsePages: 1 });
+      expect(summary.paths).not.toContain('/bikes');
+      const root = rootOf(await readPage('/cars/hyundai'));
+      expect(root).toContain('href="/cars/hyundai/creta"');
+      expect(root).toContain('href="/cars/hyundai/i20"');
+      expect(rootOf(await readPage('/cars'))).toContain('2 models');
+      // The Creta passes the gate, so its make page is indexed too.
+      expect(robotsOf(await readPage('/cars/hyundai'))).toBe('index, follow');
+      const sitemap = await readFile(path.join(distDir, 'sitemap.xml'), 'utf8');
+      expect(sitemap).toContain(
+        `<loc>${ORIGIN}/cars/hyundai</loc>\n    <lastmod>2026-09-01T00:00:00Z</lastmod>`,
+      );
+      expect(sitemap).toContain(
+        `<loc>${ORIGIN}/cars</loc>\n    <lastmod>2026-09-01T00:00:00Z</lastmod>`,
+      );
     });
   });
 });

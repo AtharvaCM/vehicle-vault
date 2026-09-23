@@ -8,13 +8,20 @@ import type {
   PublicCatalogVariantPage,
 } from '@vehicle-vault/shared';
 import {
+  buildPublicCatalogBrowsePage,
+  buildPublicCatalogMakePage,
   PUBLIC_CATALOG_MODEL_PAGE_BATCH_MAX,
   PUBLIC_CATALOG_VARIANT_PAGE_BATCH_MAX,
+  uniquePublicCatalogVariants,
+  type PublicCatalogSegment,
 } from '@vehicle-vault/shared';
 
 import {
+  browsePageHead,
   CANONICAL_ORIGIN,
+  makePageHead,
   modelPageHead,
+  publicCatalogPath,
   publicModelPath,
   publicVariantPath,
   renderHeadTags,
@@ -58,6 +65,8 @@ export type PrerenderSummary = {
   paths: string[];
   variantPages: number;
   modelPages: number;
+  makePages: number;
+  browsePages: number;
   /** Pages without `noindex`: the flag is on and the gate passed them. The sitemap lists exactly these. */
   indexablePages: number;
   /** Whether `sitemap.xml` was written. It is when indexing is on, even if it lists nothing. */
@@ -70,8 +79,7 @@ export class PrerenderError extends Error {
 
 /**
  * A page the prerender writes: where it lives, the queries its route reads,
- * and its head. Variant and model pages are jobs; make and browse pages (#177)
- * become jobs the same way, with their own payloads and heads.
+ * and its head. Variant, model, make and browse pages are all jobs.
  */
 type PageJob = {
   path: string;
@@ -93,9 +101,8 @@ const SAFE_SEGMENT = /^[a-z0-9][a-z0-9_-]*$/i;
 
 /**
  * Writes a static `index.html` for every publishable catalog variant, and for
- * every model with one, into the client build, so the page's content and link
- * preview exist before any
- * JavaScript runs. Fails — and so fails the deploy — when the catalog API
+ * every model, make and segment with one, into the client build, so the
+ * page's content and link preview exist before any JavaScript runs. Fails — and so fails the deploy — when the catalog API
  * cannot be read or has nothing in it, rather than shipping an empty catalog.
  */
 export async function prerenderPublicCatalog(options: PrerenderOptions): Promise<PrerenderSummary> {
@@ -131,7 +138,10 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
     getData,
   );
   const modelPageJobs = modelJobs(index.variants, modelPayloads, { origin, indexing });
-  const jobs = [...variantPageJobs, ...modelPageJobs];
+  // Make and browse pages are summaries of the index, built by the same shared
+  // functions the API serves them with, so they need no requests of their own.
+  const { makePageJobs, browsePageJobs } = listingJobs(index.variants, { origin, indexing });
+  const jobs = [...variantPageJobs, ...modelPageJobs, ...makePageJobs, ...browsePageJobs];
 
   let written = 0;
   for (const job of jobs) {
@@ -178,7 +188,8 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
   const passing = jobs.filter((job) => job.passesGate).length;
   log(
     `Prerendered ${written} pages (${variantPageJobs.length} variant pages, ` +
-      `${modelPageJobs.length} model pages) into ${distDir} in ${seconds}s.`,
+      `${modelPageJobs.length} model pages, ${makePageJobs.length} make pages, ` +
+      `${browsePageJobs.length} browse pages) into ${distDir} in ${seconds}s.`,
   );
   log(
     indexing
@@ -192,6 +203,8 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
     paths: jobs.map((job) => job.path),
     variantPages: variantPageJobs.length,
     modelPages: modelPageJobs.length,
+    makePages: makePageJobs.length,
+    browsePages: browsePageJobs.length,
     indexablePages: indexed.length,
     sitemap: indexing,
   };
@@ -405,6 +418,55 @@ function modelJobs(
   }
 
   return jobs;
+}
+
+const SEGMENTS: PublicCatalogSegment[] = ['cars', 'bikes'];
+
+/**
+ * A browse page for each segment the index has anything in, and a make page for
+ * each make it lists. A make page groups by address, as model pages do, so
+ * `/cars/hyundai` lists the models of Hyundai's car and SUV rows alike, and
+ * each variant address counts once (the first index row wins).
+ */
+function listingJobs(
+  entries: PublicCatalogIndexEntry[],
+  { origin, indexing }: { origin: string; indexing: boolean },
+): { makePageJobs: PageJob[]; browsePageJobs: PageJob[] } {
+  const unique = uniquePublicCatalogVariants(entries);
+  const makePageJobs: PageJob[] = [];
+  const browsePageJobs: PageJob[] = [];
+
+  for (const segment of SEGMENTS) {
+    const inSegment = unique.filter((entry) => entry.segment === segment);
+    if (inSegment.length === 0) continue;
+    const browse = buildPublicCatalogBrowsePage(inSegment, segment);
+
+    for (const { slug } of browse.makes) {
+      const make = buildPublicCatalogMakePage(inSegment, segment, slug);
+      if (!make) continue;
+      makePageJobs.push({
+        path: publicCatalogPath({ segment, make: slug }),
+        queries: [{ queryKey: queryKeys.publicCatalog.make(segment, slug), data: make }],
+        head: makePageHead(make, { origin, indexing }),
+        passesGate: make.indexable,
+        indexed: isPageIndexed(make, indexing),
+        // The newest `updatedAt` of the variants under it.
+        lastmod: make.updatedAt,
+      });
+    }
+
+    // A browse page is the way in to every make: indexed whenever indexing is.
+    browsePageJobs.push({
+      path: publicCatalogPath({ segment }),
+      queries: [{ queryKey: queryKeys.publicCatalog.browse(segment), data: browse }],
+      head: browsePageHead(browse, { origin, indexing }),
+      passesGate: true,
+      indexed: indexing,
+      lastmod: newestUpdatedAt(inSegment.map((entry) => entry.updatedAt)),
+    });
+  }
+
+  return { makePageJobs, browsePageJobs };
 }
 
 type ApiEnvelope<T> = { success?: boolean; data?: T };

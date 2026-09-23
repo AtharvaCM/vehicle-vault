@@ -94,6 +94,28 @@ describe('PublicModelPageView', () => {
     expect(document.title).toBe(modelPageTitle(modelPage()));
   });
 
+  it('has breadcrumbs up to its make and browse pages, ending on itself', () => {
+    render(
+      <PublicModelPageView
+        page={modelPage({
+          segment: 'bikes',
+          vehicleType: VehicleType.Motorcycle,
+          make: { name: 'Royal Enfield', slug: 'royal-enfield' },
+          model: { name: 'Classic 350', slug: 'classic-350' },
+        })}
+      />,
+    );
+    const trail = within(screen.getByRole('navigation', { name: 'Breadcrumb' }));
+
+    expect(
+      trail.getAllByRole('link').map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['Bikes', '/bikes'],
+      ['Royal Enfield', '/bikes/royal-enfield'],
+    ]);
+    expect(trail.getByText('Classic 350')).toHaveAttribute('aria-current', 'page');
+  });
+
   it('lists the variants by generation, current first, each linking to its own page', () => {
     render(<PublicModelPageView page={modelPage()} />);
 

@@ -39,6 +39,10 @@ import {
   carsVariantRoute,
   bikesModelRoute,
   carsModelRoute,
+  bikesMakeRoute,
+  carsMakeRoute,
+  bikesBrowseRoute,
+  carsBrowseRoute,
 } from '@/routes';
 
 const protectedRouteTree = appRoute.addChildren([
@@ -79,6 +83,10 @@ export const routeTree = rootRoute.addChildren([
   bikesVariantRoute,
   carsModelRoute,
   bikesModelRoute,
+  carsMakeRoute,
+  bikesMakeRoute,
+  carsBrowseRoute,
+  bikesBrowseRoute,
   protectedRouteTree,
 ]);
 
