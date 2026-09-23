@@ -1,3 +1,17 @@
+## [1.65.9](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.8...v1.65.9) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** show which vehicles are selected before bulk delete ([dd150e9](https://github.com/AtharvaCM/vehicle-vault/commit/dd150e99d9419d45d3638727854d27ccbfabfc46))
+
+## [1.65.8](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.7...v1.65.8) (2026-09-23)
+
+
+### Bug Fixes
+
+* **maintenance:** save every line item's amount, not only typed ones ([c2931f1](https://github.com/AtharvaCM/vehicle-vault/commit/c2931f1f18f241adee5c4d57f766761535d542c4))
+
 ## [1.65.7](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.6...v1.65.7) (2026-09-23)
 
 
