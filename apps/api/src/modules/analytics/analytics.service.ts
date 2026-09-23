@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { AuditResourceType, Prisma } from '@prisma/client';
 import {
   MaintenanceRecordStatus,
+  TCO_MIN_COST_PER_KM_DISTANCE_KM,
   type CostSplitResponse,
   type CostTrendPoint,
   type CostTrendResponse,
@@ -9,6 +10,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { accruedInRange, summarize, type LoanParams } from '../vehicle-loans/amortization';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -434,8 +436,12 @@ export class AnalyticsService {
    * `purchasePrice` is set, the TCO field includes it on top of the net
    * spend so the figure reflects "money out the door" for the asset.
    *
-   * Falls back to fuel-log odometer range when `purchaseOdometer` isn't
-   * recorded, so the card still computes ₹/km on existing vehicles.
+   * ₹/km divides by the distance from `purchaseOdometer` to the current
+   * odometer. Without a purchase odometer it measures from the earliest reading
+   * the app holds — a confirmed service, a fill, or the odometer the vehicle was
+   * added with — and below TCO_MIN_COST_PER_KM_DISTANCE_KM it reports no figure
+   * at all rather than one inflated by dividing a year's costs by a few hundred
+   * kilometres.
    */
   async getTco(userId: string, vehicleId: string): Promise<TcoResponse> {
     const vehicle = await this.prisma.vehicle.findFirst({
@@ -451,6 +457,9 @@ export class AnalyticsService {
       policies,
       firstFuel,
       lastFuel,
+      firstRecord,
+      lastRecord,
+      creation,
       loans,
     ] = await Promise.all([
       this.prisma.maintenanceRecord.aggregate({
@@ -473,15 +482,37 @@ export class AnalyticsService {
         where: { vehicleId, premiumAmount: { not: null } },
         select: { premiumAmount: true },
       }),
+      // Readings of 0 are "not recorded" placeholders, not a trip back to new.
       this.prisma.fuelLog.findFirst({
-        where: { vehicleId },
+        where: { vehicleId, odometer: { gt: 0 } },
         orderBy: { odometer: 'asc' },
         select: { odometer: true },
       }),
       this.prisma.fuelLog.findFirst({
-        where: { vehicleId },
+        where: { vehicleId, odometer: { gt: 0 } },
         orderBy: { odometer: 'desc' },
         select: { odometer: true },
+      }),
+      this.prisma.maintenanceRecord.findFirst({
+        where: { vehicleId, ...CONFIRMED_MAINTENANCE, odometer: { gt: 0 } },
+        orderBy: { odometer: 'asc' },
+        select: { odometer: true },
+      }),
+      this.prisma.maintenanceRecord.findFirst({
+        where: { vehicleId, ...CONFIRMED_MAINTENANCE, odometer: { gt: 0 } },
+        orderBy: { odometer: 'desc' },
+        select: { odometer: true },
+      }),
+      // The odometer the vehicle was added with lives only in the audit trail:
+      // later edits and fills overwrite `Vehicle.odometer`.
+      this.prisma.auditEvent.findFirst({
+        where: {
+          resourceType: AuditResourceType.vehicle,
+          resourceId: vehicleId,
+          action: AUDIT_ACTIONS.vehicle.created,
+        },
+        orderBy: { occurredAt: 'asc' },
+        select: { after: true },
       }),
       this.prisma.vehicleLoan.findMany({
         where: { vehicleId },
@@ -535,12 +566,19 @@ export class AnalyticsService {
       .minus(insurerReimbursed);
     const tco = vehicle.purchasePrice ? netSpend.plus(vehicle.purchasePrice) : null;
 
-    let kmSincePurchase = 0;
-    if (vehicle.purchaseOdometer != null) {
-      kmSincePurchase = Math.max(0, vehicle.odometer - vehicle.purchaseOdometer);
-    } else if (firstFuel && lastFuel) {
-      kmSincePurchase = Math.max(0, lastFuel.odometer - firstFuel.odometer);
-    }
+    // Services don't move the vehicle's odometer forward, so the latest one can
+    // be ahead of it.
+    const currentOdometer = Math.max(
+      vehicle.odometer,
+      lastFuel?.odometer ?? 0,
+      lastRecord?.odometer ?? 0,
+    );
+    const addedWith = odometerAddedWith(creation?.after);
+    const startOdometer =
+      vehicle.purchaseOdometer ??
+      minPositive([firstFuel?.odometer, firstRecord?.odometer, addedWith]);
+    const kmSincePurchase =
+      startOdometer != null ? Math.max(0, currentOdometer - startOdometer) : 0;
 
     let ownershipMonths: number | null = null;
     if (vehicle.purchaseDate) {
@@ -551,7 +589,10 @@ export class AnalyticsService {
       ownershipMonths = Math.max(0, months);
     }
 
-    const costPerKm = kmSincePurchase > 0 ? netSpend.div(kmSincePurchase).toFixed(2) : null;
+    const costPerKm =
+      kmSincePurchase >= TCO_MIN_COST_PER_KM_DISTANCE_KM
+        ? netSpend.div(kmSincePurchase).toFixed(2)
+        : null;
     const costPerMonth =
       ownershipMonths && ownershipMonths > 0 ? netSpend.div(ownershipMonths).toFixed(2) : null;
 
@@ -581,4 +622,16 @@ export class AnalyticsService {
       },
     };
   }
+}
+
+/** The odometer in a `vehicle.created` audit snapshot, when it holds a real one. */
+function odometerAddedWith(after: Prisma.JsonValue | undefined): number | null {
+  if (!after || typeof after !== 'object' || Array.isArray(after)) return null;
+  const odometer = after.odometer;
+  return typeof odometer === 'number' && odometer > 0 ? odometer : null;
+}
+
+function minPositive(values: (number | null | undefined)[]): number | null {
+  const known = values.filter((v): v is number => v != null && v > 0);
+  return known.length > 0 ? Math.min(...known) : null;
 }
