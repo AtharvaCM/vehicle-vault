@@ -103,7 +103,7 @@ const slugs = {
 
 describe('PublicCatalogService', () => {
   const prisma = {
-    vehicleCatalogVariant: { findFirst: vi.fn() },
+    vehicleCatalogVariant: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn() },
     serviceInterval: { findMany: vi.fn() },
   };
 
@@ -309,6 +309,110 @@ describe('PublicCatalogService', () => {
       const page = await service.getVariantPage(slugs);
 
       expect(page.updatedAt).toBe('2026-07-10T00:00:00.000Z');
+    });
+  });
+  const publishableWhere = {
+    offerings: { some: {} },
+    generation: {
+      model: {
+        make: {
+          marketCode: 'IN',
+          vehicleType: { in: ['car', 'suv', 'van', 'motorcycle'] },
+        },
+      },
+    },
+  };
+
+  describe('getIndex', () => {
+    it('lists every publishable variant across both segments, in a stable order', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([]);
+
+      await service.getIndex();
+
+      expect(prisma.vehicleCatalogVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: publishableWhere, orderBy: { id: 'asc' } }),
+      );
+    });
+
+    it('gives each variant its segment, names, slugs and newest change, and nothing else', async () => {
+      const bike = variantRow({ id: 'variant-2', name: 'Classic 350', slug: 'classic-350' });
+      bike.generation.model.make.vehicleType = 'motorcycle';
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([variantRow(), bike]);
+
+      const index = await service.getIndex();
+
+      expect(index.variants).toEqual([
+        {
+          segment: 'cars',
+          vehicleType: 'car',
+          make: { name: 'Hyundai', slug: 'hyundai' },
+          model: { name: 'i20', slug: 'i20' },
+          generation: { name: 'i20 lineup', slug: 'i20-lineup' },
+          variant: { name: 'Asta', slug: 'asta' },
+          updatedAt: '2026-07-10T00:00:00.000Z',
+        },
+        expect.objectContaining({
+          segment: 'bikes',
+          vehicleType: 'motorcycle',
+          variant: { name: 'Classic 350', slug: 'classic-350' },
+        }),
+      ]);
+      const serialized = JSON.stringify(index);
+      for (const forbidden of ['sourceName', 'sourceUrl', 'carwale', 'variant-1', 'make-1']) {
+        expect(serialized).not.toContain(forbidden);
+      }
+    });
+
+    it('drops a row of a type with no public segment', async () => {
+      const truck = variantRow();
+      truck.generation.model.make.vehicleType = 'truck';
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([truck]);
+
+      await expect(service.getIndex()).resolves.toEqual({ variants: [] });
+    });
+  });
+
+  describe('getVariantPageBatch', () => {
+    it('reads one page of publishable variants in index order', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([variantRow()]);
+      prisma.vehicleCatalogVariant.count.mockResolvedValue(401);
+
+      const batch = await service.getVariantPageBatch({ page: 3, pageSize: 200 });
+
+      expect(prisma.vehicleCatalogVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: publishableWhere,
+          orderBy: { id: 'asc' },
+          skip: 400,
+          take: 200,
+        }),
+      );
+      expect(prisma.vehicleCatalogVariant.count).toHaveBeenCalledWith({ where: publishableWhere });
+      expect(batch).toMatchObject({ page: 3, pageSize: 200, total: 401, hasMore: false });
+    });
+
+    it('says there is more while pages remain', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([variantRow()]);
+      prisma.vehicleCatalogVariant.count.mockResolvedValue(401);
+
+      const batch = await service.getVariantPageBatch({ page: 2, pageSize: 200 });
+
+      expect(batch.hasMore).toBe(true);
+    });
+
+    it('returns for each variant exactly what its own page endpoint returns', async () => {
+      const bike = variantRow({ id: 'variant-2', slug: 'classic-350' });
+      bike.generation.model.make.vehicleType = 'motorcycle';
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([variantRow(), bike]);
+      prisma.vehicleCatalogVariant.count.mockResolvedValue(2);
+
+      const batch = await service.getVariantPageBatch({ page: 1, pageSize: 200 });
+      const single = await service.getVariantPage(slugs);
+
+      expect(batch.items).toHaveLength(2);
+      expect(batch.items[0]).toEqual(single);
+      expect(batch.items[1]).toMatchObject({ segment: 'bikes', vehicleType: 'motorcycle' });
+      expect(JSON.stringify(batch)).not.toContain('sourceUrl');
     });
   });
 });

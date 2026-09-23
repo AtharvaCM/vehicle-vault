@@ -5,7 +5,7 @@
   },
   "framework": "vite",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @vehicle-vault/web build",
+  "buildCommand": "PRERENDER_API_BASE_URL=https://vehiclevault.middle-earth.in/api pnpm --filter @vehicle-vault/web build:prerendered",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     {

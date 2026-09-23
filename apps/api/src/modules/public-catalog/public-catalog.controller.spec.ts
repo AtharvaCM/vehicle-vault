@@ -1,10 +1,13 @@
 import { NotFoundException } from '@nestjs/common';
 import { HEADERS_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { describe, expect, it, vi } from 'vitest';
 
 import { IS_PUBLIC_KEY } from '../../common/auth/decorators/public.decorator';
 import { RATE_LIMIT_BUCKET } from '../../common/rate-limit/rate-limit.types';
+import { VariantPageBatchQueryDto } from './dto/variant-page-batch-query.dto';
 import { PUBLIC_CATALOG_CACHE_CONTROL, PublicCatalogController } from './public-catalog.controller';
 
 const handlers = Object.getOwnPropertyNames(PublicCatalogController.prototype).filter(
@@ -49,6 +52,49 @@ describe('PublicCatalogController', () => {
       controller.getVariantPage('trucks', 'tata', 'ace', 'ace-lineup', 'base'),
     ).rejects.toBeInstanceOf(NotFoundException);
     expect(service.getVariantPage).not.toHaveBeenCalled();
+  });
+
+  it('covers the index and the bulk variant pages', () => {
+    expect(handlers).toEqual(
+      expect.arrayContaining(['getIndex', 'getVariantPageBatch', 'getVariantPage']),
+    );
+  });
+
+  it('wraps the index in the success envelope', async () => {
+    const service = { getIndex: vi.fn().mockResolvedValue({ variants: [] }) };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getIndex()).resolves.toEqual({
+      success: true,
+      data: { variants: [] },
+    });
+  });
+
+  it('reads the first full batch of variant pages when no page is asked for', async () => {
+    const batch = { items: [], page: 1, pageSize: 200, total: 0, hasMore: false };
+    const service = { getVariantPageBatch: vi.fn().mockResolvedValue(batch) };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getVariantPageBatch({})).resolves.toEqual({
+      success: true,
+      data: batch,
+    });
+    expect(service.getVariantPageBatch).toHaveBeenCalledWith({ page: 1, pageSize: 200 });
+
+    await controller.getVariantPageBatch({ page: 3, pageSize: 50 });
+    expect(service.getVariantPageBatch).toHaveBeenLastCalledWith({ page: 3, pageSize: 50 });
+  });
+
+  it('refuses a batch larger than the cap or a page below one', async () => {
+    const errorsFor = async (query: Record<string, string>) =>
+      (await validate(plainToInstance(VariantPageBatchQueryDto, query))).map(
+        (error) => error.property,
+      );
+
+    expect(await errorsFor({ page: '2', pageSize: '200' })).toEqual([]);
+    expect(await errorsFor({ pageSize: '201' })).toEqual(['pageSize']);
+    expect(await errorsFor({ page: '0' })).toEqual(['page']);
+    expect(await errorsFor({ page: 'two' })).toEqual(['page']);
   });
 
   it('wraps the page in the success envelope', async () => {

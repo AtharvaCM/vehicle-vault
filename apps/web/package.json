@@ -8,13 +8,16 @@
     "dev": "vite",
     "prebuild": "pnpm --filter @vehicle-vault/shared build",
     "build": "tsc --noEmit && vite build",
+    "build:prerendered": "pnpm run build && pnpm run build:ssr && pnpm run prerender",
+    "build:ssr": "NODE_ENV=production vite build --ssr src/prerender/cli.ts --outDir dist-ssr --emptyOutDir",
+    "prerender": "NODE_ENV=production node dist-ssr/cli.js",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test --config=playwright.config.ts",
     "format": "prettier --check .",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist dist-ssr"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

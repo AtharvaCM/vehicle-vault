@@ -1,14 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import {
   DEFAULT_VEHICLE_CATALOG_MARKET,
   FuelType,
   PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES,
+  publicCatalogSegmentFor,
   type MaintenanceCategory,
+  type PublicCatalogIndex,
+  type PublicCatalogIndexEntry,
   type PublicCatalogOffering,
   type PublicCatalogSchedule,
   type PublicCatalogSegment,
   type PublicCatalogSpec,
   type PublicCatalogVariantPage,
+  type PublicCatalogVariantPageBatch,
   type VehicleType,
 } from '@vehicle-vault/shared';
 
@@ -78,6 +83,38 @@ type OfferingRow = {
   updatedAt: Date;
 };
 
+const VARIANT_PAGE_INCLUDE = {
+  offerings: true,
+  spec: true,
+  generation: { include: { model: { include: { make: true } } } },
+} satisfies Prisma.VehicleCatalogVariantInclude;
+
+type VariantPageRow = Prisma.VehicleCatalogVariantGetPayload<{
+  include: typeof VARIANT_PAGE_INCLUDE;
+}>;
+
+/**
+ * Every publishable variant, across both segments: the same rule the slug
+ * lookup applies, without the slugs. The index and the bulk pages share it, so
+ * the prerender never lists a page the variant endpoint would call not found.
+ */
+const PUBLISHABLE_VARIANT_WHERE = {
+  offerings: { some: {} },
+  generation: {
+    model: {
+      make: {
+        marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
+        vehicleType: { in: Object.values(PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES).flat() },
+      },
+    },
+  },
+} satisfies Prisma.VehicleCatalogVariantWhereInput;
+
+/** Index and bulk pages list variants in the same, stable order. */
+const PUBLISHABLE_VARIANT_ORDER = {
+  id: 'asc',
+} satisfies Prisma.VehicleCatalogVariantOrderByWithRelationInput;
+
 export type PublicVariantSlugs = {
   segment: PublicCatalogSegment;
   make: string;
@@ -117,17 +154,114 @@ export class PublicCatalogService {
           },
         },
       },
-      include: {
-        offerings: true,
-        spec: true,
-        generation: { include: { model: { include: { make: true } } } },
-      },
+      include: VARIANT_PAGE_INCLUDE,
     });
 
     if (!variant) {
       throw new NotFoundException('No public catalog page at this address.');
     }
 
+    return this.toVariantPage(variant, slugs.segment);
+  }
+
+  /**
+   * Every publishable variant with its names, slugs and last change, in one
+   * response. The build-time prerender walks it to decide which pages to write.
+   */
+  async getIndex(): Promise<PublicCatalogIndex> {
+    const variants = await this.prisma.vehicleCatalogVariant.findMany({
+      where: PUBLISHABLE_VARIANT_WHERE,
+      orderBy: PUBLISHABLE_VARIANT_ORDER,
+      select: {
+        name: true,
+        slug: true,
+        updatedAt: true,
+        offerings: { select: { updatedAt: true } },
+        spec: { select: { updatedAt: true } },
+        generation: {
+          select: {
+            name: true,
+            slug: true,
+            model: {
+              select: {
+                name: true,
+                slug: true,
+                make: { select: { name: true, slug: true, vehicleType: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const entries: PublicCatalogIndexEntry[] = [];
+    for (const variant of variants) {
+      const { generation } = variant;
+      const { model } = generation;
+      const { make } = model;
+      const vehicleType = make.vehicleType as VehicleType;
+      const segment = publicCatalogSegmentFor(vehicleType);
+      if (!segment) continue;
+
+      entries.push({
+        segment,
+        vehicleType,
+        make: { name: make.name, slug: make.slug },
+        model: { name: model.name, slug: model.slug },
+        generation: { name: generation.name, slug: generation.slug },
+        variant: { name: variant.name, slug: variant.slug },
+        updatedAt: newest([
+          variant.updatedAt,
+          ...variant.offerings.map((offering) => offering.updatedAt),
+          ...(variant.spec ? [variant.spec.updatedAt] : []),
+        ]).toISOString(),
+      });
+    }
+
+    return { variants: entries };
+  }
+
+  /**
+   * Variant page payloads in bulk, a page at a time and in index order, each
+   * exactly what `getVariantPage` returns for that variant's address. The
+   * prerender reads the whole catalog this way in a handful of requests.
+   */
+  async getVariantPageBatch({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }): Promise<PublicCatalogVariantPageBatch> {
+    const [total, variants] = await Promise.all([
+      this.prisma.vehicleCatalogVariant.count({ where: PUBLISHABLE_VARIANT_WHERE }),
+      this.prisma.vehicleCatalogVariant.findMany({
+        where: PUBLISHABLE_VARIANT_WHERE,
+        orderBy: PUBLISHABLE_VARIANT_ORDER,
+        include: VARIANT_PAGE_INCLUDE,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    // Each page resolves its own schedule, one small query apiece; Prisma's
+    // connection pool bounds how many run at once.
+    const items = await Promise.all(
+      variants.flatMap((variant) => {
+        const segment = publicCatalogSegmentFor(
+          variant.generation.model.make.vehicleType as VehicleType,
+        );
+        return segment ? [this.toVariantPage(variant, segment)] : [];
+      }),
+    );
+
+    return { items, page, pageSize, total, hasMore: page * pageSize < total };
+  }
+
+  private async toVariantPage(
+    variant: VariantPageRow,
+    segment: PublicCatalogSegment,
+  ): Promise<PublicCatalogVariantPage> {
     const { generation } = variant;
     const { model } = generation;
     const { make } = model;
@@ -138,7 +272,7 @@ export class PublicCatalogService {
     const schedule = await this.resolveSchedule(variant.id, vehicleType, fuelType);
 
     return {
-      segment: slugs.segment,
+      segment,
       vehicleType,
       make: { name: make.name, slug: make.slug },
       model: { name: model.name, slug: model.slug },
