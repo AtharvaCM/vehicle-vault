@@ -1,3 +1,22 @@
+## [1.65.11](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.10...v1.65.11) (2026-09-23)
+
+
+### Bug Fixes
+
+* **maintenance:** don't offer to add a vehicle while the list is loading ([f750957](https://github.com/AtharvaCM/vehicle-vault/commit/f750957ea84f9121fb3f4d344aa443c5901d6f05)), closes [#221](https://github.com/AtharvaCM/vehicle-vault/issues/221)
+* **maintenance:** log service and add reminder open the form ([ab576fd](https://github.com/AtharvaCM/vehicle-vault/commit/ab576fd25384a5c8934472b6164e6fbf52c67ef1)), closes [#202](https://github.com/AtharvaCM/vehicle-vault/issues/202)
+
+## [1.65.10](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.9...v1.65.10) (2026-09-23)
+
+
+### Bug Fixes
+
+* **analytics:** measure cost per km over real distance ([03cc17e](https://github.com/AtharvaCM/vehicle-vault/commit/03cc17e4c557f0da70b82c3f8c8cf989f98875a7))
+* **catalog:** publish imports only from the review, behind a confirmation ([7caa447](https://github.com/AtharvaCM/vehicle-vault/commit/7caa4475733047a8179752c50fb4f5b63c0d41bb))
+* **maintenance:** fill the upload-first draft from the bill automatically ([a9e1de9](https://github.com/AtharvaCM/vehicle-vault/commit/a9e1de9532baa52a3133570517f3fbd6acf7c1e1))
+* **vehicles:** keep purchase details when editing a vehicle ([b96a8ab](https://github.com/AtharvaCM/vehicle-vault/commit/b96a8ab4b51b25dd15d92268dca7efdc8a8a5303))
+* **vehicles:** treat a no-op vehicle edit as a successful save ([cc59919](https://github.com/AtharvaCM/vehicle-vault/commit/cc59919b7c91c0e236a5cb4d1bbcfaa8aa2318f4))
+
 ## [1.65.9](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.8...v1.65.9) (2026-09-23)
 
 

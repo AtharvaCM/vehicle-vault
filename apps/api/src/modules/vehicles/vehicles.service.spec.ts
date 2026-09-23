@@ -308,6 +308,28 @@ describe('VehiclesService', () => {
     });
   });
 
+  it('updating the nickname leaves purchase price, date and odometer untouched', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
+    const before = {
+      ...vehicleRecord,
+      purchaseDate: new Date('2022-01-01T00:00:00.000Z'),
+      purchasePrice: 850_000,
+      purchaseOdometer: 10,
+    };
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(before);
+    prisma.vehicle.update = vi.fn().mockResolvedValue({ ...before, nickname: 'Highway cruiser' });
+
+    await service.updateVehicle('user-1', 'vehicle-1', { nickname: 'Highway cruiser' });
+
+    expect(catalogLinker.resolveCatalogLink).not.toHaveBeenCalled();
+    // Only the changed field is written: an explicit `null` here would wipe
+    // the stored purchase details, and this must not become one.
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: { nickname: 'Highway cruiser' },
+    });
+  });
+
   it('maps duplicate registration errors to conflict', async () => {
     prisma.vehicle.create = vi.fn().mockRejectedValue(
       new PrismaClientKnownRequestError('duplicate', {
