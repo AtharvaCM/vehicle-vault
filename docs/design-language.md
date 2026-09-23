@@ -14,7 +14,7 @@ This is the spec the Phase 1 tokens and components are built from. Where it name
 
 ## Colour
 
-Semantic names only; screens never use palette colours (`slate-500`, `rose-50`) directly.
+Semantic names only; screens never use palette colours (`slate-500`, `rose-50`) directly. Lint enforces this and the other rules below (`apps/web/eslint/design-system-plugin.js`): errors on migrated paths, warnings elsewhere until each area moves.
 
 | Token                   | CSS variable → Tailwind utility        | Light                                       | Dark      | Use                                                  |
 | ----------------------- | -------------------------------------- | ------------------------------------------- | --------- | ---------------------------------------------------- |
