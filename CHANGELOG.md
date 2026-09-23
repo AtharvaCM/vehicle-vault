@@ -1,3 +1,10 @@
+## [1.65.7](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.6...v1.65.7) (2026-09-23)
+
+
+### Bug Fixes
+
+* **forms:** start service and fuel forms with sane defaults and plain-language errors ([f1425f6](https://github.com/AtharvaCM/vehicle-vault/commit/f1425f63643d78e6c56872654636369ade004ca1))
+
 ## [1.65.6](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.5...v1.65.6) (2026-09-23)
 
 
