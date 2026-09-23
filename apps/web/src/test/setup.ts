@@ -28,6 +28,9 @@ function createStorage(): Storage {
 }
 
 beforeEach(() => {
+  // Specs that run in the node environment (the prerender's) have no window.
+  if (typeof window === 'undefined') return;
+
   const storage = createStorage();
 
   Object.defineProperty(window, 'localStorage', {

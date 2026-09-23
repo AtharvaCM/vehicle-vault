@@ -1,10 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
 
 import { AppProviders } from '@/app/providers';
+import { router } from '@/app/router';
 import { captureInstallPrompt } from '@/features/pwa/install-prompt';
 import { initClarity } from '@/lib/monitoring/init-clarity';
 import { initErrorReporting } from '@/lib/monitoring/init-error-reporting';
+import { queryClient } from '@/lib/query/query-client';
+import { mountApp } from '@/prerender/mount-app';
 import '@/styles/globals.css';
 
 initErrorReporting();
@@ -21,8 +23,12 @@ if (import.meta.env.PROD) {
   void import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true }));
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+// A prerendered public catalog page is hydrated in place; everything else is a
+// plain client render. The prerender renders this same tree.
+mountApp(
+  document.getElementById('root')!,
   <React.StrictMode>
     <AppProviders />
   </React.StrictMode>,
+  { router, queryClient },
 );

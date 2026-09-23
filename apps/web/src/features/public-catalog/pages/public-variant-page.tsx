@@ -1,21 +1,20 @@
-import { APP_NAME, type PublicCatalogVariantPage } from '@vehicle-vault/shared';
+import type { PublicCatalogVariantPage } from '@vehicle-vault/shared';
 
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { NotFoundScreen } from '@/components/errors/not-found-screen';
-import { useDocumentTitle } from '@/hooks/use-document-title';
 import { ApiError } from '@/lib/api/api-error';
 
 import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public-variant-page';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
+import { variantPageHead } from '../head/public-page-head';
+import { usePublicPageHead } from '../head/use-public-page-head';
 import { PublicSpecSections } from '../components/public-spec-sections';
 import { RunningCostCalculator } from '../components/running-cost-calculator';
 import { describeOffering } from '../utils/format-public-catalog';
 
-export function variantPageTitle(page: PublicCatalogVariantPage) {
-  return `${page.make.name} ${page.model.name} ${page.variant.name} — service schedule and specs | ${APP_NAME}`;
-}
+export { variantPageTitle } from '../head/public-page-head';
 
 type PublicVariantRouteProps = {
   slugs: PublicVariantSlugs;
@@ -58,7 +57,7 @@ type PublicVariantPageViewProps = {
  * can be rendered ahead of time and hydrated over.
  */
 export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
-  useDocumentTitle(variantPageTitle(page));
+  usePublicPageHead(variantPageHead(page));
 
   const heading = `${page.make.name} ${page.model.name} ${page.variant.name}`;
 
