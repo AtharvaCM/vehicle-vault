@@ -54,7 +54,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
     intervalKm: 10000,
     intervalMonths: 12,
     appliesToFuel: ALL_NON_ELECTRIC,
-    notes: 'Recommended every 10 000 km or 12 months, whichever comes first.',
+    notes: 'Whichever of the distance or the time comes first.',
   },
   {
     slug: 'tyre_rotation',
