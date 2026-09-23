@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import type { Vehicle } from '../types/vehicle';
 import { getVehicleDisplayName } from '../utils/get-vehicle-display-name';

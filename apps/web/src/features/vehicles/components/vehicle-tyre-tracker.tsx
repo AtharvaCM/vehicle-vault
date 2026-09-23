@@ -32,7 +32,7 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';

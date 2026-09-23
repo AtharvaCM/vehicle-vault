@@ -14,7 +14,7 @@ import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { appToast } from '@/lib/toast';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import { useVehicleDocuments } from '../hooks/use-documents';
 import { useDocumentAttachments } from '../hooks/use-document-attachments';

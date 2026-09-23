@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { Reminder } from '../types/reminder';

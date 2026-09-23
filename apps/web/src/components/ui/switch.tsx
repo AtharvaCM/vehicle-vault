@@ -1,6 +1,6 @@
 import type * as React from 'react';
 
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 type SwitchProps = Omit<React.ComponentProps<'button'>, 'onChange' | 'role' | 'type'> & {
   checked: boolean;

@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { AlertTriangle, CheckCircle2, Clock, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 import type { DashboardSummary } from '../types/dashboard';
 import type { DashboardFocus } from '../types/dashboard-search';
