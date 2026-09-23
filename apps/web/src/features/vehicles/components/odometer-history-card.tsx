@@ -1,8 +1,7 @@
 import { Activity } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { VehicleServiceInsights } from '../utils/get-vehicle-service-insights';
 
@@ -36,16 +35,14 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
                       </span>
                     ) : null}
                   </div>
-                  <p className="text-xs text-muted-foreground">{formatDate(entry.date)}</p>
+                  <p className="text-xs text-muted-foreground">{format.date(entry.date)}</p>
                 </div>
                 <div className="space-y-1 text-right">
                   <p className="text-sm font-semibold text-slate-950">
-                    {entry.odometer.toLocaleString('en-IN')} km
+                    {format.odometer(entry.odometer)}
                   </p>
                   {entry.totalCost !== undefined ? (
-                    <p className="text-xs text-muted-foreground">
-                      {formatCurrency(entry.totalCost)}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{format.money(entry.totalCost)}</p>
                   ) : null}
                 </div>
               </div>

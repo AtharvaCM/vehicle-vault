@@ -6,6 +6,7 @@ import { formatFileSize } from '@/features/attachments/utils/format-file-size';
 import { InlineError } from '@/components/shared/inline-error';
 import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { appToast } from '@/lib/toast';
 
@@ -90,8 +91,8 @@ export function LoanAttachmentsSection({ loanId }: Props) {
               >
                 <span className="truncate font-medium">{att.originalFileName}</span>
                 <span className="text-xs text-muted-foreground">
-                  {att.kind} · {formatFileSize(att.size)} ·{' '}
-                  {new Date(att.uploadedAt).toLocaleDateString()}
+                  {format.enumLabel('attachmentKind', att.kind)} · {formatFileSize(att.size)} ·{' '}
+                  {format.date(att.uploadedAt)}
                 </span>
               </button>
               <Button

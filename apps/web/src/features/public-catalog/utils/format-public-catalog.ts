@@ -9,15 +9,7 @@ import {
   type PublicCatalogScheduleItem,
 } from '@vehicle-vault/shared';
 
-const FUEL_LABELS: Record<FuelType, string> = {
-  [FuelType.Petrol]: 'Petrol',
-  [FuelType.Diesel]: 'Diesel',
-  [FuelType.Electric]: 'Electric',
-  [FuelType.Hybrid]: 'Hybrid',
-  [FuelType.CNG]: 'CNG',
-  [FuelType.LPG]: 'LPG',
-  [FuelType.Other]: 'Other',
-};
+import { format } from '@/lib/format';
 
 const VEHICLE_TYPE_NOUNS: Record<VehicleType, string> = {
   [VehicleType.Car]: 'car',
@@ -29,7 +21,7 @@ const VEHICLE_TYPE_NOUNS: Record<VehicleType, string> = {
 };
 
 export function formatFuelType(fuelType: FuelType) {
-  return FUEL_LABELS[fuelType] ?? fuelType;
+  return format.enumLabel('fuelType', fuelType);
 }
 
 export function formatFuelTypes(fuelTypes: FuelType[]) {
@@ -84,11 +76,9 @@ function fuelAdjective(fuelType: FuelType) {
   return `${formatFuelType(fuelType).toLowerCase()} `;
 }
 
-const numberFormat = new Intl.NumberFormat('en-IN');
-
 /** "Every 10,000 km or 12 months, whichever comes first". */
 export function describeInterval(item: Pick<PublicCatalogScheduleItem, 'km' | 'months'>) {
-  const km = item.km ? `${numberFormat.format(item.km)} km` : null;
+  const km = item.km ? format.distance(item.km) : null;
   const months = item.months ? `${item.months} ${item.months === 1 ? 'month' : 'months'}` : null;
   if (km && months) return `Every ${km} or ${months}, whichever comes first`;
   if (km) return `Every ${km}`;
@@ -97,7 +87,7 @@ export function describeInterval(item: Pick<PublicCatalogScheduleItem, 'km' | 'm
 }
 
 export function formatSpecNumber(value: number) {
-  return numberFormat.format(value);
+  return format.number(value, { decimals: 3 });
 }
 
 /** Every variant a model page lists, across its generations. */

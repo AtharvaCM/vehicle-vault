@@ -1,10 +1,10 @@
-import { format } from 'date-fns';
 import { Calendar, Link2, Pencil, ReceiptText, Trash2, Wrench } from 'lucide-react';
 import { outOfPocket, type Claim, type ClaimStatus } from '@vehicle-vault/shared';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useDeleteClaim } from '../hooks/use-claims';
@@ -30,14 +30,6 @@ const STATUS_CLASSES: Record<ClaimStatus, string> = {
   settled: 'bg-emerald-50 text-emerald-600 border-emerald-100',
   rejected: 'bg-rose-50 text-rose-600 border-rose-100',
 };
-
-function formatINR(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
   // Delete is always offered here, unlike edit, so it needs the role itself.
@@ -66,10 +58,8 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
             </h4>
             <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              Filed {format(new Date(claim.filedDate), 'd MMM yyyy')}
-              {claim.settledDate
-                ? ` · Settled ${format(new Date(claim.settledDate), 'd MMM yyyy')}`
-                : ''}
+              Filed {format.date(claim.filedDate)}
+              {claim.settledDate ? ` · Settled ${format.date(claim.settledDate)}` : ''}
             </p>
           </div>
           <Badge variant="outline" className={STATUS_CLASSES[claim.status]}>
@@ -82,21 +72,23 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
             <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
               Gross bill
             </p>
-            <p className="font-bold text-slate-900 tabular-nums">{formatINR(claim.grossAmount)}</p>
+            <p className="font-bold text-slate-900 tabular-nums">
+              {format.money(claim.grossAmount)}
+            </p>
           </div>
           <div className="space-y-1">
             <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
               Insurer paid
             </p>
             <p className="font-bold text-emerald-600 tabular-nums">
-              {formatINR(claim.insurerPaidAmount)}
+              {format.money(claim.insurerPaidAmount)}
             </p>
           </div>
           <div className="space-y-1">
             <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
               Out of pocket
             </p>
-            <p className="font-bold text-rose-600 tabular-nums">{formatINR(pocket)}</p>
+            <p className="font-bold text-rose-600 tabular-nums">{format.money(pocket)}</p>
           </div>
         </div>
 

@@ -67,7 +67,7 @@ test('a new vehicle asks for the insurance and PUC expiry, once', async ({ page 
 
   // Both records exist, each known by its expiry alone.
   await page.getByRole('tab', { name: 'Protection' }).click();
-  await expect(page.getByText('01 Mar 2027')).toBeVisible();
+  await expect(page.getByText('1 Mar 2027')).toBeVisible();
   await expect(page.getByText('15 Dec 2026')).toBeVisible();
   await expect(page.getByText('Not recorded').first()).toBeVisible();
 });

@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUpdateVehicleOdometer } from '@/features/vehicles/hooks/use-update-vehicle-odometer';
+import { format } from '@/lib/format';
 
 type OdometerQuickUpdateProps = {
   vehicleId: string;
@@ -58,7 +59,7 @@ export function OdometerQuickUpdate({
     }
     if (reading < odometer) {
       setError({
-        message: `The odometer already reads ${odometer.toLocaleString('en-IN')} km, so a lower reading can't be saved here.`,
+        message: `The odometer already reads ${format.odometer(odometer)}, so a lower reading can't be saved here.`,
         offerEdit: true,
       });
       return;
@@ -76,7 +77,7 @@ export function OdometerQuickUpdate({
     setOpen(false);
     appToast.success({
       title: 'Odometer updated',
-      description: `${displayName} now reads ${reading.toLocaleString('en-IN')} km.`,
+      description: `${displayName} now reads ${format.odometer(reading)}.`,
     });
   }
 

@@ -1,9 +1,9 @@
 import { ReminderStatus, type ReminderType } from '@vehicle-vault/shared';
 
+import { format } from '@/lib/format';
+
 import type { Reminder } from '../types/reminder';
 import type { ReminderSortOption } from '../types/reminder-list-search';
-import { formatReminderStatus } from './format-reminder-status';
-import { formatReminderType } from './format-reminder-type';
 
 type FilterAndSortRemindersArgs = {
   reminders: Reminder[];
@@ -75,8 +75,8 @@ export function filterAndSortReminders({
         reminder.dueDate ?? '',
         reminder.dueOdometer?.toString() ?? '',
         vehicleLabelById[reminder.vehicleId] ?? '',
-        formatReminderType(reminder.type),
-        formatReminderStatus(reminder.status),
+        format.enumLabel('reminderType', reminder.type),
+        format.enumLabel('reminderStatus', reminder.status),
       ];
 
       return searchFields.some((value) => value.toLowerCase().includes(normalizedSearch));

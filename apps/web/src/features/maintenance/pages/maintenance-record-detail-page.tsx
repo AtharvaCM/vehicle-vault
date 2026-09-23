@@ -9,6 +9,7 @@ import { PageTitle } from '@/components/shared/page-title';
 import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { buttonVariants } from '@/components/ui/button';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
@@ -18,7 +19,6 @@ import { MaintenanceDraftBadge } from '../components/maintenance-draft-badge';
 import { MaintenanceSummaryCard } from '../components/maintenance-summary-card';
 import { useDeleteMaintenanceRecord } from '../hooks/use-delete-maintenance-record';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { isDraftRecord } from '../utils/is-draft-record';
 
 type MaintenanceRecordDetailPageProps = {
@@ -125,7 +125,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
             </div>
           }
           description="Review what was done, when it happened, and what it cost."
-          title={formatMaintenanceCategory(record.category)}
+          title={format.enumLabel('maintenanceCategory', record.category)}
         />
 
         {actionError ? <InlineError message={actionError} /> : null}

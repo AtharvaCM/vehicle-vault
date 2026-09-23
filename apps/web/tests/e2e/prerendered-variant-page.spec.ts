@@ -86,8 +86,8 @@ test.describe('prerendered variant page', () => {
 
     expect(html).toContain(`>${variant.heading}</h1>`);
     expect(html).toContain('Typical schedule for a petrol car');
-    expect(html).toContain('Periodic Service');
-    expect(html).toContain('Engine Oil');
+    expect(html).toContain('Periodic service');
+    expect(html).toContain('Engine oil');
     expect(html).toContain(
       `<title>${variant.heading} — service schedule and specs | Vehicle Vault</title>`,
     );

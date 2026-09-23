@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import type { MaintenanceRecord } from '../types/maintenance-record';
@@ -33,7 +34,7 @@ export function MaintenanceRecordList({
               onSelectionChange ? (
                 <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-sm">
                   <input
-                    aria-label={`Select maintenance record ${record.workshopName?.trim() || formatSelectionLabel(record.category)} on ${record.serviceDate}`}
+                    aria-label={`Select maintenance record ${record.workshopName?.trim() || format.enumLabel('maintenanceCategory', record.category)} on ${record.serviceDate}`}
                     checked={selectedRecordIds.includes(record.id)}
                     className={cn(
                       'h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-400',
@@ -50,8 +51,4 @@ export function MaintenanceRecordList({
       </CardContent>
     </Card>
   );
-}
-
-function formatSelectionLabel(category: MaintenanceRecord['category']) {
-  return category.replace(/_/g, ' ');
 }

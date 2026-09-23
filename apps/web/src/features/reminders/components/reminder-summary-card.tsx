@@ -2,10 +2,9 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { Reminder } from '../types/reminder';
-import { formatReminderType } from '../utils/format-reminder-type';
 import { describeRepeatRule } from '../utils/repeat-rule';
 import { ReminderStatusBadge } from './reminder-status-badge';
 
@@ -20,7 +19,7 @@ export function ReminderSummaryCard({ reminder, vehicleLabel }: ReminderSummaryC
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle>{reminder.title}</CardTitle>
-          <Badge>{formatReminderType(reminder.type)}</Badge>
+          <Badge>{format.enumLabel('reminderType', reminder.type)}</Badge>
           <ReminderStatusBadge status={reminder.status} />
         </div>
         <CardDescription>
@@ -31,13 +30,13 @@ export function ReminderSummaryCard({ reminder, vehicleLabel }: ReminderSummaryC
         <Detail label="Vehicle" value={vehicleLabel ?? 'Vehicle details unavailable'} />
         <Detail
           label="Due date"
-          value={reminder.dueDate ? formatDate(reminder.dueDate) : 'Not specified'}
+          value={reminder.dueDate ? format.date(reminder.dueDate) : 'Not specified'}
         />
         <Detail
           label="Due odometer"
           value={
             reminder.dueOdometer !== undefined
-              ? `${reminder.dueOdometer.toLocaleString('en-IN')} km`
+              ? format.odometer(reminder.dueOdometer)
               : 'Not specified'
           }
         />
@@ -45,9 +44,7 @@ export function ReminderSummaryCard({ reminder, vehicleLabel }: ReminderSummaryC
         <Detail
           label="Completed at"
           value={
-            reminder.completedAt
-              ? formatDate(reminder.completedAt, { dateStyle: 'medium', timeStyle: 'short' })
-              : 'Not completed'
+            reminder.completedAt ? format.date(reminder.completedAt, 'dateTime') : 'Not completed'
           }
         />
         <Detail
@@ -55,14 +52,8 @@ export function ReminderSummaryCard({ reminder, vehicleLabel }: ReminderSummaryC
           label="Notes"
           value={reminder.notes?.trim() || 'No additional notes were recorded.'}
         />
-        <Detail
-          label="Added"
-          value={formatDate(reminder.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}
-        />
-        <Detail
-          label="Last updated"
-          value={formatDate(reminder.updatedAt, { dateStyle: 'medium', timeStyle: 'short' })}
-        />
+        <Detail label="Added" value={format.date(reminder.createdAt, 'dateTime')} />
+        <Detail label="Last updated" value={format.date(reminder.updatedAt, 'dateTime')} />
       </CardContent>
     </Card>
   );

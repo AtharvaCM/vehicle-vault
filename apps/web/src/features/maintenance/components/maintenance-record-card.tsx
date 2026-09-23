@@ -5,11 +5,9 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
-import { formatCurrency } from '@/lib/utils/format-currency';
-import { formatDate } from '@/lib/utils/format-date';
+import { format } from '@/lib/format';
 
 import type { MaintenanceRecord } from '../types/maintenance-record';
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 import { isDraftRecord } from '../utils/is-draft-record';
 import { MaintenanceDraftBadge } from './maintenance-draft-badge';
 
@@ -28,7 +26,7 @@ export function MaintenanceRecordCard({
   const isDraft = isDraftRecord(record);
   const detailBits = [
     vehicleLabel,
-    formatDate(record.serviceDate),
+    format.date(record.serviceDate),
     record.invoiceNumber?.trim() ? `Invoice ${record.invoiceNumber.trim()}` : undefined,
     record.lineItems?.length
       ? `${record.lineItems.length} item${record.lineItems.length === 1 ? '' : 's'}`
@@ -62,7 +60,7 @@ export function MaintenanceRecordCard({
                   variant="outline"
                   className="bg-white text-[10px] font-bold uppercase tracking-widest"
                 >
-                  {formatMaintenanceCategory(record.category)}
+                  {format.enumLabel('maintenanceCategory', record.category)}
                 </Badge>
                 {isDraft ? <MaintenanceDraftBadge /> : null}
               </div>
@@ -87,7 +85,7 @@ export function MaintenanceRecordCard({
                   Odometer
                 </p>
                 <p className="text-[13px] font-semibold tabular-nums text-slate-700">
-                  {record.odometer.toLocaleString('en-IN')} km
+                  {format.odometer(record.odometer)}
                 </p>
               </div>
 
@@ -96,7 +94,7 @@ export function MaintenanceRecordCard({
                   Total Cost
                 </p>
                 <p className="text-[13px] font-bold tabular-nums text-primary">
-                  {formatCurrency(record.totalCost, record.currencyCode)}
+                  {format.money(record.totalCost, { currency: record.currencyCode })}
                 </p>
               </div>
             </div>

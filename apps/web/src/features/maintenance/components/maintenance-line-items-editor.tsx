@@ -1,8 +1,4 @@
-import {
-  MaintenanceCategory,
-  MaintenanceLineItemKind,
-  type MaintenanceLineItem,
-} from '@vehicle-vault/shared';
+import { MaintenanceCategory, MaintenanceLineItemKind } from '@vehicle-vault/shared';
 import {
   Controller,
   useFieldArray,
@@ -26,11 +22,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCurrency } from '@/lib/utils/format-currency';
+import { format } from '@/lib/format';
 
 import type { MaintenanceFormValues } from '../schemas/maintenance-form.schema';
 import { resolveMaintenanceLineItemTotal } from '../utils/get-maintenance-line-item-breakdown';
-import { formatMaintenanceCategory } from '../utils/format-maintenance-category';
 
 const kindOptions = Object.values(MaintenanceLineItemKind);
 const categoryOptions = Object.values(MaintenanceCategory);
@@ -104,7 +99,7 @@ export function MaintenanceLineItemsEditor({
                     <p className="text-sm font-semibold text-slate-900">Item {index + 1}</p>
                     <p className="text-xs text-slate-500">
                       {resolvedTotal > 0
-                        ? `Resolved total ${formatCurrency(resolvedTotal, currencyCode)}`
+                        ? `Resolved total ${format.money(resolvedTotal, { currency: currencyCode })}`
                         : 'Set a line total directly or derive it from quantity × unit price.'}
                     </p>
                   </div>
@@ -139,7 +134,7 @@ export function MaintenanceLineItemsEditor({
                           <SelectContent>
                             {kindOptions.map((kind) => (
                               <SelectItem key={kind} value={kind}>
-                                {formatLineItemKind(kind)}
+                                {format.enumLabel('maintenanceLineItemKind', kind)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -170,7 +165,7 @@ export function MaintenanceLineItemsEditor({
                             <SelectItem value="__none">No mapping</SelectItem>
                             {categoryOptions.map((category) => (
                               <SelectItem key={category} value={category}>
-                                {formatMaintenanceCategory(category)}
+                                {format.enumLabel('maintenanceCategory', category)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -265,7 +260,7 @@ export function MaintenanceLineItemsEditor({
                       typeof lineItem?.quantity === 'number' &&
                       typeof lineItem?.unitPrice === 'number' &&
                       lineItem?.lineTotal === undefined
-                        ? `Will resolve to ${formatCurrency(resolvedTotal, currencyCode)}`
+                        ? `Will resolve to ${format.money(resolvedTotal, { currency: currencyCode })}`
                         : undefined
                     }
                     error={errors.lineItems?.[index]?.lineTotal?.message}
@@ -330,11 +325,4 @@ export function MaintenanceLineItemsEditor({
 
 function toOptionalNumber(value: string) {
   return value === '' ? undefined : Number(value);
-}
-
-function formatLineItemKind(kind: MaintenanceLineItem['kind']) {
-  return kind
-    .split('_')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
 }

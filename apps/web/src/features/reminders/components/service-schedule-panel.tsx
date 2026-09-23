@@ -8,16 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { queryKeys } from '@/lib/query/query-keys';
-import { formatDate } from '@/lib/utils/format-date';
 
 import {
   applyServiceSchedule,
   serviceScheduleSuggestionsQueryOptions,
 } from '../api/service-schedule';
 import type { ServiceScheduleSuggestion } from '../types/service-schedule';
-import { formatReminderType } from '../utils/format-reminder-type';
 
 type Props = {
   vehicleId: string;
@@ -133,7 +132,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                         variant="outline"
                         className="text-[10px] font-bold uppercase tracking-widest"
                       >
-                        {formatReminderType(item.type)}
+                        {format.enumLabel('reminderType', item.type)}
                       </Badge>
                       {disabled ? (
                         <Badge className="bg-emerald-100 text-[10px] uppercase tracking-widest text-emerald-700">
@@ -143,7 +142,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
                       {item.intervalKm != null ? (
-                        <span>Every {item.intervalKm.toLocaleString('en-IN')} km</span>
+                        <span>Every {format.distance(item.intervalKm)}</span>
                       ) : null}
                       {item.intervalKm != null && item.intervalMonths != null ? ' or ' : null}
                       {item.intervalMonths != null ? (
@@ -192,8 +191,8 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
 
 function nextDue(item: ServiceScheduleSuggestion): string {
   return [
-    item.dueOdometer != null ? `${item.dueOdometer.toLocaleString('en-IN')} km` : null,
-    item.dueDate ? formatDate(item.dueDate) : null,
+    item.dueOdometer != null ? format.odometer(item.dueOdometer) : null,
+    item.dueDate ? format.date(item.dueDate) : null,
   ]
     .filter(Boolean)
     .join(' / ');
@@ -206,11 +205,9 @@ function nextDue(item: ServiceScheduleSuggestion): string {
 function describeAnchor(anchor: NonNullable<ServiceScheduleSuggestion['anchor']>): string {
   if (anchor.source === 'now') return 'No history — counted from today';
 
-  const when = anchor.lastDoneDate ? ` ${formatDate(anchor.lastDoneDate)}` : '';
+  const when = anchor.lastDoneDate ? ` ${format.date(anchor.lastDoneDate)}` : '';
   const where =
-    anchor.lastDoneOdometer != null
-      ? ` at ${anchor.lastDoneOdometer.toLocaleString('en-IN')} km`
-      : '';
+    anchor.lastDoneOdometer != null ? ` at ${format.odometer(anchor.lastDoneOdometer)}` : '';
   const verb = anchor.source === 'tyre_check' ? 'Last checked' : 'Last done';
 
   return `${verb}${when}${where}`;

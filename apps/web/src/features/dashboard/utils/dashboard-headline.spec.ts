@@ -60,7 +60,7 @@ describe('dashboardHeadline', () => {
         ],
         attentionCounts: makeAttentionCounts({ thisMonth: 1, total: 1 }),
       }),
-    ).toBe('Nothing due right now. Next up: Insurance policy · Expires in 12 days.');
+    ).toBe('Nothing due right now. Next up: Insurance policy · 12 days left.');
   });
 
   it('reports an empty month', () => {

@@ -138,7 +138,7 @@ describe('AttentionQueue', () => {
     );
 
     expect(screen.getByText('Accessory')).toBeInTheDocument();
-    expect(screen.getByText('Expires in 4 days')).toBeInTheDocument();
+    expect(screen.getByText('4 days left')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View accessory' })).toHaveAttribute(
       'data-search',
       JSON.stringify({ tab: 'accessories' }),
@@ -167,9 +167,9 @@ describe('AttentionQueue', () => {
     expect(screen.getByText('Overdue', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByText('This week', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByText('Brake pads')).toBeInTheDocument();
-    expect(screen.getByText('3 days overdue')).toBeInTheDocument();
+    expect(screen.getByText('3 days late')).toBeInTheDocument();
     expect(screen.getByText('PUC certificate', { selector: 'p' })).toBeInTheDocument();
-    expect(screen.getByText('Expires in 4 days')).toBeInTheDocument();
+    expect(screen.getByText('4 days left')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark Brake pads done' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Renew' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Snooze PUC certificate' })).toBeInTheDocument();

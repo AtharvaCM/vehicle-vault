@@ -3,24 +3,9 @@ import { Wallet } from 'lucide-react';
 import { TCO_MIN_COST_PER_KM_DISTANCE_KM, type TcoResponse } from '@vehicle-vault/shared';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from '@/lib/format';
 
 import { tcoQueryOptions } from '../api/get-tco';
-
-const inr = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  maximumFractionDigits: 0,
-});
-
-// Whole rupees are too coarse per kilometre: ₹8 and ₹8.4 are 5% apart.
-const inrPerKm = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
-const intFmt = new Intl.NumberFormat('en-IN');
 
 type Props = {
   vehicleId: string;
@@ -61,20 +46,23 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
   const figures: { label: string; value: string; emphasis?: boolean }[] = [
     {
       label: tco.totals.tco ? 'Total cost of ownership' : 'Net lifetime spend',
-      value: inr.format(Number(tco.totals.tco ?? tco.totals.netSpend)),
+      value: format.money(Number(tco.totals.tco ?? tco.totals.netSpend)),
       emphasis: true,
     },
-    { label: 'Maintenance', value: inr.format(Number(tco.totals.maintenance)) },
-    { label: 'Fuel', value: inr.format(Number(tco.totals.fuel)) },
-    ...(accessories > 0 ? [{ label: 'Accessories', value: inr.format(accessories) }] : []),
-    { label: 'Insurance', value: inr.format(Number(tco.totals.insurance)) },
+    { label: 'Maintenance', value: format.money(Number(tco.totals.maintenance)) },
+    { label: 'Fuel', value: format.money(Number(tco.totals.fuel)) },
+    ...(accessories > 0 ? [{ label: 'Accessories', value: format.money(accessories) }] : []),
+    { label: 'Insurance', value: format.money(Number(tco.totals.insurance)) },
     ...(loanInterestPaid > 0
-      ? [{ label: 'Loan interest paid', value: inr.format(loanInterestPaid) }]
+      ? [{ label: 'Loan interest paid', value: format.money(loanInterestPaid) }]
       : []),
     ...(loanOutstanding > 0
-      ? [{ label: 'Loan outstanding', value: inr.format(loanOutstanding) }]
+      ? [{ label: 'Loan outstanding', value: format.money(loanOutstanding) }]
       : []),
-    { label: 'Insurer reimbursed', value: `− ${inr.format(Number(tco.totals.insurerReimbursed))}` },
+    {
+      label: 'Insurer reimbursed',
+      value: `− ${format.money(Number(tco.totals.insurerReimbursed))}`,
+    },
   ];
 
   return (
@@ -106,22 +94,24 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
       <div className="grid gap-3 sm:grid-cols-3">
         <Metric
           label="₹ / km"
-          value={tco.derived.costPerKm ? inrPerKm.format(Number(tco.derived.costPerKm)) : '—'}
+          value={
+            tco.derived.costPerKm
+              ? format.money(Number(tco.derived.costPerKm), { decimals: 1 })
+              : '—'
+          }
           hint={costPerKmHint(tco)}
         />
         <Metric
           label="₹ / month"
-          value={tco.derived.costPerMonth ? inr.format(Number(tco.derived.costPerMonth)) : '—'}
+          value={tco.derived.costPerMonth ? format.money(Number(tco.derived.costPerMonth)) : '—'}
           hint={
             tco.ownershipMonths != null ? `${tco.ownershipMonths} months owned` : 'No purchase date'
           }
         />
         <Metric
           label="Purchase price"
-          value={tco.purchasePrice ? inr.format(Number(tco.purchasePrice)) : '—'}
-          hint={
-            tco.purchaseDate ? new Date(tco.purchaseDate).toISOString().slice(0, 10) : 'Not set'
-          }
+          value={tco.purchasePrice ? format.money(Number(tco.purchasePrice)) : '—'}
+          hint={tco.purchaseDate ? format.date(tco.purchaseDate) : 'Not set'}
         />
       </div>
 
@@ -135,9 +125,9 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
 }
 
 function costPerKmHint(tco: TcoResponse): string {
-  if (tco.derived.costPerKm) return `${intFmt.format(tco.kmSincePurchase)} km`;
+  if (tco.derived.costPerKm) return format.distance(tco.kmSincePurchase);
   if (tco.purchaseOdometer == null) return 'Add the odometer at purchase to see cost per km';
-  return `${intFmt.format(tco.kmSincePurchase)} km so far; shown from ${intFmt.format(TCO_MIN_COST_PER_KM_DISTANCE_KM)} km`;
+  return `${format.distance(tco.kmSincePurchase)} so far; shown from ${format.distance(TCO_MIN_COST_PER_KM_DISTANCE_KM)}`;
 }
 
 function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {

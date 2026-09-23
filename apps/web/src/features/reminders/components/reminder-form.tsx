@@ -17,10 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { format } from '@/lib/format';
 
 import { reminderFormSchema, type ReminderFormValues } from '../schemas/reminder-form.schema';
 import type { CreateReminderBody } from '../types/reminder';
-import { formatReminderType } from '../utils/format-reminder-type';
 import { repeatChoiceOptions, toRepeatRule, type RepeatChoice } from '../utils/repeat-rule';
 
 const reminderTypeOptions = Object.values(ReminderType);
@@ -277,7 +277,7 @@ export function ReminderForm({
                     <SelectContent>
                       {reminderTypeOptions.map((type) => (
                         <SelectItem key={type} value={type}>
-                          {formatReminderType(type)}
+                          {format.enumLabel('reminderType', type)}
                         </SelectItem>
                       ))}
                     </SelectContent>
