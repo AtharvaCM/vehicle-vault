@@ -59,6 +59,7 @@
     "catalog:cleanup-pseudo-variants": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/cleanup-pseudo-variants.ts",
     "catalog:merge-duplicate-generations": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/merge-duplicate-generations.ts",
     "catalog:merge-near-duplicate-trims": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/merge-near-duplicate-trims.ts",
+    "catalog:strip-model-name-from-trims": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/strip-model-name-from-trims.ts",
     "catalog:diff": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/diff-snapshots.ts",
     "catalog:scrape": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-carwale.ts",
     "catalog:seed-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/upsert-specs.ts",

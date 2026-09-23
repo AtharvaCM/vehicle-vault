@@ -106,3 +106,57 @@ export function planTrimMerges(modelName: string, trims: TrimRow[]): TrimFold[] 
   // A survivor must survive: drop any fold whose target is itself folded away.
   return folds.filter((fold) => !foldedAway.has(fold.intoVariantId));
 }
+
+export type TrimRename = {
+  variantId: string;
+  from: string;
+  to: string;
+};
+
+/**
+ * The model-name tail a trim starts with ("Liva" in "Liva GX" of the Toyota
+ * Etios Liva), as the words of the trim's own name so their casing survives, or
+ * null. Tails are tried longest first; punctuation is compared loosely.
+ */
+function modelPrefixWords(modelName: string, trimName: string): number | null {
+  const modelTokens = normalizeTrimName(modelName).split(' ').filter(Boolean);
+  const words = trimName.trim().split(/\s+/);
+
+  for (let start = 0; start < modelTokens.length; start += 1) {
+    const prefix = modelTokens.slice(start).join(' ');
+    let consumed = '';
+    for (let count = 1; count < words.length; count += 1) {
+      consumed = normalizeTrimName(words.slice(0, count).join(' '));
+      if (consumed === prefix) return count;
+      if (!prefix.startsWith(consumed)) break;
+    }
+  }
+  return null;
+}
+
+/**
+ * Trims whose names repeat part of the model's ("7 Premium" in the BYD eMax 7,
+ * "Cruiser Taisor V" in the Toyota Urban Cruiser Taisor), renamed to the rest
+ * ("Premium", "V"). A trim is left alone when nothing would be left, or when
+ * the rest is already another trim's name in the generation: that pair is a
+ * near-duplicate for `planTrimMerges` to fold, not a rename.
+ */
+export function planTrimRenames(modelName: string, trims: TrimRow[]): TrimRename[] {
+  const taken = new Set(trims.map((trim) => normalizeTrimName(trim.name)));
+  const renames: TrimRename[] = [];
+
+  for (const trim of [...trims].sort((a, b) => a.name.localeCompare(b.name))) {
+    if (trim.name.trim().startsWith('|')) continue;
+    const count = modelPrefixWords(modelName, trim.name);
+    if (count === null) continue;
+
+    const to = trim.name.trim().split(/\s+/).slice(count).join(' ');
+    const key = normalizeTrimName(to);
+    if (!key || taken.has(key)) continue;
+
+    renames.push({ variantId: trim.id, from: trim.name, to });
+    taken.add(key);
+  }
+
+  return renames;
+}

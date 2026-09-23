@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { detailedTrimRoot, planTrimMerges, type TrimRow } from './trim-merge-plan';
+import { detailedTrimRoot, planTrimMerges, planTrimRenames, type TrimRow } from './trim-merge-plan';
 
 const trims = (...names: string[]): TrimRow[] => names.map((name) => ({ id: name, name }));
 
@@ -96,5 +96,54 @@ describe('planTrimMerges', () => {
     expect(folds.map((fold) => [fold.variantName, fold.intoVariantName])).toEqual([
       ['V', 'V | Petrol | Manual'],
     ]);
+  });
+});
+
+describe('planTrimRenames', () => {
+  const renamed = (model: string, ...names: string[]) =>
+    planTrimRenames(model, trims(...names)).map((rename) => [rename.from, rename.to]);
+
+  it('drops the model-name tail a trim repeats, keeping the rest as written', () => {
+    expect(renamed('Etios Liva', 'Liva GX', 'Liva VX')).toEqual([
+      ['Liva GX', 'GX'],
+      ['Liva VX', 'VX'],
+    ]);
+    expect(renamed('eMax 7', '7 Premium 6 STR')).toEqual([['7 Premium 6 STR', 'Premium 6 STR']]);
+    expect(renamed('Urban Cruiser Taisor', 'Cruiser Taisor V')).toEqual([
+      ['Cruiser Taisor V', 'V'],
+    ]);
+    expect(renamed('Grand i10 Nios', 'i10 Nios Sportz (O) Vibe')).toEqual([
+      ['i10 Nios Sportz (O) Vibe', 'Sportz (O) Vibe'],
+    ]);
+  });
+
+  it('keeps detail segments and punctuation in what is left', () => {
+    expect(renamed('Sealion 7', '7 Premium | 2WD 82.6 kWh')).toEqual([
+      ['7 Premium | 2WD 82.6 kWh', 'Premium | 2WD 82.6 kWh'],
+    ]);
+    expect(renamed('Octavia RS', 'RS 2.0 TSI')).toEqual([['RS 2.0 TSI', '2.0 TSI']]);
+  });
+
+  it('matches a model name whose words the trim spells differently', () => {
+    expect(renamed('Tayron R-Line', 'R-Line 2.0 TSI')).toEqual([['R-Line 2.0 TSI', '2.0 TSI']]);
+  });
+
+  it('leaves a trim alone when the rest is already another trim: that is a merge', () => {
+    expect(renamed('XUV 3XO', 'AX5', '3XO AX5', '3XO AX5L')).toEqual([['3XO AX5L', 'AX5L']]);
+  });
+
+  it('leaves names that do not start with the model name, or are only the model name', () => {
+    expect(renamed('Creta', 'SX (O)', 'Knight Creta', 'Creta')).toEqual([]);
+    expect(renamed('City', '4th Gen V')).toEqual([]);
+  });
+
+  it('never renames two trims to the same name', () => {
+    expect(renamed('Punch EV', 'EV Adventure', 'Punch EV Adventure')).toEqual([
+      ['EV Adventure', 'Adventure'],
+    ]);
+  });
+
+  it('skips a scraped name with no trim before its detail segments', () => {
+    expect(renamed('City', '| Petrol | Automatic')).toEqual([]);
   });
 });
