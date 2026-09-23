@@ -1,3 +1,11 @@
+## [1.65.11](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.10...v1.65.11) (2026-09-23)
+
+
+### Bug Fixes
+
+* **maintenance:** don't offer to add a vehicle while the list is loading ([f750957](https://github.com/AtharvaCM/vehicle-vault/commit/f750957ea84f9121fb3f4d344aa443c5901d6f05)), closes [#221](https://github.com/AtharvaCM/vehicle-vault/issues/221)
+* **maintenance:** log service and add reminder open the form ([ab576fd](https://github.com/AtharvaCM/vehicle-vault/commit/ab576fd25384a5c8934472b6164e6fbf52c67ef1)), closes [#202](https://github.com/AtharvaCM/vehicle-vault/issues/202)
+
 ## [1.65.10](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.9...v1.65.10) (2026-09-23)
 
 
