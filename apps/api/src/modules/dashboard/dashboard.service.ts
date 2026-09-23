@@ -150,9 +150,9 @@ function km(value: number): string {
   return `${Math.max(0, Math.round(value)).toLocaleString('en-IN')} km`;
 }
 
-/** "engine_oil" → "engine oil". */
+/** "engine_oil" → "engine oil", "cvt_belt" → "CVT belt". */
 function categoryWords(category: string): string {
-  return category.replace(/_/g, ' ');
+  return category.replace(/_/g, ' ').replace(/\b(cvt|puc)\b/g, (word) => word.toUpperCase());
 }
 
 type AttentionVehicleFields = Pick<

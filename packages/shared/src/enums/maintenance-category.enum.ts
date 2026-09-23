@@ -21,5 +21,7 @@ export enum MaintenanceCategory {
   Fasteners = 'fasteners',
   Detailing = 'detailing',
   BrakeService = 'brake_service',
+  SparkPlug = 'spark_plug',
+  CvtBelt = 'cvt_belt',
   Other = 'other',
 }

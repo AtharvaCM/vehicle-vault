@@ -545,6 +545,8 @@ function inferLineItemKind(normalizedCategory?: MaintenanceCategory) {
       MaintenanceCategory.Battery,
       MaintenanceCategory.Clutch,
       MaintenanceCategory.TyreReplacement,
+      MaintenanceCategory.SparkPlug,
+      MaintenanceCategory.CvtBelt,
     ].includes(normalizedCategory)
   ) {
     return MaintenanceLineItemKind.Part;

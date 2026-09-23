@@ -213,6 +213,80 @@ describe('MaintenanceIntervalResolver', () => {
       });
     });
 
+    describe('spark plug and CVT belt', () => {
+      const withTransmission = (transmission: string | null) => {
+        prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValue({
+          transmission,
+          driveType: null,
+          coolingType: 'air-cooled',
+        });
+        return resolver.resolveForVehicle({ ...petrolMotorcycle, catalogVariantId: 'variant-1' });
+      };
+
+      it('gives a CVT scooter a spark plug and a CVT belt, by distance only', async () => {
+        const intervals = await withTransmission('CVT');
+
+        expect(intervals[MaintenanceCategory.SparkPlug]).toEqual({
+          km: 9000,
+          months: null,
+          source: 'default',
+        });
+        expect(intervals[MaintenanceCategory.CvtBelt]).toEqual({
+          km: 24000,
+          months: null,
+          source: 'default',
+        });
+      });
+
+      it('reads a scooter recorded as "Automatic" as a CVT', async () => {
+        const intervals = await withTransmission('Automatic');
+
+        expect(intervals[MaintenanceCategory.CvtBelt]).toBeDefined();
+      });
+
+      it.each(['5 Speed Manual', '6 Speed DCT', 'Automatic (Dual Clutch)', null])(
+        'gives a motorcycle with transmission %s a spark plug but no CVT belt',
+        async (transmission) => {
+          const intervals = await withTransmission(transmission);
+
+          expect(intervals[MaintenanceCategory.SparkPlug]).toBeDefined();
+          expect(intervals[MaintenanceCategory.CvtBelt]).toBeUndefined();
+        },
+      );
+
+      it('gives an electric scooter neither', async () => {
+        prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValue({
+          transmission: 'Automatic',
+          driveType: null,
+          coolingType: null,
+        });
+
+        const intervals = await resolver.resolveForVehicle({
+          ...petrolMotorcycle,
+          fuelType: 'electric',
+          catalogVariantId: 'variant-ev',
+        });
+
+        expect(intervals[MaintenanceCategory.SparkPlug]).toBeUndefined();
+        expect(intervals[MaintenanceCategory.CvtBelt]).toBeUndefined();
+      });
+
+      it('gives a car neither, even from a per-variant CVT belt row', async () => {
+        prisma.serviceInterval.findMany.mockResolvedValue([
+          { category: 'cvt_belt', intervalKm: 60000, intervalMonths: null },
+        ]);
+
+        const intervals = await resolver.resolveForVehicle({
+          catalogVariantId: 'variant-car',
+          vehicleType: 'car',
+          fuelType: 'petrol',
+        });
+
+        expect(intervals[MaintenanceCategory.SparkPlug]).toBeUndefined();
+        expect(intervals[MaintenanceCategory.CvtBelt]).toBeUndefined();
+      });
+    });
+
     it('gives a motorcycle with an unrecorded drive and cooling type neither chain service nor coolant', async () => {
       prisma.vehicleCatalogVariantSpec.findUnique.mockResolvedValue({
         transmission: null,
