@@ -143,6 +143,7 @@ export const appConfig = registerAs('app', () => ({
     register: resolveRateLimit(process.env.RATE_LIMIT_REGISTER, { limit: 5, windowSeconds: 60 }),
     mail: resolveRateLimit(process.env.RATE_LIMIT_MAIL, { limit: 3, windowSeconds: 900 }),
     token: resolveRateLimit(process.env.RATE_LIMIT_TOKEN, { limit: 20, windowSeconds: 60 }),
+    catalog: resolveRateLimit(process.env.RATE_LIMIT_CATALOG, { limit: 120, windowSeconds: 60 }),
   },
   adminEmails: resolveAdminEmails(process.env.ADMIN_EMAILS),
   attachmentStorageBackend:

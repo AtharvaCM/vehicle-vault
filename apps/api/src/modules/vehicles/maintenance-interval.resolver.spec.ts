@@ -97,4 +97,78 @@ describe('MaintenanceIntervalResolver', () => {
       source: 'variant',
     });
   });
+
+  describe('resolveForVariant', () => {
+    const petrolCarVariant = { variantId: 'variant-1', vehicleType: 'car', fuelType: 'petrol' };
+
+    it('resolves a variant with no vehicle, reading its own interval rows', async () => {
+      prisma.serviceInterval.findMany.mockResolvedValue([
+        { category: 'engine_oil', intervalKm: 10000, intervalMonths: 12 },
+      ]);
+      const intervals = await resolver.resolveForVariant(petrolCarVariant);
+
+      expect(prisma.serviceInterval.findMany).toHaveBeenCalledWith({
+        where: { variantId: 'variant-1' },
+      });
+      expect(intervals[MaintenanceCategory.EngineOil]).toEqual({
+        km: 10000,
+        months: 12,
+        source: 'variant',
+      });
+      expect(intervals[MaintenanceCategory.BrakePads]).toMatchObject({ source: 'default' });
+    });
+
+    it('gates an electric variant off every combustion-only item, even from variant rows', async () => {
+      prisma.serviceInterval.findMany.mockResolvedValue([
+        { category: 'engine_oil', intervalKm: 10000, intervalMonths: 12 },
+      ]);
+      const intervals = await resolver.resolveForVariant({
+        ...petrolCarVariant,
+        fuelType: 'electric',
+      });
+
+      for (const category of [
+        MaintenanceCategory.EngineOil,
+        MaintenanceCategory.OilFilter,
+        MaintenanceCategory.AirFilter,
+        MaintenanceCategory.Coolant,
+        MaintenanceCategory.TimingBelt,
+      ]) {
+        expect(intervals[category]).toBeUndefined();
+      }
+      expect(intervals[MaintenanceCategory.PeriodicService]).toBeDefined();
+    });
+
+    it('gives a motorcycle chain service and no timing belt', async () => {
+      const intervals = await resolver.resolveForVariant({
+        ...petrolCarVariant,
+        vehicleType: 'motorcycle',
+      });
+
+      expect(intervals[MaintenanceCategory.ChainService]).toBeDefined();
+      expect(intervals[MaintenanceCategory.TimingBelt]).toBeUndefined();
+    });
+
+    it('returns defaults only, without a query, when there is no variant', async () => {
+      const intervals = await resolver.resolveForVariant({ ...petrolCarVariant, variantId: null });
+
+      expect(prisma.serviceInterval.findMany).not.toHaveBeenCalled();
+      expect(Object.values(intervals).every((interval) => interval?.source === 'default')).toBe(
+        true,
+      );
+    });
+
+    it('is what resolveForVehicle returns for the same vehicle', async () => {
+      prisma.serviceInterval.findMany.mockResolvedValue([
+        { category: 'periodic_service', intervalKm: 15000, intervalMonths: 12 },
+      ]);
+      const forVehicle = await resolver.resolveForVehicle({
+        ...petrolCar,
+        catalogVariantId: 'variant-1',
+      });
+      const forVariant = await resolver.resolveForVariant(petrolCarVariant);
+
+      expect(forVariant).toEqual(forVehicle);
+    });
+  });
 });

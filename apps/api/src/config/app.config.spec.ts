@@ -10,6 +10,7 @@ const KEYS = [
   'RATE_LIMIT_REGISTER',
   'RATE_LIMIT_MAIL',
   'RATE_LIMIT_TOKEN',
+  'RATE_LIMIT_CATALOG',
 ] as const;
 
 describe('appConfig rate limiting and proxy trust', () => {
@@ -34,6 +35,7 @@ describe('appConfig rate limiting and proxy trust', () => {
       register: { limit: 5, windowSeconds: 60 },
       mail: { limit: 3, windowSeconds: 900 },
       token: { limit: 20, windowSeconds: 60 },
+      catalog: { limit: 120, windowSeconds: 60 },
     });
   });
 

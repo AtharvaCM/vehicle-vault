@@ -11,8 +11,10 @@ export const RATE_LIMIT_BUCKET = 'rateLimitBucket';
  *   which is how an API becomes someone else's mail bomb.
  * - `token` — endpoints that exchange a token; guessing one is hopeless, so
  *   this is loose and exists to cap volume rather than to stop anyone.
+ * - `catalog` — the public catalog pages' reads. Crawlers are welcome, so it is
+ *   loose; it caps a scraper looping over every variant, not a visitor.
  */
-export type RateLimitBucket = 'login' | 'register' | 'mail' | 'token';
+export type RateLimitBucket = 'login' | 'register' | 'mail' | 'token' | 'catalog';
 
 export type RateLimitPolicy = { limit: number; windowSeconds: number };
 

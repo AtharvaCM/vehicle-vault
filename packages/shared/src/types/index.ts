@@ -21,3 +21,4 @@ export * from './tyre';
 export * from './accessory';
 export * from './service-baseline';
 export * from './notification-preference';
+export * from './public-catalog';
