@@ -96,6 +96,8 @@ test.describe('prerendered variant page', () => {
     );
     expect(html).toContain(`<meta property="og:title" content="${variant.heading}`);
     expect(html).toContain('<meta name="robots" content="noindex" />');
+    // The guest's Track this vehicle link, usable before any script runs.
+    expect(html).toMatch(/<a[^>]*href="\/register\?catalog=[^"]+"[^>]*>Track this vehicle/);
   });
 
   test('with JavaScript off the schedule is still there', async ({ browser }) => {
@@ -149,6 +151,12 @@ test.describe('prerendered variant page', () => {
       'href',
       `https://vehicle-vault.middle-earth.in${variant.path}`,
     );
+
+    await page.getByRole('link', { name: 'Track this vehicle' }).click();
+    await expect(page).toHaveURL(/\/register\?catalog=/);
+    expect(
+      await page.evaluate(() => (window as unknown as { __samePage?: boolean }).__samePage),
+    ).toBe(true);
     expect(errors).toEqual([]);
   });
 
@@ -222,6 +230,11 @@ test.describe('prerendered variant page', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: variant.heading })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open your garage' })).toBeVisible();
+    // Signed in, the CTA skips registration; the guest markup never hydrates here.
+    await expect(page.getByRole('link', { name: 'Track this vehicle' })).toHaveAttribute(
+      'href',
+      /^\/vehicles\/new\?catalog=/,
+    );
     expect(errors.filter((error) => HYDRATION_ERROR.test(error))).toEqual([]);
   });
 
