@@ -1,3 +1,10 @@
+## [1.65.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.1...v1.65.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **catalog:** fold near-duplicate trims into one ([b83bcfb](https://github.com/AtharvaCM/vehicle-vault/commit/b83bcfb2c355973b7d4546ea5e1e4a9ef108bf7c)), closes [#187](https://github.com/AtharvaCM/vehicle-vault/issues/187)
+
 ## [1.65.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.0...v1.65.1) (2026-09-23)
 
 
