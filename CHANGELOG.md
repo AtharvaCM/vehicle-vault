@@ -1,3 +1,10 @@
+## [1.71.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.71.1...v1.71.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **web:** keep Tailwind 3's rendering where Tailwind 4 changed it ([5f51a16](https://github.com/AtharvaCM/vehicle-vault/commit/5f51a1600ef25e22417846ab5797878d2be320c1))
+
 ## [1.71.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.71.0...v1.71.1) (2026-09-23)
 
 
