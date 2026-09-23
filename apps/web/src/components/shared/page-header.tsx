@@ -14,13 +14,7 @@ type PageHeaderProps = {
   className?: string;
 };
 
-export function PageHeader({
-  title,
-  description,
-  actions,
-  eyebrow,
-  className,
-}: PageHeaderProps) {
+export function PageHeader({ title, description, actions, eyebrow, className }: PageHeaderProps) {
   useDocumentTitle(`${title} | ${APP_NAME}`);
 
   return (

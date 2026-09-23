@@ -90,17 +90,17 @@ Emailed links (verification, password reset) fail out loud and never touch the s
 
 One name per concept on screen. Routes, API paths, types and code identifiers keep their names (`maintenance-records`, `MaintenanceRecord`); this governs what a person reads. Navigation labels change in the IA phase, not here.
 
-| Say | Not | Notes |
-|---|---|---|
-| **Service** | Maintenance, Service log | The feature: "Log service", "Service" tab, "No service logged yet". |
-| **service record** | maintenance record, service entry, service log entry | One visit to a workshop or one job done at home. Plural "service records". |
-| **service history** | maintenance history | Only for what is known about past services as a whole (the service-baseline questions, "Unknown service history"), never for one record or the list page. |
-| **Papers** | Documents, Protection (in copy), Compliance | The vehicle's insurance, PUC, RC, road tax and warranty together. One paper is named by its kind: "Insurance", "PUC certificate", "RC", "Road tax", "Warranty". |
-| **insurance policy** / **policy** | Insurance Policy, Coverage | "Policy" alone is fine once insurance is clear from the screen. |
-| **Sign in** / **Sign out** / **Create account** | Login, Logout, Log in, Sign up, Register | Verbs on buttons; "Signed out" in the toast. |
-| **Add vehicle** | Add a vehicle, Add Vehicle, New Vehicle, Create vehicle, Register vehicle | Every entry point to the vehicle form. A sentence may still say "add your first vehicle". |
-| **odometer** / **reading** | Official odometer, mileage (for the odometer) | "Mileage" means fuel economy only (km/L). |
-| **Labour** | Labor | Indian English, as the rest of the copy. |
+| Say                                             | Not                                                                       | Notes                                                                                                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Service**                                     | Maintenance, Service log                                                  | The feature: "Log service", "Service" tab, "No service logged yet".                                                                                                             |
+| **service record**                              | maintenance record, service entry, service log entry                      | One visit to a workshop or one job done at home. Plural "service records".                                                                                                      |
+| **service history**                             | maintenance history                                                       | A vehicle's past services as a whole ("Unknown service history", "Review service history across your garage"). Never one record; a list of records is headed "Service records". |
+| **Papers**                                      | Documents, Protection (in copy), Compliance                               | The vehicle's insurance, PUC, RC, road tax and warranty together. One paper is named by its kind: "Insurance", "PUC certificate", "RC", "Road tax", "Warranty".                 |
+| **insurance policy** / **policy**               | Insurance Policy, Coverage                                                | "Policy" alone is fine once insurance is clear from the screen.                                                                                                                 |
+| **Sign in** / **Sign out** / **Create account** | Login, Logout, Log in, Sign up, Register                                  | Verbs on buttons; "Signed out" in the toast.                                                                                                                                    |
+| **Add vehicle**                                 | Add a vehicle, Add Vehicle, New Vehicle, Create vehicle, Register vehicle | Every entry point to the vehicle form. A sentence may still say "add your first vehicle".                                                                                       |
+| **odometer** / **reading**                      | Official odometer, mileage (for the odometer)                             | "Mileage" means fuel economy only (km/L).                                                                                                                                       |
+| **Labour**                                      | Labor                                                                     | Indian English, as the rest of the copy.                                                                                                                                        |
 
 **Sentence case** for every button, heading, tab, label, badge, menu item, toast title and dialog title: capitalise the first word and proper nouns only ("Log service", "Save changes", "Due today"). Acronyms keep their capitals (PUC, RC, EMI, CNG, SUV, OTP), brands theirs (Vehicle Vault, Google, GitHub).
 

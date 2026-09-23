@@ -93,8 +93,8 @@ export function MaintenanceOverviewPage({
           title="Maintenance"
         />
         <LoadingState
-          description="Loading service history across your garage."
-          title="Loading service history"
+          description="Loading service records across your garage."
+          title="Loading service records"
         />
       </PageContainer>
     );
@@ -119,8 +119,8 @@ export function MaintenanceOverviewPage({
               Retry
             </Button>
           }
-          description="We couldn't load your service history. Try again in a moment."
-          title="Unable to load service history"
+          description="We couldn't load your service records. Try again in a moment."
+          title="Unable to load service records"
         />
       </PageContainer>
     );
