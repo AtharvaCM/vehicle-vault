@@ -23,7 +23,7 @@ import {
   type VehicleCatalogVariantQuery,
 } from '@vehicle-vault/shared';
 
-import { canonicalizeGenerationNames } from '../../../prisma/catalog-import/generation-redirects';
+import { canonicalizeCatalogNames } from '../../../prisma/catalog-import/generation-redirects';
 import { upsertCatalogDataset } from '../../../prisma/catalog-import/upsert-catalog-dataset';
 import { syncCatalogAliases } from '../../../prisma/catalog-import/sync-catalog-aliases';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -650,7 +650,7 @@ export class VehicleCatalogService {
     // Keyed by the catalog's generation names, not the source's: a variant of a
     // merged-away generation is still on sale, just filed under another name.
     const incomingSummary = summarizeImportDataset(
-      await canonicalizeGenerationNames(this.prisma, dataset),
+      await canonicalizeCatalogNames(this.prisma, dataset),
     );
     const activeOfferings = await this.getActivePublishedSourceOfferings(
       run.marketCode,
@@ -748,7 +748,7 @@ export class VehicleCatalogService {
       recordsUpserted: run.recordsUpserted,
       notes: run.notes ?? undefined,
       diff: buildImportDiff(
-        await canonicalizeGenerationNames(this.prisma, dataset),
+        await canonicalizeCatalogNames(this.prisma, dataset),
         currentPublishedDataset,
       ),
     };

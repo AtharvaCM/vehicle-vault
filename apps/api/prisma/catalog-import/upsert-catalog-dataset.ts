@@ -1,7 +1,11 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 
 import { slugify } from './catalog-slug';
-import { findGenerationRedirect, type GenerationRedirect } from './generation-redirects';
+import {
+  findGenerationRedirect,
+  findVariantRedirect,
+  type GenerationRedirect,
+} from './generation-redirects';
 import { isPseudoCatalogVariant } from './pseudo-variants';
 import type { CatalogDataset } from './types';
 
@@ -123,28 +127,37 @@ export async function upsertCatalogDataset(
         for (const variant of generation.variants) {
           if (isPseudoCatalogVariant(variant.name)) continue;
 
-          const variantRecord = await prisma.vehicleCatalogVariant.upsert({
-            where: {
-              generationId_slug: {
-                generationId: generationRecord.id,
-                slug: slugify(variant.name),
-              },
-            },
-            update: {
-              name: variant.name,
-              sourceName: defaultSourceName,
-              sourceUrl:
-                variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
-            },
-            create: {
-              generationId: generationRecord.id,
-              name: variant.name,
-              slug: slugify(variant.name),
-              sourceName: defaultSourceName,
-              sourceUrl:
-                variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
-            },
-          });
+          // A trim folded into another one keeps landing there, under the
+          // survivor's own name; see generation-redirects.
+          const variantRedirect = await findVariantRedirect(
+            prisma,
+            generationRecord.id,
+            variant.name,
+          );
+          const variantRecord = variantRedirect
+            ? { id: variantRedirect.variantId }
+            : await prisma.vehicleCatalogVariant.upsert({
+                where: {
+                  generationId_slug: {
+                    generationId: generationRecord.id,
+                    slug: slugify(variant.name),
+                  },
+                },
+                update: {
+                  name: variant.name,
+                  sourceName: defaultSourceName,
+                  sourceUrl:
+                    variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+                },
+                create: {
+                  generationId: generationRecord.id,
+                  name: variant.name,
+                  slug: slugify(variant.name),
+                  sourceName: defaultSourceName,
+                  sourceUrl:
+                    variant.sourceUrl ?? generation.sourceUrl ?? model.sourceUrl ?? make.sourceUrl,
+                },
+              });
           recordsUpserted += 1;
 
           const offeringOverrides = await prisma.vehicleCatalogVariantOfferingOverride.findMany({
@@ -164,7 +177,21 @@ export async function upsertCatalogDataset(
             },
           });
 
+          // Onto a survivor, another source's offering for the same fuel mix
+          // already says when it was sold; a second one would list it twice.
+          const otherSourceSignatures = variantRedirect
+            ? new Set(
+                (
+                  await prisma.vehicleCatalogVariantOffering.findMany({
+                    where: { variantId: variantRecord.id, sourceName: { not: defaultSourceName } },
+                    select: { fuelTypes: true },
+                  })
+                ).map((row) => buildFuelTypeSignature(row.fuelTypes)),
+              )
+            : new Set<string>();
+
           for (const offering of variant.offerings) {
+            if (otherSourceSignatures.has(buildFuelTypeSignature(offering.fuelTypes))) continue;
             const override = overridesBySignature.get(buildFuelTypeSignature(offering.fuelTypes));
 
             await prisma.vehicleCatalogVariantOffering.create({
