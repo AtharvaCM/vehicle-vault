@@ -112,7 +112,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Provider & Policy
+                    Provider & policy
                   </p>
                   <h4 className="font-black text-slate-900 leading-tight">
                     {document.provider ?? <NotRecorded />}
@@ -133,7 +133,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                         : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-50'
                   }
                 >
-                  {isExpired ? 'Expired' : isExpiringSoon ? 'Expiring Soon' : 'Active'}
+                  {isExpired ? 'Expired' : isExpiringSoon ? 'Expiring soon' : 'Active'}
                 </Badge>
               </div>
 
@@ -141,7 +141,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
                     <Calendar className="h-3 w-3" />
-                    Valid From
+                    Valid from
                   </div>
                   <p className="text-sm font-bold text-slate-700">
                     {document.startDate ? format.date(document.startDate) : <NotRecorded />}
@@ -150,10 +150,10 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
                     <Calendar className="h-3 w-3" />
-                    Valid Till
+                    Valid till
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {document.endDate ? format.date(document.endDate) : 'No Date Limit'}
+                    {document.endDate ? format.date(document.endDate) : 'No date limit'}
                   </p>
                 </div>
               </div>
@@ -164,7 +164,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 {typeof document.details?.premiumAmount === 'number' && (
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                      Premium Paid
+                      Premium paid
                     </p>
                     <p className="text-lg font-black tracking-tight text-slate-900">
                       {format.money(document.details.premiumAmount)}
@@ -174,7 +174,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 {typeof document.details?.insuredValue === 'number' && (
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                      Insured Declared Value (IDV)
+                      Insured declared value (IDV)
                     </p>
                     <p className="text-sm font-bold text-slate-600">
                       {format.money(document.details.insuredValue)}
@@ -254,10 +254,10 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   {isExpired
                     ? 'Expired'
                     : isExpiringSoon
-                      ? 'Expiring Soon'
+                      ? 'Expiring soon'
                       : document.endDate
                         ? 'Valid'
-                        : 'No Expiry'}
+                        : 'No expiry'}
                 </Badge>
               </div>
 
@@ -265,7 +265,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
                     <Calendar className="h-3 w-3" />
-                    Issued On
+                    Issued on
                   </div>
                   <p className="text-sm font-bold text-slate-700">
                     {document.startDate ? format.date(document.startDate) : <NotRecorded />}
@@ -274,10 +274,10 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
                     <FileBadge className="h-3 w-3" />
-                    Valid Till
+                    Valid till
                   </div>
                   <p className="text-sm font-bold text-slate-700">
-                    {document.endDate ? format.date(document.endDate) : 'No Date Limit'}
+                    {document.endDate ? format.date(document.endDate) : 'No date limit'}
                   </p>
                 </div>
               </div>
@@ -288,7 +288,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 {typeof amount === 'number' && (
                   <div className="space-y-0.5">
                     <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                      Amount Paid
+                      Amount paid
                     </p>
                     <p className="text-lg font-black tracking-tight text-slate-900">
                       {format.money(amount)}
@@ -362,7 +362,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-50'
                 }
               >
-                {isExpired ? 'Expired' : 'In Force'}
+                {isExpired ? 'Expired' : 'In force'}
               </Badge>
             </div>
 
@@ -370,7 +370,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
                   <Calendar className="h-3 w-3" />
-                  Coverage Start
+                  Coverage start
                 </div>
                 <p className="text-sm font-bold text-slate-700">
                   {document.startDate ? format.date(document.startDate) : <NotRecorded />}
@@ -379,10 +379,10 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
                   <Shield className="h-3 w-3" />
-                  Coverage End
+                  Coverage end
                 </div>
                 <p className="text-sm font-bold text-slate-700">
-                  {document.endDate ? format.date(document.endDate) : 'No Date Limit'}
+                  {document.endDate ? format.date(document.endDate) : 'No date limit'}
                 </p>
               </div>
             </div>
@@ -393,7 +393,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
               {typeof document.details?.endOdometer === 'number' && (
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                    Odometer Limit
+                    Odometer limit
                   </p>
                   <div className="flex items-center gap-2">
                     <Gauge className="h-4 w-4 text-slate-400" />

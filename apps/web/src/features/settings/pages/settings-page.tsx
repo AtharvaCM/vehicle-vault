@@ -86,7 +86,7 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle>Data export</CardTitle>
             <CardDescription>
-              Download a JSON backup of your vehicles, maintenance history, reminders, receipts, and
+              Download a JSON backup of your vehicles, service history, reminders, receipts, and
               account details.
             </CardDescription>
           </CardHeader>
@@ -190,7 +190,7 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
             <p>
-              A complete, newest-first history of vehicle, maintenance, reminder, fuel, and account
+              A complete, newest-first history of vehicle, service, reminder, fuel, and account
               events tied to your account.
             </p>
             <Link

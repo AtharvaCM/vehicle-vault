@@ -66,7 +66,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
       setScannedData(result);
       setIsFormOpen(true);
       appToast.success({
-        title: 'Receipt Scanned!',
+        title: 'Receipt scanned!',
         description: "We've extracted the details for you to review.",
       });
     } catch {
@@ -122,7 +122,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Fuel History</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Fuel history</h3>
           <p className="text-sm text-slate-500">
             Track your fuel consumption and efficiency over time.
           </p>
@@ -144,7 +144,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
               onClick={() => {
                 if (scanStatus.data?.available === false) {
                   appToast.info({
-                    title: 'AI Not Configured',
+                    title: 'AI not configured',
                     description:
                       'Please set your GEMINI_API_KEY in the backend .env to enable receipt scanning.',
                   });
@@ -155,7 +155,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
               size="sm"
               variant="outline"
               className="gap-2 border-primary/20 hover:border-primary/50 text-primary bg-primary/5 relative"
-              title={scanStatus.data?.available ? 'AI Ready' : 'AI Plugin Missing'}
+              title={scanStatus.data?.available ? 'AI ready' : 'AI plugin missing'}
             >
               {scanMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -167,7 +167,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
                   />
                 </div>
               )}
-              {scanMutation.isPending ? 'Analyzing...' : 'Scan Receipt'}
+              {scanMutation.isPending ? 'Analyzing...' : 'Scan receipt'}
             </Button>
 
             <Button
@@ -188,7 +188,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
               className="gap-2"
             >
               <Plus className="h-4 w-4" />
-              Log Fuel
+              Log fuel
             </Button>
           </div>
         ) : null}
@@ -228,13 +228,13 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
       >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Edit Fuel Log</DialogTitle>
+            <DialogTitle>Edit fuel log</DialogTitle>
           </DialogHeader>
           {editingLog && (
             <FuelLogForm
               onSubmit={handleUpdate}
               isSubmitting={updateMutation.isPending}
-              submitLabel="Save Changes"
+              submitLabel="Save changes"
               initialValues={{
                 date: editingLog.date.split('T')[0],
                 odometer: editingLog.odometer,

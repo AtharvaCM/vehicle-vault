@@ -90,7 +90,7 @@ export function VehicleForm({
   submitError,
   initialValues,
   onDirtyChange,
-  submitLabel = 'Save Vehicle',
+  submitLabel = 'Save vehicle',
   submittingLabel = 'Saving vehicle...',
   submitHint = 'You can add service history and reminders as soon as this vehicle is saved.',
   successMessage = 'Vehicle details saved.',

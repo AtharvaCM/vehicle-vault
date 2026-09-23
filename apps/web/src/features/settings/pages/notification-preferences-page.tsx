@@ -92,7 +92,7 @@ export function NotificationPreferencesPage() {
       <PageTitle
         actions={
           <Link className={buttonVariants({ variant: 'outline' })} to="/settings">
-            Back to Settings
+            Back to settings
           </Link>
         }
         description={description}

@@ -101,7 +101,7 @@ async function registerAndCreateVehicle(page: Page) {
   return { nickname, vehicleUrl: page.url() };
 }
 
-test('user can import grouped maintenance CSV rows into a structured record', async ({ page }) => {
+test('user can import grouped service CSV rows into a structured record', async ({ page }) => {
   const csvPath = path.join(__dirname, 'fixtures', 'sample-maintenance-import.csv');
   const { nickname, vehicleUrl } = await registerAndCreateVehicle(page);
 
@@ -112,7 +112,7 @@ test('user can import grouped maintenance CSV rows into a structured record', as
     .getByRole('button', { name: /import csv/i })
     .first()
     .click();
-  await expect(page.getByRole('dialog', { name: /import maintenance csv/i })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: /import service csv/i })).toBeVisible();
 
   await page.locator('#maintenance-import-upload').setInputFiles(csvPath);
   await expect(page.getByText('Column mapping')).toBeVisible();
@@ -120,7 +120,7 @@ test('user can import grouped maintenance CSV rows into a structured record', as
 
   await page.getByRole('button', { name: /preview import/i }).click();
   await expect(page.getByText('Ready to import')).toBeVisible();
-  await expect(page.getByText('1 maintenance record will be created.')).toBeVisible();
+  await expect(page.getByText('1 service record will be created.')).toBeVisible();
   await expect(page.getByText('Torque Garage')).toBeVisible();
   await expect(page.getByText('₹1,850')).toBeVisible();
 
@@ -133,7 +133,7 @@ test('user can import grouped maintenance CSV rows into a structured record', as
   await page.getByRole('button', { name: /import records/i }).click();
   await bulkImportResponse;
 
-  await expect(page.getByRole('dialog', { name: /import maintenance csv/i })).toBeHidden();
+  await expect(page.getByRole('dialog', { name: /import service csv/i })).toBeHidden();
   const importedRecord = page.getByRole('link', { name: /torque garage/i }).first();
   await expect(importedRecord).toBeVisible();
   await expect(page.getByText('Invoice INV-IMPORT-001')).toBeVisible();

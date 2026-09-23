@@ -15,7 +15,7 @@ function uniqueSuffix() {
  * picker only when there is something to pick, and land straight on the form
  * otherwise.
  */
-test('one vehicle: Log maintenance and Create reminder skip the picker and open the form', async ({
+test('one vehicle: Log service and Create reminder skip the picker and open the form', async ({
   page,
 }) => {
   const suffix = uniqueSuffix();
@@ -36,9 +36,9 @@ test('one vehicle: Log maintenance and Create reminder skip the picker and open 
   // With exactly one editable vehicle the action is a plain link straight to
   // its form — no picker, no button-then-dialog detour.
   await page.goto('/maintenance');
-  await page.getByRole('link', { name: 'Log maintenance', exact: true }).click();
+  await page.getByRole('link', { name: 'Log service', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}/maintenance/new$`));
-  await expect(page.getByRole('heading', { name: 'Add Maintenance Record' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Add service record' })).toBeVisible();
   await expect(page.getByRole('dialog')).not.toBeVisible();
 
   await page.goto('/reminders');
@@ -48,7 +48,7 @@ test('one vehicle: Log maintenance and Create reminder skip the picker and open 
   await expect(page.getByRole('dialog')).not.toBeVisible();
 });
 
-test('several vehicles: Log maintenance opens a picker, then the chosen form', async ({ page }) => {
+test('several vehicles: Log service opens a picker, then the chosen form', async ({ page }) => {
   const suffix = uniqueSuffix();
   const firstNickname = `Daily ${suffix.slice(-4)}`;
   const secondNickname = `Weekend ${suffix.slice(-4)}`;
@@ -75,9 +75,9 @@ test('several vehicles: Log maintenance opens a picker, then the chosen form', a
   });
 
   await page.goto('/maintenance');
-  await page.getByRole('button', { name: 'Log maintenance', exact: true }).click();
+  await page.getByRole('button', { name: 'Log service', exact: true }).click();
 
-  const dialog = page.getByRole('dialog', { name: 'Log maintenance' });
+  const dialog = page.getByRole('dialog', { name: 'Log service' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('link', { name: new RegExp(firstNickname) })).toBeVisible();
   await expect(dialog.getByRole('link', { name: new RegExp(secondNickname) })).toBeVisible();
@@ -85,7 +85,7 @@ test('several vehicles: Log maintenance opens a picker, then the chosen form', a
   await dialog.getByRole('link', { name: new RegExp(secondNickname) }).click();
 
   await expect(page).toHaveURL(new RegExp(`/vehicles/${secondVehicle.id}/maintenance/new$`));
-  await expect(page.getByRole('heading', { name: 'Add Maintenance Record' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Add service record' })).toBeVisible();
 });
 
 test.afterAll(async () => {

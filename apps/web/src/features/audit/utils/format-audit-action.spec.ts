@@ -9,7 +9,7 @@ describe('formatAuditAction', () => {
       tone: 'accent',
     });
     expect(formatAuditAction('maintenance.deleted')).toEqual({
-      label: 'Maintenance deleted',
+      label: 'Service deleted',
       tone: 'danger',
     });
     expect(formatAuditAction('reminder.completed')).toEqual({
@@ -43,7 +43,7 @@ describe('formatAuditAction', () => {
   });
 
   it('formats resource types and passes null through', () => {
-    expect(formatResourceType('maintenance_record')).toBe('Maintenance record');
+    expect(formatResourceType('maintenance_record')).toBe('Service record');
     expect(formatResourceType(null)).toBeNull();
   });
 });

@@ -114,6 +114,6 @@ function getNextDueLabel(insights: VehicleServiceInsights) {
 
   return {
     value: 'Not recorded',
-    detail: 'Add next due date or odometer on maintenance entries to make this more useful.',
+    detail: 'Add next due date or odometer on service records to make this more useful.',
   };
 }

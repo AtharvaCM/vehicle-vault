@@ -16,7 +16,7 @@ import type { AuditResourceType } from '@/features/audit/types/audit-event';
 
 const RESOURCE_FILTERS: { value: AuditResourceType; label: string }[] = [
   { value: 'vehicle', label: 'Vehicles' },
-  { value: 'maintenance_record', label: 'Maintenance' },
+  { value: 'maintenance_record', label: 'Service' },
   { value: 'reminder', label: 'Reminders' },
   { value: 'fuel_log', label: 'Fuel logs' },
   { value: 'insurance_policy', label: 'Insurance' },
@@ -60,7 +60,7 @@ export function ActivityPage() {
         <CardContent>
           <AuditFeed
             query={query}
-            emptyDescription="Once you start adding vehicles and logging maintenance, your history shows up here."
+            emptyDescription="Once you start adding vehicles and logging service, your history shows up here."
           />
         </CardContent>
       </Card>

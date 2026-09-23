@@ -458,16 +458,16 @@ describe('VehicleTyreTracker two-wheeler layout', () => {
 
     // A two-wheeler has no left/right pair to rotate, so the card must not
     // claim a rotation status it cannot support.
-    expect(screen.queryByText('Tyre Rotation')).not.toBeInTheDocument();
-    expect(screen.getByText('Wheel Alignment / Balancing')).toBeInTheDocument();
+    expect(screen.queryByText('Tyre rotation')).not.toBeInTheDocument();
+    expect(screen.getByText('Wheel alignment / balancing')).toBeInTheDocument();
   });
 
   it('keeps both cards, unrelabelled, for a car', () => {
     renderTracker(settled([]));
 
-    expect(screen.getByText('Tyre Rotation')).toBeInTheDocument();
-    expect(screen.getByText('Wheel Alignment')).toBeInTheDocument();
-    expect(screen.queryByText('Wheel Alignment / Balancing')).not.toBeInTheDocument();
+    expect(screen.getByText('Tyre rotation')).toBeInTheDocument();
+    expect(screen.getByText('Wheel alignment')).toBeInTheDocument();
+    expect(screen.queryByText('Wheel alignment / balancing')).not.toBeInTheDocument();
   });
 
   it('gives the wheel diagram a front/rear description, not a four-corner one', () => {

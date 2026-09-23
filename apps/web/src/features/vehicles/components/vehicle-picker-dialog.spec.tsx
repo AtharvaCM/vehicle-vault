@@ -36,7 +36,7 @@ function makeVehicle(overrides: Partial<VehiclePickerVehicle> = {}): VehiclePick
 }
 
 describe('VehiclePickerDialog', () => {
-  it('shows a disabled trigger while the vehicles query is still loading, never "Add a vehicle"', () => {
+  it('shows a disabled trigger while the vehicles query is still loading, never "Add vehicle"', () => {
     // `vehicles` is `[]` here for the same reason it is on a real page while
     // the query is pending — not because the account has none.
     render(
@@ -77,7 +77,7 @@ describe('VehiclePickerDialog', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: 'Add a vehicle' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Add vehicle' })).toHaveAttribute(
       'href',
       '/vehicles/new',
     );

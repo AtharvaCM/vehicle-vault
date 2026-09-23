@@ -41,8 +41,8 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
       setActionError(null);
       await deleteRecordMutation.mutateAsync(recordId);
       appToast.success({
-        title: 'Maintenance record deleted',
-        description: 'The service entry and its linked files were removed.',
+        title: 'Service record deleted',
+        description: 'The service record and its linked files were removed.',
       });
       await navigate({
         to: '/vehicles/$vehicleId/maintenance',
@@ -50,20 +50,20 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
       });
     } catch (error) {
       appToast.error({
-        title: 'Unable to delete maintenance record',
-        description: getApiErrorMessage(error, 'Unable to delete the maintenance record.'),
+        title: 'Unable to delete service record',
+        description: getApiErrorMessage(error, 'Unable to delete the service record.'),
       });
-      setActionError(getApiErrorMessage(error, 'Unable to delete the maintenance record.'));
+      setActionError(getApiErrorMessage(error, 'Unable to delete the service record.'));
     }
   }
 
   if (recordQuery.isPending) {
     return (
       <PageContainer>
-        <PageTitle description="Loading this service entry." title="Maintenance Record" />
+        <PageTitle description="Loading this service record." title="Service record" />
         <LoadingState
           description="Getting the latest service details."
-          title="Loading maintenance record"
+          title="Loading service record"
         />
       </PageContainer>
     );
@@ -80,8 +80,8 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
           </Link>
         }
         onRetry={() => void recordQuery.refetch()}
-        pageDescription="Review the full details for one logged service entry."
-        resourceLabel="Maintenance record"
+        pageDescription="Review the full details for one logged service record."
+        resourceLabel="Service record"
         subject="record"
       />
     );
@@ -100,7 +100,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
                 params={{ vehicleId: record.vehicleId }}
                 to="/vehicles/$vehicleId/maintenance"
               >
-                Back to Maintenance History
+                Back to maintenance
               </Link>
               {canEdit ? (
                 <>
@@ -109,15 +109,15 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
                     params={{ recordId: record.id }}
                     to="/maintenance-records/$recordId/edit"
                   >
-                    Edit Record
+                    Edit record
                   </Link>
                   <ConfirmActionDialog
                     confirmLabel="Delete record"
-                    description="This removes the service entry and any linked receipts or documents. This can't be undone."
+                    description="This removes the service record and any linked receipts or documents. This can't be undone."
                     isPending={deleteRecordMutation.isPending}
                     onConfirm={() => handleDeleteRecord(record.vehicleId)}
-                    title="Delete this maintenance record?"
-                    triggerLabel="Delete Record"
+                    title="Delete this service record?"
+                    triggerLabel="Delete record"
                     triggerVariant="secondary"
                   />
                 </>

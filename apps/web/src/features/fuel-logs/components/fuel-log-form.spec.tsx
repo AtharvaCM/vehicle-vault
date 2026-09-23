@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { FuelLogForm } from './fuel-log-form';
 
-const numberFields = ['Odometer (km)', 'Quantity (Litres)', 'Price per Litre', 'Total Cost'];
+const numberFields = ['Odometer (km)', 'Quantity (litres)', 'Price per litre', 'Total cost'];
 
 describe('FuelLogForm', () => {
   it('starts every number empty rather than 0', () => {
@@ -20,7 +20,7 @@ describe('FuelLogForm', () => {
     const onSubmit = vi.fn();
 
     render(<FuelLogForm onSubmit={onSubmit} />);
-    await user.click(screen.getByRole('button', { name: 'Save Fuel Log' }));
+    await user.click(screen.getByRole('button', { name: 'Save fuel log' }));
 
     const alerts = await screen.findAllByRole('alert');
     expect(alerts.map((alert) => alert.textContent)).toEqual([
@@ -37,9 +37,9 @@ describe('FuelLogForm', () => {
     const user = userEvent.setup();
 
     render(<FuelLogForm onSubmit={vi.fn()} />);
-    await user.click(screen.getByRole('button', { name: 'Save Fuel Log' }));
+    await user.click(screen.getByRole('button', { name: 'Save fuel log' }));
 
-    const litres = screen.getByLabelText('Quantity (Litres)');
+    const litres = screen.getByLabelText('Quantity (litres)');
     await screen.findByText('Enter the litres');
     expect(litres).toHaveAccessibleDescription('Enter the litres');
   });
@@ -47,7 +47,7 @@ describe('FuelLogForm', () => {
   it('keeps what a scanned receipt filled in', () => {
     render(<FuelLogForm initialValues={{ quantity: 8, price: 105 }} onSubmit={vi.fn()} />);
 
-    expect(screen.getByLabelText('Quantity (Litres)')).toHaveValue(8);
+    expect(screen.getByLabelText('Quantity (litres)')).toHaveValue(8);
     expect(screen.getByLabelText('Odometer (km)')).toHaveValue(null);
   });
 });

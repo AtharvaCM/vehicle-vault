@@ -72,22 +72,22 @@ function emptyMaintenanceValues(): DefaultValues<MaintenanceFormValues> {
 
 const quickPresets = [
   {
-    label: 'Oil Change',
+    label: 'Oil change',
     category: MaintenanceCategory.EngineOil,
     note: 'Engine oil and filter replacement',
   },
   {
-    label: 'Periodic Service',
+    label: 'Periodic service',
     category: MaintenanceCategory.PeriodicService,
     note: 'Full vehicle inspection and service',
   },
   {
-    label: 'Brake Service',
+    label: 'Brake service',
     category: MaintenanceCategory.BrakePads,
     note: 'Brake pad inspection/replacement',
   },
   {
-    label: 'Tyre Rotation',
+    label: 'Tyre rotation',
     category: MaintenanceCategory.TyreRotation,
     note: 'Wheel rotation and alignment check',
   },
@@ -197,10 +197,10 @@ export function MaintenanceForm({
   submitError,
   initialValues,
   onDirtyChange,
-  submitLabel = 'Save Record',
+  submitLabel = 'Save record',
   submittingLabel = 'Saving record...',
   submitHint = 'Use this record for one completed service, repair, or inspection.',
-  successMessage = 'Maintenance record saved.',
+  successMessage = 'Service record saved.',
 }: MaintenanceFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const [lowOdometerWarning, setLowOdometerWarning] = useState<{
@@ -356,7 +356,7 @@ export function MaintenanceForm({
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-indigo-600" />
               <CardTitle className="text-sm font-semibold text-indigo-900">
-                Smart Suggestions
+                Smart suggestions
               </CardTitle>
             </div>
             <CardDescription className="text-xs text-indigo-700">
@@ -415,7 +415,7 @@ export function MaintenanceForm({
                       type="button"
                       variant="ghost"
                     >
-                      Quick Apply
+                      Quick apply
                     </Button>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export function MaintenanceForm({
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Maintenance record</CardTitle>
+          <CardTitle>Service record</CardTitle>
           <CardDescription>
             Capture the details of one completed service visit, repair, or inspection.
           </CardDescription>
@@ -435,7 +435,7 @@ export function MaintenanceForm({
         <CardContent>
           <div className="mb-6">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Common Tasks
+              Common tasks
             </p>
             <div className="flex flex-wrap gap-2">
               {quickPresets.map((preset) => (
@@ -467,8 +467,8 @@ export function MaintenanceForm({
               value={entryMode}
             >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="quick">Quick Entry</TabsTrigger>
-                <TabsTrigger value="detailed">Detailed Entry</TabsTrigger>
+                <TabsTrigger value="quick">Quick entry</TabsTrigger>
+                <TabsTrigger value="detailed">Detailed entry</TabsTrigger>
               </TabsList>
 
               <TabsContent className="space-y-5" value="quick">
@@ -536,7 +536,7 @@ export function MaintenanceForm({
                         aria-invalid={Boolean(form.formState.errors.category)}
                         id="maintenance-category"
                       >
-                        <SelectValue placeholder="Select a maintenance category" />
+                        <SelectValue placeholder="Select a service category" />
                       </SelectTrigger>
                       <SelectContent>
                         {categoryOptions.map((category) => (
@@ -701,7 +701,7 @@ export function MaintenanceForm({
                         })}
                       />
                       <BreakdownMetric
-                        label="Labor"
+                        label="Labour"
                         value={format.money(lineItemBreakdown.laborCost, {
                           currency: currencyCode,
                         })}
@@ -727,7 +727,7 @@ export function MaintenanceForm({
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm leading-6 text-slate-600">
-                      <p>Parts, fluids, labor, fees, jobs, and taxes add to the total.</p>
+                      <p>Parts, fluids, labour, fees, jobs, and taxes add to the total.</p>
                       <p>Discount items subtract from the total automatically.</p>
                       <p>If you do not add structured items yet, the manual total still works.</p>
                     </CardContent>
@@ -796,7 +796,7 @@ export function MaintenanceForm({
                 {isSubmitting ? submittingLabel : submitLabel}
               </Button>
               <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
-                {isSubmitting ? 'Saving maintenance record...' : submitHint}
+                {isSubmitting ? 'Saving service record...' : submitHint}
               </p>
             </div>
           </form>

@@ -13,7 +13,7 @@ const VehicleMaintenanceListPage = createLazyPage(
       default: module.VehicleMaintenanceListPage,
     })),
   {
-    title: 'Loading maintenance history',
+    title: 'Loading service history',
     description: 'Loading service history for this vehicle.',
   },
 );
