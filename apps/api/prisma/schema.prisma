@@ -347,6 +347,8 @@ model VehicleInvite {
   expiresAt       DateTime
   acceptedAt      DateTime?
   revokedAt       DateTime?
+  /// The invitee said no. Like `acceptedAt` and `revokedAt`, it ends the invite.
+  declinedAt      DateTime?
   invitedByUserId String      @db.Uuid
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt

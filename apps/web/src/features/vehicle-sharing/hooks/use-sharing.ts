@@ -6,8 +6,10 @@ import { queryKeys } from '@/lib/query/query-keys';
 import {
   acceptInvite,
   createInvite,
+  declineInvite,
   invitesQueryOptions,
   membersQueryOptions,
+  previewInvite,
   removeMember,
   revokeInvite,
   transferOwnership,
@@ -86,5 +88,22 @@ export function useAcceptInvite() {
       qc.invalidateQueries({ queryKey: queryKeys.vehicles.all() });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
     },
+  });
+}
+
+/** The invite behind a link, as its page shows it; asked again once signed in. */
+export function useInvitePreview(token: string, signedIn: boolean) {
+  return useQuery({
+    queryKey: [...queryKeys.vehicleSharing.all(), 'invite-preview', token, signedIn] as const,
+    queryFn: () => previewInvite(token, signedIn),
+    retry: false,
+  });
+}
+
+export function useDeclineInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) => declineInvite(token),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.vehicleSharing.all() }),
   });
 }
