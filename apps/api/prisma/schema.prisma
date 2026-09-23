@@ -50,6 +50,8 @@ enum MaintenanceCategory {
   fasteners
   detailing
   brake_service
+  spark_plug
+  cvt_belt
   other
 }
 

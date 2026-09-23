@@ -385,6 +385,28 @@ describe('ServiceScheduleService', () => {
       expect(slugs).not.toContain('chain_lube');
       // Measured, not serviced, so it has no category and still applies.
       expect(slugs).toContain('tyre_inspection');
+      // No spark plug or CVT belt in the resolver's answer, so neither is offered.
+      expect(slugs).not.toContain('spark_plug');
+      expect(slugs).not.toContain('cvt_belt');
+    });
+
+    it('offers a CVT scooter its spark plug and belt at the two-wheeler intervals', async () => {
+      vehiclesService.ensureVehicleExists.mockResolvedValue(bike);
+      intervalResolver.resolveForVehicle.mockResolvedValue({
+        spark_plug: { km: 9000, months: null, source: 'default' },
+        cvt_belt: { km: 24000, months: null, source: 'default' },
+      });
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+
+      expect(suggestions.find((s) => s.slug === 'spark_plug')).toMatchObject({
+        intervalKm: 9000,
+        dueOdometer: 21_000,
+      });
+      expect(suggestions.find((s) => s.slug === 'cvt_belt')).toMatchObject({
+        intervalKm: 24000,
+        dueOdometer: 36_000,
+      });
     });
 
     it('leaves an unlinked car on the curated catalog', async () => {

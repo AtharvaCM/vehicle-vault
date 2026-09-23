@@ -62,6 +62,12 @@ const TWO_WHEELER_DEFAULT_INTERVALS: ResolvedIntervalMap = {
   [MaintenanceCategory.BrakePads]: { km: 10000, months: 12, source: 'default' },
   [MaintenanceCategory.ChainService]: { km: 500, months: 1, source: 'default' },
   [MaintenanceCategory.Coolant]: { km: 20000, months: 24, source: 'default' },
+  // Replace. The makers state only a distance: Honda Activa 9,000 km, TVS
+  // Jupiter and Hero Splendor+ 12,000 km. The shortest is the default.
+  [MaintenanceCategory.SparkPlug]: { km: 9000, months: null, source: 'default' },
+  // Drive belt (with the CVT rollers) replaced every 24,000 km on the TVS
+  // Jupiter; Honda only states an inspection. Scooters only — see `appliesTo`.
+  [MaintenanceCategory.CvtBelt]: { km: 24000, months: null, source: 'default' },
 };
 
 const NON_MOTORCYCLE_ONLY = new Set<MaintenanceCategory>([
@@ -81,6 +87,8 @@ const NOT_FOR_ELECTRIC = new Set<MaintenanceCategory>([
   MaintenanceCategory.AirFilter,
   MaintenanceCategory.Coolant,
   MaintenanceCategory.TimingBelt,
+  MaintenanceCategory.SparkPlug,
+  MaintenanceCategory.CvtBelt,
 ]);
 
 export interface IntervalVehicleShape {
@@ -101,10 +109,7 @@ export interface IntervalVariantShape {
  * (e.g. "chain", "liquid-cooled") — matched with loose substring checks
  * rather than parsed into an enum, since the source data isn't normalized.
  *
- * `transmission` isn't read yet: CVT-belt gating needs a `MaintenanceCategory`
- * this table doesn't have (see the PR description's follow-ups), so the
- * two-wheeler table has no item that would use it. Selected here so it's a
- * one-line addition once that category exists.
+ * `transmission` gates the CVT belt: a scooter's automatic is a belt CVT.
  */
 interface TwoWheelerSpecFacts {
   transmission: string | null;
@@ -121,6 +126,17 @@ const EMPTY_SPEC_FACTS: TwoWheelerSpecFacts = {
 /** Chain final drive, going by the variant's recorded drive type. Never guessed from transmission. */
 function isChainDrive(driveType: string | null): boolean {
   return driveType != null && /chain/i.test(driveType);
+}
+
+/**
+ * A belt CVT, going by the variant's recorded transmission. Bike spec sources
+ * write a scooter's as "CVT" or "Automatic"; a motorcycle's dual-clutch or AMT
+ * automatic has no belt, so it is excluded.
+ */
+function isCvt(transmission: string | null): boolean {
+  if (transmission == null) return false;
+  if (/dct|dual[\s-]*clutch|amt/i.test(transmission)) return false;
+  return /cvt|automatic/i.test(transmission);
 }
 
 /** Liquid-cooled, going by the variant's recorded cooling type. */
@@ -211,6 +227,10 @@ export class MaintenanceIntervalResolver {
     }
     if (category === MaintenanceCategory.Coolant && isMotorcycle) {
       return isLiquidCooled(specFacts.coolingType);
+    }
+    // A car's CVT belt is sealed inside the gearbox, not a service item.
+    if (category === MaintenanceCategory.CvtBelt) {
+      return isMotorcycle && isCvt(specFacts.transmission);
     }
 
     return true;

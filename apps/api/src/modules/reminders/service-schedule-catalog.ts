@@ -140,6 +140,27 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
     intervalMonths: 12,
   },
   {
+    // Two-wheelers only here: the resolver's two-wheeler table supplies the
+    // interval. A car's plugs last several times longer and are not offered.
+    slug: 'spark_plug',
+    category: MaintenanceCategory.SparkPlug,
+    type: ReminderType.Service,
+    title: 'Spark plug replacement',
+    intervalKm: 9000,
+    appliesToFuel: ALL_NON_ELECTRIC,
+    appliesToVehicle: [VehicleType.Motorcycle],
+  },
+  {
+    // Kept only when the resolver says the variant has a belt CVT.
+    slug: 'cvt_belt',
+    category: MaintenanceCategory.CvtBelt,
+    type: ReminderType.Service,
+    title: 'CVT belt and rollers replacement',
+    intervalKm: 24000,
+    appliesToFuel: ALL_NON_ELECTRIC,
+    appliesToVehicle: [VehicleType.Motorcycle],
+  },
+  {
     slug: 'chain_lube',
     category: MaintenanceCategory.ChainService,
     type: ReminderType.Service,
