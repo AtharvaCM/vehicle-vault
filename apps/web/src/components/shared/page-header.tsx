@@ -9,6 +9,7 @@ type PageHeaderProps = {
   title: string;
   description: string;
   actions?: ReactNode;
+  /** A short label above the title, only where it adds something the title doesn't say. */
   eyebrow?: string;
   className?: string;
 };
@@ -17,7 +18,7 @@ export function PageHeader({
   title,
   description,
   actions,
-  eyebrow = APP_NAME,
+  eyebrow,
   className,
 }: PageHeaderProps) {
   useDocumentTitle(`${title} | ${APP_NAME}`);
@@ -32,9 +33,11 @@ export function PageHeader({
       {/* The title keeps at least 20rem beside the actions. Where that doesn't
           fit, the actions drop to a row of their own below it. */}
       <div className="space-y-1.5 sm:min-w-80 sm:flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-          {eyebrow}
-        </p>
+        {eyebrow ? (
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+            {eyebrow}
+          </p>
+        ) : null}
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
             {title}

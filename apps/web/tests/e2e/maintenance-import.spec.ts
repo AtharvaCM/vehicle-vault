@@ -120,7 +120,7 @@ test('user can import grouped maintenance CSV rows into a structured record', as
 
   await page.getByRole('button', { name: /preview import/i }).click();
   await expect(page.getByText('Ready to import')).toBeVisible();
-  await expect(page.getByText('1 maintenance record will be created.')).toBeVisible();
+  await expect(page.getByText('1 service record will be created.')).toBeVisible();
   await expect(page.getByText('Torque Garage')).toBeVisible();
   await expect(page.getByText('₹1,850')).toBeVisible();
 

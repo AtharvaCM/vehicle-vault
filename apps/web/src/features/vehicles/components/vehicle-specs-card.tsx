@@ -22,14 +22,14 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vehicle Specifications</CardTitle>
+          <CardTitle>Vehicle specifications</CardTitle>
           <CardDescription>
             Specifications are published per variant, and this vehicle has none on file.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <EmptyState
-            description={`Add the variant for your ${make} ${model} from Edit Vehicle, and its specifications will appear here.`}
+            description={`Add the variant for your ${make} ${model} from Edit vehicle, and its specifications will appear here.`}
             title="No variant on file"
           />
         </CardContent>
@@ -41,7 +41,7 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vehicle Specifications</CardTitle>
+          <CardTitle>Vehicle specifications</CardTitle>
           <CardDescription>
             Loading specs for {make} {model} {variant}…
           </CardDescription>
@@ -59,7 +59,7 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vehicle Specifications</CardTitle>
+          <CardTitle>Vehicle specifications</CardTitle>
           <CardDescription>
             Specifications for {make} {model} {variant}
           </CardDescription>
@@ -96,10 +96,10 @@ function EngineSection({ specs }: SpecSectionProps) {
   const items = buildSpecItems([
     ['Displacement', specs.engineCc, 'cc'],
     ['Cylinders', specs.engineCyl],
-    ['Engine Type', specs.engineType],
+    ['Engine type', specs.engineType],
     ['Fuel', specs.engineFuel],
-    ['Max Power', specs.powerPs, specs.powerRpm ? `PS @ ${specs.powerRpm} rpm` : 'PS'],
-    ['Max Torque', specs.torqueNm, specs.torqueRpm ? `Nm @ ${specs.torqueRpm} rpm` : 'Nm'],
+    ['Max power', specs.powerPs, specs.powerRpm ? `PS @ ${specs.powerRpm} rpm` : 'PS'],
+    ['Max torque', specs.torqueNm, specs.torqueRpm ? `Nm @ ${specs.torqueRpm} rpm` : 'Nm'],
     ['Transmission', specs.transmission],
     ['Drivetrain', specs.driveType],
   ]);
@@ -107,7 +107,7 @@ function EngineSection({ specs }: SpecSectionProps) {
   if (items.length === 0) return null;
 
   return (
-    <SpecCard icon={<Gauge className="h-5 w-5" />} items={items} title="Engine & Drivetrain" />
+    <SpecCard icon={<Gauge className="h-5 w-5" />} items={items} title="Engine & drivetrain" />
   );
 }
 
@@ -117,58 +117,58 @@ function DimensionsSection({ specs }: SpecSectionProps) {
     ['Width', specs.widthMm, 'mm'],
     ['Height', specs.heightMm, 'mm'],
     ['Wheelbase', specs.wheelbaseMm, 'mm'],
-    ['Kerb Weight', specs.kerbWeightKg, 'kg'],
-    ['Gross Weight', specs.grossWeightKg, 'kg'],
-    ['Boot Space', specs.bootSpaceLitres, 'L'],
-    ['Ground Clearance', specs.groundClearanceMm, 'mm'],
-    ['Turning Radius', specs.turningRadiusM, 'm'],
+    ['Kerb weight', specs.kerbWeightKg, 'kg'],
+    ['Gross weight', specs.grossWeightKg, 'kg'],
+    ['Boot space', specs.bootSpaceLitres, 'L'],
+    ['Ground clearance', specs.groundClearanceMm, 'mm'],
+    ['Turning radius', specs.turningRadiusM, 'm'],
   ]);
 
   if (items.length === 0) return null;
 
   return (
-    <SpecCard icon={<Ruler className="h-5 w-5" />} items={items} title="Dimensions & Weight" />
+    <SpecCard icon={<Ruler className="h-5 w-5" />} items={items} title="Dimensions & weight" />
   );
 }
 
 function PerformanceSection({ specs }: SpecSectionProps) {
   const items = buildSpecItems([
-    ['Top Speed', specs.topSpeedKph, 'km/h'],
-    ['Mileage (City)', specs.mileageCity, 'km/l'],
-    ['Mileage (Highway)', specs.mileageHighway, 'km/l'],
-    ['Mileage (Combined)', specs.mileageCombined, 'km/l'],
-    ['Fuel Tank', specs.fuelCapLitres, 'L'],
+    ['Top speed', specs.topSpeedKph, 'km/h'],
+    ['Mileage (city)', specs.mileageCity, 'km/l'],
+    ['Mileage (highway)', specs.mileageHighway, 'km/l'],
+    ['Mileage (combined)', specs.mileageCombined, 'km/l'],
+    ['Fuel tank', specs.fuelCapLitres, 'L'],
   ]);
 
   if (items.length === 0) return null;
 
   return (
-    <SpecCard icon={<Fuel className="h-5 w-5" />} items={items} title="Performance & Economy" />
+    <SpecCard icon={<Fuel className="h-5 w-5" />} items={items} title="Performance & economy" />
   );
 }
 
 function BodySection({ specs }: SpecSectionProps) {
   const items = buildSpecItems([
-    ['Body Type', specs.bodyType],
-    ['Seating Capacity', specs.seatingCapacity],
+    ['Body type', specs.bodyType],
+    ['Seating capacity', specs.seatingCapacity],
     ['Doors', specs.doors],
   ]);
 
   if (items.length === 0) return null;
 
-  return <SpecCard icon={<Car className="h-5 w-5" />} items={items} title="Body & Comfort" />;
+  return <SpecCard icon={<Car className="h-5 w-5" />} items={items} title="Body & comfort" />;
 }
 
 function TyresSection({ specs }: SpecSectionProps) {
   const items = buildSpecItems([
-    ['Tyre Size', specs.tyreSize],
-    ['Wheel Type', specs.wheelType],
-    ['Wheel Size', specs.wheelSizeInch, '"'],
+    ['Tyre size', specs.tyreSize],
+    ['Wheel type', specs.wheelType],
+    ['Wheel size', specs.wheelSizeInch, '"'],
   ]);
 
   if (items.length === 0) return null;
 
-  return <SpecCard icon={<CircleDot className="h-5 w-5" />} items={items} title="Tyres & Wheels" />;
+  return <SpecCard icon={<CircleDot className="h-5 w-5" />} items={items} title="Tyres & wheels" />;
 }
 
 function SafetySection({ specs }: SpecSectionProps) {
@@ -179,7 +179,7 @@ function SafetySection({ specs }: SpecSectionProps) {
       const features = JSON.parse(specs.safetyFeatures) as string[];
       features.forEach((f) => items.push({ label: f, value: '✓' }));
     } catch {
-      items.push({ label: 'Safety Features', value: specs.safetyFeatures });
+      items.push({ label: 'Safety features', value: specs.safetyFeatures });
     }
   }
 

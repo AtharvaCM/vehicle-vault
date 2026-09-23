@@ -48,13 +48,13 @@ describe('MaintenanceDraftReviewCard', () => {
   it('applies a finished extraction to a draft', () => {
     render(<MaintenanceDraftReviewCard isDraft recordId="record-1" />);
 
-    expect(screen.getByRole('button', { name: 'Apply to Draft' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply to draft' })).toBeInTheDocument();
   });
 
   it('never offers to apply one over a confirmed record, which it would overwrite', () => {
     render(<MaintenanceDraftReviewCard isDraft={false} recordId="record-1" />);
 
-    expect(screen.queryByRole('button', { name: 'Apply to Draft' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Apply to draft' })).not.toBeInTheDocument();
     // What was read stays on show.
     expect(screen.getByText('Torque Garage')).toBeInTheDocument();
   });

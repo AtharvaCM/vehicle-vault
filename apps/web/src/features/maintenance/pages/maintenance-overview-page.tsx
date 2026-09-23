@@ -93,8 +93,8 @@ export function MaintenanceOverviewPage({
           title="Maintenance"
         />
         <LoadingState
-          description="Loading maintenance history across your garage."
-          title="Loading maintenance history"
+          description="Loading service history across your garage."
+          title="Loading service history"
         />
       </PageContainer>
     );
@@ -119,8 +119,8 @@ export function MaintenanceOverviewPage({
               Retry
             </Button>
           }
-          description="We couldn't load your maintenance history. Try again in a moment."
-          title="Unable to load maintenance"
+          description="We couldn't load your service history. Try again in a moment."
+          title="Unable to load service history"
         />
       </PageContainer>
     );
@@ -153,16 +153,16 @@ export function MaintenanceOverviewPage({
     try {
       await bulkDeleteMutation.mutateAsync(idsToDelete);
       appToast.success({
-        title: 'Maintenance records deleted',
-        description: `Deleted ${idsToDelete.length} maintenance record${idsToDelete.length === 1 ? '' : 's'}.`,
+        title: 'Service records deleted',
+        description: `Deleted ${idsToDelete.length} service record${idsToDelete.length === 1 ? '' : 's'}.`,
       });
       setSelectedRecordIds([]);
     } catch (error) {
       appToast.error({
-        title: 'Unable to delete maintenance records',
+        title: 'Unable to delete service records',
         description: getApiErrorMessage(
           error,
-          "We couldn't delete the selected maintenance records right now.",
+          "We couldn't delete the selected service records right now.",
         ),
       });
     }
@@ -178,9 +178,9 @@ export function MaintenanceOverviewPage({
               params: { vehicleId },
             })}
             dialogDescription="Choose which vehicle this service is for."
-            dialogTitle="Log maintenance"
+            dialogTitle="Log service"
             isLoading={vehiclesQuery.isPending}
-            triggerLabel="Log maintenance"
+            triggerLabel="Log service"
             vehicles={vehicles}
           />
         }
@@ -199,13 +199,13 @@ export function MaintenanceOverviewPage({
                   </span>
                 ) : null
               }
-              description="Service entries logged across your garage."
+              description="Service records logged across your garage."
               icon={ClipboardList}
               label="Records"
               value={String(recordCount)}
             />
             <StatCard
-              description="Vehicles that already have at least one service entry."
+              description="Vehicles that already have at least one service record."
               icon={Wrench}
               label="Vehicles with history"
               value={String(vehiclesWithHistory)}
@@ -249,8 +249,8 @@ export function MaintenanceOverviewPage({
 
           <SectionCard
             className="p-3 sm:p-5"
-            description="Browse every logged service entry across your vehicles."
-            title="All maintenance records"
+            description="Browse every logged service record across your vehicles."
+            title="All service records"
             action={
               <div className="flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
@@ -263,7 +263,7 @@ export function MaintenanceOverviewPage({
                 onSelectionChange={handleSelectionChange}
                 records={filteredRecords}
                 selectedRecordIds={selectedRecordIds}
-                title="Maintenance history"
+                title="Service records"
                 vehicleLabelById={vehicleLabelById}
               />
             ) : (
@@ -275,34 +275,34 @@ export function MaintenanceOverviewPage({
                 }
                 description="Try broadening the search or removing the active category filter."
                 icon={ClipboardList}
-                title="No maintenance records match these filters"
+                title="No service records match these filters"
               />
             )}
           </SectionCard>
         </>
       ) : (
         <SectionCard
-          description="Maintenance records from across your tracked vehicles will appear here."
-          title="Latest maintenance activity"
+          description="Service records from across your tracked vehicles will appear here."
+          title="Latest service activity"
         >
           <EmptyState
             action={
               <VehiclePickerDialog
-                addVehicleLabel="Add your first vehicle"
+                addVehicleLabel="Add vehicle"
                 buildLink={(vehicleId) => ({
                   to: '/vehicles/$vehicleId/maintenance/new',
                   params: { vehicleId },
                 })}
                 dialogDescription="Choose which vehicle this service is for."
-                dialogTitle="Log maintenance"
+                dialogTitle="Log service"
                 isLoading={vehiclesQuery.isPending}
-                triggerLabel="Log maintenance from a vehicle"
+                triggerLabel="Log service from a vehicle"
                 vehicles={vehicles}
               />
             }
-            description="Your service entries will appear here once you log the first visit or repair."
+            description="Your service records will appear here once you log the first visit or repair."
             icon={ClipboardList}
-            title="No maintenance records yet"
+            title="No service records yet"
           />
         </SectionCard>
       )}

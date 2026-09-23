@@ -109,7 +109,7 @@ describe('VehicleEditPage roles', () => {
 
     expect(screen.queryByText('vehicle form')).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Vehicle' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to vehicle' })).toBeInTheDocument();
   });
 });
 
@@ -133,7 +133,7 @@ describe('VehicleEditPage saving with nothing changed', () => {
     renderAs(VehicleRole.Owner);
     submitPayload.current = {};
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(updateVehicleMutateAsync).not.toHaveBeenCalled();
     expect(appToast.success).toHaveBeenCalledWith({
@@ -150,7 +150,7 @@ describe('VehicleEditPage saving with nothing changed', () => {
     renderAs(VehicleRole.Owner);
     submitPayload.current = { nickname: 'Family SUV' };
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(updateVehicleMutateAsync).toHaveBeenCalledWith({ nickname: 'Family SUV' });
     expect(appToast.success).toHaveBeenCalledWith({

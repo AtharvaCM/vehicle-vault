@@ -154,11 +154,11 @@ async function expectNoSqueezedIcons(page: Page, where: string) {
 /**
  * A fill's three figures and its menu share one strip, which a phone leaves
  * narrow. No label or figure may break over two lines, as "15,180 km" and
- * "Total Cost" did at 375px: when the three do not fit, a whole figure moves to
+ * "Total cost" did at 375px: when the three do not fit, a whole figure moves to
  * a second row. And a long location wraps beside its pin without squeezing it.
  */
 async function expectFillFitsPhone(card: Locator, title: string, figures: string[]) {
-  for (const text of ['Odometer', 'Price/L', 'Total Cost', ...figures]) {
+  for (const text of ['Odometer', 'Price/L', 'Total cost', ...figures]) {
     const lines = await card
       .getByText(text, { exact: true })
       .evaluate((node) =>
@@ -320,9 +320,9 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     location: 'Hindustan Petroleum COCO outlet, Mumbai–Pune Expressway, Lonavala',
   });
   const fills: Array<[string, string[]]> = [
-    ['30 L Fuel Fill', ['14,950 km', '₹105', '₹3,150']],
-    ['42.5 L Fuel Fill', ['15,180 km', '₹106', '₹4,505']],
-    ['25 L Fuel Fill', ['15,410 km', '₹104', '₹2,600']],
+    ['30 L fuel fill', ['14,950 km', '₹105', '₹3,150']],
+    ['42.5 L fuel fill', ['15,180 km', '₹106', '₹4,505']],
+    ['25 L fuel fill', ['15,410 km', '₹104', '₹2,600']],
   ];
 
   await page.setViewportSize(PHONE);
@@ -331,9 +331,9 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   const tabs: Array<[string, Array<string | RegExp>]> = [
     ['overview', [workshop, reminderTitle]],
     ['maintenance', [workshop]],
-    ['specs', [/No specifications available|Engine & Drivetrain/]],
+    ['specs', [/No specifications available|Engine & drivetrain/]],
     ['reminders', [reminderTitle]],
-    ['fuel', ['42.5 L Fuel Fill']],
+    ['fuel', ['42.5 L fuel fill']],
     ['tyres', ['Log inspection']],
     ['accessories', ['No accessories yet']],
     ['protection', ['Add Policy']],

@@ -62,7 +62,7 @@ describe('VehicleRemindersPage roles', () => {
     (role) => {
       renderAs(role, [reminder]);
 
-      expect(screen.getByRole('link', { name: 'Add Reminder' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Add reminder' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Select all visible' })).toBeInTheDocument();
       expect(
         screen.getByRole('checkbox', { name: /select reminder insurance renewal/i }),
@@ -75,9 +75,9 @@ describe('VehicleRemindersPage roles', () => {
 
     // Reading stays open to them.
     expect(screen.getByText('Insurance renewal')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Vehicle' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to vehicle' })).toBeInTheDocument();
 
-    expect(screen.queryByRole('link', { name: 'Add Reminder' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Add reminder' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Select all visible' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });

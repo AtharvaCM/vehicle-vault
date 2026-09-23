@@ -9,8 +9,8 @@ const VehicleMaintenanceCreatePage = createLazyPage(
       default: module.VehicleMaintenanceCreatePage,
     })),
   {
-    title: 'Loading maintenance form',
-    description: 'Loading the new service entry form.',
+    title: 'Loading service form',
+    description: 'Loading the new service record form.',
   },
 );
 

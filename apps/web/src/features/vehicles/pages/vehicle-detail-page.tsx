@@ -133,7 +133,7 @@ export function VehicleDetailPage({
       <PageContainer>
         <PageTitle
           description="Loading this vehicle and its latest activity."
-          title="Vehicle Detail"
+          title="Vehicle detail"
         />
         <LoadingState description="Getting this vehicle ready." title="Loading vehicle" />
       </PageContainer>
@@ -182,12 +182,6 @@ export function VehicleDetailPage({
                   >
                     <ChevronRight className="h-4 w-4 rotate-180" />
                   </Link>
-                  <Badge
-                    variant="outline"
-                    className="bg-slate-50 font-bold uppercase tracking-widest text-[10px]"
-                  >
-                    Registry entry
-                  </Badge>
                   {access.isViewer ? (
                     <Badge
                       className="bg-slate-100 font-bold uppercase tracking-widest text-[10px] text-slate-600"
@@ -218,13 +212,13 @@ export function VehicleDetailPage({
                   <div className="h-8 w-px bg-slate-100 hidden sm:block" />
                   <HeroMetric
                     icon={<Fuel className="h-4 w-4" />}
-                    label="Fuel Type"
+                    label="Fuel type"
                     value={format.enumLabel('fuelType', vehicle.fuelType)}
                   />
                   <div className="h-8 w-px bg-slate-100 hidden sm:block" />
                   <HeroMetric
                     icon={<CarFront className="h-4 w-4" />}
-                    label="Vehicle Type"
+                    label="Vehicle type"
                     value={format.enumLabel('vehicleType', vehicle.vehicleType)}
                   />
                 </div>
@@ -239,7 +233,7 @@ export function VehicleDetailPage({
                         params={{ vehicleId }}
                         to="/vehicles/$vehicleId/edit"
                       >
-                        Edit Vehicle
+                        Edit vehicle
                       </Link>
                       <div className="h-10 w-px bg-slate-200/60 hidden sm:block" />
                       <Link
@@ -251,7 +245,7 @@ export function VehicleDetailPage({
                         to="/vehicles/$vehicleId/maintenance/new"
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Log Maintenance
+                        Log service
                       </Link>
                       <Link
                         className={cn(
@@ -261,7 +255,7 @@ export function VehicleDetailPage({
                         params={{ vehicleId }}
                         to="/vehicles/$vehicleId/reminders/new"
                       >
-                        Add Reminder
+                        Add reminder
                       </Link>
                     </>
                   ) : null}
@@ -287,7 +281,7 @@ export function VehicleDetailPage({
                           className="w-full cursor-pointer"
                           to="/vehicles/$vehicleId/maintenance"
                         >
-                          View Full History
+                          View full history
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -296,7 +290,7 @@ export function VehicleDetailPage({
                           className="w-full cursor-pointer"
                           to="/vehicles/$vehicleId/reminders"
                         >
-                          Manage All Reminders
+                          Manage all reminders
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -319,7 +313,7 @@ export function VehicleDetailPage({
                           }
                         }}
                       >
-                        Download Service History (PDF)
+                        Download service history (PDF)
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="cursor-pointer"
@@ -362,7 +356,7 @@ export function VehicleDetailPage({
                           }
                         }}
                       >
-                        Download Resale Report (PDF)
+                        Download resale report (PDF)
                       </DropdownMenuItem>
                       {isOwner ? <DropdownMenuSeparator /> : null}
                       {isOwner ? (
@@ -372,11 +366,11 @@ export function VehicleDetailPage({
                         >
                           <ConfirmActionDialog
                             confirmLabel="Delete vehicle"
-                            description="This removes the vehicle, its maintenance history, reminders, and attachment details. This can't be undone."
+                            description="This removes the vehicle, its service history, reminders, and attachment details. This can't be undone."
                             isPending={deleteVehicleMutation.isPending}
                             onConfirm={handleDeleteVehicle}
                             title="Delete this vehicle?"
-                            triggerLabel="Delete Vehicle Permanently"
+                            triggerLabel="Delete vehicle permanently"
                             triggerVariant="ghost"
                             className="w-full justify-start h-auto p-0 font-normal hover:bg-transparent"
                           />
@@ -418,13 +412,13 @@ export function VehicleDetailPage({
                 className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
                 value="maintenance"
               >
-                Service Log
+                Service log
               </TabsTrigger>
               <TabsTrigger
                 className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
                 value="specs"
               >
-                Tech Specs
+                Tech specs
               </TabsTrigger>
               <TabsTrigger
                 className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-premium-sm transition-all"
@@ -492,19 +486,16 @@ export function VehicleDetailPage({
 
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <SnapshotMetric
-                  label="Total Records"
+                  label="Total records"
                   value={maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'}
                 />
                 <SnapshotMetric
-                  label="Active Reminders"
+                  label="Active reminders"
                   value={remindersQuery.isSuccess ? String(activeReminders.length) : '...'}
                 />
+                <SnapshotMetric label="Odometer" value={format.odometer(vehicle.odometer)} />
                 <SnapshotMetric
-                  label="Official Odometer"
-                  value={format.odometer(vehicle.odometer)}
-                />
-                <SnapshotMetric
-                  label="Engine Type"
+                  label="Fuel"
                   value={format.enumLabel('fuelType', vehicle.fuelType)}
                 />
               </div>
@@ -549,7 +540,7 @@ export function VehicleDetailPage({
                 />
                 <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold">Vehicle Health</CardTitle>
+                    <CardTitle className="text-lg font-bold">Vehicle health</CardTitle>
                     <CardDescription>Maintain a perfect digital service record.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
@@ -565,7 +556,7 @@ export function VehicleDetailPage({
                       <div className="mt-1 flex-shrink-0 text-primary">
                         <Plus className="h-4 w-4" />
                       </div>
-                      <p>Open a service entry to attach receipts, invoices, or photos.</p>
+                      <p>Open a service record to attach receipts, invoices, or photos.</p>
                     </div>
                     <div className="flex gap-3">
                       <div className="mt-1 flex-shrink-0 text-primary">
@@ -589,8 +580,8 @@ export function VehicleDetailPage({
                 />
                 <Card className="h-fit border-slate-200/60 bg-white/70 shadow-premium-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold">Preventative Care</CardTitle>
-                    <CardDescription>Stay ahead of maintenance tasks.</CardDescription>
+                    <CardTitle className="text-lg font-bold">Preventative care</CardTitle>
+                    <CardDescription>Stay ahead of service tasks.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
                     <p>Set a due date, a due odometer, or both depending on the job.</p>
@@ -669,7 +660,7 @@ export function VehicleDetailPage({
                 <CardContent className="p-5">
                   <AuditFeed
                     query={auditQuery}
-                    emptyDescription="Changes to this vehicle and its maintenance, reminders, fuel, and documents will show up here."
+                    emptyDescription="Changes to this vehicle and its service, reminders, fuel, and documents will show up here."
                   />
                 </CardContent>
               </Card>
@@ -722,7 +713,7 @@ type MaintenancePanelProps = {
 function MaintenancePanel({
   vehicleId,
   maintenanceQuery,
-  title = 'Recent maintenance',
+  title = 'Recent service',
   visibleCount = 3,
 }: MaintenancePanelProps) {
   const { canEdit } = useVehicleAccess();
@@ -767,7 +758,7 @@ function MaintenancePanel({
         ) : maintenanceQuery.isError ? (
           <EmptyState
             description="Service history couldn't be loaded right now."
-            title="Unable to load maintenance"
+            title="Unable to load service records"
           />
         ) : records.length ? (
           <div className="space-y-3">
@@ -788,7 +779,7 @@ function MaintenancePanel({
                 </Link>
               ) : undefined
             }
-            description="No service entries logged yet."
+            description="No service logged yet."
             title="No records"
           />
         )}
@@ -823,7 +814,7 @@ function ReminderPanel({
       <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
         <div>
           <CardTitle className="text-lg font-bold">{title}</CardTitle>
-          <CardDescription>Active maintenance alerts.</CardDescription>
+          <CardDescription>Active service alerts.</CardDescription>
         </div>
         <div className="flex gap-2">
           <Link
@@ -876,7 +867,7 @@ function ReminderPanel({
               ) : undefined
             }
             description="No active reminders."
-            title="Clear list"
+            title="No reminders"
           />
         )}
       </CardContent>

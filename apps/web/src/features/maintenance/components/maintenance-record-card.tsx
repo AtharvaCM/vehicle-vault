@@ -54,7 +54,7 @@ export function MaintenanceRecordCard({
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <p className="truncate font-bold text-slate-900 group-hover:text-primary transition-colors">
-                  {record.workshopName?.trim() || 'Direct Service / DIY'}
+                  {record.workshopName?.trim() || 'Direct service / DIY'}
                 </p>
                 <Badge
                   variant="outline"
@@ -91,7 +91,7 @@ export function MaintenanceRecordCard({
 
               <div className="space-y-0.5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Total Cost
+                  Total cost
                 </p>
                 <p className="text-[13px] font-bold tabular-nums text-primary">
                   {format.money(record.totalCost, { currency: record.currencyCode })}

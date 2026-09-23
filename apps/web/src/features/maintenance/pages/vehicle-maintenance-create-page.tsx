@@ -48,7 +48,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
   const extractionStatusQuery = useAttachmentExtractionStatus();
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
-    message: 'You have unsaved maintenance details. Leave without saving?',
+    message: 'You have unsaved service details. Leave without saving?',
   });
 
   async function handleCreateMaintenanceRecord(
@@ -57,8 +57,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
     try {
       const created = await createMaintenanceMutation.mutateAsync(values);
       const restoreNavigationGuard = allowNextNavigation();
-      toast.success('Maintenance record created', {
-        description: 'The service entry was added to this vehicle.',
+      toast.success('Service record created', {
+        description: 'The service record was added to this vehicle.',
         action: {
           label: 'Link to claim',
           onClick: () => {
@@ -83,8 +83,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       }
     } catch (error) {
       appToast.error({
-        title: 'Unable to create maintenance record',
-        description: getApiErrorMessage(error, 'Unable to create the maintenance record.'),
+        title: 'Unable to create service record',
+        description: getApiErrorMessage(error, 'Unable to create the service record.'),
       });
       throw error;
     }
@@ -148,7 +148,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
             : 'Draft created, but it could not be filled from the bill',
           description: getApiErrorMessage(
             extractionError ?? applyError,
-            'Your files were uploaded. Use Read again in Document Review, or fill the draft in yourself.',
+            'Your files were uploaded. Use Read again in Document review, or fill the draft in yourself.',
           ),
         });
       } else if (isFilledFromBill) {
@@ -195,10 +195,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
   }
 
   const submitError = createMaintenanceMutation.error
-    ? getApiErrorMessage(
-        createMaintenanceMutation.error,
-        'Unable to create the maintenance record.',
-      )
+    ? getApiErrorMessage(createMaintenanceMutation.error, 'Unable to create the service record.')
     : null;
 
   if (
@@ -209,16 +206,16 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
     return (
       <PageContainer>
         <PageTitle
-          description="Maintenance records can only be created for an existing vehicle."
+          description="Service records can only be created for an existing vehicle."
           title="Vehicle not found"
         />
         <EmptyState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to Vehicles
+              Back to vehicles
             </Link>
           }
-          description="The requested vehicle could not be found, so a maintenance record cannot be created for it."
+          description="The requested vehicle could not be found, so a service record cannot be created for it."
           title="Vehicle not found"
         />
       </PageContainer>
@@ -234,7 +231,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       <PageContainer>
         <PageTitle
           description={`${vehicleTitle} is shared with you for reading.`}
-          title="Add Maintenance Record"
+          title="Add service record"
         />
         <ViewOnlyNotice
           action={
@@ -243,7 +240,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
               params={{ vehicleId }}
               to="/vehicles/$vehicleId/maintenance"
             >
-              Back to Maintenance History
+              Back to maintenance
             </Link>
           }
           description="You can read this vehicle's service history, but not log new entries for it."
@@ -257,7 +254,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       <PageContainer>
         <PageTitle
           description={`Log a service, repair, or inspection for ${vehicleTitle}.`}
-          title="Add Maintenance Record"
+          title="Add service record"
         />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -273,7 +270,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Upload First</CardTitle>
+                <CardTitle>Upload first</CardTitle>
                 <CardDescription>
                   Start with the invoice or job card and turn it into a draft before you type
                   anything.
@@ -295,7 +292,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
                   ) : (
                     <ScanText className="h-4 w-4" />
                   )}
-                  {isUploadFirstPending ? 'Creating Draft...' : 'Upload Job Card First'}
+                  {isUploadFirstPending ? 'Creating draft...' : 'Upload job card first'}
                 </Button>
                 <input
                   accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
@@ -325,10 +322,10 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
                 <p>
-                  Quick Entry is best when you only need the date, category, odometer, and total.
+                  Quick entry is best when you only need the date, category, odometer, and total.
                 </p>
                 <p>
-                  Detailed Entry lets you break the invoice into jobs, parts, fluids, taxes, and
+                  Detailed entry lets you break the invoice into jobs, parts, fluids, taxes, and
                   discounts.
                 </p>
                 <p>

@@ -82,7 +82,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
         <EmptyState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to Vehicles
+              Back to vehicles
             </Link>
           }
           description="The requested vehicle could not be found, so a reminder cannot be created for it."
@@ -101,7 +101,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
       <PageContainer>
         <PageTitle
           description={`${vehicleTitle} is shared with you for reading.`}
-          title="Add Reminder"
+          title="Add reminder"
         />
         <ViewOnlyNotice
           action={
@@ -110,7 +110,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
               params={{ vehicleId }}
               to="/vehicles/$vehicleId/reminders"
             >
-              Back to Vehicle Reminders
+              Back to vehicle reminders
             </Link>
           }
           description="You can read this vehicle's reminders, but not create new ones for it."
@@ -124,7 +124,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
       <PageContainer>
         <PageTitle
           description={`Create a reminder for ${vehicleTitle} so important due dates and kilometre targets stay visible.`}
-          title="Add Reminder"
+          title="Add reminder"
         />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

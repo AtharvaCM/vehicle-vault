@@ -33,12 +33,12 @@ export function BulkMaintenanceActions({
             <p className="text-sm font-semibold text-slate-950">
               {hasSelection
                 ? `${selectedCount} record${selectedCount === 1 ? '' : 's'} selected`
-                : 'Select maintenance records to take action'}
+                : 'Select service records to take action'}
             </p>
             <p className="text-sm text-muted-foreground">
               {hasSelection
-                ? 'Delete selected maintenance entries in one step.'
-                : `You can select all ${visibleCount} visible maintenance records from the current filtered view.`}
+                ? 'Delete selected service records in one step.'
+                : `You can select all ${visibleCount} visible service records from the current filtered view.`}
             </p>
           </div>
         </div>
@@ -54,10 +54,10 @@ export function BulkMaintenanceActions({
               </Button>
               <ConfirmActionDialog
                 confirmLabel={`Delete ${selectedCount} record${selectedCount === 1 ? '' : 's'}`}
-                description="This removes the selected maintenance entries and any linked receipts from your garage."
+                description="This removes the selected service records and any linked receipts from your garage."
                 isPending={isDeleting}
                 onConfirm={onDeleteSelected}
-                title="Delete selected maintenance records?"
+                title="Delete selected service records?"
                 triggerIcon={<Trash2 className="mr-2 h-4 w-4" />}
                 triggerLabel={`Delete selected (${selectedCount})`}
                 triggerVariant="outline"

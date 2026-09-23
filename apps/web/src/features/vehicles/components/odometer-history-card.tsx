@@ -15,7 +15,7 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
       <CardHeader>
         <CardTitle>Odometer history</CardTitle>
         <CardDescription>
-          Compare the current reading against logged service entries.
+          Compare the current reading against logged service records.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -50,8 +50,7 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border/80 bg-slate-50/70 px-4 py-6 text-sm text-muted-foreground">
-            Log the first maintenance visit with an odometer reading to start a useful mileage
-            history.
+            Log the first service visit with an odometer reading to start a useful odometer history.
           </div>
         )}
 

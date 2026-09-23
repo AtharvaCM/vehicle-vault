@@ -99,7 +99,7 @@ async function uploadFirst(page: Page, vehicleId: string) {
   });
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+\/edit$/);
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Confirm Maintenance Record' }),
+    page.getByRole('heading', { level: 1, name: 'Confirm service record' }),
   ).toBeVisible();
 
   return page.url().split('/').at(-2)!;

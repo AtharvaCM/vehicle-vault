@@ -21,8 +21,8 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Maintenance summary</CardTitle>
-        <CardDescription>Review the recorded details for this service entry.</CardDescription>
+        <CardTitle>Service summary</CardTitle>
+        <CardDescription>Review the recorded details for this service record.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
         <Detail
@@ -56,7 +56,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
           }
         />
         <Detail
-          label="Entry source"
+          label="Added via"
           value={
             <Badge tone="neutral">
               {format.enumLabel('maintenanceSource', record.source ?? 'manual')}
@@ -94,7 +94,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                   value={format.money(record.fluidsCost ?? 0, { currency: record.currencyCode })}
                 />
                 <BreakdownRow
-                  label="Labor"
+                  label="Labour"
                   value={format.money(record.laborCost ?? 0, { currency: record.currencyCode })}
                 />
                 <BreakdownRow

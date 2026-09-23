@@ -168,10 +168,10 @@ export function ClaimFormDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Insurance Claim' : 'Record Insurance Claim'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit insurance claim' : 'Record insurance claim'}</DialogTitle>
           <DialogDescription>
             Track the gross bill, what the insurer paid, and your out-of-pocket. Link the related
-            maintenance record when you have one.
+            service record when you have one.
           </DialogDescription>
         </DialogHeader>
 
@@ -208,7 +208,7 @@ export function ClaimFormDialog({
           </FormField>
 
           <FormField
-            label="Linked Maintenance Record (optional)"
+            label="Linked service record (optional)"
             htmlFor="maintenanceRecordId"
             error={errors.maintenanceRecordId?.message}
           >
@@ -221,10 +221,10 @@ export function ClaimFormDialog({
                   value={field.value ?? '__none'}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="No maintenance record linked" />
+                    <SelectValue placeholder="No service record linked" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none">No maintenance record linked</SelectItem>
+                    <SelectItem value="__none">No service record linked</SelectItem>
                     {maintenanceRecords.map((record) => (
                       <SelectItem key={record.id} value={record.id}>
                         {format.date(record.serviceDate)} ·{' '}
@@ -240,7 +240,7 @@ export function ClaimFormDialog({
           </FormField>
 
           <FormField
-            label="Insurer Claim Number"
+            label="Insurer claim number"
             htmlFor="claimNumber"
             error={errors.claimNumber?.message}
           >
@@ -249,7 +249,7 @@ export function ClaimFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              label="Gross Bill (₹)"
+              label="Gross bill (₹)"
               htmlFor="grossAmount"
               error={errors.grossAmount?.message}
             >
@@ -260,7 +260,7 @@ export function ClaimFormDialog({
               />
             </FormField>
             <FormField
-              label="Insurer Paid (₹)"
+              label="Insurer paid (₹)"
               htmlFor="insurerPaidAmount"
               error={errors.insurerPaidAmount?.message}
             >
@@ -293,11 +293,11 @@ export function ClaimFormDialog({
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Filed Date" htmlFor="filedDate" error={errors.filedDate?.message}>
+            <FormField label="Filed date" htmlFor="filedDate" error={errors.filedDate?.message}>
               <Input type="date" {...register('filedDate')} />
             </FormField>
             <FormField
-              label="Settled Date"
+              label="Settled date"
               htmlFor="settledDate"
               error={errors.settledDate?.message}
             >
@@ -321,7 +321,7 @@ export function ClaimFormDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving || insurancePolicies.length === 0}>
-              {isSaving ? 'Saving…' : isEditing ? 'Save Changes' : 'Record Claim'}
+              {isSaving ? 'Saving…' : isEditing ? 'Save changes' : 'Record claim'}
             </Button>
           </DialogFooter>
         </form>

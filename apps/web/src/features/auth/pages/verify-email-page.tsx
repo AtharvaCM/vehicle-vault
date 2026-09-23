@@ -115,7 +115,7 @@ export function VerifyEmailPage() {
             ? 'Your email is already verified. There is nothing more to do.'
             : 'Your email has been verified. You can now access your garage.'
         }
-        title={state === 'already' ? 'Already verified' : 'Email Verified!'}
+        title={state === 'already' ? 'Already verified' : 'Email verified'}
         alternateAction={alternateAction}
       >
         <div className="flex flex-col items-center py-4">
@@ -134,7 +134,7 @@ export function VerifyEmailPage() {
               </Link>
             ) : (
               <Link to="/login">
-                Continue to Login
+                Continue to sign in
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}

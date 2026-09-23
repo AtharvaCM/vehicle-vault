@@ -55,7 +55,7 @@ describe('MaintenanceRecordList', () => {
     );
 
     await user.click(
-      screen.getByRole('checkbox', { name: /select maintenance record torque garage/i }),
+      screen.getByRole('checkbox', { name: /select service record torque garage/i }),
     );
 
     expect(onSelectionChange).toHaveBeenCalledWith('record-1', true);
@@ -71,7 +71,7 @@ describe('MaintenanceRecordList', () => {
     );
 
     expect(
-      screen.getByRole('checkbox', { name: /select maintenance record torque garage/i }),
+      screen.getByRole('checkbox', { name: /select service record torque garage/i }),
     ).toBeChecked();
   });
 
@@ -79,7 +79,7 @@ describe('MaintenanceRecordList', () => {
     const user = userEvent.setup();
     render(<SelectableRecordList />);
     const checkbox = screen.getByRole('checkbox', {
-      name: /select maintenance record torque garage/i,
+      name: /select service record torque garage/i,
     });
 
     await user.click(checkbox);

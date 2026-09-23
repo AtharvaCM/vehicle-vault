@@ -100,16 +100,16 @@ export function VehicleMaintenanceListPage({
     try {
       await bulkDeleteMutation.mutateAsync(idsToDelete);
       appToast.success({
-        title: 'Maintenance records deleted',
-        description: `Deleted ${idsToDelete.length} maintenance record${idsToDelete.length === 1 ? '' : 's'}.`,
+        title: 'Service records deleted',
+        description: `Deleted ${idsToDelete.length} service record${idsToDelete.length === 1 ? '' : 's'}.`,
       });
       setSelectedRecordIds([]);
     } catch (error) {
       appToast.error({
-        title: 'Unable to delete maintenance records',
+        title: 'Unable to delete service records',
         description: getApiErrorMessage(
           error,
-          "We couldn't delete the selected maintenance records right now.",
+          "We couldn't delete the selected service records right now.",
         ),
       });
     }
@@ -119,16 +119,16 @@ export function VehicleMaintenanceListPage({
     return (
       <PageContainer>
         <PageTitle
-          description="Maintenance history is scoped to an existing vehicle record."
+          description="Service records are scoped to an existing vehicle."
           title="Vehicle not found"
         />
         <EmptyState
           action={
             <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to Vehicles
+              Back to vehicles
             </Link>
           }
-          description="The requested vehicle could not be found, so its maintenance history is unavailable."
+          description="The requested vehicle could not be found, so its service records are unavailable."
           title="Vehicle not found"
         />
       </PageContainer>
@@ -146,7 +146,7 @@ export function VehicleMaintenanceListPage({
                 params={{ vehicleId }}
                 to="/vehicles/$vehicleId"
               >
-                Back to Vehicle
+                Back to vehicle
               </Link>
               {canEdit ? (
                 <>
@@ -158,20 +158,20 @@ export function VehicleMaintenanceListPage({
                     params={{ vehicleId }}
                     to="/vehicles/$vehicleId/maintenance/new"
                   >
-                    Add Maintenance
+                    Log service
                   </Link>
                 </>
               ) : null}
             </>
           }
-          description="See every service entry tied to this vehicle."
+          description="See every service record tied to this vehicle."
           title={`${vehicleTitle} Maintenance`}
         />
 
         {maintenanceQuery.isPending ? (
           <LoadingState
-            description="Loading maintenance history for this vehicle."
-            title="Loading maintenance"
+            description="Loading service records for this vehicle."
+            title="Loading service records"
           />
         ) : maintenanceQuery.isError ? (
           <ErrorState
@@ -180,8 +180,8 @@ export function VehicleMaintenanceListPage({
                 Retry
               </Button>
             }
-            description="We couldn't load this vehicle's maintenance history. Try again in a moment."
-            title="Unable to load maintenance records"
+            description="We couldn't load this vehicle's service records. Try again in a moment."
+            title="Unable to load service records"
           />
         ) : (
           <div className="space-y-4">
@@ -234,7 +234,7 @@ export function VehicleMaintenanceListPage({
                       </Button>
                     }
                     description="Try a broader search or remove the current category filter."
-                    title="No maintenance records match these filters"
+                    title="No service records match these filters"
                   />
                 )
               ) : (
@@ -254,17 +254,17 @@ export function VehicleMaintenanceListPage({
                           params={{ vehicleId }}
                           to="/vehicles/$vehicleId/maintenance/new"
                         >
-                          Add the first maintenance record
+                          Log your first service
                         </Link>
                       </div>
                     ) : undefined
                   }
                   description={
                     canEdit
-                      ? 'No service entries have been logged for this vehicle yet.'
-                      : 'No service entries have been logged for this vehicle yet. Whoever owns it can add them.'
+                      ? 'No service records have been logged for this vehicle yet.'
+                      : 'No service records have been logged for this vehicle yet. Whoever owns it can add them.'
                   }
-                  title="No maintenance records yet"
+                  title="No service records yet"
                 />
               )}
 

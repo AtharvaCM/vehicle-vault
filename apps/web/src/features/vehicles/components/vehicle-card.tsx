@@ -92,7 +92,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
 
             <div className="hidden space-y-1 lg:block">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Fuel Type
+                Fuel type
               </p>
               <p className="text-[13px] font-semibold text-slate-700">
                 {format.enumLabel('fuelType', vehicle.fuelType)}

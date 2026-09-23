@@ -36,7 +36,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
 
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <p className="font-bold text-slate-900">{format.number(log.quantity)} L Fuel Fill</p>
+              <p className="font-bold text-slate-900">{format.number(log.quantity)} L fuel fill</p>
             </div>
             <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
               <span>{format.date(log.date)}</span>
@@ -76,7 +76,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
 
             <div className="space-y-0.5">
               <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Total Cost
+                Total cost
               </p>
               <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-primary">
                 {format.money(log.totalCost)}
@@ -99,14 +99,14 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {onEdit ? (
-                    <DropdownMenuItem onClick={() => onEdit(log)}>Edit Entry</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(log)}>Edit entry</DropdownMenuItem>
                   ) : null}
                   {onDelete ? (
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDelete(log.id)}
                     >
-                      Delete Entry
+                      Delete entry
                     </DropdownMenuItem>
                   ) : null}
                 </DropdownMenuContent>

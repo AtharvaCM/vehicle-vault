@@ -280,7 +280,7 @@ export function DocumentFormDialog({
             </div>
           )}
           {!isEditing && (
-            <FormField label="Document Type" htmlFor="kind">
+            <FormField label="Document type" htmlFor="kind">
               <Controller
                 control={control}
                 name="kind"
@@ -290,11 +290,11 @@ export function DocumentFormDialog({
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="insurance">Insurance Policy</SelectItem>
-                      <SelectItem value="warranty">Warranty Coverage</SelectItem>
-                      <SelectItem value="registration">Registration Certificate</SelectItem>
-                      <SelectItem value="puc">PUC Certificate</SelectItem>
-                      <SelectItem value="road_tax">Road Tax</SelectItem>
+                      <SelectItem value="insurance">Insurance policy</SelectItem>
+                      <SelectItem value="warranty">Warranty coverage</SelectItem>
+                      <SelectItem value="registration">Registration certificate</SelectItem>
+                      <SelectItem value="puc">PUC certificate</SelectItem>
+                      <SelectItem value="road_tax">Road tax</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -303,7 +303,7 @@ export function DocumentFormDialog({
           )}
 
           {selectedKind === 'warranty' && (
-            <FormField label="Warranty Type" htmlFor="type" error={(errors as any).type?.message}>
+            <FormField label="Warranty type" htmlFor="type" error={(errors as any).type?.message}>
               <Controller
                 control={control}
                 name="type"
@@ -318,8 +318,8 @@ export function DocumentFormDialog({
                     <SelectContent>
                       <SelectItem value="Manufacturer">Manufacturer</SelectItem>
                       <SelectItem value="Extended">Extended</SelectItem>
-                      <SelectItem value="Parts">Parts Only</SelectItem>
-                      <SelectItem value="Service">Service Plan</SelectItem>
+                      <SelectItem value="Parts">Parts only</SelectItem>
+                      <SelectItem value="Service">Service plan</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -330,10 +330,10 @@ export function DocumentFormDialog({
           <FormField
             label={
               isComplianceKind(selectedKind)
-                ? 'Issuing Authority (optional)'
+                ? 'Issuing authority (optional)'
                 : selectedKind === 'insurance'
-                  ? 'Provider Name (optional)'
-                  : 'Provider/Brand'
+                  ? 'Provider name (optional)'
+                  : 'Provider/brand'
             }
             htmlFor="provider"
             error={errors.provider?.message}
@@ -353,7 +353,7 @@ export function DocumentFormDialog({
 
           {selectedKind === 'insurance' && (
             <FormField
-              label="Policy Number (optional)"
+              label="Policy number (optional)"
               htmlFor="policyNumber"
               error={(errors as any).policyNumber?.message}
             >
@@ -366,7 +366,7 @@ export function DocumentFormDialog({
           )}
           {selectedKind === 'warranty' && (
             <FormField
-              label="Warranty # / Certificate ID"
+              label="Warranty # / certificate ID"
               htmlFor="warrantyNumber"
               error={(errors as any).warrantyNumber?.message}
             >
@@ -391,13 +391,13 @@ export function DocumentFormDialog({
             <FormField
               // Only a warranty needs one: the other kinds run on their expiry,
               // and the prompt on a new vehicle collects that alone.
-              label={selectedKind === 'warranty' ? 'Start Date' : 'Start Date (optional)'}
+              label={selectedKind === 'warranty' ? 'Start date' : 'Start date (optional)'}
               htmlFor="startDate"
               error={errors.startDate?.message}
             >
               <Input id="startDate" type="date" {...register('startDate')} />
             </FormField>
-            <FormField label="End Date" htmlFor="endDate" error={errors.endDate?.message}>
+            <FormField label="End date" htmlFor="endDate" error={errors.endDate?.message}>
               <Input
                 id="endDate"
                 type="date"
@@ -410,7 +410,7 @@ export function DocumentFormDialog({
           {selectedKind === 'insurance' && (
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                label="Premium Amount (₹)"
+                label="Premium amount (₹)"
                 htmlFor="premiumAmount"
                 error={(errors as any).premiumAmount?.message}
               >
@@ -426,7 +426,7 @@ export function DocumentFormDialog({
                 />
               </FormField>
               <FormField
-                label="Insured Value (IDV) (₹)"
+                label="Insured value (IDV) (₹)"
                 htmlFor="insuredValue"
                 error={(errors as any).insuredValue?.message}
               >
@@ -445,7 +445,7 @@ export function DocumentFormDialog({
           )}
           {selectedKind === 'warranty' && (
             <FormField
-              label="End Odometer (km)"
+              label="End odometer (km)"
               htmlFor="endOdometer"
               error={(errors as any).endOdometer?.message}
             >
@@ -463,7 +463,7 @@ export function DocumentFormDialog({
           )}
           {isComplianceKind(selectedKind) && (
             <FormField
-              label="Amount Paid (₹)"
+              label="Amount paid (₹)"
               htmlFor="amount"
               error={(errors as any).amount?.message}
             >
@@ -498,7 +498,7 @@ export function DocumentFormDialog({
               {isSaving
                 ? 'Saving...'
                 : isEditing
-                  ? 'Save Changes'
+                  ? 'Save changes'
                   : `Add ${documentKindNouns[selectedKind]}`}
             </Button>
           </DialogFooter>

@@ -121,7 +121,7 @@ export function ReminderForm({
   submitError,
   initialValues,
   onDirtyChange,
-  submitLabel = 'Save Reminder',
+  submitLabel = 'Save reminder',
   submittingLabel = 'Saving reminder...',
   submitHint = 'Use a due date, a due odometer, or both to track this reminder.',
   successMessage = 'Reminder saved.',

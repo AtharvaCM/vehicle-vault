@@ -75,7 +75,7 @@ export function RegisterPage() {
       alternateAction={
         <AuthPageLink label="Sign in" next={next} text="Already have an account?" to="/login" />
       }
-      description="Create an account to keep your vehicles, maintenance history, reminders, and receipts in one place."
+      description="Create an account to keep your vehicles, service history, reminders, and receipts in one place."
       title="Create your account"
     >
       <div className="space-y-6">

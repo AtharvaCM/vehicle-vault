@@ -40,7 +40,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
       await extractAttachmentMutation.mutateAsync(attachmentId);
       appToast.success({
         title: 'Document extracted',
-        description: 'Review the suggested maintenance fields before saving the draft.',
+        description: 'Review the suggested service fields before saving the draft.',
       });
     } catch (error) {
       appToast.error({
@@ -55,7 +55,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
       await extractAttachmentsMutation.mutateAsync(attachments.map((attachment) => attachment.id));
       appToast.success({
         title: 'Documents extracted',
-        description: 'Review the merged maintenance fields before saving the draft.',
+        description: 'Review the merged service fields before saving the draft.',
       });
     } catch (error) {
       appToast.error({
@@ -70,7 +70,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
       await applyAttachmentExtractionMutation.mutateAsync(attachmentId);
       appToast.success({
         title: 'Extraction applied',
-        description: 'The draft form now reflects the suggested maintenance data.',
+        description: 'The draft form now reflects the suggested service data.',
       });
     } catch (error) {
       appToast.error({
@@ -85,7 +85,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle>Document Review</CardTitle>
+            <CardTitle>Document review</CardTitle>
             <CardDescription>
               {isDraft
                 ? 'Extract invoice and job card data, then apply the suggestions into the draft.'
@@ -103,7 +103,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
             <div className="space-y-1">
               <p className="text-sm font-medium text-slate-900">Multi-page document OCR</p>
               <p className="text-sm text-slate-600">
-                Extract all attached pages together into one merged maintenance suggestion.
+                Extract all attached pages together into one merged service suggestion.
               </p>
             </div>
             <Button
@@ -188,7 +188,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
                       ) : (
                         <Wand2 className="h-4 w-4" />
                       )}
-                      Apply to Draft
+                      Apply to draft
                     </Button>
                   ) : null}
                 </div>
@@ -206,7 +206,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-border/70 bg-white/80 px-4 py-3 text-sm text-slate-500">
-                  Run OCR to extract the document into structured maintenance fields.
+                  Run OCR to extract the document into structured service fields.
                 </div>
               )}
             </div>

@@ -68,7 +68,7 @@ describe('VehicleMaintenanceListPage roles', () => {
     renderAs(role, [record]);
 
     expect(screen.getByRole('button', { name: 'Import CSV' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add Maintenance' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Log service' })).toBeInTheDocument();
   });
 
   it.each([VehicleRole.Owner, VehicleRole.Editor])('lets an %s select and bulk delete', (role) => {
@@ -76,7 +76,7 @@ describe('VehicleMaintenanceListPage roles', () => {
 
     expect(screen.getByRole('button', { name: 'Select all visible' })).toBeInTheDocument();
     expect(
-      screen.getByRole('checkbox', { name: /select maintenance record torque garage/i }),
+      screen.getByRole('checkbox', { name: /select service record torque garage/i }),
     ).toBeInTheDocument();
   });
 
@@ -85,10 +85,10 @@ describe('VehicleMaintenanceListPage roles', () => {
 
     // Reading stays open to them.
     expect(screen.getByText('Torque Garage')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Vehicle' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to vehicle' })).toBeInTheDocument();
 
     expect(screen.queryByRole('button', { name: 'Import CSV' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Add Maintenance' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Log service' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Select all visible' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
@@ -96,18 +96,14 @@ describe('VehicleMaintenanceListPage roles', () => {
   it('gives a viewer an empty history without an add prompt', () => {
     renderAs(VehicleRole.Viewer, []);
 
-    expect(screen.getByText('No maintenance records yet')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: 'Add the first maintenance record' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText('No service records yet')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Log your first service' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Import CSV' })).not.toBeInTheDocument();
   });
 
   it('keeps the empty-state add prompt for an editor', () => {
     renderAs(VehicleRole.Editor, []);
 
-    expect(
-      screen.getByRole('link', { name: 'Add the first maintenance record' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Log your first service' })).toBeInTheDocument();
   });
 });

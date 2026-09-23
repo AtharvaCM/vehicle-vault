@@ -64,8 +64,8 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
         title: files.length > 1 ? 'Attachments uploaded' : 'Attachment uploaded',
         description:
           files.length > 1
-            ? 'The files were added to this service entry.'
-            : 'The file was added to this service entry.',
+            ? 'The files were added to this service record.'
+            : 'The file was added to this service record.',
       });
     } catch (error) {
       const message = getApiErrorMessage(error, "We couldn't upload this file.");
@@ -84,7 +84,7 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
       await deleteAttachmentMutation.mutateAsync(attachmentId);
       appToast.success({
         title: 'Attachment deleted',
-        description: 'The file was removed from this service entry.',
+        description: 'The file was removed from this service record.',
       });
     } catch (error) {
       const message = getApiErrorMessage(error, "We couldn't delete this file.");
@@ -112,11 +112,11 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle>Receipts & Documents</CardTitle>
+            <CardTitle>Receipts & documents</CardTitle>
             <CardDescription>
               {canEdit
-                ? 'Upload and manage the supporting files linked to this service entry.'
-                : 'The supporting files linked to this service entry. You can open them, but not change them.'}
+                ? 'Upload and manage the supporting files linked to this service record.'
+                : 'The supporting files linked to this service record. You can open them, but not change them.'}
             </CardDescription>
           </div>
           <Badge tone="neutral">
@@ -135,7 +135,7 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
 
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard
-            description="Files currently linked to this service entry."
+            description="Files currently linked to this service record."
             icon={Paperclip}
             label="Attachments"
             value={String(attachmentsCount)}
@@ -157,7 +157,7 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
 
         {attachmentsQuery.isPending ? (
           <LoadingState
-            description="Loading files linked to this service entry."
+            description="Loading files linked to this service record."
             title="Loading attachments"
           />
         ) : attachmentsQuery.isError ? (
@@ -167,7 +167,7 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
                 Retry
               </Button>
             }
-            description="We couldn't load the receipts and documents for this entry. Try again in a moment."
+            description="We couldn't load the receipts and documents for this record. Try again in a moment."
             title="Unable to load attachments"
           />
         ) : attachmentsQuery.data.length ? (
@@ -183,8 +183,8 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
           <EmptyState
             description={
               canEdit
-                ? 'No receipts or documents are linked to this service entry yet. Upload an invoice, job card, or supporting photos so you can find them later.'
-                : 'No receipts or documents are linked to this service entry yet.'
+                ? 'No receipts or documents are linked to this service record yet. Upload an invoice, job card, or supporting photos so you can find them later.'
+                : 'No receipts or documents are linked to this service record yet.'
             }
             title="No attachments yet"
           />
