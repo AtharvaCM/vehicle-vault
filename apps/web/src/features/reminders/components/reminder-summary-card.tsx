@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils/format-date';
 
 import type { Reminder } from '../types/reminder';
 import { formatReminderType } from '../utils/format-reminder-type';
+import { describeRepeatRule } from '../utils/repeat-rule';
 import { ReminderStatusBadge } from './reminder-status-badge';
 
 type ReminderSummaryCardProps = {
@@ -40,6 +41,7 @@ export function ReminderSummaryCard({ reminder, vehicleLabel }: ReminderSummaryC
               : 'Not specified'
           }
         />
+        <Detail label="Repeats" value={describeRepeatRule(reminder)} />
         <Detail
           label="Completed at"
           value={

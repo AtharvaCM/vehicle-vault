@@ -1,11 +1,17 @@
-import { ReminderType } from '@vehicle-vault/shared';
+import {
+  REMINDER_REPEAT_MAX_KM,
+  REMINDER_REPEAT_MAX_MONTHS,
+  ReminderType,
+} from '@vehicle-vault/shared';
 import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -37,4 +43,16 @@ export class CreateReminderDto {
   @IsString()
   @MaxLength(1000)
   notes?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(REMINDER_REPEAT_MAX_MONTHS)
+  repeatEveryMonths?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(REMINDER_REPEAT_MAX_KM)
+  repeatEveryKm?: number | null;
 }

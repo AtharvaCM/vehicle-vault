@@ -19,6 +19,7 @@ import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 import { ReminderForm } from '../components/reminder-form';
 import { useReminder } from '../hooks/use-reminder';
 import { useUpdateReminder } from '../hooks/use-update-reminder';
+import { toRepeatChoice } from '../utils/repeat-rule';
 
 type ReminderEditPageProps = {
   reminderId: string;
@@ -47,6 +48,9 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
             dueDate: toDateInputValue(reminderQuery.data.dueDate),
             dueOdometer: reminderQuery.data.dueOdometer,
             notes: reminderQuery.data.notes ?? '',
+            repeat: toRepeatChoice(reminderQuery.data),
+            repeatEveryMonths: reminderQuery.data.repeatEveryMonths,
+            repeatEveryKm: reminderQuery.data.repeatEveryKm,
           }
         : undefined,
     [reminderQuery.data],

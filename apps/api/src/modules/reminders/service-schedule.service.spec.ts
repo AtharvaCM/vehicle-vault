@@ -2,12 +2,12 @@ import { BadRequestException } from '@nestjs/common';
 import { FuelType, ReminderType, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ServiceScheduleService } from './service-schedule.service';
+import { ServiceScheduleService, type CompletedReminder } from './service-schedule.service';
 
 describe('ServiceScheduleService', () => {
   const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   const prisma = {
-    reminder: { findMany: vi.fn(), create: vi.fn() },
+    reminder: { findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
     $transaction: vi.fn(),
   };
   const vehiclesService = { ensureVehicleExists: vi.fn() };
@@ -27,6 +27,7 @@ describe('ServiceScheduleService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prisma.reminder.findMany.mockResolvedValue([]);
+    prisma.reminder.count.mockResolvedValue(0);
     prisma.$transaction.mockImplementation(async (cb: (tx: typeof prisma) => Promise<unknown>) =>
       cb(prisma),
     );
@@ -85,7 +86,7 @@ describe('ServiceScheduleService', () => {
       fuelType: FuelType.Petrol,
       vehicleType: VehicleType.Car,
     });
-    prisma.reminder.findMany.mockResolvedValue([{ title: 'Engine oil change', notes: null }]);
+    prisma.reminder.findMany.mockResolvedValue([{ title: 'Engine oil change', catalogSlug: null }]);
 
     const suggestions = await service.getSuggestions('u1', 'v1');
     const oil = suggestions.find((s) => s.slug === 'engine_oil_change')!;
@@ -125,7 +126,36 @@ describe('ServiceScheduleService', () => {
     expect(firstCall.title).toBe('Engine oil change');
     expect(firstCall.dueOdometer).toBe(20000);
     expect(firstCall.type).toBe(ReminderType.Service);
-    expect(firstCall.notes).toContain('[catalog:engine_oil_change]');
+    // Origin and cadence are columns; the notes are the item's own words.
+    expect(firstCall.notes).toBe(
+      'Recommended every 10 000 km or 12 months, whichever comes first.',
+    );
+    expect(firstCall).toMatchObject({
+      catalogSlug: 'engine_oil_change',
+      repeatEveryKm: 10000,
+      repeatEveryMonths: 12,
+    });
+    expect(prisma.reminder.create.mock.calls[1][0].data).toMatchObject({
+      catalogSlug: 'tyre_rotation',
+      repeatEveryKm: 10000,
+      repeatEveryMonths: null,
+    });
+  });
+
+  it('flags alreadyScheduled from the catalog origin column', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 0,
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.Car,
+    });
+    prisma.reminder.findMany.mockResolvedValue([
+      { title: 'My own oil reminder', catalogSlug: 'engine_oil_change' },
+    ]);
+
+    const suggestions = await service.getSuggestions('u1', 'v1');
+
+    expect(suggestions.find((s) => s.slug === 'engine_oil_change')?.alreadyScheduled).toBe(true);
   });
 
   describe('tyre walk-around anchoring', () => {
@@ -216,98 +246,224 @@ describe('ServiceScheduleService', () => {
     };
     const now = new Date('2026-09-08T00:00:00.000Z');
 
+    /** A completed reminder as the reminders service hands it over. */
+    function completed(overrides: Partial<CompletedReminder> = {}): CompletedReminder {
+      return {
+        id: 'rem-current',
+        vehicleId: 'v1',
+        title: 'Engine oil change',
+        type: ReminderType.Service,
+        notes: 'Recommended every 10 000 km or 12 months, whichever comes first.',
+        dueDate: null,
+        catalogSlug: 'engine_oil_change',
+        repeatEveryKm: 10_000,
+        repeatEveryMonths: 12,
+        ...overrides,
+      } as CompletedReminder;
+    }
+
     beforeEach(() => {
       vehiclesService.ensureVehicleExists.mockResolvedValue(vehicle);
       tyresService.getAlertState.mockResolvedValue(noTyreObservation(40_000));
     });
 
-    it('schedules the next occurrence of a catalog reminder', async () => {
-      const next = await service.buildNextOccurrence('u1', 'v1', 'engine_oil_change', now);
+    describe('a schedule reminder (regression: keeps repeating as before)', () => {
+      it('schedules the next occurrence with its origin, rule and notes', async () => {
+        const next = await service.buildNextOccurrence('u1', completed(), now);
 
-      expect(next).toMatchObject({
-        vehicleId: 'v1',
-        title: 'Engine oil change',
-        dueOdometer: 50_000,
-      });
-      expect(next?.notes).toContain('[catalog:engine_oil_change]');
-    });
-
-    it('does not turn a hand-written reminder into a repeating one', async () => {
-      // No marker means the user never stated an interval, so there is nothing
-      // to repeat and inventing one would be putting words in their mouth.
-      await expect(service.buildNextOccurrence('u1', 'v1', null, now)).resolves.toBeNull();
-    });
-
-    it('stops when the item no longer applies to the vehicle', async () => {
-      vehiclesService.ensureVehicleExists.mockResolvedValue({
-        ...vehicle,
-        fuelType: FuelType.Electric,
+        expect(next).toMatchObject({
+          vehicleId: 'v1',
+          title: 'Engine oil change',
+          dueOdometer: 50_000,
+          dueDate: new Date('2027-09-08T00:00:00.000Z'),
+          catalogSlug: 'engine_oil_change',
+          repeatEveryKm: 10_000,
+          repeatEveryMonths: 12,
+          notes: 'Recommended every 10 000 km or 12 months, whichever comes first.',
+        });
       });
 
-      await expect(
-        service.buildNextOccurrence('u1', 'v1', 'engine_oil_change', now),
-      ).resolves.toBeNull();
-    });
+      it('stops when the item no longer applies to the vehicle', async () => {
+        vehiclesService.ensureVehicleExists.mockResolvedValue({
+          ...vehicle,
+          fuelType: FuelType.Electric,
+        });
 
-    it('stops when something already covers the slug', async () => {
-      prisma.reminder.findMany.mockResolvedValue([
-        { notes: 'whatever\n[catalog:engine_oil_change]' },
-      ]);
-
-      await expect(
-        service.buildNextOccurrence('u1', 'v1', 'engine_oil_change', now),
-      ).resolves.toBeNull();
-    });
-
-    it('does not mistake the reminder being completed for its own successor', async () => {
-      // Completion has not committed when this runs, so the row is still
-      // active. Without excluding it the duplicate check matches itself and the
-      // chain silently ends at the first completion — which is exactly what
-      // happened the first time this ran against a real database.
-      prisma.reminder.findMany.mockImplementation(
-        async (args: { where: { id?: { not?: string } } }) =>
-          args.where.id?.not === 'rem-current' ? [] : [{ notes: '[catalog:engine_oil_change]' }],
-      );
-
-      await expect(
-        service.buildNextOccurrence('u1', 'v1', 'engine_oil_change', now, 'rem-current'),
-      ).resolves.toMatchObject({ dueOdometer: 50_000 });
-    });
-
-    it('schedules nothing when the anchor has not moved on', async () => {
-      // Walk-around ticked off without a measurement being logged: the last
-      // observation is 15 000 km back, so the next occurrence would be born
-      // 10 000 km overdue and completing it would make another.
-      tyresService.getAlertState.mockResolvedValue({
-        vehicleOdometer: 40_000,
-        conditions: [],
-        lastObservation: { at: new Date('2025-01-01T00:00:00.000Z'), odometer: 25_000 },
+        await expect(service.buildNextOccurrence('u1', completed(), now)).resolves.toBeNull();
       });
 
-      await expect(
-        service.buildNextOccurrence('u1', 'v1', 'tyre_inspection', now),
-      ).resolves.toBeNull();
-    });
+      it('stops when another open reminder already covers the item, never counting itself', async () => {
+        prisma.reminder.count.mockResolvedValue(1);
 
-    it('still schedules when only the date has passed but the distance has not', async () => {
-      // Two limits, and reaching one of them is not reaching both.
-      tyresService.getAlertState.mockResolvedValue({
-        vehicleOdometer: 40_000,
-        conditions: [],
-        lastObservation: { at: new Date('2025-01-01T00:00:00.000Z'), odometer: 39_000 },
+        await expect(service.buildNextOccurrence('u1', completed(), now)).resolves.toBeNull();
+        // Completion has not committed when this runs, so the row is still
+        // open: without excluding it the chain would end at the first completion.
+        expect(prisma.reminder.count).toHaveBeenCalledWith({
+          where: expect.objectContaining({
+            catalogSlug: 'engine_oil_change',
+            id: { not: 'rem-current' },
+          }),
+        });
       });
 
-      await expect(
-        service.buildNextOccurrence('u1', 'v1', 'tyre_inspection', now),
-      ).resolves.toMatchObject({ dueOdometer: 44_000 });
+      it('stops when the owner turned its repeat rule off', async () => {
+        await expect(
+          service.buildNextOccurrence(
+            'u1',
+            completed({ repeatEveryKm: null, repeatEveryMonths: null }),
+            now,
+          ),
+        ).resolves.toBeNull();
+      });
+
+      it('schedules nothing when the tyre walk-around anchor has not moved on', async () => {
+        // Ticked off without a measurement: the last observation is 15 000 km
+        // back, so the next occurrence would be born overdue on both limits.
+        tyresService.getAlertState.mockResolvedValue({
+          vehicleOdometer: 40_000,
+          conditions: [],
+          lastObservation: { at: new Date('2025-01-01T00:00:00.000Z'), odometer: 25_000 },
+        });
+
+        await expect(
+          service.buildNextOccurrence(
+            'u1',
+            completed({
+              title: 'Tyre tread & pressure check',
+              type: ReminderType.Inspection,
+              catalogSlug: 'tyre_inspection',
+              repeatEveryKm: 5_000,
+              repeatEveryMonths: 6,
+            }),
+            now,
+          ),
+        ).resolves.toBeNull();
+      });
+
+      it('still schedules when only the date has passed but the distance has not', async () => {
+        tyresService.getAlertState.mockResolvedValue({
+          vehicleOdometer: 40_000,
+          conditions: [],
+          lastObservation: { at: new Date('2025-01-01T00:00:00.000Z'), odometer: 39_000 },
+        });
+
+        await expect(
+          service.buildNextOccurrence(
+            'u1',
+            completed({
+              catalogSlug: 'tyre_inspection',
+              type: ReminderType.Inspection,
+              repeatEveryKm: 5_000,
+              repeatEveryMonths: 6,
+            }),
+            now,
+          ),
+        ).resolves.toMatchObject({ dueOdometer: 44_000 });
+      });
     });
 
-    it('is not confused by an active reminder for a different item', async () => {
-      prisma.reminder.findMany.mockResolvedValue([{ notes: '[catalog:tyre_rotation]' }]);
+    describe('a hand-written reminder', () => {
+      const handWritten = (overrides: Partial<CompletedReminder> = {}) =>
+        completed({ catalogSlug: null, notes: 'Ask about the rattle', ...overrides });
 
-      await expect(
-        service.buildNextOccurrence('u1', 'v1', 'engine_oil_change', now),
-      ).resolves.not.toBeNull();
+      it('does not repeat without a rule', async () => {
+        await expect(
+          service.buildNextOccurrence(
+            'u1',
+            handWritten({ repeatEveryKm: null, repeatEveryMonths: null }),
+            now,
+          ),
+        ).resolves.toBeNull();
+      });
+
+      it('repeats by date, counted from completion', async () => {
+        const next = await service.buildNextOccurrence(
+          'u1',
+          handWritten({ repeatEveryKm: null, repeatEveryMonths: 6 }),
+          now,
+        );
+
+        expect(next).toMatchObject({
+          dueDate: new Date('2027-03-08T00:00:00.000Z'),
+          dueOdometer: null,
+          catalogSlug: null,
+          repeatEveryMonths: 6,
+          notes: 'Ask about the rattle',
+        });
+        // No catalog lookups for a reminder the schedule did not make.
+        expect(prisma.reminder.count).not.toHaveBeenCalled();
+        expect(tyresService.getAlertState).not.toHaveBeenCalled();
+      });
+
+      it('repeats by distance, counted from the odometer at completion', async () => {
+        const next = await service.buildNextOccurrence(
+          'u1',
+          handWritten({ repeatEveryKm: 7_500, repeatEveryMonths: null }),
+          now,
+        );
+
+        expect(next).toMatchObject({ dueOdometer: 47_500, dueDate: null });
+      });
+
+      it('carries both limits when both are set: whichever comes first', async () => {
+        const next = await service.buildNextOccurrence(
+          'u1',
+          handWritten({ repeatEveryKm: 10_000, repeatEveryMonths: 12 }),
+          now,
+        );
+
+        expect(next).toMatchObject({
+          dueOdometer: 50_000,
+          dueDate: new Date('2027-09-08T00:00:00.000Z'),
+        });
+      });
+
+      it('keeps a renewal on its cycle when it is renewed early', async () => {
+        // Insurance due 1 Oct, renewed on 8 Sept: next year's policy still
+        // runs out on 1 Oct, not a few weeks sooner.
+        const next = await service.buildNextOccurrence(
+          'u1',
+          handWritten({
+            title: 'Insurance renewal',
+            type: ReminderType.Insurance,
+            dueDate: new Date('2026-10-01T00:00:00.000Z'),
+            repeatEveryKm: null,
+            repeatEveryMonths: 12,
+          }),
+          now,
+        );
+
+        expect(next?.dueDate).toEqual(new Date('2027-10-01T00:00:00.000Z'));
+      });
+
+      it('counts a late renewal from when it was done', async () => {
+        const next = await service.buildNextOccurrence(
+          'u1',
+          handWritten({
+            type: ReminderType.Puc,
+            dueDate: new Date('2026-08-01T00:00:00.000Z'),
+            repeatEveryKm: null,
+            repeatEveryMonths: 6,
+          }),
+          now,
+        );
+
+        expect(next?.dueDate).toEqual(new Date('2027-03-08T00:00:00.000Z'));
+      });
+
+      it('counts a service from completion even when it was done early', async () => {
+        const next = await service.buildNextOccurrence(
+          'u1',
+          handWritten({
+            dueDate: new Date('2026-12-01T00:00:00.000Z'),
+            repeatEveryKm: null,
+            repeatEveryMonths: 12,
+          }),
+          now,
+        );
+
+        expect(next?.dueDate).toEqual(new Date('2027-09-08T00:00:00.000Z'));
+      });
     });
   });
 

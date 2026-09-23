@@ -816,6 +816,16 @@ model Reminder {
   /// down when to come back. Unique: a record keeps one reminder and refreshes
   /// it. Set null if the record goes, since the reminder may still be wanted.
   sourceMaintenanceRecordId String?            @unique @db.Uuid
+  /// Where the reminder came from, when it was the suggested service schedule:
+  /// the schedule item's slug (`engine_oil_change`, `tyre_inspection`). Null for
+  /// a hand-written or record-made reminder.
+  catalogSlug               String?            @db.VarChar(64)
+  /// The repeat rule. Completing a reminder with one creates the next
+  /// occurrence: due this many months and/or kilometres later, whichever comes
+  /// first when both are set. Both null: it does not repeat. Kept free of
+  /// anything reminder-specific so a document expiry can carry the same pair.
+  repeatEveryMonths         Int?
+  repeatEveryKm             Int?
   createdAt                 DateTime           @default(now())
   updatedAt                 DateTime           @updatedAt
   vehicle                   Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
