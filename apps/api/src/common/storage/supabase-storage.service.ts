@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { AppConfigService } from '../../config/app-config.service';
 
 @Injectable()
 export class SupabaseStorageService implements OnModuleInit {
+  private readonly logger = new Logger(SupabaseStorageService.name);
   private readonly client: SupabaseClient | null;
   private readonly storageBackend: 'local' | 'supabase';
 
@@ -110,7 +112,7 @@ export class SupabaseStorageService implements OnModuleInit {
       try {
         return await readFile(this.resolveLocalPath(path));
       } catch {
-        throw new NotFoundException(`Attachment file ${path} was not found in cloud storage.`);
+        throw this.missingObject(path);
       }
     }
 
@@ -118,13 +120,26 @@ export class SupabaseStorageService implements OnModuleInit {
 
     if (error) {
       if (error.message.toLowerCase().includes('not found')) {
-        throw new NotFoundException(`Attachment file ${path} was not found in cloud storage.`);
+        throw this.missingObject(path);
       }
 
       throw new InternalServerErrorException('Unable to download attachment from cloud storage.');
     }
 
     return Buffer.from(await data.arrayBuffer());
+  }
+
+  /**
+   * A row whose file is gone: uploads from before cloud storage was configured
+   * were written to a container's disk and lost with it. Logged as a warning,
+   * because a 404 is otherwise invisible in the API log, and worded for the
+   * person who clicked, not for us.
+   */
+  private missingObject(path: string) {
+    this.logger.warn(`Attachment file missing from storage: ${path}`);
+    return new NotFoundException(
+      'This file is no longer in storage. Delete the attachment and upload it again.',
+    );
   }
 
   async deleteObject(path: string) {

@@ -190,10 +190,13 @@ async function requestBlob(path: string, options: { signal?: AbortSignal } = {})
     unauthorizedHandler?.();
   }
   if (!response.ok) {
+    // A file endpoint answers an error in the usual JSON envelope; keep it, so
+    // the caller can show why ("no longer in storage") rather than a generic
+    // failure.
     throw new ApiError(
       `Request to ${path} failed with status ${response.status}`,
       response.status,
-      null,
+      await parseResponse<unknown>(response).catch(() => null),
     );
   }
   return response.blob();

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from './api-error';
 import { apiClient, configureApiClient } from './api-client';
+import { getApiErrorMessage } from './get-api-error-message';
 
 vi.mock('@/lib/env/env', () => ({
   getEnv: () => ({
@@ -128,5 +129,39 @@ describe('apiClient', () => {
 
     await expect(apiClient.get('/vehicles')).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the error a file download answers with, so the caller can say why', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message:
+              'This file is no longer in storage. Delete the attachment and upload it again.',
+          },
+        }),
+        { status: 404, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+
+    const error = await apiClient.getBlob('/attachments/attachment-1/file').catch((e) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(getApiErrorMessage(error, 'Could not open attachment')).toBe(
+      'This file is no longer in storage. Delete the attachment and upload it again.',
+    );
+  });
+
+  it('still fails a file download with no JSON body, with the generic message', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response('Bad gateway', { status: 502 }));
+
+    const error = await apiClient.getBlob('/attachments/attachment-1/file').catch((e) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(getApiErrorMessage(error, 'Could not open attachment')).toBe(
+      'Could not open attachment',
+    );
   });
 });
