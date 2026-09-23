@@ -1,3 +1,10 @@
+## [1.65.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.4...v1.65.5) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** never predict an odometer below the recorded reading ([f1f2151](https://github.com/AtharvaCM/vehicle-vault/commit/f1f2151ca68d2c7f1cd00593f49426657417ba9c))
+
 ## [1.65.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.3...v1.65.4) (2026-09-23)
 
 
