@@ -1,3 +1,10 @@
+## [1.69.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.69.0...v1.69.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** clearing a nickname or variant on edit actually clears it ([32b9b22](https://github.com/AtharvaCM/vehicle-vault/commit/32b9b227e122138d46b9984c580a7733c080702b))
+
 # [1.69.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.68.0...v1.69.0) (2026-09-23)
 
 
