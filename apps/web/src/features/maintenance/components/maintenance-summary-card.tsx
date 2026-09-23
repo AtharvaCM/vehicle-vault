@@ -143,7 +143,9 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                         </p>
                       </div>
                       <div className="text-sm font-semibold text-slate-900">
-                        {formatCurrency(lineItem.lineTotal ?? 0, record.currencyCode)}
+                        {typeof lineItem.lineTotal === 'number'
+                          ? formatCurrency(lineItem.lineTotal, record.currencyCode)
+                          : '—'}
                       </div>
                     </div>
                     {lineItem.notes ? (

@@ -385,6 +385,105 @@ describe('MaintenanceService', () => {
     });
   });
 
+  it('resolves a line item total from quantity x unit price when it was not sent', async () => {
+    // Defends the API independently of the web form: any client (bulk import,
+    // a future consumer) can send a null lineTotal alongside quantity and
+    // unit price, and the record page must not render that as ₹0.
+    prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
+
+    await service.createForVehicle('user-1', 'vehicle-1', {
+      category: MaintenanceCategory.EngineOil,
+      serviceDate: '2026-03-18T00:00:00.000Z',
+      odometer: 12345,
+      totalCost: 1575,
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Fluid,
+          name: 'Engine oil',
+          quantity: 3.5,
+          unitPrice: 450,
+        },
+      ],
+    });
+
+    expect(prisma.maintenanceRecord.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          lineItems: {
+            create: [
+              expect.objectContaining({
+                name: 'Engine oil',
+                quantity: 3.5,
+                unitPrice: 450,
+                lineTotal: 1575,
+              }),
+            ],
+          },
+        }),
+      }),
+    );
+  });
+
+  it('resolves a line item total from quantity x unit price when updating a record', async () => {
+    prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue(record);
+    prisma.maintenanceRecord.update = vi.fn().mockResolvedValue(record);
+
+    await service.updateRecord('user-1', 'record-1', {
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Part,
+          name: 'Oil filter',
+          quantity: 2,
+          unitPrice: 225,
+        },
+      ],
+    });
+
+    expect(prisma.maintenanceRecord.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          lineItems: expect.objectContaining({
+            create: [
+              expect.objectContaining({
+                name: 'Oil filter',
+                quantity: 2,
+                unitPrice: 225,
+                lineTotal: 450,
+              }),
+            ],
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('leaves a line item total undefined when neither typed nor derivable', async () => {
+    prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
+
+    await service.createForVehicle('user-1', 'vehicle-1', {
+      category: MaintenanceCategory.EngineOil,
+      serviceDate: '2026-03-18T00:00:00.000Z',
+      odometer: 12345,
+      totalCost: 0,
+      lineItems: [
+        {
+          kind: MaintenanceLineItemKind.Job,
+          name: 'Inspection',
+        },
+      ],
+    });
+
+    expect(prisma.maintenanceRecord.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          lineItems: {
+            create: [expect.objectContaining({ name: 'Inspection', lineTotal: undefined })],
+          },
+        }),
+      }),
+    );
+  });
+
   it('replaces line items when updating a maintenance record', async () => {
     prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue(record);
     prisma.maintenanceRecord.update = vi.fn().mockResolvedValue({

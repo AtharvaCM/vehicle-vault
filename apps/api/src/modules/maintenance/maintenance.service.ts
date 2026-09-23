@@ -16,6 +16,7 @@ import {
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { roundMoney } from '../../common/transforms/round-money.transform';
 import { AuditService } from '../audit/audit.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
@@ -496,13 +497,38 @@ export class MaintenanceService {
       quantity: input.quantity,
       unit: input.unit,
       unitPrice: input.unitPrice,
-      lineTotal: input.lineTotal,
+      lineTotal: this.resolveLineItemTotal(input),
       brand: input.brand,
       partNumber: input.partNumber,
       notes: input.notes,
       position,
       metadata: input.metadata ? this.toJsonValue(input.metadata) : undefined,
     };
+  }
+
+  /**
+   * The web form already resolves qty x unit price into `lineTotal` before
+   * sending it, but any other client (bulk import, a future API consumer)
+   * could still send a null total alongside quantity and unit price. Resolve
+   * it here too so the record's line items never silently store an amount
+   * that reads as zero on the record page. Shared by create and update, since
+   * update also builds its line items through this method.
+   */
+  private resolveLineItemTotal(
+    input: Pick<
+      NonNullable<CreateMaintenanceRecordInput['lineItems']>[number],
+      'lineTotal' | 'quantity' | 'unitPrice'
+    >,
+  ): number | undefined {
+    if (typeof input.lineTotal === 'number') {
+      return roundMoney(input.lineTotal) as number;
+    }
+
+    if (typeof input.quantity === 'number' && typeof input.unitPrice === 'number') {
+      return roundMoney(input.quantity * input.unitPrice) as number;
+    }
+
+    return input.lineTotal;
   }
 
   private toMaintenanceRecord(record: MaintenanceRecordWithLineItems) {
