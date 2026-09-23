@@ -149,7 +149,8 @@ export function publicCatalogSegmentFor(vehicleType: VehicleType): PublicCatalog
 
 /**
  * One publishable variant in the catalog index: enough to build its URL and
- * breadcrumbs, and to date it, without its page payload.
+ * breadcrumbs, to date it, and to sum it up on a make page, without its page
+ * payload.
  */
 export interface PublicCatalogIndexEntry {
   segment: PublicCatalogSegment;
@@ -158,6 +159,14 @@ export interface PublicCatalogIndexEntry {
   model: PublicCatalogNamedSlug;
   generation: PublicCatalogNamedSlug;
   variant: PublicCatalogNamedSlug;
+  /** Every fuel it was offered with, its newest offering's first. */
+  fuelTypes: FuelType[];
+  /** The first year of its earliest offering. */
+  yearStart: number | null;
+  /** The last year of its latest offering; null while any offering is on sale. */
+  yearEnd: number | null;
+  /** Any of its offerings is on sale now. */
+  isCurrent: boolean;
   /** The page-quality gate's verdict, the same one the variant's page payload carries. */
   indexable: boolean;
   /** ISO timestamp of the newest change to the variant, its offerings or specs. */
@@ -265,4 +274,57 @@ export interface PublicCatalogModelPageBatch {
   pageSize: number;
   total: number;
   hasMore: boolean;
+}
+
+/**
+ * One model as a make page lists it: enough to tell it from the make's other
+ * models and link to its own page.
+ */
+export interface PublicCatalogMakeModel extends PublicCatalogNamedSlug {
+  /** How many variant pages it has. */
+  variantCount: number;
+  /** Every fuel any of its variants was offered with, in the order they first appear. */
+  fuelTypes: FuelType[];
+  /** The first year any of its variants was offered. */
+  yearStart: number | null;
+  /** The last year any of its variants was offered; null while one is on sale. */
+  yearEnd: number | null;
+  /** Any of its variants is on sale now. */
+  isCurrent: boolean;
+}
+
+/**
+ * The public page for a make, `/cars/{make}`: every model with a public page at
+ * that address, on sale first, then by name. Like a model page it is an
+ * address, not a row: Hyundai is both a car and an SUV make with one slug, and
+ * `/cars/hyundai` lists the models of both.
+ */
+export interface PublicCatalogMakePage {
+  segment: PublicCatalogSegment;
+  make: PublicCatalogNamedSlug;
+  /** On sale first, then by name. Never empty. */
+  models: PublicCatalogMakeModel[];
+  /**
+   * The page-quality gate's verdict: indexable when any of its models is, which
+   * is when any variant under it is. The web build's indexing flag still has
+   * the last word.
+   */
+  indexable: boolean;
+  /** ISO timestamp of the newest change to any variant under it. */
+  updatedAt: string;
+}
+
+/** One make as a browse page lists it. */
+export interface PublicCatalogBrowseMake extends PublicCatalogNamedSlug {
+  /** How many model pages it has. */
+  modelCount: number;
+}
+
+/**
+ * The public page for a segment, `/cars` or `/bikes`: every make with a public
+ * page there, by name. Empty only when the catalog has nothing in the segment.
+ */
+export interface PublicCatalogBrowsePage {
+  segment: PublicCatalogSegment;
+  makes: PublicCatalogBrowseMake[];
 }

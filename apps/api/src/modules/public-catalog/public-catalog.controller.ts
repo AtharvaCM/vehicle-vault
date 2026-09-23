@@ -64,6 +64,34 @@ export class PublicCatalogController {
     );
   }
 
+  // Declared after the fixed one-segment routes above, so `index`,
+  // `variant-pages` and `model-pages` never reach it as a segment.
+  @Get(':segment')
+  @RateLimit('catalog')
+  @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)
+  @ApiOperation({
+    summary: 'Every make with public pages in a segment, as its browse page lists them',
+  })
+  async getBrowsePage(@Param('segment') segment: string) {
+    if (!isPublicCatalogSegment(segment)) {
+      throw new NotFoundException('No public catalog page at this address.');
+    }
+
+    return successResponse(await this.publicCatalogService.getBrowsePage(segment));
+  }
+
+  @Get(':segment/:make')
+  @RateLimit('catalog')
+  @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)
+  @ApiOperation({ summary: 'A catalog make and its models, as its public page lists them' })
+  async getMakePage(@Param('segment') segment: string, @Param('make') make: string) {
+    if (!isPublicCatalogSegment(segment)) {
+      throw new NotFoundException('No public catalog page at this address.');
+    }
+
+    return successResponse(await this.publicCatalogService.getMakePage({ segment, make }));
+  }
+
   @Get(':segment/:make/:model')
   @RateLimit('catalog')
   @Header('Cache-Control', PUBLIC_CATALOG_CACHE_CONTROL)

@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { MaintenanceCategory } from '@vehicle-vault/shared';
+import { buildPublicCatalogMakePage, MaintenanceCategory } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
@@ -364,6 +364,11 @@ describe('PublicCatalogService', () => {
           model: { name: 'i20', slug: 'i20' },
           generation: { name: 'i20 lineup', slug: 'i20-lineup' },
           variant: { name: 'Asta', slug: 'asta' },
+          // What a make page sums up: the newest offering's fuels first.
+          fuelTypes: ['petrol', 'cng'],
+          yearStart: 2020,
+          yearEnd: null,
+          isCurrent: true,
           indexable: false,
           updatedAt: '2026-07-10T00:00:00.000Z',
         },
@@ -428,6 +433,197 @@ describe('PublicCatalogService', () => {
       prisma.vehicleCatalogVariant.findMany.mockResolvedValue([truck]);
 
       await expect(service.getIndex()).resolves.toEqual({ variants: [] });
+    });
+  });
+
+  describe('make and browse pages', () => {
+    /** A variant row at an address, under a make row of the given type. */
+    function rowAt({
+      id,
+      makeType = 'car',
+      makeName = 'Hyundai',
+      makeSlug = 'hyundai',
+      model,
+      variant,
+      current = true,
+      spec = specRow(),
+      updatedAt = '2026-06-02T00:00:00Z',
+    }: {
+      id: string;
+      makeType?: string;
+      makeName?: string;
+      makeSlug?: string;
+      model: string;
+      variant: string;
+      current?: boolean;
+      spec?: ReturnType<typeof specRow> | null;
+      updatedAt?: string;
+    }) {
+      const row = variantRow({
+        id,
+        name: variant,
+        slug: variant.toLowerCase(),
+        updatedAt: at(updatedAt),
+        spec,
+        offerings: [
+          {
+            fuelTypes: ['petrol'],
+            yearStart: 2019,
+            yearEnd: current ? null : 2022,
+            isCurrent: current,
+            updatedAt: at('2026-06-01T00:00:00Z'),
+          },
+        ],
+      });
+      row.generation = {
+        ...row.generation,
+        slug: `${model.toLowerCase()}-lineup`,
+        model: {
+          ...row.generation.model,
+          id: `model-${makeType}-${model}`,
+          name: model,
+          slug: model.toLowerCase(),
+          make: {
+            ...row.generation.model.make,
+            id: `make-${makeType}`,
+            vehicleType: makeType,
+            name: makeName,
+            slug: makeSlug,
+          },
+        },
+      };
+      return row;
+    }
+
+    // Hyundai is a car make and an SUV make with one slug; the i20 is under the
+    // car row, the Creta under the SUV row, and the Venue under both.
+    const hyundaiRows = () => [
+      rowAt({ id: 'v1', model: 'i20', variant: 'Asta', spec: specRow() }),
+      rowAt({ id: 'v2', makeType: 'suv', model: 'Creta', variant: 'SX', spec: specRow(richSpec) }),
+      rowAt({ id: 'v3', model: 'Venue', variant: 'S', current: false }),
+      rowAt({
+        id: 'v4',
+        makeType: 'suv',
+        model: 'Venue',
+        variant: 'SX',
+        updatedAt: '2026-08-01T00:00:00Z',
+      }),
+      // The same Venue S address again from the SUV row: counted once.
+      rowAt({ id: 'v5', makeType: 'suv', model: 'Venue', variant: 'S' }),
+      rowAt({ id: 'v6', makeType: 'suv', model: 'Alcazar', variant: 'Base', current: false }),
+    ];
+
+    it('looks a make page up by slug across the segment’s vehicle types, publishable rows only', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(hyundaiRows());
+
+      await service.getMakePage({ segment: 'cars', make: 'hyundai' });
+
+      expect(prisma.vehicleCatalogVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            offerings: { some: {} },
+            generation: {
+              model: {
+                make: {
+                  slug: 'hyundai',
+                  marketCode: 'IN',
+                  vehicleType: { in: ['car', 'suv', 'van'] },
+                },
+              },
+            },
+          },
+          orderBy: { id: 'asc' },
+        }),
+      );
+    });
+
+    it('lists the models of every make row at the address, merged by model, on sale first', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(hyundaiRows());
+
+      const page = await service.getMakePage({ segment: 'cars', make: 'hyundai' });
+
+      expect(page.make).toEqual({ name: 'Hyundai', slug: 'hyundai' });
+      expect(page.models.map((model) => [model.name, model.variantCount, model.isCurrent])).toEqual(
+        [
+          ['Creta', 1, true],
+          ['i20', 1, true],
+          // The Venue S from both rows is one variant; the SX keeps it on sale.
+          ['Venue', 2, true],
+          ['Alcazar', 1, false],
+        ],
+      );
+      expect(page.models.find((model) => model.slug === 'alcazar')).toMatchObject({
+        fuelTypes: ['petrol'],
+        yearStart: 2019,
+        yearEnd: 2022,
+      });
+      expect(page.updatedAt).toBe('2026-08-01T00:00:00.000Z');
+    });
+
+    it('is indexable when any variant under it is, and not when none is', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(hyundaiRows());
+      await expect(
+        service.getMakePage({ segment: 'cars', make: 'hyundai' }),
+      ).resolves.toMatchObject({ indexable: true });
+
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(
+        hyundaiRows().filter((row) => row.id !== 'v2'),
+      );
+      await expect(
+        service.getMakePage({ segment: 'cars', make: 'hyundai' }),
+      ).resolves.toMatchObject({ indexable: false });
+    });
+
+    it('is exactly what the shared builder makes of the index', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(hyundaiRows());
+      const page = await service.getMakePage({ segment: 'cars', make: 'hyundai' });
+      const { variants } = await service.getIndex();
+
+      expect(page).toEqual(buildPublicCatalogMakePage(variants, 'cars', 'hyundai'));
+    });
+
+    it('is not found when the make has nothing published', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.getMakePage({ segment: 'bikes', make: 'hyundai' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('lists a segment’s makes by name, one per slug, with their model counts', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        ...hyundaiRows(),
+        rowAt({ id: 'v7', makeName: 'Honda', makeSlug: 'honda', model: 'City', variant: 'V' }),
+      ]);
+
+      const page = await service.getBrowsePage('cars');
+
+      expect(prisma.vehicleCatalogVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            offerings: { some: {} },
+            generation: {
+              model: { make: { marketCode: 'IN', vehicleType: { in: ['car', 'suv', 'van'] } } },
+            },
+          },
+        }),
+      );
+      expect(page).toEqual({
+        segment: 'cars',
+        makes: [
+          { name: 'Honda', slug: 'honda', modelCount: 1 },
+          { name: 'Hyundai', slug: 'hyundai', modelCount: 4 },
+        ],
+      });
+    });
+
+    it('gives an empty browse page, not an error, when a segment has nothing yet', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([]);
+
+      await expect(service.getBrowsePage('bikes')).resolves.toEqual({
+        segment: 'bikes',
+        makes: [],
+      });
     });
   });
 
