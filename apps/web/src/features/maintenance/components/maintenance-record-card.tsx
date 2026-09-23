@@ -39,7 +39,7 @@ export function MaintenanceRecordCard({
 
       {/* The card fills anything from a phone to half a desktop panel, so its figures
           move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
-      <Card className="@container flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md sm:p-5">
+      <Card className="@container flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 transition-all duration-300 hover:border-primary/20 hover:bg-white sm:p-5">
         <Link
           className="flex flex-col p-0 @xl:flex-row @xl:items-center"
           params={{ recordId: record.id }}
@@ -99,7 +99,7 @@ export function MaintenanceRecordCard({
               </div>
             </div>
 
-            <div className="ml-4 flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-300 shadow-premium-sm transition-all group-hover:translate-x-1 group-hover:text-primary">
+            <div className="ml-4 flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-primary">
               <ChevronRight className="h-4 w-4" />
             </div>
           </div>

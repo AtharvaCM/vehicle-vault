@@ -23,7 +23,7 @@ export function InstallAppCard() {
       role="region"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-primary shadow-premium-sm">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-primary">
           <Download aria-hidden="true" className="h-4 w-4" />
         </div>
         <div className="space-y-0.5">

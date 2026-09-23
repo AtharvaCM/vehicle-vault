@@ -63,7 +63,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
 
   if (suggestionsQuery.isLoading) {
     return (
-      <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+      <Card className="border-slate-200/60 bg-white">
         <CardHeader className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 shrink-0 text-primary" />
@@ -88,7 +88,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
   const actionable = items.filter((item) => !item.alreadyScheduled);
 
   return (
-    <Card className="border-slate-200/60 bg-white shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white">
       <CardHeader className="border-b border-slate-100 pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">

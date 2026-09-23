@@ -8,11 +8,11 @@ export function Toaster() {
       richColors
       toastOptions={{
         classNames: {
-          toast: 'rounded-2xl border border-border shadow-lg',
+          toast: 'rounded-card border border-border shadow-overlay',
           title: 'text-sm font-semibold',
           description: 'text-sm text-muted-foreground',
-          actionButton: 'rounded-xl',
-          cancelButton: 'rounded-xl',
+          actionButton: 'rounded-control',
+          cancelButton: 'rounded-control',
         },
       }}
     />

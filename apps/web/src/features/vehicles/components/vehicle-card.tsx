@@ -29,7 +29,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
 
       <Card
         className={cn(
-          'flex-1 overflow-hidden border-slate-200/60 bg-white/70 shadow-premium-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-premium-md',
+          'flex-1 overflow-hidden border-slate-200/60 bg-white/70 transition-all duration-300 hover:border-primary/20 hover:bg-white',
           selected && 'ring-2 ring-primary',
         )}
       >
@@ -99,7 +99,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
               </p>
             </div>
 
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-300 shadow-premium-sm transition-all group-hover:translate-x-1 group-hover:text-primary sm:ml-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-primary sm:ml-4">
               <ChevronRight className="h-4 w-4" />
             </div>
           </div>

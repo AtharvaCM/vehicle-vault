@@ -171,7 +171,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   return (
     <Card
       className={cn(
-        '@container flex flex-col gap-3 border-slate-200/60 bg-white/70 shadow-premium-sm transition-colors hover:bg-white',
+        '@container flex flex-col gap-3 border-slate-200/60 bg-white/70 transition-colors hover:bg-white',
         vehicle.status === 'overdue' && 'border-rose-200/60',
         vehicle.status === 'due_soon' && 'border-amber-200/60',
       )}

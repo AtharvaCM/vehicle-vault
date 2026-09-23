@@ -84,7 +84,7 @@ export function FuelEconomyCard({ vehicleId }: { vehicleId: string }) {
   const economyQuery = useVehicleFuelEconomy(vehicleId);
 
   return (
-    <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm">
+    <Card className="border-slate-200/60 bg-white/70">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <Fuel aria-hidden="true" className="h-4 w-4 text-primary" />

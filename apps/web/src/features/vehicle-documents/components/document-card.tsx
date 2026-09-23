@@ -105,7 +105,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
 
   if (document.kind === 'insurance') {
     return (
-      <Card className="border-slate-200/60 bg-white shadow-premium-sm overflow-hidden hover:border-primary/20 transition-all">
+      <Card className="border-slate-200/60 bg-white overflow-hidden hover:border-primary/20 transition-all">
         <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row">
             <div className="flex-[1.5] p-5 space-y-4">
@@ -223,7 +223,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   if (isComplianceKind(document.kind)) {
     const amount = document.details?.amount;
     return (
-      <Card className="border-slate-200/60 bg-white shadow-premium-sm overflow-hidden hover:border-primary/20 transition-all">
+      <Card className="border-slate-200/60 bg-white overflow-hidden hover:border-primary/20 transition-all">
         <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row">
             <div className="flex-[1.5] p-5 space-y-4">
@@ -336,7 +336,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
 
   // Warranty kind
   return (
-    <Card className="border-slate-200/60 bg-white shadow-premium-sm overflow-hidden hover:border-primary/20 transition-all">
+    <Card className="border-slate-200/60 bg-white overflow-hidden hover:border-primary/20 transition-all">
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row">
           <div className="flex-[1.5] p-5 space-y-4">

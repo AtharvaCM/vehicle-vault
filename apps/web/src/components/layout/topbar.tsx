@@ -95,7 +95,7 @@ export function Topbar() {
           <Link
             className={cn(
               buttonVariants({ size: 'sm', variant: 'outline' }),
-              'hidden shadow-premium-sm sm:inline-flex',
+              'hidden sm:inline-flex',
             )}
             to="/vehicles/new"
           >
@@ -113,7 +113,7 @@ export function Topbar() {
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label={auth.user?.name || 'User profile'}
-                className="h-9 w-9 rounded-full border-slate-200/60 p-0 shadow-premium-sm hover:bg-slate-50"
+                className="h-9 w-9 rounded-full border-slate-200/60 p-0 hover:bg-slate-50"
                 variant="outline"
               >
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
@@ -121,10 +121,7 @@ export function Topbar() {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-64 rounded-xl border-slate-200/60 p-1.5 shadow-premium-lg"
-            >
+            <DropdownMenuContent align="end" className="w-64 rounded-xl border-slate-200/60 p-1.5">
               <DropdownMenuLabel className="px-3 py-2">
                 <div className="flex flex-col space-y-0.5">
                   <p className="text-sm font-semibold text-slate-900">{auth.user?.name}</p>
@@ -169,8 +166,7 @@ export function Topbar() {
               key={item.to}
               activeOptions={{ exact: item.exact ?? false }}
               activeProps={{
-                className:
-                  'bg-primary text-primary-foreground shadow-premium-sm border-transparent',
+                className: 'bg-primary text-primary-foreground border-transparent',
               }}
               className={cn(
                 'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 active:scale-95',

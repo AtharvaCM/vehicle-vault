@@ -4,7 +4,7 @@ React SPA for Vehicle Vault. Consumes the API over HTTP; owns presentation, form
 
 ## Stack
 
-React 19 + TypeScript + Vite 6. TanStack Router (code-defined routes, not file-based) + TanStack Query 5. react-hook-form + Zod (schemas shared via `@vehicle-vault/shared`). Tailwind 3.4 (with `@tailwindcss/container-queries`) + shadcn/ui (Radix, `style: radix-nova`). Recharts for charts, sonner for toasts, papaparse for CSV import, Vitest (jsdom) for unit tests, Playwright for e2e.
+React 19 + TypeScript + Vite 8. TanStack Router (code-defined routes, not file-based) + TanStack Query 5. react-hook-form + Zod 4 (schemas shared via `@vehicle-vault/shared`). Tailwind 4 (CSS-first: `src/styles/`, no config file) + shadcn/ui (Radix, `style: radix-nova`). Recharts for charts, sonner for toasts, papaparse for CSV import, Vitest (jsdom) for unit tests, Playwright for e2e.
 
 Only env var: `VITE_API_BASE_URL` (`src/lib/env/env.ts`). Throws in PROD build if unset; dev defaults to `http://localhost:3001/api`.
 
@@ -24,6 +24,9 @@ Hierarchical `queryKeys.<domain>.<selector>(...)` factory; every key builds on `
 
 **Format module** (`src/lib/format`):
 The only way a value becomes display text: `format.money` (₹, Indian grouping, whole rupees unless asked), `format.number`, `format.distance` / `format.odometer` ("31,800 km"), `format.date` (one style, "23 Sep 2026"; `'short'` "Wed 23 Sep"; `'dateTime'` for when something happened), `format.relativeDue` (`due`: "3 days late" / "Today" / "In 4 days"; `ends`: "153 days left" / "Ended 20 Sep") and `format.enumLabel` (a sentence-case label for every shared enum, via `satisfies Record<Enum, string>` so a new enum value fails the typecheck until labelled). Dates are read on the Indian calendar (fixed UTC+05:30) whatever the browser's zone; a date-only value is UTC midnight, so it keeps its day. Missing or unreadable input prints `format.EMPTY` ("—"), never "Invalid date" or "NaN km". Lint bans `toLocaleString`/`toLocaleDateString`, `new Intl.NumberFormat`/`DateTimeFormat` and date-fns `format` everywhere else in `src`.
+
+**Design tokens** (`src/styles/tokens.css`, spec: [docs/design-language.md](../../docs/design-language.md)):
+The "Glovebox folder" look as semantic CSS variables, exposed to Tailwind through `@theme inline` — surfaces (`bg-page`, `bg-surface`), lines (`border-line`), text (`text-fg`, `text-fg-2`, `text-fg-3`), `brand` / `brand-tint`, the statuses `late` / `soon` / `ok` / `ended` with their tints and dots, and the number plate's colours. The shadcn names the UI components use (`primary`, `muted-foreground`, `destructive`, `border`, `ring`, …) are mapped onto them, so a screen re-skins by changing a token, not a class. `.dark` holds the dark set (not switchable yet). Type is IBM Plex Sans (body 15, tabular numerals), Anek Latin for `h1`/`h2` and `font-display`, IBM Plex Mono for document numbers, self-hosted from `public/fonts/`; sizes `text-caption` … `text-display`, radii `rounded-control` / `rounded-card` / `rounded-sheet`, and one shadow, `shadow-overlay`, for menus, popovers and sheets. `cn` knows these names (`src/lib/utils.ts`) so tailwind-merge doesn't drop them; `tokens.spec.ts` holds every text pair to WCAG AA. `tailwind-3-compat.css` keeps the v3 palette, line heights and `space-y` until screens move onto the tokens.
 
 **Response envelope**:
 `{success, data, meta?}` on success; `{success:false, error:{code,message,details?}}` on failure. `api/` functions unwrap `.data`; errors become `ApiError` (carries `status` + body); user-facing text via `getApiErrorMessage()`.

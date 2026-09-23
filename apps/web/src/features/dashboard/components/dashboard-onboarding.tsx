@@ -21,7 +21,7 @@ const STEPS = [
 
 export function DashboardOnboarding() {
   return (
-    <Card className="border-slate-200/60 bg-white/70 shadow-premium-sm sm:p-8">
+    <Card className="border-slate-200/60 bg-white/70 sm:p-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 shadow-inner">
           <CarFront aria-hidden="true" className="h-7 w-7" />

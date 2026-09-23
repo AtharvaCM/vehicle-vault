@@ -73,7 +73,7 @@ export function NotificationCenter() {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 p-0 sm:w-96 rounded-xl shadow-premium-lg border-slate-200/60 overflow-hidden"
+        className="w-80 p-0 sm:w-96 rounded-xl border-slate-200/60 overflow-hidden"
         align="end"
       >
         <div className="flex items-center justify-between p-4 pb-2">
