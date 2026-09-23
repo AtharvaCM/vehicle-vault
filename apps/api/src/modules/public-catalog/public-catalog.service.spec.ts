@@ -118,6 +118,7 @@ const slugs = {
 describe('PublicCatalogService', () => {
   const prisma = {
     vehicleCatalogVariant: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn() },
+    vehicleCatalogModel: { findMany: vi.fn() },
     serviceInterval: { findMany: vi.fn() },
   };
 
@@ -471,6 +472,449 @@ describe('PublicCatalogService', () => {
       expect(batch.items[0]).toEqual(single);
       expect(batch.items[1]).toMatchObject({ segment: 'bikes', vehicleType: 'motorcycle' });
       expect(JSON.stringify(batch)).not.toContain('sourceUrl');
+    });
+  });
+
+  describe('getModelPage', () => {
+    const modelSlugs = { segment: 'cars' as const, make: 'hyundai', model: 'i20' };
+
+    const offering = (
+      fuelTypes: string[],
+      yearStart: number | null,
+      yearEnd: number | null,
+      isCurrent: boolean,
+    ) => ({ fuelTypes, yearStart, yearEnd, isCurrent, updatedAt: at('2026-06-04T00:00:00Z') });
+
+    /** A variant row of the i20 in a generation of our choosing. */
+    function i20(
+      id: string,
+      name: string,
+      generation: {
+        slug: string;
+        yearStart: number | null;
+        yearEnd: number | null;
+        isCurrent: boolean;
+      },
+      overrides: Record<string, unknown> = {},
+    ) {
+      const row = variantRow({
+        id,
+        name,
+        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        spec: null,
+        offerings: [offering(['petrol'], 2023, null, true)],
+        ...overrides,
+      });
+      Object.assign(row.generation, {
+        id: `generation-${generation.slug}`,
+        name: `i20 ${generation.slug}`,
+        ...generation,
+      });
+      return row;
+    }
+
+    const currentGen = { slug: 'third-gen', yearStart: 2020, yearEnd: null, isCurrent: true };
+    const secondGen = { slug: 'second-gen', yearStart: 2014, yearEnd: 2020, isCurrent: false };
+    const firstGen = { slug: 'first-gen', yearStart: 2008, yearEnd: 2014, isCurrent: false };
+
+    it('looks up every publishable variant at the address, across car, SUV and van makes', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([variantRow()]);
+
+      await service.getModelPage(modelSlugs);
+
+      expect(prisma.vehicleCatalogVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            offerings: { some: {} },
+            generation: {
+              model: {
+                slug: 'i20',
+                make: {
+                  slug: 'hyundai',
+                  marketCode: 'IN',
+                  vehicleType: { in: ['car', 'suv', 'van'] },
+                },
+              },
+            },
+          },
+          orderBy: { id: 'asc' },
+        }),
+      );
+    });
+
+    it('limits /bikes to motorcycles', async () => {
+      const bike = variantRow();
+      bike.generation.model.make.vehicleType = 'motorcycle';
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([bike]);
+
+      const page = await service.getModelPage({ ...modelSlugs, segment: 'bikes' });
+
+      const where = prisma.vehicleCatalogVariant.findMany.mock.calls[0][0].where;
+      expect(where.generation.model.make.vehicleType).toEqual({ in: ['motorcycle'] });
+      expect(page).toMatchObject({ segment: 'bikes', vehicleType: 'motorcycle' });
+    });
+
+    it('is not found when no publishable variant is at the address', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([]);
+
+      await expect(service.getModelPage(modelSlugs)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('groups variants by generation, current first, then the most recent', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        i20('v1', 'Magna', firstGen, { offerings: [offering(['petrol'], 2008, 2014, false)] }),
+        i20('v2', 'Asta', currentGen),
+        i20('v3', 'Sportz', secondGen, { offerings: [offering(['diesel'], 2014, 2020, false)] }),
+        i20('v4', 'Era', currentGen),
+      ]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.generations.map((generation) => generation.slug)).toEqual([
+        'third-gen',
+        'second-gen',
+        'first-gen',
+      ]);
+      expect(page.generations[0]).toMatchObject({
+        name: 'i20 third-gen',
+        yearStart: 2020,
+        yearEnd: null,
+        isCurrent: true,
+      });
+      expect(page.generations.map((generation) => generation.variants.map((v) => v.name))).toEqual([
+        ['Asta', 'Era'],
+        ['Sportz'],
+        ['Magna'],
+      ]);
+    });
+
+    it('lists variants on sale before discontinued ones, then by name as a person sorts it', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        i20('v1', 'Series 10', currentGen),
+        i20('v2', 'Base', currentGen, { offerings: [offering(['petrol'], 2020, 2022, false)] }),
+        i20('v3', 'Series 2', currentGen),
+        i20('v4', 'asta', currentGen),
+      ]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.generations[0]?.variants.map((variant) => variant.name)).toEqual([
+        'asta',
+        'Series 2',
+        'Series 10',
+        'Base',
+      ]);
+    });
+
+    it('sums up each variant: its fuels, the years it was sold, whether it still is, its gearbox', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        i20('v1', 'Asta', currentGen, {
+          offerings: [
+            offering(['petrol'], 2020, 2023, false),
+            offering(['cng', 'petrol'], 2023, null, true),
+          ],
+          spec: specRow({ transmission: 'CVT' }),
+        }),
+        i20('v2', 'Magna', secondGen, {
+          offerings: [
+            offering(['diesel'], 2016, 2020, false),
+            offering(['petrol'], 2014, 2018, false),
+          ],
+        }),
+      ]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.generations[0]?.variants[0]).toEqual({
+        name: 'Asta',
+        slug: 'asta',
+        fuelTypes: ['cng', 'petrol'],
+        yearStart: 2020,
+        yearEnd: null,
+        isCurrent: true,
+        transmission: 'CVT',
+      });
+      expect(page.generations[1]?.variants[0]).toEqual({
+        name: 'Magna',
+        slug: 'magna',
+        fuelTypes: ['diesel', 'petrol'],
+        yearStart: 2014,
+        yearEnd: 2020,
+        isCurrent: false,
+        transmission: null,
+      });
+    });
+
+    it('merges one model spread over two make rows with the same slug into one page', async () => {
+      const car = i20('v1', 'Asta', currentGen);
+      const suv = i20('v2', 'Sportz', currentGen);
+      suv.generation.model = { ...suv.generation.model, id: 'model-2' };
+      suv.generation.model.make = {
+        ...suv.generation.model.make,
+        id: 'make-2',
+        vehicleType: 'suv',
+      };
+      const older = i20('v3', 'Magna', secondGen, {
+        offerings: [offering(['petrol'], 2014, 2020, false)],
+      });
+      older.generation.model.make = {
+        ...older.generation.model.make,
+        id: 'make-2',
+        vehicleType: 'suv',
+      };
+      // The same generation and variant slugs under both makes: listed once, first row wins.
+      const twin = i20('v4', 'Asta', currentGen, {
+        offerings: [offering(['diesel'], 2020, null, true)],
+      });
+      twin.generation.model.make = {
+        ...twin.generation.model.make,
+        id: 'make-2',
+        vehicleType: 'suv',
+      };
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([car, suv, older, twin]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.generations.map((generation) => generation.slug)).toEqual([
+        'third-gen',
+        'second-gen',
+      ]);
+      expect(page.generations[0]?.variants).toEqual([
+        expect.objectContaining({ name: 'Asta', fuelTypes: ['petrol'] }),
+        expect.objectContaining({ name: 'Sportz' }),
+      ]);
+      expect(page.generations[1]?.variants.map((variant) => variant.name)).toEqual(['Magna']);
+    });
+
+    it('takes its specs and schedule from the newest variant on sale in the current generation, and says which', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        i20('v-old', 'Magna', secondGen, {
+          offerings: [offering(['petrol'], 2014, 2020, false)],
+          spec: specRow({ ...richSpec }),
+        }),
+        i20('v-ended', 'Base', currentGen, {
+          offerings: [offering(['petrol'], 2020, 2021, false)],
+          spec: specRow({ ...richSpec }),
+        }),
+        i20('v-2021', 'Sportz', currentGen, {
+          offerings: [offering(['petrol'], 2021, null, true)],
+          spec: specRow({ ...richSpec }),
+        }),
+        i20('v-2024', 'Asta', currentGen, {
+          offerings: [offering(['diesel'], 2024, null, true)],
+          spec: specRow({ ...richSpec, transmission: 'DCT' }),
+        }),
+      ]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.representative).toMatchObject({
+        generation: { name: 'i20 third-gen', slug: 'third-gen' },
+        variant: { name: 'Asta', slug: 'asta' },
+        specs: { transmission: 'DCT', engineCc: 1197 },
+      });
+      expect(page.schedule).toMatchObject({
+        basis: 'typical',
+        fuelType: 'diesel',
+        vehicleType: 'car',
+      });
+      expect(prisma.serviceInterval.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.serviceInterval.findMany).toHaveBeenCalledWith({
+        where: { variantId: 'v-2024' },
+      });
+    });
+
+    it('prefers a variant the page-quality gate passes, so the specs shown say something', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        i20('v-thin', 'Asta', currentGen, { offerings: [offering(['petrol'], 2024, null, true)] }),
+        i20('v-rich', 'Sportz', currentGen, {
+          offerings: [offering(['petrol'], 2021, null, true)],
+          spec: specRow({ ...richSpec }),
+        }),
+      ]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.representative.variant.slug).toBe('sportz');
+    });
+
+    it("gives the representative's schedule exactly as its own variant page has it", async () => {
+      prisma.serviceInterval.findMany.mockResolvedValue([
+        { category: 'periodic_service', intervalKm: 10000, intervalMonths: 12 },
+      ]);
+      const row = variantRow();
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([row]);
+      prisma.vehicleCatalogVariant.findFirst.mockResolvedValue(row);
+
+      const modelPage = await service.getModelPage(modelSlugs);
+      const variantPage = await service.getVariantPage(slugs);
+
+      expect(modelPage.schedule).toEqual(variantPage.schedule);
+      expect(modelPage.schedule.basis).toBe('variant');
+      expect(modelPage.representative.specs).toEqual(variantPage.specs);
+    });
+
+    it('is indexable if and only if at least one of its variants is', async () => {
+      const thin = i20('v-thin', 'Asta', currentGen, { spec: specRow() });
+      const bare = i20('v-bare', 'Era', currentGen);
+      const rich = i20('v-rich', 'Sportz', secondGen, {
+        offerings: [offering(['petrol'], 2014, 2020, false)],
+        spec: specRow({ ...richSpec }),
+      });
+
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([thin, bare]);
+      await expect(service.getModelPage(modelSlugs)).resolves.toMatchObject({ indexable: false });
+
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([thin, bare, rich]);
+      await expect(service.getModelPage(modelSlugs)).resolves.toMatchObject({ indexable: true });
+    });
+
+    it('reports the newest change across all its variants', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        i20('v1', 'Asta', currentGen, { updatedAt: at('2026-08-01T00:00:00Z') }),
+        i20('v2', 'Era', currentGen, { spec: specRow({ updatedAt: at('2026-09-01T00:00:00Z') }) }),
+      ]);
+
+      const page = await service.getModelPage(modelSlugs);
+
+      expect(page.updatedAt).toBe('2026-09-01T00:00:00.000Z');
+    });
+
+    it('never lets a source name, source URL, id or free-text field into the payload', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([variantRow()]);
+
+      const serialized = JSON.stringify(await service.getModelPage(modelSlugs));
+
+      for (const forbidden of [
+        'sourceName',
+        'sourceUrl',
+        'source.example.test',
+        'carwale',
+        'safetyFeatures',
+        'Six airbags',
+        'variant-1',
+        'generation-1',
+        'model-1',
+        'make-1',
+        'spec-1',
+      ]) {
+        expect(serialized).not.toContain(forbidden);
+      }
+    });
+  });
+
+  describe('getModelPageBatch', () => {
+    const modelRow = (id: string, slug: string, make: string, vehicleType: string) => ({
+      id,
+      slug,
+      make: { slug: make, vehicleType },
+    });
+
+    /** A variant row under a given model row. */
+    function underModel(
+      id: string,
+      model: { id: string; slug: string },
+      makeSlug: string,
+      vehicleType: string,
+    ) {
+      const row = variantRow({ id, slug: id });
+      row.generation.model = {
+        ...row.generation.model,
+        id: model.id,
+        slug: model.slug,
+        name: model.slug,
+      };
+      row.generation.model.make = {
+        ...row.generation.model.make,
+        slug: makeSlug,
+        name: makeSlug,
+        vehicleType,
+      };
+      return row;
+    }
+
+    it('reads publishable models only, then their variants in id order', async () => {
+      prisma.vehicleCatalogModel.findMany.mockResolvedValue([
+        modelRow('m1', 'i20', 'hyundai', 'car'),
+      ]);
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        underModel('v1', { id: 'm1', slug: 'i20' }, 'hyundai', 'car'),
+      ]);
+
+      await service.getModelPageBatch({ page: 1, pageSize: 100 });
+
+      expect(prisma.vehicleCatalogModel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            make: { marketCode: 'IN', vehicleType: { in: ['car', 'suv', 'van', 'motorcycle'] } },
+            generations: { some: { variants: { some: { offerings: { some: {} } } } } },
+          },
+        }),
+      );
+      expect(prisma.vehicleCatalogVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { offerings: { some: {} }, generation: { modelId: { in: ['m1'] } } },
+          orderBy: { id: 'asc' },
+        }),
+      );
+    });
+
+    it('pages by address, in address order, one address spanning two make rows', async () => {
+      prisma.vehicleCatalogModel.findMany.mockResolvedValue([
+        modelRow('m-venue', 'venue', 'hyundai', 'suv'),
+        modelRow('m-classic', 'classic-350', 'royal-enfield', 'motorcycle'),
+        modelRow('m-i20-car', 'i20', 'hyundai', 'car'),
+        modelRow('m-i20-suv', 'i20', 'hyundai', 'suv'),
+        modelRow('m-ace', 'ace', 'tata', 'truck'),
+      ]);
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        underModel('v1', { id: 'm-i20-car', slug: 'i20' }, 'hyundai', 'car'),
+        underModel('v2', { id: 'm-i20-suv', slug: 'i20' }, 'hyundai', 'suv'),
+      ]);
+
+      const first = await service.getModelPageBatch({ page: 1, pageSize: 2 });
+
+      // bikes/royal-enfield/classic-350, then cars/hyundai/i20, then cars/hyundai/venue; no truck.
+      expect(first).toMatchObject({ page: 1, pageSize: 2, total: 3, hasMore: true });
+      expect(prisma.vehicleCatalogVariant.findMany.mock.calls[0][0].where.generation).toEqual({
+        modelId: { in: ['m-classic', 'm-i20-car', 'm-i20-suv'] },
+      });
+      const i20Page = first.items.find((item) => item.model.slug === 'i20');
+      expect(i20Page?.generations[0]?.variants.map((variant) => variant.slug)).toEqual([
+        'v1',
+        'v2',
+      ]);
+
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([]);
+      const last = await service.getModelPageBatch({ page: 2, pageSize: 2 });
+      expect(last).toMatchObject({ page: 2, total: 3, hasMore: false });
+      expect(prisma.vehicleCatalogVariant.findMany.mock.calls[1][0].where.generation).toEqual({
+        modelId: { in: ['m-venue'] },
+      });
+    });
+
+    it('asks for no variants past the last page', async () => {
+      prisma.vehicleCatalogModel.findMany.mockResolvedValue([
+        modelRow('m1', 'i20', 'hyundai', 'car'),
+      ]);
+
+      const batch = await service.getModelPageBatch({ page: 5, pageSize: 100 });
+
+      expect(batch).toEqual({ items: [], page: 5, pageSize: 100, total: 1, hasMore: false });
+      expect(prisma.vehicleCatalogVariant.findMany).not.toHaveBeenCalled();
+    });
+
+    it('returns for each address exactly what its own model page endpoint returns', async () => {
+      const rows = [variantRow(), variantRow({ id: 'variant-2', name: 'Sportz', slug: 'sportz' })];
+      prisma.vehicleCatalogModel.findMany.mockResolvedValue([
+        modelRow('model-1', 'i20', 'hyundai', 'car'),
+      ]);
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(rows);
+
+      const batch = await service.getModelPageBatch({ page: 1, pageSize: 100 });
+      const single = await service.getModelPage({ segment: 'cars', make: 'hyundai', model: 'i20' });
+
+      expect(batch.items).toEqual([single]);
     });
   });
 });

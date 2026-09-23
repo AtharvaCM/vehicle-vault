@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { IS_PUBLIC_KEY } from '../../common/auth/decorators/public.decorator';
 import { RATE_LIMIT_BUCKET } from '../../common/rate-limit/rate-limit.types';
+import { ModelPageBatchQueryDto } from './dto/model-page-batch-query.dto';
 import { VariantPageBatchQueryDto } from './dto/variant-page-batch-query.dto';
 import { PUBLIC_CATALOG_CACHE_CONTROL, PublicCatalogController } from './public-catalog.controller';
 
@@ -95,6 +96,61 @@ describe('PublicCatalogController', () => {
     expect(await errorsFor({ pageSize: '201' })).toEqual(['pageSize']);
     expect(await errorsFor({ page: '0' })).toEqual(['page']);
     expect(await errorsFor({ page: 'two' })).toEqual(['page']);
+  });
+
+  it('covers the model page and the bulk model pages', () => {
+    expect(handlers).toEqual(expect.arrayContaining(['getModelPageBatch', 'getModelPage']));
+  });
+
+  it('is not found for a model outside cars or bikes, without a lookup', async () => {
+    const service = { getModelPage: vi.fn() };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getModelPage('trucks', 'tata', 'ace')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(service.getModelPage).not.toHaveBeenCalled();
+  });
+
+  it('wraps a model page in the success envelope', async () => {
+    const service = { getModelPage: vi.fn().mockResolvedValue({ model: { slug: 'i20' } }) };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getModelPage('cars', 'hyundai', 'i20')).resolves.toEqual({
+      success: true,
+      data: { model: { slug: 'i20' } },
+    });
+    expect(service.getModelPage).toHaveBeenCalledWith({
+      segment: 'cars',
+      make: 'hyundai',
+      model: 'i20',
+    });
+  });
+
+  it('reads the first full batch of model pages when no page is asked for', async () => {
+    const batch = { items: [], page: 1, pageSize: 100, total: 0, hasMore: false };
+    const service = { getModelPageBatch: vi.fn().mockResolvedValue(batch) };
+    const controller = new PublicCatalogController(service as never);
+
+    await expect(controller.getModelPageBatch({})).resolves.toEqual({
+      success: true,
+      data: batch,
+    });
+    expect(service.getModelPageBatch).toHaveBeenCalledWith({ page: 1, pageSize: 100 });
+
+    await controller.getModelPageBatch({ page: 2, pageSize: 25 });
+    expect(service.getModelPageBatch).toHaveBeenLastCalledWith({ page: 2, pageSize: 25 });
+  });
+
+  it('refuses a model batch larger than its cap or a page below one', async () => {
+    const errorsFor = async (query: Record<string, string>) =>
+      (await validate(plainToInstance(ModelPageBatchQueryDto, query))).map(
+        (error) => error.property,
+      );
+
+    expect(await errorsFor({ page: '2', pageSize: '100' })).toEqual([]);
+    expect(await errorsFor({ pageSize: '101' })).toEqual(['pageSize']);
+    expect(await errorsFor({ page: '0' })).toEqual(['page']);
   });
 
   it('wraps the page in the success envelope', async () => {
