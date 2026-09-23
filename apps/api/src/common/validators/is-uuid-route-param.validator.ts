@@ -22,7 +22,9 @@ export function IsUuidRouteParam(validationOptions?: ValidationOptions): Propert
       options: validationOptions,
       validator: {
         validate(value: unknown): boolean {
-          return typeof value === 'string' && isUUID(value, '4');
+          // No version pin: the schema's `uuid` columns accept any version, and
+          // a row minted with v1/v5/v7 must resolve the same as any other id.
+          return typeof value === 'string' && isUUID(value);
         },
         defaultMessage(): string {
           return 'Not found';

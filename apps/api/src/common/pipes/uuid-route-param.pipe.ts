@@ -11,6 +11,9 @@ import { NotFoundException, ParseUUIDPipe } from '@nestjs/common';
  */
 export class UuidRouteParamPipe extends ParseUUIDPipe {
   constructor() {
-    super({ version: '4', exceptionFactory: () => new NotFoundException('Not found') });
+    // No `version` pin: the schema's `uuid` columns accept any version, and a
+    // row minted with v1/v5/v7 (a future seed, import, or DB default) must
+    // resolve the same as any other id, not 404 on every route that reads it.
+    super({ exceptionFactory: () => new NotFoundException('Not found') });
   }
 }
