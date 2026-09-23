@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { InlineError } from '@/components/shared/inline-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -149,12 +150,8 @@ function CatalogImportReviewPanel() {
               {runsQuery.data.map((run) => (
                 <RunRow
                   key={run.id}
-                  isPublishing={publishMutation.isPending && publishMutation.variables === run.id}
                   onOpen={() => {
                     setSelectedRunId(run.id);
-                  }}
-                  onPublish={() => {
-                    void handlePublish(run.id);
                   }}
                   run={run}
                 />
@@ -242,19 +239,11 @@ function CatalogImportReviewPanel() {
   );
 }
 
-function RunRow({
-  run,
-  onOpen,
-  onPublish,
-  isPublishing,
-}: {
-  run: VehicleCatalogImportRunReview;
-  onOpen: () => void;
-  onPublish: () => void;
-  isPublishing: boolean;
-}) {
-  const canPublish = run.status === 'succeeded' && !run.publishedAt;
-
+/**
+ * A run in the queue. It offers no publish of its own: a run goes live only from
+ * its review, behind a confirmation, so nothing is published unread.
+ */
+function RunRow({ run, onOpen }: { run: VehicleCatalogImportRunReview; onOpen: () => void }) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-white/80 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 space-y-2">
@@ -282,12 +271,6 @@ function RunRow({
           <GitCompareArrows className="mr-2 h-4 w-4" />
           Review diff
         </Button>
-        {canPublish ? (
-          <Button disabled={isPublishing} onClick={onPublish} type="button">
-            <CheckCheck className="mr-2 h-4 w-4" />
-            {isPublishing ? 'Publishing...' : 'Publish'}
-          </Button>
-        ) : null}
       </div>
     </div>
   );
@@ -356,7 +339,11 @@ function CatalogImportDetail({
           </div>
           <DiffList label="New models" values={detail.diff.newModels} />
           <DiffList label="New variants" values={detail.diff.newVariants} />
-          <DiffList label="Changed variants" values={detail.diff.changedVariants} />
+          {detail.diff.changedVariantDetails ? (
+            <ChangedVariantList changes={detail.diff.changedVariantDetails} />
+          ) : (
+            <DiffList label="Changed variants" values={detail.diff.changedVariants} />
+          )}
           <DiffList
             label="Missing from snapshot"
             values={detail.diff.missingVariants}
@@ -434,20 +421,29 @@ function CatalogImportDetail({
         {canPublish ? (
           <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
             {canArchiveMissing ? (
-              <Button
-                disabled={isArchiving}
-                onClick={onArchiveMissing}
-                type="button"
-                variant="outline"
-              >
-                <ScanSearch className="mr-2 h-4 w-4" />
-                {isArchiving ? 'Archiving missing...' : 'Archive missing as historical'}
-              </Button>
+              <ConfirmActionDialog
+                confirmLabel={`Archive ${pluralize(detail.diff.missingVariants.length, 'variant')}`}
+                description={describeArchiveMissing(detail)}
+                isPending={isArchiving}
+                onConfirm={onArchiveMissing}
+                title={`Archive ${pluralize(detail.diff.missingVariants.length, 'missing variant')} as historical?`}
+                triggerIcon={<ScanSearch className="mr-2 h-4 w-4" />}
+                triggerLabel="Archive missing as historical"
+                triggerSize="default"
+                triggerVariant="outline"
+              />
             ) : null}
-            <Button disabled={isPublishing} onClick={onPublish} type="button">
-              <CheckCheck className="mr-2 h-4 w-4" />
-              {isPublishing ? 'Publishing import...' : 'Approve and publish'}
-            </Button>
+            <ConfirmActionDialog
+              confirmLabel="Publish"
+              description={describePublish(detail)}
+              isPending={isPublishing}
+              onConfirm={onPublish}
+              title={`Publish ${formatSourceLabel(detail.sourceKey)}?`}
+              triggerIcon={<CheckCheck className="mr-2 h-4 w-4" />}
+              triggerLabel="Approve and publish"
+              triggerSize="default"
+              triggerVariant="default"
+            />
           </div>
         ) : (
           <div className="rounded-xl border border-border/70 bg-slate-50 px-3 py-2 text-sm text-slate-600">
@@ -697,6 +693,68 @@ function DiffList({
       )}
     </div>
   );
+}
+
+function ChangedVariantList({
+  changes,
+}: {
+  changes: NonNullable<VehicleCatalogImportRunDetail['diff']['changedVariantDetails']>;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-slate-900">Changed variants</p>
+      {changes.length ? (
+        <ul className="space-y-2">
+          {changes.map((change) => (
+            <li key={change.variant} className="rounded-xl border border-border/60 bg-white p-3">
+              <p className="text-sm font-medium text-slate-900">{change.variant}</p>
+              <dl className="mt-1 space-y-0.5 text-xs text-slate-600">
+                {change.changes.map((fieldChange) => (
+                  <div key={fieldChange.field} className="flex flex-wrap gap-x-1">
+                    <dt className="font-medium text-slate-700">{fieldChange.field}:</dt>
+                    <dd>
+                      {fieldChange.before} → {fieldChange.after}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-500">No changes detected in this category.</p>
+      )}
+    </div>
+  );
+}
+
+function pluralize(count: number, noun: string) {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/**
+ * The publish confirmation restates what goes live and where, so it is a
+ * decision about this diff rather than a second click on the same button.
+ */
+export function describePublish(detail: Pick<VehicleCatalogImportRunDetail, 'diff' | 'sourceKey'>) {
+  const { diff } = detail;
+  const impact = [
+    `+${pluralize(diff.newModels.length, 'model')}`,
+    `+${pluralize(diff.newVariants.length, 'variant')}`,
+    `${diff.changedVariants.length} changed`,
+  ];
+
+  if (diff.missingVariants.length) {
+    impact.push(`${diff.missingVariants.length} missing left as-is`);
+  }
+
+  return `Publish ${formatSourceLabel(detail.sourceKey)}: ${impact.join(', ')}. It goes live at once in the trusted catalog: the public catalog pages, the vehicle pickers and the service intervals owners' reminders use.`;
+}
+
+export function describeArchiveMissing(detail: Pick<VehicleCatalogImportRunDetail, 'diff'>) {
+  const count = detail.diff.missingVariants.length;
+
+  return `${pluralize(count, 'published variant')} ${count === 1 ? 'is' : 'are'} not in this snapshot. Archiving marks ${count === 1 ? 'it' : 'them'} historical in the live catalog now, ending ${count === 1 ? 'its' : 'their'} years this year, so ${count === 1 ? 'it stops' : 'they stop'} being offered as current. This does not publish the import.`;
 }
 
 function RunStateBadge({ run }: { run: VehicleCatalogImportRunReview }) {
