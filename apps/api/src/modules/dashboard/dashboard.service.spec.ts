@@ -608,7 +608,16 @@ describe('DashboardService', () => {
       });
       expect(result.loans.nextEmiDate).toBe('2026-03-23T00:00:00.000Z');
       expect(result.vehicles[0]?.status).toBe('due_soon');
-      expect(result.vehicles[0]?.nextDue).toBeNull();
+      // The EMI is what makes the card amber, so the card names it.
+      expect(result.vehicles[0]?.nextDue).toEqual({
+        kind: 'loan_emi',
+        targetId: 'emi:loan-1',
+        title: 'Loan EMI',
+        amount: 15900,
+        dueDate: '2026-03-23T00:00:00.000Z',
+        daysUntilDue: 3,
+        dueOdometer: undefined,
+      });
     });
 
     it('(f2) keeps the instalment day inside shorter months for a loan started on the 31st', async () => {
@@ -814,11 +823,12 @@ describe('DashboardService', () => {
           detail: 'Rear right · 3.6 mm tread',
         },
       ]);
-      // The vehicle's pill and "next due" point at the same row, so the pill has a visible cause.
+      // The vehicle's pill and "next due" point at the same row, so the pill has a
+      // visible cause. The first warning is "coming up", not due soon.
       expect(result.vehicles[0]).toMatchObject({
         status: 'overdue',
         overdueCount: 1,
-        dueSoonCount: 1,
+        dueSoonCount: 0,
         nextDue: { kind: 'tyre', targetId: 'tyre:fl', title: 'Tyre not roadworthy' },
       });
       expect(tyresService.getAlertState).toHaveBeenCalledWith('user-1', 'vehicle-1');
@@ -1163,7 +1173,7 @@ describe('DashboardService', () => {
         status: 'due_soon',
         overdueCount: 0,
         dueSoonCount: 1,
-        nextDue: null,
+        nextDue: { kind: 'loan_emi', targetId: 'emi:loan-alpha', amount: 15900 },
         lastService: null,
       });
       expect(mike).toMatchObject({
@@ -1178,6 +1188,58 @@ describe('DashboardService', () => {
         dueSoonCount: 0,
         nextDue: null,
         lastService: null,
+      });
+    });
+
+    it('counts the headline, the tile and every card from one 7-day attention set', async () => {
+      // The demo garage: an overdue SUV, a hatch due today, a bike whose only
+      // item is an EMI in 2 days, and a second car with a service 20 days out.
+      vehiclesService.getAllVehicles.mockResolvedValue([
+        makeVehicle({ id: 'v-suv', nickname: 'Family SUV' }),
+        makeVehicle({ id: 'v-hatch', nickname: 'Daily Hatch' }),
+        makeVehicle({
+          id: 'v-bike',
+          nickname: 'Weekend Bike',
+          vehicleType: VehicleType.Motorcycle,
+        }),
+        makeVehicle({ id: 'v-second', nickname: 'Second Car' }),
+      ]);
+      remindersService.getAllReminders.mockResolvedValue([
+        makeReminder({
+          id: 'suv-overdue',
+          vehicleId: 'v-suv',
+          dueDate: daysFromNow(-3),
+          status: ReminderStatus.Overdue,
+        }),
+        makeReminder({
+          id: 'hatch-today',
+          vehicleId: 'v-hatch',
+          dueDate: daysFromNow(0),
+          status: ReminderStatus.DueToday,
+        }),
+        makeReminder({ id: 'second-later', vehicleId: 'v-second', dueDate: daysFromNow(20) }),
+      ]);
+      vehicleLoansService.listForUser.mockResolvedValue([
+        makeLoan({ id: 'loan-bike', vehicleId: 'v-bike', startDate: '2025-12-22T00:00:00.000Z' }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+      const card = (id: string) => result.vehicles.find((vehicle) => vehicle.id === id);
+
+      expect(result.attentionCounts.urgentVehicles).toBe(3);
+      expect(result.attentionCounts.vehiclesNeedingAttention).toBe(3);
+      expect(result.vehicles.filter((vehicle) => vehicle.status !== 'ok')).toHaveLength(3);
+
+      expect(card('v-bike')).toMatchObject({
+        status: 'due_soon',
+        dueSoonCount: 1,
+        nextDue: { kind: 'loan_emi', amount: 15900, daysUntilDue: 2 },
+      });
+      // 20 days out is "coming up": the card still says what is next, without a badge.
+      expect(card('v-second')).toMatchObject({
+        status: 'ok',
+        dueSoonCount: 0,
+        nextDue: { kind: 'reminder', targetId: 'second-later', daysUntilDue: 20 },
       });
     });
 

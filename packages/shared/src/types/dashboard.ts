@@ -128,7 +128,11 @@ export type DashboardAttentionCounts = {
   thisMonth: number;
   /** Documents (any kind) expired or expiring within 30 days. */
   documentsExpiring30d: number;
-  /** Vehicles whose `status` is not `ok`. */
+  /**
+   * Vehicles with something overdue, due today or due within 7 days: the same
+   * set as `urgentVehicles`, and the vehicles whose `status` is not `ok`.
+   * Items 8–30 days out are "coming up" and count toward neither.
+   */
   vehiclesNeedingAttention: number;
   /**
    * Distinct vehicles among overdue/today/thisWeek items (thisMonth excluded,
@@ -150,14 +154,16 @@ export type DashboardVehicleDocumentStatus = {
 };
 
 export type DashboardVehicleNextDue = {
-  /** EMIs never become "next due". */
-  kind: Exclude<DashboardAttentionKind, 'loan_emi'>;
+  /** An EMI can be next due, so a badge it causes is never left unexplained. */
+  kind: DashboardAttentionKind;
   /** The attention row's id. */
   targetId: string;
   title: string;
   dueDate: string | null;
   daysUntilDue: number | null;
   dueOdometer?: number;
+  /** Loan EMI only: the EMI amount. */
+  amount?: number;
 };
 
 export type DashboardVehicleLastService = {
@@ -216,9 +222,9 @@ export type DashboardVehicleHealth = {
   status: DashboardVehicleStatus;
   /** Attention items for this vehicle with urgency `overdue`. */
   overdueCount: number;
-  /** Attention items for this vehicle with urgency today | this_week | this_month. */
+  /** Attention items for this vehicle with urgency today | this_week (never this_month). */
   dueSoonCount: number;
-  /** The vehicle's first attention row other than an EMI, by the queue's ordering. */
+  /** The vehicle's first attention row, EMIs included, by the queue's ordering. */
   nextDue: DashboardVehicleNextDue | null;
   /**
    * Latest document per kind. Only kinds present on the vehicle appear, except

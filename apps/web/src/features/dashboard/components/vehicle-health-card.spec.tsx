@@ -54,6 +54,32 @@ describe('VehicleHealthCard', () => {
     expect(screen.getByText('Brake pads · 3 days overdue')).toBeInTheDocument();
   });
 
+  it('names the EMI behind a due soon pill, with its amount', () => {
+    renderWithProviders(
+      <VehicleHealthCard
+        today={today}
+        vehicle={makeVehicle({
+          status: 'due_soon',
+          dueSoonCount: 1,
+          nextDue: {
+            kind: 'loan_emi',
+            targetId: 'emi:loan-1',
+            title: 'Loan EMI',
+            amount: 4800,
+            dueDate: '2026-04-04T00:00:00.000Z',
+            daysUntilDue: 2,
+          },
+        })}
+      />,
+    );
+
+    const pill = screen.getByRole('link', { name: '1 due soon' });
+
+    expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'loans' }));
+    expect(screen.getByText(/^EMI ₹4,800 · /)).toBeInTheDocument();
+    expect(screen.queryByText('Nothing scheduled')).not.toBeInTheDocument();
+  });
+
   it('shows the due soon pill linking to protection when a document is next', () => {
     renderWithProviders(
       <VehicleHealthCard

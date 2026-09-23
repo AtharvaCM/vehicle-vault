@@ -41,7 +41,9 @@ type Props = {
 
 const prepaymentSchema = z.object({
   date: z.string().min(1, 'Date is required'),
-  amount: z.number().positive('Amount must be positive'),
+  amount: z
+    .number({ invalid_type_error: 'Enter the amount prepaid' })
+    .positive('Amount must be more than 0'),
   notes: z.string().trim().optional(),
 });
 
@@ -57,7 +59,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
     resolver: zodResolver(prepaymentSchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
-      amount: 0,
+      amount: undefined,
       notes: '',
     },
   });
@@ -76,7 +78,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
       appToast.success({ title: 'Prepayment added' });
       form.reset({
         date: new Date().toISOString().split('T')[0],
-        amount: 0,
+        amount: undefined,
         notes: '',
       });
     } catch (error) {

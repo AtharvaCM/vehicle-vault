@@ -34,6 +34,12 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
     high: 'Robust data. High accuracy predictions.',
   };
 
+  // Two dated readings are the least a rate can be measured from, and a rate of
+  // zero (readings that never move forward) predicts nothing. Either way the
+  // honest figure is the reading itself, not a prediction built on 0 km/day.
+  const canPredict = insights.dataPointsCount >= 2 && insights.averageDailyMileage > 0;
+  const lastRecordedDate = format(new Date(insights.lastRecordedDate), 'MMM d, yyyy');
+
   return (
     <Card className="overflow-hidden border-zinc-200/50 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800/50 dark:bg-zinc-900/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -43,67 +49,78 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
           </CardTitle>
           <div className="flex items-center gap-2">
             <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {insights.currentOdometerPredicted.toLocaleString()} km
+              {(canPredict
+                ? insights.currentOdometerPredicted
+                : insights.lastRecordedOdometer
+              ).toLocaleString()}{' '}
+              km
             </h3>
-            <Badge
-              variant="outline"
-              className={`text-[10px] uppercase tracking-wider ${confidenceColors[insights.confidence]}`}
-            >
-              {insights.confidence} confidence
-            </Badge>
+            {canPredict ? (
+              <Badge
+                variant="outline"
+                className={`text-[10px] uppercase tracking-wider ${confidenceColors[insights.confidence]}`}
+              >
+                {insights.confidence} confidence
+              </Badge>
+            ) : null}
           </div>
-          <p className="text-xs text-zinc-400">Predicted current odometer</p>
+          <p className="text-xs text-zinc-400">
+            {canPredict
+              ? 'Predicted current odometer'
+              : `Last recorded (${lastRecordedDate}). Log another reading to see a prediction.`}
+          </p>
         </div>
         <div className="rounded-full bg-zinc-100 p-2.5 dark:bg-zinc-800">
           <TrendingUp className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
         </div>
       </CardHeader>
-      <CardContent className="pt-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              <Calendar className="h-3.5 w-3.5" />
-              <span>Avg. Daily</span>
+      {canPredict ? (
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Avg. Daily</span>
+              </div>
+              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                {insights.averageDailyMileage} km/day
+              </p>
             </div>
-            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-              {insights.averageDailyMileage} km/day
-            </p>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              <Gauge className="h-3.5 w-3.5" />
-              <span>Avg. Monthly</span>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                <Gauge className="h-3.5 w-3.5" />
+                <span>Avg. Monthly</span>
+              </div>
+              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                {insights.averageMonthlyMileage.toLocaleString()} km
+              </p>
             </div>
-            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-              {insights.averageMonthlyMileage.toLocaleString()} km
-            </p>
           </div>
-        </div>
 
-        <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400">
-              Last Recorded
-            </span>
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              {insights.lastRecordedOdometer.toLocaleString()} km (
-              {format(new Date(insights.lastRecordedDate), 'MMM d, yyyy')})
-            </span>
+          <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-400">
+                Last Recorded
+              </span>
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                {insights.lastRecordedOdometer.toLocaleString()} km ({lastRecordedDate})
+              </span>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help rounded-full p-1 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <Info className="h-4 w-4 text-zinc-400" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[200px] text-xs">
+                  {confidenceMessages[insights.confidence]}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="cursor-help rounded-full p-1 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                  <Info className="h-4 w-4 text-zinc-400" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[200px] text-xs">
-                {confidenceMessages[insights.confidence]}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardContent>
+        </CardContent>
+      ) : null}
     </Card>
   );
 }
