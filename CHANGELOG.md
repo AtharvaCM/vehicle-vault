@@ -1,3 +1,11 @@
+## [1.66.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.0...v1.66.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **auth:** return to the page a signed-out visitor was opening ([dc3bf10](https://github.com/AtharvaCM/vehicle-vault/commit/dc3bf107fc9c10fee912cd8c8c383d9fa7ed5a31))
+* **auth:** sign-out lands on a plain sign-in page ([e208dbb](https://github.com/AtharvaCM/vehicle-vault/commit/e208dbb56879eacbcae319950bd108ffebbe497c))
+
 # [1.66.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.13...v1.66.0) (2026-09-23)
 
 
