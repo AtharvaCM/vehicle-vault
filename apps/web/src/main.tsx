@@ -5,12 +5,15 @@ import { router } from '@/app/router';
 import { captureInstallPrompt } from '@/features/pwa/install-prompt';
 import { initClarity } from '@/lib/monitoring/init-clarity';
 import { initErrorReporting } from '@/lib/monitoring/init-error-reporting';
+import { installZodErrorMap } from '@/lib/validation/zod-error-map';
 import { queryClient } from '@/lib/query/query-client';
 import { mountApp } from '@/prerender/mount-app';
 import '@/styles/globals.css';
 
 initErrorReporting();
 initClarity();
+// Before any form validates: no raw Zod message should ever reach a user.
+installZodErrorMap();
 // Before the first render: the browser can offer installation straight away.
 captureInstallPrompt();
 
