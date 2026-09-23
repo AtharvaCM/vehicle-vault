@@ -1,3 +1,124 @@
+# [1.68.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.67.0...v1.68.0) (2026-09-23)
+
+
+### Features
+
+* **reminders:** a repeat rule any reminder can carry ([0e80a77](https://github.com/AtharvaCM/vehicle-vault/commit/0e80a77679706b7ddf5395e5c01947ab487f3135))
+
+# [1.67.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.4...v1.67.0) (2026-09-23)
+
+
+### Features
+
+* **sharing:** invite links preview publicly and accept explicitly ([2b0246a](https://github.com/AtharvaCM/vehicle-vault/commit/2b0246ac4cc5b0ce13691321c1e3ab30338de569))
+
+## [1.66.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.3...v1.66.4) (2026-09-23)
+
+
+### Bug Fixes
+
+* **auth:** verification and reset links fail and succeed out loud ([5166fa6](https://github.com/AtharvaCM/vehicle-vault/commit/5166fa6a8a9cbf0e840610bb1a557903905a5762))
+
+## [1.66.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.2...v1.66.3) (2026-09-23)
+
+
+### Bug Fixes
+
+* **api:** 404 malformed :id route params instead of 400 or 500 ([9ae82b9](https://github.com/AtharvaCM/vehicle-vault/commit/9ae82b9e8195331bdaa72fa0138d9ab4a833b9aa))
+* **api:** accept any UUID version in id route params ([198cd86](https://github.com/AtharvaCM/vehicle-vault/commit/198cd86e9ae240b2c1b486b21d5f7a33139a503e))
+* **web:** distinguish 404, 403 and retryable states on detail pages ([9f07a75](https://github.com/AtharvaCM/vehicle-vault/commit/9f07a75e897c27d80023930ac57677cbdad8c3ed))
+
+## [1.66.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.1...v1.66.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **notifications:** disable preference switches for channels that cannot deliver ([e8193d0](https://github.com/AtharvaCM/vehicle-vault/commit/e8193d0a10b5661b0afe02e501a6df8fc7569722))
+* **notifications:** refresh channel availability when push is toggled ([2d26b28](https://github.com/AtharvaCM/vehicle-vault/commit/2d26b28c878367bfe4d0c8b1acd4e192141b1459))
+
+## [1.66.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.0...v1.66.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **auth:** return to the page a signed-out visitor was opening ([dc3bf10](https://github.com/AtharvaCM/vehicle-vault/commit/dc3bf107fc9c10fee912cd8c8c383d9fa7ed5a31))
+* **auth:** sign-out lands on a plain sign-in page ([e208dbb](https://github.com/AtharvaCM/vehicle-vault/commit/e208dbb56879eacbcae319950bd108ffebbe497c))
+
+# [1.66.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.13...v1.66.0) (2026-09-23)
+
+
+### Features
+
+* **tyres:** front/rear tyre positions and a two-wheel layout ([fade934](https://github.com/AtharvaCM/vehicle-vault/commit/fade934952a3c98089ebfa087f472dc5a1c4371e))
+
+## [1.65.13](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.12...v1.65.13) (2026-09-23)
+
+
+### Bug Fixes
+
+* **reminders:** count the suggested schedule from the last logged service ([fe73860](https://github.com/AtharvaCM/vehicle-vault/commit/fe738606ccdbd58fecdeceb5b4e602586f93adfb))
+
+## [1.65.12](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.11...v1.65.12) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** find every model and offer manual entry when adding a vehicle ([0ae993f](https://github.com/AtharvaCM/vehicle-vault/commit/0ae993fae3238b055385e5d07414f5d236a77cb1))
+
+## [1.65.11](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.10...v1.65.11) (2026-09-23)
+
+
+### Bug Fixes
+
+* **maintenance:** don't offer to add a vehicle while the list is loading ([f750957](https://github.com/AtharvaCM/vehicle-vault/commit/f750957ea84f9121fb3f4d344aa443c5901d6f05)), closes [#221](https://github.com/AtharvaCM/vehicle-vault/issues/221)
+* **maintenance:** log service and add reminder open the form ([ab576fd](https://github.com/AtharvaCM/vehicle-vault/commit/ab576fd25384a5c8934472b6164e6fbf52c67ef1)), closes [#202](https://github.com/AtharvaCM/vehicle-vault/issues/202)
+
+## [1.65.10](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.9...v1.65.10) (2026-09-23)
+
+
+### Bug Fixes
+
+* **analytics:** measure cost per km over real distance ([03cc17e](https://github.com/AtharvaCM/vehicle-vault/commit/03cc17e4c557f0da70b82c3f8c8cf989f98875a7))
+* **catalog:** publish imports only from the review, behind a confirmation ([7caa447](https://github.com/AtharvaCM/vehicle-vault/commit/7caa4475733047a8179752c50fb4f5b63c0d41bb))
+* **maintenance:** fill the upload-first draft from the bill automatically ([a9e1de9](https://github.com/AtharvaCM/vehicle-vault/commit/a9e1de9532baa52a3133570517f3fbd6acf7c1e1))
+* **vehicles:** keep purchase details when editing a vehicle ([b96a8ab](https://github.com/AtharvaCM/vehicle-vault/commit/b96a8ab4b51b25dd15d92268dca7efdc8a8a5303))
+* **vehicles:** treat a no-op vehicle edit as a successful save ([cc59919](https://github.com/AtharvaCM/vehicle-vault/commit/cc59919b7c91c0e236a5cb4d1bbcfaa8aa2318f4))
+
+## [1.65.9](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.8...v1.65.9) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** show which vehicles are selected before bulk delete ([dd150e9](https://github.com/AtharvaCM/vehicle-vault/commit/dd150e99d9419d45d3638727854d27ccbfabfc46))
+
+## [1.65.8](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.7...v1.65.8) (2026-09-23)
+
+
+### Bug Fixes
+
+* **maintenance:** save every line item's amount, not only typed ones ([c2931f1](https://github.com/AtharvaCM/vehicle-vault/commit/c2931f1f18f241adee5c4d57f766761535d542c4))
+
+## [1.65.7](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.6...v1.65.7) (2026-09-23)
+
+
+### Bug Fixes
+
+* **forms:** start service and fuel forms with sane defaults and plain-language errors ([f1425f6](https://github.com/AtharvaCM/vehicle-vault/commit/f1425f63643d78e6c56872654636369ade004ca1))
+
+## [1.65.6](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.5...v1.65.6) (2026-09-23)
+
+
+### Bug Fixes
+
+* **dashboard:** use one definition of needs attention everywhere ([59b2bce](https://github.com/AtharvaCM/vehicle-vault/commit/59b2bce75c96541665f030fc3e6b6551b413fe6b))
+
+## [1.65.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.4...v1.65.5) (2026-09-23)
+
+
+### Bug Fixes
+
+* **vehicles:** never predict an odometer below the recorded reading ([f1f2151](https://github.com/AtharvaCM/vehicle-vault/commit/f1f2151ca68d2c7f1cd00593f49426657417ba9c))
+
 ## [1.65.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.3...v1.65.4) (2026-09-23)
 
 

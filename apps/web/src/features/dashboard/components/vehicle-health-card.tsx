@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils/cn';
+import { formatCurrency } from '@/lib/utils/format-currency';
 import { formatDate } from '@/lib/utils/format-date';
 
 import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
@@ -128,6 +129,18 @@ function DataHealthText({
 }
 
 function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
+  if (nextDue.kind === 'loan_emi' && nextDue.dueDate) {
+    const relative = formatRelativeDue({
+      kind: nextDue.kind,
+      daysUntilDue: nextDue.daysUntilDue,
+      dueDate: nextDue.dueDate,
+    });
+
+    return nextDue.amount !== undefined
+      ? `EMI ${formatCurrency(nextDue.amount)} · ${relative}`
+      : `EMI · ${relative}`;
+  }
+
   if (nextDue.dueDate) {
     const relative = formatRelativeDue({
       kind: nextDue.kind,

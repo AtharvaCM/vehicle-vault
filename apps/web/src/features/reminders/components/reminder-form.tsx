@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { reminderFormSchema, type ReminderFormValues } from '../schemas/reminder-form.schema';
 import type { CreateReminderBody } from '../types/reminder';
 import { formatReminderType } from '../utils/format-reminder-type';
+import { repeatChoiceOptions, toRepeatRule, type RepeatChoice } from '../utils/repeat-rule';
 
 const reminderTypeOptions = Object.values(ReminderType);
 
@@ -53,7 +54,54 @@ function toReminderPayload(values: ReminderFormValues): CreateReminderBody {
     dueDate: toIsoDateString(values.dueDate),
     dueOdometer: values.dueOdometer,
     notes: values.notes?.trim() ? values.notes.trim() : undefined,
+    ...toRepeatRule(values.repeat, values),
   };
+}
+
+/**
+ * Quick fills: a title, a type and the cadence that kind of reminder usually
+ * follows. Road tax is left to the owner, since it is yearly in some states and
+ * paid once for the vehicle's life in others.
+ */
+const presets: {
+  label: string;
+  title: string;
+  type: ReminderType;
+  repeat?: RepeatChoice;
+  repeatEveryMonths?: number;
+  repeatEveryKm?: number;
+}[] = [
+  {
+    label: 'Insurance',
+    title: 'Insurance renewal',
+    type: ReminderType.Insurance,
+    repeat: 'yearly',
+  },
+  {
+    label: 'PUC',
+    title: 'PUC certificate renewal',
+    type: ReminderType.Puc,
+    repeat: 'six-months',
+  },
+  {
+    label: 'Oil change',
+    title: 'Engine oil change',
+    type: ReminderType.Service,
+    repeat: 'custom',
+    repeatEveryMonths: 12,
+    repeatEveryKm: 10000,
+  },
+  {
+    label: 'Annual service',
+    title: 'Annual service',
+    type: ReminderType.Service,
+    repeat: 'yearly',
+  },
+  { label: 'Road tax', title: 'Road tax renewal', type: ReminderType.Tax },
+];
+
+function numberOrUndefined(value: unknown) {
+  return value === '' || value === null || value === undefined ? undefined : Number(value);
 }
 
 const defaultReminderValues: ReminderFormValues = {
@@ -62,6 +110,9 @@ const defaultReminderValues: ReminderFormValues = {
   dueDate: '',
   dueOdometer: undefined,
   notes: '',
+  repeat: 'none',
+  repeatEveryMonths: undefined,
+  repeatEveryKm: undefined,
 };
 
 export function ReminderForm({
@@ -79,6 +130,9 @@ export function ReminderForm({
   const form = useForm<ReminderFormValues>({
     defaultValues: defaultReminderValues,
   });
+  const repeat = form.watch('repeat');
+  const showsMonths = repeat === 'custom';
+  const showsKm = repeat === 'distance' || repeat === 'custom';
 
   useEffect(() => {
     if (submitError) {
@@ -163,16 +217,7 @@ export function ReminderForm({
             Quick fill
           </p>
           <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Insurance', title: 'Insurance Renewal', type: ReminderType.Insurance },
-              { label: 'Road Tax', title: 'Road Tax Renewal', type: ReminderType.Tax },
-              { label: 'Annual Service', title: 'Annual Service', type: ReminderType.Service },
-              {
-                label: 'Emission Check',
-                title: 'Emission/Pollution Check',
-                type: ReminderType.Inspection,
-              },
-            ].map((preset) => (
+            {presets.map((preset) => (
               <Button
                 key={preset.label}
                 type="button"
@@ -182,6 +227,13 @@ export function ReminderForm({
                 onClick={() => {
                   form.setValue('title', preset.title, { shouldDirty: true });
                   form.setValue('type', preset.type, { shouldDirty: true });
+                  if (preset.repeat) {
+                    form.setValue('repeat', preset.repeat, { shouldDirty: true });
+                    form.setValue('repeatEveryMonths', preset.repeatEveryMonths, {
+                      shouldDirty: true,
+                    });
+                    form.setValue('repeatEveryKm', preset.repeatEveryKm, { shouldDirty: true });
+                  }
                   toast.info(`Applied ${preset.label} preset`);
                 }}
               >
@@ -263,6 +315,72 @@ export function ReminderForm({
               />
             </FormField>
           </div>
+
+          <div className="grid gap-3.5 md:grid-cols-2">
+            <FormField
+              htmlFor="reminder-repeat"
+              label="Repeats"
+              error={form.formState.errors.repeat?.message}
+            >
+              <Controller
+                control={form.control}
+                name="repeat"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="reminder-repeat">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {repeatChoiceOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+
+            {showsMonths ? (
+              <FormField
+                htmlFor="reminder-repeat-months"
+                label="Every (months)"
+                error={form.formState.errors.repeatEveryMonths?.message}
+              >
+                <Input
+                  id="reminder-repeat-months"
+                  {...form.register('repeatEveryMonths', { setValueAs: numberOrUndefined })}
+                  aria-invalid={Boolean(form.formState.errors.repeatEveryMonths)}
+                  min={1}
+                  type="number"
+                />
+              </FormField>
+            ) : null}
+
+            {showsKm ? (
+              <FormField
+                htmlFor="reminder-repeat-km"
+                label="Every (km)"
+                error={form.formState.errors.repeatEveryKm?.message}
+              >
+                <Input
+                  id="reminder-repeat-km"
+                  {...form.register('repeatEveryKm', { setValueAs: numberOrUndefined })}
+                  aria-invalid={Boolean(form.formState.errors.repeatEveryKm)}
+                  min={1}
+                  type="number"
+                />
+              </FormField>
+            ) : null}
+          </div>
+          <p className="-mt-2 text-sm leading-5 text-slate-500">
+            {repeat === 'none'
+              ? 'Marking it done ends it.'
+              : repeat === 'custom'
+                ? 'Marking it done schedules the next one. With both set, whichever comes first.'
+                : 'Marking it done schedules the next one.'}
+          </p>
 
           <FormField
             htmlFor="reminder-notes"

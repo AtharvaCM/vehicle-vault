@@ -14,10 +14,20 @@ type Row = { kind: string; emailEnabled: boolean; pushEnabled: boolean };
  * the service makes. Writes land in the same store, so a test reads back the
  * state it produced rather than the calls that produced it.
  */
-function store(initial: { mutedAt?: Date | null; rows?: Row[]; exists?: boolean } = {}) {
+function store(
+  initial: {
+    mutedAt?: Date | null;
+    rows?: Row[];
+    exists?: boolean;
+    emailVerified?: boolean;
+    pushSubscriptionCount?: number;
+  } = {},
+) {
   const state = {
     exists: initial.exists ?? true,
     alertEmailsMutedAt: initial.mutedAt ?? null,
+    emailVerified: initial.emailVerified ?? true,
+    pushSubscriptionCount: initial.pushSubscriptionCount ?? 1,
     rows: new Map((initial.rows ?? []).map((row) => [row.kind, { ...row }])),
   };
 
@@ -25,7 +35,9 @@ function store(initial: { mutedAt?: Date | null; rows?: Row[]; exists?: boolean 
     state.exists
       ? {
           alertEmailsMutedAt: state.alertEmailsMutedAt,
+          emailVerified: state.emailVerified,
           notificationPreferences: [...state.rows.values()].map((row) => ({ ...row })),
+          _count: { pushSubscriptions: state.pushSubscriptionCount },
         }
       : null;
 
@@ -62,8 +74,18 @@ function store(initial: { mutedAt?: Date | null; rows?: Row[]; exists?: boolean 
 
 const audit = { track: vi.fn() };
 
-function serviceOver(db: ReturnType<typeof store>) {
-  return new NotificationPreferencesService(db.prisma as never, audit as never);
+function serviceOver(
+  db: ReturnType<typeof store>,
+  channels: { mailConfigured?: boolean; pushConfigured?: boolean } = {},
+) {
+  const mail = { isConfigured: channels.mailConfigured ?? true };
+  const push = { isConfigured: channels.pushConfigured ?? true };
+  return new NotificationPreferencesService(
+    db.prisma as never,
+    audit as never,
+    mail as never,
+    push as never,
+  );
 }
 
 /** The response as a kind → delivery map, which is what the assertions care about. */
@@ -117,6 +139,101 @@ describe('NotificationPreferencesService', () => {
       await expect(serviceOver(store({ exists: false })).get('user-1')).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+  });
+
+  describe('channel availability', () => {
+    it('reads both channels available when everything is configured', async () => {
+      const db = store({ emailVerified: true, pushSubscriptionCount: 1 });
+
+      const { channels } = await serviceOver(db, {
+        mailConfigured: true,
+        pushConfigured: true,
+      }).get('user-1');
+
+      expect(channels).toEqual({
+        email: { available: true, reason: null },
+        push: { available: true, reason: null },
+      });
+    });
+
+    it('reads email unavailable when the mail transport is not configured', async () => {
+      const db = store({ emailVerified: true });
+
+      const { channels } = await serviceOver(db, { mailConfigured: false }).get('user-1');
+
+      expect(channels.email).toEqual({ available: false, reason: 'not_configured' });
+    });
+
+    it('reads email unavailable when the address is unverified, even with mail configured', async () => {
+      const db = store({ emailVerified: false });
+
+      const { channels } = await serviceOver(db, { mailConfigured: true }).get('user-1');
+
+      expect(channels.email).toEqual({ available: false, reason: 'email_unverified' });
+    });
+
+    it('reads push unavailable when VAPID is not configured', async () => {
+      const db = store({ pushSubscriptionCount: 3 });
+
+      const { channels } = await serviceOver(db, { pushConfigured: false }).get('user-1');
+
+      expect(channels.push).toEqual({ available: false, reason: 'not_configured' });
+    });
+
+    it('reads push unavailable when there is no subscribed device, even with VAPID configured', async () => {
+      const db = store({ pushSubscriptionCount: 0 });
+
+      const { channels } = await serviceOver(db, { pushConfigured: true }).get('user-1');
+
+      expect(channels.push).toEqual({ available: false, reason: 'no_device' });
+    });
+
+    it('reads both channels unavailable when neither is configured nor usable', async () => {
+      const db = store({ emailVerified: false, pushSubscriptionCount: 0 });
+
+      const { channels } = await serviceOver(db, {
+        mailConfigured: false,
+        pushConfigured: false,
+      }).get('user-1');
+
+      expect(channels).toEqual({
+        email: { available: false, reason: 'not_configured' },
+        push: { available: false, reason: 'not_configured' },
+      });
+    });
+
+    it('ignores the alert-email mute when deciding email availability', async () => {
+      const db = store({ emailVerified: true, mutedAt: UNSUBSCRIBED_AT });
+
+      const { channels } = await serviceOver(db, { mailConfigured: true }).get('user-1');
+
+      expect(channels.email).toEqual({ available: true, reason: null });
+    });
+
+    it('carries channel availability through update, including the no-op path', async () => {
+      const db = store({ emailVerified: false, pushSubscriptionCount: 0 });
+      const service = serviceOver(db, { mailConfigured: true, pushConfigured: true });
+
+      const noop = await service.update(
+        'user-1',
+        [{ kind: 'tyre-worn', email: true, push: true }],
+        { actorUserId: 'user-1' },
+      );
+      expect(noop.channels).toEqual({
+        email: { available: false, reason: 'email_unverified' },
+        push: { available: false, reason: 'no_device' },
+      });
+
+      const changed = await service.update(
+        'user-1',
+        [{ kind: 'tyre-worn', email: false, push: true }],
+        { actorUserId: 'user-1' },
+      );
+      expect(changed.channels).toEqual({
+        email: { available: false, reason: 'email_unverified' },
+        push: { available: false, reason: 'no_device' },
+      });
     });
   });
 

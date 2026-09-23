@@ -1,6 +1,15 @@
 import { useState } from 'react';
-import { Crown, Mail, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
-import type { VehicleMember, VehicleRole } from '@vehicle-vault/shared';
+import {
+  Copy,
+  Crown,
+  Mail,
+  MessageCircle,
+  Share2,
+  ShieldCheck,
+  Trash2,
+  UserPlus,
+} from 'lucide-react';
+import type { VehicleInviteCreated, VehicleMember, VehicleRole } from '@vehicle-vault/shared';
 
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -232,6 +241,7 @@ function RoleBadge({ role }: { role: VehicleRole }) {
 function InviteForm({ vehicleId }: { vehicleId: string }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<EditableRole>('editor');
+  const [created, setCreated] = useState<VehicleInviteCreated | null>(null);
   const mutation = useCreateInvite(vehicleId);
 
   function handleSubmit(event: React.FormEvent) {
@@ -240,14 +250,11 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
     mutation.mutate(
       { email: email.trim(), role },
       {
+        // The link is always handed over: email may not be configured, and
+        // even when it is, most families share on WhatsApp.
         onSuccess: (result) => {
           setEmail('');
-          appToast.success({
-            title: 'Invitation sent',
-            description: result.token
-              ? `Dev token: ${result.token.slice(0, 12)}…`
-              : `An email was sent to ${result.invite.email}.`,
-          });
+          setCreated(result);
         },
         onError: (error) =>
           appToast.error({ title: 'Invite failed', description: getApiErrorMessage(error) }),
@@ -262,10 +269,11 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
           <UserPlus className="h-5 w-5" /> Invite a collaborator
         </CardTitle>
         <CardDescription>
-          They will receive an email with a link to accept. Invitations expire in 7 days.
+          You’ll get a link to send them. Invitations expire in 7 days.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {created ? <InviteLinkPanel created={created} onDone={() => setCreated(null)} /> : null}
         <form className="grid gap-3 sm:grid-cols-[1fr_140px_auto]" onSubmit={handleSubmit}>
           <div className="grid gap-1">
             <Label htmlFor="invite-email" className="text-xs">
@@ -302,6 +310,84 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * The invite link, right after creating it: copy, WhatsApp, or the device's
+ * share sheet. Says an email went out only when the API says one did.
+ */
+export function InviteLinkPanel({
+  created,
+  onDone,
+}: {
+  created: VehicleInviteCreated;
+  onDone: () => void;
+}) {
+  const { acceptUrl, emailSent, invite } = created;
+  const message = `Join my vehicle on Vehicle Vault: ${acceptUrl}`;
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(acceptUrl);
+      appToast.success({ title: 'Invite link copied' });
+    } catch {
+      appToast.error({
+        title: 'Couldn’t copy the link',
+        description: 'Select it and copy it by hand.',
+      });
+    }
+  }
+
+  return (
+    <div
+      className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm"
+      role="status"
+    >
+      <p className="font-semibold text-emerald-900">
+        {emailSent
+          ? `Email sent to ${invite.email}. You can also send them this link.`
+          : `Send this link to ${invite.email}. Email isn’t set up, so nothing was sent.`}
+      </p>
+      <Input
+        aria-label="Invite link"
+        readOnly
+        value={acceptUrl}
+        onFocus={(e) => e.target.select()}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => void copyLink()} size="sm" type="button">
+          <Copy aria-hidden="true" className="h-4 w-4" /> Copy link
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <MessageCircle aria-hidden="true" className="h-4 w-4" /> WhatsApp
+          </a>
+        </Button>
+        {canShare ? (
+          <Button
+            onClick={() =>
+              void navigator
+                .share({ title: 'Vehicle Vault invite', text: message, url: acceptUrl })
+                .catch(() => undefined)
+            }
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <Share2 aria-hidden="true" className="h-4 w-4" /> Share
+          </Button>
+        ) : null}
+        <Button onClick={onDone} size="sm" type="button" variant="ghost">
+          Done
+        </Button>
+      </div>
+    </div>
   );
 }
 

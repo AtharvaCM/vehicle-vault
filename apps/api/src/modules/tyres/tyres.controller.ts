@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthUser } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { successResponse } from '../../common/utils/api-response.util';
 import { VehicleIdParamDto } from '../vehicles/dto/vehicle-id-param.dto';
 import { CreateTyreDto } from './dto/create-tyre.dto';
@@ -62,7 +63,7 @@ export class TyresController {
   @ApiOperation({ summary: 'Update a tyre' })
   async updateTyre(
     @CurrentUser() user: AuthUser,
-    @Param('tyreId') tyreId: string,
+    @Param('tyreId', new UuidRouteParamPipe()) tyreId: string,
     @Body() body: UpdateTyreDto,
   ) {
     return successResponse(await this.tyresService.updateTyre(user.id, tyreId, body));
@@ -70,7 +71,10 @@ export class TyresController {
 
   @Delete('tyres/:tyreId')
   @ApiOperation({ summary: 'Delete a tyre and its inspection history' })
-  async deleteTyre(@CurrentUser() user: AuthUser, @Param('tyreId') tyreId: string) {
+  async deleteTyre(
+    @CurrentUser() user: AuthUser,
+    @Param('tyreId', new UuidRouteParamPipe()) tyreId: string,
+  ) {
     return successResponse(await this.tyresService.deleteTyre(user.id, tyreId));
   }
 }

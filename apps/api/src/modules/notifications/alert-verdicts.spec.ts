@@ -52,11 +52,9 @@ describe('distanceIntervals', () => {
 
 describe('isAlertedFromMeasurements', () => {
   it('picks out the tyre walk-around, and only it', () => {
-    expect(isAlertedFromMeasurements({ notes: 'Measure tread.\n[catalog:tyre_inspection]' })).toBe(
-      true,
-    );
-    expect(isAlertedFromMeasurements({ notes: '[catalog:tyre_rotation]' })).toBe(false);
-    expect(isAlertedFromMeasurements({ notes: null })).toBe(false);
+    expect(isAlertedFromMeasurements({ catalogSlug: 'tyre_inspection' })).toBe(true);
+    expect(isAlertedFromMeasurements({ catalogSlug: 'tyre_rotation' })).toBe(false);
+    expect(isAlertedFromMeasurements({ catalogSlug: null })).toBe(false);
     expect(isAlertedFromMeasurements({})).toBe(false);
   });
 });

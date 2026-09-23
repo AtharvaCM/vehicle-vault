@@ -9,6 +9,7 @@ import { MaintenanceOverdueTemplate } from './templates/maintenance-overdue.temp
 import { ReminderDueTemplate } from './templates/reminder-due.template';
 import { ServiceBaselineUnknownTemplate } from './templates/service-baseline-unknown.template';
 import { TyreWornTemplate } from './templates/tyre-worn.template';
+import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import type { VehicleTyreAlertState } from '../tyres/tyres.service';
 
 const NOW = new Date('2026-09-08T06:00:00.000Z');
@@ -288,7 +289,8 @@ describe('MaintenanceAlertService tyre checks', () => {
         vehicleId: 'v1',
         title: 'Tyre tread & pressure check',
         dueOdometer: 35_000,
-        notes: 'Measure tread depth at each corner.\n[catalog:tyre_inspection]',
+        notes: 'Measure tread depth at each corner.',
+        catalogSlug: 'tyre_inspection',
       },
     ]);
 
@@ -305,7 +307,7 @@ describe('MaintenanceAlertService tyre checks', () => {
         vehicleId: 'v1',
         title: 'Rotate tyres',
         dueOdometer: 35_000,
-        notes: '[catalog:tyre_rotation]',
+        catalogSlug: 'tyre_rotation',
       },
     ]);
 
@@ -760,7 +762,7 @@ describe('MaintenanceAlertService date reminders', () => {
       reminder({
         title: 'Tyre tread & pressure check',
         dueDate: new Date('2026-09-02T00:00:00.000Z'),
-        notes: '[catalog:tyre_inspection]',
+        catalogSlug: 'tyre_inspection',
       }),
     ]);
 
@@ -1483,5 +1485,63 @@ describe('MaintenanceAlertService warranty distance', () => {
       .filter(([, , kind]) => kind === 'warranty-odometer')
       .map(([userId]) => userId);
     expect(recipients.sort()).toEqual(['u1', 'u2']);
+  });
+});
+
+describe('MaintenanceAlertService distance checks read the corrected odometer', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('counts from the odometer the owner entered, not an older, lower fill', async () => {
+    const daysAgo = (days: number) => new Date(NOW.getTime() - days * 86_400_000);
+    // The demo Daily Hatch: 32,000 typed on the vehicle, one older fill at 31,800.
+    const insightsPrisma = {
+      vehicle: {
+        findUnique: vi.fn().mockResolvedValue({
+          odometer: 32_000,
+          createdAt: daysAgo(400),
+          updatedAt: daysAgo(130),
+        }),
+      },
+      maintenanceRecord: { findMany: vi.fn().mockResolvedValue([]) },
+      fuelLog: {
+        findMany: vi.fn().mockResolvedValue([{ date: daysAgo(120), odometer: 31_800 }]),
+      },
+    };
+    const realInsights = new VehicleInsightsService(
+      insightsPrisma as never,
+      { assert: vi.fn() } as never,
+    );
+
+    buildService();
+    const service = new MaintenanceAlertService(
+      prisma as never,
+      realInsights,
+      notify as never,
+      documents as never,
+      intervals as never,
+      accessories as never,
+      tyres as never,
+    );
+    // Pads last done at 2,400 km on a 30,000 km interval: due at 32,400. From
+    // the fill's 31,800 that is 600 km away, outside the 500 km window; from
+    // the vehicle's own 32,000 it is 400 km away, inside it.
+    intervals.resolveForVehicle.mockResolvedValue({
+      brake_pads: { km: 30_000, months: 24, source: 'default' },
+    });
+    prisma.vehicle.findUnique.mockResolvedValue({
+      ...VEHICLE,
+      odometer: 32_000,
+      serviceBaselines: [
+        { category: 'brake_pads', status: ServiceBaselineStatus.known, lastDoneOdometer: 2_400 },
+      ],
+    });
+
+    await service.runAlertChecks('v1');
+
+    expect(alertsOfKind('maintenance-due')).toEqual([
+      expect.objectContaining({ category: 'brake_pads', remainingDistanceKm: 400 }),
+    ]);
   });
 });

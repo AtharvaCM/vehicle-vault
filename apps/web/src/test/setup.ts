@@ -2,6 +2,11 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 
+import { installZodErrorMap } from '@/lib/validation/zod-error-map';
+
+// Specs see the same validation messages the app shows.
+installZodErrorMap();
+
 function createStorage(): Storage {
   const store = new Map<string, string>();
 

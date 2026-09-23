@@ -17,6 +17,7 @@ import type { FuelReceiptExtractionDraft } from '@vehicle-vault/shared';
 
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/guards/jwt-auth.guard';
+import { UuidRouteParamPipe } from '../../common/pipes/uuid-route-param.pipe';
 import { ExtractionService } from '../extraction/extraction.service';
 import { BulkCreateFuelLogDto } from './dto/bulk-create-fuel-log.dto';
 import { CreateFuelLogDto } from './dto/create-fuel-log.dto';
@@ -53,19 +54,25 @@ export class FuelLogsController {
   }
 
   @Get('vehicle/:vehicleId')
-  async getByVehicle(@CurrentUser('id') userId: string, @Param('vehicleId') vehicleId: string) {
+  async getByVehicle(
+    @CurrentUser('id') userId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+  ) {
     return this.fuelLogsService.getFuelLogsByVehicle(userId, vehicleId);
   }
 
   @Get(':id')
-  async getById(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async getById(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     return this.fuelLogsService.getFuelLogById(userId, id);
   }
 
   @Post('vehicle/:vehicleId')
   async create(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() dto: CreateFuelLogDto,
   ) {
     return this.fuelLogsService.createFuelLog(userId, vehicleId, dto);
@@ -74,7 +81,7 @@ export class FuelLogsController {
   @Post('vehicle/:vehicleId/bulk')
   async createBulk(
     @CurrentUser('id') userId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
     @Body() body: BulkCreateFuelLogDto,
   ) {
     return this.fuelLogsService.createBulkFuelLogs(userId, vehicleId, body.logs);
@@ -83,14 +90,17 @@ export class FuelLogsController {
   @Patch(':id')
   async update(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
     @Body() dto: UpdateFuelLogDto,
   ) {
     return this.fuelLogsService.updateFuelLog(userId, id, dto);
   }
 
   @Delete(':id')
-  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+  async delete(
+    @CurrentUser('id') userId: string,
+    @Param('id', new UuidRouteParamPipe()) id: string,
+  ) {
     return this.fuelLogsService.deleteFuelLog(userId, id);
   }
 }

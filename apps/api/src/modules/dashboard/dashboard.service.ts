@@ -68,6 +68,16 @@ const DOCUMENT_DISMISS_SNOOZE_DAYS = 14;
 const THIS_WEEK_MAX_DAYS = 7;
 const THIS_MONTH_MAX_DAYS = 30;
 
+/**
+ * The one definition of "needs attention": overdue, due today, or due within
+ * {@link THIS_WEEK_MAX_DAYS} days. The headline, the "vehicles needing
+ * attention" tile and each garage card's status all count from it; a
+ * `this_month` row is "coming up", never attention.
+ */
+function needsAttention(item: DashboardAttentionItem): boolean {
+  return item.urgency !== 'this_month';
+}
+
 const URGENCY_RANK: Record<DashboardUrgency, number> = {
   overdue: 0,
   today: 1,
@@ -321,7 +331,7 @@ export class DashboardService {
       })),
       attention: attention.slice(0, DASHBOARD_ATTENTION_LIMIT),
       attentionTotal: attention.length,
-      attentionCounts: this.buildAttentionCounts(attention, vehicleHealth),
+      attentionCounts: this.buildAttentionCounts(attention),
       vehicles: vehicleHealth.slice(0, DASHBOARD_VEHICLE_LIMIT),
       vehiclesTotal: vehicleHealth.length,
       // The spend section reads analytics, which count confirmed records only.
@@ -744,17 +754,13 @@ export class DashboardService {
     return left.title.localeCompare(right.title);
   }
 
-  private buildAttentionCounts(
-    attention: DashboardAttentionItem[],
-    vehicleHealth: DashboardVehicleHealth[],
-  ): DashboardAttentionCounts {
+  private buildAttentionCounts(attention: DashboardAttentionItem[]): DashboardAttentionCounts {
     const overdue = attention.filter((item) => item.urgency === 'overdue').length;
     const today = attention.filter((item) => item.urgency === 'today').length;
     const thisWeek = attention.filter((item) => item.urgency === 'this_week').length;
     const thisMonth = attention.filter((item) => item.urgency === 'this_month').length;
-    const urgentVehicles = new Set(
-      attention.filter((item) => item.urgency !== 'this_month').map((item) => item.vehicleId),
-    ).size;
+    const urgentVehicles = new Set(attention.filter(needsAttention).map((item) => item.vehicleId))
+      .size;
 
     return {
       overdue,
@@ -762,7 +768,9 @@ export class DashboardService {
       thisWeek,
       thisMonth,
       documentsExpiring30d: attention.filter((item) => item.kind === 'document').length,
-      vehiclesNeedingAttention: vehicleHealth.filter((vehicle) => vehicle.status !== 'ok').length,
+      // The headline's figure, not a count of card statuses: the cards are
+      // capped at DASHBOARD_VEHICLE_LIMIT, and both come from the same set.
+      vehiclesNeedingAttention: urgentVehicles,
       urgentVehicles,
       total: overdue + today + thisWeek + thisMonth,
     };
@@ -828,7 +836,9 @@ export class DashboardService {
       .map((vehicle): DashboardVehicleHealth => {
         const items = attentionByVehicle.get(vehicle.id) ?? [];
         const overdueCount = items.filter((item) => item.urgency === 'overdue').length;
-        const dueSoonCount = items.length - overdueCount;
+        // A `this_month` row is "coming up": it can be the card's next due, but
+        // it never turns the card amber.
+        const dueSoonCount = items.filter(needsAttention).length - overdueCount;
         const status: DashboardVehicleStatus =
           overdueCount > 0 ? 'overdue' : dueSoonCount > 0 ? 'due_soon' : 'ok';
         const latestFuelLogDate = latestFuelLogDateByVehicle.get(vehicle.id);
@@ -880,10 +890,14 @@ export class DashboardService {
       });
   }
 
-  /** The first row in queue order; EMIs never become "next due". */
+  /**
+   * The first row in queue order, EMIs included. The queue sorts by urgency, so
+   * whatever gives the card its status is the row it names: a "1 due soon"
+   * badge always has its cause beside it.
+   */
   private nextDueFor(items: DashboardAttentionItem[]): DashboardVehicleNextDue | null {
-    const next = items.find((item) => item.kind !== 'loan_emi');
-    if (!next || next.kind === 'loan_emi') return null;
+    const next = items[0];
+    if (!next) return null;
 
     return {
       kind: next.kind,
@@ -892,6 +906,7 @@ export class DashboardService {
       dueDate: next.dueDate,
       daysUntilDue: next.daysUntilDue,
       dueOdometer: next.dueOdometer,
+      ...(next.amount !== undefined ? { amount: next.amount } : {}),
     };
   }
 

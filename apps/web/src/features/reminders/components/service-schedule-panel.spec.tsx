@@ -57,3 +57,48 @@ describe('ServiceSchedulePanel roles', () => {
     expect(screen.queryByRole('button', { name: /add .* reminder/i })).not.toBeInTheDocument();
   });
 });
+
+describe('ServiceSchedulePanel anchors', () => {
+  function renderWith(item: Record<string, unknown>) {
+    suggestionsQuery.current = {
+      data: [{ ...suggestion, ...item }],
+      isLoading: false,
+      isError: false,
+    };
+
+    return render(
+      <VehicleAccessProvider role={VehicleRole.Owner}>
+        <ServiceSchedulePanel vehicleId="vehicle-1" />
+      </VehicleAccessProvider>,
+    );
+  }
+
+  it('says which logged service the next due is counted from', () => {
+    renderWith({
+      dueOdometer: 27_500,
+      dueDate: '2027-07-25T00:00:00.000Z',
+      anchor: {
+        source: 'record',
+        lastDoneOdometer: 17_500,
+        lastDoneDate: '2026-07-25T00:00:00.000Z',
+      },
+    });
+
+    expect(screen.getByText(/^Last done .+ at 17,500 km → next 27,500 km \/ /)).toBeInTheDocument();
+    expect(screen.queryByText(/Next:/)).not.toBeInTheDocument();
+  });
+
+  it('says when an item with no history is counted from today', () => {
+    renderWith({ anchor: { source: 'now' } });
+
+    expect(
+      screen.getByText(/^No history — counted from today → next 50,000 km \/ /),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the old line for an API that sends no anchor', () => {
+    renderWith({});
+
+    expect(screen.getByText(/Next: 50,000 km/)).toBeInTheDocument();
+  });
+});

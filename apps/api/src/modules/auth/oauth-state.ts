@@ -2,16 +2,22 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 import type { OAuthProvider } from '@prisma/client';
 import type { StrategyOptions } from 'passport-google-oauth20';
-import { CATALOG_SLUG_MAX_LENGTH, CATALOG_SLUG_PATTERN } from '@vehicle-vault/shared';
+import {
+  CATALOG_SLUG_MAX_LENGTH,
+  CATALOG_SLUG_PATTERN,
+  toSafeReturnPath,
+} from '@vehicle-vault/shared';
 
 /**
  * The OAuth `state` parameter: what ties a provider's callback to the sign-in
  * this browser started, and what carries a catalog model slug across the
  * provider redirect so an OAuth sign-up from "Track this vehicle" is
- * attributed like an email one.
+ * attributed like an email one, and the web app's return path (`next`) so the
+ * person lands where they were going.
  *
  * `state` is `<payload>.<signature>`: base64url JSON holding the provider, a
- * random nonce, the expiry and, optionally, the model slug, signed with an
+ * random nonce, the expiry and, optionally, the model slug and the return
+ * path, signed with an
  * HMAC key derived from `JWT_SECRET`. The nonce is also set as an HttpOnly
  * cookie scoped to the provider's callback path. A callback is accepted only
  * when the signature holds, the provider matches, the state has not expired
@@ -19,6 +25,8 @@ import { CATALOG_SLUG_MAX_LENGTH, CATALOG_SLUG_PATTERN } from '@vehicle-vault/sh
  *
  * - the slug cannot be changed without breaking the signature, and is checked
  *   against the catalog slug pattern on the way in and on the way out;
+ * - the return path likewise, checked with `toSafeReturnPath` both ways, so
+ *   the callback never sends anyone off this site;
  * - a callback URL minted by someone else (login CSRF) fails, because the
  *   victim's browser does not hold that state's nonce.
  *
@@ -38,10 +46,11 @@ export type OAuthStatePayload = {
   nonce: string;
   expiresAt: number;
   catalogModel?: string;
+  next?: string;
 };
 
 /** What a verified state hands the callback, as passport's `authInfo.state`. */
-export type OAuthStateInfo = { catalogModel?: string };
+export type OAuthStateInfo = { catalogModel?: string; next?: string };
 
 /** A catalog model slug, validated the way `RegisterDto.catalogModel` is, or undefined. */
 export function toCatalogModel(value: unknown): string | undefined {
@@ -74,6 +83,7 @@ export function createOAuthNonce() {
 
 export function signOAuthState(payload: OAuthStatePayload, secret: string): string {
   const catalogModel = toCatalogModel(payload.catalogModel);
+  const next = toSafeReturnPath(payload.next);
   const body = Buffer.from(
     JSON.stringify({
       v: STATE_VERSION,
@@ -81,6 +91,7 @@ export function signOAuthState(payload: OAuthStatePayload, secret: string): stri
       n: payload.nonce,
       e: payload.expiresAt,
       ...(catalogModel ? { m: catalogModel } : {}),
+      ...(next ? { r: next } : {}),
     }),
   ).toString('base64url');
 
@@ -120,8 +131,9 @@ export function readOAuthState(
     return null;
   }
 
-  const { v, p, n, e, m } = parsed;
+  const { v, p, n, e, m, r } = parsed;
   const catalogModel = toCatalogModel(m);
+  const next = toSafeReturnPath(r);
 
   if (
     v !== STATE_VERSION ||
@@ -130,7 +142,8 @@ export function readOAuthState(
     n.length === 0 ||
     typeof e !== 'number' ||
     expected.now > e ||
-    (m !== undefined && catalogModel === undefined)
+    (m !== undefined && catalogModel === undefined) ||
+    (r !== undefined && next === undefined)
   ) {
     return null;
   }
@@ -140,6 +153,7 @@ export function readOAuthState(
     nonce: n,
     expiresAt: e,
     ...(catalogModel ? { catalogModel } : {}),
+    ...(next ? { next } : {}),
   };
 }
 
@@ -190,8 +204,8 @@ function queryValue(query: unknown, key: string): unknown {
 /**
  * The passport-oauth2 state store for one provider (passed as the strategy's
  * `store`). `store` runs when sign-in begins and reads the optional
- * `catalogModel` query parameter; an invalid one is dropped rather than
- * refused, because attribution must never stop someone signing in. `verify`
+ * `catalogModel` and `next` query parameters; an invalid one is dropped
+ * rather than refused, because neither must ever stop someone signing in. `verify`
  * runs on the callback before the code is exchanged.
  */
 export class OAuthStateStore {
@@ -240,6 +254,7 @@ export class OAuthStateStore {
         nonce,
         expiresAt: this.now() + OAUTH_STATE_TTL_MS,
         catalogModel: toCatalogModel(queryValue(req.query, 'catalogModel')),
+        next: toSafeReturnPath(queryValue(req.query, 'next')),
       },
       this.options.secret,
     );
@@ -266,7 +281,10 @@ export class OAuthStateStore {
       return;
     }
 
-    callback(null, true, payload.catalogModel ? { catalogModel: payload.catalogModel } : {});
+    callback(null, true, {
+      ...(payload.catalogModel ? { catalogModel: payload.catalogModel } : {}),
+      ...(payload.next ? { next: payload.next } : {}),
+    });
   }
 }
 

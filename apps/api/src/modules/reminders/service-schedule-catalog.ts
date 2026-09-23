@@ -7,7 +7,13 @@ import {
   VehicleType,
 } from '@vehicle-vault/shared';
 
-import { TYRE_INSPECTION_SLUG } from './catalog-marker';
+/**
+ * The slug of the tyre walk-around item, named here because the alert engine
+ * matches on it (see `isAlertedFromMeasurements`). This module imports nothing
+ * from the reminders service, so the notifications module can read it without
+ * a dependency cycle (reminders → notifications → tyres).
+ */
+export const TYRE_INSPECTION_SLUG = 'tyre_inspection';
 
 /**
  * Static catalog of generic recommended service intervals. Not bound to a

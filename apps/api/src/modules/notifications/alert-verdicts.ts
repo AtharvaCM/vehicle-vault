@@ -14,7 +14,7 @@ import {
 // Pure functions, not a provider: importing them does not make the
 // notifications module depend on the reminders module, which would close a
 // cycle (reminders → notifications → tyres).
-import { extractSlugFromNotes, TYRE_INSPECTION_SLUG } from '../reminders/catalog-marker';
+import { TYRE_INSPECTION_SLUG } from '../reminders/service-schedule-catalog';
 import type { VehicleTyreAlertState } from '../tyres/tyres.service';
 import type { AlertKind, AlertPayloads } from './types';
 
@@ -61,8 +61,8 @@ export const EDITOR_ONLY_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>([
  * inspects and forgets to tick is left alone; someone who ticks without
  * inspecting is not.
  */
-export function isAlertedFromMeasurements(reminder: { notes?: string | null }): boolean {
-  return extractSlugFromNotes(reminder.notes ?? null) === TYRE_INSPECTION_SLUG;
+export function isAlertedFromMeasurements(reminder: { catalogSlug?: string | null }): boolean {
+  return reminder.catalogSlug === TYRE_INSPECTION_SLUG;
 }
 
 /** The vehicle facts the two cold-start questions turn on. */

@@ -81,6 +81,19 @@ export function getMaintenanceLineItemBreakdown(
 }
 
 export function resolveMaintenanceLineItemTotal(lineItem: MaintenanceLineItemLike) {
+  return resolveMaintenanceLineItemTotalOrUndefined(lineItem) ?? 0;
+}
+
+/**
+ * Same resolution as {@link resolveMaintenanceLineItemTotal}, but leaves the
+ * amount undefined rather than fabricating a 0 when it genuinely cannot be
+ * derived from a typed total or quantity x unit price. Used wherever the
+ * result is persisted or rendered, so an unknown amount stays unknown instead
+ * of lying as zero.
+ */
+export function resolveMaintenanceLineItemTotalOrUndefined(
+  lineItem: MaintenanceLineItemLike,
+): number | undefined {
   if (typeof lineItem.lineTotal === 'number') {
     return roundMoney(lineItem.lineTotal);
   }
@@ -89,7 +102,7 @@ export function resolveMaintenanceLineItemTotal(lineItem: MaintenanceLineItemLik
     return roundMoney(lineItem.quantity * lineItem.unitPrice);
   }
 
-  return 0;
+  return undefined;
 }
 
 export function roundMoney(value: number) {

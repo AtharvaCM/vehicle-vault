@@ -1,7 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ReminderStatus, ReminderType, VehicleRole, type Reminder } from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
+import { ApiError } from '@/lib/api/api-error';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const reminderQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
@@ -81,5 +83,81 @@ describe('ReminderDetailPage roles', () => {
     expect(screen.queryByRole('link', { name: 'Edit Reminder' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Mark Complete' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete Reminder' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ReminderDetailPage repeat rule', () => {
+  it('says how the reminder repeats, and shows the notes as written', () => {
+    reminderQuery.current = {
+      data: {
+        ...reminder,
+        notes: 'Recommended every 10 000 km or 12 months, whichever comes first.',
+        catalogSlug: 'engine_oil_change',
+        repeatEveryKm: 10000,
+        repeatEveryMonths: 12,
+      },
+      isPending: false,
+      isError: false,
+    };
+    vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: VehicleRole.Owner } };
+
+    render(<ReminderDetailPage reminderId="reminder-1" />);
+
+    expect(
+      screen.getByText('Repeats every 10,000 km or 12 months, whichever comes first'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Recommended every 10 000 km or 12 months, whichever comes first.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\[catalog:/)).not.toBeInTheDocument();
+  });
+
+  it('says a one-off reminder does not repeat', () => {
+    reminderQuery.current = { data: reminder, isPending: false, isError: false };
+    vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: VehicleRole.Owner } };
+
+    render(<ReminderDetailPage reminderId="reminder-1" />);
+
+    expect(screen.getByText('Doesn’t repeat')).toBeInTheDocument();
+  });
+});
+
+function renderErrored(error: unknown) {
+  const refetch = vi.fn();
+  reminderQuery.current = { isPending: false, isError: true, error, refetch };
+  vehicleQuery.current = {};
+
+  render(<ReminderDetailPage reminderId="reminder-1" />);
+
+  return { refetch };
+}
+
+describe('ReminderDetailPage errors', () => {
+  it('tells a malformed or unknown reminder id apart from a real failure', () => {
+    renderErrored(new ApiError('Reminder not found', 404));
+
+    expect(screen.getByText("This reminder isn't in your garage.")).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Your reminders' })).toHaveAttribute(
+      'href',
+      '/reminders',
+    );
+  });
+
+  it('tells a viewer whose access was removed why, not just that it failed', () => {
+    renderErrored(new ApiError('Forbidden', 403));
+
+    expect(
+      screen.getByText('You no longer have access — the owner may have removed you.'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers a working Try again that refetches on a network/5xx failure', () => {
+    const { refetch } = renderErrored(new ApiError('Internal error', 500));
+
+    expect(screen.getByText("We couldn't load this reminder.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });

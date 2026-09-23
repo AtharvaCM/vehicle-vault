@@ -1,6 +1,6 @@
-import { IsUUID } from 'class-validator';
+import { IsUuidRouteParam } from '../../../common/validators/is-uuid-route-param.validator';
 
 export class CatalogOfferingIdParamDto {
-  @IsUUID()
+  @IsUuidRouteParam()
   offeringId!: string;
 }
