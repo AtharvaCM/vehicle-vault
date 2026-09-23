@@ -5,10 +5,9 @@ import type { VehicleFormValues } from '../schemas/vehicle-form.schema';
 /**
  * Fields that resolve `catalogVariantId`. It isn't a form field react-hook-form
  * tracks as dirty on its own (it is derived from the catalog match at submit
- * time), and the API only re-resolves it on its own when make, model, year,
- * vehicle type or fuel type change — never for a variant-only edit. So it
- * travels with any of them, or a variant switch silently keeps pointing at the
- * old catalog entry.
+ * time). It travels with any of them: a catalog option picked in the form
+ * carries its id, and a variant typed by hand or cleared carries none, which
+ * tells the API to re-resolve the link from the vehicle's other fields.
  */
 const CATALOG_LINKED_FIELDS: Array<keyof VehicleFormValues> = [
   'make',

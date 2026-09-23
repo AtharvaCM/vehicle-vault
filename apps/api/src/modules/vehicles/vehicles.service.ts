@@ -198,11 +198,14 @@ export class VehiclesService {
     const input = this.validateUpdateVehicleInput(payload);
 
     // Re-link to catalog when identifying fields change and caller did not
-    // override catalogVariantId explicitly.
+    // override catalogVariantId explicitly. The variant counts: a variant
+    // typed by hand or cleared comes with no catalogVariantId, and keeping the
+    // old link would leave it describing the previous trim.
     const willRelink =
       input.catalogVariantId === undefined &&
       (input.make !== undefined ||
         input.model !== undefined ||
+        input.variant !== undefined ||
         input.year !== undefined ||
         input.fuelType !== undefined ||
         input.vehicleType !== undefined);
