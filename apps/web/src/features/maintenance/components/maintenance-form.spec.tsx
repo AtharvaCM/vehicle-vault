@@ -189,4 +189,43 @@ describe('MaintenanceForm', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(screen.queryByText(/save anyway/)).not.toBeInTheDocument();
   });
+
+  it('sends the resolved qty x unit price as the line item amount, not just what was typed', async () => {
+    // The bug: a line item entered as quantity x unit price counted toward the
+    // record's total but its own lineTotal was only sent when typed directly,
+    // so the saved item amount silently stayed null and rendered as ₹0.
+    const onSubmit = show({
+      ...loaded,
+      entryMode: 'detailed',
+      lineItems: [
+        {
+          kind: 'fluid',
+          name: 'Engine oil',
+          quantity: 3.5,
+          unitPrice: 450,
+          lineTotal: undefined,
+          unit: 'L',
+          brand: '',
+          partNumber: '',
+          notes: '',
+        },
+      ] as MaintenanceFormValues['lineItems'],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Record' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lineItems: [
+          expect.objectContaining({
+            name: 'Engine oil',
+            quantity: 3.5,
+            unitPrice: 450,
+            lineTotal: 1575,
+          }),
+        ],
+      }),
+    );
+  });
 });
