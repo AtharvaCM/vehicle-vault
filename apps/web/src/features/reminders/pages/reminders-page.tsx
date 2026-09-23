@@ -169,6 +169,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
             })}
             dialogDescription="Choose which vehicle this reminder is for."
             dialogTitle="Create reminder"
+            isLoading={vehiclesQuery.isPending}
             triggerLabel="Create reminder"
             variant="secondary"
             vehicles={vehiclesQuery.data ?? []}

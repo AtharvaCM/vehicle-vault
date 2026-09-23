@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils/cn';
 
 import { accessFor } from '../context/vehicle-access';
 import type { Vehicle } from '../types/vehicle';
+import { getVehicleDisplayName } from '../utils/get-vehicle-display-name';
 
 export type VehiclePickerVehicle = Pick<
   Vehicle,
@@ -22,6 +23,13 @@ export type VehiclePickerVehicle = Pick<
 type VehiclePickerDialogProps = {
   /** The account's vehicles, unfiltered — viewer-only ones are excluded here. */
   vehicles: VehiclePickerVehicle[];
+  /**
+   * The vehicles query is still pending: `vehicles` is only `[]` because
+   * nothing has loaded yet, not because the account truly has none. Render a
+   * disabled trigger rather than risk showing "Add a vehicle" to an owner who
+   * already has some.
+   */
+  isLoading?: boolean;
   /** Builds the typed link for a chosen vehicle, e.g. `/vehicles/$vehicleId/maintenance/new`. */
   buildLink: (vehicleId: string) => LinkProps;
   /** Label for the trigger when there is at least one editable vehicle. */
@@ -35,21 +43,20 @@ type VehiclePickerDialogProps = {
   className?: string;
 };
 
-function vehicleDisplayName(vehicle: VehiclePickerVehicle) {
-  return vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
-}
-
 /**
  * "Pick a vehicle, then go": the shared launcher behind an action that needs a
  * vehicle id before it can open a form (log maintenance, create a reminder).
  * Viewer-only vehicles can never open these forms, so they never appear here.
  *
+ * - Still loading: a disabled button with the normal trigger label — never
+ *   the add-vehicle link, which would wrongly imply there are none.
  * - No editable vehicle: a plain link to add one — there is nothing to pick.
  * - Exactly one: a plain link straight to its form, no dialog in the way.
  * - Several: a button that opens a dialog listing them by name.
  */
 export function VehiclePickerDialog({
   vehicles,
+  isLoading = false,
   buildLink,
   triggerLabel,
   addVehicleLabel = 'Add a vehicle',
@@ -68,12 +75,20 @@ export function VehiclePickerDialog({
   const sortedVehicles = useMemo(
     () =>
       [...editableVehicles].sort((a, b) =>
-        vehicleDisplayName(a).localeCompare(vehicleDisplayName(b)),
+        getVehicleDisplayName(a).localeCompare(getVehicleDisplayName(b)),
       ),
     [editableVehicles],
   );
 
   const [onlyVehicle] = sortedVehicles;
+
+  if (isLoading) {
+    return (
+      <Button className={className} disabled size={size} type="button" variant={variant}>
+        {triggerLabel}
+      </Button>
+    );
+  }
 
   if (!onlyVehicle) {
     return (
@@ -120,7 +135,7 @@ export function VehiclePickerDialog({
                 onClick={() => setOpen(false)}
               >
                 <span className="text-sm font-medium text-slate-900">
-                  {vehicleDisplayName(vehicle)}
+                  {getVehicleDisplayName(vehicle)}
                 </span>
                 <span className="text-[11px] tabular-nums text-slate-500">
                   {vehicle.registrationNumber}

@@ -180,6 +180,7 @@ export function MaintenanceOverviewPage({
             })}
             dialogDescription="Choose which vehicle this service is for."
             dialogTitle="Log maintenance"
+            isLoading={vehiclesQuery.isPending}
             triggerLabel="Log maintenance"
             vehicles={vehicles}
           />
@@ -295,6 +296,7 @@ export function MaintenanceOverviewPage({
                 })}
                 dialogDescription="Choose which vehicle this service is for."
                 dialogTitle="Log maintenance"
+                isLoading={vehiclesQuery.isPending}
                 triggerLabel="Log maintenance from a vehicle"
                 vehicles={vehicles}
               />
