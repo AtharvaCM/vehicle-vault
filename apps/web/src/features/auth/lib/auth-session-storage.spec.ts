@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   clearStoredAuthSession,
@@ -156,5 +156,16 @@ describe('authSessionStorage', () => {
     clearStoredAuthSession();
 
     expect(getStoredAuthSession()).toBeNull();
+  });
+
+  it('reads a blocked store as signed out instead of throwing', () => {
+    const blocked = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(window.localStorage, 'getItem').mockImplementation(blocked);
+    vi.spyOn(window.localStorage, 'removeItem').mockImplementation(blocked);
+
+    expect(getStoredAuthSession()).toBeNull();
+    expect(() => clearStoredAuthSession()).not.toThrow();
   });
 });
