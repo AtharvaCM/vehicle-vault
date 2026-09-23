@@ -31,6 +31,8 @@ URL search params validated by a `normalize*Search` function in the feature's `t
 **Query-state UI**:
 The standard triad `LoadingState` / `EmptyState` / `ErrorState` from `src/components/shared/` for every query-backed view. Forms use `FormField`; mutation errors go to `appToast.error(getApiErrorMessage(e))`.
 
+**Resource load error** (`components/errors/resource-load-error.tsx`): what a single-resource detail page (`VehicleDetailPage`, `MaintenanceRecordDetailPage`, `ReminderDetailPage`) renders for its `query.isError` branch — a 404 reads as "isn't in your garage" (the id was malformed or unknown, never a 500), a 403 as access having been removed, and anything else as retryable, with a `Try again` that calls the query's own `refetch`. One component owns the three messages so the pages don't restate and drift on them.
+
 **Vehicle naming**:
 `describeVehicleModel(vehicle)` builds the "make model variant" line everywhere one is shown. The variant is optional on a vehicle, so the helper drops it rather than leaving a separator with nothing after it; `VehicleSpecsCard` says so outright, because specs are published per variant and its lookup never runs without one.
 
