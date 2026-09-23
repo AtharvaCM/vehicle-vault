@@ -62,6 +62,10 @@ describe('SupabaseStorageService', () => {
     await expect(
       service.downloadObject('attachments/user-1/record-1/missing.pdf'),
     ).rejects.toBeInstanceOf(NotFoundException);
+    // Worded for the person who clicked, with what to do about it.
+    await expect(service.downloadObject('attachments/user-1/record-1/missing.pdf')).rejects.toThrow(
+      'This file is no longer in storage. Delete the attachment and upload it again.',
+    );
   });
 
   it('lists every object under a prefix, however deeply nested', async () => {
