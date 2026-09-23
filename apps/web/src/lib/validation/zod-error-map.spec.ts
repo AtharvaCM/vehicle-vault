@@ -8,11 +8,11 @@ import { installZodErrorMap } from './zod-error-map';
 // passed per parse it would sit above them.
 installZodErrorMap();
 
-/** Zod's own wording, which must never reach a form. */
+/** Zod's own wording (3 and 4), which must never reach a form. */
 const rawZodText =
-  /Expected|received|String must|Number must|Invalid (input|enum|email|url)|character\(s\)/;
+  /expected|received|too (small|big)|string must|number must|invalid (input|option|enum|email|url|key|element|string|date)|unrecognized key|character\(s\)|>=|<=/i;
 
-function messageFor(schema: z.ZodTypeAny, value: unknown) {
+function messageFor(schema: z.ZodType, value: unknown) {
   const result = schema.safeParse(value);
 
   expect(result.success).toBe(false);
@@ -36,6 +36,16 @@ describe('zodErrorMap', () => {
     ['a bad link', z.string().url(), 'nope', 'Enter a valid link, starting with https://'],
     ['a bad timestamp', z.string().datetime(), 'nope', 'Enter a valid date'],
     ['a value outside an enum', z.enum(['a', 'b']), 'c', 'Choose one of the options'],
+    ['an invalid date', z.date(), new Date(Number.NaN), 'Enter a valid date'],
+    ['text where a date goes', z.coerce.date(), 'nope', 'Enter a valid date'],
+    [
+      'a date too early',
+      z.date().min(new Date(2020, 0, 1)),
+      new Date(2019, 0, 1),
+      'Choose a date on or after 1 Jan 2020',
+    ],
+    ['an empty list', z.array(z.string()).min(1), [], 'Add at least 1'],
+    ['a step that does not fit', z.number().multipleOf(5), 7, 'Enter a whole number'],
   ])('words %s in plain language', (_, schema, value, expected) => {
     const message = messageFor(schema, value);
 
@@ -44,10 +54,32 @@ describe('zodErrorMap', () => {
   });
 
   it('never overrides a message the schema gives', () => {
-    const schema = z.number({ invalid_type_error: 'Enter the litres' }).positive('Too few');
+    const schema = z.number({ error: 'Enter the litres' }).positive('Too few');
 
     expect(messageFor(schema, Number.NaN)).toBe('Enter the litres');
     expect(messageFor(schema, 0)).toBe('Too few');
+  });
+
+  // One schema per issue code Zod 4 can raise. A new code, or a Zod upgrade
+  // that renames one, lands in the map's default rather than in Zod's words.
+  it.each([
+    ['invalid_type', z.string(), 42],
+    ['too_small', z.number().min(1), 0],
+    ['too_big', z.string().max(1), 'ab'],
+    ['invalid_format', z.string().regex(/^a$/), 'b'],
+    ['not_multiple_of', z.number().multipleOf(2), 3],
+    ['unrecognized_keys', z.strictObject({ a: z.string() }), { a: 'x', b: 'y' }],
+    ['invalid_union', z.union([z.string(), z.number()]), true],
+    ['invalid_key', z.record(z.string().min(2), z.string()), { b: 'x' }],
+    ['invalid_value', z.literal('a'), 'b'],
+    ['custom', z.string().refine((value) => value === 'a'), 'b'],
+  ])('words a %s issue without Zod’s text', (code, schema, value) => {
+    const result = schema.safeParse(value);
+
+    expect(result.success).toBe(false);
+    const issue = result.success ? undefined : result.error.issues[0];
+    expect(issue?.code).toBe(code);
+    expect(issue?.message).not.toMatch(rawZodText);
   });
 
   it('is installed for the shared package schemas too', () => {
