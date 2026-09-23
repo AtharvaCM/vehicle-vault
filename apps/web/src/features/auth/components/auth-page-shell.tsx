@@ -63,17 +63,24 @@ export function AuthPageShell({
 
 export function AuthPageLink({
   label,
+  next,
   to,
   text,
 }: {
   label: string;
+  /** A return path to keep when switching between sign-in and registration. */
+  next?: string;
   to: '/login' | '/register';
   text: string;
 }) {
   return (
     <p>
       {text}{' '}
-      <Link className="font-semibold text-slate-900 hover:text-slate-700" to={to}>
+      <Link
+        className="font-semibold text-slate-900 hover:text-slate-700"
+        search={next ? { next } : {}}
+        to={to}
+      >
         {label}
       </Link>
     </p>
