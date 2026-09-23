@@ -10,11 +10,12 @@ function makePrismaMock() {
   return {
     vehicle: { findFirst: vi.fn() },
     fuelLog: { aggregate: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
-    maintenanceRecord: { aggregate: vi.fn(), findMany: vi.fn() },
+    maintenanceRecord: { aggregate: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
     claim: { aggregate: vi.fn(), findMany: vi.fn() },
     insurancePolicy: { findMany: vi.fn() },
     vehicleLoan: { findMany: vi.fn() },
     accessory: { aggregate: vi.fn(), findMany: vi.fn() },
+    auditEvent: { findFirst: vi.fn() },
   };
 }
 
@@ -322,7 +323,7 @@ describe('AnalyticsService.getTco', () => {
     vi.useRealTimers();
   });
 
-  it('falls back to fuel-log odometer range when purchaseOdometer is missing', async () => {
+  it('measures from the earliest fill to the current odometer when purchaseOdometer is missing', async () => {
     (prisma.vehicle.findFirst as Mock).mockResolvedValue({
       id: 'v1',
       odometer: 30000,
@@ -342,10 +343,123 @@ describe('AnalyticsService.getTco', () => {
 
     const result = await service.getTco('user-1', 'v1');
 
-    expect(result.kmSincePurchase).toBe(10000);
+    // 30,000 on the vehicle less the 5,000 of the first fill, not the 10,000
+    // between the two fills.
+    expect(result.kmSincePurchase).toBe(25000);
     expect(result.totals.tco).toBeNull();
     expect(result.derived.costPerMonth).toBeNull();
-    expect(result.derived.costPerKm).toBe('1.00');
+    expect(result.derived.costPerKm).toBe('0.40');
+  });
+
+  describe('the distance ₹/km divides by', () => {
+    const NET_SPEND = '28236.00';
+
+    const stubSpend = (vehicle: { odometer: number; purchaseOdometer: number | null }) => {
+      (prisma.vehicle.findFirst as Mock).mockResolvedValue({
+        id: 'v1',
+        purchaseDate: null,
+        purchasePrice: null,
+        ...vehicle,
+      });
+      (prisma.maintenanceRecord.aggregate as Mock).mockResolvedValue({
+        _sum: { totalCost: new Prisma.Decimal(NET_SPEND) },
+      });
+      (prisma.fuelLog.aggregate as Mock).mockResolvedValue({ _sum: { totalCost: null } });
+      (prisma.claim.aggregate as Mock).mockResolvedValue({ _sum: { insurerPaidAmount: null } });
+      (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    };
+
+    /** Earliest then latest, as the service asks for them. */
+    const stubFills = (first: number | null, last: number | null) =>
+      (prisma.fuelLog.findFirst as Mock)
+        .mockResolvedValueOnce(first == null ? null : { odometer: first })
+        .mockResolvedValueOnce(last == null ? null : { odometer: last });
+    const stubRecords = (first: number | null, last: number | null) =>
+      (prisma.maintenanceRecord.findFirst as Mock)
+        .mockResolvedValueOnce(first == null ? null : { odometer: first })
+        .mockResolvedValueOnce(last == null ? null : { odometer: last });
+
+    it('counts from the purchase odometer when there is one', async () => {
+      stubSpend({ odometer: 18_500, purchaseOdometer: 15_000 });
+      stubFills(17_800, 18_500);
+      stubRecords(17_500, 17_500);
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(result.kmSincePurchase).toBe(3_500);
+      expect(result.derived.costPerKm).toBe('8.07');
+    });
+
+    it('counts from the earliest service when it precedes every fill', async () => {
+      stubSpend({ odometer: 26_000, purchaseOdometer: null });
+      stubFills(24_800, 26_000);
+      stubRecords(22_500, 25_000);
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(result.kmSincePurchase).toBe(3_500);
+    });
+
+    it('counts from the first fill when fills are all there is', async () => {
+      stubSpend({ odometer: 21_000, purchaseOdometer: null });
+      stubFills(18_000, 21_000);
+      stubRecords(null, null);
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(result.kmSincePurchase).toBe(3_000);
+      expect(result.derived.costPerKm).toBe('9.41');
+    });
+
+    it('counts from the odometer the vehicle was added with', async () => {
+      stubSpend({ odometer: 20_000, purchaseOdometer: null });
+      stubFills(18_700, 19_400);
+      stubRecords(null, null);
+      (prisma.auditEvent.findFirst as Mock).mockResolvedValue({ after: { odometer: 16_000 } });
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(prisma.auditEvent.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ resourceId: 'v1', action: 'vehicle.created' }),
+        }),
+      );
+      expect(result.kmSincePurchase).toBe(4_000);
+    });
+
+    it('reads up to a service logged past the vehicle’s own odometer', async () => {
+      stubSpend({ odometer: 20_000, purchaseOdometer: 17_000 });
+      stubFills(null, null);
+      stubRecords(18_000, 20_400);
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(result.kmSincePurchase).toBe(3_400);
+    });
+
+    it('gives no figure over a distance too short to mean anything', async () => {
+      // The demo Family SUV used to read "₹40 / km, 700 km": a year's insurance
+      // and a service divided by the gap between two fills.
+      stubSpend({ odometer: 18_200, purchaseOdometer: null });
+      stubFills(17_800, 18_200);
+      stubRecords(null, null);
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(result.kmSincePurchase).toBe(400);
+      expect(result.derived.costPerKm).toBeNull();
+    });
+
+    it('gives no figure when the vehicle has no reading to measure from', async () => {
+      stubSpend({ odometer: 18_200, purchaseOdometer: null });
+      stubFills(null, null);
+      stubRecords(null, null);
+
+      const result = await service.getTco('user-1', 'v1');
+
+      expect(result.kmSincePurchase).toBe(0);
+      expect(result.derived.costPerKm).toBeNull();
+    });
   });
 
   it('throws NotFound when vehicle is not owned', async () => {

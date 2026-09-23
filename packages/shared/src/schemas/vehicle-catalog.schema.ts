@@ -118,8 +118,16 @@ export const VehicleCatalogImportCountsSchema = z.object({
   variants: z.number().int().nonnegative(),
 });
 
+export const VehicleCatalogImportVariantChangeSchema = z.object({
+  variant: z.string(),
+  changes: z.array(z.object({ field: z.string(), before: z.string(), after: z.string() })),
+});
+
 export const VehicleCatalogImportDiffSchema = z.object({
   changedVariants: z.array(z.string()),
+  // Field-level old → new for each changed variant. Optional so a web build
+  // that ships before the API still reads a diff without it.
+  changedVariantDetails: z.array(VehicleCatalogImportVariantChangeSchema).optional(),
   incomingCounts: VehicleCatalogImportCountsSchema,
   missingVariants: z.array(z.string()),
   newModels: z.array(z.string()),

@@ -1,6 +1,16 @@
-import { AuditResourceType, Prisma, ReminderType as PrismaReminderType } from '@prisma/client';
+import {
+  AuditResourceType,
+  Prisma,
+  ReminderType as PrismaReminderType,
+  ServiceBaselineStatus,
+} from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { FuelType, ReminderStatus, VehicleType } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  MaintenanceRecordStatus,
+  ReminderStatus,
+  VehicleType,
+} from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
@@ -17,15 +27,31 @@ import { composeCatalogNotes, extractSlugFromNotes, TYRE_INSPECTION_SLUG } from 
 import { filterCatalogForVehicle, type ServiceScheduleItem } from './service-schedule-catalog';
 
 /**
- * Where a proposed interval is counted from. For most catalog items that is
- * simply "now, at the current odometer"; for the tyre walk-around it is the
- * last time anyone actually looked, so scheduling a check four thousand
- * kilometres after the last one proposes it in one thousand rather than five.
+ * Where a proposed interval is counted from: the last time the item was done,
+ * when the app knows it, else "now, at the current odometer". For a service
+ * item that is its latest confirmed record, else what the owner told the
+ * service baseline; for the tyre walk-around it is the last tyre observation,
+ * so scheduling a check four thousand kilometres after the last one proposes
+ * it in one thousand rather than five.
  */
 interface ScheduleAnchor {
   odometer: number;
   at: Date;
+  basis: ServiceScheduleAnchor;
 }
+
+/**
+ * What a suggestion was counted from, so the row can say it. `lastDone*` are
+ * what the source recorded, before any clamping to now; a baseline may know
+ * only one of the two, and the missing dimension is then counted from now.
+ */
+export interface ServiceScheduleAnchor {
+  source: 'record' | 'baseline' | 'tyre_check' | 'now';
+  lastDoneOdometer?: number;
+  lastDoneDate?: string;
+}
+
+const NOW_BASIS: ServiceScheduleAnchor = { source: 'now' };
 
 export interface ServiceScheduleSuggestion {
   slug: string;
@@ -38,6 +64,8 @@ export interface ServiceScheduleSuggestion {
   dueOdometer?: number;
   /** Computed proposed `dueDate` (today + intervalMonths) as ISO. */
   dueDate?: string;
+  /** What `dueOdometer` and `dueDate` were counted from. */
+  anchor: ServiceScheduleAnchor;
   /** True if a non-completed reminder with the same catalog slug or title is already scheduled. */
   alreadyScheduled: boolean;
 }
@@ -79,8 +107,8 @@ export class ServiceScheduleService {
     }
 
     const now = new Date();
-    const fallback: ScheduleAnchor = { odometer: vehicle.odometer, at: now };
-    const anchors = await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now);
+    const fallback: ScheduleAnchor = { odometer: vehicle.odometer, at: now, basis: NOW_BASIS };
+    const anchors = await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now, items);
 
     return items.map((item) => this.toSuggestion(item, anchors, fallback, existingKeys));
   }
@@ -107,7 +135,7 @@ export class ServiceScheduleService {
     const created: string[] = [];
     // The same anchors the suggestion was previewed against, so applying one
     // creates the reminder the user was shown rather than a later one.
-    const anchors = await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now);
+    const anchors = await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now, items);
 
     await this.prisma.$transaction(async (tx) => {
       for (const item of items) {
@@ -196,8 +224,14 @@ export class ServiceScheduleService {
     });
     if (active.some((reminder) => extractSlugFromNotes(reminder.notes) === slug)) return null;
 
-    const anchors = await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now);
-    const anchor = anchors[slug] ?? { odometer: vehicle.odometer, at: now };
+    // Completing a service reminder is itself the owner saying it was done now,
+    // which is later than any record or baseline, so only the walk-around keeps
+    // its own anchor: ticking it off is not a measurement of the tyres.
+    const measured =
+      slug === TYRE_INSPECTION_SLUG
+        ? (await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now, [item]))[slug]
+        : undefined;
+    const anchor = measured ?? { odometer: vehicle.odometer, at: now };
 
     const dueOdometer = item.intervalKm != null ? anchor.odometer + item.intervalKm : null;
     const dueDate = item.intervalMonths != null ? addMonths(anchor.at, item.intervalMonths) : null;
@@ -251,33 +285,101 @@ export class ServiceScheduleService {
   }
 
   /**
-   * Per-slug anchors, for the items whose interval should be counted from
+   * Per-slug anchors, for the items whose interval can be counted from
    * something the app already knows rather than from the moment the user opened
-   * the screen.
+   * the screen. An item missing from the result is counted from now.
    *
-   * Only the tyre walk-around has one today. The same argument applies to every
-   * category with a **ServiceBaseline** or a logged service behind it, and
-   * generalising it is the obvious next step — but each anchor needs its own
-   * source, so they are added one at a time rather than guessed at wholesale.
+   * A catalog item with a maintenance category resolves, in order: the latest
+   * confirmed record of that category, then the owner's **ServiceBaseline**
+   * answer, then nothing. "Latest" is the highest odometer, as in the service
+   * baseline coverage and the alert engine, so the row, the Service Log tab and
+   * the alert all measure from the same service. Drafts never anchor: an
+   * unconfirmed record is not evidence the service happened. The tyre
+   * walk-around anchors on the last tyre observation instead.
    */
   private async resolveAnchors(
     userId: string,
     vehicleId: string,
     currentOdometer: number,
     now: Date,
+    items: ServiceScheduleItem[],
   ): Promise<Record<string, ScheduleAnchor>> {
-    const tyreState = await this.tyresService.getAlertState(userId, vehicleId);
-    const observation = tyreState.lastObservation;
-    if (!observation) return {};
+    const categories = [
+      ...new Set(items.flatMap((item) => (item.category ? [item.category] : []))),
+    ];
+    const [tyreState, records, baselines] = await Promise.all([
+      this.tyresService.getAlertState(userId, vehicleId),
+      categories.length > 0
+        ? this.prisma.maintenanceRecord.findMany({
+            where: {
+              vehicleId,
+              status: MaintenanceRecordStatus.Confirmed,
+              category: { in: categories },
+            },
+            select: { category: true, odometer: true, serviceDate: true },
+            orderBy: [{ odometer: 'desc' }, { serviceDate: 'desc' }],
+          })
+        : [],
+      categories.length > 0
+        ? this.prisma.serviceBaseline.findMany({
+            where: {
+              vehicleId,
+              status: ServiceBaselineStatus.known,
+              category: { in: categories },
+            },
+            select: { category: true, lastDoneOdometer: true, lastDoneDate: true },
+          })
+        : [],
+    ]);
 
-    // A future-dated or ahead-of-odometer observation would push the next check
-    // further out than the interval allows, so the anchor never runs ahead of now.
-    return {
-      [TYRE_INSPECTION_SLUG]: {
-        odometer: Math.min(observation.odometer, currentOdometer),
-        at: observation.at.getTime() > now.getTime() ? now : observation.at,
-      },
-    };
+    // A future-dated or ahead-of-odometer reading would push the next occurrence
+    // further out than the interval allows, so an anchor never runs ahead of now.
+    const clamp = (
+      odometer: number | null,
+      at: Date | null,
+      basis: ServiceScheduleAnchor,
+    ): ScheduleAnchor => ({
+      odometer: odometer == null ? currentOdometer : Math.min(odometer, currentOdometer),
+      at: at == null || at.getTime() > now.getTime() ? now : at,
+      basis,
+    });
+
+    const anchors: Record<string, ScheduleAnchor> = {};
+    for (const item of items) {
+      if (!item.category) continue;
+
+      const record = records.find((row) => row.category === item.category);
+      if (record) {
+        anchors[item.slug] = clamp(record.odometer, record.serviceDate, {
+          source: 'record',
+          lastDoneOdometer: record.odometer,
+          lastDoneDate: record.serviceDate.toISOString(),
+        });
+        continue;
+      }
+
+      const baseline = baselines.find((row) => row.category === item.category);
+      if (baseline && (baseline.lastDoneOdometer != null || baseline.lastDoneDate != null)) {
+        anchors[item.slug] = clamp(baseline.lastDoneOdometer, baseline.lastDoneDate, {
+          source: 'baseline',
+          ...(baseline.lastDoneOdometer != null
+            ? { lastDoneOdometer: baseline.lastDoneOdometer }
+            : {}),
+          ...(baseline.lastDoneDate ? { lastDoneDate: baseline.lastDoneDate.toISOString() } : {}),
+        });
+      }
+    }
+
+    const observation = tyreState.lastObservation;
+    if (observation) {
+      anchors[TYRE_INSPECTION_SLUG] = clamp(observation.odometer, observation.at, {
+        source: 'tyre_check',
+        lastDoneOdometer: observation.odometer,
+        lastDoneDate: observation.at.toISOString(),
+      });
+    }
+
+    return anchors;
   }
 
   private toSuggestion(
@@ -301,6 +403,7 @@ export class ServiceScheduleService {
         item.intervalMonths != null
           ? addMonths(anchor.at, item.intervalMonths).toISOString()
           : undefined,
+      anchor: anchor.basis,
       alreadyScheduled,
     };
   }

@@ -11,6 +11,7 @@ import {
   Gauge,
 } from 'lucide-react';
 import {
+  isTwoWheeler,
   TyrePosition,
   type MaintenanceRecord,
   type Tyre,
@@ -155,8 +156,15 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
 
   const measured = conditionQuery.data?.tyres ?? [];
   const hasMeasurements = measured.length > 0;
-  const serviceStatus = mergeStatus(insights.rotation.status, insights.alignment.status);
+  // Two-wheelers get a front/rear layout and carry no rotation service of their
+  // own, so the merged badge and the diagram must not fold rotation into them.
+  const twoWheeler = vehicle ? isTwoWheeler(vehicle.vehicleType) : false;
+  const serviceStatus = twoWheeler
+    ? insights.alignment.status
+    : mergeStatus(insights.rotation.status, insights.alignment.status);
   const byPosition = new Map(measured.map((tyre) => [tyre.position, tyre]));
+  const diagramCorners = twoWheeler ? TWO_WHEEL_DIAGRAM_CORNERS : FOUR_WHEEL_DIAGRAM_CORNERS;
+  const alignmentLabel = twoWheeler ? 'Wheel Alignment / Balancing' : 'Wheel Alignment';
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
@@ -202,7 +210,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           </CardHeader>
           <CardContent className="p-8 sm:p-12">
             <div
-              aria-label={describeDiagram(insights, measured, hasMeasurements)}
+              aria-label={describeDiagram(insights, measured, hasMeasurements, twoWheeler)}
               className="relative mx-auto flex aspect-[1/2] w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-slate-200 bg-slate-50/30"
               role="img"
             >
@@ -214,9 +222,10 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                 Each corner now shows its own measured condition. Without
                 measurements they fall back to one shared service-derived status,
                 because rotation is a four-wheel operation and alignment is axle
-                geometry — neither describes an individual tyre.
+                geometry — neither describes an individual tyre. A two-wheeler
+                gets one front and one rear glyph instead of four corners.
               */}
-              {DIAGRAM_CORNERS.map(({ corner, position }) => (
+              {diagramCorners.map(({ corner, position }) => (
                 <TyreGlyph
                   key={corner}
                   corner={corner}
@@ -267,15 +276,19 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           />
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <MetricCard
-            icon={<RotateCw className="h-4 w-4" />}
-            label="Tyre Rotation"
-            metric={insights.rotation}
-          />
+        <div className={cn('grid gap-4', twoWheeler ? 'sm:grid-cols-1' : 'sm:grid-cols-2')}>
+          {/* Rotation swaps tyres front-to-back and side-to-side; a two-wheeler
+              has neither a side pair nor a rotation service to track. */}
+          {twoWheeler ? null : (
+            <MetricCard
+              icon={<RotateCw className="h-4 w-4" />}
+              label="Tyre Rotation"
+              metric={insights.rotation}
+            />
+          )}
           <MetricCard
             icon={<Settings2 className="h-4 w-4" />}
-            label="Wheel Alignment"
+            label={alignmentLabel}
             metric={insights.alignment}
           />
         </div>
@@ -343,6 +356,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
             onClose={() => setOpenDialog(null)}
             vehicleId={vehicle.id}
             vehicleOdometer={vehicle.odometer}
+            vehicleType={vehicle.vehicleType}
           />
           <TyreInspectionDialog
             isOpen={openDialog === 'inspection'}
@@ -358,6 +372,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               tyre={editTarget}
               vehicleId={vehicle.id}
               vehicleOdometer={vehicle.odometer}
+              vehicleType={vehicle.vehicleType}
             />
           ) : null}
         </>
@@ -376,12 +391,21 @@ const INTERVAL_SOURCE_NOTE: Record<TyreMetric['intervalSource'], string | null> 
   fallback: null,
 };
 
-/** Screen position -> the tyre actually fitted there. The spare has no corner on the diagram. */
-const DIAGRAM_CORNERS = [
+/**
+ * Screen position -> the tyre actually fitted there. The spare has no corner
+ * on the diagram.
+ */
+const FOUR_WHEEL_DIAGRAM_CORNERS = [
   { corner: 'top-left' as const, position: TyrePosition.FrontLeft },
   { corner: 'top-right' as const, position: TyrePosition.FrontRight },
   { corner: 'bottom-left' as const, position: TyrePosition.RearLeft },
   { corner: 'bottom-right' as const, position: TyrePosition.RearRight },
+];
+
+/** A two-wheeler has one front and one rear tyre, not four corners. */
+const TWO_WHEEL_DIAGRAM_CORNERS = [
+  { corner: 'top' as const, position: TyrePosition.Front },
+  { corner: 'bottom' as const, position: TyrePosition.Rear },
 ];
 
 const CONDITION_COPY: Record<
@@ -431,6 +455,8 @@ const POSITION_LABEL: Record<TyrePosition, string> = {
   [TyrePosition.RearLeft]: 'Rear left',
   [TyrePosition.RearRight]: 'Rear right',
   [TyrePosition.Spare]: 'Spare',
+  [TyrePosition.Front]: 'Front',
+  [TyrePosition.Rear]: 'Rear',
 };
 
 /**
@@ -441,11 +467,19 @@ function describeDiagram(
   insights: ReturnType<typeof getTyreInsights>,
   measured: TyreCondition[],
   hasMeasurements: boolean,
+  twoWheeler: boolean,
 ): string {
   if (!hasMeasurements) {
+    // Rotation is not a two-wheeler service, so its status has nothing true to
+    // report here — the same reason its card is hidden below the diagram.
+    const rotationPhrase = twoWheeler
+      ? ''
+      : `Tyre rotation: ${STATUS_COPY[insights.rotation.status].label}. `;
+    const alignmentPhrase = twoWheeler ? 'Wheel alignment / balancing' : 'Wheel alignment';
+
     return (
-      `Wheel diagram. Tyre rotation: ${STATUS_COPY[insights.rotation.status].label}. ` +
-      `Wheel alignment: ${STATUS_COPY[insights.alignment.status].label}. ` +
+      `Wheel diagram. ${rotationPhrase}` +
+      `${alignmentPhrase}: ${STATUS_COPY[insights.alignment.status].label}. ` +
       'Individual tyre condition is not tracked.'
     );
   }
@@ -475,7 +509,8 @@ function formatCategory(category: string) {
 }
 
 interface TyreGlyphProps {
-  corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  /** Four-corner positions for a car; 'top'/'bottom' centre the glyph for a two-wheeler. */
+  corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top' | 'bottom';
   /** Measured condition when the tyre is tracked. */
   measured: TyreCondition | null;
   /** Service-derived fallback, used only when nothing is measured. */
@@ -488,6 +523,8 @@ function TyreGlyph({ corner, measured, status }: TyreGlyphProps) {
     'top-right': '-top-4 -right-8 sm:-right-10',
     'bottom-left': '-bottom-4 -left-8 sm:-left-10',
     'bottom-right': '-bottom-4 -right-8 sm:-right-10',
+    top: '-top-4 left-1/2 -translate-x-1/2',
+    bottom: '-bottom-4 left-1/2 -translate-x-1/2',
   }[corner];
 
   const appearance = measured
