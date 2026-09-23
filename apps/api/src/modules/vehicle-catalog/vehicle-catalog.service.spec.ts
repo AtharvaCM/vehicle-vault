@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AuthUser, FuelType, VehicleCatalogMarket, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { normalizeAlias } from '../../../prisma/catalog-import/sync-catalog-aliases';
 import { upsertCatalogDataset } from '../../../prisma/catalog-import/upsert-catalog-dataset';
 import { VehicleCatalogService } from './vehicle-catalog.service';
 
@@ -51,6 +52,13 @@ describe('VehicleCatalogService', () => {
     },
     vehicleCatalogModel: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    vehicleCatalogGeneration: {
+      findFirst: vi.fn(),
+    },
+    vehicleCatalogGenerationAlias: {
+      findFirst: vi.fn(),
     },
     vehicleCatalogVariant: {
       findMany: vi.fn(),
@@ -90,6 +98,8 @@ describe('VehicleCatalogService', () => {
     );
     prisma.vehicleCatalogMake.findMany.mockResolvedValue([]);
     prisma.vehicleCatalogVariantOfferingOverride.findMany.mockResolvedValue([]);
+    prisma.vehicleCatalogModel.findFirst.mockResolvedValue(null);
+    prisma.vehicleCatalogGeneration.findFirst.mockResolvedValue({ id: 'exact' });
     service = new VehicleCatalogService(prisma as never);
   });
 
@@ -500,6 +510,109 @@ describe('VehicleCatalogService', () => {
       }),
     );
     expect(prisma.vehicleCatalogVariantOffering.updateMany).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not archive a variant whose generation was merged into another one', async () => {
+    const run = {
+      id: 'run-1',
+      sourceKey: 'hyundai-india',
+      marketCode: 'IN',
+      status: 'succeeded',
+      startedAt: new Date('2026-03-22T10:00:00.000Z'),
+      completedAt: new Date('2026-03-22T10:01:00.000Z'),
+      snapshotCount: 1,
+      recordsUpserted: 0,
+      notes: null,
+      publishedAt: null,
+      publishedByUserId: null,
+      snapshots: [
+        {
+          capturedAt: new Date('2026-03-22T10:00:30.000Z'),
+          // The source still files the trim under its own placeholder name.
+          payload: {
+            dataset: [
+              {
+                ...snapshotPayload.dataset[0],
+                models: [
+                  {
+                    ...snapshotPayload.dataset[0].models[0],
+                    generations: [
+                      {
+                        ...snapshotPayload.dataset[0].models[0].generations[0],
+                        name: 'Creta (current)',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    prisma.vehicleCatalogImportRun.findUnique.mockResolvedValue(run);
+    // "Creta (current)" was merged into "Creta (2024 facelift)" and left as its alias.
+    prisma.vehicleCatalogGeneration.findFirst.mockResolvedValue(null);
+    prisma.vehicleCatalogGenerationAlias.findFirst.mockResolvedValue({
+      generation: {
+        id: 'generation-1',
+        name: 'Creta (2024 facelift)',
+        model: { id: 'model-1', name: 'Creta', make: { name: 'Hyundai', vehicleType: 'suv' } },
+      },
+    });
+    prisma.vehicleCatalogVariantOffering.findMany.mockResolvedValue([
+      {
+        id: 'offering-1',
+        fuelTypes: [FuelType.Petrol, FuelType.Diesel],
+        yearStart: 2024,
+        yearEnd: null,
+        isCurrent: true,
+        sourceUrl: 'https://example.com',
+        variant: {
+          name: 'SX (O)',
+          sourceUrl: 'https://example.com',
+          generation: {
+            name: 'Creta (2024 facelift)',
+            yearStart: 2024,
+            yearEnd: null,
+            isCurrent: true,
+            sourceUrl: 'https://example.com',
+            model: {
+              name: 'Creta',
+              sourceUrl: 'https://example.com',
+              make: {
+                name: 'Hyundai',
+                marketCode: 'IN',
+                vehicleType: VehicleType.SUV,
+                sourceUrl: 'https://example.com',
+              },
+            },
+          },
+        },
+      },
+    ]);
+    prisma.vehicleCatalogVariantOffering.updateMany = vi.fn();
+
+    await service.archiveMissingVariants(mockUser, 'run-1');
+
+    expect(prisma.vehicleCatalogGenerationAlias.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          normalizedAlias: normalizeAlias('Creta (current)'),
+          generation: {
+            model: {
+              slug: 'creta',
+              make: {
+                slug: 'hyundai',
+                marketCode: 'IN',
+                vehicleType: { in: ['car', 'suv', 'van'] },
+              },
+            },
+          },
+        },
+      }),
+    );
+    expect(prisma.vehicleCatalogVariantOffering.updateMany).not.toHaveBeenCalled();
   });
 
   it('rejects publishing a run when a newer successful import exists', async () => {
