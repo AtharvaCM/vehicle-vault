@@ -10,8 +10,8 @@ import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
-import { TrackThisVehicle } from '../components/track-this-vehicle';
 import { describeOffering } from '../utils/format-public-catalog';
+import { TrackThisVehicle } from '../components/track-this-vehicle';
 
 export function variantPageTitle(page: PublicCatalogVariantPage) {
   return `${page.make.name} ${page.model.name} ${page.variant.name} — service schedule and specs | ${APP_NAME}`;
