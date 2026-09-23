@@ -1,3 +1,11 @@
+# [1.64.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.63.0...v1.64.0) (2026-09-23)
+
+
+### Features
+
+* **catalog:** public model page payload with variants by generation ([3c8c3eb](https://github.com/AtharvaCM/vehicle-vault/commit/3c8c3ebc81f53a2c84ea36a69c45720a3519084a)), closes [#176](https://github.com/AtharvaCM/vehicle-vault/issues/176)
+* **web:** public model pages, prerendered, with a make-and-model intent ([f40ca57](https://github.com/AtharvaCM/vehicle-vault/commit/f40ca5774b6b0a210a9f785a36a2ac2d0d1e7d60)), closes [#176](https://github.com/AtharvaCM/vehicle-vault/issues/176)
+
 # [1.63.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.62.0...v1.63.0) (2026-09-23)
 
 
