@@ -10,6 +10,13 @@ import {
   describeScheduleBasis,
   formatSpecNumber,
 } from '../utils/format-public-catalog';
+import { isPageIndexed, PUBLIC_CATALOG_INDEXING } from './indexing';
+import {
+  serializeStructuredData,
+  STRUCTURED_DATA_ELEMENT_ID,
+  variantPageStructuredData,
+  type JsonLd,
+} from './structured-data';
 
 /**
  * The origin every canonical and Open Graph URL is absolute on: the custom
@@ -32,15 +39,18 @@ export type PublicPageHead = {
   /** Absolute. */
   imageUrl: string;
   /**
-   * Every page is `noindex` until the indexing flag and the page-quality gate
-   * (#175) decide otherwise.
+   * `index, follow` only when the build's indexing flag is on and the API's
+   * page-quality gate passed the page; `noindex` otherwise.
    */
   robots: 'noindex' | 'index, follow';
+  /** schema.org JSON-LD describing the page's subject, or null for none. */
+  structuredData: JsonLd | null;
 };
 
 type HeadOptions = {
   origin?: string;
-  indexable?: boolean;
+  /** The global indexing flag; the build's `VITE_PUBLIC_CATALOG_INDEXING` unless given. */
+  indexing?: boolean;
 };
 
 type Slugged = { slug: string };
@@ -90,16 +100,18 @@ export function variantPageDescription(page: PublicCatalogVariantPage) {
 
 export function variantPageHead(
   page: PublicCatalogVariantPage,
-  { origin = CANONICAL_ORIGIN, indexable = false }: HeadOptions = {},
+  { origin = CANONICAL_ORIGIN, indexing = PUBLIC_CATALOG_INDEXING }: HeadOptions = {},
 ): PublicPageHead {
   const base = normalizeOrigin(origin);
+  const canonicalUrl = `${base}${publicVariantPath(page)}`;
 
   return {
     title: variantPageTitle(page),
     description: variantPageDescription(page),
-    canonicalUrl: `${base}${publicVariantPath(page)}`,
+    canonicalUrl,
     imageUrl: `${base}/web-app-manifest-512x512.png`,
-    robots: indexable ? 'index, follow' : 'noindex',
+    robots: isPageIndexed(page, indexing) ? 'index, follow' : 'noindex',
+    structuredData: variantPageStructuredData(page, canonicalUrl),
   };
 }
 
@@ -115,6 +127,13 @@ export function renderHeadTags(head: PublicPageHead) {
         ? `<link rel="${tag.key}" href="${escapeHtml(tag.value)}" />`
         : `<meta ${tag.kind}="${tag.key}" content="${escapeHtml(tag.value)}" />`,
     ),
+    ...(head.structuredData
+      ? [
+          `<script type="application/ld+json" id="${STRUCTURED_DATA_ELEMENT_ID}">${serializeStructuredData(
+            head.structuredData,
+          )}</script>`,
+        ]
+      : []),
   ].join('\n    ');
 }
 

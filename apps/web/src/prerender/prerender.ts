@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type {
@@ -16,10 +16,12 @@ import {
   variantPageHead,
   type PublicPageHead,
 } from '@/features/public-catalog/head/public-page-head';
+import { isPageIndexed, PUBLIC_CATALOG_INDEXING } from '@/features/public-catalog/head/indexing';
 import { queryKeys } from '@/lib/query/query-keys';
 
 import { composeDocument } from './compose-document';
 import { renderAppAtUrl, type RenderedApp, type SeededQuery } from './render-app';
+import { renderRobots, renderSitemap } from './sitemap';
 
 /** The slice of `fetch` the prerender uses, so a test can hand it fixtures. */
 export type PrerenderFetch = (
@@ -33,8 +35,14 @@ export type PrerenderOptions = {
   /** The finished client build: `index.html` is the template, pages land beside it. */
   distDir: string;
   fetch?: PrerenderFetch;
-  /** The canonical origin for head tags. */
+  /** The canonical origin for head tags, the sitemap and `robots.txt`. */
   origin?: string;
+  /**
+   * The global indexing flag. Off: every page is `noindex` and no sitemap is
+   * written. Defaults to the build's `VITE_PUBLIC_CATALOG_INDEXING`, the value
+   * the client bundle was built with too.
+   */
+  indexing?: boolean;
   log?: (line: string) => void;
   sleep?: (ms: number) => Promise<void>;
   render?: (url: string, queries: SeededQuery[]) => Promise<RenderedApp>;
@@ -44,6 +52,10 @@ export type PrerenderSummary = {
   /** Site paths written, e.g. `/cars/honda/city/city-lineup/vx`. */
   paths: string[];
   variantPages: number;
+  /** Pages without `noindex`: the flag is on and the gate passed them. The sitemap lists exactly these. */
+  indexablePages: number;
+  /** Whether `sitemap.xml` was written. It is when indexing is on, even if it lists nothing. */
+  sitemap: boolean;
 };
 
 export class PrerenderError extends Error {
@@ -59,6 +71,12 @@ type PageJob = {
   path: string;
   queries: SeededQuery[];
   head: PublicPageHead;
+  /** The API's page-quality gate passed it. */
+  passesGate: boolean;
+  /** Indexed (no `noindex`), and so in the sitemap: the flag is on and the gate passed it. */
+  indexed: boolean;
+  /** The newest `updatedAt` in the page's subtree, for the sitemap's `lastmod`. */
+  lastmod: string;
 };
 
 const MAX_ATTEMPTS_UNREACHABLE = 3;
@@ -79,6 +97,7 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
     distDir,
     fetch: fetcher = globalThis.fetch as PrerenderFetch,
     origin = CANONICAL_ORIGIN,
+    indexing = PUBLIC_CATALOG_INDEXING,
     log = (line) => console.log(line),
     sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     render = renderAppAtUrl,
@@ -97,7 +116,7 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
   log(`Catalog index: ${index.variants.length} variants.`);
 
   const payloads = await fetchAllVariantPages(apiBaseUrl, index.variants.length, getData);
-  const jobs = variantJobs(index.variants, payloads, origin);
+  const jobs = variantJobs(index.variants, payloads, { origin, indexing });
 
   let written = 0;
   for (const job of jobs) {
@@ -118,10 +137,45 @@ export async function prerenderPublicCatalog(options: PrerenderOptions): Promise
     written += 1;
   }
 
-  const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
-  log(`Prerendered ${written} pages (${written} variant pages) into ${distDir} in ${seconds}s.`);
+  const indexed = jobs.filter((job) => job.indexed);
+  const base = origin.replace(/\/+$/, '');
+  const sitemapFile = path.join(distDir, 'sitemap.xml');
+  if (indexing) {
+    await writeFile(
+      sitemapFile,
+      renderSitemap(
+        indexed.map((job) => ({ path: job.path, lastmod: job.lastmod })),
+        base,
+      ),
+      'utf8',
+    );
+  } else {
+    // Nothing to list, so no file: a crawler asking gets a 404, not an empty promise.
+    await rm(sitemapFile, { force: true });
+  }
+  await writeFile(
+    path.join(distDir, 'robots.txt'),
+    renderRobots({ sitemapUrl: indexing ? `${base}/sitemap.xml` : null }),
+    'utf8',
+  );
 
-  return { paths: jobs.map((job) => job.path), variantPages: written };
+  const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+  const passing = jobs.filter((job) => job.passesGate).length;
+  log(`Prerendered ${written} pages (${written} variant pages) into ${distDir} in ${seconds}s.`);
+  log(
+    indexing
+      ? `Indexable: ${indexed.length} of ${written} pages. Indexing is on: sitemap.xml lists ` +
+          `those ${indexed.length}, and the other ${written - indexed.length} are noindex.`
+      : `Indexable: 0 of ${written} pages. Indexing is off (VITE_PUBLIC_CATALOG_INDEXING is not "on"), ` +
+          `so every page is noindex and there is no sitemap.xml; ${passing} pass the page-quality gate.`,
+  );
+
+  return {
+    paths: jobs.map((job) => job.path),
+    variantPages: written,
+    indexablePages: indexed.length,
+    sitemap: indexing,
+  };
 }
 
 async function fetchAllVariantPages(
@@ -155,7 +209,7 @@ async function fetchAllVariantPages(
 function variantJobs(
   entries: PublicCatalogIndexEntry[],
   payloads: PublicCatalogVariantPage[],
-  origin: string,
+  { origin, indexing }: { origin: string; indexing: boolean },
 ): PageJob[] {
   const payloadsByPath = new Map(payloads.map((payload) => [publicVariantPath(payload), payload]));
   const jobs = new Map<string, PageJob>();
@@ -184,6 +238,22 @@ function variantJobs(
     // Two index rows can share an address: Hyundai is both a car and an SUV
     // make with one slug. An address is one file, written once.
     if (jobs.has(pagePath)) continue;
+    // An API older than the gate sends no verdict. With indexing on, that
+    // would quietly ship every page noindex and an empty sitemap.
+    if (indexing && typeof payload.indexable !== 'boolean') {
+      throw new PrerenderError(
+        `Indexing is on, but the catalog API gave ${pagePath} no page-quality verdict. ` +
+          'Deploy the API with the page-quality gate first.',
+      );
+    }
+    // The index and the page come from one gate on the API. Disagreeing, the
+    // sitemap and the page's own robots tag could contradict each other.
+    if (entry.indexable !== payload.indexable) {
+      throw new PrerenderError(
+        `The index and the page payload disagree on whether ${pagePath} is indexable. ` +
+          'The catalog may have changed mid-build; run the build again.',
+      );
+    }
 
     jobs.set(pagePath, {
       path: pagePath,
@@ -199,7 +269,10 @@ function variantJobs(
           data: payload,
         },
       ],
-      head: variantPageHead(payload, { origin }),
+      head: variantPageHead(payload, { origin, indexing }),
+      passesGate: payload.indexable,
+      indexed: isPageIndexed(payload, indexing),
+      lastmod: entry.updatedAt,
     });
   }
 

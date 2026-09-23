@@ -2,6 +2,11 @@ import { useEffect } from 'react';
 import { APP_NAME } from '@vehicle-vault/shared';
 
 import { headTagSpecs, type HeadTagSpec, type PublicPageHead } from './public-page-head';
+import {
+  serializeStructuredData,
+  STRUCTURED_DATA_ELEMENT_ID,
+  type JsonLd,
+} from './structured-data';
 
 const APP_DESCRIPTION =
   'One record of your car or two-wheeler: service history, insurance and PUC, and what’s due next — with a heads-up before anything lapses. Built for India.';
@@ -34,11 +39,20 @@ export const APP_DEFAULT_HEAD: { title: string; tags: HeadTagSpec[] } = {
  */
 export function usePublicPageHead(head: PublicPageHead) {
   const { title, description, canonicalUrl, imageUrl, robots } = head;
+  // Compared as text: the object is rebuilt on every render.
+  const structuredData = head.structuredData ? serializeStructuredData(head.structuredData) : null;
 
   useEffect(() => {
-    applyPublicPageHead(document, { title, description, canonicalUrl, imageUrl, robots });
+    applyPublicPageHead(document, {
+      title,
+      description,
+      canonicalUrl,
+      imageUrl,
+      robots,
+      structuredData: structuredData ? (JSON.parse(structuredData) as JsonLd) : null,
+    });
     return () => restoreAppDefaultHead(document);
-  }, [title, description, canonicalUrl, imageUrl, robots]);
+  }, [title, description, canonicalUrl, imageUrl, robots, structuredData]);
 }
 
 export function applyPublicPageHead(doc: Document, head: PublicPageHead) {
@@ -46,10 +60,12 @@ export function applyPublicPageHead(doc: Document, head: PublicPageHead) {
   for (const tag of headTagSpecs(head)) {
     upsertTag(doc, tag);
   }
+  setStructuredData(doc, head.structuredData);
 }
 
 export function restoreAppDefaultHead(doc: Document) {
   doc.title = APP_DEFAULT_HEAD.title;
+  setStructuredData(doc, null);
   const defaults = new Set(APP_DEFAULT_HEAD.tags.map((tag) => `${tag.kind}:${tag.key}`));
   for (const tag of headTagSpecs(emptyHead)) {
     if (!defaults.has(`${tag.kind}:${tag.key}`)) findTag(doc, tag)?.remove();
@@ -65,7 +81,24 @@ const emptyHead: PublicPageHead = {
   canonicalUrl: '',
   imageUrl: '',
   robots: 'noindex',
+  structuredData: null,
 };
+
+/** Puts the page's one JSON-LD script in place (the prerendered one included), or takes it out. */
+function setStructuredData(doc: Document, data: JsonLd | null) {
+  let script = doc.getElementById(STRUCTURED_DATA_ELEMENT_ID);
+  if (!data) {
+    script?.remove();
+    return;
+  }
+  if (!script) {
+    script = doc.createElement('script');
+    script.setAttribute('type', 'application/ld+json');
+    script.id = STRUCTURED_DATA_ELEMENT_ID;
+    doc.head.appendChild(script);
+  }
+  script.textContent = serializeStructuredData(data);
+}
 
 function findTag(doc: Document, tag: HeadTagSpec) {
   const selector =
