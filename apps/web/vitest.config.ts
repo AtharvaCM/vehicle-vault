@@ -7,7 +7,12 @@ export default mergeConfig(
     test: {
       clearMocks: true,
       environment: 'jsdom',
-      include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'tests/e2e/helpers/**/*.spec.ts'],
+      include: [
+        'src/**/*.spec.ts',
+        'src/**/*.spec.tsx',
+        'tests/e2e/helpers/**/*.spec.ts',
+        'eslint/**/*.spec.js',
+      ],
       mockReset: true,
       restoreMocks: true,
       setupFiles: ['./src/test/setup.ts'],

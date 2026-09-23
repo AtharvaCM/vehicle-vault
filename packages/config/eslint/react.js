@@ -27,7 +27,9 @@ export default tseslint.config(
       // recommended preset adds the React Compiler rules (purity, refs,
       // set-state-in-effect, ...), which this codebase has never been held to.
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      // An error, not a warning: the web lint lets warnings through (they
+      // track the design-system migration), and this one must not slip.
+      'react-hooks/exhaustive-deps': 'error',
       'react/react-in-jsx-scope': 'off',
       'react-refresh/only-export-components': 'off',
     },

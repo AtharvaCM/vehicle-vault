@@ -12,7 +12,7 @@
     "build:ssr": "NODE_ENV=production vite build --ssr src/prerender/cli.ts --outDir dist-ssr --emptyOutDir",
     "prerender": "NODE_ENV=production node dist-ssr/cli.js",
     "preview": "vite preview",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test --config=playwright.config.ts",
