@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { MaintenanceCategory, MaintenanceLineItemKind } from '../enums';
 
 const isoDateTimeString = z.string().datetime({ offset: true });
-const jsonObjectSchema = z.record(z.unknown());
+const jsonObjectSchema = z.record(z.string(), z.unknown());
 
 export const MaintenanceLineItemCreateSchema = z.object({
   kind: z.nativeEnum(MaintenanceLineItemKind),

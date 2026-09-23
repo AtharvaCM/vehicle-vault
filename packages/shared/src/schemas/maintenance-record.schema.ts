@@ -7,7 +7,7 @@ import {
 } from './maintenance-line-item.schema';
 
 const isoDateTimeString = z.string().datetime({ offset: true });
-const jsonObjectSchema = z.record(z.unknown());
+const jsonObjectSchema = z.record(z.string(), z.unknown());
 
 export const MaintenanceRecordCreateSchema = z.object({
   vehicleId: z.string().trim().min(1),

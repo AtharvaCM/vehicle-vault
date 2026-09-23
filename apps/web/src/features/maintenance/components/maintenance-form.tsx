@@ -174,14 +174,14 @@ function toCreateMaintenanceRecordInput(
 
 function setFormIssueErrors(
   form: ReturnType<typeof useForm<MaintenanceFormValues>>,
-  issues: { message: string; path: Array<string | number> }[],
+  issues: { message: string; path: PropertyKey[] }[],
 ) {
   issues.forEach((issue) => {
     if (!issue.path.length) {
       return;
     }
 
-    form.setError(issue.path.join('.') as Path<MaintenanceFormValues>, {
+    form.setError(issue.path.map(String).join('.') as Path<MaintenanceFormValues>, {
       message: issue.message,
     });
   });
