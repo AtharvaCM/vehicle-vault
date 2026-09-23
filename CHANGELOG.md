@@ -1,3 +1,10 @@
+# [1.66.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.13...v1.66.0) (2026-09-23)
+
+
+### Features
+
+* **tyres:** front/rear tyre positions and a two-wheel layout ([fade934](https://github.com/AtharvaCM/vehicle-vault/commit/fade934952a3c98089ebfa087f472dc5a1c4371e))
+
 ## [1.65.13](https://github.com/AtharvaCM/vehicle-vault/compare/v1.65.12...v1.65.13) (2026-09-23)
 
 
