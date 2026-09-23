@@ -1,3 +1,16 @@
+# [1.59.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.58.0...v1.59.0) (2026-09-23)
+
+
+### Bug Fixes
+
+* **web:** read a blocked localStorage as signed out instead of crashing ([ee792ab](https://github.com/AtharvaCM/vehicle-vault/commit/ee792abca9f7a7a6f78169013e9515f8bbdb6bad)), closes [#171](https://github.com/AtharvaCM/vehicle-vault/issues/171)
+
+
+### Features
+
+* **catalog:** running-cost calculator on the public variant page ([b9e5488](https://github.com/AtharvaCM/vehicle-vault/commit/b9e5488c3e5632bb9a1b357be0b473c920472cee)), closes [#171](https://github.com/AtharvaCM/vehicle-vault/issues/171)
+* **shared:** ownership-cost estimator for the running-cost calculator ([9a6ed9f](https://github.com/AtharvaCM/vehicle-vault/commit/9a6ed9f38fbd2844065e97e04e91952697aa30a9)), closes [#171](https://github.com/AtharvaCM/vehicle-vault/issues/171)
+
 # [1.58.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.57.3...v1.58.0) (2026-09-23)
 
 
