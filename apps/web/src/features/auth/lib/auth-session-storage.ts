@@ -8,7 +8,15 @@ export function getStoredAuthSession(): AuthSession | null {
     return null;
   }
 
-  const rawSession = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+  let rawSession: string | null;
+  try {
+    rawSession = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+  } catch {
+    // A browser that blocks storage (Safari with all cookies blocked) throws on
+    // any access. Treat it as signed out rather than crash every page, the
+    // public catalog pages included.
+    return null;
+  }
 
   if (!rawSession) {
     return null;
@@ -29,7 +37,7 @@ export function getStoredAuthSession(): AuthSession | null {
 
     return parsedSession;
   } catch {
-    window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    clearStoredAuthSession();
     return null;
   }
 }
@@ -47,5 +55,9 @@ export function clearStoredAuthSession() {
     return;
   }
 
-  window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  try {
+    window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  } catch {
+    // Nothing could have been stored in a blocked store, so there is nothing to clear.
+  }
 }
