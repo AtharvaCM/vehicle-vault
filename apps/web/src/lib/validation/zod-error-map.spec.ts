@@ -42,7 +42,7 @@ describe('zodErrorMap', () => {
       'a date too early',
       z.date().min(new Date(2020, 0, 1)),
       new Date(2019, 0, 1),
-      'Choose a date on or after 1/1/2020',
+      'Choose a date on or after 1 Jan 2020',
     ],
     ['an empty list', z.array(z.string()).min(1), [], 'Add at least 1'],
     ['a step that does not fit', z.number().multipleOf(5), 7, 'Enter a whole number'],
