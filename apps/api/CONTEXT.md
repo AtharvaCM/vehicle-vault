@@ -187,6 +187,9 @@ Sources overlap: an official-site snapshot names a model's real current generati
 **Trim merge**:
 CarWale names some trims differently from the official sources, so one generation could hold the same trim twice: model-prefixed ("3XO AX5" beside "AX5") or a bare parent beside its detailed children (Honda's "V" beside "V | Petrol | Manual"). `catalog:merge-near-duplicate-trims` (plan: `vehicle-catalog/trim-merge-plan.ts`) folds each into the survivor with `catalog-import/variant-fold.ts`, the same fold the generation merge uses, and keeps the folded name as a variant alias. Names that only share a prefix ("SX" and "SX (O)") are different trims and stay. Imports and the import review redirect a folded name to its survivor (`findVariantRedirect`), and an import writing onto a survivor skips an offering another source already gives for that fuel mix.
 
+**Trim names**:
+CarWale repeats part of the model name at the start of many trim names ("Liva GX" in the Toyota Etios Liva, "7 Premium" in the BYD eMax 7). `catalog:strip-model-name-from-trims` (plan: `planTrimRenames` in `vehicle-catalog/trim-merge-plan.ts`) drops it ("GX", "Premium") and keeps the old name as a variant alias, so imports and the import review find the renamed trim (`findVariantRedirect`). A trim whose shortened name already exists is a duplicate for `catalog:merge-near-duplicate-trims`, run first, and is left alone.
+
 **MaintenancePartCatalog**:
 A **global, cross-user** self-learning table mapping normalized part names → suggested `MaintenanceCategory`, harvested from user line items. Powers category suggestion and part search. Not user-scoped (mild data-leakage consideration for part numbers).
 
