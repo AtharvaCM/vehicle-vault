@@ -80,6 +80,31 @@ describe('signOAuthState / readOAuthState', () => {
     expect(readOAuthState(tampered, SECRET, expectGoogle)).toBeNull();
   });
 
+  it('round-trips a return path', () => {
+    const state = signOAuthState(payload({ next: '/vehicle-invites/abc?x=1' }), SECRET);
+
+    expect(readOAuthState(state, SECRET, expectGoogle)?.next).toBe('/vehicle-invites/abc?x=1');
+  });
+
+  it('never signs a return path that leaves the site', () => {
+    for (const next of [
+      'https://evil.example.test/',
+      '//evil.example.test',
+      '/\\evil.example.test',
+    ]) {
+      const state = signOAuthState(payload({ next }), SECRET);
+
+      expect(decodeBody(state)).not.toHaveProperty('r');
+    }
+  });
+
+  it('refuses a state whose return path was swapped after signing', () => {
+    const state = signOAuthState(payload({ next: '/dashboard' }), SECRET);
+    const tampered = withBody(state, { ...decodeBody(state), r: '/vehicles' });
+
+    expect(readOAuthState(tampered, SECRET, expectGoogle)).toBeNull();
+  });
+
   it('refuses a state whose expiry was pushed out after signing', () => {
     const state = signOAuthState(payload(), SECRET);
     const tampered = withBody(state, { ...decodeBody(state), e: NOW + 365 * OAUTH_STATE_TTL_MS });
@@ -205,6 +230,32 @@ describe('OAuthStateStore', () => {
       const { callback } = verify(subject, started.state, `${OAUTH_STATE_COOKIE}=${started.nonce}`);
 
       expect(callback).toHaveBeenCalledWith(null, true, {});
+    }
+  });
+
+  it('carries a same-origin return path from sign-in to callback', () => {
+    const subject = store();
+    const started = begin(subject, { next: '/vehicle-invites/tok-1' });
+
+    const { callback } = verify(subject, started.state, `${OAUTH_STATE_COOKIE}=${started.nonce}`);
+
+    expect(callback).toHaveBeenCalledWith(null, true, { next: '/vehicle-invites/tok-1' });
+  });
+
+  it('drops a return path that would leave the site instead of refusing the sign-in', () => {
+    const subject = store();
+
+    for (const next of [
+      'https://evil.example.test',
+      '//evil.example.test',
+      '/\\evil.example.test',
+      'javascript:alert(1)',
+      ['/dashboard'],
+    ]) {
+      const started = begin(subject, { catalogModel: 'city', next });
+      const { callback } = verify(subject, started.state, `${OAUTH_STATE_COOKIE}=${started.nonce}`);
+
+      expect(callback).toHaveBeenCalledWith(null, true, { catalogModel: 'city' });
     }
   });
 

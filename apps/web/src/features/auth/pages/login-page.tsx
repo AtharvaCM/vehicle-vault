@@ -1,8 +1,7 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 
-import { afterSignInDestination } from '@/features/catalog-intent/lib/catalog-intent';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
@@ -11,12 +10,14 @@ import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
 import { LoginForm } from '../components/login-form';
 import { OAuthButtons } from '../components/oauth-buttons';
 import { useAuth } from '../hooks/use-auth';
+import { afterAuthDestination, navigateAfterAuth } from '../lib/return-path';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { next } = useSearch({ from: '/login' });
 
   const handleSubmit = async (values: Parameters<typeof login>[0]) => {
     setIsSubmitting(true);
@@ -28,12 +29,16 @@ export function LoginPage() {
       // Rendered now, so the router's auth context is signed in before the
       // navigation below (see register-page.tsx).
       flushSync(() => auth.setSession(authResponse));
+      const destination = afterAuthDestination(next);
       appToast.success({
         title: 'Signed in',
-        description: 'Opening your garage dashboard.',
+        ...('to' in destination && destination.to === '/dashboard'
+          ? { description: 'Opening your garage dashboard.' }
+          : {}),
       });
-      // On to a vehicle picked on a catalog page before signing in, if any.
-      await navigate({ to: afterSignInDestination() });
+      // Back where they were going, else on to a vehicle picked on a catalog
+      // page before signing in, if any.
+      await navigateAfterAuth(navigate, destination);
     } catch (error) {
       const message = getApiErrorMessage(error, 'Unable to sign in with those credentials.');
 
@@ -49,13 +54,15 @@ export function LoginPage() {
 
   return (
     <AuthPageShell
-      alternateAction={<AuthPageLink label="Create one" text="Need an account?" to="/register" />}
+      alternateAction={
+        <AuthPageLink label="Create one" next={next} text="Need an account?" to="/register" />
+      }
       description="Sign in to see your garage, service history, reminders, and receipts."
       title="Welcome back"
     >
       <div className="space-y-6">
         <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
-        <OAuthButtons />
+        <OAuthButtons next={next} />
       </div>
     </AuthPageShell>
   );
