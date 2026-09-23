@@ -27,6 +27,24 @@ describe('buildVehicleUpdatePayload', () => {
     expect(payload).toEqual({ nickname: 'Highway cruiser' });
   });
 
+  it('sends null for a nickname or variant the owner cleared', () => {
+    const payload = buildVehicleUpdatePayload(
+      { ...values, nickname: undefined, variant: undefined },
+      { nickname: true, variant: true },
+    );
+
+    expect(payload).toMatchObject({ nickname: null, variant: null });
+  });
+
+  it('leaves an untouched blank nickname out rather than clearing it', () => {
+    const payload = buildVehicleUpdatePayload(
+      { ...values, nickname: undefined },
+      { odometer: true },
+    );
+
+    expect(payload).not.toHaveProperty('nickname');
+  });
+
   it('leaves purchase details out when only the nickname changed', () => {
     const payload = buildVehicleUpdatePayload(values, { nickname: true });
 

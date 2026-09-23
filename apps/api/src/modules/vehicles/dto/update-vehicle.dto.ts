@@ -36,7 +36,7 @@ export class UpdateVehicleDto {
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  variant?: string;
+  variant?: string | null;
 
   @IsOptional()
   @Type(() => Number)
@@ -57,7 +57,7 @@ export class UpdateVehicleDto {
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  nickname?: string;
+  nickname?: string | null;
 
   @IsOptional()
   @Type(() => Number)
