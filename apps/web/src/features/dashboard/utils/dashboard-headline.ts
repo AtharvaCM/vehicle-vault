@@ -1,11 +1,12 @@
 import type { DashboardSummary } from '../types/dashboard';
+import { attentionCount } from './attention-set';
 import { formatRelativeDue } from './format-due';
 
 type HeadlineInput = Pick<DashboardSummary, 'attention' | 'attentionCounts'>;
 
 /** The page description under the "Dashboard" H1. */
 export function dashboardHeadline({ attention, attentionCounts }: HeadlineInput) {
-  const urgentCount = attentionCounts.overdue + attentionCounts.today + attentionCounts.thisWeek;
+  const urgentCount = attentionCount(attentionCounts);
 
   if (urgentCount > 0) {
     const headline =

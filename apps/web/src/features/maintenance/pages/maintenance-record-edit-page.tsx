@@ -9,6 +9,8 @@ import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
+import { useAttachmentExtractionStatus } from '@/features/attachments/hooks/use-attachment-extraction-status';
+import { useAttachments } from '@/features/attachments/hooks/use-attachments';
 import { MaintenanceClaimLinkCard } from '@/features/claims/components/maintenance-claim-link-card';
 import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
@@ -19,11 +21,13 @@ import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 
+import { DraftBillSummary } from '../components/draft-bill-summary';
 import { MaintenanceDraftReviewCard } from '../components/maintenance-draft-review-card';
 import { MaintenanceForm } from '../components/maintenance-form';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
 import type { MaintenanceFormValues } from '../schemas/maintenance-form.schema';
 import { useUpdateMaintenanceRecord } from '../hooks/use-update-maintenance-record';
+import { getFieldsFromBill, pickBillExtraction } from '../utils/get-fields-from-bill';
 
 type MaintenanceRecordEditPageProps = {
   recordId: string;
@@ -82,6 +86,21 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           }
         : undefined,
     [recordQuery.data],
+  );
+
+  // Upload-first fills a draft from its bill before opening it here. The fields
+  // that still hold what the bill says carry a "from bill" marker, worked out
+  // from the saved values so a reload keeps them.
+  const attachmentsQuery = useAttachments(recordId);
+  const extractionStatusQuery = useAttachmentExtractionStatus();
+  const draftAttachments = isDraft ? (attachmentsQuery.data ?? []) : [];
+  const billExtraction = pickBillExtraction(draftAttachments);
+  const fieldsFromBill = useMemo(
+    () =>
+      billExtraction && initialValues
+        ? getFieldsFromBill(billExtraction, initialValues)
+        : undefined,
+    [billExtraction, initialValues],
   );
 
   async function handleUpdateRecord(
@@ -209,8 +228,19 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           title={isDraft ? 'Confirm Maintenance Record' : 'Edit Maintenance Record'}
         />
 
+        {isDraft ? (
+          <DraftBillSummary
+            attachments={draftAttachments}
+            extraction={billExtraction}
+            extractionAvailable={extractionStatusQuery.data?.available}
+            fieldsFromBillCount={fieldsFromBill?.size ?? 0}
+          />
+        ) : null}
+
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <MaintenanceForm
+            currentOdometer={vehicleQuery.data?.odometer}
+            fieldsFromBill={fieldsFromBill}
             initialValues={initialValues}
             isSubmitting={updateRecordMutation.isPending}
             onDirtyChange={setIsDirty}
@@ -235,6 +265,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
             successMessage={
               isDraft ? 'Maintenance record confirmed.' : 'Maintenance record updated.'
             }
+            recordId={recordId}
             vehicleId={recordQuery.data?.vehicleId}
           />
 

@@ -16,6 +16,7 @@ import {
   applyServiceSchedule,
   serviceScheduleSuggestionsQueryOptions,
 } from '../api/service-schedule';
+import type { ServiceScheduleSuggestion } from '../types/service-schedule';
 import { formatReminderType } from '../utils/format-reminder-type';
 
 type Props = {
@@ -148,13 +149,15 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                       {item.intervalMonths != null ? (
                         <span>{item.intervalMonths} months</span>
                       ) : null}
-                      {item.dueOdometer != null || item.dueDate ? ' • Next: ' : null}
-                      {item.dueOdometer != null ? (
-                        <span>{item.dueOdometer.toLocaleString('en-IN')} km</span>
-                      ) : null}
-                      {item.dueOdometer != null && item.dueDate ? ' / ' : null}
-                      {item.dueDate ? <span>{formatDate(item.dueDate)}</span> : null}
+                      {!item.anchor && (item.dueOdometer != null || item.dueDate)
+                        ? ` • Next: ${nextDue(item)}`
+                        : null}
                     </p>
+                    {item.anchor && (item.dueOdometer != null || item.dueDate) ? (
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {describeAnchor(item.anchor)} → next {nextDue(item)}
+                      </p>
+                    ) : null}
                     {item.notes ? (
                       <p className="mt-1 text-xs italic text-slate-400">{item.notes}</p>
                     ) : null}
@@ -185,4 +188,30 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
       </CardContent>
     </Card>
   );
+}
+
+function nextDue(item: ServiceScheduleSuggestion): string {
+  return [
+    item.dueOdometer != null ? `${item.dueOdometer.toLocaleString('en-IN')} km` : null,
+    item.dueDate ? formatDate(item.dueDate) : null,
+  ]
+    .filter(Boolean)
+    .join(' / ');
+}
+
+/**
+ * Says what the next due was counted from, so a reminder added from this row is
+ * never silently later than the service it follows.
+ */
+function describeAnchor(anchor: NonNullable<ServiceScheduleSuggestion['anchor']>): string {
+  if (anchor.source === 'now') return 'No history — counted from today';
+
+  const when = anchor.lastDoneDate ? ` ${formatDate(anchor.lastDoneDate)}` : '';
+  const where =
+    anchor.lastDoneOdometer != null
+      ? ` at ${anchor.lastDoneOdometer.toLocaleString('en-IN')} km`
+      : '';
+  const verb = anchor.source === 'tyre_check' ? 'Last checked' : 'Last done';
+
+  return `${verb}${when}${where}`;
 }

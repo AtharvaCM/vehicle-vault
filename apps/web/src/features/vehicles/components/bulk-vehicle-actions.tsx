@@ -3,8 +3,16 @@ import { CarFront, Trash2 } from 'lucide-react';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Button } from '@/components/ui/button';
 
+import type { Vehicle } from '../types/vehicle';
+import { getVehicleDisplayName } from '../utils/get-vehicle-display-name';
+
+export type SelectedVehicleSummary = Pick<
+  Vehicle,
+  'id' | 'make' | 'model' | 'nickname' | 'registrationNumber'
+>;
+
 type BulkVehicleActionsProps = {
-  selectedCount: number;
+  selectedVehicles: SelectedVehicleSummary[];
   visibleCount: number;
   isDeleting?: boolean;
   onClearSelection: () => void;
@@ -13,13 +21,14 @@ type BulkVehicleActionsProps = {
 };
 
 export function BulkVehicleActions({
-  selectedCount,
+  selectedVehicles,
   visibleCount,
   isDeleting = false,
   onClearSelection,
   onDeleteSelected,
   onSelectAllVisible,
 }: BulkVehicleActionsProps) {
+  const selectedCount = selectedVehicles.length;
   const hasSelection = selectedCount > 0;
 
   return (
@@ -61,7 +70,23 @@ export function BulkVehicleActions({
                 triggerIcon={<Trash2 className="mr-2 h-4 w-4" />}
                 triggerLabel={`Delete selected (${selectedCount})`}
                 triggerVariant="outline"
-              />
+              >
+                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-border/70 bg-slate-50 p-3 text-sm">
+                  {selectedVehicles.map((vehicle) => (
+                    <li
+                      className="flex items-center justify-between gap-3 text-slate-700"
+                      key={vehicle.id}
+                    >
+                      <span className="truncate font-medium text-slate-900">
+                        {getVehicleDisplayName(vehicle)}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-slate-500">
+                        {vehicle.registrationNumber}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </ConfirmActionDialog>
             </>
           ) : null}
         </div>
