@@ -1,3 +1,10 @@
+## [1.66.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.3...v1.66.4) (2026-09-23)
+
+
+### Bug Fixes
+
+* **auth:** verification and reset links fail and succeed out loud ([5166fa6](https://github.com/AtharvaCM/vehicle-vault/commit/5166fa6a8a9cbf0e840610bb1a557903905a5762))
+
 ## [1.66.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.66.2...v1.66.3) (2026-09-23)
 
 

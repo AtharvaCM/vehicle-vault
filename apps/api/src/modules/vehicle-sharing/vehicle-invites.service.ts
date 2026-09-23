@@ -20,12 +20,27 @@ import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 const INVITE_TOKEN_BYTES = 32;
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type InviteStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
+export type InviteStatus = 'pending' | 'accepted' | 'revoked' | 'expired' | 'declined';
 
 export interface InviteCreateResult {
   invite: SerialisedInvite;
-  /** Plain-text token shown only once (dev/preview environments). */
-  token?: string;
+  /**
+   * The link to accept, always: the owner can forward it themselves, which is
+   * the only way it reaches anyone while email is not configured.
+   */
+  acceptUrl: string;
+  /** True only when an email really went out. */
+  emailSent: boolean;
+}
+
+export interface InvitePreview {
+  status: InviteStatus;
+  vehicleLabel: string;
+  inviterName: string;
+  role: VehicleRole;
+  emailMasked: string;
+  expiresAt: string;
+  addressedToYou?: boolean;
 }
 
 export interface SerialisedInvite {
@@ -37,6 +52,7 @@ export interface SerialisedInvite {
   expiresAt: string;
   acceptedAt: string | null;
   revokedAt: string | null;
+  declinedAt: string | null;
   invitedByUserId: string;
   createdAt: string;
 }
@@ -80,6 +96,7 @@ export class VehicleInvitesService {
         email: normalisedEmail,
         acceptedAt: null,
         revokedAt: null,
+        declinedAt: null,
         expiresAt: { gt: new Date() },
       },
       select: { id: true },
@@ -124,6 +141,7 @@ export class VehicleInvitesService {
     });
 
     const acceptUrl = this.buildAcceptUrl(token);
+    let emailSent = false;
     if (this.mailService.isConfigured) {
       try {
         await this.mailService.sendVehicleInviteEmail({
@@ -134,6 +152,7 @@ export class VehicleInvitesService {
           acceptUrl,
           expiresAt,
         });
+        emailSent = true;
       } catch (error) {
         this.logger.warn(
           `Invite email delivery failed for ${normalisedEmail}: ${
@@ -143,11 +162,71 @@ export class VehicleInvitesService {
       }
     }
 
-    const includePlainToken = process.env.NODE_ENV !== 'production';
+    return { invite: serialiseInvite(invite), acceptUrl, emailSent };
+  }
+
+  /**
+   * The invite behind a link, for its page to show before anyone accepts:
+   * vehicle, inviter, role, the invited address masked, expiry and status.
+   * Anyone holding the link may see this (the token is the secret). With a
+   * `userId`, it also says whether the invite is addressed to that account.
+   */
+  async preview(token: string, userId?: string): Promise<InvitePreview> {
+    const invite = await this.prisma.vehicleInvite.findUnique({
+      where: { tokenHash: hashToken(token) },
+      include: {
+        vehicle: {
+          select: { make: true, model: true, nickname: true, registrationNumber: true },
+        },
+        invitedBy: { select: { name: true } },
+      },
+    });
+    if (!invite) throw new NotFoundException('Invitation not found.');
+
+    let addressedToYou: boolean | undefined;
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+      addressedToYou = user?.email.toLowerCase() === invite.email.toLowerCase();
+    }
+
     return {
-      invite: serialiseInvite(invite),
-      ...(includePlainToken ? { token } : {}),
+      status: computeInviteStatus(invite),
+      vehicleLabel: labelForVehicle(invite.vehicle),
+      inviterName: invite.invitedBy.name,
+      role: invite.role,
+      emailMasked: maskEmail(invite.email),
+      expiresAt: invite.expiresAt.toISOString(),
+      ...(addressedToYou === undefined ? {} : { addressedToYou }),
     };
+  }
+
+  /**
+   * The invitee says no. Only the account the invite is addressed to can
+   * decline it, and only while it is pending; the owner sees it as declined.
+   */
+  async decline(userId: string, token: string): Promise<{ declined: true }> {
+    const invite = await this.findUsableInvite(userId, token);
+
+    await this.prisma.$transaction(async (tx) => {
+      const declined = await tx.vehicleInvite.update({
+        where: { id: invite.id },
+        data: { declinedAt: new Date() },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: invite.vehicle.userId,
+        action: AUDIT_ACTIONS.vehicleInvite.declined,
+        resourceType: AuditResourceType.vehicle_invite,
+        resourceId: invite.id,
+        before: invite as unknown as Record<string, unknown>,
+        after: declined as unknown as Record<string, unknown>,
+      });
+    });
+
+    return { declined: true };
   }
 
   async listForVehicle(actorUserId: string, vehicleId: string): Promise<SerialisedInvite[]> {
@@ -188,25 +267,7 @@ export class VehicleInvitesService {
   }
 
   async accept(userId: string, token: string): Promise<{ vehicleId: string; role: VehicleRole }> {
-    const tokenHash = hashToken(token);
-    const invite = await this.prisma.vehicleInvite.findUnique({
-      where: { tokenHash },
-      include: { vehicle: { select: { userId: true } } },
-    });
-    if (!invite) throw new NotFoundException('Invitation not found.');
-    if (invite.acceptedAt) throw new ConflictException('Invitation already accepted.');
-    if (invite.revokedAt) throw new ForbiddenException('Invitation was revoked.');
-    if (invite.expiresAt.getTime() <= Date.now()) {
-      throw new ForbiddenException('Invitation has expired.');
-    }
-
-    const user = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { email: true },
-    });
-    if (user.email.toLowerCase() !== invite.email.toLowerCase()) {
-      throw new ForbiddenException('This invitation is addressed to a different account.');
-    }
+    const invite = await this.findUsableInvite(userId, token);
 
     if (invite.vehicle.userId === userId) {
       throw new ConflictException('You already own this vehicle.');
@@ -249,6 +310,31 @@ export class VehicleInvitesService {
     return { vehicleId: invite.vehicleId, role: invite.role };
   }
 
+  /** A pending invite addressed to this account, or the reason it cannot be used. */
+  private async findUsableInvite(userId: string, token: string) {
+    const invite = await this.prisma.vehicleInvite.findUnique({
+      where: { tokenHash: hashToken(token) },
+      include: { vehicle: { select: { userId: true } } },
+    });
+    if (!invite) throw new NotFoundException('Invitation not found.');
+    if (invite.acceptedAt) throw new ConflictException('Invitation already accepted.');
+    if (invite.revokedAt) throw new ForbiddenException('Invitation was revoked.');
+    if (invite.declinedAt) throw new ForbiddenException('Invitation was declined.');
+    if (invite.expiresAt.getTime() <= Date.now()) {
+      throw new ForbiddenException('Invitation has expired.');
+    }
+
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (user.email.toLowerCase() !== invite.email.toLowerCase()) {
+      throw new ForbiddenException('This invitation is addressed to a different account.');
+    }
+
+    return invite;
+  }
+
   private buildAcceptUrl(token: string) {
     const base = this.appConfig.frontendOrigin.replace(/\/$/, '');
     return `${base}/vehicle-invites/${token}`;
@@ -269,6 +355,13 @@ function labelForVehicle(v: {
   return `${v.make} ${v.model} (${v.registrationNumber})`;
 }
 
+/** `rahul@gmail.com` → `r***@gmail.com`: enough to recognise, not to harvest. */
+export function maskEmail(email: string) {
+  const at = email.lastIndexOf('@');
+  if (at <= 0) return '***';
+  return `${email[0]}***${email.slice(at)}`;
+}
+
 function serialiseInvite(invite: Prisma.VehicleInviteGetPayload<true>): SerialisedInvite {
   return {
     id: invite.id,
@@ -279,6 +372,7 @@ function serialiseInvite(invite: Prisma.VehicleInviteGetPayload<true>): Serialis
     expiresAt: invite.expiresAt.toISOString(),
     acceptedAt: invite.acceptedAt ? invite.acceptedAt.toISOString() : null,
     revokedAt: invite.revokedAt ? invite.revokedAt.toISOString() : null,
+    declinedAt: invite.declinedAt ? invite.declinedAt.toISOString() : null,
     invitedByUserId: invite.invitedByUserId,
     createdAt: invite.createdAt.toISOString(),
   };
@@ -287,6 +381,7 @@ function serialiseInvite(invite: Prisma.VehicleInviteGetPayload<true>): Serialis
 function computeInviteStatus(invite: Prisma.VehicleInviteGetPayload<true>): InviteStatus {
   if (invite.acceptedAt) return 'accepted';
   if (invite.revokedAt) return 'revoked';
+  if (invite.declinedAt) return 'declined';
   if (invite.expiresAt.getTime() <= Date.now()) return 'expired';
   return 'pending';
 }

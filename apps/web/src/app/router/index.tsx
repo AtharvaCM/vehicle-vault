@@ -67,7 +67,6 @@ const protectedRouteTree = appRoute.addChildren([
   settingsActivityRoute,
   settingsPreferencesRoute,
   adminUsersRoute,
-  acceptInviteRoute,
 ]);
 
 /** Exported so tests can build a router over the real tree with their own history. */
@@ -79,6 +78,8 @@ export const routeTree = rootRoute.addChildren([
   registerRoute,
   resetPasswordRoute,
   verifyEmailRoute,
+  // Public: an invite link is previewed before anyone signs in.
+  acceptInviteRoute,
   carsVariantRoute,
   bikesVariantRoute,
   carsModelRoute,

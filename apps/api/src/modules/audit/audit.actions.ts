@@ -125,6 +125,7 @@ export const AUDIT_ACTIONS = {
     created: 'vehicle_invite.created',
     accepted: 'vehicle_invite.accepted',
     revoked: 'vehicle_invite.revoked',
+    declined: 'vehicle_invite.declined',
   },
 } as const;
 

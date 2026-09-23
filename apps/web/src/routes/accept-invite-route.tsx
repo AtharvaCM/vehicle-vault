@@ -1,7 +1,7 @@
 import { createRoute } from '@tanstack/react-router';
 
-import { appRoute } from './app-route';
 import { createLazyPage } from './lazy-page';
+import { rootRoute } from './root-route';
 
 const AcceptInvitePage = createLazyPage(
   () =>
@@ -9,8 +9,8 @@ const AcceptInvitePage = createLazyPage(
       default: module.AcceptInvitePage,
     })),
   {
-    title: 'Accepting invitation',
-    description: 'Validating your vehicle invitation.',
+    title: 'Opening your invite',
+    description: 'Loading the invitation.',
   },
 );
 
@@ -20,7 +20,9 @@ function AcceptInviteRouteComponent() {
 }
 
 export const acceptInviteRoute = createRoute({
-  getParentRoute: () => appRoute,
+  // Outside the signed-in guard: the page shows the invite to anyone holding
+  // the link and asks them to sign in or register only to accept it.
+  getParentRoute: () => rootRoute,
   path: 'vehicle-invites/$token',
   component: AcceptInviteRouteComponent,
 });

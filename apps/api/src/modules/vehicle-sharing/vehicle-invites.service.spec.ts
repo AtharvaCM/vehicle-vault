@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { VehicleRole } from '@prisma/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { VehicleInvitesService } from './vehicle-invites.service';
+import { maskEmail, VehicleInvitesService } from './vehicle-invites.service';
 
 describe('VehicleInvitesService', () => {
   const prisma = {
@@ -17,7 +17,7 @@ describe('VehicleInvitesService', () => {
       update: vi.fn(),
     },
     vehicle: { findUniqueOrThrow: vi.fn() },
-    user: { findUniqueOrThrow: vi.fn() },
+    user: { findUniqueOrThrow: vi.fn(), findUnique: vi.fn() },
     $transaction: vi.fn(),
   };
   const access = {
@@ -99,9 +99,14 @@ describe('VehicleInvitesService', () => {
       role: VehicleRole.viewer,
     });
 
-    expect(result.token).toBeDefined();
-    const hash = createHash('sha256').update(result.token!).digest('hex');
+    // The owner always gets the link, and it carries the token the row hashes.
+    const token = result.acceptUrl.replace('https://app.test/vehicle-invites/', '');
+    expect(result.acceptUrl).toMatch(/^https:\/\/app\.test\/vehicle-invites\/[0-9a-f]{64}$/);
+    const hash = createHash('sha256').update(token).digest('hex');
     expect(result.invite.email).toBe('new@x.test');
+    // Mail is not configured here, so nothing claims an email went out.
+    expect(result.emailSent).toBe(false);
+    expect(mailService.sendVehicleInviteEmail).not.toHaveBeenCalled();
     expect(prisma.vehicleInvite.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ tokenHash: hash, role: VehicleRole.viewer }),
     });
@@ -199,5 +204,180 @@ describe('VehicleInvitesService', () => {
       revokedAt: null,
     });
     await expect(service.revoke('u', 'v1', 'inv-1')).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  describe('email delivery is reported, not assumed', () => {
+    function stubCreate() {
+      prisma.vehicleMember.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicleInvite.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicleInvite.create.mockImplementation(
+        ({ data }: { data: Record<string, unknown> }) =>
+          Promise.resolve({
+            id: 'inv-1',
+            vehicleId: 'v1',
+            ...data,
+            acceptedAt: null,
+            revokedAt: null,
+            declinedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
+      );
+    }
+
+    afterEach(() => {
+      mailService.isConfigured = false;
+    });
+
+    it('says an email was sent when it was', async () => {
+      mailService.isConfigured = true;
+      stubCreate();
+
+      const result = await service.createInvite('u-owner', 'v1', {
+        email: 'new@x.test',
+        role: VehicleRole.editor,
+      });
+
+      expect(result.emailSent).toBe(true);
+      expect(mailService.sendVehicleInviteEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ acceptUrl: result.acceptUrl }),
+      );
+    });
+
+    it('says no email was sent when delivery failed, and still gives the link', async () => {
+      mailService.isConfigured = true;
+      mailService.sendVehicleInviteEmail.mockRejectedValueOnce(new Error('SMTP down'));
+      stubCreate();
+
+      const result = await service.createInvite('u-owner', 'v1', {
+        email: 'new@x.test',
+        role: VehicleRole.editor,
+      });
+
+      expect(result.emailSent).toBe(false);
+      expect(result.acceptUrl).toMatch(/\/vehicle-invites\//);
+    });
+  });
+
+  describe('preview', () => {
+    const token = 'd'.repeat(64);
+    const stored = (overrides: Record<string, unknown> = {}) => ({
+      id: 'inv-1',
+      vehicleId: 'v1',
+      email: 'rahul@gmail.com',
+      role: VehicleRole.viewer,
+      tokenHash: createHash('sha256').update(token).digest('hex'),
+      expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+      acceptedAt: null,
+      revokedAt: null,
+      declinedAt: null,
+      invitedByUserId: 'u-owner',
+      vehicle: {
+        make: 'Hyundai',
+        model: 'Creta',
+        nickname: 'Family SUV',
+        registrationNumber: 'MH12AB1234',
+      },
+      invitedBy: { name: 'Asha' },
+      ...overrides,
+    });
+
+    it('shows vehicle, inviter, role, masked address and expiry to anyone with the link', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValueOnce(stored());
+
+      await expect(service.preview(token)).resolves.toEqual({
+        status: 'pending',
+        vehicleLabel: 'Family SUV (MH12AB1234)',
+        inviterName: 'Asha',
+        role: VehicleRole.viewer,
+        emailMasked: 'r***@gmail.com',
+        expiresAt: '2099-01-01T00:00:00.000Z',
+      });
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('says, signed in, whether the invite is for this account', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValue(stored());
+      prisma.user.findUnique.mockResolvedValueOnce({ email: 'Rahul@Gmail.com' });
+
+      await expect(service.preview(token, 'u-rahul')).resolves.toMatchObject({
+        addressedToYou: true,
+      });
+
+      prisma.user.findUnique.mockResolvedValueOnce({ email: 'someone@else.test' });
+
+      await expect(service.preview(token, 'u-other')).resolves.toMatchObject({
+        addressedToYou: false,
+      });
+    });
+
+    it('reports an invite that has ended', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValueOnce(stored({ declinedAt: new Date() }));
+
+      await expect(service.preview(token)).resolves.toMatchObject({ status: 'declined' });
+    });
+
+    it('404s an unknown link', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.preview('nope-token-nope-token')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('decline', () => {
+    const token = 'e'.repeat(64);
+    const pending = {
+      id: 'inv-1',
+      vehicleId: 'v1',
+      email: 'new@x.test',
+      role: VehicleRole.editor,
+      expiresAt: new Date(Date.now() + 60_000),
+      acceptedAt: null,
+      revokedAt: null,
+      declinedAt: null,
+      vehicle: { userId: 'u-owner' },
+    };
+
+    it('marks the invite declined, audited for the owner', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValueOnce(pending);
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({ email: 'new@x.test' });
+      prisma.vehicleInvite.update.mockResolvedValueOnce({ ...pending, declinedAt: new Date() });
+
+      await expect(service.decline('u-new', token)).resolves.toEqual({ declined: true });
+      expect(prisma.vehicleInvite.update).toHaveBeenCalledWith({
+        where: { id: 'inv-1' },
+        data: { declinedAt: expect.any(Date) },
+      });
+      expect(audit.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'vehicle_invite.declined', ownerUserId: 'u-owner' }),
+      );
+      expect(prisma.vehicleMember.upsert).not.toHaveBeenCalled();
+    });
+
+    it('only lets the invited account decline', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValueOnce(pending);
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({ email: 'other@x.test' });
+
+      await expect(service.decline('u-other', token)).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.vehicleInvite.update).not.toHaveBeenCalled();
+    });
+
+    it('cannot accept an invite once declined', async () => {
+      prisma.vehicleInvite.findUnique.mockResolvedValueOnce({
+        ...pending,
+        declinedAt: new Date(),
+      });
+
+      await expect(service.accept('u-new', token)).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
+  it('masks an address to its first letter and domain', () => {
+    expect(maskEmail('rahul@gmail.com')).toBe('r***@gmail.com');
+    expect(maskEmail('a@b.test')).toBe('a***@b.test');
+    expect(maskEmail('not-an-email')).toBe('***');
   });
 });
