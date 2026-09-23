@@ -47,7 +47,7 @@ export const VehicleDocumentSchema = z.object({
   startDate: z.coerce.date().nullable(),
   endDate: z.coerce.date().nullable(),
   notes: z.string().max(500).nullable(),
-  details: z.record(z.unknown()),
+  details: z.record(z.string(), z.unknown()),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
