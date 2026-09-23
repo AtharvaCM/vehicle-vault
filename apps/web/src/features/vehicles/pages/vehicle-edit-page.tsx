@@ -61,13 +61,22 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
   async function handleUpdateVehicle(
     values: Parameters<typeof updateVehicleMutation.mutateAsync>[0],
   ) {
+    // The form only sends what changed, so a save with nothing touched sends
+    // an empty body. VehicleUpdateSchema refuses that ("at least one field"),
+    // and there is nothing to write anyway: treat it as a no-op success
+    // rather than calling the API.
+    const hasChanges = Object.keys(values).length > 0;
+
     try {
-      await updateVehicleMutation.mutateAsync(values);
+      if (hasChanges) {
+        await updateVehicleMutation.mutateAsync(values);
+      }
       const restoreNavigationGuard = allowNextNavigation();
-      appToast.success({
-        title: 'Vehicle updated',
-        description: 'Vehicle details were saved.',
-      });
+      appToast.success(
+        hasChanges
+          ? { title: 'Vehicle updated', description: 'Vehicle details were saved.' }
+          : { title: 'No changes to save', description: 'Nothing on this vehicle changed.' },
+      );
 
       try {
         await navigate({
