@@ -1,3 +1,11 @@
+# [1.60.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.59.0...v1.60.0) (2026-09-23)
+
+
+### Features
+
+* **api:** attribute catalog sign-ups and vehicles on product events ([3132bbf](https://github.com/AtharvaCM/vehicle-vault/commit/3132bbf5543ad9540938ca688ea8d49eb3512a67)), closes [#172](https://github.com/AtharvaCM/vehicle-vault/issues/172)
+* **catalog:** track this vehicle from a variant page ([731433e](https://github.com/AtharvaCM/vehicle-vault/commit/731433e3f781b8e81955a03ef85d297332b1cef2)), closes [#172](https://github.com/AtharvaCM/vehicle-vault/issues/172)
+
 # [1.59.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.58.0...v1.59.0) (2026-09-23)
 
 

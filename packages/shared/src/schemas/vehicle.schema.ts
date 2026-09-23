@@ -22,6 +22,17 @@ export const VehicleCreateSchema = z.object({
   purchaseOdometer: z.number().int().nonnegative().optional().nullable(),
 });
 
+/**
+ * What `POST /vehicles` accepts: a vehicle, plus whether the form was opened
+ * prefilled from a catalog intent ("Track this vehicle" on a public catalog
+ * page). The flag is attribution for `vehicle_created` and is never stored on
+ * the vehicle, so it stays out of `VehicleCreateSchema`, which the update and
+ * read shapes build on.
+ */
+export const VehicleCreateRequestSchema = VehicleCreateSchema.extend({
+  fromCatalogIntent: z.literal(true).optional(),
+});
+
 export const VehicleUpdateSchema = VehicleCreateSchema.partial().refine(
   (value) => Object.keys(value).length > 0,
   {

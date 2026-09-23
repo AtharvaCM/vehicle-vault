@@ -13,6 +13,7 @@ import { RunningCostCalculator } from '../components/running-cost-calculator';
 import { variantPageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
 import { describeOffering } from '../utils/format-public-catalog';
+import { TrackThisVehicle } from '../components/track-this-vehicle';
 
 export { variantPageTitle } from '../head/public-page-head';
 
@@ -96,6 +97,8 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
           <PublicSpecSections specs={page.specs} />
         </section>
       ) : null}
+
+      <TrackThisVehicle page={page} />
     </article>
   );
 }

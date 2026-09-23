@@ -4,7 +4,7 @@ import {
   type VehicleCatalogVariantOption,
   VehicleType,
 } from '@vehicle-vault/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { FormField } from '@/components/shared/form-field';
@@ -30,6 +30,7 @@ import { useVehicleCatalogMakes } from '../hooks/use-vehicle-catalog-makes';
 import { useVehicleCatalogModels } from '../hooks/use-vehicle-catalog-models';
 import { useVehicleCatalogVariants } from '../hooks/use-vehicle-catalog-variants';
 import { type VehicleFormValues, vehicleFormSchema } from '../schemas/vehicle-form.schema';
+import { keepsCatalogSelection, type VariantYears } from '../utils/keeps-catalog-selection';
 
 const fuelOptions = Object.values(FuelType);
 const vehicleTypeOptions = Object.values(VehicleType);
@@ -147,6 +148,17 @@ export function VehicleForm({
     () => variantsQuery.data?.find((variant) => variant.name === selectedVariant),
     [selectedVariant, variantsQuery.data],
   );
+  // The years the chosen variant was sold in, held on to while a new year is
+  // typed: the picker's list for a half-typed year is empty, and a prefilled
+  // variant should survive the owner correcting the year to their own.
+  const chosenVariantYearsRef = useRef<VariantYears | null>(null);
+  useEffect(() => {
+    if (!selectedVariant) {
+      chosenVariantYearsRef.current = null;
+    } else if (selectedVariantOption) {
+      chosenVariantYearsRef.current = selectedVariantOption;
+    }
+  }, [selectedVariant, selectedVariantOption]);
   const availableFuelOptions = useMemo(
     () =>
       selectedVariantOption?.fuelTypes.length
@@ -289,7 +301,16 @@ export function VehicleForm({
                 id="vehicle-year"
                 {...form.register('year', {
                   valueAsNumber: true,
-                  onChange: () => {
+                  onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+                    if (
+                      keepsCatalogSelection(
+                        Number(event.target.value),
+                        chosenVariantYearsRef.current,
+                      )
+                    ) {
+                      return;
+                    }
+
                     form.setValue('make', '', { shouldDirty: true });
                     form.setValue('model', '', { shouldDirty: true });
                     form.setValue('variant', '', { shouldDirty: true });

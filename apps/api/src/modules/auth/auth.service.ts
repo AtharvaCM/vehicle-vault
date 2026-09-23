@@ -115,7 +115,11 @@ export class AuthService {
       await this.productEvents.record(this.prisma, {
         name: 'account_created',
         userId: user.id,
-        properties: { method: 'password' },
+        properties: {
+          method: 'password',
+          // Signed up from a public catalog page's "Track this vehicle".
+          ...(input.catalogModel ? { source: 'catalog', catalogModel: input.catalogModel } : {}),
+        },
       });
 
       const { url } = await this.tokenService.issueEmailVerification(user.id);
