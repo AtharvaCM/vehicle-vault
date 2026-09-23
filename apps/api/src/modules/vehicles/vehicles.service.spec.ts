@@ -308,6 +308,86 @@ describe('VehiclesService', () => {
     });
   });
 
+  it('relinks catalog references when only the variant changes to one typed by hand', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
+    const before = { ...vehicleRecord, catalogVariantId, catalogGenerationId };
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(before);
+    catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
+      variantId: null,
+      generationId: catalogGenerationId,
+    });
+    prisma.vehicle.update = vi.fn().mockResolvedValue({
+      ...before,
+      variant: 'SX Knight',
+      catalogVariantId: null,
+    });
+
+    // The form sends no catalogVariantId when the variant matches no catalog
+    // option, so the old link would otherwise still describe the SX.
+    await service.updateVehicle('user-1', 'vehicle-1', { variant: 'SX Knight' });
+
+    expect(catalogLinker.resolveCatalogLink).toHaveBeenCalledWith({
+      make: 'Hyundai',
+      model: 'Creta',
+      year: 2022,
+      vehicleType: VehicleType.Car,
+      fuelType: FuelType.Petrol,
+    });
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: {
+        variant: 'SX Knight',
+        catalogVariantId: null,
+        catalogGenerationId,
+      },
+    });
+  });
+
+  it('relinks catalog references when the variant is cleared', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
+    const before = { ...vehicleRecord, catalogVariantId, catalogGenerationId };
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(before);
+    catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
+      variantId: null,
+      generationId: catalogGenerationId,
+    });
+    prisma.vehicle.update = vi.fn().mockResolvedValue({
+      ...before,
+      variant: null,
+      catalogVariantId: null,
+    });
+
+    await service.updateVehicle('user-1', 'vehicle-1', { variant: null });
+
+    expect(catalogLinker.resolveCatalogLink).toHaveBeenCalled();
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: {
+        variant: null,
+        catalogVariantId: null,
+        catalogGenerationId,
+      },
+    });
+  });
+
+  it('keeps the catalog variant the caller picked alongside a new variant', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(vehicleRecord);
+    prisma.vehicle.update = vi.fn().mockResolvedValue({
+      ...vehicleRecord,
+      variant: 'SX(O)',
+      catalogVariantId,
+    });
+
+    await service.updateVehicle('user-1', 'vehicle-1', { variant: 'SX(O)', catalogVariantId });
+
+    expect(catalogLinker.resolveCatalogLink).not.toHaveBeenCalled();
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: { variant: 'SX(O)', catalogVariantId },
+    });
+  });
+
   it('updating the nickname leaves purchase price, date and odometer untouched', async () => {
     accessService.assert.mockResolvedValueOnce(VehicleRole.editor);
     const before = {
@@ -343,9 +423,15 @@ describe('VehiclesService', () => {
     });
 
     // Prisma reads `undefined` as "leave unchanged"; only `null` clears the column.
+    // Clearing the variant also re-resolves the catalog link, which finds nothing here.
     expect(prisma.vehicle.update).toHaveBeenCalledWith({
       where: { id: 'vehicle-1' },
-      data: { nickname: null, variant: null },
+      data: {
+        nickname: null,
+        variant: null,
+        catalogVariantId: null,
+        catalogGenerationId: null,
+      },
     });
     expect(vehicle.nickname).toBeUndefined();
     expect(vehicle.variant).toBeUndefined();
