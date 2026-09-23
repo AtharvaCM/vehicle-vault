@@ -8,10 +8,10 @@ import {
 } from '@nestjs/common';
 import {
   FuelType,
-  VehicleCreateSchema,
+  VehicleCreateRequestSchema,
   VehicleType,
   VehicleUpdateSchema,
-  type CreateVehicleInput,
+  type CreateVehicleRequest,
   type UpdateVehicleInput,
   type Vehicle,
   type VehicleServiceIntervalMap,
@@ -130,7 +130,8 @@ export class VehiclesService {
   }
 
   async createVehicle(userId: string, payload: CreateVehicleDto) {
-    const input = this.validateCreateVehicleInput(payload);
+    // Attribution for the product event, not a vehicle column.
+    const { fromCatalogIntent, ...input } = this.validateCreateVehicleInput(payload);
 
     // Auto-link to catalog when caller did not supply catalogVariantId.
     let catalogVariantId: string | null | undefined = input.catalogVariantId;
@@ -176,6 +177,7 @@ export class VehiclesService {
           name: 'vehicle_created',
           userId,
           vehicleId: created.id,
+          ...(fromCatalogIntent ? { properties: { fromCatalogIntent: true } } : {}),
         });
         return created;
       });
@@ -359,8 +361,8 @@ export class VehiclesService {
     }
   }
 
-  private validateCreateVehicleInput(payload: CreateVehicleDto): CreateVehicleInput {
-    const result = VehicleCreateSchema.safeParse(payload);
+  private validateCreateVehicleInput(payload: CreateVehicleDto): CreateVehicleRequest {
+    const result = VehicleCreateRequestSchema.safeParse(payload);
 
     if (!result.success) {
       throw new BadRequestException({

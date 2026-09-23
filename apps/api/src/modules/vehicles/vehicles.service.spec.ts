@@ -153,6 +153,31 @@ describe('VehiclesService', () => {
     });
   });
 
+  it('marks a vehicle created from a catalog intent on its event, and nowhere else', async () => {
+    prisma.vehicle.create = vi.fn().mockResolvedValue(vehicleRecord);
+
+    await service.createVehicle('user-1', {
+      registrationNumber: 'MH12AB1234',
+      make: 'Hyundai',
+      model: 'Creta',
+      variant: 'SX',
+      year: 2022,
+      fuelType: FuelType.Petrol,
+      odometer: 12000,
+      vehicleType: VehicleType.Car,
+      fromCatalogIntent: true,
+    });
+
+    expect(productEvents.record).toHaveBeenCalledWith(prisma, {
+      name: 'vehicle_created',
+      userId: 'user-1',
+      vehicleId: 'vehicle-1',
+      properties: { fromCatalogIntent: true },
+    });
+    // Not a vehicle column: it must not reach the row Prisma writes.
+    expect(prisma.vehicle.create.mock.calls[0]?.[0]?.data).not.toHaveProperty('fromCatalogIntent');
+  });
+
   it('creates a vehicle with no variant, and still links it by make, model and year', async () => {
     catalogLinker.resolveCatalogLink.mockResolvedValueOnce({
       variantId: null,

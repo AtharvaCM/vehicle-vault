@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CATALOG_SLUG_MAX_LENGTH, CATALOG_SLUG_PATTERN } from '@vehicle-vault/shared';
+import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({
@@ -30,4 +31,16 @@ export class RegisterDto {
   @MinLength(8)
   @MaxLength(72)
   password!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Slug of the catalog model whose public page led to this sign-up. Attribution only.',
+    example: 'city',
+    maxLength: CATALOG_SLUG_MAX_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(CATALOG_SLUG_MAX_LENGTH)
+  @Matches(CATALOG_SLUG_PATTERN)
+  catalogModel?: string;
 }

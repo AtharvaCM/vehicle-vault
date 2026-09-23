@@ -1,9 +1,17 @@
 import { z } from 'zod';
 
+import { CatalogSlugSchema } from './vehicle-catalog.schema';
+
 export const RegisterSchema = z.object({
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(255),
   password: z.string().min(8).max(72),
+  /**
+   * The catalog model slug of the public page whose "Track this vehicle"
+   * button led here. Attribution only: it becomes `account_created`'s
+   * `source: 'catalog'` and `catalogModel`, and nothing else reads it.
+   */
+  catalogModel: CatalogSlugSchema.optional(),
 });
 
 export const LoginSchema = z.object({
