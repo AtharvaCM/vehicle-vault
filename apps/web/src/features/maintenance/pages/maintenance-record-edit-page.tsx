@@ -211,6 +211,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <MaintenanceForm
+            currentOdometer={vehicleQuery.data?.odometer}
             initialValues={initialValues}
             isSubmitting={updateRecordMutation.isPending}
             onDirtyChange={setIsDirty}
@@ -235,6 +236,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
             successMessage={
               isDraft ? 'Maintenance record confirmed.' : 'Maintenance record updated.'
             }
+            recordId={recordId}
             vehicleId={recordQuery.data?.vehicleId}
           />
 
