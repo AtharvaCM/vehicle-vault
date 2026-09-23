@@ -842,6 +842,27 @@ describe('prerenderPublicCatalog', () => {
       });
     });
 
+    it('fails when the index comes from an API older than make pages', async () => {
+      const fetcher = fixtureFetch({
+        ...catalogRoutes,
+        '/public-catalog/index': () =>
+          ok({
+            variants: pages.map((page) => {
+              const {
+                fuelTypes: _fuels,
+                yearStart: _start,
+                yearEnd: _end,
+                isCurrent: _current,
+                ...rest
+              } = indexEntry(page);
+              return rest;
+            }),
+          }),
+      });
+
+      await expect(run(fetcher)).rejects.toThrow(/Deploy the API with make and browse pages/);
+    });
+
     it('merges a make’s car and SUV rows into one make page, dated by its newest variant', async () => {
       const i20 = carPage();
       const creta: PublicCatalogVariantPage = {

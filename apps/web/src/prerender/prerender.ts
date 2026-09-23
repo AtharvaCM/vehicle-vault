@@ -432,6 +432,17 @@ function listingJobs(
   entries: PublicCatalogIndexEntry[],
   { origin, indexing }: { origin: string; indexing: boolean },
 ): { makePageJobs: PageJob[]; browsePageJobs: PageJob[] } {
+  // An API older than make pages sends index entries without their fuels,
+  // years and sale status, and every model would read as long gone.
+  const summaryless = entries.find(
+    (entry) => typeof entry.isCurrent !== 'boolean' || !Array.isArray(entry.fuelTypes),
+  );
+  if (summaryless) {
+    throw new PrerenderError(
+      `The catalog index gave ${publicVariantPath(summaryless)} no fuels or sale status for ` +
+        'make pages. Deploy the API with make and browse pages first.',
+    );
+  }
   const unique = uniquePublicCatalogVariants(entries);
   const makePageJobs: PageJob[] = [];
   const browsePageJobs: PageJob[] = [];
