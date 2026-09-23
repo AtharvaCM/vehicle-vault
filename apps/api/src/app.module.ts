@@ -20,6 +20,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MailModule } from './common/mail/mail.module';
 import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { ProductEventsModule } from './modules/product-events/product-events.module';
+import { PublicCatalogModule } from './modules/public-catalog/public-catalog.module';
 import { VehicleDocumentsModule } from './modules/vehicle-documents/vehicle-documents.module';
 import { ClaimsModule } from './modules/claims/claims.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
@@ -45,6 +46,7 @@ import { VehicleSharingModule } from './modules/vehicle-sharing/vehicle-sharing.
     AuthModule,
     UsersModule,
     VehicleCatalogModule,
+    PublicCatalogModule,
     VehiclesModule,
     MaintenanceModule,
     MaintenancePartsModule,

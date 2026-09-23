@@ -61,6 +61,19 @@ export const queryKeys = {
     variantSpecs: (make: string, model: string, variant: string) =>
       [...queryKeys.vehicleCatalog.all(), 'variantSpecs', make, model, variant] as const,
   },
+  publicCatalog: {
+    all: () => ['publicCatalog'] as const,
+    variant: (segment: string, make: string, model: string, generation: string, variant: string) =>
+      [
+        ...queryKeys.publicCatalog.all(),
+        'variant',
+        segment,
+        make,
+        model,
+        generation,
+        variant,
+      ] as const,
+  },
   maintenance: {
     all: () => ['maintenance'] as const,
     global: () => [...queryKeys.maintenance.all(), 'global'] as const,

@@ -65,6 +65,10 @@ export const endpoints = {
     publishImportRun: (runId: string) => `/vehicle-catalog/import-runs/${runId}/publish`,
     specs: '/vehicle-catalog/specs',
   },
+  publicCatalog: {
+    variant: (segment: string, make: string, model: string, generation: string, variant: string) =>
+      `/public-catalog/${[segment, make, model, generation, variant].map(encodeURIComponent).join('/')}`,
+  },
   maintenance: {
     all: '/maintenance-records',
     list: (vehicleId: string) => `/vehicles/${vehicleId}/maintenance-records`,

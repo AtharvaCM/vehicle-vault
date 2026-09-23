@@ -29,3 +29,4 @@ export * from './vehicles-new-route';
 export * from './vehicles-route';
 export * from './verify-email-route';
 export * from './accept-invite-route';
+export * from './public-catalog-routes';

@@ -60,27 +60,46 @@ export interface IntervalVehicleShape {
   fuelType: string;
 }
 
+export interface IntervalVariantShape {
+  variantId: string | null;
+  vehicleType: string;
+  fuelType: string;
+}
+
 @Injectable()
 export class MaintenanceIntervalResolver {
   constructor(private readonly prisma: PrismaService) {}
 
   async resolveForVehicle(vehicle: IntervalVehicleShape): Promise<ResolvedIntervalMap> {
+    return this.resolveForVariant({
+      variantId: vehicle.catalogVariantId ?? null,
+      vehicleType: vehicle.vehicleType,
+      fuelType: vehicle.fuelType,
+    });
+  }
+
+  /**
+   * The same resolution without a vehicle: what a catalog variant needs, for a
+   * given type and fuel. The public catalog pages read this, so a stranger sees
+   * the schedule a tracked vehicle of that variant would be held to.
+   */
+  async resolveForVariant(variant: IntervalVariantShape): Promise<ResolvedIntervalMap> {
     const resolved: ResolvedIntervalMap = {};
 
     for (const [category, interval] of Object.entries(DEFAULT_INTERVALS)) {
-      if (this.appliesTo(category as MaintenanceCategory, vehicle)) {
+      if (this.appliesTo(category as MaintenanceCategory, variant)) {
         resolved[category as MaintenanceCategory] = interval;
       }
     }
 
-    if (vehicle.catalogVariantId) {
+    if (variant.variantId) {
       const rows = await this.prisma.serviceInterval.findMany({
-        where: { variantId: vehicle.catalogVariantId },
+        where: { variantId: variant.variantId },
       });
       for (const row of rows) {
         if (row.intervalKm == null && row.intervalMonths == null) continue;
         const category = row.category as MaintenanceCategory;
-        if (!this.appliesTo(category, vehicle)) continue;
+        if (!this.appliesTo(category, variant)) continue;
         // A variant row replaces the default outright rather than merging with
         // it, so a manufacturer can express a genuinely time-only or
         // distance-only interval. A null here means "no limit on this
@@ -97,7 +116,10 @@ export class MaintenanceIntervalResolver {
     return resolved;
   }
 
-  private appliesTo(category: MaintenanceCategory, vehicle: IntervalVehicleShape): boolean {
+  private appliesTo(
+    category: MaintenanceCategory,
+    vehicle: Pick<IntervalVehicleShape, 'vehicleType' | 'fuelType'>,
+  ): boolean {
     const isMotorcycle = vehicle.vehicleType === VehicleType.Motorcycle;
     if (MOTORCYCLE_ONLY.has(category) && !isMotorcycle) return false;
     if (NON_MOTORCYCLE_ONLY.has(category) && isMotorcycle) return false;
