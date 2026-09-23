@@ -1,4 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
+
+import { queryKeys } from '@/lib/query/query-keys';
 
 import { getPushPublicKey, subscribePush, unsubscribePush } from '../api/push';
 
@@ -30,6 +33,7 @@ function isSupported(): boolean {
  */
 export function usePushNotifications() {
   const [status, setStatus] = useState<PushStatus>('loading');
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let cancelled = false;
@@ -88,13 +92,17 @@ export function usePushNotifications() {
         keys: { p256dh: json.keys?.p256dh ?? '', auth: json.keys?.auth ?? '' },
         userAgent: navigator.userAgent,
       });
+      // The preferences page's push column reads this device's subscription
+      // state, so a newly subscribed device must make an unavailable column
+      // available without a reload.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() });
       setStatus('on');
       return true;
     } catch {
       setStatus('off');
       return false;
     }
-  }, []);
+  }, [queryClient]);
 
   const disable = useCallback(async () => {
     setStatus('loading');
@@ -104,6 +112,10 @@ export function usePushNotifications() {
       if (subscription) {
         await unsubscribePush(subscription.endpoint);
         await subscription.unsubscribe();
+        // Symmetric with enable: unsubscribing the last device can make the
+        // push column newly unavailable, and the preferences page must not
+        // keep showing it as available until a reload.
+        await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() });
       }
       setStatus('off');
       return true;
@@ -111,7 +123,7 @@ export function usePushNotifications() {
       setStatus('on');
       return false;
     }
-  }, []);
+  }, [queryClient]);
 
   return { status, enable, disable };
 }

@@ -40,6 +40,7 @@ export function useUpdateNotificationPreferences() {
           preferences: previous.preferences.map(
             (preference) => changes.get(preference.kind) ?? preference,
           ),
+          channels: previous.channels,
         });
       }
 
