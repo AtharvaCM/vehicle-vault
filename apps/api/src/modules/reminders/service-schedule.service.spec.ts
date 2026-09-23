@@ -131,9 +131,7 @@ describe('ServiceScheduleService', () => {
     expect(firstCall.dueOdometer).toBe(20000);
     expect(firstCall.type).toBe(ReminderType.Service);
     // Origin and cadence are columns; the notes are the item's own words.
-    expect(firstCall.notes).toBe(
-      'Recommended every 10 000 km or 12 months, whichever comes first.',
-    );
+    expect(firstCall.notes).toBe('Whichever of the distance or the time comes first.');
     expect(firstCall).toMatchObject({
       catalogSlug: 'engine_oil_change',
       repeatEveryKm: 10000,
@@ -354,6 +352,52 @@ describe('ServiceScheduleService', () => {
 
       expect(oil.dueOdometer).toBe(28_500);
       expect(Date.parse(oil.dueDate!)).toBeLessThan(Date.parse('2099-01-01T00:00:00.000Z'));
+    });
+  });
+
+  describe('two-wheelers', () => {
+    const bike = {
+      id: 'v1',
+      odometer: 12_000,
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.Motorcycle,
+      catalogVariantId: null,
+    };
+
+    it('takes intervals from the two-wheeler table and drops what does not apply', async () => {
+      vehiclesService.ensureVehicleExists.mockResolvedValue(bike);
+      // What the resolver answers for a scooter with no drive or cooling on file.
+      intervalResolver.resolveForVehicle.mockResolvedValue({
+        periodic_service: { km: 3000, months: 6, source: 'default' },
+        engine_oil: { km: 3000, months: 4, source: 'default' },
+        air_filter: { km: 8000, months: 12, source: 'default' },
+        brake_pads: { km: 10000, months: 12, source: 'default' },
+      });
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const slugs = suggestions.map((s) => s.slug);
+      const oil = suggestions.find((s) => s.slug === 'engine_oil_change')!;
+
+      expect(intervalResolver.resolveForVehicle).toHaveBeenCalled();
+      expect(oil).toMatchObject({ intervalKm: 3000, intervalMonths: 4, dueOdometer: 15_000 });
+      expect(slugs).not.toContain('tyre_rotation');
+      expect(slugs).not.toContain('coolant_flush');
+      expect(slugs).not.toContain('chain_lube');
+      // Measured, not serviced, so it has no category and still applies.
+      expect(slugs).toContain('tyre_inspection');
+    });
+
+    it('leaves an unlinked car on the curated catalog', async () => {
+      vehiclesService.ensureVehicleExists.mockResolvedValue({
+        ...bike,
+        vehicleType: VehicleType.Car,
+      });
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+
+      expect(intervalResolver.resolveForVehicle).not.toHaveBeenCalled();
+      expect(suggestions.find((s) => s.slug === 'engine_oil_change')?.intervalKm).toBe(10_000);
+      expect(suggestions.map((s) => s.slug)).toContain('tyre_rotation');
     });
   });
 

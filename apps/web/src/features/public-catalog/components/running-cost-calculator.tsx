@@ -33,6 +33,7 @@ const FIELD_ORDER: OwnershipCostVisitorField[] = [
   'efficiency',
   'energyPrice',
   'serviceCostPerVisit',
+  'servicesPerYear',
   'years',
   'onRoadPrice',
 ];
@@ -158,6 +159,7 @@ function fieldLabels(
       suffix: `per ${units.priceUnit}`,
     },
     serviceCostPerVisit: { label: 'Service cost per visit', prefix: '₹' },
+    servicesPerYear: { label: 'Services per year' },
     years: { label: 'Years of ownership', suffix: 'years' },
     onRoadPrice: { label: 'On-road price (optional)', prefix: '₹' },
     energy: electric ? 'Electricity' : 'Fuel',
@@ -386,6 +388,8 @@ function assumptionHint(
       return `a typical price in ${formatAsOf()}, not your city’s`;
     case 'serviceCostPerVisit':
       return `a typical authorised-workshop service for ${vehicleNoun(base.vehicleType)}`;
+    case 'servicesPerYear':
+      return 'what the schedule’s regular service interval implies, at a typical distance';
     case 'years':
       return 'a typical ownership period';
     case 'onRoadPrice':
@@ -411,6 +415,8 @@ function describeAssumed(
       return `${labels.energyPrice.label.toLowerCase()} of ₹${formatQuantity(inputs.energyPrice)} per ${units.priceUnit} (${formatAsOf()})`;
     case 'serviceCostPerVisit':
       return `${formatCurrency(inputs.serviceCostPerVisit)} a service, typical for ${vehicleNoun(vehicleType)}`;
+    case 'servicesPerYear':
+      return `${formatQuantity(inputs.servicesPerYear)} services a year`;
     case 'years':
       return `${formatQuantity(inputs.years)} years of ownership`;
   }
