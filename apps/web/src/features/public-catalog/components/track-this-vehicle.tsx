@@ -49,15 +49,12 @@ export function TrackThisVehicle({ page }: TrackThisVehicleProps) {
   return (
     <section
       aria-labelledby="track-this-vehicle-heading"
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5"
+      className="rounded-xl border border-line bg-surface p-4 shadow-xs sm:p-5"
     >
-      <h2
-        className="text-lg font-semibold tracking-tight text-slate-950"
-        id="track-this-vehicle-heading"
-      >
+      <h2 className="text-lg font-semibold tracking-tight text-fg" id="track-this-vehicle-heading">
         Own a {vehicleName}?
       </h2>
-      <p className="mt-1 text-sm leading-6 text-slate-600">
+      <p className="mt-1 text-sm leading-6 text-fg-2">
         Keep its service history, reminders and documents in one place, and hear before something
         falls due.{' '}
         {isVariant

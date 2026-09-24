@@ -341,7 +341,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-page px-4">
         <div className="w-full max-w-md">
           <LoadingState
             description="Restoring your account so you can get back to your garage."

@@ -11,25 +11,23 @@ export function EmailVerificationScreen() {
 
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50">
+      <div className="w-full max-w-md space-y-8 rounded-2xl border border-line bg-surface p-8 shadow-xl">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 ring-8 ring-slate-50/50">
-            <Mail className="h-10 w-10 text-slate-900" />
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-page ring-8 ring-page/50">
+            <Mail className="h-10 w-10 text-fg" />
           </div>
 
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Verify your email
-          </h2>
-          <p className="mt-3 text-slate-500">
+          <h2 className="text-2xl font-extrabold tracking-tight text-fg">Verify your email</h2>
+          <p className="mt-3 text-fg-3">
             We&apos;ve sent a verification link to{' '}
-            <span className="break-all font-semibold text-slate-900">{user?.email}</span>. Open it
-            to keep using Vehicle Vault — everything you have added is still here.
+            <span className="break-all font-semibold text-fg">{user?.email}</span>. Open it to keep
+            using Vehicle Vault — everything you have added is still here.
           </p>
         </div>
 
         <div className="space-y-4">
           <Button
-            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-colors"
             disabled={isResending || hasSent}
             onClick={() => void resend()}
           >
@@ -46,7 +44,7 @@ export function EmailVerificationScreen() {
           </Button>
 
           <Button
-            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl border-slate-200 text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900"
+            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl border-line text-fg-2 transition-colors hover:bg-page hover:text-fg"
             variant="outline"
             onClick={() => logout()}
           >
@@ -55,12 +53,12 @@ export function EmailVerificationScreen() {
           </Button>
         </div>
 
-        <div className="mt-8 border-t border-slate-100 pt-6 text-center text-sm text-slate-400">
+        <div className="mt-8 border-t border-line-subtle pt-6 text-center text-sm text-fg-3">
           <p>
             Need help?{' '}
             <a
               href="mailto:support@middle-earth.in"
-              className="font-medium text-slate-900 hover:underline"
+              className="font-medium text-fg hover:underline"
             >
               Contact support
             </a>

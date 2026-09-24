@@ -55,7 +55,7 @@ export function ResetPasswordPage() {
   const alternateAction = (
     <p>
       Need a new link?{' '}
-      <Link className="font-semibold text-slate-900 hover:text-slate-700" to="/forgot-password">
+      <Link className="font-semibold text-fg hover:text-fg-2" to="/forgot-password">
         Request another reset
       </Link>
     </p>

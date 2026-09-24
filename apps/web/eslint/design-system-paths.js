@@ -9,6 +9,11 @@ export const MIGRATED_PATHS = [
   'src/lib/**',
   'src/components/ui/**',
   'src/components/shared/**',
+  'src/features/auth/**',
+  'src/features/landing/**',
+  'src/features/public-catalog/**',
+  'src/features/catalog-intent/**',
+  'src/components/errors/**',
 ];
 
 /**

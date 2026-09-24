@@ -18,24 +18,24 @@ export function PublicCatalogShell({ children }: PublicCatalogShellProps) {
   const isAuthenticated = useContext(AuthContext)?.isAuthenticated ?? false;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-page text-fg">
       <header className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
         <Link
-          className="rounded-lg text-xs font-semibold uppercase tracking-[0.28em] text-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="rounded-lg text-small font-medium text-fg-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
           to="/"
         >
           {APP_NAME}
         </Link>
         {isAuthenticated ? (
           <Link
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
             to="/dashboard"
           >
             Open your garage
           </Link>
         ) : (
           <Link
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
             to="/login"
           >
             Sign in
@@ -45,7 +45,7 @@ export function PublicCatalogShell({ children }: PublicCatalogShellProps) {
 
       <main className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">{children}</main>
 
-      <footer className="mx-auto max-w-4xl px-4 py-8 text-sm text-slate-600 sm:px-6">
+      <footer className="mx-auto max-w-4xl px-4 py-8 text-sm text-fg-2 sm:px-6">
         © {new Date().getFullYear()} {APP_NAME}
       </footer>
     </div>

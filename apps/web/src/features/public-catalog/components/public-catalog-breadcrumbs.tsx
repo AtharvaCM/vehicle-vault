@@ -22,19 +22,16 @@ export function PublicCatalogBreadcrumbs({ page }: PublicCatalogBreadcrumbsProps
           return (
             <li className="flex min-w-0 items-center gap-1" key={crumb.name + index}>
               {index > 0 ? (
-                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-fg-3" />
               ) : null}
               {isCurrent ? (
-                <span
-                  aria-current="page"
-                  className="px-1 py-1 font-medium text-slate-900 wrap-anywhere"
-                >
+                <span aria-current="page" className="px-1 py-1 font-medium text-fg wrap-anywhere">
                   {crumb.name}
                 </span>
               ) : (
                 <PublicCatalogLink
                   address={crumb.address}
-                  className="rounded-lg px-1 py-1 font-medium text-slate-600 underline-offset-4 wrap-anywhere hover:text-slate-950 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                  className="rounded-lg px-1 py-1 font-medium text-fg-2 underline-offset-4 wrap-anywhere hover:text-fg hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {crumb.name}
                 </PublicCatalogLink>
