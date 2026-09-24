@@ -194,7 +194,7 @@ export function MaintenanceOverviewPage({
             <StatCard
               accent={
                 draftCount > 0 ? (
-                  <span className="text-xs font-medium text-amber-700">
+                  <span className="text-xs font-medium text-soon">
                     {draftCount} draft{draftCount === 1 ? '' : 's'} to confirm
                   </span>
                 ) : null
@@ -213,7 +213,7 @@ export function MaintenanceOverviewPage({
             <StatCard
               accent={
                 latestServiceDate ? (
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="text-xs font-medium text-fg-3">
                     Latest {format.date(latestServiceDate)}
                   </span>
                 ) : null

@@ -99,10 +99,10 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
       </CardHeader>
       <CardContent className="space-y-4">
         {attachments.length > 1 ? (
-          <div className="flex flex-col gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 rounded-xl border border-brand/30 bg-brand-tint px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-sm font-medium text-slate-900">Multi-page document OCR</p>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm font-medium text-fg">Multi-page document OCR</p>
+              <p className="text-sm text-fg-2">
                 Extract all attached pages together into one merged service suggestion.
               </p>
             </div>
@@ -147,15 +147,15 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
           attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="space-y-3 rounded-2xl border border-border/70 bg-slate-50/60 p-4"
+              className="space-y-3 rounded-2xl border border-border/70 bg-page/60 p-4"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-slate-900">{attachment.originalFileName}</p>
+                    <p className="font-medium text-fg">{attachment.originalFileName}</p>
                     <ExtractionStatusBadge extraction={attachment.extraction} />
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-fg-3">
                     Uploaded {format.date(attachment.uploadedAt, 'dateTime')}
                   </p>
                 </div>
@@ -197,15 +197,15 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
               {attachment.extraction?.status === 'completed' ? (
                 <ExtractionPreview extraction={attachment.extraction} />
               ) : attachment.extraction?.status === 'failed' ? (
-                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <div className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-sm text-late">
                   {attachment.extraction.failureReason || 'The document could not be analyzed.'}
                 </div>
               ) : !extractionStatusQuery.data?.available ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                <div className="rounded-xl border border-soon/30 bg-soon-tint px-4 py-3 text-sm text-soon">
                   OCR is not configured on the backend, so this draft can only use manual entry.
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-border/70 bg-white/80 px-4 py-3 text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-border/70 bg-surface/80 px-4 py-3 text-sm text-fg-3">
                   Run OCR to extract the document into structured service fields.
                 </div>
               )}
@@ -274,25 +274,23 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
       </div>
 
       {extraction.notes ? (
-        <div className="rounded-xl border border-border/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
+        <div className="rounded-xl border border-border/70 bg-surface/80 px-4 py-3 text-sm text-fg-2">
           {extraction.notes}
         </div>
       ) : null}
 
       {extraction.lineItems?.length ? (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Suggested line items
-          </p>
+          <p className="text-caption font-medium text-fg-3">Suggested line items</p>
           <div className="space-y-2">
             {extraction.lineItems.map((lineItem, index) => (
               <div
                 key={`${lineItem.name}-${index}`}
-                className="flex flex-col gap-2 rounded-xl border border-border/70 bg-white px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
+                className="flex flex-col gap-2 rounded-xl border border-border/70 bg-surface px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-slate-900">{lineItem.name}</span>
+                    <span className="font-medium text-fg">{lineItem.name}</span>
                     <Badge tone="neutral">
                       {format.enumLabel('maintenanceLineItemKind', lineItem.kind)}
                     </Badge>
@@ -302,7 +300,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
                       </Badge>
                     ) : null}
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-fg-3">
                     {[
                       typeof lineItem.quantity === 'number'
                         ? `${lineItem.quantity}${lineItem.unit ? ` ${lineItem.unit}` : ''}`
@@ -314,7 +312,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
                       .join(' • ') || 'No extra details'}
                   </p>
                 </div>
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-fg">
                   {typeof lineItem.lineTotal === 'number'
                     ? format.money(lineItem.lineTotal, { currency: extraction.currencyCode })
                     : 'No amount'}
@@ -328,13 +326,14 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
   );
 }
 
+// A plain label/value pair, not the shared Figure: this preview sits beside the
+// form on the same page, and Figure's aria-labelledby group would give "Odometer"
+// two accessible matches for getByLabel('Odometer') — the form input and this.
 function ExtractionField({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-white/80 px-4 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-        {label}
-      </p>
-      <p className="mt-1 text-sm text-slate-900">{value || 'Not detected'}</p>
+    <div className="rounded-xl border border-border/70 bg-surface/80 px-4 py-3">
+      <p className="text-caption font-medium text-fg-3">{label}</p>
+      <p className="mt-1 text-sm text-fg">{value || 'Not detected'}</p>
     </div>
   );
 }

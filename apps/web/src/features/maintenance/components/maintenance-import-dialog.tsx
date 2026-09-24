@@ -138,7 +138,7 @@ export function MaintenanceImportDialog({
           <DialogTitle className="flex items-center gap-2">
             {step === 'upload' ? <Upload className="h-5 w-5 text-primary" /> : null}
             {step === 'map' ? <FileText className="h-5 w-5 text-primary" /> : null}
-            {step === 'preview' ? <Check className="h-5 w-5 text-emerald-500" /> : null}
+            {step === 'preview' ? <Check className="h-5 w-5 text-ok" /> : null}
             Import service CSV
           </DialogTitle>
           <DialogDescription>
@@ -148,12 +148,12 @@ export function MaintenanceImportDialog({
 
         <div className="flex-1 overflow-hidden py-4">
           {step === 'upload' ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-slate-50/60 p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-page/60 p-12 text-center">
               <div className="mb-4 rounded-full bg-primary/10 p-4">
                 <Upload className="h-8 w-8 text-primary" />
               </div>
-              <h4 className="text-lg font-bold text-slate-900">Select a CSV file</h4>
-              <p className="mt-2 max-w-[420px] text-sm text-slate-500">
+              <h4 className="text-lg font-bold text-fg">Select a CSV file</h4>
+              <p className="mt-2 max-w-[420px] text-sm text-fg-3">
                 Supports one row per service event or multiple rows per invoice when you map a group
                 key or invoice number.
               </p>
@@ -177,7 +177,7 @@ export function MaintenanceImportDialog({
               <div className="flex items-center justify-between px-1">
                 <div>
                   <h4 className="text-sm font-bold">Column mapping</h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-fg-3">
                     Match your CSV headers to record-level and line-item fields.
                   </p>
                 </div>
@@ -207,11 +207,11 @@ export function MaintenanceImportDialog({
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3 px-1">
                 <div>
-                  <h4 className="flex items-center gap-2 text-sm font-bold text-emerald-600">
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-ok">
                     <Check className="h-4 w-4" />
                     Ready to import
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-fg-3">
                     {preview.records.length} service record
                     {preview.records.length === 1 ? '' : 's'} will be created.
                   </p>
@@ -226,21 +226,21 @@ export function MaintenanceImportDialog({
 
               <div className="overflow-hidden rounded-xl border border-border">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-border bg-slate-50">
+                  <thead className="border-b border-border bg-page">
                     <tr>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-slate-500">
+                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
                         Date
                       </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-slate-500">
+                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
                         Category
                       </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-slate-500">
+                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
                         Workshop
                       </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-slate-500">
+                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
                         Items
                       </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-slate-500">
+                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
                         Total
                       </th>
                     </tr>
@@ -248,7 +248,7 @@ export function MaintenanceImportDialog({
                   <tbody>
                     {preview.records.slice(0, 5).map((record, index) => (
                       <tr
-                        className="border-b border-slate-100 last:border-0"
+                        className="border-b border-line-subtle last:border-0"
                         key={`${record.serviceDate}-${index}`}
                       >
                         <td className="px-3 py-3">{format.date(record.serviceDate)}</td>
@@ -267,19 +267,17 @@ export function MaintenanceImportDialog({
               </div>
 
               {preview.issues.length ? (
-                <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="space-y-3 rounded-xl border border-soon/30 bg-soon-tint p-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600" />
+                    <AlertCircle className="mt-0.5 h-4 w-4 text-soon" />
                     <div>
-                      <p className="text-sm font-semibold text-amber-800">
-                        Some rows will be skipped
-                      </p>
-                      <p className="text-xs text-amber-700">
+                      <p className="text-sm font-semibold text-soon">Some rows will be skipped</p>
+                      <p className="text-xs text-soon">
                         Invalid rows are not imported. Review the first few issues below.
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2 text-xs text-amber-800">
+                  <div className="space-y-2 text-xs text-soon">
                     {preview.issues.slice(0, 5).map((issue) => (
                       <p key={`${issue.rowNumber}-${issue.message}`}>
                         Row {issue.rowNumber}: {issue.message}
@@ -294,8 +292,8 @@ export function MaintenanceImportDialog({
           {step === 'importing' ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <h4 className="text-lg font-bold text-slate-900">Importing service records...</h4>
-              <p className="mt-2 text-sm text-slate-500">
+              <h4 className="text-lg font-bold text-fg">Importing service records...</h4>
+              <p className="mt-2 text-sm text-fg-3">
                 Processing {preview.records.length} records into the service history.
               </p>
             </div>
@@ -349,15 +347,15 @@ function FieldSection({
 }) {
   return (
     <section className="space-y-4">
-      <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{title}</h5>
+      <h5 className="text-caption font-medium text-fg-3">{title}</h5>
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map((field) => (
           <div className="space-y-2" key={field.id}>
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-fg-2">
               {field.label}
               {field.required ? <span className="text-destructive"> *</span> : null}
             </label>
-            <p className="text-[11px] text-slate-500">{field.description}</p>
+            <p className="text-caption text-fg-3">{field.description}</p>
             <Select
               onValueChange={(value) =>
                 onMappingChange((current) => ({

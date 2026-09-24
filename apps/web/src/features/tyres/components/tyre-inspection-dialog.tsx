@@ -166,21 +166,21 @@ export function TyreInspectionDialog({
             </div>
 
             <div className="grid gap-3">
-              <p className="text-[13px] font-medium text-foreground/90">Readings</p>
+              <p className="text-small font-medium text-foreground/90">Readings</p>
               {errors.readings?.root?.message ? (
-                <p className="text-xs leading-5 text-rose-600">{errors.readings.root.message}</p>
+                <p className="text-xs leading-5 text-late">{errors.readings.root.message}</p>
               ) : null}
 
               {fitted.map((tyre, index) => (
                 <div
                   key={tyre.id}
-                  className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
+                  className="grid gap-3 rounded-xl border border-line bg-page/60 p-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-tight text-slate-900">
+                    <p className="text-xs font-bold uppercase tracking-tight text-fg">
                       {format.enumLabel('tyrePosition', tyre.position)}
                     </p>
-                    <p className="truncate text-[11px] text-slate-500">
+                    <p className="truncate text-caption text-fg-3">
                       {[tyre.brand, tyre.model, tyre.size].filter(Boolean).join(' · ') ||
                         'No tyre details recorded'}
                     </p>

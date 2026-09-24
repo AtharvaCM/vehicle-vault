@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, type DefaultValues, type Path, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { Figure } from '@/components/shared/figure';
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
@@ -351,15 +352,13 @@ export function MaintenanceForm({
   return (
     <div className="space-y-6">
       {suggestions.length > 0 ? (
-        <Card className="border-indigo-100 bg-indigo-50/30">
+        <Card className="border-brand/30 bg-brand-tint">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-indigo-600" />
-              <CardTitle className="text-sm font-semibold text-indigo-900">
-                Smart suggestions
-              </CardTitle>
+              <Sparkles className="h-4 w-4 text-brand" />
+              <CardTitle className="text-sm font-semibold text-brand">Smart suggestions</CardTitle>
             </div>
-            <CardDescription className="text-xs text-indigo-700">
+            <CardDescription className="text-xs text-brand">
               Based on your vehicle&apos;s usage trend, you might need these services soon.
             </CardDescription>
           </CardHeader>
@@ -368,42 +367,42 @@ export function MaintenanceForm({
               {suggestions.map((suggestion) => (
                 <div
                   key={suggestion.category}
-                  className="flex flex-col rounded-lg border border-indigo-100 bg-white p-3 shadow-xs"
+                  className="flex flex-col rounded-lg border border-brand/30 bg-surface p-3 shadow-xs"
                 >
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-indigo-900">
+                    <span className="text-xs font-bold uppercase text-brand">
                       {format.enumLabel('maintenanceCategory', suggestion.category)}
                     </span>
                     <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                      className={`rounded px-1.5 py-0.5 text-caption font-bold uppercase ${
                         suggestion.priority === 'high'
-                          ? 'bg-red-100 text-red-700'
+                          ? 'bg-late-tint text-late'
                           : suggestion.priority === 'medium'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-indigo-100 text-indigo-700'
+                            ? 'bg-soon-tint text-soon'
+                            : 'bg-brand-tint text-brand'
                       }`}
                     >
                       {suggestion.priority} priority
                     </span>
                   </div>
-                  <p className="mb-3 text-xs leading-relaxed text-slate-600">{suggestion.reason}</p>
+                  <p className="mb-3 text-xs leading-relaxed text-fg-2">{suggestion.reason}</p>
                   <div className="mt-auto flex items-center justify-between gap-2">
                     <div className="flex flex-col gap-0.5">
                       {suggestion.estimatedOdometerDue ? (
-                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <div className="flex items-center gap-1 text-caption text-fg-3">
                           <Clock className="h-2.5 w-2.5" />
                           <span>~{suggestion.estimatedOdometerDue} km</span>
                         </div>
                       ) : null}
                       {suggestion.estimatedDateDue ? (
-                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <div className="flex items-center gap-1 text-caption text-fg-3">
                           <Calendar className="h-2.5 w-2.5" />
                           <span>~{format.date(suggestion.estimatedDateDue)}</span>
                         </div>
                       ) : null}
                     </div>
                     <Button
-                      className="h-7 px-2 text-[10px] font-semibold text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                      className="h-7 px-2 text-caption font-semibold text-brand hover:bg-brand-tint hover:text-brand"
                       onClick={() => {
                         form.setValue('category', suggestion.category, { shouldDirty: true });
                         form.setValue('notes', suggestion.reason, { shouldDirty: true });
@@ -434,14 +433,12 @@ export function MaintenanceForm({
         </CardHeader>
         <CardContent>
           <div className="mb-6">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Common tasks
-            </p>
+            <p className="mb-2 text-xs font-medium text-fg-3">Common tasks</p>
             <div className="flex flex-wrap gap-2">
               {quickPresets.map((preset) => (
                 <Button
                   key={preset.label}
-                  className="h-8 rounded-lg border-slate-200 bg-slate-50 text-xs hover:bg-slate-100 hover:text-slate-900"
+                  className="h-8 rounded-lg border-line bg-page text-xs hover:bg-line-subtle hover:text-fg"
                   onClick={() => {
                     form.setValue('category', preset.category, { shouldDirty: true });
                     form.setValue('notes', preset.note, { shouldDirty: true });
@@ -472,14 +469,14 @@ export function MaintenanceForm({
               </TabsList>
 
               <TabsContent className="space-y-5" value="quick">
-                <div className="rounded-2xl border border-border/70 bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
+                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-sm text-fg-2">
                   Best for fast logging when you mainly need the date, odometer, category, and
                   total.
                 </div>
               </TabsContent>
 
               <TabsContent className="space-y-5" value="detailed">
-                <div className="rounded-2xl border border-border/70 bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
+                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-sm text-fg-2">
                   Use structured items when the invoice breaks work into jobs, parts, fluids, taxes,
                   or discounts.
                 </div>
@@ -668,10 +665,10 @@ export function MaintenanceForm({
             {entryMode === 'detailed' ? (
               <>
                 <div className="grid gap-4 lg:grid-cols-3">
-                  <Card className="border-border/70 bg-slate-50/60 lg:col-span-2">
+                  <Card className="border-border/70 bg-page/60 lg:col-span-2">
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-slate-500" />
+                        <Wrench className="h-4 w-4 text-fg-3" />
                         <CardTitle className="text-sm">Structured summary</CardTitle>
                       </div>
                       <CardDescription>
@@ -719,14 +716,14 @@ export function MaintenanceForm({
                     </CardContent>
                   </Card>
 
-                  <Card className="border-border/70 bg-slate-50/60">
+                  <Card className="border-border/70 bg-page/60">
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-2">
-                        <WalletCards className="h-4 w-4 text-slate-500" />
+                        <WalletCards className="h-4 w-4 text-fg-3" />
                         <CardTitle className="text-sm">How totals work</CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm leading-6 text-slate-600">
+                    <CardContent className="space-y-2 text-sm leading-6 text-fg-2">
                       <p>Parts, fluids, labour, fees, jobs, and taxes add to the total.</p>
                       <p>Discount items subtract from the total automatically.</p>
                       <p>If you do not add structured items yet, the manual total still works.</p>
@@ -748,7 +745,7 @@ export function MaintenanceForm({
 
             {lowOdometerWarning && lowOdometerWarning.odometer === enteredOdometer ? (
               <div
-                className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm leading-5 text-amber-800"
+                className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-2.5 text-sm leading-5 text-soon"
                 role="alert"
               >
                 <p>
@@ -782,7 +779,7 @@ export function MaintenanceForm({
             ) : null}
 
             {submissionState ? (
-              <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
+              <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-sm leading-5 text-ok">
                 {submissionState}
               </p>
             ) : null}
@@ -795,7 +792,7 @@ export function MaintenanceForm({
               >
                 {isSubmitting ? submittingLabel : submitLabel}
               </Button>
-              <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
+              <p className="text-sm leading-5 text-fg-3 sm:max-w-md">
                 {isSubmitting ? 'Saving service record...' : submitHint}
               </p>
             </div>
@@ -808,7 +805,7 @@ export function MaintenanceForm({
 
 function FromBillMarker() {
   return (
-    <span className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 ring-1 ring-inset ring-sky-200">
+    <span className="rounded-full bg-brand-tint px-1.5 py-0.5 text-caption font-semibold text-brand ring-1 ring-inset ring-brand/30">
       from bill
     </span>
   );
@@ -816,9 +813,8 @@ function FromBillMarker() {
 
 function BreakdownMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-white/80 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+    <div className="rounded-2xl border border-border/70 bg-surface/80 p-4">
+      <Figure label={label} value={value} />
     </div>
   );
 }

@@ -52,14 +52,12 @@ export function ReminderListControls({
     searchValue.trim().length > 0 || status !== 'all' || type !== 'all' || sortBy !== 'urgency';
 
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-xs">
+    <div className="rounded-xl border border-border/70 bg-surface p-4 shadow-xs">
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_200px_200px_220px_auto] xl:items-end">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Search
-          </p>
+          <p className="text-caption font-medium text-fg-3">Search</p>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-3" />
             <Input
               className="pl-9"
               onChange={(event) => onSearchChange(event.target.value)}
@@ -70,9 +68,7 @@ export function ReminderListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Status
-          </p>
+          <p className="text-caption font-medium text-fg-3">Status</p>
           <Select
             onValueChange={(value) => onStatusChange(value as ReminderStatus | 'all')}
             value={status}
@@ -92,9 +88,7 @@ export function ReminderListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Type
-          </p>
+          <p className="text-caption font-medium text-fg-3">Type</p>
           <Select
             onValueChange={(value) => onTypeChange(value as ReminderType | 'all')}
             value={type}
@@ -114,9 +108,7 @@ export function ReminderListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Sort
-          </p>
+          <p className="text-caption font-medium text-fg-3">Sort</p>
           <Select
             onValueChange={(value) => onSortChange(value as ReminderSortOption)}
             value={sortBy}

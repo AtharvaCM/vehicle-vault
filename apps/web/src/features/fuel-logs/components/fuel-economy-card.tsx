@@ -40,30 +40,27 @@ function EconomyFigures({ economy }: { economy: VehicleFuelEconomy }) {
     <div className="space-y-3">
       {achieved ? (
         <div>
-          <p className="text-3xl font-black tabular-nums text-slate-900">
+          <p className="text-3xl font-black tabular-nums text-fg">
             {formatFigure(achieved.value)}{' '}
-            <span className="text-base font-bold text-slate-500">{unit}</span>
+            <span className="text-base font-bold text-fg-3">{unit}</span>
           </p>
-          <p className="text-[13px] text-slate-500">
+          <p className="text-small text-fg-3">
             Real, over {format.distance(achieved.distanceKm)} and {format.number(achieved.quantity)}{' '}
             {QUANTITY_UNIT[unit]}
           </p>
         </div>
       ) : (
-        <p className="text-[13px] leading-relaxed text-slate-500">{missingFills(economy)}</p>
+        <p className="text-small leading-relaxed text-fg-3">{missingFills(economy)}</p>
       )}
 
       {claimed !== null ? (
-        <p className="text-[13px] text-slate-600">
+        <p className="text-small text-fg-2">
           Claimed {formatFigure(claimed)} {unit}
           {differencePercent !== null ? (
             <>
               {' · '}
               <span
-                className={cn(
-                  'font-semibold',
-                  differencePercent < 0 ? 'text-amber-700' : 'text-emerald-700',
-                )}
+                className={cn('font-semibold', differencePercent < 0 ? 'text-soon' : 'text-ok')}
               >
                 {describeDifference(differencePercent)}
               </span>
@@ -84,7 +81,7 @@ export function FuelEconomyCard({ vehicleId }: { vehicleId: string }) {
   const economyQuery = useVehicleFuelEconomy(vehicleId);
 
   return (
-    <Card className="border-slate-200/60 bg-white/70">
+    <Card className="border-line/60 bg-surface/70">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <Fuel aria-hidden="true" className="h-4 w-4 text-primary" />
@@ -94,9 +91,9 @@ export function FuelEconomyCard({ vehicleId }: { vehicleId: string }) {
       </CardHeader>
       <CardContent>
         {economyQuery.isPending ? (
-          <p className="text-[13px] text-slate-400">Working it out…</p>
+          <p className="text-small text-fg-3">Working it out…</p>
         ) : economyQuery.isError ? (
-          <p className="text-[13px] text-slate-500">Couldn&apos;t work out the fuel economy.</p>
+          <p className="text-small text-fg-3">Couldn&apos;t work out the fuel economy.</p>
         ) : (
           <EconomyFigures economy={economyQuery.data} />
         )}

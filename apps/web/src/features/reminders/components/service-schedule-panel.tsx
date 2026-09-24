@@ -63,8 +63,8 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
 
   if (suggestionsQuery.isLoading) {
     return (
-      <Card className="border-slate-200/60 bg-white">
-        <CardHeader className="border-b border-slate-100 pb-4">
+      <Card className="border-line/60 bg-surface">
+        <CardHeader className="border-b border-line-subtle pb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 shrink-0 text-primary" />
             <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
@@ -88,16 +88,14 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
   const actionable = items.filter((item) => !item.alreadyScheduled);
 
   return (
-    <Card className="border-slate-200/60 bg-white">
-      <CardHeader className="border-b border-slate-100 pb-4">
+    <Card className="border-line/60 bg-surface">
+      <CardHeader className="border-b border-line-subtle pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 shrink-0 text-primary" />
             <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
           </div>
-          <Badge variant="outline" className="text-[10px] uppercase tracking-widest">
-            Typical intervals
-          </Badge>
+          <Badge variant="outline">Typical intervals</Badge>
         </div>
         <CardDescription>
           {canEdit
@@ -107,9 +105,9 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
       </CardHeader>
       <CardContent className="space-y-2 p-5">
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500">No suggestions for this vehicle.</p>
+          <p className="text-sm text-fg-3">No suggestions for this vehicle.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-line-subtle">
             {items.map((item) => {
               const disabled = item.alreadyScheduled;
               const checked = selected.has(item.slug);
@@ -127,20 +125,11 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                   ) : null}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] font-bold uppercase tracking-widest"
-                      >
-                        {format.enumLabel('reminderType', item.type)}
-                      </Badge>
-                      {disabled ? (
-                        <Badge className="bg-emerald-100 text-[10px] uppercase tracking-widest text-emerald-700">
-                          Already scheduled
-                        </Badge>
-                      ) : null}
+                      <p className="text-sm font-semibold text-fg">{item.title}</p>
+                      <Badge variant="outline">{format.enumLabel('reminderType', item.type)}</Badge>
+                      {disabled ? <Badge tone="success">Already scheduled</Badge> : null}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-fg-3">
                       {item.intervalKm != null ? (
                         <span>Every {format.distance(item.intervalKm)}</span>
                       ) : null}
@@ -153,12 +142,12 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                         : null}
                     </p>
                     {item.anchor && (item.dueOdometer != null || item.dueDate) ? (
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-fg-3">
                         {describeAnchor(item.anchor)} → next {nextDue(item)}
                       </p>
                     ) : null}
                     {item.notes ? (
-                      <p className="mt-1 text-xs italic text-slate-400">{item.notes}</p>
+                      <p className="mt-1 text-xs italic text-fg-3">{item.notes}</p>
                     ) : null}
                   </div>
                 </li>
@@ -168,8 +157,8 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
         )}
 
         {canEdit && actionable.length > 0 ? (
-          <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-            <p className="text-xs text-slate-500">
+          <div className="flex items-center justify-between border-t border-line-subtle pt-4">
+            <p className="text-xs text-fg-3">
               <ListChecks className="mr-1 inline h-3 w-3" />
               {selected.size} selected
             </p>

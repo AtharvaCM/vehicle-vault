@@ -1,6 +1,7 @@
 import type { Accessory } from '@vehicle-vault/shared';
 
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
+import { Figure } from '@/components/shared/figure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +35,7 @@ export function AccessoryCard({
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <CardTitle className="text-base">{accessory.name}</CardTitle>
-            {accessory.brand ? <p className="text-sm text-slate-500">{accessory.brand}</p> : null}
+            {accessory.brand ? <p className="text-sm text-fg-3">{accessory.brand}</p> : null}
           </div>
           <Badge tone={isRemoved ? 'neutral' : isFitted ? 'accent' : 'warning'}>
             {isRemoved ? 'Removed' : isFitted ? 'Fitted' : 'Not fitted'}
@@ -43,52 +44,44 @@ export function AccessoryCard({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <dl className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Cost</dt>
-            <dd className="mt-1 text-slate-900">
-              {format.money(accessory.cost, { currency: accessory.currencyCode })}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Bought</dt>
-            <dd className="mt-1 text-slate-900">{format.date(accessory.purchaseDate)}</dd>
-          </div>
-          {accessory.category ? (
-            <div>
-              <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Category</dt>
-              <dd className="mt-1 text-slate-900">{accessory.category}</dd>
-            </div>
-          ) : null}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <Figure
+            label="Cost"
+            value={format.money(accessory.cost, { currency: accessory.currencyCode })}
+          />
+          <Figure label="Bought" value={format.date(accessory.purchaseDate)} />
+          {accessory.category ? <Figure label="Category" value={accessory.category} /> : null}
           {accessory.removedDate ? (
-            <div>
-              <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Removed</dt>
-              <dd className="mt-1 text-slate-900">
-                {format.date(accessory.removedDate)}
-                {accessory.removedOdometer != null
-                  ? ` · ${format.distance(accessory.removedOdometer)}`
-                  : ''}
-              </dd>
-            </div>
+            <Figure
+              label="Removed"
+              value={
+                <>
+                  {format.date(accessory.removedDate)}
+                  {accessory.removedOdometer != null
+                    ? ` · ${format.distance(accessory.removedOdometer)}`
+                    : ''}
+                </>
+              }
+            />
           ) : accessory.fittedDate ? (
-            <div>
-              <dt className="text-xs uppercase tracking-[0.12em] text-slate-500">Fitted</dt>
-              <dd className="mt-1 text-slate-900">
-                {format.date(accessory.fittedDate)}
-                {accessory.fittedOdometer != null
-                  ? ` · ${format.distance(accessory.fittedOdometer)}`
-                  : ''}
-              </dd>
-            </div>
+            <Figure
+              label="Fitted"
+              value={
+                <>
+                  {format.date(accessory.fittedDate)}
+                  {accessory.fittedOdometer != null
+                    ? ` · ${format.distance(accessory.fittedOdometer)}`
+                    : ''}
+                </>
+              }
+            />
           ) : null}
-        </dl>
+        </div>
 
         {accessory.warrantyExpiresAt ? (
           <p
             className={
-              warrantyDays != null && warrantyDays <= 30
-                ? 'text-sm text-amber-700'
-                : 'text-sm text-slate-500'
+              warrantyDays != null && warrantyDays <= 30 ? 'text-sm text-soon' : 'text-sm text-fg-3'
             }
           >
             {warrantyDays != null && warrantyDays < 0
@@ -97,7 +90,7 @@ export function AccessoryCard({
           </p>
         ) : null}
 
-        {accessory.notes ? <p className="text-sm text-slate-600">{accessory.notes}</p> : null}
+        {accessory.notes ? <p className="text-sm text-fg-2">{accessory.notes}</p> : null}
 
         {onEdit || onDelete ? (
           <div className="flex items-center gap-2">

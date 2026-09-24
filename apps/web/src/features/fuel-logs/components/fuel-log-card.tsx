@@ -1,6 +1,7 @@
 import { Fuel, MapPin, MoreVertical } from 'lucide-react';
 import type { FuelLog } from '@vehicle-vault/shared';
 
+import { Figure } from '@/components/shared/figure';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { format } from '@/lib/format';
@@ -26,23 +27,23 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
   // all three fit beside the menu down to about 350px. None of them breaks mid-value;
   // on a narrower card, a whole figure moves to a second row.
   return (
-    <Card className="@container overflow-hidden border-slate-200/60 bg-white/70 p-0 transition-all duration-300 hover:border-primary/20 hover:bg-white sm:p-5">
+    <Card className="@container overflow-hidden border-line/60 bg-surface/70 p-0 transition-colors duration-300 hover:border-primary/20 hover:bg-surface sm:p-5">
       <div className="flex flex-col @2xl:flex-row @2xl:items-center">
         {/* Main Info */}
         <div className="flex flex-1 items-center gap-4 p-3 sm:p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
             <Fuel className="h-5 w-5" />
           </div>
 
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <p className="font-bold text-slate-900">{format.number(log.quantity)} L fuel fill</p>
+              <p className="font-bold text-fg">{format.number(log.quantity)} L fuel fill</p>
             </div>
-            <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
+            <div className="flex flex-col gap-y-1 text-small font-medium text-fg-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
               <span>{format.date(log.date)}</span>
               {log.location && (
                 <>
-                  <span className="hidden text-slate-300 sm:inline">•</span>
+                  <span className="hidden text-fg-3 sm:inline">•</span>
                   <span className="flex items-start gap-1">
                     <MapPin className="mt-1 h-3 w-3 shrink-0" />
                     {log.location}
@@ -54,34 +55,19 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
         </div>
 
         {/* Metrics */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent max-sm:@2xl:px-6 max-sm:@2xl:py-0">
+        <div className="flex items-center justify-between border-t border-line-subtle bg-page/30 p-3 sm:p-4 @2xl:border-l @2xl:border-t-0 @2xl:bg-transparent max-sm:@2xl:px-6 max-sm:@2xl:py-0">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 @md:gap-x-8 @2xl:gap-x-10">
-            <div className="space-y-0.5">
-              <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Odometer
-              </p>
-              <p className="whitespace-nowrap text-[13px] font-semibold tabular-nums text-slate-700">
-                {format.odometer(log.odometer)}
-              </p>
-            </div>
-
-            <div className="space-y-0.5">
-              <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Price/L
-              </p>
-              <p className="whitespace-nowrap text-[13px] font-semibold tabular-nums text-slate-700">
-                {format.money(log.price)}
-              </p>
-            </div>
-
-            <div className="space-y-0.5">
-              <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Total cost
-              </p>
-              <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-primary">
-                {format.money(log.totalCost)}
-              </p>
-            </div>
+            <Figure
+              className="whitespace-nowrap"
+              label="Odometer"
+              value={format.odometer(log.odometer)}
+            />
+            <Figure className="whitespace-nowrap" label="Price/L" value={format.money(log.price)} />
+            <Figure
+              className="whitespace-nowrap"
+              label="Total cost"
+              value={<span className="text-brand">{format.money(log.totalCost)}</span>}
+            />
           </div>
 
           {onEdit || onDelete ? (
@@ -91,7 +77,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-slate-400 hover:text-slate-600 md:h-8 md:w-8"
+                    className="text-fg-3 hover:text-fg-2 md:h-8 md:w-8"
                     aria-label="Fuel log actions"
                   >
                     <MoreVertical className="h-4 w-4" />

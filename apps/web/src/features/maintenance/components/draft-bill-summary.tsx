@@ -43,17 +43,17 @@ export function DraftBillSummary({
 
   return (
     <div
-      className="flex items-center gap-3 rounded-2xl border border-border/70 bg-white p-3"
+      className="flex items-center gap-3 rounded-2xl border border-border/70 bg-surface p-3"
       data-testid="draft-bill-summary"
     >
       <BillThumbnail attachment={bill} />
       <div className="min-w-0 space-y-1">
-        <p className="truncate text-sm font-medium text-slate-900">
+        <p className="truncate text-sm font-medium text-fg">
           {bill.originalFileName}
           {attachments.length > 1 ? ` and ${attachments.length - 1} more` : ''}
         </p>
         <p
-          className={note.tone === 'warning' ? 'text-sm text-amber-700' : 'text-sm text-slate-600'}
+          className={note.tone === 'warning' ? 'text-sm text-soon' : 'text-sm text-fg-2'}
           role={note.tone === 'warning' ? 'status' : undefined}
         >
           {note.text}
@@ -150,14 +150,14 @@ function BillThumbnail({ attachment }: { attachment: Attachment }) {
   return (
     <button
       aria-label={`Open ${attachment.originalFileName}`}
-      className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-slate-50"
+      className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-page"
       onClick={handleOpen}
       type="button"
     >
       {objectUrl ? (
         <img alt="" className="h-full w-full object-cover" src={objectUrl} />
       ) : (
-        <FileText className="h-6 w-6 text-slate-400" />
+        <FileText className="h-6 w-6 text-fg-3" />
       )}
     </button>
   );

@@ -23,14 +23,14 @@ export function BulkMaintenanceActions({
   const hasSelection = selectedCount > 0;
 
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-xs">
+    <div className="rounded-xl border border-border/70 bg-surface p-4 shadow-xs">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-3">
-          <div className="rounded-xl border border-border/70 bg-slate-50 p-2">
-            <ListChecks className="h-4 w-4 text-slate-600" />
+          <div className="rounded-xl border border-border/70 bg-page p-2">
+            <ListChecks className="h-4 w-4 text-fg-2" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-950">
+            <p className="text-sm font-semibold text-fg">
               {hasSelection
                 ? `${selectedCount} record${selectedCount === 1 ? '' : 's'} selected`
                 : 'Select service records to take action'}

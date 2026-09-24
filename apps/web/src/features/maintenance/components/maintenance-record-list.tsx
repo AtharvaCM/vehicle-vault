@@ -32,13 +32,11 @@ export function MaintenanceRecordList({
             record={record}
             selectionControl={
               onSelectionChange ? (
-                <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs">
+                <label className="flex items-center justify-center rounded-md border border-border/70 bg-surface p-2 shadow-xs">
                   <input
                     aria-label={`Select service record ${record.workshopName?.trim() || format.enumLabel('maintenanceCategory', record.category)} on ${record.serviceDate}`}
                     checked={selectedRecordIds.includes(record.id)}
-                    className={cn(
-                      'h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-400',
-                    )}
+                    className={cn('h-4 w-4 rounded border-line text-fg focus:ring-line')}
                     onChange={(event) => onSelectionChange(record.id, event.currentTarget.checked)}
                     type="checkbox"
                   />

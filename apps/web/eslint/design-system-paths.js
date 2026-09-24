@@ -18,17 +18,21 @@ export const MIGRATED_PATHS = [
   'src/features/dashboard/**',
   'src/features/analytics/**',
   'src/features/vehicles/**',
+  'src/features/maintenance/**',
+  'src/features/service-baseline/**',
+  'src/features/reminders/**',
+  'src/features/fuel-logs/**',
+  'src/features/tyres/**',
+  'src/features/accessories/**',
+  'src/features/attachments/**',
 ];
 
 /**
  * Files inside MIGRATED_PATHS that belong to a later slice and stay warnings
- * until it lands: the tyre tracker moves with the tyres area (#249), the
- * protection tab with papers (#250). Each slice removes its own entry.
+ * until it lands: the protection tab moves with papers (#250). Each slice
+ * removes its own entry.
  */
-export const MIGRATION_PENDING_PATHS = [
-  'src/features/vehicles/components/vehicle-tyre-tracker.tsx',
-  'src/features/vehicles/components/protection-tab.tsx',
-];
+export const MIGRATION_PENDING_PATHS = ['src/features/vehicles/components/protection-tab.tsx'];
 
 /**
  * Screens moved onto the status and figure components (#246) before the rest of

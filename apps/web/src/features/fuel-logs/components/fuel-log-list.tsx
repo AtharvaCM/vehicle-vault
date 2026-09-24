@@ -18,7 +18,7 @@ export function FuelLogList({ logs, onEdit, onDelete, onAdd, isLoading }: FuelLo
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 w-full animate-pulse rounded-xl bg-slate-100" />
+          <div key={i} className="h-24 w-full animate-pulse rounded-xl bg-line-subtle" />
         ))}
       </div>
     );
