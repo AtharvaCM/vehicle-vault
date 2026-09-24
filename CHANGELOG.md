@@ -1,3 +1,11 @@
+# [1.76.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.75.0...v1.76.0) (2026-09-24)
+
+
+### Features
+
+* **web:** home and the vehicle overview speak in statuses and figures ([468ce5e](https://github.com/AtharvaCM/vehicle-vault/commit/468ce5e5a563e6ac8ce1fee24bcdd5a14bed3961)), closes [#246](https://github.com/AtharvaCM/vehicle-vault/issues/246)
+* **web:** status pill, due line, figure, money and section header ([7cec852](https://github.com/AtharvaCM/vehicle-vault/commit/7cec852d4ea0ddc0d940040905e82ab9e1a28a56))
+
 # [1.75.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.74.0...v1.75.0) (2026-09-24)
 
 
