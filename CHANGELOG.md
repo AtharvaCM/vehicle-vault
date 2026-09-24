@@ -1,3 +1,10 @@
+# [1.82.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.81.0...v1.82.0) (2026-09-24)
+
+
+### Features
+
+* **web:** give admins an area of their own ([c46fafc](https://github.com/AtharvaCM/vehicle-vault/commit/c46fafc4dc71ca0336e06e9b0bc6de28a79900ba)), closes [#200](https://github.com/AtharvaCM/vehicle-vault/issues/200) [#282](https://github.com/AtharvaCM/vehicle-vault/issues/282)
+
 # [1.81.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.80.0...v1.81.0) (2026-09-24)
 
 
