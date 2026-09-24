@@ -10,15 +10,14 @@ import { Button } from '@/components/ui/button';
 import { AttentionQueue } from '../components/attention-queue';
 import { AttentionSummary } from '../components/attention-summary';
 import { ComingUpList } from '../components/coming-up-list';
+import { CostsSummaryLine } from '../components/costs-summary-line';
 import { DashboardOnboarding } from '../components/dashboard-onboarding';
 import { DashboardSkeleton } from '../components/dashboard-skeleton';
 import { GarageGrid } from '../components/garage-grid';
-import { LoansCard } from '../components/loans-card';
 import { RecentServiceCard } from '../components/recent-service-card';
 import { FuelLogDialog } from '../components/fuel-log-dialog';
 import { QuickLogDialog } from '../components/quick-log-dialog';
 import { SmartSuggestionsCard } from '../components/smart-suggestions-card';
-import { SpendSection } from '../components/spend-section';
 import { VehiclePickerMenu } from '../components/vehicle-picker-menu';
 import { useDashboardSummary } from '../hooks/use-dashboard-summary';
 import { isDashboardFocus, type DashboardSearch } from '../types/dashboard-search';
@@ -144,9 +143,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
         </div>
       </div>
 
-      <LoansCard loans={summary.loans} />
-
-      {summary.hasSpend ? <SpendSection /> : null}
+      {summary.hasSpend ? <CostsSummaryLine loans={summary.loans} /> : null}
       {loggableVehicles.length > 0 ? (
         <>
           <QuickLogDialog
