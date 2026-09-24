@@ -25,10 +25,8 @@ test('a yearly insurance reminder schedules next year’s when it is marked done
     registrationNumber: `MH12RP${suffix.slice(-4)}`,
   });
 
-  await page
-    .getByRole('link', { name: /^add reminder$/i })
-    .first()
-    .click();
+  await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
+  await page.getByRole('menuitem', { name: 'Reminder' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/reminders\/new$/);
 
   // The quick fill sets the cadence, not just the title.

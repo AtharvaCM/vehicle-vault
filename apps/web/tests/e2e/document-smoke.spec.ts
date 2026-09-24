@@ -24,8 +24,8 @@ test('user can manage insurance and warranty documents via unified route', async
     registrationNumber,
   });
 
-  // ── 2. Go to Protection Tab ────────────────────────────────────────
-  await page.getByRole('tab', { name: /protection/i }).click();
+  // ── 2. Go to Papers Tab ────────────────────────────────────────────
+  await page.getByRole('tab', { name: /^papers/i }).click();
 
   // ── 3. Create Insurance ────────────────────────────────────────────
   await page.getByRole('button', { name: 'Add policy', exact: true }).click();

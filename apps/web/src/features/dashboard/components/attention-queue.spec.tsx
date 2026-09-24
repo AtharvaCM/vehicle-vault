@@ -134,14 +134,14 @@ describe('AttentionQueue', () => {
     expect(screen.getByText('Front left · 1.4 mm tread')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View tyres' })).toHaveAttribute(
       'data-search',
-      JSON.stringify({ tab: 'tyres' }),
+      JSON.stringify({ tab: 'more', section: 'tyres' }),
     );
 
     expect(screen.getByText('Accessory')).toBeInTheDocument();
     expect(screen.getByText('4 days left')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View accessory' })).toHaveAttribute(
       'data-search',
-      JSON.stringify({ tab: 'accessories' }),
+      JSON.stringify({ tab: 'more', section: 'accessories' }),
     );
 
     // Neither is ticked off or snoozed from here: the fix happens on the tab.

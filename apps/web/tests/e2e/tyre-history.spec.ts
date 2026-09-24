@@ -70,7 +70,7 @@ test('a tyre can be reviewed, corrected and deleted from the tracker', async ({ 
     treadDepthMm: 5.2,
   });
 
-  await page.goto(`/vehicles/${vehicle.id}?tab=tyres`);
+  await page.goto(`/vehicles/${vehicle.id}?tab=more&section=tyres`);
   const card = page.getByTestId('tyre-corner').filter({ hasText: 'Front left' });
   await expect(card).toContainText('Healthy');
 

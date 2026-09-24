@@ -48,7 +48,7 @@ test('a policy keeps its file, and loses it with the policy', async ({ page }) =
     },
   });
 
-  await page.goto(`${vehicleUrl}?tab=protection`);
+  await page.goto(`${vehicleUrl}?tab=papers`);
   const card = page.locator('div', { has: page.getByText(policy.provider!) }).filter({
     has: page.getByRole('region', { name: 'Document files' }),
   });
@@ -105,7 +105,7 @@ test('a PUC certificate keeps its photo, and loses it with the record', async ({
     },
   });
 
-  await page.goto(`${vehicleUrl}?tab=protection`);
+  await page.goto(`${vehicleUrl}?tab=papers`);
   const card = page.locator('div', { has: page.getByText(puc.provider!) }).filter({
     has: page.getByRole('region', { name: 'Document files' }),
   });

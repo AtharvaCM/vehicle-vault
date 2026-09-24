@@ -76,7 +76,7 @@ describe('VehicleHealthCard', () => {
 
     const pill = screen.getByRole('link', { name: '1 due soon' });
 
-    expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'loans' }));
+    expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'more', section: 'loans' }));
     expect(screen.getByText(/^EMI ₹4,800 · /)).toBeInTheDocument();
     expect(screen.queryByText('Nothing scheduled')).not.toBeInTheDocument();
   });
@@ -101,7 +101,7 @@ describe('VehicleHealthCard', () => {
 
     expect(screen.getByRole('link', { name: '1 due soon' })).toHaveAttribute(
       'data-search',
-      JSON.stringify({ tab: 'protection' }),
+      JSON.stringify({ tab: 'papers' }),
     );
     expect(screen.getByText('Insurance policy · 5 days left')).toBeInTheDocument();
   });
@@ -126,7 +126,7 @@ describe('VehicleHealthCard', () => {
 
     expect(screen.getByRole('link', { name: '1 late' })).toHaveAttribute(
       'data-search',
-      JSON.stringify({ tab: 'tyres' }),
+      JSON.stringify({ tab: 'more', section: 'tyres' }),
     );
     expect(screen.getByText('Replace tyre')).toBeInTheDocument();
   });
@@ -155,7 +155,7 @@ describe('VehicleHealthCard', () => {
       expect(screen.getByText('70%')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'No current insurance' })).toHaveAttribute(
         'data-search',
-        JSON.stringify({ tab: 'protection' }),
+        JSON.stringify({ tab: 'papers' }),
       );
     });
 

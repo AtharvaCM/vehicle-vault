@@ -13,8 +13,8 @@ function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
-/** Signs in, adds a vehicle, and returns its Protection tab's address. */
-async function vehicleProtectionTab(page: Page, label: string) {
+/** Signs in, adds a vehicle, and returns its Papers tab's address. */
+async function vehiclePapersTab(page: Page, label: string) {
   const suffix = uniqueSuffix();
   await registerAndSignIn(page, {
     name: `E2E ${label} ${suffix}`,
@@ -26,7 +26,7 @@ async function vehicleProtectionTab(page: Page, label: string) {
     odometer: '15200',
     registrationNumber: `MH12DG${suffix.slice(-4)}`,
   });
-  return `${page.url()}?tab=protection`;
+  return `${page.url()}?tab=papers`;
 }
 
 /**
@@ -36,9 +36,9 @@ async function vehicleProtectionTab(page: Page, label: string) {
  * here, in a real browser.
  */
 test('a dialog rises from the bottom of a phone, with Save in reach', async ({ page }) => {
-  const protection = await vehicleProtectionTab(page, 'Sheet');
+  const papers = await vehiclePapersTab(page, 'Sheet');
   await page.setViewportSize(PHONE);
-  await page.goto(protection);
+  await page.goto(papers);
 
   await page.getByRole('button', { name: /add policy/i }).click();
   const sheet = page.getByRole('dialog');
@@ -90,9 +90,9 @@ test('a dialog rises from the bottom of a phone, with Save in reach', async ({ p
 });
 
 test('from md up a dialog is the centred modal it was', async ({ page }) => {
-  const protection = await vehicleProtectionTab(page, 'Modal');
+  const papers = await vehiclePapersTab(page, 'Modal');
   await page.setViewportSize(TABLET);
-  await page.goto(protection);
+  await page.goto(papers);
 
   await page.getByRole('button', { name: /add policy/i }).click();
   const modal = page.getByRole('dialog');

@@ -227,9 +227,7 @@ test('from md up the sidebar is the one navigation', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveCount(0);
 });
 
-test('the vehicle tabs scroll on a phone, with a linked tab brought into view', async ({
-  page,
-}) => {
+test('the vehicle page fits all five tabs on a phone, with nothing to scroll', async ({ page }) => {
   const suffix = await signIn(page, 'Tabs');
   await createCatalogVehicle(page, {
     nickname: `Tabs Garage ${suffix.slice(-4)}`,
@@ -238,22 +236,22 @@ test('the vehicle tabs scroll on a phone, with a linked tab brought into view', 
   });
   const vehicleUrl = page.url();
 
-  await page.setViewportSize(PHONE);
-  // Activity is the last of the tabs: far off the right edge of a phone.
-  await page.goto(`${vehicleUrl}?tab=activity`);
+  // Five tabs, not the eleven the strip used to scroll through.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(vehicleUrl);
 
-  const activity = page.getByRole('tab', { name: 'Activity' });
-  await expect(activity).toHaveAttribute('data-state', 'active');
-  const box = await activity.boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.x).toBeGreaterThanOrEqual(0);
-  expect(box!.x + box!.width).toBeLessThanOrEqual(PHONE.width);
-
-  // The strip scrolls rather than clipping or pushing the page sideways.
   const strip = page.getByRole('tablist');
-  expect(await strip.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
-  await expect(page.getByRole('tabpanel').getByText('Vehicle created')).toBeVisible();
-  await expectNoSidewaysScroll(page, 'The activity tab');
+  const tabs = strip.getByRole('tab');
+  await expect(tabs).toHaveCount(5);
+  for (const tab of await tabs.all()) {
+    await expect(tab).toBeInViewport();
+  }
+  expect(await strip.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(false);
+
+  // "More" is where everything the five tabs do not name lives, one tap away.
+  await tabs.filter({ hasText: 'More' }).click();
+  await expect(page.getByRole('navigation', { name: 'More about this vehicle' })).toBeVisible();
+  await expectNoSidewaysScroll(page, 'The vehicle page');
 });
 
 /**
@@ -333,27 +331,27 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
 
   await page.setViewportSize(PHONE);
 
-  // Each tab, with what it shows only once its data has loaded.
+  // Each tab (or More section), with what it shows only once its data has loaded.
   const tabs: Array<[string, Array<string | RegExp>]> = [
-    ['overview', [workshop, reminderTitle]],
-    ['maintenance', [workshop]],
-    ['specs', [/No specifications available|Engine & drivetrain/]],
-    ['reminders', [reminderTitle]],
-    ['fuel', ['42.5 L fuel fill']],
-    ['tyres', ['Log inspection']],
-    ['accessories', ['No accessories yet']],
-    ['protection', ['Add Policy']],
-    ['loans', [lender]],
-    ['members', [invitee]],
-    ['activity', ['Reminder created']],
+    ['tab=overview', [workshop, reminderTitle]],
+    ['tab=history', [workshop]],
+    ['tab=more&section=specs', [/No specifications available|Engine & drivetrain/]],
+    ['tab=reminders', [reminderTitle]],
+    ['tab=history&view=fuel', ['42.5 L fuel fill']],
+    ['tab=more&section=tyres', ['Log inspection']],
+    ['tab=more&section=accessories', ['No accessories yet']],
+    ['tab=papers', ['Add Policy']],
+    ['tab=more&section=loans', [lender]],
+    ['tab=more&section=members', [invitee]],
+    ['tab=more&section=activity', ['Reminder created']],
   ];
-  for (const [tab, loaded] of tabs) {
-    await page.goto(`${vehicleUrl}?tab=${tab}`);
+  for (const [search, loaded] of tabs) {
+    await page.goto(`${vehicleUrl}?${search}`);
     for (const text of loaded) {
       await expect(page.getByRole('tabpanel').getByText(text).first()).toBeVisible();
     }
-    await expectNoSidewaysScroll(page, `The ${tab} tab`);
-    await expectNoSqueezedIcons(page, `The ${tab} tab`);
+    await expectNoSidewaysScroll(page, `The vehicle page at ?${search}`);
+    await expectNoSqueezedIcons(page, `The vehicle page at ?${search}`);
   }
 
   // Opened, an activity entry lists every changed value: ids and JSON with
@@ -385,7 +383,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   }
 
   // On a phone a fill's three figures and menu share one narrow strip.
-  await page.goto(`${vehicleUrl}?tab=fuel`);
+  await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
   for (const [title, figures] of fills) {
     const card = page
       .getByRole('main')
@@ -400,7 +398,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   const reminderCard: [string, string[]] = [reminderTitle, ['24,800 km']];
   const desktopPages: Array<[string, string, Array<[string, string[]]>]> = [
     ['The overview tab', `${vehicleUrl}?tab=overview`, [recordCard, reminderCard]],
-    ['The maintenance tab', `${vehicleUrl}?tab=maintenance`, [recordCard]],
+    ['The history tab', `${vehicleUrl}?tab=history`, [recordCard]],
     [`/vehicles/${vehicleId}/maintenance`, `/vehicles/${vehicleId}/maintenance`, [recordCard]],
   ];
   await page.setViewportSize(DESKTOP);
@@ -419,7 +417,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   // beside the text, but not for a fill's.
   for (const screen of [DESKTOP, WIDE_DESKTOP]) {
     await page.setViewportSize(screen);
-    await page.goto(`${vehicleUrl}?tab=fuel`);
+    await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
     for (const [title, figures] of fills) {
       // A fill's card is not a link.
       const card = page
@@ -427,7 +425,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
         .locator('[data-slot="card"]', { has: page.getByText(title, { exact: true }) });
       await expectReadableCard(card, title, figures);
     }
-    await expectNoSidewaysScroll(page, `The fuel tab at ${screen.width}px`);
+    await expectNoSidewaysScroll(page, `The fuel view at ${screen.width}px`);
   }
 
   // From sm the page header puts its actions beside the title, and at 768px a

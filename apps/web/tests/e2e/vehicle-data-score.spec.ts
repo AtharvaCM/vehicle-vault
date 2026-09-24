@@ -51,7 +51,7 @@ test('the health card scores a vehicle’s data and moves on once a gap is fille
   await expect(card).toContainText('35% · Service history incomplete');
   await expect(card.getByRole('link', { name: 'Service history incomplete' })).toHaveAttribute(
     'href',
-    `/vehicles/${vehicle.id}?tab=maintenance`,
+    `/vehicles/${vehicle.id}?tab=history`,
   );
 
   // Answer every category, even if only with "unknown": an answer is an answer.

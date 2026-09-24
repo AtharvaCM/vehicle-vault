@@ -65,7 +65,7 @@ test('real km/L appears once there are two fills, beside the claim', async ({ pa
 
   // One fill: nothing to measure between yet, and the app says so.
   await logFill(15_000, 30, 1);
-  await page.goto(`${vehicleUrl}?tab=fuel`);
+  await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
   await expect(page.getByText(/One fill-up logged/)).toBeVisible();
   await expect(page.getByText(/Claimed 17\.5 km\/L/)).toBeVisible();
 

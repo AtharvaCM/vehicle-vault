@@ -101,7 +101,7 @@ test('the dashboard lists what the bell knows about tyres, history and accessori
 
   // Each row leads to the tab that fixes it.
   await page.getByRole('link', { name: 'View tyres' }).click();
-  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=tyres`));
+  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=more&section=tyres`));
 });
 
 test.afterAll(async () => {

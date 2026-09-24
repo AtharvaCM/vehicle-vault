@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FuelType, VehicleRole, VehicleType, type Vehicle } from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
@@ -9,15 +9,26 @@ import { ApiError } from '@/lib/api/api-error';
 import type { VehicleDetailSearch } from '../types/vehicle-detail-search';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const documents = vi.hoisted(() => ({ current: [] as unknown[] }));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
-    params: _params,
+    params,
+    search,
     to,
     ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { params?: Record<string, string>; to: string }) => (
-    <a href={to} {...props}>
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    params?: Record<string, string>;
+    search?: Record<string, string>;
+    to: string;
+  }) => (
+    <a
+      data-params={params ? JSON.stringify(params) : undefined}
+      data-search={search ? JSON.stringify(search) : undefined}
+      href={to}
+      {...props}
+    >
       {children}
     </a>
   ),
@@ -33,6 +44,9 @@ vi.mock('@/features/maintenance/hooks/use-maintenance-records', () => ({
 }));
 vi.mock('@/features/reminders/hooks/use-vehicle-reminders', () => ({
   useVehicleReminders: () => ({ data: [], isPending: false, isError: false, isSuccess: true }),
+}));
+vi.mock('@/features/vehicle-documents/hooks/use-documents', () => ({
+  useVehicleDocuments: () => ({ data: documents.current, isPending: false, isError: false }),
 }));
 vi.mock('@/features/audit/hooks/use-vehicle-audit', () => ({ useVehicleAudit: () => ({}) }));
 vi.mock('@/features/vehicle-sharing/hooks/use-sharing', () => ({
@@ -54,6 +68,22 @@ vi.mock('@/features/analytics/components/tco-card', () => ({ TcoCard: () => null
 vi.mock('@/features/service-baseline/components/service-history-card', () => ({
   ServiceHistoryCard: () => null,
 }));
+vi.mock('@/features/reminders/components/service-schedule-panel', () => ({
+  ServiceSchedulePanel: () => <p>Suggested service schedule</p>,
+}));
+// The Log menu's dialogs save through React Query; only whether they are offered is tested here.
+vi.mock('@/features/dashboard/components/fuel-log-dialog', () => ({
+  FuelLogDialog: () => null,
+}));
+vi.mock('@/features/vehicle-documents/components/document-form-dialog', () => ({
+  DocumentFormDialog: () => null,
+}));
+vi.mock('@/features/loans/components/vehicle-loans-panel', () => ({
+  VehicleLoansPanel: () => <p>Loans panel</p>,
+}));
+vi.mock('@/features/vehicle-sharing/components/members-tab', () => ({
+  MembersTab: () => <p>Members panel</p>,
+}));
 
 import { VehicleDetailPage } from './vehicle-detail-page';
 
@@ -71,7 +101,24 @@ const vehicle: Vehicle = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-function renderAs(role: VehicleRole, searchState: VehicleDetailSearch = {}) {
+function paper(kind: string, endDate: string) {
+  return {
+    id: `${kind}-1`,
+    vehicleId: 'vehicle-1',
+    kind,
+    provider: 'Issuer',
+    startDate: new Date('2025-01-01T00:00:00.000Z'),
+    endDate: new Date(endDate),
+    createdAt: new Date('2025-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2025-01-01T00:00:00.000Z'),
+  };
+}
+
+function renderAs(
+  role: VehicleRole,
+  searchState: VehicleDetailSearch = {},
+  onSearchStateChange = vi.fn(),
+) {
   vehicleQuery.current = {
     data: { ...vehicle, currentUserRole: role },
     isPending: false,
@@ -80,23 +127,31 @@ function renderAs(role: VehicleRole, searchState: VehicleDetailSearch = {}) {
 
   return render(
     <VehicleDetailPage
-      onSearchStateChange={vi.fn()}
+      onSearchStateChange={onSearchStateChange}
       searchState={searchState}
       vehicleId="vehicle-1"
     />,
   );
 }
 
-async function openActionsMenu() {
+async function openMenu(name: string) {
   const user = userEvent.setup();
-  await user.click(screen.getByRole('button', { name: 'More vehicle actions' }));
-  // Always present, so it proves the menu opened before asserting an absence.
-  await screen.findByRole('menuitem', { name: /download service history/i });
+  await user.click(screen.getByRole('button', { name }));
+  // Every menu has at least one item, so this proves it opened before asserting an absence.
+  await screen.findAllByRole('menuitem');
 }
 
-describe('VehicleDetailPage roles', () => {
+describe('VehicleDetailPage header', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    documents.current = [];
+  });
+
+  it('names the vehicle by its plate, nickname, model and odometer', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Bajaj Pulsar NS 200' })).toBeVisible();
+    expect(screen.getByText(/40,000 km, updated/)).toBeVisible();
   });
 
   it('tells a viewer the vehicle is view only', () => {
@@ -113,81 +168,182 @@ describe('VehicleDetailPage roles', () => {
     expect(screen.queryByText('View only')).not.toBeInTheDocument();
   });
 
-  it('offers a viewer nothing that the API would refuse', () => {
+  it('offers an editor every kind of log from one menu', async () => {
+    renderAs(VehicleRole.Editor);
+    await openMenu('Log');
+
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      'Service',
+      'Fuel',
+      'Odometer',
+      'Paper',
+      'Reminder',
+    ]);
+  });
+
+  it('offers a viewer nothing that the API would refuse', async () => {
     renderAs(VehicleRole.Viewer);
 
-    for (const name of [
-      'Edit vehicle',
-      'Log service',
-      'Add reminder',
-      'Log',
-      'Add',
-      'Add first record',
-      'Add first reminder',
-    ]) {
+    expect(screen.queryByRole('button', { name: 'Log' })).not.toBeInTheDocument();
+    for (const name of ['Edit vehicle', 'Log', 'Add', 'Add first record', 'Add first reminder']) {
       expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
     }
     // Reading stays open to them.
+    expect(screen.getByRole('link', { name: 'Show papers' })).toBeVisible();
     expect(screen.getAllByRole('link', { name: 'View all' })).toHaveLength(2);
     expect(screen.getByText('No records')).toBeInTheDocument();
+
+    await openMenu('More vehicle actions');
+    expect(screen.getByRole('menuitem', { name: /download service history/i })).toBeVisible();
+    expect(screen.getByRole('menuitem', { name: /download resale report/i })).toBeVisible();
+    expect(screen.queryByRole('menuitem', { name: 'Edit vehicle' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Delete vehicle' })).not.toBeInTheDocument();
   });
 
-  it('keeps the write actions for an editor', () => {
+  it('keeps editing to an editor and deleting to the owner', async () => {
     renderAs(VehicleRole.Editor);
+    await openMenu('More vehicle actions');
+    expect(screen.getByRole('menuitem', { name: 'Edit vehicle' })).toBeVisible();
+    expect(screen.queryByRole('menuitem', { name: 'Delete vehicle' })).not.toBeInTheDocument();
+  });
 
-    for (const name of [
-      'Edit vehicle',
-      'Log service',
-      'Add reminder',
-      'Log',
-      'Add',
-      'Add first record',
-      'Add first reminder',
-    ]) {
-      expect(screen.getByRole('link', { name })).toBeInTheDocument();
+  it('offers the owner Delete vehicle', async () => {
+    renderAs(VehicleRole.Owner);
+    await openMenu('More vehicle actions');
+
+    expect(screen.getByRole('menuitem', { name: 'Delete vehicle' })).toBeVisible();
+  });
+
+  it('opens the first paper on file full screen from Show papers', () => {
+    documents.current = [paper('puc', '2027-01-01T00:00:00.000Z')];
+    renderAs(VehicleRole.Viewer);
+
+    const link = screen.getByRole('link', { name: 'Show papers' });
+    expect(link).toHaveAttribute('href', '/vehicles/$vehicleId/documents/$kind/$documentId');
+    expect(link).toHaveAttribute(
+      'data-params',
+      JSON.stringify({ vehicleId: 'vehicle-1', kind: 'puc', documentId: 'puc-1' }),
+    );
+  });
+
+  it('opens the Papers tab from Show papers when none is on file', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(screen.getByRole('link', { name: 'Show papers' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'papers' }),
+    );
+  });
+});
+
+describe('VehicleDetailPage tabs', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    documents.current = [];
+  });
+
+  it('has five tabs, for every role', () => {
+    for (const role of [VehicleRole.Owner, VehicleRole.Viewer]) {
+      const { unmount } = renderAs(role);
+      expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+        'Overview',
+        'History',
+        'Reminders',
+        'Papers',
+        'More',
+      ]);
+      unmount();
     }
   });
 
-  it('keeps deleting the vehicle to its owner', async () => {
-    renderAs(VehicleRole.Owner);
-    await openActionsMenu();
+  it('switches tab through the search state', async () => {
+    const onSearchStateChange = vi.fn();
+    renderAs(VehicleRole.Owner, {}, onSearchStateChange);
 
-    expect(screen.getByRole('menuitem', { name: /delete vehicle permanently/i })).toBeVisible();
+    await userEvent.setup().click(screen.getByRole('tab', { name: 'Papers' }));
+
+    expect(onSearchStateChange).toHaveBeenCalledWith({ tab: 'papers' });
   });
 
-  it('does not offer an editor the owner-only delete', async () => {
-    renderAs(VehicleRole.Editor);
-    await openActionsMenu();
-
-    expect(screen.queryByText(/delete vehicle permanently/i)).not.toBeInTheDocument();
-  });
-
-  it('leaves a viewer the downloads but not the delete', async () => {
+  it('marks Papers, in words for a screen reader, when a paper has expired', () => {
+    documents.current = [paper('insurance', '2026-01-01T00:00:00.000Z')];
     renderAs(VehicleRole.Viewer);
-    await openActionsMenu();
 
-    expect(screen.getByRole('menuitem', { name: /download resale report/i })).toBeVisible();
-    expect(screen.queryByText(/delete vehicle permanently/i)).not.toBeInTheDocument();
+    const tab = screen.getByRole('tab', { name: 'Papers, 1 paper expired' });
+    expect(within(tab).getByTestId('papers-status-dot')).toHaveAttribute('data-tone', 'late');
   });
 
-  it('hides the loans tab, which is owner-only, from an editor', () => {
-    renderAs(VehicleRole.Editor);
-    expect(screen.queryByRole('tab', { name: 'Loans' })).not.toBeInTheDocument();
+  it('leaves Papers unmarked when every paper is in date', () => {
+    documents.current = [paper('insurance', '2099-01-01T00:00:00.000Z')];
+    renderAs(VehicleRole.Viewer);
+
+    expect(screen.getByRole('tab', { name: 'Papers' })).toBeVisible();
+    expect(screen.queryByTestId('papers-status-dot')).not.toBeInTheDocument();
   });
 
-  it('hides logging a service on the service log tab from a viewer', () => {
-    renderAs(VehicleRole.Viewer, { tab: 'maintenance' });
+  it('shows the service log under History, without logging for a viewer', () => {
+    renderAs(VehicleRole.Viewer, { tab: 'history' });
 
     expect(screen.getByText('Service history')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Service' })).toBeChecked();
     expect(screen.queryByRole('link', { name: 'Log' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Add first record' })).not.toBeInTheDocument();
   });
 
-  it('keeps logging a service on the service log tab for an editor', () => {
-    renderAs(VehicleRole.Editor, { tab: 'maintenance' });
+  it('keeps logging a service under History for an editor', () => {
+    renderAs(VehicleRole.Editor, { tab: 'history' });
 
     expect(screen.getByRole('link', { name: 'Log' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Add first record' })).toBeInTheDocument();
+  });
+
+  it('adds the suggested service schedule to Reminders', () => {
+    renderAs(VehicleRole.Owner, { tab: 'reminders' });
+
+    expect(screen.getByText('Suggested service schedule')).toBeVisible();
+  });
+
+  it('lists the sections under More, with Loans for the owner only', () => {
+    renderAs(VehicleRole.Owner, { tab: 'more' });
+    const owned = within(screen.getByRole('navigation', { name: 'More about this vehicle' }));
+    expect(owned.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Tech specsEngine, size and features from the catalogue',
+      'TyresTread, age and rotation',
+      "AccessoriesWhat's fitted, with its warranty",
+      "LoansEMIs and what's left to pay",
+      'MembersWho can see this vehicle or log for it',
+      'ActivityEvery change, newest first',
+    ]);
+    expect(owned.getByRole('link', { name: /^Tyres/ })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'more', section: 'tyres' }),
+    );
+  });
+
+  it('keeps Loans off the More list for an editor', () => {
+    renderAs(VehicleRole.Editor, { tab: 'more' });
+
+    expect(screen.queryByRole('link', { name: /^Loans/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Members/ })).toBeVisible();
+  });
+
+  it('opens a More section with a way back to the list', () => {
+    renderAs(VehicleRole.Owner, { tab: 'more', section: 'loans' });
+
+    expect(screen.getByRole('heading', { name: 'Loans' })).toBeVisible();
+    expect(screen.getByText('Loans panel')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'more' }),
+    );
+  });
+
+  it('sends an editor who opens Loans back to the More list', () => {
+    const onSearchStateChange = vi.fn();
+    renderAs(VehicleRole.Editor, { tab: 'more', section: 'loans' }, onSearchStateChange);
+
+    expect(screen.queryByText('Loans panel')).not.toBeInTheDocument();
+    expect(onSearchStateChange).toHaveBeenCalledWith({ tab: 'more', section: undefined });
   });
 });
 

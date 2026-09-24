@@ -42,10 +42,8 @@ test('a new account uses the app for a week before it has to verify', async ({ p
     registrationNumber: `MH12GR${account.suffix.slice(-4)}`,
   });
 
-  await page
-    .getByRole('link', { name: /log service/i })
-    .first()
-    .click();
+  await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
+  await page.getByRole('menuitem', { name: 'Service' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
   await page.getByLabel(/service date/i).fill('2026-03-20');
   await page.getByLabel(/^odometer$/i).fill('15200');

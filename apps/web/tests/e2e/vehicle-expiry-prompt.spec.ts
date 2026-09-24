@@ -42,7 +42,7 @@ async function addVehicle(page: import('@playwright/test').Page, suffix: string)
 /**
  * The two dates an owner knows by heart are the ones the alerts run on, so the
  * new vehicle asks for them straight away rather than waiting for a later visit
- * to the Protection tab.
+ * to the Papers tab.
  */
 test('a new vehicle asks for the insurance and PUC expiry, once', async ({ page }) => {
   const suffix = uniqueSuffix();
@@ -66,7 +66,7 @@ test('a new vehicle asks for the insurance and PUC expiry, once', async ({ page 
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
 
   // Both records exist, each known by its expiry alone.
-  await page.getByRole('tab', { name: 'Protection' }).click();
+  await page.getByRole('tab', { name: /^Papers/ }).click();
   await expect(page.getByText('1 Mar 2027')).toBeVisible();
   await expect(page.getByText('15 Dec 2026')).toBeVisible();
   await expect(page.getByText('Not recorded').first()).toBeVisible();
