@@ -72,10 +72,11 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
 
       try {
         await navigate({
-          to: '/vehicles/$vehicleId/maintenance',
+          to: '/vehicles/$vehicleId',
           params: {
             vehicleId,
           },
+          search: { tab: 'history' },
         });
       } catch (error) {
         restoreNavigationGuard();
@@ -238,9 +239,10 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
             <Link
               className={buttonVariants({ variant: 'secondary' })}
               params={{ vehicleId }}
-              to="/vehicles/$vehicleId/maintenance"
+              search={{ tab: 'history' }}
+              to="/vehicles/$vehicleId"
             >
-              Back to maintenance
+              Back to History
             </Link>
           }
           description="You can read this vehicle's service history, but not log new entries for it."

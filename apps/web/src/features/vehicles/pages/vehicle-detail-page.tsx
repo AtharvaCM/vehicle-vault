@@ -260,7 +260,6 @@ export function VehicleDetailPage({
 
           <TabsContent value="history" className="mt-0 animate-in fade-in duration-500">
             <VehicleHistoryTab
-              maintenanceQuery={maintenanceQuery}
               onViewChange={(view) => onSearchStateChange({ tab: 'history', view })}
               serviceInsights={serviceInsights}
               vehicleId={vehicleId}
@@ -269,11 +268,7 @@ export function VehicleDetailPage({
           </TabsContent>
 
           <TabsContent value="reminders" className="mt-0 animate-in fade-in duration-500">
-            <VehicleRemindersTab
-              remindersQuery={remindersQuery}
-              vehicleId={vehicleId}
-              visibleReminders={activeReminders}
-            />
+            <VehicleRemindersTab vehicleId={vehicleId} />
           </TabsContent>
 
           <TabsContent value="papers" className="mt-0 animate-in fade-in duration-500">

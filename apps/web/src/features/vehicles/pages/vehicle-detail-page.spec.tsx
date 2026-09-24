@@ -42,8 +42,17 @@ vi.mock('../hooks/use-delete-vehicle', () => ({
 vi.mock('@/features/maintenance/hooks/use-maintenance-records', () => ({
   useMaintenanceRecords: () => ({ data: [], isPending: false, isError: false, isSuccess: true }),
 }));
+vi.mock('@/features/maintenance/hooks/use-bulk-delete-maintenance-records', () => ({
+  useBulkDeleteMaintenanceRecords: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 vi.mock('@/features/reminders/hooks/use-vehicle-reminders', () => ({
   useVehicleReminders: () => ({ data: [], isPending: false, isError: false, isSuccess: true }),
+}));
+vi.mock('@/features/reminders/hooks/use-bulk-complete-reminders', () => ({
+  useBulkCompleteReminders: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+vi.mock('@/features/reminders/hooks/use-bulk-delete-reminders', () => ({
+  useBulkDeleteReminders: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock('@/features/vehicle-documents/hooks/use-documents', () => ({
   useVehicleDocuments: () => ({ data: documents.current, isPending: false, isError: false }),
@@ -77,6 +86,12 @@ vi.mock('@/features/dashboard/components/fuel-log-dialog', () => ({
 }));
 vi.mock('@/features/vehicle-documents/components/document-form-dialog', () => ({
   DocumentFormDialog: () => null,
+}));
+vi.mock('@/features/maintenance/components/maintenance-import-dialog', () => ({
+  MaintenanceImportDialog: () => null,
+}));
+vi.mock('@/features/maintenance/hooks/use-bulk-delete-maintenance-records', () => ({
+  useBulkDeleteMaintenanceRecords: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock('@/features/loans/components/vehicle-loans-panel', () => ({
   VehicleLoansPanel: () => <p>Loans panel</p>,
@@ -284,17 +299,17 @@ describe('VehicleDetailPage tabs', () => {
   it('shows the service log under History, without logging for a viewer', () => {
     renderAs(VehicleRole.Viewer, { tab: 'history' });
 
-    expect(screen.getByText('Service history')).toBeInTheDocument();
+    expect(screen.getByText('No service records yet')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Service' })).toBeChecked();
-    expect(screen.queryByRole('link', { name: 'Log' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Add first record' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Import CSV' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Log your first service' })).not.toBeInTheDocument();
   });
 
   it('keeps logging a service under History for an editor', () => {
     renderAs(VehicleRole.Editor, { tab: 'history' });
 
-    expect(screen.getByRole('link', { name: 'Log' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add first record' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Import CSV' }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Log your first service' })).toBeInTheDocument();
   });
 
   it('adds the suggested service schedule to Reminders', () => {

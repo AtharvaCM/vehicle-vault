@@ -25,18 +25,14 @@ vi.mock('@/features/fuel-logs/components/fuel-tab', () => ({
 vi.mock('@/features/fuel-logs/components/fuel-economy-card', () => ({
   FuelEconomyCard: () => <div data-testid="fuel-economy-card" />,
 }));
+vi.mock('@/features/maintenance/components/vehicle-maintenance-list', () => ({
+  VehicleMaintenanceList: () => <div data-testid="vehicle-maintenance-list" />,
+}));
 vi.mock('./odometer-history-card', () => ({
   OdometerHistoryCard: () => <div data-testid="odometer-history-card" />,
 }));
 
 import { VehicleHistoryTab } from './vehicle-history-tab';
-
-const maintenanceQuery = {
-  data: [],
-  isPending: false,
-  isError: false,
-  isSuccess: true,
-} as unknown as Parameters<typeof VehicleHistoryTab>[0]['maintenanceQuery'];
 
 const serviceInsights = {
   averageDaysBetweenServices: null,
@@ -53,7 +49,6 @@ describe('VehicleHistoryTab', () => {
   it('shows the service content and not the fuel tab in the service view', () => {
     render(
       <VehicleHistoryTab
-        maintenanceQuery={maintenanceQuery}
         onViewChange={vi.fn()}
         serviceInsights={serviceInsights}
         vehicleId="vehicle-1"
@@ -69,7 +64,6 @@ describe('VehicleHistoryTab', () => {
   it('shows the fuel tab in the fuel view', () => {
     render(
       <VehicleHistoryTab
-        maintenanceQuery={maintenanceQuery}
         onViewChange={vi.fn()}
         serviceInsights={serviceInsights}
         vehicleId="vehicle-1"
@@ -86,7 +80,6 @@ describe('VehicleHistoryTab', () => {
     const onViewChange = vi.fn();
     render(
       <VehicleHistoryTab
-        maintenanceQuery={maintenanceQuery}
         onViewChange={onViewChange}
         serviceInsights={serviceInsights}
         vehicleId="vehicle-1"

@@ -41,7 +41,8 @@ export function ReminderPanel({
               <Link
                 className={buttonVariants({ size: 'xs', variant: 'ghost' })}
                 params={{ vehicleId }}
-                to="/vehicles/$vehicleId/reminders"
+                search={{ tab: 'reminders' }}
+                to="/vehicles/$vehicleId"
               >
                 View all
               </Link>

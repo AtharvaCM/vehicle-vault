@@ -148,7 +148,7 @@ describe('MaintenanceRecordDetailPage roles', () => {
 
     expect(screen.queryByRole('link', { name: 'Edit record' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete record' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to maintenance' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to History' })).toBeInTheDocument();
   });
 
   it('leaves a viewer the receipts to open but not to change', () => {

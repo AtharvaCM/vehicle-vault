@@ -55,6 +55,6 @@ describe('VehicleReminderCreatePage roles', () => {
 
     expect(screen.queryByText('reminder form')).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to vehicle reminders' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Reminders' })).toBeInTheDocument();
   });
 });

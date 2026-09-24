@@ -90,9 +90,14 @@ test('every top-level page is one click away, and a deep page says where it sits
       await expect(page.getByRole('heading', { name: heading, exact: true })).toHaveCount(1);
     }
 
-    // A service record sits under its vehicle, and lights Garage.
+    // A service record sits under its vehicle's History tab, and lights Garage.
     await page.goto(`/maintenance-records/${record.id}`);
-    await expect(breadcrumbTrail(page)).toHaveText(['Garage', nickname, 'Service record']);
+    await expect(breadcrumbTrail(page)).toHaveText([
+      'Garage',
+      nickname,
+      'History',
+      'Service record',
+    ]);
     await expect(nav.getByRole('link', { name: 'Garage' })).toHaveAttribute('data-active', 'true');
     await page
       .getByRole('navigation', { name: 'Breadcrumb' })
@@ -139,11 +144,11 @@ test('every top-level page is one click away, and a deep page says where it sits
     await expect(bar.getByRole('button', { name: 'More' })).toHaveAttribute('data-active', 'true');
   }
 
-  // On a phone the trail shortens to the way back.
+  // On a phone the trail shortens to the way back: the vehicle's History tab.
   await page.goto(`/maintenance-records/${record.id}`);
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toBeHidden();
-  await page.getByRole('banner').getByRole('link', { name: nickname }).click();
-  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}$`));
+  await page.getByRole('banner').getByRole('link', { name: 'History' }).click();
+  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}\\?tab=history$`));
   await expect(bar.getByRole('link', { name: 'Garage' })).toHaveAttribute('data-active', 'true');
 });
 

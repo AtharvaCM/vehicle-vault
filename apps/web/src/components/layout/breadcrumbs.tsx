@@ -42,15 +42,26 @@ export function Breadcrumbs({ fallback = null }: { fallback?: ReactNode }) {
     case '/vehicles/$vehicleId/edit':
       return <VehicleTrail tail={[{ label: 'Edit' }]} vehicleId={params.vehicleId!} />;
     case '/vehicles/$vehicleId/documents/$kind/$documentId':
-      return <VehicleTrail tail={[{ label: 'Papers' }]} vehicleId={params.vehicleId!} />;
-    case '/vehicles/$vehicleId/maintenance':
-      return <VehicleTrail tail={[{ label: 'Service history' }]} vehicleId={params.vehicleId!} />;
+      return (
+        <VehicleTrail
+          tail={[tabCrumb(params.vehicleId!, 'papers'), { label: 'Show papers' }]}
+          vehicleId={params.vehicleId!}
+        />
+      );
     case '/vehicles/$vehicleId/maintenance/new':
-      return <VehicleTrail tail={[{ label: 'Log service' }]} vehicleId={params.vehicleId!} />;
-    case '/vehicles/$vehicleId/reminders':
-      return <VehicleTrail tail={[{ label: 'Reminders' }]} vehicleId={params.vehicleId!} />;
+      return (
+        <VehicleTrail
+          tail={[tabCrumb(params.vehicleId!, 'history'), { label: 'Log service' }]}
+          vehicleId={params.vehicleId!}
+        />
+      );
     case '/vehicles/$vehicleId/reminders/new':
-      return <VehicleTrail tail={[{ label: 'Add reminder' }]} vehicleId={params.vehicleId!} />;
+      return (
+        <VehicleTrail
+          tail={[tabCrumb(params.vehicleId!, 'reminders'), { label: 'Add reminder' }]}
+          vehicleId={params.vehicleId!}
+        />
+      );
     case '/maintenance-records/$recordId':
       return <RecordTrail recordId={params.recordId!} />;
     case '/maintenance-records/$recordId/edit':
@@ -78,12 +89,24 @@ function useVehicleCrumb(vehicleId: string): Crumb {
   return { label, link: { to: '/vehicles/$vehicleId', params: { vehicleId } } };
 }
 
+const TAB_LABELS = { history: 'History', reminders: 'Reminders', papers: 'Papers' } as const;
+
+/** The vehicle's tab a page is filed under, so its trail leads back there. */
+function tabCrumb(vehicleId: string, tab: keyof typeof TAB_LABELS): Crumb {
+  // Until a record says which vehicle it belongs to, there is nowhere to link.
+  if (!vehicleId) return { label: TAB_LABELS[tab] };
+  return {
+    label: TAB_LABELS[tab],
+    link: { to: '/vehicles/$vehicleId', params: { vehicleId }, search: { tab } },
+  };
+}
+
 function VehicleTrail({ vehicleId, tail = [] }: { vehicleId: string; tail?: Crumb[] }) {
   const vehicle = useVehicleCrumb(vehicleId);
   return <Trail crumbs={[GARAGE, vehicle, ...tail]} />;
 }
 
-/** A service record, under the vehicle it was logged against. */
+/** A service record, under the History tab of the vehicle it was logged against. */
 function RecordTrail({ recordId, editing = false }: { recordId: string; editing?: boolean }) {
   const { data: record } = useMaintenanceRecord(recordId);
   const vehicle = useVehicleCrumb(record?.vehicleId ?? '');
@@ -93,17 +116,23 @@ function RecordTrail({ recordId, editing = false }: { recordId: string; editing?
         link: { to: '/maintenance-records/$recordId', params: { recordId } },
       }
     : { label: 'Service record' };
-  return <Trail crumbs={[GARAGE, vehicle, self, ...(editing ? [{ label: 'Edit' }] : [])]} />;
+  const history = tabCrumb(record?.vehicleId ?? '', 'history');
+  return (
+    <Trail crumbs={[GARAGE, vehicle, history, self, ...(editing ? [{ label: 'Edit' }] : [])]} />
+  );
 }
 
-/** A reminder, under the vehicle it belongs to. */
+/** A reminder, under the Reminders tab of the vehicle it belongs to. */
 function ReminderTrail({ reminderId, editing = false }: { reminderId: string; editing?: boolean }) {
   const { data: reminder } = useReminder(reminderId);
   const vehicle = useVehicleCrumb(reminder?.vehicleId ?? '');
   const self: Crumb = editing
     ? { label: 'Reminder', link: { to: '/reminders/$reminderId', params: { reminderId } } }
     : { label: 'Reminder' };
-  return <Trail crumbs={[GARAGE, vehicle, self, ...(editing ? [{ label: 'Edit' }] : [])]} />;
+  const reminders = tabCrumb(reminder?.vehicleId ?? '', 'reminders');
+  return (
+    <Trail crumbs={[GARAGE, vehicle, reminders, self, ...(editing ? [{ label: 'Edit' }] : [])]} />
+  );
 }
 
 const LINK_CLASS =
