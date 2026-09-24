@@ -177,7 +177,7 @@ export function TyreInspectionDialog({
                   className="grid gap-3 rounded-xl border border-line bg-page/60 p-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-tight text-fg">
+                    <p className="text-xs font-bold text-fg">
                       {format.enumLabel('tyrePosition', tyre.position)}
                     </p>
                     <p className="truncate text-caption text-fg-3">
