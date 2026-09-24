@@ -3,9 +3,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Monitor,
+  Moon,
   Plus,
   Settings,
   Siren,
+  Sun,
   Wrench,
 } from 'lucide-react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
@@ -18,10 +21,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { themePreferences, useThemePreference, type ThemePreference } from '@/lib/theme';
 import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/features/notifications/components/notification-center';
@@ -38,6 +44,12 @@ const sectionTitles: Record<string, string> = {
   '/settings': 'Settings',
 };
 
+const themeOptions: Record<ThemePreference, { label: string; icon: typeof Sun }> = {
+  system: { label: 'System', icon: Monitor },
+  light: { label: 'Light', icon: Sun },
+  dark: { label: 'Dark', icon: Moon },
+};
+
 const mobileIcons = {
   '/dashboard': LayoutDashboard,
   '/maintenance': Wrench,
@@ -50,6 +62,7 @@ export function Topbar() {
   const auth = useAuth();
   const navigate = useNavigate();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [themePreference, setThemePreference] = useThemePreference();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -146,6 +159,31 @@ export function Topbar() {
                   Service history
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-1.5" />
+              <DropdownMenuLabel className="px-3 pt-1 pb-0.5 text-small font-medium text-fg-3">
+                Theme
+              </DropdownMenuLabel>
+              {/* Kept on this device; System follows the phone or computer. */}
+              <DropdownMenuRadioGroup
+                aria-label="Theme"
+                onValueChange={(value) => setThemePreference(value as ThemePreference)}
+                value={themePreference}
+              >
+                {themePreferences.map((preference) => {
+                  const { label, icon: Icon } = themeOptions[preference];
+                  return (
+                    <DropdownMenuRadioItem
+                      className="rounded-lg py-2"
+                      key={preference}
+                      onSelect={(event) => event.preventDefault()}
+                      value={preference}
+                    >
+                      <Icon className="mr-2.5 h-4 w-4 text-fg-3" />
+                      {label}
+                    </DropdownMenuRadioItem>
+                  );
+                })}
+              </DropdownMenuRadioGroup>
               <DropdownMenuSeparator className="my-1.5" />
               <DropdownMenuItem
                 className="rounded-lg px-3 py-2 text-late focus:bg-late-tint focus:text-late"

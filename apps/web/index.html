@@ -9,7 +9,38 @@
     />
     <meta name="application-name" content="Vehicle Vault" />
     <meta name="apple-mobile-web-app-title" content="Vehicle Vault" />
-    <meta name="theme-color" content="#0e5c63" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0e5c63" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1216" />
+    <!--
+      The theme, applied before the first paint so no page flashes the wrong
+      one (#252): this device's choice, or the system's. It only touches
+      <html>, never #root, so prerendered catalog pages hydrate as before.
+      src/lib/theme/theme.ts takes over once the app loads, and
+      index-html-theme-script.spec.ts keeps the two in step.
+    -->
+    <script>
+      (function () {
+        var preference = 'system';
+        try {
+          var stored = localStorage.getItem('vehicle-vault.theme');
+          if (stored === 'light' || stored === 'dark') preference = stored;
+        } catch (error) {}
+        var dark =
+          preference === 'dark' ||
+          (preference === 'system' &&
+            typeof matchMedia === 'function' &&
+            matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        if (dark) root.classList.add('dark');
+        root.style.colorScheme = dark ? 'dark' : 'light';
+        if (preference !== 'system') {
+          var metas = document.querySelectorAll('meta[name="theme-color"]');
+          for (var i = 0; i < metas.length; i++) {
+            metas[i].setAttribute('content', dark ? '#0f1216' : '#0e5c63');
+          }
+        }
+      })();
+    </script>
     <meta name="msapplication-TileColor" content="#0e5c63" />
     <meta
       property="og:title"

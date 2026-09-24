@@ -8,6 +8,7 @@ import { initErrorReporting } from '@/lib/monitoring/init-error-reporting';
 import { installZodErrorMap } from '@/lib/validation/zod-error-map';
 import { queryClient } from '@/lib/query/query-client';
 import { mountApp } from '@/prerender/mount-app';
+import { startThemeSync } from '@/lib/theme';
 import '@/styles/globals.css';
 
 initErrorReporting();
@@ -16,6 +17,9 @@ initClarity();
 installZodErrorMap();
 // Before the first render: the browser can offer installation straight away.
 captureInstallPrompt();
+// The inline script in index.html set the theme before the first paint; from
+// here the page follows the system (on System) and choices made in other tabs.
+startThemeSync();
 
 // The worker precaches the app shell so it opens instantly and offline, and it
 // is the same /sw.js push notifications use. Production only: in dev it would
