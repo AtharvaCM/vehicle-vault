@@ -16,19 +16,19 @@ function monthsAgo(months: number) {
 async function overflow(page: Page) {
   return page.evaluate(() => {
     const viewport = document.documentElement.clientWidth;
-    return [...document.querySelectorAll<HTMLElement>('[data-slot="chart"], [data-slot="share-bar"]')].map(
-      (element) => {
-        const box = element.getBoundingClientRect();
-        const card = element.closest<HTMLElement>('[data-slot="card"]')?.getBoundingClientRect();
-        const svg = element.querySelector('svg')?.getBoundingClientRect();
-        return {
-          slot: element.dataset.slot,
-          outOfScreen: box.right > viewport + 0.5 || box.left < -0.5,
-          outOfCard: card ? box.right > card.right + 0.5 : false,
-          svgWiderThanChart: svg ? svg.width > box.width + 0.5 : false,
-        };
-      },
-    );
+    return [
+      ...document.querySelectorAll<HTMLElement>('[data-slot="chart"], [data-slot="share-bar"]'),
+    ].map((element) => {
+      const box = element.getBoundingClientRect();
+      const card = element.closest<HTMLElement>('[data-slot="card"]')?.getBoundingClientRect();
+      const svg = element.querySelector('svg')?.getBoundingClientRect();
+      return {
+        slot: element.dataset.slot,
+        outOfScreen: box.right > viewport + 0.5 || box.left < -0.5,
+        outOfCard: card ? box.right > card.right + 0.5 : false,
+        svgWiderThanChart: svg ? svg.width > box.width + 0.5 : false,
+      };
+    });
   });
 }
 
@@ -103,7 +103,12 @@ test('spend charts stay inside their cards at 390px, also after a resize', async
   }
 
   // Months read as people say them, not as ISO keys.
-  await expect(trend.locator('svg').getByText(/^[A-Z][a-z]{2} \d{4}$/).first()).toBeVisible();
+  await expect(
+    trend
+      .locator('svg')
+      .getByText(/^[A-Z][a-z]{2} \d{4}$/)
+      .first(),
+  ).toBeVisible();
 });
 
 test.afterAll(async () => {
