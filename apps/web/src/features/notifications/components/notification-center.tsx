@@ -189,13 +189,10 @@ function EmptyBell() {
       {pending > 0 ? (
         <>
           <p className="text-ui font-medium text-fg">No new alerts</p>
-          <Link
-            to="/dashboard"
-            className="text-caption text-primary font-semibold mt-1 hover:underline"
-          >
+          <Link to="/home" className="text-caption text-primary font-semibold mt-1 hover:underline">
             {pending === 1
-              ? '1 thing needs your attention on the dashboard'
-              : `${pending} things need your attention on the dashboard`}
+              ? '1 thing needs your attention on Home'
+              : `${pending} things need your attention on Home`}
           </Link>
         </>
       ) : (

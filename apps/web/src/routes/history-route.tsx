@@ -13,18 +13,18 @@ const MaintenanceOverviewPage = createLazyPage(
       default: module.MaintenanceOverviewPage,
     })),
   {
-    title: 'Loading maintenance',
+    title: 'Loading history',
     description: 'Loading your service history.',
   },
 );
 
-function MaintenanceRouteComponent() {
-  const search = maintenanceRoute.useSearch();
+function HistoryRouteComponent() {
+  const search = historyRoute.useSearch();
   const navigate = useNavigate();
 
   function updateSearch(next: Partial<MaintenanceListSearch>) {
     void navigate({
-      to: '/maintenance',
+      to: '/history',
       search: (previous) => normalizeMaintenanceListSearch({ ...previous, ...next }),
       replace: true,
     });
@@ -33,9 +33,9 @@ function MaintenanceRouteComponent() {
   return <MaintenanceOverviewPage onSearchStateChange={updateSearch} searchState={search} />;
 }
 
-export const maintenanceRoute = createRoute({
+export const historyRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'maintenance',
+  path: 'history',
   validateSearch: normalizeMaintenanceListSearch,
-  component: MaintenanceRouteComponent,
+  component: HistoryRouteComponent,
 });

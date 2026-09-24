@@ -35,7 +35,7 @@ type ResourceLoadErrorProps = {
   pageDescription: string;
   onRetry: () => void;
   isRetrying?: boolean;
-  /** The "Your vehicles" / "Your reminders" link back to a list, shown in every variant. */
+  /** The "Your garage" / "Upcoming" link back to a list, shown in every variant. */
   listAction: ReactNode;
 };
 

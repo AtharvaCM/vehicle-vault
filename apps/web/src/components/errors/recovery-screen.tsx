@@ -1,4 +1,4 @@
-import { LayoutDashboard, RotateCw, TriangleAlert } from 'lucide-react';
+import { House, RotateCw, TriangleAlert } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -28,7 +28,7 @@ export function RecoveryScreen({
       <h1 className="text-heading font-semibold text-fg">Something went wrong</h1>
       <p className="text-ui leading-6 text-fg-2">
         This page hit an error it could not recover from. Reloading usually fixes it; if it keeps
-        happening, the dashboard is a safe place to start again.
+        happening, Home is a safe place to start again.
       </p>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
         <Button onClick={onReload} type="button">
@@ -36,8 +36,8 @@ export function RecoveryScreen({
           Reload
         </Button>
         <Button onClick={onGoToDashboard} type="button" variant="outline">
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          Go to dashboard
+          <House className="mr-2 h-4 w-4" />
+          Go to Home
         </Button>
       </div>
     </div>

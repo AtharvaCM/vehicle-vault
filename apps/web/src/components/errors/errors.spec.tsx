@@ -43,8 +43,8 @@ function renderAt(path: string) {
     createRoute({ getParentRoute: () => root, path: '/ok', component: () => <p>ok page</p> }),
     createRoute({
       getParentRoute: () => root,
-      path: '/dashboard',
-      component: () => <p>dashboard page</p>,
+      path: '/home',
+      component: () => <p>home page</p>,
     }),
     createRoute({ getParentRoute: () => root, path: '/login', component: () => <p>login page</p> }),
   ]);
@@ -76,7 +76,7 @@ describe('route errors', () => {
 
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reload/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /go to dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /go to home/i })).toBeInTheDocument();
   });
 
   it('sends the error to the error-reporting client', async () => {
@@ -102,9 +102,9 @@ describe('route errors', () => {
 
   it('takes the user to the dashboard from the recovery screen', async () => {
     renderAt('/boom');
-    fireEvent.click(await screen.findByRole('button', { name: /go to dashboard/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /go to home/i }));
 
-    expect(await screen.findByText('dashboard page')).toBeInTheDocument();
+    expect(await screen.findByText('home page')).toBeInTheDocument();
   });
 });
 
@@ -182,10 +182,7 @@ describe('unknown addresses', () => {
 
     expect(await screen.findByText('Page not found')).toBeInTheDocument();
     expect(screen.getByTestId('app-shell')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /back to dashboard/i })).toHaveAttribute(
-      'href',
-      '/dashboard',
-    );
+    expect(screen.getByRole('link', { name: /back to home/i })).toHaveAttribute('href', '/home');
   });
 
   it('shows a guest a public 404 that points at sign-in', async () => {

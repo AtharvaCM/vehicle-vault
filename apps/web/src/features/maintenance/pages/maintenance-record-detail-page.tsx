@@ -75,8 +75,8 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         error={recordQuery.error}
         isRetrying={recordQuery.isRefetching}
         listAction={
-          <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-            Your vehicles
+          <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+            Your garage
           </Link>
         }
         onRetry={() => void recordQuery.refetch()}

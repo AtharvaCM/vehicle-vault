@@ -35,15 +35,15 @@ test('selecting a vehicle shows it as checked and names it in the delete confirm
     registrationNumber: registrationToDelete,
   });
 
-  await page.goto('/vehicles');
+  await page.goto('/garage');
   await createCatalogVehicle(page, {
     nickname: nicknameToKeep,
     odometer: '8000',
     registrationNumber: registrationToKeep,
   });
 
-  await page.goto('/vehicles');
-  await expect(page.getByRole('heading', { level: 1, name: 'Vehicles' })).toBeVisible();
+  await page.goto('/garage');
+  await expect(page.getByRole('heading', { level: 1, name: 'Garage' })).toBeVisible();
 
   const checkboxToDelete = page.getByRole('checkbox', {
     name: new RegExp(`select vehicle ${nicknameToDelete}`, 'i'),

@@ -58,7 +58,7 @@ export function AcceptInvitePage({ token }: Props) {
   const back = auth.isAuthenticated ? (
     <p>
       Back to{' '}
-      <Link className="font-semibold text-fg hover:text-fg-2" to="/dashboard">
+      <Link className="font-semibold text-fg hover:text-fg-2" to="/home">
         your garage
       </Link>
     </p>
@@ -123,11 +123,11 @@ export function AcceptInvitePage({ token }: Props) {
       >
         {auth.isAuthenticated ? (
           <Button asChild className="w-full">
-            <Link to="/vehicles">Your vehicles</Link>
+            <Link to="/garage">Your garage</Link>
           </Button>
         ) : (
           <Button asChild className="w-full">
-            <Link search={{ next: '/vehicles' }} to="/login">
+            <Link search={{ next: '/garage' }} to="/login">
               Sign in
             </Link>
           </Button>

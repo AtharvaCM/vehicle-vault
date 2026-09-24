@@ -19,7 +19,7 @@ export const forgotPasswordRoute = createRoute({
   path: 'forgot-password',
   beforeLoad: ({ context }) => {
     if (context.auth.isAuthenticated) {
-      throw redirect({ to: '/dashboard' });
+      throw redirect({ to: '/home' });
     }
   },
   component: ForgotPasswordPage,

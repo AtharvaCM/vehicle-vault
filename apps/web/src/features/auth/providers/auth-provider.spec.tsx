@@ -65,7 +65,7 @@ describe('AuthProvider when the API cannot be reached', () => {
     window.localStorage.clear();
     Object.defineProperty(window, 'location', {
       configurable: true,
-      value: { ...window.location, pathname: '/dashboard', replace },
+      value: { ...window.location, pathname: '/home', replace },
     });
   });
 
@@ -191,7 +191,7 @@ describe('AuthProvider when a request comes back 401', () => {
     window.localStorage.clear();
     Object.defineProperty(window, 'location', {
       configurable: true,
-      value: { ...window.location, pathname: '/dashboard', replace },
+      value: { ...window.location, pathname: '/home', replace },
     });
     api.getMe.mockResolvedValue(USER);
     api.logout.mockResolvedValue(undefined);

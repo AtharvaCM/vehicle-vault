@@ -64,6 +64,6 @@ test('a next that leads off the site is ignored', async ({ page, request }) => {
   await page.goto(`/login?next=${encodeURIComponent('//evil.example.test/dashboard')}`);
   await signIn(page, email);
 
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/home$/);
   expect(new URL(page.url()).host).not.toContain('evil.example.test');
 });

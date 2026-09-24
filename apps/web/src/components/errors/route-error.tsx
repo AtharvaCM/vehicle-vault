@@ -21,5 +21,5 @@ export function RouteError({ error }: ErrorComponentProps) {
     Sentry.captureException(error);
   }, [error]);
 
-  return <RecoveryScreen onGoToDashboard={() => void router.navigate({ to: '/dashboard' })} />;
+  return <RecoveryScreen onGoToDashboard={() => void router.navigate({ to: '/home' })} />;
 }

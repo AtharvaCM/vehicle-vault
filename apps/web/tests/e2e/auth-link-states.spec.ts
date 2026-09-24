@@ -28,7 +28,7 @@ test('a spent verification link keeps a signed-in, unverified user signed in', a
   await expect(page.getByRole('button', { name: 'Send a new link' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Continue to your garage' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
 });
 
 test('an old verification link opened by a verified user is simply done', async ({ page }) => {
@@ -39,7 +39,7 @@ test('an old verification link opened by a verified user is simply done', async 
   await expect(page.getByText('Already verified').first()).toBeVisible();
 
   await page.getByRole('link', { name: 'Continue to your garage' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
 });
 
 test('a spent verification link opened signed out stays on the page and says why', async ({

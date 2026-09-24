@@ -90,7 +90,7 @@ export function MaintenanceOverviewPage({
       <PageContainer>
         <PageHeader
           description="Review service history across every vehicle in your garage."
-          title="Maintenance"
+          title="History"
         />
         <LoadingState
           description="Loading service records across your garage."
@@ -105,7 +105,7 @@ export function MaintenanceOverviewPage({
       <PageContainer>
         <PageHeader
           description="Review service history across every vehicle in your garage."
-          title="Maintenance"
+          title="History"
         />
         <ErrorState
           action={
@@ -185,7 +185,7 @@ export function MaintenanceOverviewPage({
           />
         }
         description="Review service history across your garage, then open any entry for full details and receipts."
-        title="Maintenance"
+        title="History"
       />
 
       {records.length ? (

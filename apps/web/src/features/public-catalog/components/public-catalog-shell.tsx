@@ -29,7 +29,7 @@ export function PublicCatalogShell({ children }: PublicCatalogShellProps) {
         {isAuthenticated ? (
           <Link
             className="rounded-lg px-3 py-2 text-ui font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
-            to="/dashboard"
+            to="/home"
           >
             Open your garage
           </Link>

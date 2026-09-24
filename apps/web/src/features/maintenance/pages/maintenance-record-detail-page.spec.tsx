@@ -271,10 +271,7 @@ describe('MaintenanceRecordDetailPage errors', () => {
 
     expect(screen.getByText("This record isn't in your garage.")).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Your vehicles' })).toHaveAttribute(
-      'href',
-      '/vehicles',
-    );
+    expect(screen.getByRole('link', { name: 'Your garage' })).toHaveAttribute('href', '/garage');
   });
 
   it('tells a viewer whose access was removed why, not just that it failed', () => {

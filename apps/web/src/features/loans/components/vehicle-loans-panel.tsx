@@ -119,7 +119,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
           <p className="text-ui text-fg-3">Financing tied to this vehicle.</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/loans" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+          <Link to="/costs" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
             View all loans
           </Link>
           <Button size="sm" onClick={() => setCreateOpen(true)}>

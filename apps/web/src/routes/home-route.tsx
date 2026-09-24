@@ -13,20 +13,20 @@ const DashboardPage = createLazyPage(
       default: module.DashboardPage,
     })),
   {
-    title: 'Loading dashboard',
+    title: 'Loading Home',
     description: 'Loading your garage summary.',
   },
 );
 
-function DashboardRouteComponent() {
+function HomeRouteComponent() {
   // `useSearch` is non-strict by default: raw URL params that `validateSearch` dropped can
   // still appear here, so re-normalise before anything indexes on `focus`.
-  const search = normalizeDashboardSearch(dashboardRoute.useSearch());
+  const search = normalizeDashboardSearch(homeRoute.useSearch());
   const navigate = useNavigate();
 
   function updateSearch(next: Partial<DashboardSearch>) {
     void navigate({
-      to: '/dashboard',
+      to: '/home',
       search: (previous) => normalizeDashboardSearch({ ...previous, ...next }),
       replace: true,
     });
@@ -35,9 +35,9 @@ function DashboardRouteComponent() {
   return <DashboardPage onSearchStateChange={updateSearch} searchState={search} />;
 }
 
-export const dashboardRoute = createRoute({
+export const homeRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'dashboard',
+  path: 'home',
   validateSearch: normalizeDashboardSearch,
-  component: DashboardRouteComponent,
+  component: HomeRouteComponent,
 });

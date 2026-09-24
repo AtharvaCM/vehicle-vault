@@ -66,8 +66,8 @@ describe('NotificationCenter', () => {
     fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
 
     expect(
-      await screen.findByRole('link', { name: '5 things need your attention on the dashboard' }),
-    ).toHaveAttribute('href', '/dashboard');
+      await screen.findByRole('link', { name: '5 things need your attention on Home' }),
+    ).toHaveAttribute('href', '/home');
     expect(screen.getByText('No new alerts')).toBeInTheDocument();
     expect(screen.queryByText('All caught up!')).not.toBeInTheDocument();
   });

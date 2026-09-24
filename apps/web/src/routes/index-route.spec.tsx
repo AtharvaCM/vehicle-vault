@@ -36,7 +36,7 @@ describe('the index route', { timeout: 30_000 }, () => {
 
     await router.load().catch(() => undefined);
 
-    expect(router.state.location.pathname).toBe('/dashboard');
+    expect(router.state.location.pathname).toBe('/home');
   });
 
   it('shows a guest the landing page instead of redirecting to sign-in', async () => {

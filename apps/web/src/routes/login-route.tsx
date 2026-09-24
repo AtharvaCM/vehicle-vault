@@ -23,7 +23,7 @@ export const loginRoute = createRoute({
   validateSearch: validateReturnPathSearch,
   beforeLoad: ({ context, search }) => {
     if (context.auth.isAuthenticated) {
-      throw search.next ? redirect({ href: search.next }) : redirect({ to: '/dashboard' });
+      throw search.next ? redirect({ href: search.next }) : redirect({ to: '/home' });
     }
   },
   component: LoginPage,

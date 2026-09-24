@@ -96,8 +96,8 @@ describe('afterAuthDestination', () => {
   });
 
   it('falls back to the catalog intent, then the dashboard, when there is no return path', () => {
-    expect(afterAuthDestination(undefined)).toEqual({ to: '/dashboard' });
-    expect(afterAuthDestination('https://evil.example.test')).toEqual({ to: '/dashboard' });
+    expect(afterAuthDestination(undefined)).toEqual({ to: '/home' });
+    expect(afterAuthDestination('https://evil.example.test')).toEqual({ to: '/home' });
 
     saveCatalogIntent({ segment: 'cars', make: 'honda', model: 'city' });
 

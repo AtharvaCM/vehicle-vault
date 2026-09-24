@@ -46,7 +46,7 @@ test('the health card scores a vehicle’s data and moves on once a gap is fille
   const vehicle = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
 
   // Linked to the catalog and freshly read, but no history, papers, tyres or price.
-  await page.goto('/dashboard');
+  await page.goto('/home');
   const card = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
   await expect(card).toContainText('35% · Service history incomplete');
   await expect(card.getByRole('link', { name: 'Service history incomplete' })).toHaveAttribute(

@@ -82,7 +82,7 @@ test('the dashboard lists what the bell knows about tyres, history and accessori
     warrantyExpiresAt: utcDay(5).toISOString(),
   });
 
-  await page.goto('/dashboard');
+  await page.goto('/home');
 
   const queue = page.getByTestId('attention-row');
   await expect(queue.filter({ hasText: 'Tyre not roadworthy' })).toContainText(

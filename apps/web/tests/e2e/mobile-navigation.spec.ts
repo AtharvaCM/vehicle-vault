@@ -177,16 +177,17 @@ async function expectFillFitsPhone(card: Locator, title: string, figures: string
 
 /**
  * The shell was a desktop layout squeezed onto a phone. Below md the primary
- * navigation moves to a bottom bar; from md up nothing changes. jsdom cannot
- * evaluate a breakpoint, so the widths are checked here, in a real browser.
+ * navigation is a bottom bar; from md a sidebar (an icon rail until xl) takes
+ * over, with no menu button or chip row beside it. jsdom cannot evaluate a
+ * breakpoint, so the widths are checked here, in a real browser.
  */
-test('a phone gets the bottom bar instead of the menu button', async ({ page }) => {
+test('a phone gets the bottom bar and no sidebar', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await signIn(page, 'Phone');
 
-  const bar = page.getByRole('navigation', { name: 'Primary' });
+  const bar = page.getByTestId('bottom-nav');
   await expect(bar).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Open navigation' })).toBeHidden();
+  await expect(page.getByTestId('sidebar')).toBeHidden();
 
   // The page leaves room for the bar, so it never covers the last row.
   const room = await page.evaluate(() => {
@@ -199,26 +200,31 @@ test('a phone gets the bottom bar instead of the menu button', async ({ page }) 
   });
   expect(room.padding).toBeGreaterThanOrEqual(room.bar);
 
-  await bar.getByRole('link', { name: 'Vehicles' }).click();
-  await expect(page).toHaveURL(/\/vehicles$/);
+  await bar.getByRole('link', { name: 'Garage' }).click();
+  await expect(page).toHaveURL(/\/garage$/);
   // Where you are reads at a glance: the current destination is coloured apart.
-  const vehicles = bar.getByRole('link', { name: 'Vehicles' });
-  await expect(vehicles).toHaveAttribute('data-status', 'active');
+  const garage = bar.getByRole('link', { name: 'Garage' });
+  await expect(garage).toHaveAttribute('data-active', 'true');
   const colourOf = (name: string) =>
     bar.getByRole('link', { name }).evaluate((node) => getComputedStyle(node).color);
-  expect(await colourOf('Vehicles')).not.toBe(await colourOf('Dashboard'));
+  expect(await colourOf('Garage')).not.toBe(await colourOf('Home'));
 
-  // Everything that does not fit on the bar is one tap away.
+  // Everything that does not fit on the bar is one tap away, in a sheet that
+  // rises from the bar rather than sliding in from the far side.
   await bar.getByRole('button', { name: 'More' }).click();
-  await expect(page.getByRole('dialog').getByRole('link', { name: /loans/i })).toBeVisible();
+  const sheet = page.getByRole('dialog', { name: 'More' });
+  await expect(sheet.getByRole('link', { name: 'Costs' })).toBeVisible();
+  const box = (await sheet.boundingBox())!;
+  expect(Math.round(box.y + box.height)).toBe(PHONE.height);
 });
 
-test('from md up the layout is unchanged', async ({ page }) => {
+test('from md up the sidebar is the one navigation', async ({ page }) => {
   await page.setViewportSize(TABLET);
   await signIn(page, 'Tablet');
 
-  await expect(page.getByRole('navigation', { name: 'Primary' })).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+  await expect(page.getByTestId('bottom-nav')).toBeHidden();
+  await expect(page.getByTestId('sidebar')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveCount(0);
 });
 
 test('the vehicle tabs scroll on a phone, with a linked tab brought into view', async ({
@@ -360,11 +366,11 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   await expectNoSidewaysScroll(page, 'The activity tab, every entry open');
 
   const pages: Array<[string, string]> = [
-    ['/dashboard', workshop],
-    ['/vehicles', nickname],
-    ['/maintenance', workshop],
-    ['/reminders', reminderTitle],
-    ['/loans', lender],
+    ['/home', workshop],
+    ['/garage', nickname],
+    ['/history', workshop],
+    ['/upcoming', reminderTitle],
+    ['/costs', lender],
     ['/settings', 'Download JSON backup'],
     ['/settings/activity', 'Reminder created'],
     [`/vehicles/${vehicleId}/maintenance`, workshop],
@@ -432,15 +438,15 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
 
   // The dashboard's garage cards are narrowest where the grid adds a column: two
-  // across from sm, three beside the sidebar from xl. There a card must keep its
+  // across from sm, three from xl. There a card must keep its
   // footer's buttons inside it, without dropping their labels to make room.
   const garageCard = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
   for (const width of [640, DESKTOP.width]) {
     await page.setViewportSize({ width, height: DESKTOP.height });
-    await page.goto('/dashboard');
+    await page.goto('/home');
     await expect(garageCard.getByText('Log service', { exact: true })).toBeVisible();
     await expectControlsInsideCard(garageCard, `The garage card at ${width}px`);
-    await expectNoSidewaysScroll(page, `/dashboard at ${width}px`);
+    await expectNoSidewaysScroll(page, `/home at ${width}px`);
   }
 });
 

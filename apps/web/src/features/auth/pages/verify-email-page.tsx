@@ -84,7 +84,7 @@ export function VerifyEmailPage() {
   const alternateAction = isAuthenticated ? (
     <p>
       Back to{' '}
-      <Link className="font-semibold text-fg hover:text-fg-2" to="/dashboard">
+      <Link className="font-semibold text-fg hover:text-fg-2" to="/home">
         your garage
       </Link>
     </p>
@@ -128,7 +128,7 @@ export function VerifyEmailPage() {
             className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-colors"
           >
             {isAuthenticated ? (
-              <Link to="/dashboard">
+              <Link to="/home">
                 Continue to your garage
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -185,7 +185,7 @@ export function VerifyEmailPage() {
 
         <Button asChild className="w-full h-11 rounded-xl" variant="outline">
           {isAuthenticated ? (
-            <Link to="/dashboard">Continue to your garage</Link>
+            <Link to="/home">Continue to your garage</Link>
           ) : (
             <Link to="/login">Sign in</Link>
           )}

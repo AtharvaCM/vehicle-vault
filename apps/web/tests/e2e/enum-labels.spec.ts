@@ -96,7 +96,7 @@ test('vehicle header, service records and papers show labels, not raw enum value
   await expect(page.getByText('₹1,31,624').first()).toBeVisible();
   expect(await rawEnumTexts(page)).toEqual([]);
 
-  await page.goto('/maintenance');
+  await page.goto('/history');
   await expect(page.getByText('Engine oil', { exact: true }).first()).toBeVisible();
   expect(await rawEnumTexts(page)).toEqual([]);
 

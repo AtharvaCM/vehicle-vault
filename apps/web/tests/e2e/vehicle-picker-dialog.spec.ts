@@ -35,13 +35,13 @@ test('one vehicle: Log service and Create reminder skip the picker and open the 
 
   // With exactly one editable vehicle the action is a plain link straight to
   // its form — no picker, no button-then-dialog detour.
-  await page.goto('/maintenance');
+  await page.goto('/history');
   await page.getByRole('link', { name: 'Log service', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}/maintenance/new$`));
   await expect(page.getByRole('heading', { name: 'Add service record' })).toBeVisible();
   await expect(page.getByRole('dialog')).not.toBeVisible();
 
-  await page.goto('/reminders');
+  await page.goto('/upcoming');
   await page.getByRole('link', { name: 'Create reminder', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}/reminders/new$`));
   await expect(page.getByRole('heading', { name: 'Add Reminder' })).toBeVisible();
@@ -64,7 +64,7 @@ test('several vehicles: Log service opens a picker, then the chosen form', async
     registrationNumber: `MH12PA${suffix.slice(-4)}`,
   });
 
-  await page.goto('/vehicles');
+  await page.goto('/garage');
   await createCatalogVehicle(page, {
     nickname: secondNickname,
     odometer: '8000',
@@ -74,7 +74,7 @@ test('several vehicles: Log service opens a picker, then the chosen form', async
     where: { nickname: secondNickname },
   });
 
-  await page.goto('/maintenance');
+  await page.goto('/history');
   await page.getByRole('button', { name: 'Log service', exact: true }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Log service' });

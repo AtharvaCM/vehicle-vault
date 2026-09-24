@@ -19,7 +19,7 @@ export const resetPasswordRoute = createRoute({
   path: 'reset-password',
   beforeLoad: ({ context }) => {
     if (context.auth.isAuthenticated) {
-      throw redirect({ to: '/dashboard' });
+      throw redirect({ to: '/home' });
     }
   },
   component: ResetPasswordPage,

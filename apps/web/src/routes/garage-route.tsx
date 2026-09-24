@@ -13,18 +13,18 @@ const VehiclesListPage = createLazyPage(
       default: module.VehiclesListPage,
     })),
   {
-    title: 'Loading vehicles',
+    title: 'Loading your garage',
     description: 'Loading your garage.',
   },
 );
 
-function VehiclesRouteComponent() {
-  const search = vehiclesRoute.useSearch();
+function GarageRouteComponent() {
+  const search = garageRoute.useSearch();
   const navigate = useNavigate();
 
   function updateSearch(next: Partial<VehicleListSearch>) {
     void navigate({
-      to: '/vehicles',
+      to: '/garage',
       search: (previous) => normalizeVehicleListSearch({ ...previous, ...next }),
       replace: true,
     });
@@ -33,9 +33,9 @@ function VehiclesRouteComponent() {
   return <VehiclesListPage onSearchStateChange={updateSearch} searchState={search} />;
 }
 
-export const vehiclesRoute = createRoute({
+export const garageRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'vehicles',
+  path: 'garage',
   validateSearch: normalizeVehicleListSearch,
-  component: VehiclesRouteComponent,
+  component: GarageRouteComponent,
 });

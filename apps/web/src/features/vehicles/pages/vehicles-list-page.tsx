@@ -133,7 +133,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
           </Link>
         }
         description="Keep every vehicle in one place so service history, reminders, and receipts stay connected."
-        title="Vehicles"
+        title="Garage"
       />
 
       {vehiclesQuery.isPending ? (

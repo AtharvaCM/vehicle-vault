@@ -48,7 +48,7 @@ test('renewing a policy carries it over and takes its alert with it', async ({ p
   });
 
   // Five days out, the policy is on the dashboard's attention list.
-  await page.goto('/dashboard');
+  await page.goto('/home');
   // One vehicle, so the row names the insurer rather than the vehicle.
   const attention = page.getByTestId('attention-row').filter({ hasText: provider });
   await expect(attention.filter({ hasText: 'Insurance policy' })).toBeVisible();
@@ -75,8 +75,8 @@ test('renewing a policy carries it over and takes its alert with it', async ({ p
   await expect(page.getByRole('button', { name: 'Renew', exact: true })).toHaveCount(0);
 
   // The renewal is a year off, so the dashboard has nothing to flag.
-  await page.goto('/dashboard');
-  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  await page.goto('/home');
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
   await expect(attention).toHaveCount(0);
 });
 

@@ -34,7 +34,7 @@ test('a new account uses the app for a week before it has to verify', async ({ p
   await registerUnverified(page, account);
 
   await expect(verificationBanner(page)).toContainText('7 days left');
-  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
 
   await createCatalogVehicle(page, {
     nickname,
@@ -84,8 +84,8 @@ test('following the email link while signed in keeps the session', async ({ page
 
   await page.goto(`/verify-email?token=${token}`);
 
-  await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  await expect(page).toHaveURL(/\/home$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
   await expect(verificationBanner(page)).toHaveCount(0);
 });
 

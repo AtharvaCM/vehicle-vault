@@ -57,7 +57,7 @@ describe('VerifyEmailPage', () => {
 
     render(<VerifyEmailPage />);
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/dashboard', replace: true }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/home', replace: true }));
     expect(verifyEmail).toHaveBeenCalledWith({ token: 'link-token' });
     // The verified account has to be in the session before the app renders it.
     expect(auth.current.refreshUser).toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('VerifyEmailPage', () => {
     ).not.toHaveLength(0);
     expect(screen.getByRole('link', { name: /continue to your garage/i })).toHaveAttribute(
       'href',
-      '/dashboard',
+      '/home',
     );
     expect(navigate).not.toHaveBeenCalled();
 
@@ -143,7 +143,7 @@ describe('VerifyEmailPage', () => {
     expect(verifyEmail).not.toHaveBeenCalled();
     expect(screen.getByRole('link', { name: /continue to your garage/i })).toHaveAttribute(
       'href',
-      '/dashboard',
+      '/home',
     );
   });
 

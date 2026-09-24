@@ -84,7 +84,7 @@ describe('OAuthCallbackPage', () => {
 
     render(<OAuthCallbackPage />);
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/dashboard', replace: true }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/home', replace: true }));
   });
 
   it('returns to where the sign-in began, ahead of a waiting intent', async () => {
@@ -108,7 +108,7 @@ describe('OAuthCallbackPage', () => {
 
     render(<OAuthCallbackPage />);
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/dashboard', replace: true }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/home', replace: true }));
   });
 
   it('keeps the return path on the way back to sign in after a failure', async () => {
@@ -127,7 +127,7 @@ describe('OAuthCallbackPage', () => {
 
     render(<OAuthCallbackPage />);
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/dashboard', replace: true }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/home', replace: true }));
   });
 
   it('keeps the intent for a retry when the sign-in was cancelled', async () => {

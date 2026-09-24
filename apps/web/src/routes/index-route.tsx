@@ -24,7 +24,7 @@ export const indexRoute = createRoute({
   path: '/',
   beforeLoad: ({ context }) => {
     if (context.auth.isAuthenticated) {
-      throw redirect({ to: '/dashboard' });
+      throw redirect({ to: '/home' });
     }
   },
   component: LandingPage,

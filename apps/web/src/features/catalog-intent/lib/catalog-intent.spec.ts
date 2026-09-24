@@ -180,7 +180,7 @@ describe('what signing up and signing in do with it', () => {
   });
 
   it('goes on to the add-vehicle form while an intent waits, else the dashboard', () => {
-    expect(afterSignInDestination(saved)).toBe('/dashboard');
+    expect(afterSignInDestination(saved)).toBe('/home');
 
     saveCatalogIntent(intent, saved);
     expect(afterSignInDestination(saved)).toBe('/vehicles/new');

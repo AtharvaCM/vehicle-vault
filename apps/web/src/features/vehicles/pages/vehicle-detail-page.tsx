@@ -122,7 +122,7 @@ export function VehicleDetailPage({
         title: 'Vehicle deleted',
         description: 'The vehicle and its linked history were removed.',
       });
-      await navigate({ to: '/vehicles' });
+      await navigate({ to: '/garage' });
     } catch (error) {
       appToast.error({
         title: 'Unable to delete vehicle',
@@ -150,8 +150,8 @@ export function VehicleDetailPage({
         error={vehicleQuery.error}
         isRetrying={vehicleQuery.isRefetching}
         listAction={
-          <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-            Your vehicles
+          <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+            Your garage
           </Link>
         }
         onRetry={() => void vehicleQuery.refetch()}
@@ -181,8 +181,8 @@ export function VehicleDetailPage({
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Link
-                    aria-label="Back to your vehicles"
-                    to="/vehicles"
+                    aria-label="Back to Garage"
+                    to="/garage"
                     className="flex size-11 items-center justify-center rounded-full bg-page text-fg-3 hover:bg-page hover:text-fg-2 transition-colors md:h-8 md:w-8"
                   >
                     <ChevronRight className="h-4 w-4 rotate-180" />

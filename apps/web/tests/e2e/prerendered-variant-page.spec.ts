@@ -242,7 +242,7 @@ test.describe('prerendered variant page', () => {
     await page.goto('/login');
     await expect(page.getByLabel('Email')).toBeVisible();
 
-    await page.goto('/dashboard');
+    await page.goto('/home');
     await expect(page).toHaveURL(/\/login/);
   });
 });

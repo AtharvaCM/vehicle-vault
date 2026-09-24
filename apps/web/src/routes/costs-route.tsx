@@ -9,13 +9,13 @@ const LoansPage = createLazyPage(
       default: module.LoansPage,
     })),
   {
-    title: 'Loading loans',
+    title: 'Loading costs',
     description: 'Loading your vehicle loans.',
   },
 );
 
-export const loansRoute = createRoute({
+export const costsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'loans',
+  path: 'costs',
   component: LoansPage,
 });

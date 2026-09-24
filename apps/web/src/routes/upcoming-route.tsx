@@ -13,18 +13,18 @@ const RemindersPage = createLazyPage(
       default: module.RemindersPage,
     })),
   {
-    title: 'Loading reminders',
+    title: "Loading what's due",
     description: 'Loading your reminder list.',
   },
 );
 
-function RemindersRouteComponent() {
-  const search = remindersRoute.useSearch();
+function UpcomingRouteComponent() {
+  const search = upcomingRoute.useSearch();
   const navigate = useNavigate();
 
   function updateSearch(next: Partial<ReminderListSearch>) {
     void navigate({
-      to: '/reminders',
+      to: '/upcoming',
       search: (previous) => normalizeReminderListSearch({ ...previous, ...next }),
       replace: true,
     });
@@ -33,9 +33,9 @@ function RemindersRouteComponent() {
   return <RemindersPage onSearchStateChange={updateSearch} searchState={search} />;
 }
 
-export const remindersRoute = createRoute({
+export const upcomingRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: 'reminders',
+  path: 'upcoming',
   validateSearch: normalizeReminderListSearch,
-  component: RemindersRouteComponent,
+  component: UpcomingRouteComponent,
 });

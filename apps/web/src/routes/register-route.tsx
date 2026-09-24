@@ -35,7 +35,7 @@ export const registerRoute = createRoute({
       }
       throw search.catalog
         ? redirect({ to: '/vehicles/new', search: { catalog: search.catalog } })
-        : redirect({ to: '/dashboard' });
+        : redirect({ to: '/home' });
     }
   },
   component: RegisterPage,
