@@ -9,6 +9,8 @@
  */
 
 :root {
+  /* Native controls and scrollbars follow the set; index.html's script also sets it inline. */
+  color-scheme: light;
   --surface-page: #f3f4f6;
   --surface-card: #ffffff;
   --line: #dadde3;
@@ -61,8 +63,9 @@
   --scrim: rgb(15 18 22 / 0.4);
 }
 
-/* Defined, not yet switchable: the dark-mode slice decides when `.dark` applies. */
+/* Applied to <html> by the theme switch (src/lib/theme) and index.html's inline script. */
 .dark {
+  color-scheme: dark;
   --surface-page: #0f1216;
   --surface-card: #171b21;
   --line: #2a3038;

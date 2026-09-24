@@ -99,4 +99,4 @@ Variants: private (white), electric (green, white text), BH series (`22 BH 1234 
 - **Papers:** one slip per document with a coloured validity strip on top, issuer, dates written out, and Show; a pinned "Show papers" button.
 - **Show papers:** XL plate, a large VALID/EXPIRED banner, tabs per paper, number/issuer/validity, the file, and a "Saved on this phone · works offline" line.
 - **Log service:** Snap the bill / Choose file first; the due category preselected with the reason given; date and odometer defaulted and explained; total empty; extras collapsed; next due worked out; sticky Save service.
-- **Dark mode:** the same layout, with the plates staying white.
+- **Dark mode:** the same layout, with the plates staying white. It follows the system unless the account menu's System / Light / Dark switch says otherwise (kept per device), and it is applied before the first paint. The browser chrome (`theme-color`) is the brand teal in light and the dark page colour in dark.
