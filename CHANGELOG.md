@@ -1,3 +1,10 @@
+# [1.77.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.76.0...v1.77.0) (2026-09-24)
+
+
+### Features
+
+* **web:** one chart wrapper and honest spend charts ([9f7d20b](https://github.com/AtharvaCM/vehicle-vault/commit/9f7d20b21994aab9fcf391dc490808b1bbb0c189)), closes [#247](https://github.com/AtharvaCM/vehicle-vault/issues/247)
+
 # [1.76.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.75.0...v1.76.0) (2026-09-24)
 
 
