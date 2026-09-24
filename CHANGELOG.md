@@ -1,3 +1,10 @@
+## [1.79.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.3...v1.79.4) (2026-09-24)
+
+
+### Bug Fixes
+
+* **web:** move every text size onto the design scale, retire the Tailwind 3 palette ([3bb1818](https://github.com/AtharvaCM/vehicle-vault/commit/3bb18189f9ad01a43292abdd8cbcccadbf92e682))
+
 ## [1.79.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.2...v1.79.3) (2026-09-24)
 
 
