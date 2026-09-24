@@ -1,3 +1,10 @@
+# [1.87.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.86.0...v1.87.0) (2026-09-24)
+
+
+### Features
+
+* one Upcoming timeline across vehicles, classified as Home is ([e683e1b](https://github.com/AtharvaCM/vehicle-vault/commit/e683e1bcd84b623cc28cf8a1803b8bec0a2db930)), closes [#279](https://github.com/AtharvaCM/vehicle-vault/issues/279)
+
 # [1.86.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.85.0...v1.86.0) (2026-09-24)
 
 
