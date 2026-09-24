@@ -53,6 +53,9 @@ const TEXT_PAIRS: Array<[text: string, background: string]> = [
   ['late', 'surface-card'],
   ['late', 'late-tint'],
   ['on-late', 'late'],
+  // Solid status banners (the Show papers checkpoint).
+  ['on-ok', 'ok'],
+  ['on-soon', 'soon-dot'],
   ['soon', 'surface-card'],
   ['soon', 'soon-tint'],
   ['ok', 'surface-card'],

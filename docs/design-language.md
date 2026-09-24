@@ -31,6 +31,7 @@ Semantic names only; screens never use palette colours (`slate-500`, `rose-50`) 
 | late (Brake red)        | `--late`, `--late-tint`                | `#B42318` on `#FCE9E7`                      | `#FF8A80` | Overdue, expired, errors                             |
 | soon (Indicator amber)  | `--soon`, `--soon-dot`, `--soon-tint`  | text `#8A5300`, dot `#D98200`, bg `#FFF1D6` | `#F5B452` | Due today or this week                               |
 | on late                 | `--on-late` → `text-on-late`           | `#FFFFFF`                                   | `#0F1216` | Text on a late fill (the final Delete in a confirm)  |
+| on ok / on soon         | `--on-ok`, `--on-soon`                 | `#FFFFFF` on ok, `#15181E` on the soon dot  | `#0F1216` | Text on a solid ok or soon fill (Show papers banner) |
 | ok (PUC green)          | `--ok`, `--ok-tint`                    | `#1C7A47` on `#E4F3EA`                      | `#6FCF97` | Valid, done, all clear                               |
 | ended                   | `--ended`, `--ended-dot`               | text `#4A505C`, dot `#C4C8D0`               | `#AEB4BD` | Lapsed but not urgent (e.g. warranty ended)          |
 | plate.strip (HSRP blue) | `--plate-strip`                        | `#1D4E9E`                                   | same      | Only the plate's IND strip                           |
