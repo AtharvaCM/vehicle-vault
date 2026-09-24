@@ -122,15 +122,22 @@ test('every top-level page is one click away, and a deep page says where it sits
   await page.goto('/home');
   const bar = page.getByTestId('bottom-nav');
   await expect(page.getByTestId('sidebar')).toBeHidden();
-  for (const [label, path, heading] of DESTINATIONS.slice(0, 4)) {
+  // Home · Garage · ＋ · Upcoming · More; History and Costs are under More.
+  const onBar = DESTINATIONS.filter(([label]) => ['Home', 'Garage', 'Upcoming'].includes(label));
+  for (const [label, path, heading] of onBar) {
     await bar.getByRole('link', { name: label }).click();
     await expect(page).toHaveURL(new RegExp(`${path}$`));
     await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
   }
-  await bar.getByRole('button', { name: 'More' }).click();
-  await page.getByRole('dialog', { name: 'More' }).getByRole('link', { name: 'Costs' }).click();
-  await expect(page).toHaveURL(/\/costs$/);
-  await expect(bar.getByRole('button', { name: 'More' })).toHaveAttribute('data-active', 'true');
+  for (const [label, path, heading] of DESTINATIONS.filter(([name]) =>
+    ['History', 'Costs'].includes(name),
+  )) {
+    await bar.getByRole('button', { name: 'More' }).click();
+    await page.getByRole('dialog', { name: 'More' }).getByRole('link', { name: label }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+    await expect(bar.getByRole('button', { name: 'More' })).toHaveAttribute('data-active', 'true');
+  }
 
   // On a phone the trail shortens to the way back.
   await page.goto(`/maintenance-records/${record.id}`);
