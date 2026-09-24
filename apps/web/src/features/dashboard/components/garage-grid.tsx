@@ -20,7 +20,7 @@ export function GarageGrid({ vehicles, vehiclesTotal }: GarageGridProps) {
           <h2 className="text-lg font-semibold tracking-tight" id="garage-heading">
             Garage
           </h2>
-          <span className="text-[13px] text-slate-500">
+          <span className="text-small text-fg-3">
             {vehiclesTotal} vehicle{vehiclesTotal === 1 ? '' : 's'}
           </span>
         </div>
@@ -35,7 +35,7 @@ export function GarageGrid({ vehicles, vehiclesTotal }: GarageGridProps) {
         ))}
         {hiddenCount > 0 ? (
           <Link
-            className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4 text-sm font-medium text-slate-600 transition-colors hover:border-primary/30 hover:bg-white hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-line bg-page/60 p-4 text-sm font-medium text-fg-2 transition-colors hover:border-primary/30 hover:bg-surface hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             to="/vehicles"
           >
             +{hiddenCount} more in Vehicles

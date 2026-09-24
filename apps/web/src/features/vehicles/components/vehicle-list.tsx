@@ -28,7 +28,7 @@ export function VehicleList({
             selectionControl={
               onSelectionChange ? (
                 <label
-                  className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs"
+                  className="flex items-center justify-center rounded-md border border-border/70 bg-surface p-2 shadow-xs"
                   onClick={(event) => {
                     // Only stop the click from bubbling to the card/link below —
                     // preventDefault() here would also cancel the checkbox's own
@@ -39,9 +39,7 @@ export function VehicleList({
                   <input
                     aria-label={`Select vehicle ${getVehicleDisplayName(vehicle)}`}
                     checked={isSelected}
-                    className={cn(
-                      'h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-400',
-                    )}
+                    className={cn('h-4 w-4 rounded border-line text-fg focus:ring-ring')}
                     onChange={(event) => onSelectionChange(vehicle.id, event.currentTarget.checked)}
                     type="checkbox"
                   />

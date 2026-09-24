@@ -204,7 +204,7 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
                 Small changes here keep the rest of your records clear.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+            <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
               <p>
                 Update the odometer when you want kilometre-based reminders to stay trustworthy.
               </p>

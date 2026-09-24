@@ -212,7 +212,7 @@ export function QuickLogDialog({ open, onOpenChange, vehicles }: QuickLogDialogP
           <DialogFooter className="gap-2 sm:justify-between">
             {vehicle ? (
               <Link
-                className="self-center text-sm font-medium text-slate-600 underline-offset-4 hover:underline"
+                className="self-center text-sm font-medium text-fg-2 underline-offset-4 hover:underline"
                 onClick={() => onOpenChange(false)}
                 params={{ vehicleId: vehicle.id }}
                 to="/vehicles/$vehicleId/maintenance/new"

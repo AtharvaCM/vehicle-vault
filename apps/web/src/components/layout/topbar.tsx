@@ -70,7 +70,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-line/60 bg-surface/80 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <Sheet onOpenChange={setIsMobileNavOpen} open={isMobileNavOpen}>
@@ -88,10 +88,10 @@ export function Topbar() {
             <MobileNavSheetContent onClose={() => setIsMobileNavOpen(false)} />
           </Sheet>
 
-          <div className="hidden h-8 w-px bg-slate-200/60 xl:block" />
+          <div className="hidden h-8 w-px bg-line-subtle/60 xl:block" />
 
           <div className="flex items-baseline gap-2">
-            <h2 className="text-base font-bold tracking-tight text-slate-900">{activeSection}</h2>
+            <h2 className="text-base font-bold tracking-tight text-fg">{activeSection}</h2>
           </div>
         </div>
 
@@ -107,50 +107,48 @@ export function Topbar() {
             Add vehicle
           </Link>
 
-          <div className="hidden h-8 w-px bg-slate-200/60 xl:block" />
+          <div className="hidden h-8 w-px bg-line-subtle/60 xl:block" />
 
           <NotificationCenter />
 
-          <div className="h-6 w-px bg-slate-200/60" />
+          <div className="h-6 w-px bg-line-subtle/60" />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label={auth.user?.name || 'User profile'}
-                className="rounded-full border-slate-200/60 p-0 hover:bg-slate-50 md:h-9 md:w-9"
+                className="rounded-full border-line/60 p-0 hover:bg-page md:h-9 md:w-9"
                 size="icon"
                 variant="outline"
               >
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-page text-caption font-bold text-fg-2">
                   {auth.user?.name?.charAt(0)}
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 rounded-xl border-slate-200/60 p-1.5">
+            <DropdownMenuContent align="end" className="w-64 rounded-xl border-line/60 p-1.5">
               <DropdownMenuLabel className="px-3 py-2">
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-semibold text-slate-900">{auth.user?.name}</p>
-                  <p className="truncate text-[11px] font-normal text-slate-500">
-                    {auth.user?.email}
-                  </p>
+                  <p className="text-sm font-semibold text-fg">{auth.user?.name}</p>
+                  <p className="truncate text-caption font-normal text-fg-3">{auth.user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="my-1.5" />
-              <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-slate-100">
+              <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-page">
                 <Link to="/settings">
-                  <Settings className="mr-2.5 h-4 w-4 text-slate-500" />
+                  <Settings className="mr-2.5 h-4 w-4 text-fg-3" />
                   Account settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-slate-100">
+              <DropdownMenuItem asChild className="rounded-lg px-3 py-2 focus:bg-page">
                 <Link to="/maintenance">
-                  <Wrench className="mr-2.5 h-4 w-4 text-slate-500" />
+                  <Wrench className="mr-2.5 h-4 w-4 text-fg-3" />
                   Service history
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1.5" />
               <DropdownMenuItem
-                className="rounded-lg px-3 py-2 text-rose-600 focus:bg-rose-50 focus:text-rose-700"
+                className="rounded-lg px-3 py-2 text-late focus:bg-late-tint focus:text-late"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2.5 h-4 w-4" />
@@ -162,7 +160,7 @@ export function Topbar() {
       </div>
 
       {/* Below md the bottom bar carries these, within thumb reach. */}
-      <div className="hidden items-center gap-2 overflow-x-auto border-t border-slate-100 px-4 py-2 md:flex xl:hidden">
+      <div className="hidden items-center gap-2 overflow-x-auto border-t border-line-subtle px-4 py-2 md:flex xl:hidden">
         {navItems.map((item) => {
           const Icon = mobileIcons[item.to as keyof typeof mobileIcons] ?? item.icon;
 
@@ -174,7 +172,7 @@ export function Topbar() {
                 className: 'bg-primary text-primary-foreground border-transparent',
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 active:scale-95',
+                'inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-semibold text-fg-2 transition-colors hover:bg-page active:scale-95',
               )}
               to={item.to}
             >

@@ -20,7 +20,7 @@ type RecentServiceCardProps = {
 };
 
 function MetaDot() {
-  return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />;
+  return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-line" />;
 }
 
 export function RecentServiceCard({ recentMaintenance, vehicles }: RecentServiceCardProps) {
@@ -38,7 +38,7 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
       title="Recent service"
     >
       {records.length > 0 ? (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-line-subtle">
           {records.map((record) => (
             <Link
               className="group flex items-center justify-between gap-3 py-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -48,12 +48,12 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
             >
               <div className="min-w-0 space-y-1">
                 <div className="flex min-w-0 items-center gap-2">
-                  <p className="truncate font-semibold text-slate-900 transition-colors group-hover:text-primary">
+                  <p className="truncate font-semibold text-fg transition-colors group-hover:text-primary">
                     {format.enumLabel('maintenanceCategory', record.category)}
                   </p>
                   {isDraftRecord(record) ? <MaintenanceDraftBadge /> : null}
                 </div>
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500">
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-fg-3">
                   <span className="min-w-0 truncate">{record.vehicleLabel}</span>
                   <MetaDot />
                   <span className="tabular-nums">{format.date(record.serviceDate)}</span>
@@ -67,7 +67,7 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {record.attachmentCount > 0 ? (
-                  <span className="flex items-center gap-1 text-[12px] tabular-nums text-slate-400">
+                  <span className="flex items-center gap-1 text-caption tabular-nums text-fg-3">
                     <Paperclip aria-hidden="true" className="h-3.5 w-3.5" />
                     <span aria-hidden="true">{record.attachmentCount}</span>
                     <span className="sr-only">
@@ -75,7 +75,7 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
                     </span>
                   </span>
                 ) : null}
-                <span className="font-semibold text-slate-900">
+                <span className="font-semibold text-fg">
                   <Money value={record.totalCost} />
                 </span>
               </div>

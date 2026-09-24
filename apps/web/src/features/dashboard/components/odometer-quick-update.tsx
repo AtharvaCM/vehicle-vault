@@ -86,8 +86,10 @@ export function OdometerQuickUpdate({
       <PopoverTrigger asChild>
         <button
           aria-label={`Update odometer for ${displayName}`}
-          // An inline word in a line of text: an invisible margin makes it a 44px target on phones.
-          className="relative rounded-sm font-semibold text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-3 max-md:before:content-['']"
+          // An inline word in a line of text: an invisible margin makes it a 44px target on
+          // phones. The row's caption line-height is tighter than the old ambient one this
+          // inherited from, so the margin is a touch taller to still clear 44px.
+          className="relative rounded-sm font-semibold text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-4 max-md:before:content-['']"
           type="button"
         >
           Update
@@ -114,7 +116,7 @@ export function OdometerQuickUpdate({
             />
           </div>
           {error ? (
-            <p className="text-xs text-rose-600" id={`odometer-${vehicleId}-error`} role="alert">
+            <p className="text-xs text-late" id={`odometer-${vehicleId}-error`} role="alert">
               {error.message}
               {error.offerEdit ? (
                 <>

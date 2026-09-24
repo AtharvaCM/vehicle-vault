@@ -21,16 +21,16 @@ export function TcoCard({ vehicleId }: Props) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Wallet className="h-4 w-4 text-indigo-600" />
+          <Wallet className="h-4 w-4 text-brand" />
           Total cost of ownership
         </CardTitle>
         <CardDescription>Lifetime spend, ₹/km, ₹/month since purchase</CardDescription>
       </CardHeader>
       <CardContent>
         {query.isLoading ? (
-          <p className="text-sm text-slate-500">Loading TCO…</p>
+          <p className="text-sm text-fg-3">Loading TCO…</p>
         ) : query.isError ? (
-          <p className="text-sm text-red-600">Failed to load TCO.</p>
+          <p className="text-sm text-late">Failed to load TCO.</p>
         ) : !query.data ? null : (
           <TcoBody data={query.data} />
         )}
@@ -73,14 +73,14 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
             key={f.label}
             className={
               f.emphasis
-                ? 'rounded-xl border border-indigo-200 bg-indigo-50/60 p-3'
-                : 'rounded-xl border border-slate-200 bg-white p-3'
+                ? 'rounded-xl border border-brand/30 bg-brand-tint/60 p-3'
+                : 'rounded-xl border border-line bg-surface p-3'
             }
           >
             <Figure
               label={f.label}
               value={
-                <span className={f.emphasis ? 'text-indigo-700' : undefined}>
+                <span className={f.emphasis ? 'text-brand' : undefined}>
                   {f.negative ? '− ' : null}
                   <Money value={f.value} />
                 </span>
@@ -118,7 +118,7 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
       </div>
 
       {!purchaseSet ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-700">
+        <p className="rounded-lg border border-soon/30 bg-soon-tint/70 px-3 py-2 text-xs text-soon">
           Add purchase date, price, and odometer in the vehicle form to unlock the full TCO picture.
         </p>
       ) : null}
@@ -134,7 +134,7 @@ function costPerKmHint(tco: TcoResponse): string {
 
 function Metric({ label, value, hint }: { label: string; value: ReactNode; hint: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
+    <div className="rounded-xl border border-line bg-surface p-3">
       <Figure hint={hint} label={label} value={value} />
     </div>
   );

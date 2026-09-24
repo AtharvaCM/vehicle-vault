@@ -11,7 +11,7 @@ export function DashboardSkeleton() {
           <Skeleton className="h-5 w-36" />
           <Skeleton className="h-4 w-72 max-w-full" />
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-line-subtle">
           {Array.from({ length: 4 }, (_, index) => (
             <div className="flex h-14 items-center gap-3 px-5" key={index}>
               <Skeleton className="h-4 w-1/3" />

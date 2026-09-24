@@ -150,7 +150,7 @@ export function AttentionQueue({
     if (queue.length > 0) {
       return (
         <>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-line-subtle">
             {groups.map((group) => (
               <section aria-label={urgencyLabel(group.urgency)} key={group.urgency}>
                 <div className="px-5 pb-1 pt-3">
@@ -158,7 +158,7 @@ export function AttentionQueue({
                     {GROUP_WORDS[group.urgency]}
                   </StatusDot>
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-line-subtle">
                   {group.items.map((item) => (
                     <AttentionRow
                       isPending={pendingIds.has(item.id) || completedIds.has(item.id)}
@@ -174,7 +174,7 @@ export function AttentionQueue({
             ))}
           </div>
           {queue.length > INITIAL_ROW_LIMIT || summary.attentionTotal > ATTENTION_CAP ? (
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-5 py-3">
+            <div className="flex flex-wrap items-center gap-2 border-t border-line-subtle px-5 py-3">
               {queue.length > INITIAL_ROW_LIMIT ? (
                 <Button
                   onClick={() => setExpanded((value) => !value)}
@@ -253,11 +253,11 @@ export function AttentionQueue({
 
     return (
       <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ok-tint text-ok">
           <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
         </div>
-        <p className="font-semibold text-slate-900">Nothing needs attention</p>
-        <p className="text-[13px] text-slate-500">Nothing is overdue or due in the next 7 days.</p>
+        <p className="font-semibold text-fg">Nothing needs attention</p>
+        <p className="text-small text-fg-3">Nothing is overdue or due in the next 7 days.</p>
       </div>
     );
   }
@@ -282,7 +282,7 @@ export function AttentionQueue({
       </CardHeader>
 
       {focus ? (
-        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/60 px-5 py-2">
+        <div className="flex items-center gap-2 border-b border-line-subtle bg-page/60 px-5 py-2">
           <Badge variant="outline">Showing: {FOCUS_LABELS[focus].chip}</Badge>
           <Button onClick={clearFocus} size="xs" type="button" variant="ghost">
             Clear

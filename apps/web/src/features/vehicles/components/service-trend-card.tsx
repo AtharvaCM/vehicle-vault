@@ -75,7 +75,7 @@ function TrendMetric({
   detail?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-slate-50/80 p-4">
+    <div className="rounded-2xl border border-border/70 bg-page/80 p-4">
       <Figure hint={detail} label={label} value={value} />
     </div>
   );
