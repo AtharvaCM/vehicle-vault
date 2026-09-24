@@ -23,6 +23,10 @@ vi.mock('@/features/auth/hooks/use-auth', () => ({
   }),
 }));
 
+vi.mock('./quick-log', () => ({
+  QuickLogButton: () => <button type="button">Log</button>,
+}));
+
 import { BottomNav } from './bottom-nav';
 
 describe('BottomNav', () => {
@@ -31,7 +35,7 @@ describe('BottomNav', () => {
     auth.role = 'user';
   });
 
-  it('carries Home, Garage, Upcoming and History within thumb reach, then More', () => {
+  it('reads Home · Garage · ＋ · Upcoming · More', () => {
     render(<BottomNav />);
 
     const bar = screen.getByRole('navigation', { name: 'Primary' });
@@ -41,9 +45,9 @@ describe('BottomNav', () => {
       ['Home', '/home'],
       ['Garage', '/garage'],
       ['Upcoming', '/upcoming'],
-      ['History', '/history'],
     ]);
-    expect(within(bar).getByRole('button', { name: 'More' })).toBeInTheDocument();
+    const slots = Array.from(bar.firstElementChild!.children).map((slot) => slot.textContent);
+    expect(slots).toEqual(['Home', 'Garage', 'Log', 'Upcoming', 'More']);
   });
 
   it('lights Garage on a vehicle page and on the records filed under it', () => {
@@ -58,10 +62,13 @@ describe('BottomNav', () => {
   });
 
   it('lights More when the page is one of its destinations', () => {
-    router.pathname = '/costs';
-    render(<BottomNav />);
+    for (const pathname of ['/history', '/costs']) {
+      router.pathname = pathname;
+      const { unmount } = render(<BottomNav />);
 
-    expect(screen.getByRole('button', { name: 'More' })).toHaveAttribute('data-active', 'true');
+      expect(screen.getByRole('button', { name: 'More' })).toHaveAttribute('data-active', 'true');
+      unmount();
+    }
   });
 
   it('exists only below md, where it replaces the sidebar', () => {
@@ -78,7 +85,7 @@ describe('BottomNav', () => {
     expect(screen.getByTestId('bottom-nav')).toHaveClass('pb-[env(safe-area-inset-bottom)]');
   });
 
-  it('opens Costs and the account from More, without repeating the bar', async () => {
+  it('opens History, Costs and the account from More, without repeating the bar', async () => {
     const user = userEvent.setup();
     render(<BottomNav />);
 
@@ -88,7 +95,7 @@ describe('BottomNav', () => {
     const hrefs = within(sheet)
       .getAllByRole('link')
       .map((link) => link.getAttribute('href'));
-    expect(hrefs).toEqual(['/costs', '/settings', '/settings/preferences']);
+    expect(hrefs).toEqual(['/history', '/costs', '/settings', '/settings/preferences']);
     expect(within(sheet).getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
     expect(within(sheet).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });

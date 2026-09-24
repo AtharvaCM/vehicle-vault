@@ -21,7 +21,7 @@ import { useActiveSection } from './use-active-section';
 import { useSignOut } from './use-sign-out';
 
 /** The destinations that do not fit on the phone's bar, in nav order. */
-export const MORE_SECTIONS: readonly NavSection[] = ['costs'];
+export const MORE_SECTIONS: readonly NavSection[] = ['history', 'costs'];
 
 const ROW_CLASS =
   'flex min-h-12 w-full items-center gap-3 rounded-control px-3 text-body font-medium text-fg transition-colors hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring';
