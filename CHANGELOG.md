@@ -1,3 +1,10 @@
+# [1.81.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.80.0...v1.81.0) (2026-09-24)
+
+
+### Features
+
+* **web:** log anything from the phone bar's centre button ([3cd6dd6](https://github.com/AtharvaCM/vehicle-vault/commit/3cd6dd6c954cdc285a7a9d4e30a5bca3fbf931c3)), closes [#277](https://github.com/AtharvaCM/vehicle-vault/issues/277)
+
 # [1.80.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.4...v1.80.0) (2026-09-24)
 
 
