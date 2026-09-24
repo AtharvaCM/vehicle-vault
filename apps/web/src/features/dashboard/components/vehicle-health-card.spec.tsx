@@ -48,9 +48,10 @@ describe('VehicleHealthCard', () => {
       />,
     );
 
-    const pill = screen.getByRole('link', { name: '2 overdue' });
+    const pill = screen.getByRole('link', { name: '2 late' });
 
     expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'reminders' }));
+    expect(screen.getByText('2 late')).toHaveAttribute('data-status', 'late');
     expect(screen.getByText('Brake pads · 3 days late')).toBeInTheDocument();
   });
 
@@ -123,7 +124,7 @@ describe('VehicleHealthCard', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: '1 overdue' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '1 late' })).toHaveAttribute(
       'data-search',
       JSON.stringify({ tab: 'tyres' }),
     );

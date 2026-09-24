@@ -1,7 +1,11 @@
 import react from '@vehicle-vault/config/eslint/react';
 
 import designSystem from './eslint/design-system-plugin.js';
-import { MICRO_LABEL_ALLOWED, MIGRATED_PATHS } from './eslint/design-system-paths.js';
+import {
+  MICRO_LABEL_ALLOWED,
+  MIGRATED_PATHS,
+  NO_MICRO_LABEL_PATHS,
+} from './eslint/design-system-paths.js';
 
 // Every value the UI shows goes through `src/lib/format` (#238), so one screen
 // cannot print "23 Sept 2026" beside "May 26, 2026", or follow the browser's
@@ -61,6 +65,11 @@ export default [
     files: MIGRATED_PATHS,
     ignores: ['src/**/*.spec.{ts,tsx}'],
     rules: designSystemRules('error'),
+  },
+  {
+    files: NO_MICRO_LABEL_PATHS,
+    ignores: ['src/**/*.spec.{ts,tsx}'],
+    rules: { 'vv/no-micro-labels': 'error' },
   },
   {
     files: MICRO_LABEL_ALLOWED,

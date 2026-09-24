@@ -1,5 +1,6 @@
 import { Activity } from 'lucide-react';
 
+import { Money } from '@/components/shared/money';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
 
@@ -42,7 +43,9 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
                     {format.odometer(entry.odometer)}
                   </p>
                   {entry.totalCost !== undefined ? (
-                    <p className="text-xs text-muted-foreground">{format.money(entry.totalCost)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <Money value={entry.totalCost} />
+                    </p>
                   ) : null}
                 </div>
               </div>

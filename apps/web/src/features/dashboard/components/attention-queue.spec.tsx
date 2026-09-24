@@ -164,8 +164,8 @@ describe('AttentionQueue', () => {
     );
 
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
-    expect(screen.getByText('Overdue', { selector: 'p' })).toBeInTheDocument();
-    expect(screen.getByText('This week', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('Late')).toHaveAttribute('data-status', 'late');
+    expect(screen.getByText('This week')).toHaveAttribute('data-status', 'soon');
     expect(screen.getByText('Brake pads')).toBeInTheDocument();
     expect(screen.getByText('3 days late')).toBeInTheDocument();
     expect(screen.getByText('PUC certificate', { selector: 'p' })).toBeInTheDocument();

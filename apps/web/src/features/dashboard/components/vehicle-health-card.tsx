@@ -3,6 +3,8 @@ import { BellRing, MoreHorizontal, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { FuelType } from '@vehicle-vault/shared';
 
+import { StatusDot, StatusPill, dueStatus, type Status } from '@/components/shared/status-pill';
+import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,7 +14,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { cn } from '@/lib/utils';
 
 import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
@@ -20,14 +21,16 @@ import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-
 import { format } from '@/lib/format';
 import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
+import { vehicleHealthStatus } from '../utils/status';
 import { OdometerQuickUpdate } from './odometer-quick-update';
 import { formatOdometerMeta, formatRelativeAgo, formatRelativeDue } from '../utils/format-due';
 
-const DOCUMENT_TONE = {
-  danger: 'text-rose-600',
-  warning: 'text-amber-700',
-  ok: 'text-slate-700',
-} as const;
+/** `describeVehicleDocuments`'s tone, read as the shared status vocabulary. */
+const DOCUMENT_STATUS: Record<'danger' | 'warning' | 'ok', Status> = {
+  danger: 'late',
+  warning: 'soon',
+  ok: 'ok',
+};
 
 type VehicleHealthCardProps = {
   vehicle: DashboardVehicleHealth;
@@ -43,7 +46,7 @@ type MicroRowProps = {
 function MicroRow({ label, children }: MicroRowProps) {
   return (
     <div className="min-w-0 space-y-0.5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="text-small text-fg-2">{label}</p>
       <div className="min-w-0 truncate text-[12px] font-medium text-slate-700">{children}</div>
     </div>
   );
@@ -116,6 +119,15 @@ function DataHealthText({
   );
 }
 
+/** The next-due row's status, from the same day count its words are built from. */
+function nextDueStatus(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>): Status | null {
+  if (!nextDue.dueDate) return null;
+
+  return dueStatus(nextDue.daysUntilDue, {
+    mode: nextDue.kind === 'document' || nextDue.kind === 'accessory' ? 'ends' : 'due',
+  });
+}
+
 function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
   if (nextDue.kind === 'loan_emi' && nextDue.dueDate) {
     const relative = formatRelativeDue({
@@ -161,6 +173,8 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         ? 'reminders'
         : ATTENTION_KIND_TABS[vehicle.nextDue.kind];
   const kmSinceService = vehicle.lastService ? vehicle.odometer - vehicle.lastService.odometer : 0;
+  const health = vehicleHealthStatus(vehicle);
+  const nextDueStatusValue = vehicle.nextDue ? nextDueStatus(vehicle.nextDue) : null;
 
   return (
     <Card
@@ -187,29 +201,14 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
         </Link>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <Badge
-            asChild
-            tone={
-              vehicle.status === 'overdue'
-                ? 'danger'
-                : vehicle.status === 'due_soon'
-                  ? 'warning'
-                  : 'accent'
-            }
+          <Link
+            className="rounded-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            params={{ vehicleId: vehicle.id }}
+            search={statusTab ? { tab: statusTab } : {}}
+            to="/vehicles/$vehicleId"
           >
-            <Link
-              className="focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              params={{ vehicleId: vehicle.id }}
-              search={statusTab ? { tab: statusTab } : {}}
-              to="/vehicles/$vehicleId"
-            >
-              {vehicle.status === 'overdue'
-                ? `${vehicle.overdueCount} overdue`
-                : vehicle.status === 'due_soon'
-                  ? `${vehicle.dueSoonCount} due soon`
-                  : 'All clear'}
-            </Link>
-          </Badge>
+            <StatusPill status={health.status}>{health.words}</StatusPill>
+          </Link>
           {vehicle.currentUserRole !== 'owner' ? (
             <Badge className="bg-blue-100 text-blue-800">Shared · {vehicle.currentUserRole}</Badge>
           ) : null}
@@ -219,22 +218,23 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
       <div className="grid gap-2.5">
         <MicroRow label="Next due">
           {vehicle.nextDue ? (
-            nextDueText(vehicle.nextDue)
+            nextDueStatusValue ? (
+              <StatusDot status={nextDueStatusValue}>{nextDueText(vehicle.nextDue)}</StatusDot>
+            ) : (
+              <span>{nextDueText(vehicle.nextDue)}</span>
+            )
           ) : (
-            <span className="text-slate-400">Nothing scheduled</span>
+            <span className="text-fg-3">Nothing scheduled</span>
           )}
         </MicroRow>
-        <MicroRow label="Documents">
+        <MicroRow label="Papers">
           <Link
-            className={cn(
-              'rounded-sm hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
-              DOCUMENT_TONE[documents.tone],
-            )}
+            className="rounded-sm hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             params={{ vehicleId: vehicle.id }}
             search={{ tab: 'protection' }}
             to="/vehicles/$vehicleId"
           >
-            {documents.text}
+            <StatusDot status={DOCUMENT_STATUS[documents.tone]}>{documents.text}</StatusDot>
           </Link>
         </MicroRow>
         <MicroRow label="Last service">

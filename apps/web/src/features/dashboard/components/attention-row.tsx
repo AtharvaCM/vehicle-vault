@@ -2,27 +2,24 @@ import { Link } from '@tanstack/react-router';
 import { BellOff, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { DueLine } from '@/components/shared/due-line';
+import { Money } from '@/components/shared/money';
+import { StatusDot } from '@/components/shared/status-pill';
+import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { documentKindNouns } from '@/features/vehicle-documents/utils/document-kind-labels';
-import { cn } from '@/lib/utils';
 import { format } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
-import type {
-  DashboardAttentionItem,
-  DashboardAttentionKind,
-  DashboardUrgency,
-} from '../types/dashboard';
+import type { DashboardAttentionItem, DashboardAttentionKind } from '../types/dashboard';
 import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { formatOdometerMeta, formatRelativeDue } from '../utils/format-due';
+import { URGENCY_STATUS } from '../utils/status';
+import { useMediaQuery } from '../hooks/use-media-query';
 
-const URGENCY_BAR: Record<DashboardUrgency, string> = {
-  overdue: 'bg-rose-500',
-  today: 'bg-amber-500',
-  this_week: 'bg-amber-300',
-  this_month: 'bg-sky-400',
-};
+/** Kinds whose date is when something runs out, not when something is due. */
+const EXPIRING_KINDS: readonly DashboardAttentionKind[] = ['document', 'accessory'];
 
 /** What each kind of row offers to do, beside the row's own link. */
 const KIND_ACTIONS: Partial<Record<DashboardAttentionKind, string>> = {
@@ -108,47 +105,49 @@ export function AttentionRow({
   onComplete,
   onSnooze,
 }: AttentionRowProps) {
-  const relative = formatRelativeDue(item);
+  // `sm` and up: the due line moves to the row's end, on a line of its own. Narrower, it
+  // has to share the meta line with everything else, so it reads inline instead.
+  const isWideRow = useMediaQuery('(min-width: 640px)');
+  const dueMode: 'due' | 'ends' = EXPIRING_KINDS.includes(item.kind) ? 'ends' : 'due';
   const meta: ReactNode[] = [];
+  let dueLineAtRowEnd: ReactNode = null;
 
-  meta.push(
-    item.dueDate ? (
-      // A native title reaches keyboard, touch and screen-reader users; a hover tooltip did not.
-      <time
-        className="tabular-nums"
-        dateTime={item.dueDate}
-        key="relative"
-        title={format.date(item.dueDate, 'long')}
-      >
-        {relative}
-      </time>
-    ) : (
-      <span className="tabular-nums" key="relative">
-        {relative}
-      </span>
-    ),
-  );
-
-  if (item.dueDate) {
+  if (!item.dueDate) {
+    // Undated: an odometer-only due or a verdict with nothing to count down. Say what it
+    // rests on, in the urgency's colour.
     meta.push(
-      <span className="shrink-0 tabular-nums" key="date">
-        {format.date(item.dueDate)}
+      <StatusDot key="relative" status={URGENCY_STATUS[item.urgency]}>
+        {formatRelativeDue(item)}
+      </StatusDot>,
+    );
+  } else if (isWideRow) {
+    dueLineAtRowEnd = (
+      <DueLine date={item.dueDate} days={item.daysUntilDue} layout="stacked" mode={dueMode} />
+    );
+  } else {
+    meta.push(
+      <DueLine
+        date={item.dueDate}
+        days={item.daysUntilDue}
+        key="relative"
+        layout="inline"
+        mode={dueMode}
+      />,
+    );
+  }
+
+  if (item.dueDate && item.dueOdometer !== undefined) {
+    meta.push(
+      <span className="tabular-nums" key="odometer">
+        {formatOdometerMeta(item.dueOdometer, item.kmUntilDue)}
       </span>,
     );
-
-    if (item.dueOdometer !== undefined) {
-      meta.push(
-        <span className="tabular-nums" key="odometer">
-          {formatOdometerMeta(item.dueOdometer, item.kmUntilDue)}
-        </span>,
-      );
-    }
   }
 
   if (item.kind === 'loan_emi' && item.amount !== undefined) {
     meta.push(
-      <span className="shrink-0 font-medium tabular-nums text-slate-700" key="amount">
-        {format.money(item.amount)}
+      <span className="shrink-0 font-medium text-slate-700" key="amount">
+        <Money value={item.amount} />
       </span>,
     );
   }
@@ -161,11 +160,6 @@ export function AttentionRow({
       )}
       data-testid="attention-row"
     >
-      <span
-        aria-hidden="true"
-        className={cn('absolute inset-y-0 left-0 w-[3px]', URGENCY_BAR[item.urgency])}
-      />
-
       <AttentionItemLink
         className="group min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         item={item}
@@ -200,6 +194,10 @@ export function AttentionRow({
           ))}
         </div>
       </AttentionItemLink>
+
+      {dueLineAtRowEnd ? (
+        <div className="flex shrink-0 items-center self-center">{dueLineAtRowEnd}</div>
+      ) : null}
 
       <div className="flex shrink-0 items-start gap-2">
         {item.kind === 'reminder' && item.currentUserRole !== 'viewer' ? (
