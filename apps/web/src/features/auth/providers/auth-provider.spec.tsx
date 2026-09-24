@@ -1,7 +1,9 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { apiClient } from '@/lib/api/api-client';
 import { ApiError } from '@/lib/api/api-error';
+import { appToast } from '@/lib/toast';
 
 import { getStoredAuthSession, setStoredAuthSession } from '../lib/auth-session-storage';
 
@@ -15,6 +17,9 @@ vi.mock('../api/get-me', () => ({ getMe: api.getMe }));
 vi.mock('../api/refresh-session', () => ({ refreshSession: api.refreshSession }));
 vi.mock('../api/logout', () => ({ logout: api.logout }));
 vi.mock('@/lib/toast', () => ({ appToast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
+vi.mock('@/lib/env/env', () => ({
+  getEnv: () => ({ apiBaseUrl: 'https://api.example.test/api' }),
+}));
 
 import { useAuth } from '../hooks/use-auth';
 import { AuthProvider } from './auth-provider';
@@ -157,5 +162,86 @@ describe('AuthProvider when the API cannot be reached', () => {
     });
     await waitFor(() => expect(api.refreshSession).toHaveBeenCalledTimes(2));
     expect(screen.getByText('status: authenticated')).toBeInTheDocument();
+  });
+});
+
+function SignOut() {
+  const auth = useAuth();
+  return (
+    <>
+      <p>status: {auth.status}</p>
+      <button onClick={auth.logout} type="button">
+        Sign out
+      </button>
+    </>
+  );
+}
+
+const unauthorizedResponse = () =>
+  new Response(JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: 'No' } }), {
+    status: 401,
+    headers: { 'content-type': 'application/json' },
+  });
+
+describe('AuthProvider when a request comes back 401', () => {
+  const replace = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, pathname: '/dashboard', replace },
+    });
+    api.getMe.mockResolvedValue(USER);
+    api.logout.mockResolvedValue(undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => unauthorizedResponse()),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('says nothing about an expired session after a deliberate sign-out', async () => {
+    storeSession({ accessTokenValid: true });
+    render(
+      <AuthProvider>
+        <SignOut />
+      </AuthProvider>,
+    );
+    expect(await screen.findByText('status: authenticated')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    expect(screen.getByText('status: anonymous')).toBeInTheDocument();
+
+    // A query still mounted refetches with no token and is turned away.
+    await expect(apiClient.get('/notifications')).rejects.toBeInstanceOf(ApiError);
+
+    expect(appToast.info).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('still reports an expired session when the server refuses a live one', async () => {
+    storeSession({ accessTokenValid: true });
+    api.refreshSession.mockRejectedValue(new ApiError('Invalid refresh token', 401));
+    render(
+      <AuthProvider>
+        <SignOut />
+      </AuthProvider>,
+    );
+    expect(await screen.findByText('status: authenticated')).toBeInTheDocument();
+
+    await act(async () => {
+      await expect(apiClient.get('/notifications')).rejects.toBeInstanceOf(ApiError);
+    });
+
+    expect(appToast.info).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Session expired' }),
+    );
+    expect(screen.getByText('status: anonymous')).toBeInTheDocument();
+    expect(replace).toHaveBeenCalled();
   });
 });
