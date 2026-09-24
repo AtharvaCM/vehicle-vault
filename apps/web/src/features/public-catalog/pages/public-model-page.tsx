@@ -85,18 +85,18 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-model-page">
       <header>
         <PublicCatalogBreadcrumbs page={page} />
-        <h1 className="text-3xl font-semibold tracking-tight text-fg wrap-anywhere sm:text-4xl">
+        <h1 className="text-title font-semibold tracking-tight text-fg wrap-anywhere sm:text-display">
           {modelName}
         </h1>
-        <p className="mt-2 text-sm text-fg-2">{summary.join(' · ')}</p>
+        <p className="mt-2 text-ui text-fg-2">{summary.join(' · ')}</p>
       </header>
 
       <section aria-labelledby="variants-heading" className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-fg" id="variants-heading">
+          <h2 className="text-lead font-semibold tracking-tight text-fg" id="variants-heading">
             Variants
           </h2>
-          <p className="mt-1 text-sm leading-6 text-fg-2">
+          <p className="mt-1 text-ui leading-6 text-fg-2">
             Pick yours for its own service schedule, running-cost estimate and specs.
           </p>
         </div>
@@ -114,13 +114,13 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
               key={generation.slug}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line-subtle px-4 py-3 sm:px-5">
-                <h3 className="text-base font-semibold text-fg wrap-anywhere" id={headingId}>
+                <h3 className="text-lead font-semibold text-fg wrap-anywhere" id={headingId}>
                   {generation.name}
                 </h3>
-                <p className="flex items-center gap-2 text-sm text-fg-2">
+                <p className="flex items-center gap-2 text-ui text-fg-2">
                   {years}
                   {generation.isCurrent ? (
-                    <span className="rounded-full bg-ok-tint px-2 py-0.5 text-xs font-medium text-ok">
+                    <span className="rounded-full bg-ok-tint px-2 py-0.5 text-caption font-medium text-ok">
                       Current
                     </span>
                   ) : null}
@@ -140,10 +140,10 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
                       className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-page focus-visible:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:px-5"
                     >
                       <span className="min-w-0">
-                        <span className="block text-sm font-medium text-fg wrap-anywhere">
+                        <span className="block text-ui font-medium text-fg wrap-anywhere">
                           {modelName} {variant.name}
                         </span>
-                        <span className="mt-0.5 block text-sm text-fg-2">
+                        <span className="mt-0.5 block text-ui text-fg-2">
                           {describeModelVariant(variant)}
                         </span>
                       </span>
@@ -166,10 +166,10 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
       {page.representative.specs ? (
         <section aria-labelledby="specs-heading" className="space-y-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-fg" id="specs-heading">
+            <h2 className="text-lead font-semibold tracking-tight text-fg" id="specs-heading">
               Specifications of the {representativeName}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-fg-2">
+            <p className="mt-1 text-ui leading-6 text-fg-2">
               One variant’s figures, as an example. Other variants differ; each has its own page.
             </p>
           </div>

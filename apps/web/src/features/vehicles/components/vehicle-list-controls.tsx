@@ -77,7 +77,7 @@ export function VehicleListControls({
         </div>
 
         <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-ui text-muted-foreground">
             Showing <span className="font-medium text-foreground">{resultCount}</span> of{' '}
             {totalCount}
           </p>

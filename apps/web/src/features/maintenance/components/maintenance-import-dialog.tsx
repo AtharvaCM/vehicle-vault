@@ -152,8 +152,8 @@ export function MaintenanceImportDialog({
               <div className="mb-4 rounded-full bg-primary/10 p-4">
                 <Upload className="h-8 w-8 text-primary" />
               </div>
-              <h4 className="text-lg font-bold text-fg">Select a CSV file</h4>
-              <p className="mt-2 max-w-[420px] text-sm text-fg-3">
+              <h4 className="text-lead font-bold text-fg">Select a CSV file</h4>
+              <p className="mt-2 max-w-[420px] text-ui text-fg-3">
                 Supports one row per service event or multiple rows per invoice when you map a group
                 key or invoice number.
               </p>
@@ -176,8 +176,8 @@ export function MaintenanceImportDialog({
             <div className="space-y-6">
               <div className="flex items-center justify-between px-1">
                 <div>
-                  <h4 className="text-sm font-bold">Column mapping</h4>
-                  <p className="text-xs text-fg-3">
+                  <h4 className="text-ui font-bold">Column mapping</h4>
+                  <p className="text-caption text-fg-3">
                     Match your CSV headers to record-level and line-item fields.
                   </p>
                 </div>
@@ -207,11 +207,11 @@ export function MaintenanceImportDialog({
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3 px-1">
                 <div>
-                  <h4 className="flex items-center gap-2 text-sm font-bold text-ok">
+                  <h4 className="flex items-center gap-2 text-ui font-bold text-ok">
                     <Check className="h-4 w-4" />
                     Ready to import
                   </h4>
-                  <p className="text-xs text-fg-3">
+                  <p className="text-caption text-fg-3">
                     {preview.records.length} service record
                     {preview.records.length === 1 ? '' : 's'} will be created.
                   </p>
@@ -225,7 +225,7 @@ export function MaintenanceImportDialog({
               </div>
 
               <div className="overflow-hidden rounded-xl border border-border">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-caption">
                   <thead className="border-b border-border bg-page">
                     <tr>
                       <th className="px-3 py-2 font-bold text-fg-3">Date</th>
@@ -261,13 +261,13 @@ export function MaintenanceImportDialog({
                   <div className="flex items-start gap-3">
                     <AlertCircle className="mt-0.5 h-4 w-4 text-soon" />
                     <div>
-                      <p className="text-sm font-semibold text-soon">Some rows will be skipped</p>
-                      <p className="text-xs text-soon">
+                      <p className="text-ui font-semibold text-soon">Some rows will be skipped</p>
+                      <p className="text-caption text-soon">
                         Invalid rows are not imported. Review the first few issues below.
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2 text-xs text-soon">
+                  <div className="space-y-2 text-caption text-soon">
                     {preview.issues.slice(0, 5).map((issue) => (
                       <p key={`${issue.rowNumber}-${issue.message}`}>
                         Row {issue.rowNumber}: {issue.message}
@@ -282,8 +282,8 @@ export function MaintenanceImportDialog({
           {step === 'importing' ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <h4 className="text-lg font-bold text-fg">Importing service records...</h4>
-              <p className="mt-2 text-sm text-fg-3">
+              <h4 className="text-lead font-bold text-fg">Importing service records...</h4>
+              <p className="mt-2 text-ui text-fg-3">
                 Processing {preview.records.length} records into the service history.
               </p>
             </div>
@@ -341,7 +341,7 @@ function FieldSection({
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map((field) => (
           <div className="space-y-2" key={field.id}>
-            <label className="text-xs font-bold text-fg-2">
+            <label className="text-caption font-bold text-fg-2">
               {field.label}
               {field.required ? <span className="text-destructive"> *</span> : null}
             </label>

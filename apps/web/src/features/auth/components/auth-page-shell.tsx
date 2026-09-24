@@ -27,13 +27,15 @@ export function AuthPageShell({
           <div className="space-y-6">
             <p className="text-small font-medium text-fg-3">{APP_NAME}</p>
             <div className="space-y-4">
-              <h1 className="text-4xl font-semibold tracking-tight text-fg">{title}</h1>
-              <p className="max-w-xl text-base leading-7 text-fg-2">{description}</p>
+              <h1 className="text-title font-semibold tracking-tight text-fg sm:text-display">
+                {title}
+              </h1>
+              <p className="max-w-xl text-lead leading-7 text-fg-2">{description}</p>
             </div>
 
             <div className="rounded-3xl border border-line bg-surface p-6">
-              <h2 className="text-sm font-semibold text-fg">Why this matters</h2>
-              <ul className="mt-4 grid gap-3 text-sm leading-6 text-fg-2">
+              <h2 className="text-ui font-semibold text-fg">Why this matters</h2>
+              <ul className="mt-4 grid gap-3 text-ui leading-6 text-fg-2">
                 <li>Keep every vehicle, service entry, reminder, and receipt in one place.</li>
                 <li>See dashboard counts and urgent items for your own garage only.</li>
                 <li>Pick up where you left off whenever you come back.</li>
@@ -48,7 +50,7 @@ export function AuthPageShell({
             </CardHeader>
             <CardContent className="space-y-6">
               {children}
-              <div className="border-t border-line pt-4 text-sm text-fg-2">{alternateAction}</div>
+              <div className="border-t border-line pt-4 text-ui text-fg-2">{alternateAction}</div>
             </CardContent>
           </Card>
         </div>

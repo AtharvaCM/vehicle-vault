@@ -62,7 +62,7 @@ Every token pair used for text meets WCAG AA (4.5:1). `apps/web/src/styles/token
 - **UI: IBM Plex Sans** 400/500/600 (`font-sans`, the default). Tabular numerals on every figure (the body sets `tabular-nums`).
 - **Identifiers: IBM Plex Mono** 500/600 (`font-mono`), only for policy, certificate and receipt numbers that people read out.
 - Fonts are self-hosted from `apps/web/public/fonts/` (Fontsource's Latin subset, plus Latin Extended, which carries the ₹ sign and loads only where one appears), with `font-display: swap`; Plex Sans 400 and 600 are preloaded. Nothing loads from Google Fonts.
-- **Scale (px):** 12 · 13 · 15 · 17 · 20 · 28 · 40, as `text-caption`, `text-small`, `text-body`, `text-lead`, `text-heading`, `text-title`, `text-display`. Body 15; nothing under 12. Sentence case everywhere.
+- **Scale (px):** 12 · 13 · 14 · 15 · 16 · 17 · 20 · 28 · 40, as `text-caption`, `text-small`, `text-ui`, `text-body`, `text-field`, `text-lead`, `text-heading`, `text-title`, `text-display`. Body 15; `ui` (14) for buttons, navigation and dense rows, as drawn on the approved boards; `field` (16) for form-field text below `md`, where anything smaller makes iOS Safari zoom on focus. Nothing under 12, and Tailwind's own sizes (`text-sm`, `text-lg`…) are linted out. Sentence case everywhere.
 
 ## The number plate (`NumberPlate`)
 

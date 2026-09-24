@@ -77,7 +77,7 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
       </FormField>
 
       <div className="flex justify-end">
-        <Link className="text-sm font-medium text-fg-2 hover:text-fg" to="/forgot-password">
+        <Link className="text-ui font-medium text-fg-2 hover:text-fg" to="/forgot-password">
           Forgot password?
         </Link>
       </div>

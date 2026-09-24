@@ -687,7 +687,7 @@ export function VehicleForm({
           </div>
 
           {canUseCatalogSelectors && manualFrom ? (
-            <p className="text-sm leading-5 text-fg-3">
+            <p className="text-ui leading-5 text-fg-3">
               You are entering the{' '}
               {formatFieldList(catalogFields.slice(catalogFields.indexOf(manualFrom)))} by hand.{' '}
               <button
@@ -704,20 +704,20 @@ export function VehicleForm({
               </button>
             </p>
           ) : canUseCatalogSelectors ? (
-            <p className="text-sm leading-5 text-fg-3">
+            <p className="text-ui leading-5 text-fg-3">
               Start with vehicle type and year, then search the India catalog for the correct make,
               model, and variant.
             </p>
           ) : catalogError ? (
             <div className="space-y-2">
               <InlineError message={catalogError} />
-              <p className="text-sm leading-5 text-fg-3">
+              <p className="text-ui leading-5 text-fg-3">
                 The catalog is temporarily unavailable, so you can enter make, model, and variant
                 manually.
               </p>
             </div>
           ) : (
-            <p className="text-sm leading-5 text-fg-3">
+            <p className="text-ui leading-5 text-fg-3">
               Catalog search is available for cars, SUVs, and motorcycles. Other vehicle types can
               be entered manually for now.
             </p>
@@ -726,7 +726,7 @@ export function VehicleForm({
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
-            <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-sm leading-5 text-ok">
+            <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-ui leading-5 text-ok">
               {submissionState}
             </p>
           ) : null}
@@ -735,7 +735,7 @@ export function VehicleForm({
             <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm leading-5 text-fg-3 sm:max-w-md">
+            <p className="text-ui leading-5 text-fg-3 sm:max-w-md">
               {isSubmitting ? 'Saving vehicle details...' : submitHint}
             </p>
           </div>

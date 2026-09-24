@@ -54,7 +54,7 @@ export function ReminderList({
             />
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-line px-4 py-5 text-sm text-fg-3">
+          <p className="rounded-xl border border-dashed border-line px-4 py-5 text-ui text-fg-3">
             {emptyMessage}
           </p>
         )}

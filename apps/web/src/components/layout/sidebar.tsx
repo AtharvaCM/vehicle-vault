@@ -115,7 +115,7 @@ export function Sidebar() {
             VV
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold tracking-tight text-fg">{APP_NAME}</p>
+            <p className="text-ui font-bold tracking-tight text-fg">{APP_NAME}</p>
           </div>
         </Link>
       </div>
@@ -133,7 +133,7 @@ export function Sidebar() {
                   className: 'bg-surface text-primary border-line/60',
                 }}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-fg-2 transition-colors hover:bg-surface/50 hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
+                  'group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-ui font-medium text-fg-2 transition-colors hover:bg-surface/50 hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
                 )}
                 to={item.to}
               >
@@ -151,7 +151,7 @@ export function Sidebar() {
           <div className="rounded-xl border border-line/50 bg-surface/50 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-page text-fg-2">
-                <span className="text-xs font-bold">{auth.user?.name?.charAt(0)}</span>
+                <span className="text-caption font-bold">{auth.user?.name?.charAt(0)}</span>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-small font-semibold text-fg">{auth.user?.name}</p>

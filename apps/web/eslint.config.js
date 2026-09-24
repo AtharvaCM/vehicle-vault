@@ -24,6 +24,7 @@ function designSystemRules(severity) {
   return {
     'vv/no-palette-colors': severity,
     'vv/no-arbitrary-font-size': severity,
+    'vv/no-default-font-size': severity,
     'vv/no-transition-all': severity,
     'vv/no-micro-labels': severity,
     'no-restricted-properties': [

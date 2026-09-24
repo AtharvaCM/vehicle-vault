@@ -111,7 +111,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
             <DialogTitle>
               {loan.lender}
               {vehicleLabel ? (
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                <span className="ml-2 text-ui font-normal text-muted-foreground">
                   • {vehicleLabel}
                 </span>
               ) : null}
@@ -143,19 +143,19 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
 
           <section className="space-y-3 rounded-md border border-border p-4">
             <header className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Prepayments</h3>
-              <span className="text-xs text-muted-foreground">
+              <h3 className="text-ui font-semibold">Prepayments</h3>
+              <span className="text-caption text-muted-foreground">
                 {loan.prepayments.length} total · shortens tenure
               </span>
             </header>
 
             {loan.prepayments.length ? (
-              <ul className="divide-y divide-border text-sm">
+              <ul className="divide-y divide-border text-ui">
                 {loan.prepayments.map((p) => (
                   <li key={p.id} className="flex items-center justify-between py-2">
                     <div>
                       <div className="font-medium">{format.money(p.amount)}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-caption text-muted-foreground">
                         {format.date(p.date)}
                         {p.notes ? ` · ${p.notes}` : ''}
                       </div>
@@ -173,7 +173,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-muted-foreground">No prepayments yet.</p>
+              <p className="text-caption text-muted-foreground">No prepayments yet.</p>
             )}
 
             {!isClosed ? (
@@ -224,10 +224,10 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
           </section>
 
           {!isClosed ? (
-            <div className="flex items-center justify-between rounded-md border border-soon/30 bg-soon-tint p-3 text-sm">
+            <div className="flex items-center justify-between rounded-md border border-soon/30 bg-soon-tint p-3 text-ui">
               <div>
                 <div className="font-medium text-soon">Foreclose loan</div>
-                <div className="text-xs text-soon">
+                <div className="text-caption text-soon">
                   Pay off outstanding {format.money(loan.outstandingBalance)} and close.
                 </div>
               </div>
@@ -274,7 +274,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-muted/30 p-3">
       <div className="text-caption font-medium text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-base font-semibold text-foreground">{value}</div>
+      <div className="mt-0.5 text-lead font-semibold text-foreground">{value}</div>
     </div>
   );
 }

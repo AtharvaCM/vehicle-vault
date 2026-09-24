@@ -132,8 +132,8 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-fg">Fuel history</h3>
-          <p className="text-sm text-fg-3">Track your fuel consumption and efficiency over time.</p>
+          <h3 className="text-lead font-bold text-fg">Fuel history</h3>
+          <p className="text-ui text-fg-3">Track your fuel consumption and efficiency over time.</p>
         </div>
         {canEdit ? (
           <div className="flex flex-wrap gap-2">

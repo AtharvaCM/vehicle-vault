@@ -276,7 +276,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
                   anything.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
+              <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
                 <p>
                   This creates a draft, uploads the files and reads them, then opens the draft
                   filled in from the bill for you to check and confirm.
@@ -303,7 +303,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
                   type="file"
                   capture="environment"
                 />
-                <p className="text-xs text-fg-3">
+                <p className="text-caption text-fg-3">
                   {extractionStatusQuery.data?.available === false
                     ? 'OCR is not configured right now, but draft upload still works.'
                     : 'OCR will run automatically after upload when available.'}
@@ -320,7 +320,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
                   One entry should represent one completed visit, repair, or service job.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
+              <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
                 <p>
                   Quick entry is best when you only need the date, category, odometer, and total.
                 </p>

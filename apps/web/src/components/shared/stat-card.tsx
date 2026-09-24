@@ -33,7 +33,7 @@ export function StatCard({
         {accent ? <div className="animate-in fade-in zoom-in duration-500">{accent}</div> : null}
       </CardHeader>
       <CardContent className="space-y-1.5 pt-0">
-        <p className="text-3xl font-bold tracking-tight text-fg group-hover:text-primary transition-colors">
+        <p className="text-title font-bold tracking-tight text-fg group-hover:text-primary transition-colors">
           {value}
         </p>
         <p className="text-small leading-relaxed text-fg-3 line-clamp-2">{description}</p>

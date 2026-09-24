@@ -27,8 +27,8 @@ export function InstallAppCard() {
           <Download aria-hidden="true" className="h-4 w-4" />
         </div>
         <div className="space-y-0.5">
-          <p className="text-sm font-bold text-fg">Install Vehicle Vault</p>
-          <p className="text-sm text-fg-2">
+          <p className="text-ui font-bold text-fg">Install Vehicle Vault</p>
+          <p className="text-ui text-fg-2">
             Open it from your home screen in a tap, even where there&apos;s no signal.
           </p>
         </div>

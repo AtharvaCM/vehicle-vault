@@ -153,7 +153,7 @@ function FillPlanSummary({
   record: MaintenanceRecord;
 }) {
   const leftOut = plan.lineItemsLeftOut ? (
-    <p className="text-sm text-fg-2">
+    <p className="text-ui text-fg-2">
       Line items left out: they come to{' '}
       {format.money(plan.lineItemsLeftOut.total, { currency: record.currencyCode })}, and this
       record&apos;s cost is {format.money(record.totalCost, { currency: record.currencyCode })}.
@@ -164,7 +164,7 @@ function FillPlanSummary({
   if (!plan.fields.length) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-fg-2">
+        <p className="text-ui text-fg-2">
           Nothing to add. This record already has everything the {noun} shows.
         </p>
         {leftOut}
@@ -177,8 +177,8 @@ function FillPlanSummary({
       <dl className="divide-y divide-line-subtle rounded-xl border border-line">
         {plan.fields.map((field) => (
           <div className="grid gap-1 px-4 py-3 sm:grid-cols-[9rem_minmax(0,1fr)]" key={field}>
-            <dt className="text-sm text-fg-3">{FIELD_LABELS[field]}</dt>
-            <dd className="min-w-0 wrap-break-word text-sm font-medium text-fg">
+            <dt className="text-ui text-fg-3">{FIELD_LABELS[field]}</dt>
+            <dd className="min-w-0 wrap-break-word text-ui font-medium text-fg">
               {describeChange(field, plan.changes, record)}
             </dd>
           </div>
@@ -226,7 +226,7 @@ function describeChange(
 
 function Progress({ children }: { children: ReactNode }) {
   return (
-    <p className="flex items-center gap-2 py-4 text-sm text-fg-2" role="status">
+    <p className="flex items-center gap-2 py-4 text-ui text-fg-2" role="status">
       <Loader2 className="h-4 w-4 animate-spin" />
       {children}
     </p>
@@ -236,7 +236,7 @@ function Progress({ children }: { children: ReactNode }) {
 function Problem({ children }: { children: ReactNode }) {
   return (
     <p
-      className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-sm text-late"
+      className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-ui text-late"
       role="alert"
     >
       {children}

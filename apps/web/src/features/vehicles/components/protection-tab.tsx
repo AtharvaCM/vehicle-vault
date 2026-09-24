@@ -248,7 +248,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-fg">Insurance policies</h3>
+              <h3 className="text-heading font-bold text-fg">Insurance policies</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -306,7 +306,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ReceiptText className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-fg">Insurance claims</h3>
+              <h3 className="text-heading font-bold text-fg">Insurance claims</h3>
             </div>
             {canEdit ? (
               <Button
@@ -324,7 +324,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
 
           <div className="grid gap-4">
             {claimsQuery.isPending ? (
-              <p className="text-xs text-fg-3">Loading claims…</p>
+              <p className="text-caption text-fg-3">Loading claims…</p>
             ) : claimsQuery.isError ? (
               <ErrorState
                 action={
@@ -372,7 +372,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Car className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-fg">Warranty coverage</h3>
+              <h3 className="text-heading font-bold text-fg">Warranty coverage</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -422,7 +422,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <FileBadge className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-fg">Registration &amp; papers</h3>
+              <h3 className="text-heading font-bold text-fg">Registration &amp; papers</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -494,7 +494,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
       <aside className="space-y-6">
         <Card className="border-line/60 bg-surface/70 sticky top-24">
           <CardHeader>
-            <CardTitle className="text-lg font-bold">Papers guide</CardTitle>
+            <CardTitle className="text-lead font-bold">Papers guide</CardTitle>
             <CardDescription>Managing your vehicle protection.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">

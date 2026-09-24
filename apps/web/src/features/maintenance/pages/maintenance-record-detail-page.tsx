@@ -142,7 +142,7 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
                   Nobody has confirmed this record yet
                 </h2>
               </div>
-              <p className="text-sm text-soon">
+              <p className="text-ui text-soon">
                 {canEdit
                   ? 'It is not counted in costs, reports or reminders until it is. Check what was read, then confirm it.'
                   : 'It is not counted in costs, reports or reminders until an owner or editor of this vehicle confirms it.'}

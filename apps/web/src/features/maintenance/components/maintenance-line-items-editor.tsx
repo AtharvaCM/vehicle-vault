@@ -93,8 +93,8 @@ export function MaintenanceLineItemsEditor({
               <div key={field.id} className="rounded-2xl border border-border/70 bg-page/60 p-4">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-fg">Item {index + 1}</p>
-                    <p className="text-xs text-fg-3">
+                    <p className="text-ui font-semibold text-fg">Item {index + 1}</p>
+                    <p className="text-caption text-fg-3">
                       {resolvedTotal > 0
                         ? `Resolved total ${format.money(resolvedTotal, { currency: currencyCode })}`
                         : 'Set a line total directly or derive it from quantity × unit price.'}
@@ -311,7 +311,7 @@ export function MaintenanceLineItemsEditor({
             );
           })
         ) : (
-          <div className="rounded-2xl border border-dashed border-border bg-page/60 px-4 py-6 text-sm text-fg-3">
+          <div className="rounded-2xl border border-dashed border-border bg-page/60 px-4 py-6 text-ui text-fg-3">
             Add the individual jobs, parts, or fluids if you want a structured service record.
           </div>
         )}

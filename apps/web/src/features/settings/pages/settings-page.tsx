@@ -73,7 +73,7 @@ export function SettingsPage() {
             <CardTitle>Account</CardTitle>
             <CardDescription>The account currently signed in to Vehicle Vault.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
+          <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
             <div>
               <p className="font-semibold text-fg">{auth.user?.name}</p>
               <p className="break-all">{auth.user?.email}</p>
@@ -90,7 +90,7 @@ export function SettingsPage() {
               account details.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
+          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
             <div className="space-y-2">
               <p>Use this export as a backup of your ownership history outside the app.</p>
               <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-page/80 px-3.5 py-3">
@@ -131,7 +131,7 @@ export function SettingsPage() {
               Choose which alerts reach you by email and push, and turn push on for this device.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
+          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
             <p>
               Every alert stays in the bell either way. These settings only decide what else reaches
               you.
@@ -157,7 +157,7 @@ export function SettingsPage() {
               available.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
+          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
             {reconcileMutation.isError ? (
               <InlineError
                 message={getApiErrorMessage(
@@ -188,7 +188,7 @@ export function SettingsPage() {
               Review every change made across your garage — what changed, and when.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
+          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
             <p>
               A complete, newest-first history of vehicle, service, reminder, fuel, and account
               events tied to your account.

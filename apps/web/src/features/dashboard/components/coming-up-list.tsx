@@ -38,7 +38,7 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
 
           return (
             <AttentionItemLink
-              className="group flex min-h-11 flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="group flex min-h-11 flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2 text-ui focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               item={item}
               key={item.id}
             >

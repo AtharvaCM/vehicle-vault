@@ -84,7 +84,7 @@ export function MaintenanceClaimLinkCard({
     return (
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
+          <CardTitle className="text-lead flex items-center gap-2">
             <ReceiptText className="h-4 w-4 text-primary" /> Insurance claim
           </CardTitle>
           <CardDescription>
@@ -98,16 +98,16 @@ export function MaintenanceClaimLinkCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-lead flex items-center gap-2">
           <ReceiptText className="h-4 w-4 text-primary" /> Insurance claim
         </CardTitle>
         <CardDescription>
           Tie this repair to an insurance claim so cost analytics reflect what you actually paid.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm">
+      <CardContent className="space-y-4 text-ui">
         {isPending ? (
-          <p className="text-xs text-fg-3">Loading claims…</p>
+          <p className="text-caption text-fg-3">Loading claims…</p>
         ) : isError ? (
           <InlineError
             message={getApiErrorMessage(
@@ -123,7 +123,7 @@ export function MaintenanceClaimLinkCard({
                 <p className="font-bold text-fg">
                   {linkedClaim.claimNumber ? `#${linkedClaim.claimNumber}` : 'Claim (no number)'}
                 </p>
-                <p className="text-xs text-fg-2">
+                <p className="text-caption text-fg-2">
                   {format.money(linkedClaim.grossAmount)} gross ·{' '}
                   <span className="text-late">
                     {format.money(outOfPocket(linkedClaim))} out of pocket
@@ -146,7 +146,7 @@ export function MaintenanceClaimLinkCard({
           <div className="space-y-3">
             {unlinkedClaims.length > 0 ? (
               <>
-                <p className="text-xs text-fg-3">Link to an existing unlinked claim:</p>
+                <p className="text-caption text-fg-3">Link to an existing unlinked claim:</p>
                 <div className="flex gap-2">
                   <Select onValueChange={setPickerValue} value={pickerValue}>
                     <SelectTrigger className="flex-1">
@@ -172,7 +172,7 @@ export function MaintenanceClaimLinkCard({
                 </div>
               </>
             ) : (
-              <p className="text-xs text-fg-3">No unlinked claims on this vehicle.</p>
+              <p className="text-caption text-fg-3">No unlinked claims on this vehicle.</p>
             )}
 
             <div className="pt-2 border-t border-line-subtle">

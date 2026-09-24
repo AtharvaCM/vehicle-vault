@@ -275,7 +275,7 @@ export function VehicleMaintenanceListPage({
                     Use this page as the full service log for one vehicle.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
+                <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
                   <p>Capture each completed job with the date, odometer, and total cost.</p>
                   <p>Open any entry to review notes and manage receipts.</p>
                   <p>Use next due fields so future work is easier to plan.</p>

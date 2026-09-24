@@ -65,7 +65,7 @@ export function AdminUsersPage() {
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-lg font-bold">All users</CardTitle>
+          <CardTitle className="text-lead font-bold">All users</CardTitle>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-3" />
@@ -89,11 +89,11 @@ export function AdminUsersPage() {
           ) : null}
 
           {query.isError ? (
-            <p className="text-sm text-late">Could not load users. Try again.</p>
+            <p className="text-ui text-late">Could not load users. Try again.</p>
           ) : null}
 
           {query.data && query.data.users.length === 0 ? (
-            <p className="text-sm text-fg-3">
+            <p className="text-ui text-fg-3">
               {search ? `No users matching "${search}".` : 'No users yet.'}
             </p>
           ) : null}
@@ -107,7 +107,7 @@ export function AdminUsersPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-fg">{user.name}</p>
+                      <p className="truncate text-ui font-semibold text-fg">{user.name}</p>
                       {user.role === 'admin' ? (
                         <Badge variant="accent">
                           <ShieldCheck />
@@ -116,9 +116,9 @@ export function AdminUsersPage() {
                       ) : null}
                       {user.emailVerified ? null : <Badge variant="warning">Unverified</Badge>}
                     </div>
-                    <p className="truncate text-xs text-fg-3">{user.email}</p>
+                    <p className="truncate text-caption text-fg-3">{user.email}</p>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-fg-3">
+                  <div className="flex items-center gap-4 text-caption text-fg-3">
                     <span className="inline-flex items-center gap-1">
                       <CarFront className="h-3.5 w-3.5" />
                       {user.vehicleCount}
@@ -143,7 +143,7 @@ export function AdminUsersPage() {
           ) : null}
 
           {total > PAGE_SIZE ? (
-            <div className="mt-4 flex items-center justify-between border-t border-line-subtle pt-4 text-xs text-fg-3">
+            <div className="mt-4 flex items-center justify-between border-t border-line-subtle pt-4 text-caption text-fg-3">
               <span>
                 Page {page} of {totalPages}
               </span>

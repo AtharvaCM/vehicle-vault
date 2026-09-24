@@ -135,7 +135,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                             </Badge>
                           ) : null}
                         </div>
-                        <p className="text-xs text-fg-3">
+                        <p className="text-caption text-fg-3">
                           {[
                             lineItem.brand,
                             lineItem.partNumber,
@@ -150,14 +150,14 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                             .join(' • ') || 'No extra item metadata'}
                         </p>
                       </div>
-                      <div className="text-sm font-semibold text-fg">
+                      <div className="text-ui font-semibold text-fg">
                         {typeof lineItem.lineTotal === 'number'
                           ? format.money(lineItem.lineTotal, { currency: record.currencyCode })
                           : '—'}
                       </div>
                     </div>
                     {lineItem.notes ? (
-                      <p className="mt-2 text-sm text-fg-2">{lineItem.notes}</p>
+                      <p className="mt-2 text-ui text-fg-2">{lineItem.notes}</p>
                     ) : null}
                   </div>
                 ))}

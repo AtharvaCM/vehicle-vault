@@ -116,7 +116,7 @@ export function OdometerQuickUpdate({
             />
           </div>
           {error ? (
-            <p className="text-xs text-late" id={`odometer-${vehicleId}-error`} role="alert">
+            <p className="text-caption text-late" id={`odometer-${vehicleId}-error`} role="alert">
               {error.message}
               {error.offerEdit ? (
                 <>

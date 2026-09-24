@@ -91,10 +91,10 @@ function Calculator({ page, storageKey }: RunningCostCalculatorProps & { storage
       className="rounded-xl border border-line bg-surface p-4 shadow-xs sm:p-5"
       data-testid="running-cost-calculator"
     >
-      <h2 className="text-lg font-semibold tracking-tight text-fg" id="running-cost-heading">
+      <h2 className="text-lead font-semibold tracking-tight text-fg" id="running-cost-heading">
         Running cost
       </h2>
-      <p className="mt-1 text-sm leading-6 text-fg-2">
+      <p className="mt-1 text-ui leading-6 text-fg-2">
         An estimate, not a quote. Change any figure to match how you drive.
       </p>
 
@@ -202,7 +202,7 @@ function CalculatorField({
       </Label>
       <div className="flex items-center gap-2">
         {adornment.prefix ? (
-          <span className="text-sm text-fg-2" id={prefixId}>
+          <span className="text-ui text-fg-2" id={prefixId}>
             {adornment.prefix}
           </span>
         ) : null}
@@ -210,7 +210,7 @@ function CalculatorField({
           aria-describedby={describedBy}
           aria-invalid={invalid || undefined}
           autoComplete="off"
-          className="h-10 min-w-0 flex-1 bg-surface text-base tabular-nums aria-invalid:border-late sm:text-sm"
+          className="h-10 min-w-0 flex-1 bg-surface text-field tabular-nums aria-invalid:border-late sm:text-ui"
           id={id}
           inputMode="decimal"
           onChange={(event) => onChange(event.target.value)}
@@ -218,12 +218,12 @@ function CalculatorField({
           value={value}
         />
         {adornment.suffix ? (
-          <span className="shrink-0 text-sm text-fg-2" id={suffixId}>
+          <span className="shrink-0 text-ui text-fg-2" id={suffixId}>
             {adornment.suffix}
           </span>
         ) : null}
       </div>
-      <p className="text-xs leading-5 text-fg-3" id={hintId}>
+      <p className="text-caption leading-5 text-fg-3" id={hintId}>
         {isEntered ? (
           <span className="font-medium text-fg-2">Your figure</span>
         ) : optional ? (
@@ -265,11 +265,11 @@ function EstimateView({
             className="rounded-lg border border-line bg-page p-3"
             key={title}
           >
-            <h3 className="text-sm font-medium text-fg-2">{title}</h3>
-            <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-fg">
+            <h3 className="text-ui font-medium text-fg-2">{title}</h3>
+            <p className="mt-1 text-title font-semibold tabular-nums tracking-tight text-fg">
               {format.money(breakdown.total)}
             </p>
-            <dl className="mt-2 space-y-1 text-sm">
+            <dl className="mt-2 space-y-1 text-ui">
               <BreakdownRow label={labels.energy} value={breakdown.energy} />
               <BreakdownRow label="Service" value={breakdown.service} />
               {breakdown.purchase !== null ? (
@@ -280,7 +280,7 @@ function EstimateView({
         ))}
       </div>
 
-      <div className="rounded-lg bg-page p-3 text-sm leading-6 text-fg-2">
+      <div className="rounded-lg bg-page p-3 text-ui leading-6 text-fg-2">
         <h3 className="font-medium text-fg">How this is worked out</h3>
         <ul className="mt-1 list-disc space-y-1 pl-5">
           {estimate.defaulted.length > 0 ? (
@@ -331,7 +331,7 @@ function CannotEstimate({
   units: OwnershipCostEnergyUnits;
 }) {
   return (
-    <div className="rounded-lg border border-soon/30 bg-soon-tint p-3 text-sm leading-6 text-soon">
+    <div className="rounded-lg border border-soon/30 bg-soon-tint p-3 text-ui leading-6 text-soon">
       <h3 className="font-medium">Can’t estimate yet</h3>
       <ul className="mt-1 list-disc space-y-1 pl-5">
         {problems.map((problem) => (

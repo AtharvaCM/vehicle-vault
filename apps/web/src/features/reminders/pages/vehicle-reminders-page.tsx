@@ -214,7 +214,7 @@ export function VehicleRemindersPage({
               <CardTitle>Loading reminders</CardTitle>
               <CardDescription>Getting reminders for this vehicle.</CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-fg-2">
+            <CardContent className="text-ui text-fg-2">
               Please wait while we load the due items.
             </CardContent>
           </Card>

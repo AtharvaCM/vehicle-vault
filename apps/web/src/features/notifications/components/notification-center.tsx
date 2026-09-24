@@ -77,7 +77,7 @@ export function NotificationCenter() {
         align="end"
       >
         <div className="flex items-center justify-between p-4 pb-2">
-          <h4 className="text-sm font-bold text-fg">Notifications</h4>
+          <h4 className="text-ui font-bold text-fg">Notifications</h4>
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
               <Button
@@ -130,7 +130,7 @@ export function NotificationCenter() {
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                         )}
                       </div>
-                      <p className="mt-1 text-xs text-fg-3 leading-normal line-clamp-2">
+                      <p className="mt-1 text-caption text-fg-3 leading-normal line-clamp-2">
                         {notif.message}
                       </p>
                       <div className="mt-2.5 flex items-center justify-between">
@@ -158,7 +158,7 @@ export function NotificationCenter() {
         <div className="p-2 bg-page/50">
           <Button
             variant="ghost"
-            className="w-full text-xs text-fg-3 font-semibold h-8 hover:bg-page/80"
+            className="w-full text-caption text-fg-3 font-semibold h-8 hover:bg-page/80"
             asChild
           >
             {/* Push for this device, and which alerts go by email or push, live there. */}
@@ -188,8 +188,11 @@ function EmptyBell() {
       </div>
       {pending > 0 ? (
         <>
-          <p className="text-sm font-medium text-fg">No new alerts</p>
-          <Link to="/dashboard" className="text-xs text-primary font-semibold mt-1 hover:underline">
+          <p className="text-ui font-medium text-fg">No new alerts</p>
+          <Link
+            to="/dashboard"
+            className="text-caption text-primary font-semibold mt-1 hover:underline"
+          >
             {pending === 1
               ? '1 thing needs your attention on the dashboard'
               : `${pending} things need your attention on the dashboard`}
@@ -197,8 +200,10 @@ function EmptyBell() {
         </>
       ) : (
         <>
-          <p className="text-sm font-medium text-fg">All caught up!</p>
-          <p className="text-xs text-fg-3 mt-1">No new maintenance alerts for your vehicles.</p>
+          <p className="text-ui font-medium text-fg">All caught up!</p>
+          <p className="text-caption text-fg-3 mt-1">
+            No new maintenance alerts for your vehicles.
+          </p>
         </>
       )}
     </div>

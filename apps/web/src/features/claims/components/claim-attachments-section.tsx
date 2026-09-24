@@ -189,7 +189,7 @@ export function ClaimAttachmentsSection({
       <button
         type="button"
         onClick={() => setIsExpanded((v) => !v)}
-        className="flex w-full items-center justify-between text-xs text-fg-2 hover:text-fg transition-colors"
+        className="flex w-full items-center justify-between text-caption text-fg-2 hover:text-fg transition-colors"
       >
         <span className="flex items-center gap-1.5 font-bold text-caption">
           <Paperclip className="h-3 w-3" />
@@ -206,7 +206,7 @@ export function ClaimAttachmentsSection({
       {isExpanded ? (
         <div className="space-y-3 pt-2">
           {attachmentsQuery.isPending ? (
-            <p className="text-xs text-fg-3">Loading…</p>
+            <p className="text-caption text-fg-3">Loading…</p>
           ) : attachmentsQuery.isError ? (
             <InlineError
               message={getApiErrorMessage(
@@ -230,7 +230,7 @@ export function ClaimAttachmentsSection({
                         <div className="flex items-center gap-2">
                           <Icon className="h-4 w-4 text-fg-3 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-fg truncate">
+                            <p className="text-caption font-bold text-fg truncate">
                               {att.originalFileName}
                             </p>
                             <p className="text-caption text-fg-3">
@@ -293,7 +293,7 @@ export function ClaimAttachmentsSection({
                   })}
                 </ul>
               ) : (
-                <p className="text-xs text-fg-3 italic">No attachments yet.</p>
+                <p className="text-caption text-fg-3 italic">No attachments yet.</p>
               )}
 
               {canEdit ? (
@@ -491,7 +491,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
                 value={draft.values.claimNumber}
                 onChange={(e) => setValue('claimNumber', e.target.value)}
                 placeholder="e.g. CL-2026-1234"
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
             {renderField(
@@ -501,7 +501,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
                 step="0.01"
                 value={draft.values.grossAmount}
                 onChange={(e) => setValue('grossAmount', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
             {renderField(
@@ -511,7 +511,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
                 step="0.01"
                 value={draft.values.insurerPaidAmount}
                 onChange={(e) => setValue('insurerPaidAmount', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
             {renderField(
@@ -520,7 +520,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
                 type="date"
                 value={draft.values.filedDate}
                 onChange={(e) => setValue('filedDate', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
             {renderField(
@@ -529,7 +529,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
                 type="date"
                 value={draft.values.settledDate}
                 onChange={(e) => setValue('settledDate', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
             {renderField(
@@ -537,7 +537,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
               <Input
                 value={draft.values.vendorName}
                 onChange={(e) => setValue('vendorName', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
             {renderField(
@@ -545,7 +545,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
               <Input
                 value={draft.values.notes}
                 onChange={(e) => setValue('notes', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-caption"
               />,
             )}
           </div>
@@ -560,7 +560,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
           </Button>
         </>
       ) : (
-        <p className="text-xs text-fg-3 italic">
+        <p className="text-caption text-fg-3 italic">
           AI could not detect claim fields in this document.
         </p>
       )}

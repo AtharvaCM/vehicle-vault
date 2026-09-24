@@ -42,7 +42,7 @@ export function ActivityPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle className="text-lg font-bold">Account activity</CardTitle>
+          <CardTitle className="text-lead font-bold">Account activity</CardTitle>
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All activity" />

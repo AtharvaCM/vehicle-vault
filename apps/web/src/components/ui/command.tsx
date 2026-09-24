@@ -23,7 +23,7 @@ function CommandInput({ className, ...props }: ComponentProps<typeof CommandPrim
       <Search className="mr-2 h-4 w-4 shrink-0 text-fg-3" />
       <CommandPrimitive.Input
         className={cn(
-          'flex h-11 w-full rounded-control bg-transparent py-3 text-base outline-hidden placeholder:text-fg-3 md:text-body disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-11 w-full rounded-control bg-transparent py-3 text-field outline-hidden placeholder:text-fg-3 md:text-body disabled:cursor-not-allowed disabled:opacity-50',
           className,
         )}
         data-slot="command-input"

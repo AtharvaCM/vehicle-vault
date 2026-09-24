@@ -17,7 +17,7 @@ export function ErrorState({ title, description, action }: ErrorStateProps) {
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-late-tint text-late">
             <AlertTriangle className="h-4 w-4" />
           </div>
-          <p className="text-sm leading-6 text-late">{description}</p>
+          <p className="text-ui leading-6 text-late">{description}</p>
         </div>
         {action ? <div className="flex flex-wrap gap-3">{action}</div> : null}
       </div>

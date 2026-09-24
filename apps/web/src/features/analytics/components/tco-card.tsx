@@ -20,7 +20,7 @@ export function TcoCard({ vehicleId }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex items-center gap-2 text-lead">
           <Wallet className="h-4 w-4 text-brand" />
           Total cost of ownership
         </CardTitle>
@@ -28,9 +28,9 @@ export function TcoCard({ vehicleId }: Props) {
       </CardHeader>
       <CardContent>
         {query.isLoading ? (
-          <p className="text-sm text-fg-3">Loading TCO…</p>
+          <p className="text-ui text-fg-3">Loading TCO…</p>
         ) : query.isError ? (
-          <p className="text-sm text-late">Failed to load TCO.</p>
+          <p className="text-ui text-late">Failed to load TCO.</p>
         ) : !query.data ? null : (
           <TcoBody data={query.data} />
         )}
@@ -118,7 +118,7 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
       </div>
 
       {!purchaseSet ? (
-        <p className="rounded-lg border border-soon/30 bg-soon-tint/70 px-3 py-2 text-xs text-soon">
+        <p className="rounded-lg border border-soon/30 bg-soon-tint/70 px-3 py-2 text-caption text-soon">
           Add purchase date, price, and odometer in the vehicle form to unlock the full TCO picture.
         </p>
       ) : null}

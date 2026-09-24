@@ -137,7 +137,7 @@ export function AcceptInvitePage({ token }: Props) {
   }
 
   const details = (
-    <dl className="grid gap-3 rounded-2xl border border-line bg-page p-4 text-sm">
+    <dl className="grid gap-3 rounded-2xl border border-line bg-page p-4 text-ui">
       <div>
         <dt className="text-fg-3">Vehicle</dt>
         <dd className="font-semibold text-fg">{invite.vehicleLabel}</dd>
@@ -222,7 +222,7 @@ export function AcceptInvitePage({ token }: Props) {
       <div className="space-y-4">
         {details}
         {actionError ? (
-          <p className="text-sm text-late" role="alert">
+          <p className="text-ui text-late" role="alert">
             {getApiErrorMessage(actionError, 'That didn’t work. Try again.')}
           </p>
         ) : null}

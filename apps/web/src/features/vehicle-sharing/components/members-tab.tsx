@@ -63,7 +63,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
   if (membersQuery.isError) {
     return (
       <Card className="border-late/30 bg-late-tint">
-        <CardContent className="p-6 text-sm text-late">
+        <CardContent className="p-6 text-ui text-late">
           Failed to load members: {getApiErrorMessage(membersQuery.error)}
         </CardContent>
       </Card>
@@ -78,7 +78,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
     <div className="space-y-6">
       <Card className="border-line/60 bg-surface/70">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">Members</CardTitle>
+          <CardTitle className="text-lead font-bold">Members</CardTitle>
           <CardDescription>
             People with access to this vehicle. Owners can change roles and invite collaborators.
           </CardDescription>
@@ -93,7 +93,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
               isSelf={member.isSelf}
             />
           ))}
-          {members.length === 0 ? <p className="text-sm text-fg-3">No members yet.</p> : null}
+          {members.length === 0 ? <p className="text-ui text-fg-3">No members yet.</p> : null}
         </CardContent>
       </Card>
 
@@ -144,11 +144,11 @@ function MemberRow({
           {isOwnerRow ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
         </div>
         <div>
-          <p className="text-sm font-semibold">
+          <p className="text-ui font-semibold">
             {member.name}
-            {isSelf ? <span className="ml-2 text-xs text-fg-3">(you)</span> : null}
+            {isSelf ? <span className="ml-2 text-caption text-fg-3">(you)</span> : null}
           </p>
-          <p className="break-all text-xs text-fg-3">{member.email}</p>
+          <p className="break-all text-caption text-fg-3">{member.email}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
   return (
     <Card className="border-line/60 bg-surface/70">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg font-bold">
+        <CardTitle className="flex items-center gap-2 text-lead font-bold">
           <UserPlus className="h-5 w-5" /> Invite a collaborator
         </CardTitle>
         <CardDescription>
@@ -284,7 +284,7 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
         {created ? <InviteLinkPanel created={created} onDone={() => setCreated(null)} /> : null}
         <form className="grid gap-3 sm:grid-cols-[1fr_140px_auto]" onSubmit={handleSubmit}>
           <div className="grid gap-1">
-            <Label htmlFor="invite-email" className="text-xs">
+            <Label htmlFor="invite-email" className="text-caption">
               Email
             </Label>
             <Input
@@ -297,7 +297,7 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
             />
           </div>
           <div className="grid gap-1">
-            <Label htmlFor="invite-role" className="text-xs">
+            <Label htmlFor="invite-role" className="text-caption">
               Role
             </Label>
             <Select value={role} onValueChange={(value) => setRole(value as EditableRole)}>
@@ -349,7 +349,7 @@ export function InviteLinkPanel({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-ok/30 bg-ok-tint p-4 text-sm" role="status">
+    <div className="space-y-3 rounded-2xl border border-ok/30 bg-ok-tint p-4 text-ui" role="status">
       <p className="font-semibold text-ok">
         {emailSent
           ? `Email sent to ${invite.email}. You can also send them this link.`
@@ -408,7 +408,7 @@ function PendingInvitesCard({
   return (
     <Card className="border-line/60 bg-surface/70">
       <CardHeader>
-        <CardTitle className="text-lg font-bold">Pending invitations</CardTitle>
+        <CardTitle className="text-lead font-bold">Pending invitations</CardTitle>
         <CardDescription>Invites that have not been accepted yet.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -422,8 +422,8 @@ function PendingInvitesCard({
                 <Mail className="h-4 w-4" />
               </div>
               <div>
-                <p className="break-all text-sm font-semibold">{invite.email}</p>
-                <p className="text-xs text-fg-3">
+                <p className="break-all text-ui font-semibold">{invite.email}</p>
+                <p className="text-caption text-fg-3">
                   Role: {format.enumLabel('vehicleRole', invite.role)} · expires{' '}
                   {format.date(invite.expiresAt)}
                 </p>

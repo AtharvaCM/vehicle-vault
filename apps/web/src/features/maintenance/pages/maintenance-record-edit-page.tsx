@@ -276,7 +276,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
                     Small corrections now make the history easier to trust later.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
+                <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
                   <p>
                     Update the date, odometer, and cost whenever the original entry needs
                     correction.

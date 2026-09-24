@@ -101,8 +101,8 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
         {attachments.length > 1 ? (
           <div className="flex flex-col gap-2 rounded-xl border border-brand/30 bg-brand-tint px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-sm font-medium text-fg">Multi-page document OCR</p>
-              <p className="text-sm text-fg-2">
+              <p className="text-ui font-medium text-fg">Multi-page document OCR</p>
+              <p className="text-ui text-fg-2">
                 Extract all attached pages together into one merged service suggestion.
               </p>
             </div>
@@ -155,7 +155,7 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
                     <p className="font-medium text-fg">{attachment.originalFileName}</p>
                     <ExtractionStatusBadge extraction={attachment.extraction} />
                   </div>
-                  <p className="text-sm text-fg-3">
+                  <p className="text-ui text-fg-3">
                     Uploaded {format.date(attachment.uploadedAt, 'dateTime')}
                   </p>
                 </div>
@@ -197,15 +197,15 @@ export function MaintenanceDraftReviewCard({ recordId, isDraft }: MaintenanceDra
               {attachment.extraction?.status === 'completed' ? (
                 <ExtractionPreview extraction={attachment.extraction} />
               ) : attachment.extraction?.status === 'failed' ? (
-                <div className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-sm text-late">
+                <div className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-ui text-late">
                   {attachment.extraction.failureReason || 'The document could not be analyzed.'}
                 </div>
               ) : !extractionStatusQuery.data?.available ? (
-                <div className="rounded-xl border border-soon/30 bg-soon-tint px-4 py-3 text-sm text-soon">
+                <div className="rounded-xl border border-soon/30 bg-soon-tint px-4 py-3 text-ui text-soon">
                   OCR is not configured on the backend, so this draft can only use manual entry.
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-border/70 bg-surface/80 px-4 py-3 text-sm text-fg-3">
+                <div className="rounded-xl border border-dashed border-border/70 bg-surface/80 px-4 py-3 text-ui text-fg-3">
                   Run OCR to extract the document into structured service fields.
                 </div>
               )}
@@ -274,7 +274,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
       </div>
 
       {extraction.notes ? (
-        <div className="rounded-xl border border-border/70 bg-surface/80 px-4 py-3 text-sm text-fg-2">
+        <div className="rounded-xl border border-border/70 bg-surface/80 px-4 py-3 text-ui text-fg-2">
           {extraction.notes}
         </div>
       ) : null}
@@ -300,7 +300,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
                       </Badge>
                     ) : null}
                   </div>
-                  <p className="text-sm text-fg-3">
+                  <p className="text-ui text-fg-3">
                     {[
                       typeof lineItem.quantity === 'number'
                         ? `${lineItem.quantity}${lineItem.unit ? ` ${lineItem.unit}` : ''}`
@@ -312,7 +312,7 @@ function ExtractionPreview({ extraction }: { extraction: AttachmentExtraction })
                       .join(' • ') || 'No extra details'}
                   </p>
                 </div>
-                <div className="text-sm font-semibold text-fg">
+                <div className="text-ui font-semibold text-fg">
                   {typeof lineItem.lineTotal === 'number'
                     ? format.money(lineItem.lineTotal, { currency: extraction.currencyCode })
                     : 'No amount'}
@@ -333,7 +333,7 @@ function ExtractionField({ label, value }: { label: string; value?: string }) {
   return (
     <div className="rounded-xl border border-border/70 bg-surface/80 px-4 py-3">
       <p className="text-caption font-medium text-fg-3">{label}</p>
-      <p className="mt-1 text-sm text-fg">{value || 'Not detected'}</p>
+      <p className="mt-1 text-ui text-fg">{value || 'Not detected'}</p>
     </div>
   );
 }

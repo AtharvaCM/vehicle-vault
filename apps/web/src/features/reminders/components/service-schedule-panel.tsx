@@ -67,7 +67,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
         <CardHeader className="border-b border-line-subtle pb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 shrink-0 text-primary" />
-            <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
+            <CardTitle className="text-lead font-bold">Suggested service schedule</CardTitle>
           </div>
           <CardDescription>Loading recommended intervals…</CardDescription>
         </CardHeader>
@@ -93,7 +93,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 shrink-0 text-primary" />
-            <CardTitle className="text-lg font-bold">Suggested service schedule</CardTitle>
+            <CardTitle className="text-lead font-bold">Suggested service schedule</CardTitle>
           </div>
           <Badge variant="outline">Typical intervals</Badge>
         </div>
@@ -105,7 +105,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
       </CardHeader>
       <CardContent className="space-y-2 p-5">
         {items.length === 0 ? (
-          <p className="text-sm text-fg-3">No suggestions for this vehicle.</p>
+          <p className="text-ui text-fg-3">No suggestions for this vehicle.</p>
         ) : (
           <ul className="divide-y divide-line-subtle">
             {items.map((item) => {
@@ -125,11 +125,11 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                   ) : null}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-fg">{item.title}</p>
+                      <p className="text-ui font-semibold text-fg">{item.title}</p>
                       <Badge variant="outline">{format.enumLabel('reminderType', item.type)}</Badge>
                       {disabled ? <Badge tone="success">Already scheduled</Badge> : null}
                     </div>
-                    <p className="mt-1 text-xs text-fg-3">
+                    <p className="mt-1 text-caption text-fg-3">
                       {item.intervalKm != null ? (
                         <span>Every {format.distance(item.intervalKm)}</span>
                       ) : null}
@@ -142,12 +142,12 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
                         : null}
                     </p>
                     {item.anchor && (item.dueOdometer != null || item.dueDate) ? (
-                      <p className="mt-0.5 text-xs text-fg-3">
+                      <p className="mt-0.5 text-caption text-fg-3">
                         {describeAnchor(item.anchor)} → next {nextDue(item)}
                       </p>
                     ) : null}
                     {item.notes ? (
-                      <p className="mt-1 text-xs italic text-fg-3">{item.notes}</p>
+                      <p className="mt-1 text-caption italic text-fg-3">{item.notes}</p>
                     ) : null}
                   </div>
                 </li>
@@ -158,7 +158,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
 
         {canEdit && actionable.length > 0 ? (
           <div className="flex items-center justify-between border-t border-line-subtle pt-4">
-            <p className="text-xs text-fg-3">
+            <p className="text-caption text-fg-3">
               <ListChecks className="mr-1 inline h-3 w-3" />
               {selected.size} selected
             </p>

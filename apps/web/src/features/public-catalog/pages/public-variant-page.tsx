@@ -67,15 +67,15 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-variant-page">
       <header>
         <PublicCatalogBreadcrumbs page={page} />
-        <p className="text-sm font-medium text-fg-2 wrap-anywhere">{page.generation.name}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-fg wrap-anywhere sm:text-4xl">
+        <p className="text-ui font-medium text-fg-2 wrap-anywhere">{page.generation.name}</p>
+        <h1 className="mt-2 text-title font-semibold tracking-tight text-fg wrap-anywhere sm:text-display">
           {heading}
         </h1>
         {page.offerings.length > 0 ? (
           <ul aria-label="Offered" className="mt-3 flex flex-wrap gap-2">
             {page.offerings.map((offering) => (
               <li
-                className="rounded-full border border-line bg-surface px-3 py-1 text-sm text-fg-2"
+                className="rounded-full border border-line bg-surface px-3 py-1 text-ui text-fg-2"
                 key={describeOffering(offering)}
               >
                 {describeOffering(offering)}
@@ -91,7 +91,7 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
 
       {page.specs ? (
         <section aria-labelledby="specs-heading" className="space-y-3">
-          <h2 className="text-lg font-semibold tracking-tight text-fg" id="specs-heading">
+          <h2 className="text-lead font-semibold tracking-tight text-fg" id="specs-heading">
             Specifications
           </h2>
           <PublicSpecSections specs={page.specs} />

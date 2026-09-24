@@ -109,7 +109,7 @@ export function NotificationPreferencesPage() {
                 the bell.
               </CardDescription>
             </div>
-            <p aria-live="polite" className="shrink-0 text-xs font-medium text-fg-3">
+            <p aria-live="polite" className="shrink-0 text-caption font-medium text-fg-3">
               {isSaving ? 'Saving…' : update.isSuccess ? 'Saved' : null}
             </p>
           </CardHeader>
@@ -124,23 +124,23 @@ export function NotificationPreferencesPage() {
             ) : null}
 
             {channels.email.reason === 'email_unverified' ? (
-              <p className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-3 text-sm text-soon">
+              <p className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-3 text-ui text-soon">
                 Email alerts start once your address is verified.
               </p>
             ) : null}
 
             {channelNotices.map(({ channel, message }) => (
               <p
-                className="rounded-xl border border-line bg-page px-3.5 py-3 text-sm text-fg-2"
+                className="rounded-xl border border-line bg-page px-3.5 py-3 text-ui text-fg-2"
                 key={channel}
               >
                 {message}
               </p>
             ))}
 
-            <table className="w-full text-sm">
+            <table className="w-full text-ui">
               <thead>
-                <tr className="text-left text-xs text-fg-3">
+                <tr className="text-left text-caption text-fg-3">
                   <th className="pb-2 font-semibold" scope="col">
                     Alert
                   </th>
@@ -168,7 +168,7 @@ export function NotificationPreferencesPage() {
                         {available ? (
                           <Button
                             aria-label={`Turn ${channel} ${turnOn ? 'on' : 'off'} for every alert`}
-                            className="h-7 px-2 text-xs"
+                            className="h-7 px-2 text-caption"
                             onClick={() => setAll(channel, turnOn)}
                             size="sm"
                             variant="outline"

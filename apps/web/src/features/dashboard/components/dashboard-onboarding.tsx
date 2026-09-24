@@ -29,8 +29,10 @@ export function DashboardOnboarding() {
 
         <div className="min-w-0 flex-1 space-y-6">
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold tracking-tight text-fg">Set up your garage</h2>
-            <p className="max-w-2xl text-sm leading-6 text-fg-3">
+            <h2 className="text-heading font-semibold tracking-tight text-fg">
+              Set up your garage
+            </h2>
+            <p className="max-w-2xl text-ui leading-6 text-fg-3">
               Add the first vehicle — yours or a family member&apos;s. Reminders, insurance and PUC
               dates, and service history all hang off each vehicle.
             </p>
@@ -48,7 +50,7 @@ export function DashboardOnboarding() {
                   {index + 1}
                 </span>
                 <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-fg">{step.title}</p>
+                  <p className="text-ui font-semibold text-fg">{step.title}</p>
                   <p className="text-small leading-5 text-fg-3">{step.description}</p>
                 </div>
               </li>

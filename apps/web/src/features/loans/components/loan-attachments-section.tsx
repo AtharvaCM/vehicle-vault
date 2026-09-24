@@ -65,14 +65,14 @@ export function LoanAttachmentsSection({ loanId }: Props) {
   return (
     <section className="space-y-3 rounded-md border border-border p-4">
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Documents</h3>
-        <span className="text-xs text-muted-foreground">
+        <h3 className="text-ui font-semibold">Documents</h3>
+        <span className="text-caption text-muted-foreground">
           Sanction letter, agreement, statements, NOC
         </span>
       </header>
 
       {query.isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-caption text-muted-foreground">Loading…</p>
       ) : query.isError ? (
         <InlineError
           message={getApiErrorMessage(
@@ -81,7 +81,7 @@ export function LoanAttachmentsSection({ loanId }: Props) {
           )}
         />
       ) : attachments.length ? (
-        <ul className="divide-y divide-border text-sm">
+        <ul className="divide-y divide-border text-ui">
           {attachments.map((att) => (
             <li key={att.id} className="flex items-center justify-between gap-2 py-2">
               <button
@@ -90,7 +90,7 @@ export function LoanAttachmentsSection({ loanId }: Props) {
                 className="flex min-w-0 flex-1 flex-col text-left hover:underline"
               >
                 <span className="truncate font-medium">{att.originalFileName}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-caption text-muted-foreground">
                   {format.enumLabel('attachmentKind', att.kind)} · {formatFileSize(att.size)} ·{' '}
                   {format.date(att.uploadedAt)}
                 </span>
@@ -108,7 +108,7 @@ export function LoanAttachmentsSection({ loanId }: Props) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">No documents attached yet.</p>
+        <p className="text-caption text-muted-foreground">No documents attached yet.</p>
       )}
 
       <div className="flex flex-wrap items-end gap-2 pt-1">

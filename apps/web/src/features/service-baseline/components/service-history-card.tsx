@@ -110,7 +110,7 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
     <Card className="border-line/60 bg-surface/70">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg font-bold">Service history baseline</CardTitle>
+          <CardTitle className="text-lead font-bold">Service history baseline</CardTitle>
           {unanswered > 0 ? <Badge variant="secondary">{unanswered} unanswered</Badge> : null}
         </div>
         <CardDescription>
@@ -135,7 +135,7 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
 
         {canEdit ? (
           <div className="flex items-center justify-end gap-3 pt-2">
-            <p className="text-xs text-fg-3">
+            <p className="text-caption text-fg-3">
               {pending.length === 0
                 ? 'No changes to save'
                 : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
@@ -174,8 +174,8 @@ function BaselineRow({
   if (readOnly && isEditable(entry)) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-page/60 px-3 py-2">
-        <span className="text-sm font-medium text-fg-2">{label}</span>
-        <span className="text-xs text-fg-3">{describeAnswer(entry)}</span>
+        <span className="text-ui font-medium text-fg-2">{label}</span>
+        <span className="text-caption text-fg-3">{describeAnswer(entry)}</span>
       </div>
     );
   }
@@ -183,8 +183,8 @@ function BaselineRow({
   if (!isEditable(entry)) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-page/60 px-3 py-2">
-        <span className="text-sm font-medium text-fg-2">{label}</span>
-        <span className="text-xs text-fg-3">
+        <span className="text-ui font-medium text-fg-2">{label}</span>
+        <span className="text-caption text-fg-3">
           Logged service at {format.odometer(entry.lastDoneOdometer)}
         </span>
       </div>
@@ -195,7 +195,7 @@ function BaselineRow({
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line/60 px-3 py-2">
-      <span className="min-w-32 flex-1 text-sm font-medium text-fg-2">{label}</span>
+      <span className="min-w-32 flex-1 text-ui font-medium text-fg-2">{label}</span>
 
       <div className="flex items-center gap-2">
         <Input

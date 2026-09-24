@@ -40,9 +40,9 @@ function EconomyFigures({ economy }: { economy: VehicleFuelEconomy }) {
     <div className="space-y-3">
       {achieved ? (
         <div>
-          <p className="text-3xl font-black tabular-nums text-fg">
+          <p className="text-title font-black tabular-nums text-fg">
             {formatFigure(achieved.value)}{' '}
-            <span className="text-base font-bold text-fg-3">{unit}</span>
+            <span className="text-lead font-bold text-fg-3">{unit}</span>
           </p>
           <p className="text-small text-fg-3">
             Real, over {format.distance(achieved.distanceKm)} and {format.number(achieved.quantity)}{' '}
@@ -83,7 +83,7 @@ export function FuelEconomyCard({ vehicleId }: { vehicleId: string }) {
   return (
     <Card className="border-line/60 bg-surface/70">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg font-bold">
+        <CardTitle className="flex items-center gap-2 text-lead font-bold">
           <Fuel aria-hidden="true" className="h-4 w-4 text-primary" />
           Real fuel economy
         </CardTitle>

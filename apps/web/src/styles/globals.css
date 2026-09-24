@@ -1,17 +1,16 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import './tailwind-3-compat.css';
+@import './spacing-utilities.css';
 @import './tokens.css';
 @import './fonts.css';
 
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Tailwind 3 defaults that Tailwind 4 changed, kept so the upgrade changes
-  nothing on screen: borders default to gray-200 rather than currentcolor
-  (elements get the theme's border colour below; this covers pseudo-elements),
-  placeholders are gray-400 rather than half-opacity text, and buttons show
-  the pointer cursor.
+  Tailwind 3 behaviour that Tailwind 4 changed, kept on the tokens: borders
+  default to the theme's line colour rather than currentcolor (this covers
+  pseudo-elements too), placeholders use the caption text colour rather than
+  half-opacity text, and buttons show the pointer cursor.
 */
 @layer base {
   *,
@@ -19,12 +18,12 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-line, currentcolor);
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--color-gray-400);
+    color: var(--color-fg-3);
   }
 
   button:not(:disabled),

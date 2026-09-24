@@ -39,12 +39,12 @@ export function BulkVehicleActions({
             <CarFront className="h-4 w-4 text-fg-2" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-fg">
+            <p className="text-ui font-semibold text-fg">
               {hasSelection
                 ? `${selectedCount} vehicle${selectedCount === 1 ? '' : 's'} selected`
                 : 'Select vehicles to take action'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-ui text-muted-foreground">
               {hasSelection
                 ? 'Deleting vehicles also removes linked service records, reminders, and receipts.'
                 : `You can select all ${visibleCount} visible vehicles from the current filtered view.`}
@@ -71,7 +71,7 @@ export function BulkVehicleActions({
                 triggerLabel={`Delete selected (${selectedCount})`}
                 triggerVariant="outline"
               >
-                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-border/70 bg-page p-3 text-sm">
+                <ul className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-border/70 bg-page p-3 text-ui">
                   {selectedVehicles.map((vehicle) => (
                     <li
                       className="flex items-center justify-between gap-3 text-fg-2"

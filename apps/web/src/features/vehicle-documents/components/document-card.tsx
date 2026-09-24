@@ -62,7 +62,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   const renewButton =
     onRenew && isRenewable(document) ? (
       <Button
-        className="h-8 rounded-full px-3 text-xs font-bold"
+        className="h-8 rounded-full px-3 text-caption font-bold"
         onClick={() => onRenew(document)}
         size="sm"
         variant="outline"
@@ -77,7 +77,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   const showLink = (
     <Link
       aria-label={`Show ${documentKindTitles[document.kind]} full screen`}
-      className="inline-flex h-8 items-center gap-1 rounded-full border border-line px-3 text-xs font-bold text-fg-2 hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex h-8 items-center gap-1 rounded-full border border-line px-3 text-caption font-bold text-fg-2 hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       params={{ vehicleId, kind: document.kind, documentId: document.id }}
       to="/vehicles/$vehicleId/documents/$kind/$documentId"
     >
@@ -123,7 +123,9 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     {document.provider ?? <NotRecorded />}
                   </h4>
                   {document.number && (
-                    <p className="text-xs font-bold text-fg-3 tabular-nums">#{document.number}</p>
+                    <p className="font-mono text-caption font-medium text-fg-2">
+                      #{document.number}
+                    </p>
                   )}
                 </div>
                 <Badge
@@ -146,7 +148,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     <Calendar className="h-3 w-3" />
                     Valid from
                   </div>
-                  <p className="text-sm font-bold text-fg-2">
+                  <p className="text-ui font-bold text-fg-2">
                     {document.startDate ? format.date(document.startDate) : <NotRecorded />}
                   </p>
                 </div>
@@ -155,7 +157,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     <Calendar className="h-3 w-3" />
                     Valid till
                   </div>
-                  <p className="text-sm font-bold text-fg-2">
+                  <p className="text-ui font-bold text-fg-2">
                     {document.endDate ? format.date(document.endDate) : 'No date limit'}
                   </p>
                 </div>
@@ -167,7 +169,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 {typeof document.details?.premiumAmount === 'number' && (
                   <div className="space-y-0.5">
                     <p className="text-caption font-black text-fg-3">Premium paid</p>
-                    <p className="text-lg font-black tracking-tight text-fg">
+                    <p className="text-lead font-black tracking-tight text-fg">
                       {format.money(document.details.premiumAmount)}
                     </p>
                   </div>
@@ -177,7 +179,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     <p className="text-caption font-black text-fg-3">
                       Insured declared value (IDV)
                     </p>
-                    <p className="text-sm font-bold text-fg-2">
+                    <p className="text-ui font-bold text-fg-2">
                       {format.money(document.details.insuredValue)}
                     </p>
                   </div>
@@ -237,7 +239,9 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     {document.provider ?? <NotRecorded />}
                   </h4>
                   {document.number && (
-                    <p className="text-xs font-bold text-fg-3 tabular-nums">#{document.number}</p>
+                    <p className="font-mono text-caption font-medium text-fg-2">
+                      #{document.number}
+                    </p>
                   )}
                 </div>
                 <Badge
@@ -266,7 +270,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     <Calendar className="h-3 w-3" />
                     Issued on
                   </div>
-                  <p className="text-sm font-bold text-fg-2">
+                  <p className="text-ui font-bold text-fg-2">
                     {document.startDate ? format.date(document.startDate) : <NotRecorded />}
                   </p>
                 </div>
@@ -275,7 +279,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                     <FileBadge className="h-3 w-3" />
                     Valid till
                   </div>
-                  <p className="text-sm font-bold text-fg-2">
+                  <p className="text-ui font-bold text-fg-2">
                     {document.endDate ? format.date(document.endDate) : 'No date limit'}
                   </p>
                 </div>
@@ -287,7 +291,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 {typeof amount === 'number' && (
                   <div className="space-y-0.5">
                     <p className="text-caption font-black text-fg-3">Amount paid</p>
-                    <p className="text-lg font-black tracking-tight text-fg">
+                    <p className="text-lead font-black tracking-tight text-fg">
                       {format.money(amount)}
                     </p>
                   </div>
@@ -346,7 +350,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   {document.provider ?? <NotRecorded />}
                 </h4>
                 {document.number && (
-                  <p className="text-xs font-bold text-fg-3 tabular-nums">#{document.number}</p>
+                  <p className="font-mono text-caption font-medium text-fg-2">#{document.number}</p>
                 )}
               </div>
               <Badge
@@ -367,7 +371,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <Calendar className="h-3 w-3" />
                   Coverage start
                 </div>
-                <p className="text-sm font-bold text-fg-2">
+                <p className="text-ui font-bold text-fg-2">
                   {document.startDate ? format.date(document.startDate) : <NotRecorded />}
                 </p>
               </div>
@@ -376,7 +380,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <Shield className="h-3 w-3" />
                   Coverage end
                 </div>
-                <p className="text-sm font-bold text-fg-2">
+                <p className="text-ui font-bold text-fg-2">
                   {document.endDate ? format.date(document.endDate) : 'No date limit'}
                 </p>
               </div>
@@ -390,7 +394,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <p className="text-caption font-black text-fg-3">Odometer limit</p>
                   <div className="flex items-center gap-2">
                     <Gauge className="h-4 w-4 text-fg-3" />
-                    <p className="text-lg font-black tracking-tight text-fg">
+                    <p className="text-lead font-black tracking-tight text-fg">
                       {format.number(document.details.endOdometer)}
                     </p>
                     <span className="text-caption font-bold text-fg-3">km</span>

@@ -362,69 +362,69 @@ export function VehicleDetailPage({
               ref={tabListRef}
             >
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="overview"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="maintenance"
               >
                 Service log
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="specs"
               >
                 Tech specs
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="reminders"
               >
                 Reminders
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="fuel"
               >
                 Fuel
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="tyres"
               >
                 Tyres
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="accessories"
               >
                 Accessories
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="protection"
               >
                 Protection
               </TabsTrigger>
               {isOwner ? (
                 <TabsTrigger
-                  className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                  className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                   value="loans"
                 >
                   Loans
                 </TabsTrigger>
               ) : null}
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="members"
               >
                 Members
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
+                className="rounded-lg px-6 py-2 text-ui font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="activity"
               >
                 Activity
@@ -499,7 +499,7 @@ export function VehicleDetailPage({
                 />
                 <Card className="h-fit border-line/60 bg-surface/70">
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold">Vehicle health</CardTitle>
+                    <CardTitle className="text-lead font-bold">Vehicle health</CardTitle>
                     <CardDescription>Maintain a perfect digital service record.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
@@ -539,7 +539,7 @@ export function VehicleDetailPage({
                 />
                 <Card className="h-fit border-line/60 bg-surface/70">
                   <CardHeader>
-                    <CardTitle className="text-lg font-bold">Preventative care</CardTitle>
+                    <CardTitle className="text-lead font-bold">Preventative care</CardTitle>
                     <CardDescription>Stay ahead of service tasks.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
@@ -560,7 +560,7 @@ export function VehicleDetailPage({
                   <FuelEconomyCard vehicleId={vehicleId} />
                   <Card className="h-fit border-line/60 bg-surface/70">
                     <CardHeader>
-                      <CardTitle className="text-lg font-bold">
+                      <CardTitle className="text-lead font-bold">
                         Getting an accurate figure
                       </CardTitle>
                       <CardDescription>Economy is measured between fill-ups.</CardDescription>
@@ -610,7 +610,7 @@ export function VehicleDetailPage({
             <TabsContent value="activity" className="animate-in fade-in duration-500">
               <Card className="border-line/60 bg-surface">
                 <CardHeader className="border-b border-line-subtle pb-4">
-                  <CardTitle className="text-lg font-bold">Activity log</CardTitle>
+                  <CardTitle className="text-lead font-bold">Activity log</CardTitle>
                   <CardDescription>
                     Every change to this vehicle and its records, newest first. Click an entry to
                     see what changed.

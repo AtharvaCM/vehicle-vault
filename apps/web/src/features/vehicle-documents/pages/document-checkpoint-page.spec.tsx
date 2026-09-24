@@ -107,7 +107,8 @@ describe('DocumentCheckpointPage', () => {
     expect(document.querySelector('[data-slot="number-plate"]')).toHaveAttribute('data-size', 'xl');
     expect(screen.getByText('Maruti Suzuki Swift VXi · Petrol')).toBeInTheDocument();
     const number = screen.getByText('MH12-PUC-440192');
-    expect(number).toHaveClass('text-4xl');
+    // Read out to an officer, so set as an identifier: large, in Plex Mono.
+    expect(number).toHaveClass('text-title', 'font-mono');
     expect(screen.getByText('PUC Centre Baner')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('VALID');
   });

@@ -143,7 +143,7 @@ export function AttachmentsSection({ recordId, recordToFill }: AttachmentsSectio
           <StatCard
             accent={
               latestAttachment ? (
-                <span className="text-xs font-medium text-fg-3">
+                <span className="text-caption font-medium text-fg-3">
                   Latest {format.date(latestAttachment.uploadedAt)}
                 </span>
               ) : null

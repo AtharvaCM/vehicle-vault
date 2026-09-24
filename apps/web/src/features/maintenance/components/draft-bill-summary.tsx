@@ -48,12 +48,12 @@ export function DraftBillSummary({
     >
       <BillThumbnail attachment={bill} />
       <div className="min-w-0 space-y-1">
-        <p className="truncate text-sm font-medium text-fg">
+        <p className="truncate text-ui font-medium text-fg">
           {bill.originalFileName}
           {attachments.length > 1 ? ` and ${attachments.length - 1} more` : ''}
         </p>
         <p
-          className={note.tone === 'warning' ? 'text-sm text-soon' : 'text-sm text-fg-2'}
+          className={note.tone === 'warning' ? 'text-ui text-soon' : 'text-ui text-fg-2'}
           role={note.tone === 'warning' ? 'status' : undefined}
         >
           {note.text}

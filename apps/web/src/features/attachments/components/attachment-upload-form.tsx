@@ -42,7 +42,7 @@ export function AttachmentUploadForm({
               </div>
               <div>
                 <p className="font-medium text-fg">Upload receipts or service documents</p>
-                <p className="text-sm text-fg-3">
+                <p className="text-ui text-fg-3">
                   Add invoices, job cards, or service photos directly to this service record.
                 </p>
               </div>
@@ -71,14 +71,14 @@ export function AttachmentUploadForm({
           type="file"
           capture="environment"
         />
-        <div className="mt-3 flex items-center gap-2 text-xs text-fg-3">
+        <div className="mt-3 flex items-center gap-2 text-caption text-fg-3">
           <ShieldCheck className="h-3.5 w-3.5" />
           <span>Unsupported file types and files over 5 MB each can&apos;t be uploaded.</span>
         </div>
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-sm text-late">
+        <p className="rounded-xl border border-late/30 bg-late-tint px-4 py-3 text-ui text-late">
           {error}
         </p>
       ) : null}

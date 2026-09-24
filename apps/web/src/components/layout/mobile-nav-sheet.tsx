@@ -48,7 +48,7 @@ export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-caption font-bold text-primary-foreground">
             VV
           </div>
-          <SheetTitle className="text-lg font-bold tracking-tight">{APP_NAME}</SheetTitle>
+          <SheetTitle className="text-lead font-bold tracking-tight">{APP_NAME}</SheetTitle>
         </div>
         <SheetDescription className="mt-1 text-small">
           Manage your garage, records, and reminders.
@@ -67,7 +67,7 @@ export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
                   activeProps={{
                     className: 'bg-primary text-primary-foreground',
                   }}
-                  className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium transition-colors hover:bg-page"
+                  className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-ui font-medium transition-colors hover:bg-page"
                   to={item.to}
                 >
                   <Icon className="h-4 w-4" />
@@ -85,10 +85,10 @@ export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
           <div className="rounded-xl border border-line/50 bg-page/50 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-fg-2">
-                <span className="text-xs font-bold">{auth.user?.name?.charAt(0)}</span>
+                <span className="text-caption font-bold">{auth.user?.name?.charAt(0)}</span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-fg">{auth.user?.name}</p>
+                <p className="truncate text-ui font-semibold text-fg">{auth.user?.name}</p>
               </div>
             </div>
             <div className="mt-4 grid gap-2">
