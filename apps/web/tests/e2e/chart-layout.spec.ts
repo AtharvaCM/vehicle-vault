@@ -33,9 +33,11 @@ async function overflow(page: Page) {
 }
 
 /**
- * The spend charts on a phone: readable, and inside their cards, including
- * straight after the window narrows. Recharts measures its container a moment
- * after a resize, so the check waits for that before looking.
+ * The Spend charts on the Costs page, on a phone: readable, and inside their
+ * cards, including straight after the window narrows. Recharts measures its
+ * container a moment after a resize, so the check waits for that before
+ * looking. Moved here from Home with the charts themselves (#281): Costs
+ * mounts them directly, with no phone `<details>` collapse.
  */
 test('spend charts stay inside their cards at 390px, also after a resize', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -75,7 +77,7 @@ test('spend charts stay inside their cards at 390px, also after a resize', async
   });
 
   await page.setViewportSize(DESKTOP);
-  await page.goto('/home');
+  await page.goto('/costs');
   const trend = page.getByRole('figure', { name: 'Spend each month, by category' });
   await expect(trend).toBeVisible();
   await expect(page.getByRole('group', { name: /Spend by category/ })).toBeVisible();
@@ -89,9 +91,8 @@ test('spend charts stay inside their cards at 390px, also after a resize', async
     );
   }
 
-  // A fresh load on a phone: the charts wait behind "Show spending".
-  await page.goto('/home');
-  await page.getByText('Show spending').click();
+  // A fresh load on a phone: Costs mounts the charts directly, no collapse.
+  await page.goto('/costs');
   await expect(trend).toBeVisible();
   await page.waitForTimeout(1_000);
   const onPhone = await overflow(page);

@@ -99,7 +99,7 @@ describe('camera capture on file inputs', () => {
         join('features', 'claims', 'components', 'claim-attachments-section.tsx'),
         // Loan documents.
         join('features', 'loans', 'components', 'loan-attachments-section.tsx'),
-        join('features', 'loans', 'pages', 'loans-page.tsx'),
+        join('features', 'loans', 'components', 'loans-section.tsx'),
       ]),
     );
   });

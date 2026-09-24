@@ -105,6 +105,9 @@ One vocabulary for state: late, soon (today or this week), ok, ended (lapsed but
 **Figures** (`components/shared/figure.tsx`, `money.tsx`, `section-header.tsx`):
 A value with a label is a `Figure`: a sentence-case label in the caption colour over the tabular value, and an optional hint. The uppercase, widely tracked grey micro-label is gone, and lint fails one on Home and the vehicle Overview (`NO_MICRO_LABEL_PATHS`). Amounts are `<Money>`, and section titles are `SectionHeader`.
 
+**Costs page** (`features/analytics/pages/costs-page.tsx`, `routes/costs-route.tsx`, #281):
+`/costs` holds everything about what the garage costs: the Spend charts (`CostSplitDonut`, `CostTrendChart`, moved from Home), `VehicleSpendList` (one row per vehicle, lifetime spend and cost per km via `tcoQueryOptions`, each vehicle's own query so one failing row never blocks the rest, `costPerKmHint` shared with `TcoCard` for the #192 minimum-distance rule) and `LoansSection` (the former Loans page's body — totals, cards, dialogs, scan — unchanged, just without its own page chrome). Home keeps one line, `CostsSummaryLine`, linking here.
+
 **Charts** (`components/shared/chart/`):
 Every chart goes through `Chart`, which takes `form`: `bar`, `stacked`, `step` or `line`. It owns the token palette (`--chart-1…5`, one fixed slot per series: `SPEND_SERIES` for spend), the single value axis (`format.compactMoney` ticks), month labels from `format.date`, the tooltip, the legend, and an `sr-only` table of the numbers. `ChartRange` is the range picker, a ToggleGroup whose options share the width on a phone. `ShareBar` shows a whole split into parts. The loan schedule is two charts, what each EMI pays and the balance left, because it has two scales. Recharts measures its container after a resize, so a geometry check waits for it (see the chart overflow e2e spec).
 
