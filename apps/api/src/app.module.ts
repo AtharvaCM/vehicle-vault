@@ -9,6 +9,7 @@ import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ExportsModule } from './modules/exports/exports.module';
 import { HealthModule } from './modules/health/health.module';
+import { HistoryModule } from './modules/history/history.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { MaintenancePartsModule } from './modules/maintenance-parts/maintenance-parts.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
@@ -52,6 +53,7 @@ import { VehicleSharingModule } from './modules/vehicle-sharing/vehicle-sharing.
     MaintenancePartsModule,
     RemindersModule,
     FuelLogsModule,
+    HistoryModule,
     NotificationsModule,
     MailModule,
     RateLimitModule,
