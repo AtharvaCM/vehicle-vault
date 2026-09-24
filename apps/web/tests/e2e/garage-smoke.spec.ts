@@ -42,6 +42,9 @@ async function selectDropdownOption(page: Page, fieldLabel: RegExp, optionLabel:
 }
 
 test('user can register, sign in, and manage the core garage flow', async ({ page }) => {
+  // The whole garage in one go takes 25–30 s in CI, right at the default
+  // 30 s timeout, so a slow runner failed it wherever it happened to be.
+  test.slow();
   const suffix = uniqueSuffix();
   const name = `E2E User ${suffix}`;
   const email = `e2e+${suffix}@vehiclevault.dev`;
