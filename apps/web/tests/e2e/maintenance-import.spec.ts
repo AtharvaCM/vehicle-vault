@@ -105,8 +105,8 @@ test('user can import grouped service CSV rows into a structured record', async 
   const csvPath = path.join(__dirname, 'fixtures', 'sample-maintenance-import.csv');
   const { nickname, vehicleUrl } = await registerAndCreateVehicle(page);
 
-  await page.goto(`${vehicleUrl}/maintenance`);
-  await expect(page.getByRole('heading', { name: `${nickname} Maintenance` })).toBeVisible();
+  await page.goto(`${vehicleUrl}?tab=history`);
+  await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 
   await page
     .getByRole('button', { name: /import csv/i })

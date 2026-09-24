@@ -346,7 +346,8 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
                 <Link
                   className="cursor-pointer"
                   params={{ vehicleId: vehicle.id }}
-                  to="/vehicles/$vehicleId/reminders"
+                  search={{ tab: 'reminders' }}
+                  to="/vehicles/$vehicleId"
                 >
                   All reminders
                 </Link>

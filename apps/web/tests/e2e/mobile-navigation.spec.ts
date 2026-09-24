@@ -371,8 +371,6 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['/costs', lender],
     ['/settings', 'Download JSON backup'],
     ['/settings/activity', 'Reminder created'],
-    [`/vehicles/${vehicleId}/maintenance`, workshop],
-    [`/vehicles/${vehicleId}/reminders`, reminderTitle],
     [`/reminders/${reminder.id}`, 'Mark Complete'],
   ];
   for (const [path, loaded] of pages) {
@@ -381,6 +379,10 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await expectNoSidewaysScroll(page, path);
     await expectNoSqueezedIcons(page, path);
   }
+
+  // The old per-vehicle list addresses still forward to their tab (#278).
+  await page.goto(`/vehicles/${vehicleId}/maintenance`);
+  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}\\?tab=history$`));
 
   // On a phone a fill's three figures and menu share one narrow strip.
   await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
@@ -399,7 +401,6 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   const desktopPages: Array<[string, string, Array<[string, string[]]>]> = [
     ['The overview tab', `${vehicleUrl}?tab=overview`, [recordCard, reminderCard]],
     ['The history tab', `${vehicleUrl}?tab=history`, [recordCard]],
-    [`/vehicles/${vehicleId}/maintenance`, `/vehicles/${vehicleId}/maintenance`, [recordCard]],
   ];
   await page.setViewportSize(DESKTOP);
   for (const [where, path, cards] of desktopPages) {

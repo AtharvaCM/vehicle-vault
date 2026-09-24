@@ -78,7 +78,7 @@ describe('ReminderDetailPage roles', () => {
       screen.getByRole('heading', { level: 1, name: 'Insurance renewal' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Bajaj Pulsar NS 200 • MH12AB1234')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to vehicle reminders' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Reminders' })).toBeInTheDocument();
 
     expect(screen.queryByRole('link', { name: 'Edit reminder' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Mark complete' })).not.toBeInTheDocument();

@@ -143,7 +143,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByLabel(/notes/i).fill('Oil change and general inspection');
   await page.getByRole('button', { name: /save record/i }).click();
 
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance$/);
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+\?tab=history$/);
   await page.getByRole('link', { name: new RegExp(workshopName) }).click();
 
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);

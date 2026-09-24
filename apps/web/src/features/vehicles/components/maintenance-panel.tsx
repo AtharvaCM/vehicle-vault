@@ -39,7 +39,8 @@ export function MaintenancePanel({
               <Link
                 className={buttonVariants({ size: 'xs', variant: 'ghost' })}
                 params={{ vehicleId }}
-                to="/vehicles/$vehicleId/maintenance"
+                search={{ tab: 'history' }}
+                to="/vehicles/$vehicleId"
               >
                 View all
               </Link>

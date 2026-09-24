@@ -108,9 +108,10 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
             <Link
               className={buttonVariants({ variant: 'secondary' })}
               params={{ vehicleId }}
-              to="/vehicles/$vehicleId/reminders"
+              search={{ tab: 'reminders' }}
+              to="/vehicles/$vehicleId"
             >
-              Back to vehicle reminders
+              Back to Reminders
             </Link>
           }
           description="You can read this vehicle's reminders, but not create new ones for it."

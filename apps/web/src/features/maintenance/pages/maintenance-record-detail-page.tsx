@@ -45,8 +45,9 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         description: 'The service record and its linked files were removed.',
       });
       await navigate({
-        to: '/vehicles/$vehicleId/maintenance',
+        to: '/vehicles/$vehicleId',
         params: { vehicleId },
+        search: { tab: 'history' },
       });
     } catch (error) {
       appToast.error({
@@ -98,9 +99,10 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
               <Link
                 className={buttonVariants({ variant: 'secondary' })}
                 params={{ vehicleId: record.vehicleId }}
-                to="/vehicles/$vehicleId/maintenance"
+                search={{ tab: 'history' }}
+                to="/vehicles/$vehicleId"
               >
-                Back to maintenance
+                Back to History
               </Link>
               {canEdit ? (
                 <>

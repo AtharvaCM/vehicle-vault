@@ -62,10 +62,11 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
         description: 'This reminder was removed.',
       });
       await navigate({
-        to: '/vehicles/$vehicleId/reminders',
+        to: '/vehicles/$vehicleId',
         params: {
           vehicleId,
         },
+        search: { tab: 'reminders' },
       });
     } catch (error) {
       appToast.error({
@@ -118,9 +119,10 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
               <Link
                 className={buttonVariants({ variant: 'secondary' })}
                 params={{ vehicleId: reminder.vehicleId }}
-                to="/vehicles/$vehicleId/reminders"
+                search={{ tab: 'reminders' }}
+                to="/vehicles/$vehicleId"
               >
-                Back to vehicle reminders
+                Back to Reminders
               </Link>
               {canEdit ? (
                 <>

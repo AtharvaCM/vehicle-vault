@@ -1,49 +1,21 @@
-import { createRoute, useNavigate } from '@tanstack/react-router';
+import { createRoute, redirect } from '@tanstack/react-router';
 
 import { appRoute } from './app-route';
-import { createLazyPage } from './lazy-page';
-import {
-  normalizeMaintenanceListSearch,
-  type MaintenanceListSearch,
-} from '@/features/maintenance/types/maintenance-list-search';
 
-const VehicleMaintenanceListPage = createLazyPage(
-  () =>
-    import('@/features/maintenance/pages/vehicle-maintenance-list-page').then((module) => ({
-      default: module.VehicleMaintenanceListPage,
-    })),
-  {
-    title: 'Loading service history',
-    description: 'Loading service history for this vehicle.',
-  },
-);
-
-function VehicleMaintenanceRouteComponent() {
-  const { vehicleId } = vehicleMaintenanceRoute.useParams();
-  const search = vehicleMaintenanceRoute.useSearch();
-  const navigate = useNavigate();
-
-  function updateSearch(next: Partial<MaintenanceListSearch>) {
-    void navigate({
-      to: '/vehicles/$vehicleId/maintenance',
-      params: { vehicleId },
-      search: (previous) => normalizeMaintenanceListSearch({ ...previous, ...next }),
-      replace: true,
-    });
-  }
-
-  return (
-    <VehicleMaintenanceListPage
-      onSearchStateChange={updateSearch}
-      searchState={search}
-      vehicleId={vehicleId}
-    />
-  );
-}
-
+/**
+ * A vehicle's service history used to have a page of its own as well as a tab
+ * (#278). The History tab is the one place now; this address, kept for old
+ * links and bookmarks, forwards to it and replaces itself in the history.
+ */
 export const vehicleMaintenanceRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'vehicles/$vehicleId/maintenance',
-  validateSearch: normalizeMaintenanceListSearch,
-  component: VehicleMaintenanceRouteComponent,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/vehicles/$vehicleId',
+      params,
+      search: { tab: 'history' },
+      replace: true,
+    });
+  },
 });

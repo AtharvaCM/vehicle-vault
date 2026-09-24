@@ -11,12 +11,15 @@ vi.mock('@tanstack/react-router', () => ({
     children,
     to,
     params,
+    search,
     ...props
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
     to?: string;
     params?: Record<string, string>;
+    search?: Record<string, string>;
   }) => (
     <a
+      data-search={search ? JSON.stringify(search) : undefined}
       href={Object.entries(params ?? {}).reduce(
         (href, [key, value]) => href?.replace(`$${key}`, value),
         to,
@@ -72,16 +75,38 @@ describe('Breadcrumbs', () => {
     expect(screen.getByText('Family SUV')).toHaveAttribute('aria-current', 'page');
   });
 
-  it('files a service record under its vehicle: Garage / Family SUV / Service record', () => {
+  it("files a service record under its vehicle's History tab", () => {
     match.current = { fullPath: '/maintenance-records/$recordId', params: { recordId: 'r1' } };
     render(<Breadcrumbs />);
 
-    expect(trail()).toEqual(['Garage', 'Family SUV', 'Service record']);
+    expect(trail()).toEqual(['Garage', 'Family SUV', 'History', 'Service record']);
     const nav = screen.getByRole('navigation', { name: 'Breadcrumb' });
     expect(within(nav).getByRole('link', { name: 'Family SUV' })).toHaveAttribute(
       'href',
       '/vehicles/v1',
     );
+    const history = within(nav).getByRole('link', { name: 'History' });
+    expect(history).toHaveAttribute('href', '/vehicles/v1');
+    expect(history).toHaveAttribute('data-search', JSON.stringify({ tab: 'history' }));
+  });
+
+  it('files logging a service and adding a reminder under their tabs', () => {
+    match.current = {
+      fullPath: '/vehicles/$vehicleId/maintenance/new',
+      params: { vehicleId: 'v1' },
+    };
+    const { unmount } = render(<Breadcrumbs />);
+    expect(trail()).toEqual(['Garage', 'Family SUV', 'History', 'Log service']);
+    unmount();
+
+    match.current = { fullPath: '/vehicles/$vehicleId/reminders/new', params: { vehicleId: 'v1' } };
+    render(<Breadcrumbs />);
+    expect(trail()).toEqual(['Garage', 'Family SUV', 'Reminders', 'Add reminder']);
+    // On a phone the way back is the tab.
+    const back = screen
+      .getAllByRole('link', { name: 'Reminders' })
+      .find((link) => !link.closest('nav'));
+    expect(back).toHaveAttribute('data-search', JSON.stringify({ tab: 'reminders' }));
   });
 
   it('shortens to the way back on a phone', () => {
@@ -103,7 +128,9 @@ describe('Breadcrumbs', () => {
     match.current = { fullPath: '/reminders/$reminderId', params: { reminderId: 'm1' } };
     render(<Breadcrumbs />);
 
-    expect(trail()).toEqual(['Garage', 'Vehicle', 'Reminder']);
+    expect(trail()).toEqual(['Garage', 'Vehicle', 'Reminders', 'Reminder']);
+    // Not a link until the reminder says whose it is.
+    expect(screen.queryByRole('link', { name: 'Reminders' })).not.toBeInTheDocument();
   });
 
   it('puts the settings sub-pages under Settings', () => {
