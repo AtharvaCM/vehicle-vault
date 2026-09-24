@@ -1,3 +1,11 @@
+# [1.75.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.74.0...v1.75.0) (2026-09-24)
+
+
+### Features
+
+* **web:** name vehicles by their plate on the vehicle page, lists, home and show papers ([e3aaac2](https://github.com/AtharvaCM/vehicle-vault/commit/e3aaac2a5902cd06e6e68fddb7ab96581339f8dd)), closes [#245](https://github.com/AtharvaCM/vehicle-vault/issues/245)
+* **web:** number plate and vehicle identity components ([8a1d484](https://github.com/AtharvaCM/vehicle-vault/commit/8a1d484a846962cf6b280cd00c0765fdc2e5f689))
+
 # [1.74.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.73.0...v1.74.0) (2026-09-24)
 
 
