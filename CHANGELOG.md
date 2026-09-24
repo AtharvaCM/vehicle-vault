@@ -1,3 +1,10 @@
+## [1.79.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.2...v1.79.3) (2026-09-24)
+
+
+### Bug Fixes
+
+* **web:** no "Session expired" toast after a deliberate sign-out ([#272](https://github.com/AtharvaCM/vehicle-vault/issues/272)) ([7d7d605](https://github.com/AtharvaCM/vehicle-vault/commit/7d7d60522e143a6bf8c8fd60697bedc360021bec))
+
 ## [1.79.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.1...v1.79.2) (2026-09-24)
 
 
