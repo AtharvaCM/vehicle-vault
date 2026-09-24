@@ -15,6 +15,9 @@ export const endpoints = {
     snoozeDocument: (kind: string, id: string) =>
       `/dashboard/attention/documents/${kind}/${id}/snooze`,
   },
+  upcoming: {
+    timeline: '/upcoming',
+  },
   exports: {
     account: '/exports/account',
   },
@@ -107,6 +110,7 @@ export const endpoints = {
     update: (reminderId: string) => `/reminders/${reminderId}`,
     delete: (reminderId: string) => `/reminders/${reminderId}`,
     complete: (reminderId: string) => `/reminders/${reminderId}/complete`,
+    snooze: (reminderId: string) => `/reminders/${reminderId}/snooze`,
     scheduleSuggestions: (vehicleId: string) =>
       `/vehicles/${vehicleId}/service-schedule/suggestions`,
     applySchedule: (vehicleId: string) => `/vehicles/${vehicleId}/service-schedule/apply`,

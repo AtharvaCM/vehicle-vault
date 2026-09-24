@@ -187,7 +187,7 @@ export function AttentionQueue({
               ) : null}
               {summary.attentionTotal > ATTENTION_CAP ? (
                 <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/upcoming">
-                  See all reminders
+                  See everything upcoming
                 </Link>
               ) : null}
             </div>

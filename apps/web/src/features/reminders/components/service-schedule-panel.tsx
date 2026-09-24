@@ -39,6 +39,7 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.reminders.byVehicle(vehicleId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.reminders.list() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.reminders.scheduleSuggestions(vehicleId),
         }),

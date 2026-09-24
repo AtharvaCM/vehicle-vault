@@ -18,7 +18,7 @@ export function useCreateFuelLog(vehicleId: string) {
         queryKey: queryKeys.vehicles.detail(vehicleId),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.summary(),
+        queryKey: queryKeys.dashboard.all(),
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.audit.all(),

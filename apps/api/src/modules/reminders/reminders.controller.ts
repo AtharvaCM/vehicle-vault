@@ -90,6 +90,11 @@ export class RemindersController {
     return successResponse(await this.remindersService.deleteReminder(user.id, params.reminderId));
   }
 
+  @Patch('reminders/:reminderId/snooze')
+  async snoozeReminder(@Param() params: ReminderIdParamDto, @CurrentUser() user: AuthUser) {
+    return this.remindersService.snoozeReminder(user.id, params.reminderId);
+  }
+
   @Patch('reminders/:reminderId/complete')
   async completeReminder(@Param() params: ReminderIdParamDto, @CurrentUser() user: AuthUser) {
     return this.remindersService.completeReminder(user.id, params.reminderId);

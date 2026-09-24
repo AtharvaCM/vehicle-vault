@@ -3,39 +3,40 @@ import { createRoute, useNavigate } from '@tanstack/react-router';
 import { appRoute } from './app-route';
 import { createLazyPage } from './lazy-page';
 import {
-  normalizeReminderListSearch,
-  type ReminderListSearch,
-} from '@/features/reminders/types/reminder-list-search';
+  normalizeUpcomingSearch,
+  type UpcomingSearch,
+} from '@/features/upcoming/types/upcoming-search';
 
-const RemindersPage = createLazyPage(
+const UpcomingPage = createLazyPage(
   () =>
-    import('@/features/reminders/pages/reminders-page').then((module) => ({
-      default: module.RemindersPage,
+    import('@/features/upcoming/pages/upcoming-page').then((module) => ({
+      default: module.UpcomingPage,
     })),
   {
     title: "Loading what's due",
-    description: 'Loading your reminder list.',
+    description: 'Loading everything coming up across your garage.',
   },
 );
 
 function UpcomingRouteComponent() {
-  const search = upcomingRoute.useSearch();
+  // Non-strict by default: re-normalise so a stray param never reaches the query.
+  const search = normalizeUpcomingSearch(upcomingRoute.useSearch());
   const navigate = useNavigate();
 
-  function updateSearch(next: Partial<ReminderListSearch>) {
+  function updateSearch(next: Partial<UpcomingSearch>) {
     void navigate({
       to: '/upcoming',
-      search: (previous) => normalizeReminderListSearch({ ...previous, ...next }),
+      search: (previous) => normalizeUpcomingSearch({ ...previous, ...next }),
       replace: true,
     });
   }
 
-  return <RemindersPage onSearchStateChange={updateSearch} searchState={search} />;
+  return <UpcomingPage onSearchStateChange={updateSearch} searchState={search} />;
 }
 
 export const upcomingRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'upcoming',
-  validateSearch: normalizeReminderListSearch,
+  validateSearch: normalizeUpcomingSearch,
   component: UpcomingRouteComponent,
 });

@@ -24,7 +24,7 @@ import { deleteTyre, updateTyre } from '../api/manage-tyre';
  */
 function invalidateTyres(queryClient: QueryClient, vehicleId: string) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.tyres.all(vehicleId) });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
   invalidateAudit(queryClient);
 }
 

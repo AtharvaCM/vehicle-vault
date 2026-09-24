@@ -14,7 +14,7 @@ export function useDeleteFuelLog(vehicleId: string) {
         queryKey: queryKeys.vehicles.fuelLogs(vehicleId),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.summary(),
+        queryKey: queryKeys.dashboard.all(),
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.audit.all(),

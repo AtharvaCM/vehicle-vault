@@ -2,6 +2,9 @@ export const queryKeys = {
   dashboard: {
     all: () => ['dashboard'] as const,
     summary: () => [...queryKeys.dashboard.all(), 'summary'] as const,
+    // Under the dashboard: the same classification, so whatever refreshes Home refreshes it.
+    upcoming: (filters: { vehicleId?: string; kind?: string }) =>
+      [...queryKeys.dashboard.all(), 'upcoming', filters] as const,
   },
   vehicles: {
     all: () => ['vehicles'] as const,

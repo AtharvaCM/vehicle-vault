@@ -24,6 +24,10 @@ import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-
 import { computeReminderStatus, reminderStatusPriority } from './reminder-status';
 
 const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
+/** How far "Snooze" moves a reminder: a week on its date, 500 km on its odometer. */
+export const REMINDER_SNOOZE_DAYS = 7;
+export const REMINDER_SNOOZE_KM = 500;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 type ReminderWithVehicle = Prisma.ReminderGetPayload<{
   include: {
@@ -235,6 +239,54 @@ export class RemindersService {
     });
     // Keeps the bell in step with the attention queue for this action — the
     // reminder just left the queue, so any due/overdue alert for it is moot.
+    await this.notificationsService.markReadForReminder(userId, reminderId);
+
+    return this.getReminderById(userId, reminderId);
+  }
+
+  /**
+   * "Not now": moves the reminder a week on (from today, or from its date if
+   * that is later) and, where it counts kilometres, 500 km on from the
+   * odometer or its target, whichever is further. It is an edit to the
+   * reminder, so it takes an editor, and it clears the bell for it as
+   * completing does.
+   */
+  async snoozeReminder(userId: string, reminderId: string) {
+    const before = await this.getStoredReminderById(userId, reminderId);
+    await this.access.assertEditor(userId, before.vehicleId);
+    if (before.completedAt) {
+      throw new BadRequestException('A completed reminder cannot be snoozed');
+    }
+
+    const now = new Date();
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const dueDate = before.dueDate
+      ? new Date(Math.max(before.dueDate.getTime(), today) + REMINDER_SNOOZE_DAYS * MS_PER_DAY)
+      : null;
+    const dueOdometer =
+      before.dueOdometer === null
+        ? null
+        : Math.max(before.dueOdometer, before.vehicle.odometer) + REMINDER_SNOOZE_KM;
+    const status = this.computeReminderStatus(
+      { dueDate: dueDate?.toISOString(), dueOdometer: dueOdometer ?? undefined },
+      before.vehicle.odometer,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.reminder.update({
+        where: { id: reminderId },
+        data: { dueDate, dueOdometer, status },
+      });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.reminder.updated,
+        resourceType: AuditResourceType.reminder,
+        resourceId: reminderId,
+        before: before as unknown as Record<string, unknown>,
+        after: updated as unknown as Record<string, unknown>,
+      });
+    });
     await this.notificationsService.markReadForReminder(userId, reminderId);
 
     return this.getReminderById(userId, reminderId);

@@ -8,7 +8,7 @@ import { addPrepayment, deletePrepayment, forecloseLoan } from '../api/loan-acti
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.vehicleLoans.all() });
   void queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all() });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
 }
 
 export function useAddPrepayment(loanId: string) {

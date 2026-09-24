@@ -730,14 +730,16 @@ describe('DashboardService', () => {
       vehicleDocumentsService.listForUser.mockResolvedValue([
         makeDocument({ id: 'doc-snoozed', endDate: new Date(daysFromNow(20)) }),
       ]);
-      prisma.documentDismissal.findMany.mockResolvedValue([{ documentId: 'doc-snoozed' }]);
+      prisma.documentDismissal.findMany.mockResolvedValue([
+        { documentId: 'doc-snoozed', dismissedUntil: new Date(daysFromNow(14)) },
+      ]);
 
       const result = await service.getSummary('user-1');
 
       expect(result.attention).toEqual([]);
       expect(prisma.documentDismissal.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', dismissedUntil: { gt: NOW } },
-        select: { documentId: true },
+        select: { documentId: true, dismissedUntil: true },
       });
     });
 
@@ -746,7 +748,9 @@ describe('DashboardService', () => {
       vehicleDocumentsService.listForUser.mockResolvedValue([
         makeDocument({ id: 'doc-snoozed', endDate: new Date(daysFromNow(-1)) }),
       ]);
-      prisma.documentDismissal.findMany.mockResolvedValue([{ documentId: 'doc-snoozed' }]);
+      prisma.documentDismissal.findMany.mockResolvedValue([
+        { documentId: 'doc-snoozed', dismissedUntil: new Date(daysFromNow(14)) },
+      ]);
 
       const result = await service.getSummary('user-1');
 
@@ -760,7 +764,9 @@ describe('DashboardService', () => {
         makeDocument({ id: 'doc-snoozed', kind: 'insurance', endDate: new Date(daysFromNow(20)) }),
         makeDocument({ id: 'doc-visible', kind: 'puc', endDate: new Date(daysFromNow(3)) }),
       ]);
-      prisma.documentDismissal.findMany.mockResolvedValue([{ documentId: 'doc-snoozed' }]);
+      prisma.documentDismissal.findMany.mockResolvedValue([
+        { documentId: 'doc-snoozed', dismissedUntil: new Date(daysFromNow(14)) },
+      ]);
 
       const result = await service.getSummary('user-1');
 

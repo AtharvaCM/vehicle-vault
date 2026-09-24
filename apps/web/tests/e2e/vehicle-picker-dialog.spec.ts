@@ -9,7 +9,7 @@ function uniqueSuffix() {
 }
 
 /**
- * Issue #202: "Log maintenance" and "Create reminder" used to dump the owner
+ * Issue #202: "Log maintenance" and "Create reminder" (now "Add reminder") used to dump the owner
  * on the vehicle list no matter what, so a single-vehicle account paid three
  * extra taps for the most frequent write. Both actions now open a vehicle
  * picker only when there is something to pick, and land straight on the form
@@ -42,7 +42,7 @@ test('one vehicle: Log service and Create reminder skip the picker and open the 
   await expect(page.getByRole('dialog')).not.toBeVisible();
 
   await page.goto('/upcoming');
-  await page.getByRole('link', { name: 'Create reminder', exact: true }).click();
+  await page.getByRole('link', { name: 'Add reminder', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}/reminders/new$`));
   await expect(page.getByRole('heading', { name: 'Add Reminder' })).toBeVisible();
   await expect(page.getByRole('dialog')).not.toBeVisible();

@@ -39,7 +39,7 @@ export function useBulkCreateMaintenanceRecords(vehicleId: string) {
         queryKey: queryKeys.maintenance.all(),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.summary(),
+        queryKey: queryKeys.dashboard.all(),
       });
     },
   });

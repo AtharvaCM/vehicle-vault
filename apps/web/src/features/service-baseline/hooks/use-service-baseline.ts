@@ -25,7 +25,7 @@ export function useUpsertServiceBaseline(vehicleId: string) {
       // A baseline changes which services are considered due, so anything
       // rendering "next due" from the same figures has to be refetched.
       void queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.detail(vehicleId) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
       invalidateAudit(queryClient);
     },
   });

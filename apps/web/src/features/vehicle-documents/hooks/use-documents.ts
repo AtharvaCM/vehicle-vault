@@ -32,7 +32,7 @@ export function useCreateVehicleDocument(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
     },
   });
 }
@@ -48,7 +48,7 @@ export function useUpdateVehicleDocument(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
     },
   });
 }
@@ -64,7 +64,7 @@ export function useDeleteVehicleDocument(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.vehicleDocuments.all(), 'vehicle', vehicleId],
       });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
     },
   });
 }
