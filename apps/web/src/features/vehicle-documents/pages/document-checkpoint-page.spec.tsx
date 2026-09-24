@@ -31,7 +31,15 @@ vi.mock('../hooks/use-documents', () => ({
   useVehicleDocuments: () => ({ isPending: false, isError: false, data: documents.current }),
 }));
 vi.mock('@/features/vehicles/hooks/use-vehicle', () => ({
-  useVehicle: () => ({ data: { registrationNumber: 'MH12AB1234' } }),
+  useVehicle: () => ({
+    data: {
+      registrationNumber: 'MH12AB1234',
+      make: 'Maruti Suzuki',
+      model: 'Swift',
+      variant: 'VXi',
+      fuelType: 'petrol',
+    },
+  }),
 }));
 vi.mock('../hooks/use-document-attachments', () => ({
   useDocumentAttachments: () => ({ isPending: false, data: files.current }),
@@ -95,7 +103,9 @@ describe('DocumentCheckpointPage', () => {
     show();
 
     expect(screen.getByRole('heading', { name: 'PUC certificate' })).toBeInTheDocument();
-    expect(screen.getByText('MH12AB1234')).toBeInTheDocument();
+    expect(screen.getByText('MH 12 AB 1234')).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="number-plate"]')).toHaveAttribute('data-size', 'xl');
+    expect(screen.getByText('Maruti Suzuki Swift VXi · Petrol')).toBeInTheDocument();
     const number = screen.getByText('MH12-PUC-440192');
     expect(number).toHaveClass('text-4xl');
     expect(screen.getByText('PUC Centre Baner')).toBeInTheDocument();

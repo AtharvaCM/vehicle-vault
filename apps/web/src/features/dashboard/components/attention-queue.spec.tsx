@@ -173,6 +173,13 @@ describe('AttentionQueue', () => {
     expect(screen.getByRole('button', { name: 'Mark Brake pads done' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Renew' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Snooze PUC certificate' })).toBeInTheDocument();
+
+    // More than one vehicle in the garage: each row names its vehicle with an S plate.
+    expect(screen.getByText('MH 12 ZZ 0001')).toBeInTheDocument();
+    expect(screen.getByText('Weekend bike')).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="number-plate"][data-size="sm"]'),
+    ).toBeInTheDocument();
   });
 
   it('hides Snooze once a document is actually overdue', () => {

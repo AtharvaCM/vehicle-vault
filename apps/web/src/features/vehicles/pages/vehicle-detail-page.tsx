@@ -30,7 +30,8 @@ import { MaintenanceRecordCard } from '@/features/maintenance/components/mainten
 import { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
 import { ReminderCard } from '@/features/reminders/components/reminder-card';
 import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-reminders';
-import { ReminderStatus } from '@vehicle-vault/shared';
+import { FuelType, ReminderStatus } from '@vehicle-vault/shared';
+import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
 import { FuelEconomyCard } from '@/features/fuel-logs/components/fuel-economy-card';
@@ -195,15 +196,13 @@ export function VehicleDetailPage({
                   ) : null}
                 </div>
 
-                <div className="space-y-1">
-                  <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-                    {title}
-                  </h1>
-                  <p className="text-lg font-medium text-slate-500">
-                    {describeVehicleModel(vehicle)} <span className="mx-2 text-slate-300">•</span>{' '}
-                    {vehicle.year}
-                  </p>
-                </div>
+                <VehicleIdentity
+                  details={`${describeVehicleModel(vehicle)} · ${format.odometer(vehicle.odometer)}`}
+                  electric={vehicle.fuelType === FuelType.Electric}
+                  layout="header"
+                  name={title}
+                  registration={vehicle.registrationNumber}
+                />
 
                 <div className="flex flex-wrap items-center gap-6 pt-2">
                   <HeroMetric
