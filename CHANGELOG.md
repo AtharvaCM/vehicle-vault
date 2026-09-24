@@ -1,3 +1,10 @@
+## [1.79.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.1...v1.79.2) (2026-09-24)
+
+
+### Bug Fixes
+
+* **web:** catalog picker flakes in track-this-vehicle and garage-smoke ([#273](https://github.com/AtharvaCM/vehicle-vault/issues/273)) ([23664b0](https://github.com/AtharvaCM/vehicle-vault/commit/23664b0632413f2b8c6b7579f58d23bf649489f1))
+
 ## [1.79.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.0...v1.79.1) (2026-09-24)
 
 
