@@ -1,3 +1,10 @@
+# [1.79.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.78.0...v1.79.0) (2026-09-24)
+
+
+### Features
+
+* **web:** dark mode with a System, Light and Dark switch ([ea61b95](https://github.com/AtharvaCM/vehicle-vault/commit/ea61b95dad63ad29578a269ba946784da7d35043)), closes [#root](https://github.com/AtharvaCM/vehicle-vault/issues/root)
+
 # [1.78.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.77.0...v1.78.0) (2026-09-24)
 
 
