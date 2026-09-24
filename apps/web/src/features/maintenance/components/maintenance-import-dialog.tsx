@@ -228,21 +228,11 @@ export function MaintenanceImportDialog({
                 <table className="w-full text-left text-xs">
                   <thead className="border-b border-border bg-page">
                     <tr>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
-                        Date
-                      </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
-                        Category
-                      </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
-                        Workshop
-                      </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
-                        Items
-                      </th>
-                      <th className="px-3 py-2 font-bold uppercase tracking-tight text-fg-3">
-                        Total
-                      </th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Date</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Category</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Workshop</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Items</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Total</th>
                     </tr>
                   </thead>
                   <tbody>

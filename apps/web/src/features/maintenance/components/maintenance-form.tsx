@@ -49,6 +49,13 @@ import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
 
 const categoryOptions = Object.values(MaintenanceCategory);
 
+// Sentence case, as the chip used to be upper-cased by CSS.
+const PRIORITY_LABEL = {
+  high: 'High priority',
+  medium: 'Medium priority',
+  low: 'Low priority',
+} as const;
+
 /**
  * A new record starts on today with the numbers empty, never 0: a service saved
  * at 0 km resets "last done at", the next-due reminder and the forecast. The
@@ -370,11 +377,11 @@ export function MaintenanceForm({
                   className="flex flex-col rounded-lg border border-brand/30 bg-surface p-3 shadow-xs"
                 >
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-brand">
+                    <span className="text-xs font-bold text-brand">
                       {format.enumLabel('maintenanceCategory', suggestion.category)}
                     </span>
                     <span
-                      className={`rounded px-1.5 py-0.5 text-caption font-bold uppercase ${
+                      className={`rounded px-1.5 py-0.5 text-caption font-bold ${
                         suggestion.priority === 'high'
                           ? 'bg-late-tint text-late'
                           : suggestion.priority === 'medium'
@@ -382,7 +389,7 @@ export function MaintenanceForm({
                             : 'bg-brand-tint text-brand'
                       }`}
                     >
-                      {suggestion.priority} priority
+                      {PRIORITY_LABEL[suggestion.priority]}
                     </span>
                   </div>
                   <p className="mb-3 text-xs leading-relaxed text-fg-2">{suggestion.reason}</p>
