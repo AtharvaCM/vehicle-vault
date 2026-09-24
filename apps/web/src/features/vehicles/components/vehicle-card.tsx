@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import { Bike, CarFront, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { VehicleType } from '@vehicle-vault/shared';
+import { FuelType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
+import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
@@ -38,49 +39,29 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
           params={{ vehicleId: vehicle.id }}
           to="/vehicles/$vehicleId"
         >
-          {/* Main Info Section */}
+          {/* Main Info Section: the plate leads, the nickname and model follow it. */}
           <div className="flex min-w-0 flex-1 items-center gap-4 p-5 sm:p-6">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-inner group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-              {[VehicleType.Car, VehicleType.SUV, VehicleType.Truck, VehicleType.Van].includes(
-                vehicle.vehicleType as VehicleType,
-              ) ? (
-                <CarFront className="h-6 w-6" />
-              ) : (
-                <Bike aria-hidden className="h-6 w-6" />
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <h3 className="truncate text-lg font-bold tracking-tight text-slate-900 group-hover:text-primary transition-colors">
-                  {title}
-                </h3>
-                <Badge tone="accent" className="shrink-0">
-                  {format.enumLabel('vehicleType', vehicle.vehicleType)}
+            <VehicleIdentity
+              className="min-w-0 flex-1"
+              details={describeVehicleModel(vehicle)}
+              electric={vehicle.fuelType === FuelType.Electric}
+              layout="row"
+              name={title}
+              nameAs="h3"
+              registration={vehicle.registrationNumber}
+            />
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <Badge tone="accent">{format.enumLabel('vehicleType', vehicle.vehicleType)}</Badge>
+              {vehicle.currentUserRole && vehicle.currentUserRole !== 'owner' ? (
+                <Badge className="bg-blue-100 text-blue-800">
+                  Shared • {format.enumLabel('vehicleRole', vehicle.currentUserRole)}
                 </Badge>
-                {vehicle.currentUserRole && vehicle.currentUserRole !== 'owner' ? (
-                  <Badge className="shrink-0 bg-blue-100 text-blue-800">
-                    Shared • {format.enumLabel('vehicleRole', vehicle.currentUserRole)}
-                  </Badge>
-                ) : null}
-              </div>
-              <p className="truncate text-[13px] font-medium text-slate-500">
-                {describeVehicleModel(vehicle)}
-              </p>
+              ) : null}
             </div>
           </div>
 
           {/* Metadata Section - Hidden on very small screens, grid on mobile, flex on desktop */}
           <div className="grid grid-cols-2 gap-4 border-t border-slate-100 bg-slate-50/30 p-5 sm:flex sm:items-center sm:gap-8 sm:border-l sm:border-t-0 sm:px-8 sm:py-6">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Registration
-              </p>
-              <p className="text-[13px] font-semibold tabular-nums text-slate-700">
-                {vehicle.registrationNumber}
-              </p>
-            </div>
-
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Odometer

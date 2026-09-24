@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { documentKindNouns } from '@/features/vehicle-documents/utils/document-kind-labels';
 import { cn } from '@/lib/utils';
 import { format } from '@/lib/format';
@@ -110,15 +111,6 @@ export function AttentionRow({
   const relative = formatRelativeDue(item);
   const meta: ReactNode[] = [];
 
-  if (showVehicle) {
-    meta.push(
-      <span className="min-w-0 truncate" key="vehicle">
-        {item.vehicleName}
-        <span className="hidden sm:inline"> · {item.registrationNumber}</span>
-      </span>,
-    );
-  }
-
   meta.push(
     item.dueDate ? (
       // A native title reaches keyboard, touch and screen-reader users; a hover tooltip did not.
@@ -178,6 +170,14 @@ export function AttentionRow({
         className="group min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         item={item}
       >
+        {showVehicle ? (
+          <VehicleIdentity
+            className="mb-1"
+            layout="row"
+            name={item.vehicleName}
+            registration={item.registrationNumber}
+          />
+        ) : null}
         <div className="flex min-w-0 items-center gap-2">
           <p className="min-w-0 truncate font-semibold text-slate-900 transition-colors group-hover:text-primary">
             {item.title}

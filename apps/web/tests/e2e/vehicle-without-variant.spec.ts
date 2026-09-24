@@ -55,7 +55,7 @@ test('a vehicle can be added without naming its variant', async ({ page }) => {
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
   // Make and model, with no gap where the variant would have been.
-  await expect(page.getByText('Hyundai Creta •', { exact: false })).toBeVisible();
+  await expect(page.getByText('Hyundai Creta · 15,200 km', { exact: true })).toBeVisible();
 
   await page.getByRole('tab', { name: 'Tech Specs' }).click();
   await expect(page.getByText('No variant on file')).toBeVisible();

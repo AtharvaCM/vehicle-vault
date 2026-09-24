@@ -107,4 +107,16 @@ describe('VehicleList', () => {
     const card = container.querySelector('[data-slot="card"]');
     expect(card).not.toHaveClass('ring-2');
   });
+
+  it('names each vehicle with an S plate, its registration spaced as it prints', () => {
+    const { container } = render(
+      <VehicleList onSelectionChange={vi.fn()} selectedVehicleIds={[]} vehicles={[vehicle]} />,
+    );
+
+    expect(screen.getByText('MH 12 AB 1234')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="number-plate"][data-size="sm"]'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('MH12AB1234')).not.toBeInTheDocument();
+  });
 });

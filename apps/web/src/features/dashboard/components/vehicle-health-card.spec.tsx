@@ -220,6 +220,16 @@ describe('VehicleHealthCard', () => {
     expect(screen.getByText('No service logged')).toBeInTheDocument();
   });
 
+  it('names the vehicle with an M plate and its spaced registration', () => {
+    renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
+
+    expect(screen.getByText('MH 12 AB 1234')).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="number-plate"][data-size="md"]'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('MH12AB1234')).not.toBeInTheDocument();
+  });
+
   it('applies the documents precedence: expired > missing insurance > missing PUC > expiring > valid', () => {
     const cases: Array<[DashboardVehicleHealth['documents'], string]> = [
       [

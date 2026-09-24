@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import {
+  FuelType,
   VehicleDocumentKindSchema,
   type VehicleDocument,
   type VehicleDocumentKind,
@@ -8,8 +9,10 @@ import { differenceInCalendarDays } from 'date-fns';
 import { ArrowLeft, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { NumberPlate } from '@/components/shared/number-plate';
 import type { Attachment } from '@/features/attachments/types/attachment';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
+import { describeVehicleModel } from '@/features/vehicles/utils/describe-vehicle-model';
 import { endpoints } from '@/lib/api/endpoints';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { format } from '@/lib/format';
@@ -236,17 +239,23 @@ export function DocumentCheckpointPage({
       <div className="mx-auto max-w-lg px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(0.5rem+env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center gap-2">
           {backLink}
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-black text-slate-900">
-              {documentKind ? documentKindTitles[documentKind] : 'Document'}
-            </h1>
-            {vehicleQuery.data ? (
-              <p className="text-sm font-bold tabular-nums text-slate-500">
-                {vehicleQuery.data.registrationNumber}
-              </p>
-            ) : null}
-          </div>
+          <h1 className="min-w-0 truncate text-lg font-black text-slate-900">
+            {documentKind ? documentKindTitles[documentKind] : 'Document'}
+          </h1>
         </header>
+        {vehicleQuery.data ? (
+          <div className="mb-6 flex flex-col items-center gap-2 text-center">
+            <NumberPlate
+              electric={vehicleQuery.data.fuelType === FuelType.Electric}
+              registration={vehicleQuery.data.registrationNumber}
+              size="xl"
+            />
+            <p className="text-body text-fg-2">
+              {describeVehicleModel(vehicleQuery.data)} ·{' '}
+              {format.enumLabel('fuelType', vehicleQuery.data.fuelType)}
+            </p>
+          </div>
+        ) : null}
         {body}
       </div>
     </div>

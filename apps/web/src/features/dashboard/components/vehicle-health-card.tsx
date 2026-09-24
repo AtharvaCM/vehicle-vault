@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { BellRing, Bike, CarFront, MoreHorizontal, Wrench } from 'lucide-react';
+import { BellRing, MoreHorizontal, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { VehicleType } from '@vehicle-vault/shared';
+import { FuelType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { cn } from '@/lib/utils';
 
 import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
@@ -21,13 +22,6 @@ import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
 import { OdometerQuickUpdate } from './odometer-quick-update';
 import { formatOdometerMeta, formatRelativeAgo, formatRelativeDue } from '../utils/format-due';
-
-const FOUR_WHEELER_TYPES: readonly string[] = [
-  VehicleType.Car,
-  VehicleType.SUV,
-  VehicleType.Truck,
-  VehicleType.Van,
-];
 
 const DOCUMENT_TONE = {
   danger: 'text-rose-600',
@@ -179,25 +173,17 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
       size="sm"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-inner">
-          {FOUR_WHEELER_TYPES.includes(vehicle.vehicleType) ? (
-            <CarFront aria-hidden="true" className="h-5 w-5" />
-          ) : (
-            <Bike aria-hidden="true" className="h-5 w-5" />
-          )}
-        </div>
-
         <Link
           className="group min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           params={{ vehicleId: vehicle.id }}
           to="/vehicles/$vehicleId"
         >
-          <p className="truncate font-bold text-slate-900 transition-colors group-hover:text-primary">
-            {vehicle.displayName}
-          </p>
-          <p className="truncate text-[12px] tabular-nums text-slate-500">
-            {vehicle.registrationNumber}
-          </p>
+          <VehicleIdentity
+            electric={vehicle.fuelType === FuelType.Electric}
+            layout="card"
+            name={vehicle.displayName}
+            registration={vehicle.registrationNumber}
+          />
         </Link>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
