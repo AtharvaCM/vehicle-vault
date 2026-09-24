@@ -239,6 +239,31 @@ export function VehicleForm({
       chosenVariantYearsRef.current = selectedVariantOption;
     }
   }, [selectedVariant, selectedVariantOption]);
+  // A year changed before the chosen variant's years were known (a prefilled
+  // variant whose list is still loading): the new year's list, which holds
+  // only what was on sale that year, decides once it arrives.
+  const yearCheckPendingRef = useRef(false);
+  useEffect(() => {
+    if (!yearCheckPendingRef.current) {
+      return;
+    }
+
+    if (!selectedVariant || manualFrom !== null) {
+      yearCheckPendingRef.current = false;
+      return;
+    }
+
+    if (!variantsQuery.data) {
+      return;
+    }
+
+    yearCheckPendingRef.current = false;
+    if (!selectedVariantOption) {
+      form.setValue('make', '', { shouldDirty: true });
+      form.setValue('model', '', { shouldDirty: true });
+      form.setValue('variant', '', { shouldDirty: true });
+    }
+  }, [form, manualFrom, selectedVariant, selectedVariantOption, variantsQuery.data]);
   const availableFuelOptions = useMemo(
     () =>
       selectedVariantOption?.fuelTypes.length
@@ -401,13 +426,17 @@ export function VehicleForm({
                 {...form.register('year', {
                   valueAsNumber: true,
                   onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+                    const year = Number(event.target.value);
+
                     if (
                       manualFrom !== null ||
-                      keepsCatalogSelection(
-                        Number(event.target.value),
-                        chosenVariantYearsRef.current,
-                      )
+                      keepsCatalogSelection(year, chosenVariantYearsRef.current)
                     ) {
+                      return;
+                    }
+
+                    if (selectedVariant && !chosenVariantYearsRef.current) {
+                      yearCheckPendingRef.current = true;
                       return;
                     }
 

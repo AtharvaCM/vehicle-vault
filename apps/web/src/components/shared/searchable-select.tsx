@@ -88,6 +88,15 @@ export function SearchableSelect({
       <PopoverContent
         className="w-(--radix-popover-trigger-width) p-0"
         id={id ? `${id}-content` : undefined}
+        onCloseAutoFocus={(event) => {
+          // Focus goes back to the trigger only once the close animation ends.
+          // By then the owner may be in the next picker already, and pulling
+          // focus back would close that picker's list under their pointer.
+          const focused = document.activeElement;
+          if (focused && focused !== document.body) {
+            event.preventDefault();
+          }
+        }}
       >
         <Command shouldFilter>
           <CommandInput onValueChange={setQuery} placeholder={searchPlaceholder} value={query} />
