@@ -181,10 +181,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                 </CardDescription>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="bg-surface font-bold tracking-tight uppercase text-caption"
-                >
+                <Badge variant="outline" className="bg-surface font-bold text-caption">
                   {hasMeasurements
                     ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
                     : STATUS_COPY[serviceStatus].label}
@@ -235,7 +232,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               ))}
 
               <div className="w-1/2 h-2/3 border border-line/50 rounded-2xl flex items-center justify-center">
-                <div className="text-caption font-black text-fg-3 uppercase rotate-90">Chassis</div>
+                <div className="text-caption font-black text-fg-3 rotate-90">Chassis</div>
               </div>
             </div>
           </CardContent>
@@ -311,7 +308,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               >
                 <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                 <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-tight text-fg">
+                  <p className="text-xs font-bold text-fg">
                     {format.enumLabel('maintenanceCategory', record.category)}
                   </p>
                   <p className="text-caption text-fg-3">
@@ -596,18 +593,16 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
       {recorded ? <p className="mt-1 text-caption text-fg-3">{recorded}</p> : null}
       <div className="mt-2 space-y-0.5">
         {condition.estimatedKmRemaining != null ? (
-          <p className="text-caption font-bold uppercase tracking-tighter text-fg-3">
+          <p className="text-caption font-bold text-fg-3">
             ~{format.distance(condition.estimatedKmRemaining)} left at current wear
           </p>
         ) : null}
         {condition.lastInspectedAt ? (
-          <p className="text-caption font-bold uppercase tracking-tighter text-fg-3">
+          <p className="text-caption font-bold text-fg-3">
             Checked {formatDistanceToNow(new Date(condition.lastInspectedAt), { addSuffix: true })}
           </p>
         ) : (
-          <p className="text-caption font-bold uppercase tracking-tighter text-fg-3">
-            Never inspected
-          </p>
+          <p className="text-caption font-bold text-fg-3">Never inspected</p>
         )}
       </div>
 
@@ -719,13 +714,13 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
         </p>
         <p className="mt-1 text-caption font-medium text-fg-3">{describeBaseline(metric)}</p>
         {metric.lastRecord ? (
-          <p className="mt-2 text-caption font-bold uppercase tracking-tighter text-fg-3">
+          <p className="mt-2 text-caption font-bold text-fg-3">
             Last:{' '}
             {formatDistanceToNow(new Date(metric.lastRecord.serviceDate), { addSuffix: true })}
           </p>
         ) : null}
         {metric.status !== 'unknown' && metric.kmRemaining !== null ? (
-          <p className="mt-2 text-caption font-bold uppercase tracking-tighter text-fg-3">
+          <p className="mt-2 text-caption font-bold text-fg-3">
             {metric.kmRemaining >= 0
               ? `${format.distance(metric.kmRemaining)} to go`
               : `${format.distance(Math.abs(metric.kmRemaining))} past due`}

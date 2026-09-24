@@ -306,18 +306,10 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                 <table className="w-full text-left text-xs">
                   <thead className="bg-page border-b border-line">
                     <tr>
-                      <th className="px-3 py-2 font-bold text-fg-3 uppercase tracking-tighter">
-                        Date
-                      </th>
-                      <th className="px-3 py-2 font-bold text-fg-3 uppercase tracking-tighter">
-                        Odometer
-                      </th>
-                      <th className="px-3 py-2 font-bold text-fg-3 uppercase tracking-tighter">
-                        Qty (L)
-                      </th>
-                      <th className="px-3 py-2 font-bold text-fg-3 uppercase tracking-tighter">
-                        Total
-                      </th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Date</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Odometer</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Qty (L)</th>
+                      <th className="px-3 py-2 font-bold text-fg-3">Total</th>
                     </tr>
                   </thead>
                   <tbody>
