@@ -58,6 +58,12 @@ const TEXT_PAIRS: Array<[text: string, background: string]> = [
   ['ok', 'surface-card'],
   ['ok', 'ok-tint'],
   ['ended', 'surface-card'],
+  // Status words sit on cards and straight on the page, and each on its own tint (StatusPill).
+  ['late', 'surface-page'],
+  ['soon', 'surface-page'],
+  ['ok', 'surface-page'],
+  ['ended', 'surface-page'],
+  ['brand', 'brand-tint'],
   ['plate-ink', 'plate'],
   ['plate-ev-ink', 'plate-ev'],
 ];

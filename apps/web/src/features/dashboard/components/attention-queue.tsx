@@ -3,16 +3,11 @@ import { BellRing, CheckCircle2, FileBadge } from 'lucide-react';
 import { useState } from 'react';
 
 import { EmptyState } from '@/components/shared/empty-state';
+import { SectionHeader } from '@/components/shared/section-header';
+import { StatusDot, StatusPill } from '@/components/shared/status-pill';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useCompleteReminder } from '@/features/reminders/hooks/use-complete-reminder';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -24,6 +19,7 @@ import type {
   DashboardUrgency,
 } from '../types/dashboard';
 import type { DashboardFocus, DashboardSearch } from '../types/dashboard-search';
+import { URGENCY_STATUS } from '../utils/status';
 import { urgencyLabel } from '../utils/format-due';
 import { AttentionRow } from './attention-row';
 import { VehiclePickerMenu } from './vehicle-picker-menu';
@@ -31,6 +27,14 @@ import { VehiclePickerMenu } from './vehicle-picker-menu';
 const INITIAL_ROW_LIMIT = 8;
 const ATTENTION_CAP = 25;
 const URGENCY_ORDER: readonly DashboardUrgency[] = ['overdue', 'today', 'this_week', 'this_month'];
+
+/** The group header's words: sentence case, distinct from `urgencyLabel`'s aria text. */
+const GROUP_WORDS: Record<DashboardUrgency, string> = {
+  overdue: 'Late',
+  today: 'Today',
+  this_week: 'This week',
+  this_month: 'This month',
+};
 
 const FOCUS_LABELS: Record<DashboardFocus, { chip: string; empty: string }> = {
   overdue: { chip: 'Overdue', empty: 'Nothing overdue' },
@@ -149,9 +153,11 @@ export function AttentionQueue({
           <div className="divide-y divide-slate-100">
             {groups.map((group) => (
               <section aria-label={urgencyLabel(group.urgency)} key={group.urgency}>
-                <p className="px-5 pb-1 pt-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                  {urgencyLabel(group.urgency)}
-                </p>
+                <div className="px-5 pb-1 pt-3">
+                  <StatusDot status={URGENCY_STATUS[group.urgency]}>
+                    {GROUP_WORDS[group.urgency]}
+                  </StatusDot>
+                </div>
                 <div className="divide-y divide-slate-100">
                   {group.items.map((item) => (
                     <AttentionRow
@@ -258,25 +264,21 @@ export function AttentionQueue({
 
   return (
     <Card className="overflow-hidden rounded-xl border-border/70 p-0 shadow-xs">
-      <CardHeader className="gap-2.5 border-b border-border/60 px-5 pb-4 pt-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              Needs attention
+      <CardHeader className="border-b border-border/60 px-5 pb-4 pt-5">
+        <SectionHeader
+          actions={
+            <>
               {urgentCount > 0 ? (
-                <Badge tone={counts.overdue > 0 ? 'danger' : 'warning'}>{urgentCount}</Badge>
+                <StatusPill status={counts.overdue > 0 ? 'late' : 'soon'}>{urgentCount}</StatusPill>
               ) : null}
-            </CardTitle>
-            <CardDescription>
-              Everything due or wrong across every vehicle, most urgent first.
-            </CardDescription>
-          </div>
-          <CardAction>
-            <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/reminders">
-              All reminders
-            </Link>
-          </CardAction>
-        </div>
+              <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/reminders">
+                All reminders
+              </Link>
+            </>
+          }
+          description="Everything due or wrong across every vehicle, most urgent first."
+          title="Needs attention"
+        />
       </CardHeader>
 
       {focus ? (

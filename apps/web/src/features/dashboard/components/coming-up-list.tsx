@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { BellRing, CircleDot, Coins, History, Package, ShieldCheck } from 'lucide-react';
 import { ReminderStatus } from '@vehicle-vault/shared';
 
+import { SectionHeader } from '@/components/shared/section-header';
 import { buttonVariants } from '@/components/ui/button';
 import { format } from '@/lib/format';
 
@@ -30,15 +31,7 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
 
   return (
     <section aria-labelledby="coming-up-heading" className="space-y-2">
-      <div className="flex items-baseline gap-2">
-        <h2
-          className="text-sm font-semibold uppercase tracking-wide text-slate-500"
-          id="coming-up-heading"
-        >
-          Coming up
-        </h2>
-        <span className="text-[13px] text-slate-400">Next 30 days</span>
-      </div>
+      <SectionHeader description="Next 30 days" id="coming-up-heading" title="Coming up" />
       <div className="divide-y divide-slate-100 rounded-xl border border-slate-200/60 bg-white/70">
         {items.map((item) => {
           const Icon = KIND_ICONS[item.kind];

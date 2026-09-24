@@ -1,5 +1,6 @@
 import { Calendar, Gauge, TrendingUp, Info } from 'lucide-react';
 
+import { Figure } from '@/components/shared/figure';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,10 +61,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
               )}
             </h3>
             {canPredict ? (
-              <Badge
-                variant="outline"
-                className={`text-[10px] uppercase tracking-wider ${confidenceColors[insights.confidence]}`}
-              >
+              <Badge variant="outline" className={confidenceColors[insights.confidence]}>
                 {confidenceLabels[insights.confidence]}
               </Badge>
             ) : null}
@@ -102,14 +100,10 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
           </div>
 
           <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-400">
-                Last recorded
-              </span>
-              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                {format.odometer(insights.lastRecordedOdometer)} ({lastRecordedDate})
-              </span>
-            </div>
+            <Figure
+              label="Last recorded"
+              value={`${format.odometer(insights.lastRecordedOdometer)} (${lastRecordedDate})`}
+            />
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

@@ -1,3 +1,7 @@
+import type { ReactNode } from 'react';
+
+import { Figure } from '@/components/shared/figure';
+import { Money } from '@/components/shared/money';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
 
@@ -22,7 +26,11 @@ export function ServiceTrendCard({ insights }: ServiceTrendCardProps) {
         <TrendMetric
           label="Average spend"
           value={
-            insights.averageSpend !== null ? format.money(insights.averageSpend) : 'Not enough data'
+            insights.averageSpend !== null ? (
+              <Money value={insights.averageSpend} />
+            ) : (
+              'Not enough data'
+            )
           }
         />
         <TrendMetric
@@ -57,14 +65,18 @@ export function ServiceTrendCard({ insights }: ServiceTrendCardProps) {
   );
 }
 
-function TrendMetric({ label, value, detail }: { label: string; value: string; detail?: string }) {
+function TrendMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: ReactNode;
+  detail?: string;
+}) {
   return (
     <div className="rounded-2xl border border-border/70 bg-slate-50/80 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-2 text-base font-semibold text-foreground">{value}</p>
-      {detail ? <p className="mt-1 text-xs text-muted-foreground">{detail}</p> : null}
+      <Figure hint={detail} label={label} value={value} />
     </div>
   );
 }

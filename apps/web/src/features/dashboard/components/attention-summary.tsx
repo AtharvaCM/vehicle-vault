@@ -2,6 +2,8 @@ import { Link } from '@tanstack/react-router';
 import { AlertTriangle, CheckCircle2, Clock, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { Figure } from '@/components/shared/figure';
+import { StatusDot, type Status } from '@/components/shared/status-pill';
 import { cn } from '@/lib/utils';
 
 import type { DashboardSummary } from '../types/dashboard';
@@ -13,42 +15,18 @@ type AttentionSummaryProps = {
   focus?: DashboardFocus;
 };
 
-type TileTone = 'danger' | 'warning' | 'neutral';
-
-const TILE_VALUE_TONE: Record<TileTone, string> = {
-  danger: 'text-rose-600',
-  warning: 'text-amber-600',
-  neutral: 'text-slate-900',
-};
-
 const TILE_BASE =
-  'group flex flex-col gap-1.5 rounded-xl border border-slate-200/60 bg-white/70 p-4 transition-colors hover:border-primary/20 hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-5';
-const TILE_ACTIVE = 'border-primary/40 bg-white ring-1 ring-primary/20';
+  'group flex flex-col gap-1.5 rounded-card border border-line bg-surface p-4 transition-colors hover:border-brand focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-5';
+const TILE_ACTIVE = 'border-brand bg-brand-tint';
 
 type TileBodyProps = {
   label: string;
   value: string;
   description: string;
-  tone: TileTone;
 };
 
-function TileBody({ label, value, description, tone }: TileBodyProps) {
-  return (
-    <>
-      <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-slate-500">
-        {label}
-      </span>
-      <span
-        className={cn(
-          'text-2xl font-bold tabular-nums tracking-tight sm:text-3xl',
-          TILE_VALUE_TONE[tone],
-        )}
-      >
-        {value}
-      </span>
-      <span className="text-[13px] leading-relaxed text-slate-500">{description}</span>
-    </>
-  );
+function TileBody({ label, value, description }: TileBodyProps) {
+  return <Figure hint={description} label={label} value={value} />;
 }
 
 type FocusTileProps = TileBodyProps & {
@@ -77,50 +55,54 @@ function GarageTile(body: TileBodyProps) {
   );
 }
 
-type StatusBandTone = 'danger' | 'warning' | 'ok';
+const BAND_ICON: Record<Status, LucideIcon> = {
+  late: AlertTriangle,
+  soon: Clock,
+  ok: CheckCircle2,
+  ended: CheckCircle2,
+  draft: Clock,
+  info: Clock,
+};
 
-const BAND_STYLES: Record<StatusBandTone, { wrapper: string; icon: string; Icon: LucideIcon }> = {
-  danger: {
-    wrapper: 'border-rose-200 bg-rose-50 text-rose-900',
-    icon: 'bg-rose-100 text-rose-700',
-    Icon: AlertTriangle,
-  },
-  warning: {
-    wrapper: 'border-amber-200 bg-amber-50 text-amber-900',
-    icon: 'bg-amber-100 text-amber-700',
-    Icon: Clock,
-  },
-  ok: {
-    wrapper: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    icon: 'bg-emerald-100 text-emerald-700',
-    Icon: CheckCircle2,
-  },
+/** The band's background tint per status; only late/soon/ok are used here. */
+const BAND_TINT: Record<Status, string> = {
+  late: 'bg-late-tint',
+  soon: 'bg-soon-tint',
+  ok: 'bg-ok-tint',
+  ended: 'bg-page',
+  draft: 'bg-page',
+  info: 'bg-brand-tint',
 };
 
 type StatusBandProps = {
-  tone: StatusBandTone;
+  status: Status;
   headline: string;
   subtext: string;
   aside: ReactNode;
 };
 
-function StatusBand({ tone, headline, subtext, aside }: StatusBandProps) {
-  const { wrapper, icon, Icon } = BAND_STYLES[tone];
+function StatusBand({ status, headline, subtext, aside }: StatusBandProps) {
+  const Icon = BAND_ICON[status];
 
   return (
     <div
-      className={cn('flex w-full items-center gap-3 rounded-xl border px-4 py-3', wrapper)}
+      className={cn(
+        'flex w-full items-center gap-3 rounded-xl border border-line px-4 py-3',
+        BAND_TINT[status],
+      )}
       data-testid="status-band"
       role="status"
     >
-      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full', icon)}>
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface">
         <Icon aria-hidden="true" className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-lg font-semibold leading-tight">{headline}</p>
-        <p className="truncate text-[13px] opacity-80">{subtext}</p>
+        <StatusDot className="text-lead" status={status}>
+          {headline}
+        </StatusDot>
+        <p className="truncate text-small text-fg-2">{subtext}</p>
       </div>
-      <div className="hidden shrink-0 text-[13px] opacity-70 sm:block">{aside}</div>
+      <div className="hidden shrink-0 text-small text-fg-3 sm:block">{aside}</div>
     </div>
   );
 }
@@ -143,8 +125,7 @@ export function AttentionSummary({ summary, focus }: AttentionSummaryProps) {
           active={focus === 'overdue'}
           description="Past due or expired"
           focus="overdue"
-          label="Overdue"
-          tone={counts.overdue > 0 ? 'danger' : 'neutral'}
+          label="Late"
           value={String(counts.overdue)}
         />
         <AttentionTile
@@ -152,21 +133,18 @@ export function AttentionSummary({ summary, focus }: AttentionSummaryProps) {
           description="Today through the next 7 days"
           focus="week"
           label="Due this week"
-          tone={dueThisWeek > 0 ? 'warning' : 'neutral'}
           value={String(dueThisWeek)}
         />
         <AttentionTile
           active={focus === 'documents'}
           description="Insurance, PUC, RC, road tax within 30 days"
           focus="documents"
-          label="Documents expiring"
-          tone="neutral"
+          label="Papers running out"
           value={String(counts.documentsExpiring30d)}
         />
         <GarageTile
           description="Something overdue or due within 7 days"
-          label="Vehicles needing attention"
-          tone="neutral"
+          label="Vehicles needing you"
           // `urgentVehicles` is the headline's own count, so the two always agree.
           value={`${counts.urgentVehicles} of ${summary.vehiclesTotal}`}
         />
@@ -182,9 +160,9 @@ export function AttentionSummary({ summary, focus }: AttentionSummaryProps) {
     return (
       <StatusBand
         aside={aside}
-        headline={`${counts.overdue} overdue`}
+        headline={`${counts.overdue} late`}
+        status="late"
         subtext={worst ? itemLine(worst) : 'Past due or expired'}
-        tone="danger"
       />
     );
   }
@@ -198,8 +176,8 @@ export function AttentionSummary({ summary, focus }: AttentionSummaryProps) {
       <StatusBand
         aside={aside}
         headline={`${dueThisWeek} due this week`}
+        status="soon"
         subtext={first ? itemLine(first) : 'Today through the next 7 days'}
-        tone="warning"
       />
     );
   }
@@ -210,12 +188,12 @@ export function AttentionSummary({ summary, focus }: AttentionSummaryProps) {
     <StatusBand
       aside={aside}
       headline="All clear"
+      status="ok"
       subtext={
         next
           ? `Next up: ${next.title} · ${formatRelativeDue(next)}`
           : 'Nothing due in the next 30 days.'
       }
-      tone="ok"
     />
   );
 }

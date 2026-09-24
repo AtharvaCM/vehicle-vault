@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import type { MaintenanceSuggestion } from '@vehicle-vault/shared';
 
 import { SectionCard } from '@/components/shared/section-card';
-import { Badge } from '@/components/ui/badge';
+import { StatusPill } from '@/components/shared/status-pill';
 import { buttonVariants } from '@/components/ui/button';
 import { format } from '@/lib/format';
 
@@ -46,13 +46,13 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
                     {format.enumLabel('maintenanceCategory', insight.category)}
                   </p>
                   {insight.priority === 'high' ? (
-                    <Badge className="shrink-0" tone="warning">
+                    <StatusPill className="shrink-0" status="soon">
                       Soon
-                    </Badge>
+                    </StatusPill>
                   ) : (
-                    <Badge className="shrink-0" tone="neutral">
+                    <StatusPill className="shrink-0" status="info">
                       Upcoming
-                    </Badge>
+                    </StatusPill>
                   )}
                 </div>
                 {meta.length > 0 ? (

@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ClipboardList, Paperclip, Wrench } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/empty-state';
+import { Money } from '@/components/shared/money';
 import { SectionCard } from '@/components/shared/section-card';
 import { buttonVariants } from '@/components/ui/button';
 import { MaintenanceDraftBadge } from '@/features/maintenance/components/maintenance-draft-badge';
@@ -74,8 +75,8 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
                     </span>
                   </span>
                 ) : null}
-                <span className="font-semibold tabular-nums text-slate-900">
-                  {format.money(record.totalCost)}
+                <span className="font-semibold text-slate-900">
+                  <Money value={record.totalCost} />
                 </span>
               </div>
             </Link>

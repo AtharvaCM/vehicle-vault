@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Wallet } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { TCO_MIN_COST_PER_KM_DISTANCE_KM, type TcoResponse } from '@vehicle-vault/shared';
 
+import { Figure } from '@/components/shared/figure';
+import { Money } from '@/components/shared/money';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
 
@@ -43,25 +46,22 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
   const loanOutstanding = Number(tco.totals.loanOutstanding);
   const accessories = Number(tco.totals.accessories);
 
-  const figures: { label: string; value: string; emphasis?: boolean }[] = [
+  const figures: { label: string; value: number; negative?: boolean; emphasis?: boolean }[] = [
     {
       label: tco.totals.tco ? 'Total cost of ownership' : 'Net lifetime spend',
-      value: format.money(Number(tco.totals.tco ?? tco.totals.netSpend)),
+      value: Number(tco.totals.tco ?? tco.totals.netSpend),
       emphasis: true,
     },
-    { label: 'Maintenance', value: format.money(Number(tco.totals.maintenance)) },
-    { label: 'Fuel', value: format.money(Number(tco.totals.fuel)) },
-    ...(accessories > 0 ? [{ label: 'Accessories', value: format.money(accessories) }] : []),
-    { label: 'Insurance', value: format.money(Number(tco.totals.insurance)) },
-    ...(loanInterestPaid > 0
-      ? [{ label: 'Loan interest paid', value: format.money(loanInterestPaid) }]
-      : []),
-    ...(loanOutstanding > 0
-      ? [{ label: 'Loan outstanding', value: format.money(loanOutstanding) }]
-      : []),
+    { label: 'Maintenance', value: Number(tco.totals.maintenance) },
+    { label: 'Fuel', value: Number(tco.totals.fuel) },
+    ...(accessories > 0 ? [{ label: 'Accessories', value: accessories }] : []),
+    { label: 'Insurance', value: Number(tco.totals.insurance) },
+    ...(loanInterestPaid > 0 ? [{ label: 'Loan interest paid', value: loanInterestPaid }] : []),
+    ...(loanOutstanding > 0 ? [{ label: 'Loan outstanding', value: loanOutstanding }] : []),
     {
       label: 'Insurer reimbursed',
-      value: `− ${format.money(Number(tco.totals.insurerReimbursed))}`,
+      value: Number(tco.totals.insurerReimbursed),
+      negative: true,
     },
   ];
 
@@ -77,41 +77,43 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
                 : 'rounded-xl border border-slate-200 bg-white p-3'
             }
           >
-            <p className="text-xs uppercase tracking-wider text-slate-500">{f.label}</p>
-            <p
-              className={
-                f.emphasis
-                  ? 'text-xl font-bold text-indigo-700'
-                  : 'text-base font-semibold text-slate-800'
+            <Figure
+              label={f.label}
+              value={
+                <span className={f.emphasis ? 'text-indigo-700' : undefined}>
+                  {f.negative ? '− ' : null}
+                  <Money value={f.value} />
+                </span>
               }
-            >
-              {f.value}
-            </p>
+            />
           </div>
         ))}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Metric
+          hint={costPerKmHint(tco)}
           label="₹ / km"
           value={
-            tco.derived.costPerKm
-              ? format.money(Number(tco.derived.costPerKm), { decimals: 1 })
-              : '—'
+            <Money
+              decimals={1}
+              value={tco.derived.costPerKm ? Number(tco.derived.costPerKm) : null}
+            />
           }
-          hint={costPerKmHint(tco)}
         />
         <Metric
-          label="₹ / month"
-          value={tco.derived.costPerMonth ? format.money(Number(tco.derived.costPerMonth)) : '—'}
           hint={
             tco.ownershipMonths != null ? `${tco.ownershipMonths} months owned` : 'No purchase date'
           }
+          label="₹ / month"
+          value={
+            <Money value={tco.derived.costPerMonth ? Number(tco.derived.costPerMonth) : null} />
+          }
         />
         <Metric
-          label="Purchase price"
-          value={tco.purchasePrice ? format.money(Number(tco.purchasePrice)) : '—'}
           hint={tco.purchaseDate ? format.date(tco.purchaseDate) : 'Not set'}
+          label="Purchase price"
+          value={<Money value={tco.purchasePrice ? Number(tco.purchasePrice) : null} />}
         />
       </div>
 
@@ -130,12 +132,10 @@ function costPerKmHint(tco: TcoResponse): string {
   return `${format.distance(tco.kmSincePurchase)} so far; shown from ${format.distance(TCO_MIN_COST_PER_KM_DISTANCE_KM)}`;
 }
 
-function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
+function Metric({ label, value, hint }: { label: string; value: ReactNode; hint: string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="text-base font-semibold text-slate-800">{value}</p>
-      <p className="text-xs text-slate-500">{hint}</p>
+      <Figure hint={hint} label={label} value={value} />
     </div>
   );
 }

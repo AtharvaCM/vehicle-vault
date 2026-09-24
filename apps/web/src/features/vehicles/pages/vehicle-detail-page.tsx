@@ -5,9 +5,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageContainer } from '@/components/layout/page-container';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
+import { Figure } from '@/components/shared/figure';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { SectionHeader } from '@/components/shared/section-header';
 import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -187,7 +189,7 @@ export function VehicleDetailPage({
                   </Link>
                   {access.isViewer ? (
                     <Badge
-                      className="bg-slate-100 font-bold uppercase tracking-widest text-[10px] text-slate-600"
+                      className="border-line bg-page text-fg-2"
                       title="You can see this vehicle but not change it. Ask the owner for editor access to make changes."
                       variant="outline"
                     >
@@ -446,7 +448,7 @@ export function VehicleDetailPage({
 
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <SnapshotMetric
-                  label="Total records"
+                  label="Service records"
                   value={maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'}
                 />
                 <SnapshotMetric
@@ -642,23 +644,19 @@ function HeroMetric({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-400 shadow-inner">
+    <div className="flex items-center gap-2">
+      <span aria-hidden="true" className="text-fg-3">
         {icon}
-      </div>
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-        <p className="text-sm font-bold tabular-nums text-slate-900">{value}</p>
-      </div>
+      </span>
+      <Figure label={label} value={value} />
     </div>
   );
 }
 
 function SnapshotMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50 hover:shadow-inner">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-      <p className="mt-1 text-xl font-black tracking-tight text-slate-900 tabular-nums">{value}</p>
+    <div className="rounded-card border border-line bg-surface p-4">
+      <Figure label={label} value={value} />
     </div>
   );
 }
@@ -684,30 +682,33 @@ function MaintenancePanel({
 
   return (
     <Card className="border-slate-200/60 bg-white">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
-        <div>
-          <CardTitle className="text-lg font-bold">{title}</CardTitle>
-          <CardDescription>Service history records.</CardDescription>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            className={buttonVariants({ size: 'xs', variant: 'ghost' })}
-            params={{ vehicleId }}
-            to="/vehicles/$vehicleId/maintenance"
-          >
-            View all
-          </Link>
-          {canEdit ? (
-            <Link
-              className={buttonVariants({ size: 'xs', variant: 'outline' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/maintenance/new"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Log
-            </Link>
-          ) : null}
-        </div>
+      <CardHeader className="border-b border-slate-100 pb-4">
+        <SectionHeader
+          actions={
+            <>
+              <Link
+                className={buttonVariants({ size: 'xs', variant: 'ghost' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/maintenance"
+              >
+                View all
+              </Link>
+              {canEdit ? (
+                <Link
+                  className={buttonVariants({ size: 'xs', variant: 'outline' })}
+                  params={{ vehicleId }}
+                  to="/vehicles/$vehicleId/maintenance/new"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Log
+                </Link>
+              ) : null}
+            </>
+          }
+          as="h3"
+          description="Service history records."
+          title={title}
+        />
       </CardHeader>
       <CardContent className="pt-5 sm:p-5">
         {maintenanceQuery.isPending ? (
@@ -771,30 +772,33 @@ function ReminderPanel({
 
   return (
     <Card className="border-slate-200/60 bg-white">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4">
-        <div>
-          <CardTitle className="text-lg font-bold">{title}</CardTitle>
-          <CardDescription>Active service alerts.</CardDescription>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            className={buttonVariants({ size: 'xs', variant: 'ghost' })}
-            params={{ vehicleId }}
-            to="/vehicles/$vehicleId/reminders"
-          >
-            View all
-          </Link>
-          {canEdit ? (
-            <Link
-              className={buttonVariants({ size: 'xs', variant: 'outline' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId/reminders/new"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add
-            </Link>
-          ) : null}
-        </div>
+      <CardHeader className="border-b border-slate-100 pb-4">
+        <SectionHeader
+          actions={
+            <>
+              <Link
+                className={buttonVariants({ size: 'xs', variant: 'ghost' })}
+                params={{ vehicleId }}
+                to="/vehicles/$vehicleId/reminders"
+              >
+                View all
+              </Link>
+              {canEdit ? (
+                <Link
+                  className={buttonVariants({ size: 'xs', variant: 'outline' })}
+                  params={{ vehicleId }}
+                  to="/vehicles/$vehicleId/reminders/new"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add
+                </Link>
+              ) : null}
+            </>
+          }
+          as="h3"
+          description="Active service alerts."
+          title={title}
+        />
       </CardHeader>
       <CardContent className="pt-5 sm:p-5">
         {remindersQuery.isPending ? (
