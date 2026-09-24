@@ -109,7 +109,7 @@ export function NotificationPreferencesPage() {
                 the bell.
               </CardDescription>
             </div>
-            <p aria-live="polite" className="shrink-0 text-xs font-medium text-slate-500">
+            <p aria-live="polite" className="shrink-0 text-xs font-medium text-fg-3">
               {isSaving ? 'Saving…' : update.isSuccess ? 'Saved' : null}
             </p>
           </CardHeader>
@@ -124,14 +124,14 @@ export function NotificationPreferencesPage() {
             ) : null}
 
             {channels.email.reason === 'email_unverified' ? (
-              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900">
+              <p className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-3 text-sm text-soon">
                 Email alerts start once your address is verified.
               </p>
             ) : null}
 
             {channelNotices.map(({ channel, message }) => (
               <p
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-600"
+                className="rounded-xl border border-line bg-page px-3.5 py-3 text-sm text-fg-2"
                 key={channel}
               >
                 {message}
@@ -140,7 +140,7 @@ export function NotificationPreferencesPage() {
 
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                <tr className="text-left text-xs text-fg-3">
                   <th className="pb-2 font-semibold" scope="col">
                     Alert
                   </th>
@@ -153,8 +153,8 @@ export function NotificationPreferencesPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-y border-slate-200 bg-slate-50/80">
-                  <th className="px-2 py-3 text-left font-semibold text-slate-900" scope="row">
+                <tr className="border-y border-line bg-page/80">
+                  <th className="px-2 py-3 text-left font-semibold text-fg" scope="row">
                     Every alert
                   </th>
                   {(['email', 'push'] as const).map((channel) => {
@@ -185,7 +185,7 @@ export function NotificationPreferencesPage() {
                   <Fragment key={group.title}>
                     <tr>
                       <th
-                        className="pb-1 pt-5 text-left text-xs font-bold uppercase tracking-wider text-slate-400"
+                        className="pb-1 pt-5 text-left text-caption font-bold text-fg-3"
                         colSpan={3}
                         scope="colgroup"
                       >
@@ -197,10 +197,10 @@ export function NotificationPreferencesPage() {
                       const preference = preferences.get(kind);
 
                       return (
-                        <tr className="border-b border-slate-100 last:border-b-0" key={kind}>
+                        <tr className="border-b border-line-subtle last:border-b-0" key={kind}>
                           <th className="py-3 pr-4 text-left font-normal" scope="row">
-                            <span className="block font-medium text-slate-900">{copy.label}</span>
-                            <span className="block text-slate-500">{copy.description}</span>
+                            <span className="block font-medium text-fg">{copy.label}</span>
+                            <span className="block text-fg-3">{copy.description}</span>
                           </th>
                           {(['email', 'push'] as const).map((channel) => {
                             const available = isAvailable(channel);

@@ -58,14 +58,14 @@ export function AcceptInvitePage({ token }: Props) {
   const back = auth.isAuthenticated ? (
     <p>
       Back to{' '}
-      <Link className="font-semibold text-slate-900 hover:text-slate-700" to="/dashboard">
+      <Link className="font-semibold text-fg hover:text-fg-2" to="/dashboard">
         your garage
       </Link>
     </p>
   ) : (
     <p>
       New to Vehicle Vault?{' '}
-      <Link className="font-semibold text-slate-900 hover:text-slate-700" to="/">
+      <Link className="font-semibold text-fg hover:text-fg-2" to="/">
         See what it does
       </Link>
     </p>
@@ -79,7 +79,7 @@ export function AcceptInvitePage({ token }: Props) {
         title="Checking your invite…"
       >
         <div aria-live="polite" className="flex justify-center py-8">
-          <Loader2 aria-hidden="true" className="h-10 w-10 animate-spin text-slate-900" />
+          <Loader2 aria-hidden="true" className="h-10 w-10 animate-spin text-fg" />
         </div>
       </AuthPageShell>
     );
@@ -137,26 +137,26 @@ export function AcceptInvitePage({ token }: Props) {
   }
 
   const details = (
-    <dl className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
+    <dl className="grid gap-3 rounded-2xl border border-line bg-page p-4 text-sm">
       <div>
-        <dt className="text-slate-500">Vehicle</dt>
-        <dd className="font-semibold text-slate-900">{invite.vehicleLabel}</dd>
+        <dt className="text-fg-3">Vehicle</dt>
+        <dd className="font-semibold text-fg">{invite.vehicleLabel}</dd>
       </div>
       <div>
-        <dt className="text-slate-500">From</dt>
-        <dd className="text-slate-900">{invite.inviterName}</dd>
+        <dt className="text-fg-3">From</dt>
+        <dd className="text-fg">{invite.inviterName}</dd>
       </div>
       <div>
-        <dt className="text-slate-500">You {role.title}</dt>
-        <dd className="text-slate-900">{role.detail}</dd>
+        <dt className="text-fg-3">You {role.title}</dt>
+        <dd className="text-fg">{role.detail}</dd>
       </div>
       <div>
-        <dt className="text-slate-500">Invited address</dt>
-        <dd className="text-slate-900">{invite.emailMasked}</dd>
+        <dt className="text-fg-3">Invited address</dt>
+        <dd className="text-fg">{invite.emailMasked}</dd>
       </div>
       <div>
-        <dt className="text-slate-500">Expires</dt>
-        <dd className="text-slate-900">{format.date(invite.expiresAt)}</dd>
+        <dt className="text-fg-3">Expires</dt>
+        <dd className="text-fg">{format.date(invite.expiresAt)}</dd>
       </div>
     </dl>
   );
@@ -222,7 +222,7 @@ export function AcceptInvitePage({ token }: Props) {
       <div className="space-y-4">
         {details}
         {actionError ? (
-          <p className="text-sm text-rose-700" role="alert">
+          <p className="text-sm text-late" role="alert">
             {getApiErrorMessage(actionError, 'That didn’t work. Try again.')}
           </p>
         ) : null}

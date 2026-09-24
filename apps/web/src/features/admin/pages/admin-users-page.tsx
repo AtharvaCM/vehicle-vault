@@ -68,7 +68,7 @@ export function AdminUsersPage() {
           <CardTitle className="text-lg font-bold">All users</CardTitle>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-3" />
               <Input
                 className="pl-8 w-64"
                 placeholder="Search by email or name"
@@ -89,17 +89,17 @@ export function AdminUsersPage() {
           ) : null}
 
           {query.isError ? (
-            <p className="text-sm text-rose-600">Could not load users. Try again.</p>
+            <p className="text-sm text-late">Could not load users. Try again.</p>
           ) : null}
 
           {query.data && query.data.users.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-fg-3">
               {search ? `No users matching "${search}".` : 'No users yet.'}
             </p>
           ) : null}
 
           {query.data && query.data.users.length > 0 ? (
-            <ul className="divide-y divide-slate-200/60">
+            <ul className="divide-y divide-line-subtle/60">
               {query.data.users.map((user) => (
                 <li
                   key={user.id}
@@ -107,7 +107,7 @@ export function AdminUsersPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
+                      <p className="truncate text-sm font-semibold text-fg">{user.name}</p>
                       {user.role === 'admin' ? (
                         <Badge variant="accent">
                           <ShieldCheck />
@@ -116,9 +116,9 @@ export function AdminUsersPage() {
                       ) : null}
                       {user.emailVerified ? null : <Badge variant="warning">Unverified</Badge>}
                     </div>
-                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                    <p className="truncate text-xs text-fg-3">{user.email}</p>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 text-xs text-fg-3">
                     <span className="inline-flex items-center gap-1">
                       <CarFront className="h-3.5 w-3.5" />
                       {user.vehicleCount}
@@ -143,7 +143,7 @@ export function AdminUsersPage() {
           ) : null}
 
           {total > PAGE_SIZE ? (
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs text-slate-500">
+            <div className="mt-4 flex items-center justify-between border-t border-line-subtle pt-4 text-xs text-fg-3">
               <span>
                 Page {page} of {totalPages}
               </span>

@@ -85,7 +85,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
   return (
     <section aria-label="Document files" className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <p className="flex items-center gap-1.5 text-caption font-black text-fg-3">
           <Paperclip aria-hidden="true" className="h-3 w-3" />
           Files
         </p>
@@ -114,7 +114,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
       </div>
 
       {attachmentsQuery.isPending ? (
-        <p className="text-xs text-slate-400">Loading…</p>
+        <p className="text-xs text-fg-3">Loading…</p>
       ) : attachmentsQuery.isError ? (
         <InlineError
           message={getApiErrorMessage(
@@ -123,7 +123,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
           )}
         />
       ) : attachments.length ? (
-        <ul className="divide-y divide-slate-100 text-sm">
+        <ul className="divide-y divide-line-subtle text-sm">
           {attachments.map((attachment) => (
             <li className="flex items-center justify-between gap-2 py-1.5" key={attachment.id}>
               <button
@@ -131,17 +131,17 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
                 onClick={() => void handleOpen(attachment.id)}
                 type="button"
               >
-                <span className="truncate font-medium text-slate-700">
+                <span className="truncate font-medium text-fg-2">
                   {attachment.originalFileName}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-fg-3">
                   {formatFileSize(attachment.size)} · {format.date(attachment.uploadedAt)}
                 </span>
               </button>
               {canEdit ? (
                 <Button
                   aria-label={`Remove ${attachment.originalFileName}`}
-                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                  className="text-late hover:bg-late-tint hover:text-late"
                   disabled={remove.isPending}
                   onClick={() => void handleRemove(attachment.id)}
                   size="xs"
@@ -154,7 +154,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-3">
           {canEdit ? `No files yet. ${EMPTY_HINT[kind]}` : 'No files yet.'}
         </p>
       )}

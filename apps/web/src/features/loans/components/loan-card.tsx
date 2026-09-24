@@ -1,5 +1,6 @@
 import type { VehicleLoan } from '@vehicle-vault/shared';
 
+import { Figure } from '@/components/shared/figure';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
@@ -26,10 +27,8 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
           {vehicleLabel ? <p className="text-xs text-muted-foreground">{vehicleLabel}</p> : null}
         </div>
         <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            loan.status === 'active'
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-muted text-muted-foreground'
+          className={`rounded-full px-2 py-0.5 text-caption font-medium ${
+            loan.status === 'active' ? 'bg-ok-tint text-ok' : 'bg-muted text-muted-foreground'
           }`}
         >
           {format.enumLabel('loanStatus', loan.status)}
@@ -37,12 +36,12 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
       </CardHeader>
       <CardContent className="space-y-3 pt-0 text-sm">
         <div className="grid grid-cols-3 gap-3">
-          <Metric label="EMI" value={format.money(loan.emiAmount)} />
-          <Metric label="Rate" value={`${loan.interestRate}% /yr`} />
-          <Metric label="Tenure" value={`${loan.tenureMonths} mo`} />
-          <Metric label="Principal" value={format.money(loan.principal)} />
-          <Metric label="Outstanding" value={format.money(loan.outstandingBalance)} />
-          <Metric label="Interest paid" value={format.money(loan.interestPaidToDate)} />
+          <Figure label="EMI" value={format.money(loan.emiAmount)} />
+          <Figure label="Rate" value={`${loan.interestRate}% /yr`} />
+          <Figure label="Tenure" value={`${loan.tenureMonths} mo`} />
+          <Figure label="Principal" value={format.money(loan.principal)} />
+          <Figure label="Outstanding" value={format.money(loan.outstandingBalance)} />
+          <Figure label="Interest paid" value={format.money(loan.interestPaidToDate)} />
         </div>
 
         <div>
@@ -53,7 +52,7 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
             </span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full bg-emerald-500" style={{ width: `${paidPct}%` }} />
+            <div className="h-full bg-ok" style={{ width: `${paidPct}%` }} />
           </div>
         </div>
 
@@ -74,7 +73,7 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
             <Button
               size="sm"
               variant="ghost"
-              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+              className="text-late hover:bg-late-tint hover:text-late"
               onClick={() => onDelete(loan)}
             >
               Delete
@@ -82,21 +81,12 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
           ) : null}
         </div>
         {loan.prepaidToDate > 0 ? (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-caption text-muted-foreground">
             {loan.prepayments.length} prepayment{loan.prepayments.length === 1 ? '' : 's'} · saved
             interest baked in
           </p>
         ) : null}
       </CardContent>
     </Card>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="font-semibold text-foreground">{value}</div>
-    </div>
   );
 }

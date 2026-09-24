@@ -25,14 +25,16 @@ export const MIGRATED_PATHS = [
   'src/features/tyres/**',
   'src/features/accessories/**',
   'src/features/attachments/**',
+  'src/features/vehicle-documents/**',
+  'src/features/loans/**',
+  'src/features/claims/**',
+  'src/features/vehicle-sharing/**',
+  'src/features/audit/**',
+  'src/features/notifications/**',
+  'src/features/settings/**',
+  'src/features/admin/**',
+  'src/features/pwa/**',
 ];
-
-/**
- * Files inside MIGRATED_PATHS that belong to a later slice and stay warnings
- * until it lands: the protection tab moves with papers (#250). Each slice
- * removes its own entry.
- */
-export const MIGRATION_PENDING_PATHS = ['src/features/vehicles/components/protection-tab.tsx'];
 
 /**
  * Screens moved onto the status and figure components (#246) before the rest of

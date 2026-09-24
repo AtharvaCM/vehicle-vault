@@ -73,9 +73,9 @@ export function SettingsPage() {
             <CardTitle>Account</CardTitle>
             <CardDescription>The account currently signed in to Vehicle Vault.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+          <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
             <div>
-              <p className="font-semibold text-slate-900">{auth.user?.name}</p>
+              <p className="font-semibold text-fg">{auth.user?.name}</p>
               <p className="break-all">{auth.user?.email}</p>
             </div>
             <p>Everything in your garage is tied to this account.</p>
@@ -90,15 +90,15 @@ export function SettingsPage() {
               account details.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
             <div className="space-y-2">
               <p>Use this export as a backup of your ownership history outside the app.</p>
-              <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+              <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-page/80 px-3.5 py-3">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-fg-3" />
                 <p>
                   Only data saved under{' '}
-                  <span className="break-all font-medium text-slate-900">{auth.user?.email}</span>{' '}
-                  is included in this export.
+                  <span className="break-all font-medium text-fg">{auth.user?.email}</span> is
+                  included in this export.
                 </p>
               </div>
             </div>
@@ -131,20 +131,20 @@ export function SettingsPage() {
               Choose which alerts reach you by email and push, and turn push on for this device.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
             <p>
               Every alert stays in the bell either way. These settings only decide what else reaches
               you.
             </p>
             <Link
               to="/settings/preferences"
-              className="flex items-center justify-between rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3 font-medium text-slate-900 transition-colors hover:bg-slate-100"
+              className="flex items-center justify-between rounded-xl border border-border/70 bg-page/80 px-3.5 py-3 font-medium text-fg transition-colors hover:bg-page"
             >
               <span className="flex items-center gap-2">
-                <BellRing className="h-4 w-4 text-slate-500" />
+                <BellRing className="h-4 w-4 text-fg-3" />
                 Notification preferences
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-fg-3" />
             </Link>
           </CardContent>
         </Card>
@@ -157,7 +157,7 @@ export function SettingsPage() {
               available.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
             {reconcileMutation.isError ? (
               <InlineError
                 message={getApiErrorMessage(
@@ -188,20 +188,20 @@ export function SettingsPage() {
               Review every change made across your garage — what changed, and when.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-slate-600">
+          <CardContent className="space-y-4 text-sm leading-6 text-fg-2">
             <p>
               A complete, newest-first history of vehicle, service, reminder, fuel, and account
               events tied to your account.
             </p>
             <Link
               to="/settings/activity"
-              className="flex items-center justify-between rounded-xl border border-border/70 bg-slate-50/80 px-3.5 py-3 font-medium text-slate-900 transition-colors hover:bg-slate-100"
+              className="flex items-center justify-between rounded-xl border border-border/70 bg-page/80 px-3.5 py-3 font-medium text-fg transition-colors hover:bg-page"
             >
               <span className="flex items-center gap-2">
-                <History className="h-4 w-4 text-slate-500" />
+                <History className="h-4 w-4 text-fg-3" />
                 View activity log
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-fg-3" />
             </Link>
           </CardContent>
         </Card>

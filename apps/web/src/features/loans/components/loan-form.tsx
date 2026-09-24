@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { CreateVehicleLoanInput } from '@vehicle-vault/shared';
 
+import { Figure } from '@/components/shared/figure';
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
@@ -148,25 +149,10 @@ export function LoanForm({
 
       <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
         <div className="font-medium text-foreground/90">Preview</div>
-        <div className="mt-2 grid grid-cols-3 gap-3 text-xs text-muted-foreground">
-          <div>
-            <div className="text-[11px] uppercase tracking-wide">EMI</div>
-            <div className="text-base font-semibold text-foreground">
-              {format.money(emiPreview)}
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wide">Total interest</div>
-            <div className="text-base font-semibold text-foreground">
-              {format.money(totalInterest)}
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wide">Total payable</div>
-            <div className="text-base font-semibold text-foreground">
-              {format.money(totalPayable)}
-            </div>
-          </div>
+        <div className="mt-2 grid grid-cols-3 gap-3">
+          <Figure label="EMI" value={format.money(emiPreview)} />
+          <Figure label="Total interest" value={format.money(totalInterest)} />
+          <Figure label="Total payable" value={format.money(totalPayable)} />
         </div>
       </div>
 

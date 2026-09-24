@@ -61,10 +61,10 @@ export function PushDeviceSetting() {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="space-y-0.5">
-        <p className="text-sm font-semibold text-slate-900" id="push-device-label">
+        <p className="text-sm font-semibold text-fg" id="push-device-label">
           Push notifications on this device
         </p>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-fg-3">
           {reason ?? 'Alerts arrive here even when Vehicle Vault is not open.'}
         </p>
       </div>

@@ -115,8 +115,8 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Vehicle loans</h2>
-          <p className="text-sm text-slate-500">Financing tied to this vehicle.</p>
+          <h2 className="text-lg font-bold text-fg">Vehicle loans</h2>
+          <p className="text-sm text-fg-3">Financing tied to this vehicle.</p>
         </div>
         <div className="flex gap-2">
           <Link to="/loans" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
@@ -228,7 +228,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-on-late hover:bg-destructive/90"
               disabled={deleteMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
@@ -247,7 +247,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-caption font-medium text-muted-foreground">{label}</div>
       <div className="mt-1 text-xl font-semibold text-foreground">{value}</div>
     </div>
   );

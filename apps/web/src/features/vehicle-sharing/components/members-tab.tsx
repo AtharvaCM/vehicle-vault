@@ -62,8 +62,8 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
 
   if (membersQuery.isError) {
     return (
-      <Card className="border-rose-200 bg-rose-50">
-        <CardContent className="p-6 text-sm text-rose-800">
+      <Card className="border-late/30 bg-late-tint">
+        <CardContent className="p-6 text-sm text-late">
           Failed to load members: {getApiErrorMessage(membersQuery.error)}
         </CardContent>
       </Card>
@@ -76,7 +76,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200/60 bg-white/70">
+      <Card className="border-line/60 bg-surface/70">
         <CardHeader>
           <CardTitle className="text-lg font-bold">Members</CardTitle>
           <CardDescription>
@@ -93,7 +93,7 @@ export function MembersTab({ vehicleId, currentUserRole }: Props) {
               isSelf={member.isSelf}
             />
           ))}
-          {members.length === 0 ? <p className="text-sm text-slate-500">No members yet.</p> : null}
+          {members.length === 0 ? <p className="text-sm text-fg-3">No members yet.</p> : null}
         </CardContent>
       </Card>
 
@@ -138,17 +138,17 @@ function MemberRow({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-white px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-surface px-4 py-3">
       <div className="flex items-center gap-3">
-        <div className="rounded-full bg-slate-100 p-2 text-slate-500">
+        <div className="rounded-full bg-page p-2 text-fg-3">
           {isOwnerRow ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
         </div>
         <div>
           <p className="text-sm font-semibold">
             {member.name}
-            {isSelf ? <span className="ml-2 text-xs text-slate-400">(you)</span> : null}
+            {isSelf ? <span className="ml-2 text-xs text-fg-3">(you)</span> : null}
           </p>
-          <p className="break-all text-xs text-slate-500">{member.email}</p>
+          <p className="break-all text-xs text-fg-3">{member.email}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -235,17 +235,15 @@ function MemberRow({
 function RoleBadge({ role }: { role: VehicleRole }) {
   if (role === 'owner') {
     return (
-      <Badge className="bg-amber-100 text-amber-800">{format.enumLabel('vehicleRole', role)}</Badge>
+      <Badge className="bg-soon-tint text-soon">{format.enumLabel('vehicleRole', role)}</Badge>
     );
   }
   if (role === 'editor') {
     return (
-      <Badge className="bg-blue-100 text-blue-800">{format.enumLabel('vehicleRole', role)}</Badge>
+      <Badge className="bg-brand-tint text-brand">{format.enumLabel('vehicleRole', role)}</Badge>
     );
   }
-  return (
-    <Badge className="bg-slate-100 text-slate-700">{format.enumLabel('vehicleRole', role)}</Badge>
-  );
+  return <Badge className="bg-page text-fg-2">{format.enumLabel('vehicleRole', role)}</Badge>;
 }
 
 function InviteForm({ vehicleId }: { vehicleId: string }) {
@@ -273,7 +271,7 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
   }
 
   return (
-    <Card className="border-slate-200/60 bg-white/70">
+    <Card className="border-line/60 bg-surface/70">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <UserPlus className="h-5 w-5" /> Invite a collaborator
@@ -351,11 +349,8 @@ export function InviteLinkPanel({
   }
 
   return (
-    <div
-      className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm"
-      role="status"
-    >
-      <p className="font-semibold text-emerald-900">
+    <div className="space-y-3 rounded-2xl border border-ok/30 bg-ok-tint p-4 text-sm" role="status">
+      <p className="font-semibold text-ok">
         {emailSent
           ? `Email sent to ${invite.email}. You can also send them this link.`
           : `Send this link to ${invite.email}. Email isn’t set up, so nothing was sent.`}
@@ -411,7 +406,7 @@ function PendingInvitesCard({
   const revokeMutation = useRevokeInvite(vehicleId);
 
   return (
-    <Card className="border-slate-200/60 bg-white/70">
+    <Card className="border-line/60 bg-surface/70">
       <CardHeader>
         <CardTitle className="text-lg font-bold">Pending invitations</CardTitle>
         <CardDescription>Invites that have not been accepted yet.</CardDescription>
@@ -420,15 +415,15 @@ function PendingInvitesCard({
         {invites.map((invite) => (
           <div
             key={invite.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-white px-4 py-3"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-surface px-4 py-3"
           >
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-slate-100 p-2 text-slate-500">
+              <div className="rounded-full bg-page p-2 text-fg-3">
                 <Mail className="h-4 w-4" />
               </div>
               <div>
                 <p className="break-all text-sm font-semibold">{invite.email}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-fg-3">
                   Role: {format.enumLabel('vehicleRole', invite.role)} · expires{' '}
                   {format.date(invite.expiresAt)}
                 </p>

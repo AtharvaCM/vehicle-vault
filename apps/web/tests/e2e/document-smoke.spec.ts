@@ -57,7 +57,7 @@ test('user can manage insurance and warranty documents via unified route', async
   // ── 5. Edit Insurance ──────────────────────────────────────────────
   // Click the pencil (edit) button on the insurance card
   const insuranceCard = page
-    .locator('[class*="border-slate"]')
+    .locator('[data-slot="card"]')
     .filter({ hasText: 'Test Insurance Corp' });
   await insuranceCard.getByRole('button').first().click(); // Pencil is first, Trash is second
   await expect(page.getByRole('heading', { name: /edit insurance policy/i })).toBeVisible();
@@ -71,7 +71,7 @@ test('user can manage insurance and warranty documents via unified route', async
 
   // ── 6. Edit Warranty ───────────────────────────────────────────────
   const warrantyCard = page
-    .locator('[class*="border-slate"]')
+    .locator('[data-slot="card"]')
     .filter({ hasText: 'Test Motors Warranty' });
   await warrantyCard.getByRole('button').first().click();
   await expect(page.getByRole('heading', { name: /edit warranty coverage/i })).toBeVisible();
@@ -85,7 +85,7 @@ test('user can manage insurance and warranty documents via unified route', async
 
   // Delete warranty (the trash icon is the second button in the card)
   const updatedWarrantyCard = page
-    .locator('[class*="border-slate"]')
+    .locator('[data-slot="card"]')
     .filter({ hasText: 'Updated Motors Warranty' });
   await updatedWarrantyCard.getByRole('button').nth(1).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
@@ -93,7 +93,7 @@ test('user can manage insurance and warranty documents via unified route', async
 
   // Delete insurance
   const updatedInsuranceCard = page
-    .locator('[class*="border-slate"]')
+    .locator('[data-slot="card"]')
     .filter({ hasText: 'Updated Insurance Corp' });
   await updatedInsuranceCard.getByRole('button').nth(1).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
