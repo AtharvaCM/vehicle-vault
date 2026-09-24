@@ -20,7 +20,7 @@ import {
 function invalidateAccessories(queryClient: QueryClient, vehicleId: string) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.accessories.all(vehicleId) });
   void queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all() });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
   invalidateAudit(queryClient);
 }
 

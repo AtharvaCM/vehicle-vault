@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ReminderStatus, ReminderType } from '@vehicle-vault/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -50,6 +50,13 @@ describe('RemindersService', () => {
   };
   const serviceScheduleService = { buildNextOccurrence: vi.fn() };
 
+  const access = {
+    assert: vi.fn(),
+    assertEditor: vi.fn(),
+    assertOwner: vi.fn(),
+    resolve: vi.fn(),
+  };
+
   let service: RemindersService;
 
   beforeEach(() => {
@@ -74,7 +81,7 @@ describe('RemindersService', () => {
       prisma as never,
       vehiclesService as never,
       auditService as never,
-      { assert: vi.fn(), assertEditor: vi.fn(), assertOwner: vi.fn(), resolve: vi.fn() } as never,
+      access as never,
       notificationsService as never,
       serviceScheduleService as never,
       productEvents as never,
@@ -429,5 +436,218 @@ describe('RemindersService', () => {
     await expect(service.getReminderById('user-1', 'missing-reminder')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  describe('snoozeReminder', () => {
+    const baseDatedReminder = {
+      id: 'reminder-5',
+      vehicleId: 'vehicle-1',
+      title: 'Insurance renewal',
+      type: ReminderType.Insurance,
+      dueOdometer: null,
+      completedAt: null,
+      notes: null,
+      catalogSlug: null,
+      repeatEveryMonths: null,
+      repeatEveryKm: null,
+      createdAt,
+      updatedAt: createdAt,
+      vehicle: { odometer: 12000 },
+    };
+
+    const baseOdometerReminder = {
+      id: 'reminder-6',
+      vehicleId: 'vehicle-1',
+      title: 'Engine oil change',
+      type: ReminderType.Service,
+      dueDate: null,
+      completedAt: null,
+      notes: null,
+      catalogSlug: null,
+      repeatEveryMonths: null,
+      repeatEveryKm: null,
+      createdAt,
+      updatedAt: createdAt,
+      vehicle: { odometer: 12000 },
+    };
+
+    it('moves a past due date to today plus the snooze window', async () => {
+      const before = {
+        ...baseDatedReminder,
+        dueDate: new Date('2026-03-17T00:00:00.000Z'),
+        status: ReminderStatus.Overdue,
+      };
+      const after = {
+        ...before,
+        dueDate: new Date('2026-03-27T00:00:00.000Z'),
+        status: ReminderStatus.Upcoming,
+      };
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValueOnce(before)
+        .mockResolvedValueOnce(after);
+      prisma.reminder.update = vi.fn().mockResolvedValue(after);
+
+      await service.snoozeReminder('user-1', 'reminder-5');
+
+      expect(prisma.reminder.update).toHaveBeenCalledWith({
+        where: { id: 'reminder-5' },
+        data: expect.objectContaining({
+          dueDate: new Date('2026-03-27T00:00:00.000Z'),
+          status: ReminderStatus.Upcoming,
+        }),
+      });
+    });
+
+    it('moves a future due date seven days past its own date', async () => {
+      const before = {
+        ...baseDatedReminder,
+        dueDate: new Date('2026-04-10T00:00:00.000Z'),
+        status: ReminderStatus.Upcoming,
+      };
+      const after = {
+        ...before,
+        dueDate: new Date('2026-04-17T00:00:00.000Z'),
+        status: ReminderStatus.Upcoming,
+      };
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValueOnce(before)
+        .mockResolvedValueOnce(after);
+      prisma.reminder.update = vi.fn().mockResolvedValue(after);
+
+      await service.snoozeReminder('user-1', 'reminder-5');
+
+      expect(prisma.reminder.update).toHaveBeenCalledWith({
+        where: { id: 'reminder-5' },
+        data: expect.objectContaining({
+          dueDate: new Date('2026-04-17T00:00:00.000Z'),
+          status: ReminderStatus.Upcoming,
+        }),
+      });
+    });
+
+    it('moves the odometer target past the vehicle odometer or its own target, whichever is further', async () => {
+      const before = {
+        ...baseOdometerReminder,
+        dueOdometer: 11500,
+        status: ReminderStatus.Overdue,
+      };
+      const after = {
+        ...before,
+        dueOdometer: 12500,
+        status: ReminderStatus.Upcoming,
+      };
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValueOnce(before)
+        .mockResolvedValueOnce(after);
+      prisma.reminder.update = vi.fn().mockResolvedValue(after);
+
+      await service.snoozeReminder('user-1', 'reminder-6');
+
+      expect(prisma.reminder.update).toHaveBeenCalledWith({
+        where: { id: 'reminder-6' },
+        data: expect.objectContaining({
+          dueDate: null,
+          dueOdometer: 12500,
+        }),
+      });
+    });
+
+    it('moves an odometer target already ahead of the vehicle by the snooze distance', async () => {
+      const before = {
+        ...baseOdometerReminder,
+        dueOdometer: 15000,
+        status: ReminderStatus.Upcoming,
+      };
+      const after = {
+        ...before,
+        dueOdometer: 15500,
+      };
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValueOnce(before)
+        .mockResolvedValueOnce(after);
+      prisma.reminder.update = vi.fn().mockResolvedValue(after);
+
+      await service.snoozeReminder('user-1', 'reminder-6');
+
+      expect(prisma.reminder.update).toHaveBeenCalledWith({
+        where: { id: 'reminder-6' },
+        data: expect.objectContaining({
+          dueDate: null,
+          dueOdometer: 15500,
+        }),
+      });
+    });
+
+    it('requires editor access to the reminder’s vehicle', async () => {
+      const before = {
+        ...baseOdometerReminder,
+        dueOdometer: 15000,
+        status: ReminderStatus.Upcoming,
+      };
+      const after = { ...before, dueOdometer: 15500 };
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValueOnce(before)
+        .mockResolvedValueOnce(after);
+      prisma.reminder.update = vi.fn().mockResolvedValue(after);
+
+      await service.snoozeReminder('user-1', 'reminder-6');
+
+      expect(access.assertEditor).toHaveBeenCalledWith('user-1', 'vehicle-1');
+    });
+
+    it('refuses to snooze a completed reminder', async () => {
+      const before = {
+        ...baseDatedReminder,
+        dueDate: new Date('2026-03-17T00:00:00.000Z'),
+        status: ReminderStatus.Completed,
+        completedAt: new Date('2026-03-18T00:00:00.000Z'),
+      };
+      prisma.reminder.findFirst = vi.fn().mockResolvedValue(before);
+      prisma.reminder.update = vi.fn();
+
+      await expect(service.snoozeReminder('user-1', 'reminder-5')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.reminder.update).not.toHaveBeenCalled();
+    });
+
+    it('audits the snooze as a reminder update and clears its notifications', async () => {
+      const before = {
+        ...baseOdometerReminder,
+        dueOdometer: 15000,
+        status: ReminderStatus.Upcoming,
+      };
+      const after = { ...before, dueOdometer: 15500 };
+      prisma.reminder.findFirst = vi
+        .fn()
+        .mockResolvedValueOnce(before)
+        .mockResolvedValueOnce(after);
+      prisma.reminder.update = vi.fn().mockResolvedValue(after);
+
+      await service.snoozeReminder('user-1', 'reminder-6');
+
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'reminder.updated',
+          resourceId: 'reminder-6',
+        }),
+      );
+      expect(notificationsService.markReadForReminder).toHaveBeenCalledWith('user-1', 'reminder-6');
+    });
+
+    it('returns not found when the reminder is outside the user scope', async () => {
+      prisma.reminder.findFirst = vi.fn().mockResolvedValue(null);
+
+      await expect(service.snoozeReminder('user-1', 'missing-reminder')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(prisma.reminder.update).not.toHaveBeenCalled();
+    });
   });
 });

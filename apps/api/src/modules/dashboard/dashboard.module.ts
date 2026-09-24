@@ -11,6 +11,7 @@ import { VehicleLoansModule } from '../vehicle-loans/vehicle-loans.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { UpcomingController } from './upcoming.controller';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { DashboardService } from './dashboard.service';
     TyresModule,
     AccessoriesModule,
   ],
-  controllers: [DashboardController],
+  controllers: [DashboardController, UpcomingController],
   providers: [DashboardService],
 })
 export class DashboardModule {}

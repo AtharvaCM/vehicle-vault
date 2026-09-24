@@ -4,12 +4,13 @@ import {
   LoanStatus,
   MaintenanceRecordStatus,
   ReminderStatus,
+  UPCOMING_KINDS_BY_FILTER,
   VehicleRole,
   requiresPuc,
+  upcomingGroupOf,
   type DashboardAttentionCounts,
   type DashboardAttentionItem,
   type DashboardSummary,
-  type DashboardUrgency,
   type DashboardVehicleDocumentStatus,
   type DashboardVehicleHealth,
   type DashboardVehicleLastService,
@@ -17,8 +18,10 @@ import {
   type DashboardVehicleStatus,
   type FuelType,
   type MaintenanceRecord,
-  type Reminder,
-  type Vehicle,
+  type UpcomingGroupCounts,
+  type UpcomingItem,
+  type UpcomingKindFilter,
+  type UpcomingTimeline,
   type VehicleDocument,
   type VehicleDocumentKind,
   type VehicleLoan,
@@ -30,17 +33,13 @@ import { AttachmentsService } from '../attachments/attachments.service';
 import { MaintenanceService } from '../maintenance/maintenance.service';
 import {
   EDITOR_ONLY_KINDS,
-  isAlertedFromMeasurements,
   serviceHistoryVerdicts,
   tyreVerdicts,
-  type AlertVerdict,
 } from '../notifications/alert-verdicts';
 import { NotificationsService } from '../notifications/notifications.service';
-import { positionLabel } from '../notifications/templates/tyre-labels';
 import { RemindersService } from '../reminders/reminders.service';
 import { unansweredCategories } from '../service-baseline/service-history-coverage';
 import { TyresService } from '../tyres/tyres.service';
-import { isMoreRecentDocument } from '../vehicle-documents/document-recency';
 import { VehicleDocumentsService } from '../vehicle-documents/vehicle-documents.service';
 import { VehicleLoansService } from '../vehicle-loans/vehicle-loans.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
@@ -48,16 +47,22 @@ import { VehiclesService } from '../vehicles/vehicles.service';
 
 import { MaintenanceForecastService } from '../vehicles/maintenance-forecast.service';
 import { computeDataHealth } from './data-health';
+import {
+  THIS_MONTH_MAX_DAYS,
+  buildDueItems,
+  daysUntil,
+  displayNameFor,
+  isAttentionItem,
+  latestDocumentPerVehicleKind,
+  nextEmiDateFor,
+  toUtcDay,
+  type QueueVerdict,
+} from './due-items';
 
 const DASHBOARD_LIST_LIMIT = 5;
 const DASHBOARD_ATTENTION_LIMIT = 25;
 const DASHBOARD_VEHICLE_LIMIT = 50;
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-/** Expired documents older than this fall off the queue (they are still `expired` on the vehicle). */
-const DOCUMENT_OVERDUE_WINDOW_DAYS = 90;
-/** Odometer-only reminders enter the queue once the vehicle is within this many km of the target. */
-const ODOMETER_ATTENTION_KM = 1000;
 /**
  * How long a snoozed document row stays out of the queue. Only ever applied
  * to `this_week`/`this_month` urgency — an `overdue`/`today` row always
@@ -65,12 +70,15 @@ const ODOMETER_ATTENTION_KM = 1000;
  * actually due.
  */
 const DOCUMENT_DISMISS_SNOOZE_DAYS = 14;
-const THIS_WEEK_MAX_DAYS = 7;
-const THIS_MONTH_MAX_DAYS = 30;
+/**
+ * How far ahead Upcoming reads accessory warranties. Home reads 30 days; the
+ * rows past that land in `later`, which is all this adds.
+ */
+const UPCOMING_ACCESSORY_HORIZON_DAYS = 5 * 366;
 
 /**
  * The one definition of "needs attention": overdue, due today, or due within
- * {@link THIS_WEEK_MAX_DAYS} days. The headline, the "vehicles needing
+ * seven days. The headline, the "vehicles needing
  * attention" tile and each garage card's status all count from it; a
  * `this_month` row is "coming up", never attention.
  */
@@ -78,25 +86,10 @@ function needsAttention(item: DashboardAttentionItem): boolean {
   return item.urgency !== 'this_month';
 }
 
-const URGENCY_RANK: Record<DashboardUrgency, number> = {
-  overdue: 0,
-  today: 1,
-  this_week: 2,
-  this_month: 3,
-};
-
 const VEHICLE_STATUS_RANK: Record<DashboardVehicleStatus, number> = {
   overdue: 0,
   due_soon: 1,
   ok: 2,
-};
-
-const DOCUMENT_KIND_TITLES: Record<VehicleDocumentKind, string> = {
-  insurance: 'Insurance policy',
-  warranty: 'Warranty coverage',
-  registration: 'Registration certificate',
-  puc: 'PUC certificate',
-  road_tax: 'Road tax',
 };
 
 /**
@@ -108,28 +101,9 @@ function mandatoryDocumentKinds(fuelType: FuelType): readonly VehicleDocumentKin
   return requiresPuc(fuelType) ? ['insurance', 'puc'] : ['insurance'];
 }
 
-/**
- * The bell's tyre titles, in the queue's sentence case. The position goes in
- * the detail line instead of the title, so a phone-width row keeps it.
- */
-const TYRE_WORN_TITLES = {
-  illegal: 'Tyre not roadworthy',
-  replace: 'Replace tyre',
-  warn: 'Tyre wearing down',
-} as const;
-const TYRE_AGED_TITLES = { replace: 'Tyre aged out', warn: 'Tyre ageing' } as const;
-
-/** How many unanswered categories a service-history row names before it says "and N more". */
-const SERVICE_HISTORY_NAMED_CATEGORIES = 2;
-
 type VehicleSummaryRow = Awaited<ReturnType<VehiclesService['getAllVehicles']>>[number];
 
-/** The verdicts the queue shows: the ones the bell raises about tyres and service history. */
-type QueueVerdict = AlertVerdict<
-  'tyre-worn' | 'tyre-aged' | 'tyre-uninspected' | 'service-baseline-unknown'
->;
-
-type ExpiringAccessory = Awaited<ReturnType<AccessoriesService['findExpiringWarranties']>>[number];
+type DueSources = Awaited<ReturnType<DashboardService['loadDueSources']>>;
 
 /** What the dashboard reads about each vehicle beyond its own row, fetched once per vehicle. */
 type VehicleFacts = {
@@ -145,20 +119,6 @@ type VehicleFacts = {
 type BaselineRow = Prisma.ServiceBaselineGetPayload<{
   select: { vehicleId: true; category: true; status: true; lastDoneOdometer: true };
 }>;
-
-function km(value: number): string {
-  return `${Math.max(0, Math.round(value)).toLocaleString('en-IN')} km`;
-}
-
-/** "engine_oil" → "engine oil", "cvt_belt" → "CVT belt". */
-function categoryWords(category: string): string {
-  return category.replace(/_/g, ' ').replace(/\b(cvt|puc)\b/g, (word) => word.toUpperCase());
-}
-
-type AttentionVehicleFields = Pick<
-  DashboardAttentionItem,
-  'vehicleId' | 'vehicleName' | 'registrationNumber' | 'currentUserRole'
->;
 
 @Injectable()
 export class DashboardService {
@@ -180,46 +140,21 @@ export class DashboardService {
   async getSummary(userId: string): Promise<DashboardSummary> {
     // One clock reading per request so every bucket agrees on what "today" is.
     const now = new Date();
-    const today = this.toUtcDay(now);
+    const today = toUtcDay(now);
 
-    const [
-      vehicles,
-      maintenanceRecords,
-      reminders,
-      attachments,
-      loans,
-      documents,
-      fuelLogCount,
-      dismissals,
-      fuelLogLatestDates,
-      baselines,
-      expiringAccessories,
-    ] = await Promise.all([
-      this.vehiclesService.getAllVehicles(userId),
-      this.maintenanceService.getAllRecords(userId),
-      this.remindersService.getAllReminders(userId),
+    const [sources, attachments, fuelLogCount, fuelLogLatestDates] = await Promise.all([
+      // The engine's own accessory lookup, with the queue's 30-day look-ahead
+      // in place of the bell's seven days, as for documents.
+      this.loadDueSources(userId, now, THIS_MONTH_MAX_DAYS),
       this.attachmentsService.listAllAttachments(userId),
-      this.vehicleLoansService.listForUser(userId),
-      this.vehicleDocumentsService.listForUser(userId),
       this.prisma.fuelLog.count({ where: { vehicle: { members: { some: { userId } } } } }),
-      this.prisma.documentDismissal.findMany({
-        where: { userId, dismissedUntil: { gt: now } },
-        select: { documentId: true },
-      }),
       this.prisma.fuelLog.groupBy({
         by: ['vehicleId'],
         where: { vehicle: { members: { some: { userId } } } },
         _max: { date: true },
       }),
-      this.prisma.serviceBaseline.findMany({
-        where: { vehicle: { members: { some: { userId } } } },
-        select: { vehicleId: true, category: true, status: true, lastDoneOdometer: true },
-      }),
-      // The engine's own lookup, with the queue's 30-day look-ahead in place of
-      // the bell's seven days, as for documents.
-      this.accessoriesService.findExpiringWarranties(userId, THIS_MONTH_MAX_DAYS),
     ]);
-    const dismissedDocumentIds = new Set(dismissals.map((d) => d.documentId));
+    const { vehicles, maintenanceRecords, reminders, loans } = sources;
     const latestFuelLogDateByVehicle = new Map(
       fuelLogLatestDates
         .filter((row) => row._max.date !== null)
@@ -243,7 +178,7 @@ export class DashboardService {
     const vehicleLabelById = Object.fromEntries(
       vehicles.map((vehicle) => [
         vehicle.id,
-        `${this.displayNameFor(vehicle)} • ${vehicle.registrationNumber}`,
+        `${displayNameFor(vehicle)} • ${vehicle.registrationNumber}`,
       ]),
     );
     const attachmentCountByRecordId = attachments.reduce<Record<string, number>>(
@@ -256,32 +191,19 @@ export class DashboardService {
       {},
     );
 
-    const activeLoans = loans.filter((loan) => loan.status === LoanStatus.Active);
     const closedLoans = loans.filter((loan) => loan.status === LoanStatus.Closed);
+    const { dueItems, activeLoans, latestDocuments, factsByVehicle } = await this.classifyDue(
+      userId,
+      sources,
+      now,
+    );
+    // Home is the timeline's near end: everything but what waits for later.
+    const attention = dueItems.filter(isAttentionItem);
     const nextEmiDate = activeLoans
-      .map((loan) => this.nextEmiDateFor(loan))
+      .map((loan) => nextEmiDateFor(loan))
       .filter((date) => date.getTime() >= now.getTime())
       .sort((a, b) => a.getTime() - b.getTime())[0];
 
-    const vehicleById = new Map(vehicles.map((vehicle) => [vehicle.id, vehicle]));
-    const latestDocuments = this.latestDocumentPerVehicleKind(documents);
-    const factsByVehicle = await this.vehicleFactsFor({
-      userId,
-      vehicles,
-      maintenanceRecords,
-      baselines,
-      now,
-    });
-    const attention = this.buildAttention({
-      vehicleById,
-      reminders,
-      latestDocuments,
-      activeLoans,
-      factsByVehicle,
-      expiringAccessories,
-      today,
-      dismissedDocumentIds,
-    });
     const vehicleHealth = this.buildVehicleHealth({
       vehicles,
       attention,
@@ -343,6 +265,43 @@ export class DashboardService {
   }
 
   /**
+   * The Upcoming timeline: Home's attention rows, classified by the same code
+   * from the same sources, plus the rows Home leaves for later. Filtered by
+   * vehicle and kind; only the `later` group is paged, so the groups Home
+   * counts are always whole.
+   */
+  async getUpcoming(
+    userId: string,
+    query: { vehicleId?: string; kind?: UpcomingKindFilter; page?: number; limit?: number },
+  ): Promise<{ timeline: UpcomingTimeline; laterTotal: number; page: number; limit: number }> {
+    const now = new Date();
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const sources = await this.loadDueSources(userId, now, UPCOMING_ACCESSORY_HORIZON_DAYS);
+    if (query.vehicleId) {
+      sources.vehicles = sources.vehicles.filter((vehicle) => vehicle.id === query.vehicleId);
+    }
+
+    const { dueItems } = await this.classifyDue(userId, sources, now);
+    const kinds = query.kind ? UPCOMING_KINDS_BY_FILTER[query.kind] : null;
+    const filtered = kinds ? dueItems.filter((item) => kinds.includes(item.kind)) : dueItems;
+
+    const counts: UpcomingGroupCounts = { late: 0, this_week: 0, this_month: 0, later: 0 };
+    for (const item of filtered) counts[upcomingGroupOf(item.urgency)] += 1;
+
+    const near = filtered.filter((item) => item.urgency !== 'later');
+    const later = filtered.filter((item) => item.urgency === 'later');
+    const start = (page - 1) * limit;
+
+    return {
+      timeline: { items: [...near, ...later.slice(start, start + limit)], counts },
+      laterTotal: later.length,
+      page,
+      limit,
+    };
+  }
+
+  /**
    * Snoozes a `this_week`/`this_month` document row out of the attention
    * queue for {@link DOCUMENT_DISMISS_SNOOZE_DAYS}, and marks its matching
    * `document-expiring` notification(s) read so the bell agrees with the
@@ -369,8 +328,86 @@ export class DashboardService {
   }
 
   // ---------------------------------------------------------------------------
-  // Attention queue
+  // Attention queue and Upcoming timeline
   // ---------------------------------------------------------------------------
+
+  /** Everything the due-item classification reads, fetched in one round. */
+  private async loadDueSources(userId: string, now: Date, accessoryHorizonDays: number) {
+    const [
+      vehicles,
+      maintenanceRecords,
+      reminders,
+      loans,
+      documents,
+      dismissals,
+      baselines,
+      expiringAccessories,
+    ] = await Promise.all([
+      this.vehiclesService.getAllVehicles(userId),
+      this.maintenanceService.getAllRecords(userId),
+      this.remindersService.getAllReminders(userId),
+      this.vehicleLoansService.listForUser(userId),
+      this.vehicleDocumentsService.listForUser(userId),
+      this.prisma.documentDismissal.findMany({
+        where: { userId, dismissedUntil: { gt: now } },
+        select: { documentId: true, dismissedUntil: true },
+      }),
+      this.prisma.serviceBaseline.findMany({
+        where: { vehicle: { members: { some: { userId } } } },
+        select: { vehicleId: true, category: true, status: true, lastDoneOdometer: true },
+      }),
+      this.accessoriesService.findExpiringWarranties(userId, accessoryHorizonDays),
+    ]);
+
+    return {
+      vehicles,
+      maintenanceRecords,
+      reminders,
+      loans,
+      documents,
+      dismissals,
+      baselines,
+      expiringAccessories,
+    };
+  }
+
+  /** The sources run through the shared classification, plus what Home reads on the way. */
+  private async classifyDue(
+    userId: string,
+    sources: DueSources,
+    now: Date,
+  ): Promise<{
+    dueItems: UpcomingItem[];
+    activeLoans: VehicleLoan[];
+    latestDocuments: Map<string, VehicleDocument>;
+    factsByVehicle: Map<string, VehicleFacts>;
+  }> {
+    const { vehicles, maintenanceRecords, reminders, loans, documents, dismissals, baselines } =
+      sources;
+    const activeLoans = loans.filter((loan) => loan.status === LoanStatus.Active);
+    const latestDocuments = latestDocumentPerVehicleKind(documents);
+    const factsByVehicle = await this.vehicleFactsFor({
+      userId,
+      vehicles,
+      maintenanceRecords,
+      baselines,
+      now,
+    });
+    const dueItems = buildDueItems({
+      vehicleById: new Map(vehicles.map((vehicle) => [vehicle.id, vehicle])),
+      reminders,
+      latestDocuments,
+      activeLoans,
+      verdictsByVehicle: new Map(
+        [...factsByVehicle].map(([vehicleId, facts]) => [vehicleId, facts.verdicts]),
+      ),
+      expiringAccessories: sources.expiringAccessories,
+      today: toUtcDay(now),
+      documentSnoozes: new Map(dismissals.map((row) => [row.documentId, row.dismissedUntil])),
+    });
+
+    return { dueItems, activeLoans, latestDocuments, factsByVehicle };
+  }
 
   /**
    * The alert engine's tyre and service-history verdicts on every vehicle the
@@ -444,316 +481,6 @@ export class DashboardService {
     return new Map(entries);
   }
 
-  private buildAttention(input: {
-    vehicleById: Map<string, VehicleSummaryRow>;
-    reminders: Reminder[];
-    latestDocuments: Map<string, VehicleDocument>;
-    activeLoans: VehicleLoan[];
-    factsByVehicle: Map<string, VehicleFacts>;
-    expiringAccessories: ExpiringAccessory[];
-    today: number;
-    dismissedDocumentIds: ReadonlySet<string>;
-  }): DashboardAttentionItem[] {
-    const {
-      vehicleById,
-      reminders,
-      latestDocuments,
-      activeLoans,
-      factsByVehicle,
-      expiringAccessories,
-      today,
-      dismissedDocumentIds,
-    } = input;
-    const items: DashboardAttentionItem[] = [];
-
-    for (const reminder of reminders) {
-      if (reminder.status === ReminderStatus.Completed) continue;
-      // The tyre walk-around is judged from the readings, as in the bell: the
-      // `tyre-check` row below, not this one.
-      if (isAlertedFromMeasurements(reminder)) continue;
-      const vehicle = vehicleById.get(reminder.vehicleId);
-      if (!vehicle) continue;
-
-      const dueDate = reminder.dueDate ?? null;
-      const daysUntilDue = dueDate === null ? null : this.daysUntil(today, dueDate);
-      const kmUntilDue =
-        reminder.dueOdometer === undefined ? undefined : reminder.dueOdometer - vehicle.odometer;
-      const urgency = this.reminderUrgency(reminder.status, daysUntilDue, kmUntilDue);
-      if (!urgency) continue;
-
-      items.push({
-        ...this.attentionVehicleFields(vehicle),
-        id: reminder.id,
-        kind: 'reminder',
-        urgency,
-        title: reminder.title,
-        reminderType: reminder.type,
-        reminderStatus: reminder.status,
-        dueDate,
-        daysUntilDue,
-        dueOdometer: reminder.dueOdometer,
-        kmUntilDue,
-      });
-    }
-
-    for (const document of latestDocuments.values()) {
-      // A superseded policy never shows as expired: only the latest per
-      // (vehicle, kind) is considered, and an open-ended one never expires.
-      if (document.endDate === null) continue;
-      const vehicle = vehicleById.get(document.vehicleId);
-      if (!vehicle) continue;
-
-      const daysUntilDue = this.daysUntil(today, document.endDate);
-      const urgency = this.documentUrgency(daysUntilDue);
-      if (!urgency) continue;
-      // A snooze only defers the heads-up window; it never hides a document
-      // that has actually come due.
-      const snoozeEligible = urgency !== 'overdue' && urgency !== 'today';
-      if (snoozeEligible && dismissedDocumentIds.has(document.id)) continue;
-
-      items.push({
-        ...this.attentionVehicleFields(vehicle),
-        id: document.id,
-        kind: 'document',
-        urgency,
-        title: DOCUMENT_KIND_TITLES[document.kind],
-        documentKind: document.kind,
-        provider: document.provider ?? undefined,
-        dueDate: document.endDate.toISOString(),
-        daysUntilDue,
-      });
-    }
-
-    for (const loan of activeLoans) {
-      const vehicle = vehicleById.get(loan.vehicleId);
-      if (!vehicle) continue;
-
-      const nextEmi = this.nextEmiDateFor(loan);
-      const daysUntilDue = this.daysUntil(today, nextEmi);
-      const urgency = this.emiUrgency(daysUntilDue);
-      if (!urgency) continue;
-
-      items.push({
-        ...this.attentionVehicleFields(vehicle),
-        id: `emi:${loan.id}`,
-        kind: 'loan_emi',
-        urgency,
-        title: 'Loan EMI',
-        loanId: loan.id,
-        amount: loan.emiAmount,
-        dueDate: nextEmi.toISOString(),
-        daysUntilDue,
-      });
-    }
-
-    for (const [vehicleId, facts] of factsByVehicle) {
-      const vehicle = vehicleById.get(vehicleId);
-      if (!vehicle) continue;
-
-      items.push(...this.verdictRows(this.attentionVehicleFields(vehicle), facts.verdicts));
-    }
-
-    for (const accessory of expiringAccessories) {
-      const vehicle = vehicleById.get(accessory.vehicleId);
-      if (!vehicle || !accessory.warrantyExpiresAt) continue;
-
-      // The lookup starts at today, so nothing here has run out; a warranty
-      // ending before today's UTC date is only a server-timezone edge.
-      const daysUntilDue = Math.max(0, this.daysUntil(today, accessory.warrantyExpiresAt));
-      const urgency = this.documentUrgency(daysUntilDue);
-      if (!urgency) continue;
-
-      items.push({
-        ...this.attentionVehicleFields(vehicle),
-        id: `accessory:${accessory.id}`,
-        kind: 'accessory',
-        urgency,
-        title: `${accessory.brand ? `${accessory.brand} ${accessory.name}` : accessory.name} warranty`,
-        dueDate: accessory.warrantyExpiresAt.toISOString(),
-        daysUntilDue,
-      });
-    }
-
-    return items.sort((left, right) => this.compareAttention(left, right));
-  }
-
-  /**
-   * One row per tyre the engine would raise, and one per vehicle for each
-   * question it would ask. The categories whose history is unknown share one
-   * row: the bell asks about each on its own rhythm, but they are answered on
-   * the same screen, and a row apiece would bury everything else coming up.
-   */
-  private verdictRows(
-    vehicle: AttentionVehicleFields,
-    verdicts: QueueVerdict[],
-  ): DashboardAttentionItem[] {
-    const rows: DashboardAttentionItem[] = [];
-    const unknownCategories: string[] = [];
-    const undated = { dueDate: null, daysUntilDue: null } as const;
-
-    for (const verdict of verdicts) {
-      switch (verdict.kind) {
-        case 'tyre-worn': {
-          const { payload } = verdict;
-          rows.push({
-            ...vehicle,
-            ...undated,
-            id: `tyre:${payload.tyreId}`,
-            kind: 'tyre',
-            urgency: payload.level === 'warn' ? 'this_month' : 'overdue',
-            title: TYRE_WORN_TITLES[payload.level],
-            detail: `${positionLabel(payload.position)} · ${
-              payload.treadDepthMm === null
-                ? payload.summary
-                : `${payload.treadDepthMm.toFixed(1)} mm tread`
-            }`,
-          });
-          break;
-        }
-        case 'tyre-aged': {
-          const { payload } = verdict;
-          rows.push({
-            ...vehicle,
-            ...undated,
-            id: `tyre:${payload.tyreId}`,
-            kind: 'tyre',
-            urgency: payload.level === 'warn' ? 'this_month' : 'overdue',
-            title: TYRE_AGED_TITLES[payload.level],
-            detail: `${positionLabel(payload.position)} · ${
-              payload.ageYears === null
-                ? payload.summary
-                : `${payload.ageYears.toFixed(1)} years old`
-            }`,
-          });
-          break;
-        }
-        case 'tyre-uninspected': {
-          const { payload } = verdict;
-          rows.push({
-            ...vehicle,
-            ...undated,
-            id: `tyre-check:${payload.vehicleId}`,
-            kind: 'tyre',
-            urgency: 'this_month',
-            ...(payload.reason === 'untracked'
-              ? { title: 'Tyres not tracked', detail: `None on file at ${km(payload.odometer)}` }
-              : {
-                  title: 'Time to check the tyres',
-                  detail: `Last measured ${km(payload.kmSinceLastCheck)} and ${
-                    payload.daysSinceLastCheck
-                  } day${payload.daysSinceLastCheck === 1 ? '' : 's'} ago`,
-                }),
-          });
-          break;
-        }
-        case 'service-baseline-unknown': {
-          const { payload } = verdict;
-          if (payload.scope === 'category') {
-            unknownCategories.push(payload.category);
-            break;
-          }
-          rows.push({
-            ...vehicle,
-            ...undated,
-            id: `service-history:${payload.vehicleId}`,
-            kind: 'service_baseline',
-            urgency: 'this_month',
-            title: 'Add this vehicle’s service history',
-            detail: `None on file at ${km(payload.odometer)}`,
-          });
-          break;
-        }
-      }
-    }
-
-    if (unknownCategories.length > 0) {
-      const named = unknownCategories.slice(0, SERVICE_HISTORY_NAMED_CATEGORIES).map(categoryWords);
-      const more = unknownCategories.length - named.length;
-      const list = more > 0 ? `${named.join(', ')} and ${more} more` : named.join(' and ');
-
-      rows.push({
-        ...vehicle,
-        ...undated,
-        id: `service-history:${vehicle.vehicleId}`,
-        kind: 'service_baseline',
-        urgency: 'this_month',
-        title: 'Unknown service history',
-        detail: `${list.charAt(0).toUpperCase()}${list.slice(1)}`,
-      });
-    }
-
-    return rows;
-  }
-
-  /**
-   * Urgency comes from the reminder's own status so a queue row can never
-   * contradict the reminder list; only the "how soon" bucketing is local.
-   */
-  private reminderUrgency(
-    status: ReminderStatus,
-    daysUntilDue: number | null,
-    kmUntilDue: number | undefined,
-  ): DashboardUrgency | null {
-    if (status === ReminderStatus.Overdue) return 'overdue';
-    if (status === ReminderStatus.DueToday) return 'today';
-    if (status !== ReminderStatus.Upcoming) return null;
-
-    if (daysUntilDue === null) {
-      return kmUntilDue !== undefined && kmUntilDue <= ODOMETER_ATTENTION_KM ? 'this_month' : null;
-    }
-
-    return this.dateUrgency(daysUntilDue);
-  }
-
-  private documentUrgency(daysUntilDue: number): DashboardUrgency | null {
-    if (daysUntilDue < 0) {
-      return daysUntilDue >= -DOCUMENT_OVERDUE_WINDOW_DAYS ? 'overdue' : null;
-    }
-    if (daysUntilDue === 0) return 'today';
-
-    return this.dateUrgency(daysUntilDue);
-  }
-
-  private emiUrgency(daysUntilDue: number): DashboardUrgency | null {
-    if (daysUntilDue === 0) return 'today';
-    if (daysUntilDue >= 1 && daysUntilDue <= THIS_WEEK_MAX_DAYS) return 'this_week';
-
-    return null;
-  }
-
-  /** Future-dated bucketing shared by every kind: 1–7 this week, 8–30 this month, else nothing. */
-  private dateUrgency(daysUntilDue: number): DashboardUrgency | null {
-    if (daysUntilDue >= 1 && daysUntilDue <= THIS_WEEK_MAX_DAYS) return 'this_week';
-    if (daysUntilDue > THIS_WEEK_MAX_DAYS && daysUntilDue <= THIS_MONTH_MAX_DAYS) {
-      return 'this_month';
-    }
-
-    return null;
-  }
-
-  /**
-   * Urgency bucket first; within a bucket dated items by days-until-due,
-   * then odometer-only items by km-until-due, then title.
-   */
-  private compareAttention(left: DashboardAttentionItem, right: DashboardAttentionItem): number {
-    const rankDifference = URGENCY_RANK[left.urgency] - URGENCY_RANK[right.urgency];
-    if (rankDifference !== 0) return rankDifference;
-
-    const leftDated = left.daysUntilDue !== null;
-    const rightDated = right.daysUntilDue !== null;
-    if (leftDated !== rightDated) return leftDated ? -1 : 1;
-
-    if (left.daysUntilDue !== null && right.daysUntilDue !== null) {
-      if (left.daysUntilDue !== right.daysUntilDue) return left.daysUntilDue - right.daysUntilDue;
-    } else {
-      const leftKm = left.kmUntilDue ?? Number.POSITIVE_INFINITY;
-      const rightKm = right.kmUntilDue ?? Number.POSITIVE_INFINITY;
-      if (leftKm !== rightKm) return leftKm < rightKm ? -1 : 1;
-    }
-
-    return left.title.localeCompare(right.title);
-  }
-
   private buildAttentionCounts(attention: DashboardAttentionItem[]): DashboardAttentionCounts {
     const overdue = attention.filter((item) => item.urgency === 'overdue').length;
     const today = attention.filter((item) => item.urgency === 'today').length;
@@ -817,7 +544,7 @@ export class DashboardService {
     for (const record of maintenanceRecords) {
       if (record.status === MaintenanceRecordStatus.Draft) continue;
       const current = lastServiceByVehicle.get(record.vehicleId);
-      if (!current || this.toUtcDay(record.serviceDate) > this.toUtcDay(current.serviceDate)) {
+      if (!current || toUtcDay(record.serviceDate) > toUtcDay(current.serviceDate)) {
         lastServiceByVehicle.set(record.vehicleId, record);
       }
     }
@@ -855,7 +582,7 @@ export class DashboardService {
 
         return {
           id: vehicle.id,
-          displayName: this.displayNameFor(vehicle),
+          displayName: displayNameFor(vehicle),
           registrationNumber: vehicle.registrationNumber,
           vehicleType: vehicle.vehicleType,
           fuelType: vehicle.fuelType,
@@ -926,7 +653,7 @@ export class DashboardService {
         continue;
       }
 
-      const daysUntilDue = this.daysUntil(today, document.endDate);
+      const daysUntilDue = daysUntil(today, document.endDate);
       statuses[document.kind] = {
         state:
           daysUntilDue < 0
@@ -956,48 +683,6 @@ export class DashboardService {
   // Shared helpers
   // ---------------------------------------------------------------------------
 
-  /**
-   * Latest document per (vehicle, kind), decided by startDate: a renewal always
-   * starts after what it replaces, so a renewed policy hides the one it replaced
-   * and a dated certificate entered after an open-ended one is not masked by it.
-   * Equal start dates fall back to endDate, where null (open-ended) ranks latest.
-   */
-  private latestDocumentPerVehicleKind(documents: VehicleDocument[]): Map<string, VehicleDocument> {
-    const latest = new Map<string, VehicleDocument>();
-    for (const document of documents) {
-      const key = `${document.vehicleId}:${document.kind}`;
-      const current = latest.get(key);
-      if (!current || isMoreRecentDocument(document, current)) {
-        latest.set(key, document);
-      }
-    }
-
-    return latest;
-  }
-
-  /**
-   * Next instalment = startDate + (elapsed + 1) months, with the day clamped into the
-   * target month so a loan started on the 31st is due on the 28th/30th of shorter
-   * months instead of spilling into the month after.
-   */
-  private nextEmiDateFor(loan: VehicleLoan): Date {
-    const elapsed = loan.tenureMonths - loan.monthsRemaining;
-    const start = new Date(loan.startDate);
-    const target = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + elapsed + 1, 1));
-    const daysInTargetMonth = new Date(
-      Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-    ).getUTCDate();
-    target.setUTCDate(Math.min(start.getUTCDate(), daysInTargetMonth));
-    target.setUTCHours(
-      start.getUTCHours(),
-      start.getUTCMinutes(),
-      start.getUTCSeconds(),
-      start.getUTCMilliseconds(),
-    );
-
-    return target;
-  }
-
   private groupByVehicle<T extends { vehicleId: string }>(rows: readonly T[]): Map<string, T[]> {
     const byVehicle = new Map<string, T[]>();
     for (const row of rows) {
@@ -1010,30 +695,5 @@ export class DashboardService {
     }
 
     return byVehicle;
-  }
-
-  private attentionVehicleFields(vehicle: VehicleSummaryRow): AttentionVehicleFields {
-    return {
-      vehicleId: vehicle.id,
-      vehicleName: this.displayNameFor(vehicle),
-      registrationNumber: vehicle.registrationNumber,
-      currentUserRole: vehicle.currentUserRole ?? VehicleRole.Owner,
-    };
-  }
-
-  private displayNameFor(vehicle: Pick<Vehicle, 'nickname' | 'make' | 'model'>): string {
-    return vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
-  }
-
-  /** Whole UTC calendar days from `today` (a `toUtcDay` value) to `value`; negative when past. */
-  private daysUntil(today: number, value: string | Date): number {
-    return Math.round((this.toUtcDay(value) - today) / MS_PER_DAY);
-  }
-
-  /** Midnight-UTC timestamp of the UTC date — mirrors `RemindersService.toUtcDayTimestamp`. */
-  private toUtcDay(value: string | Date): number {
-    const date = value instanceof Date ? value : new Date(value);
-
-    return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
   }
 }

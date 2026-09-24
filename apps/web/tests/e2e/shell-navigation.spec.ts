@@ -158,7 +158,7 @@ test('old addresses land on the new pages, query string and all', async ({ page 
   const moves: Array<[from: string, to: RegExp, heading: string]> = [
     ['/dashboard?focus=overdue', /\/home\?focus=overdue$/, 'Home'],
     ['/vehicles?sort=year-desc', /\/garage\?sort=year-desc$/, 'Garage'],
-    ['/reminders?status=overdue', /\/upcoming\?status=overdue$/, 'Upcoming'],
+    ['/reminders?kind=papers', /\/upcoming\?kind=papers$/, 'Upcoming'],
     ['/maintenance?search=oil', /\/history\?search=oil$/, 'History'],
     ['/loans', /\/costs$/, 'Costs'],
   ];

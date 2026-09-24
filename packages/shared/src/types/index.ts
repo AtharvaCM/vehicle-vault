@@ -2,6 +2,7 @@ export * from './admin';
 export * from './attachment';
 export * from './auth';
 export * from './dashboard';
+export * from './upcoming';
 export * from './export';
 export * from './maintenance';
 export * from './reminder';

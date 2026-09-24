@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
 import { BellRing, CircleDot, Coins, History, Package, ShieldCheck } from 'lucide-react';
-import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { SectionHeader } from '@/components/shared/section-header';
 import { buttonVariants } from '@/components/ui/button';
@@ -60,11 +59,7 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
         })}
       </div>
       <div className="flex justify-end">
-        <Link
-          className={buttonVariants({ variant: 'ghost', size: 'sm' })}
-          search={{ status: ReminderStatus.Upcoming }}
-          to="/upcoming"
-        >
+        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/upcoming">
           Everything upcoming
         </Link>
       </div>

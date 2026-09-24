@@ -12,7 +12,7 @@ export function useCreateLoan(vehicleId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.vehicleLoans.all() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all() });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.summary() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() });
     },
   });
 }
