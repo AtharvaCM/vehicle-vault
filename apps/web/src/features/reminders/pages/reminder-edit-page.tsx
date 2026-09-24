@@ -11,6 +11,7 @@ import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice'
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 import { ApiError } from '@/lib/api/api-error';
+import { documentKindTitles } from '@/features/vehicle-documents/utils/document-kind-labels';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
@@ -163,6 +164,14 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <ReminderForm
+            followsPaper={
+              reminderQuery.data.renewsDocument
+                ? {
+                    kind: reminderQuery.data.renewsDocument.kind,
+                    title: documentKindTitles[reminderQuery.data.renewsDocument.kind],
+                  }
+                : undefined
+            }
             initialValues={initialValues}
             isSubmitting={updateReminderMutation.isPending}
             onDirtyChange={setIsDirty}

@@ -1,6 +1,6 @@
 /**
  * Dev-only demo data: a signed-up user with a few vehicles across every
- * dashboard state (overdue, due today, expiring soon, all clear, an active
+ * dashboard state (a lapsed renewal, due today, all clear, an active
  * loan, a stale odometer) so the triage dashboard has something real to look
  * at locally instead of an empty garage. Every date is relative to "now", so
  * re-running the seed keeps the data fresh no matter when it's run.
@@ -72,7 +72,7 @@ async function main() {
       },
     });
 
-    // --- Vehicle 1: Family SUV — overdue reminder, document expiring this week, fresh odometer ---
+    // --- Vehicle 1: Family SUV — lapsed insurance with its renewal reminder, fresh odometer ---
     const suv = await tx.vehicle.create({
       data: {
         userId: user.id,
@@ -91,30 +91,34 @@ async function main() {
     await tx.reminder.create({
       data: {
         vehicleId: suv.id,
-        title: 'Insurance renewal',
-        type: 'insurance',
-        status: 'overdue',
-        dueDate: daysFromNow(-3),
-      },
-    });
-    await tx.reminder.create({
-      data: {
-        vehicleId: suv.id,
         title: 'Wheel alignment check',
         type: 'service',
         status: 'upcoming',
         dueDate: daysFromNow(4),
       },
     });
-    await tx.insurancePolicy.create({
+    const suvPolicy = await tx.insurancePolicy.create({
       data: {
         vehicleId: suv.id,
         provider: 'HDFC ERGO',
         policyNumber: 'HE-DEMO-001',
-        startDate: monthsFromNow(-11),
-        endDate: daysFromNow(5),
+        startDate: monthsFromNow(-12),
+        endDate: daysFromNow(-3),
         premiumAmount: 14500,
         insuredValue: 1200000,
+      },
+    });
+    // The renewal follows the policy (`reminders/renewal-link.ts`): due when
+    // it ends, and one item on Home and Upcoming rather than two.
+    await tx.reminder.create({
+      data: {
+        vehicleId: suv.id,
+        title: 'Insurance renewal',
+        type: 'insurance',
+        status: 'overdue',
+        dueDate: suvPolicy.endDate,
+        repeatEveryMonths: 12,
+        insurancePolicyId: suvPolicy.id,
       },
     });
     await tx.complianceDocument.create({

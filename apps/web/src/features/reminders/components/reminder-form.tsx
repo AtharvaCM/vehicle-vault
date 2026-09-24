@@ -1,4 +1,9 @@
-import { ReminderCreateSchema, ReminderType } from '@vehicle-vault/shared';
+import {
+  RENEWAL_DOCUMENT_KIND_BY_REMINDER_TYPE,
+  ReminderCreateSchema,
+  ReminderType,
+  type VehicleDocumentKind,
+} from '@vehicle-vault/shared';
 import { useEffect, useState } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -35,6 +40,12 @@ type ReminderFormProps = {
   submittingLabel?: string;
   submitHint?: string;
   successMessage?: string;
+  /**
+   * The paper this renewal follows, when editing one that does: its due date
+   * is the paper's end date, so the field is read-only while the type still
+   * matches the paper's kind.
+   */
+  followsPaper?: { kind: VehicleDocumentKind; title: string };
 };
 
 function toIsoDateString(value: string | undefined) {
@@ -125,12 +136,16 @@ export function ReminderForm({
   submittingLabel = 'Saving reminder...',
   submitHint = 'Use a due date, a due odometer, or both to track this reminder.',
   successMessage = 'Reminder saved.',
+  followsPaper,
 }: ReminderFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const form = useForm<ReminderFormValues>({
     defaultValues: defaultReminderValues,
   });
   const repeat = form.watch('repeat');
+  const type = form.watch('type');
+  const renewalKind = RENEWAL_DOCUMENT_KIND_BY_REMINDER_TYPE[type];
+  const datedByPaper = followsPaper !== undefined && renewalKind === followsPaper.kind;
   const showsMonths = repeat === 'custom';
   const showsKm = repeat === 'distance' || repeat === 'custom';
 
@@ -285,6 +300,13 @@ export function ReminderForm({
             </FormField>
 
             <FormField
+              description={
+                datedByPaper
+                  ? `Follows the ${followsPaper.title.toLowerCase()}: due when it ends. Change the date on the paper.`
+                  : !followsPaper && renewalKind
+                    ? 'If this vehicle has the paper on file, the reminder follows its end date instead.'
+                    : undefined
+              }
               htmlFor="reminder-due-date"
               label="Due date"
               error={form.formState.errors.dueDate?.message}
@@ -293,6 +315,8 @@ export function ReminderForm({
                 id="reminder-due-date"
                 {...form.register('dueDate')}
                 aria-invalid={Boolean(form.formState.errors.dueDate)}
+                className={datedByPaper ? 'bg-page text-fg-2' : undefined}
+                readOnly={datedByPaper}
                 type="date"
               />
             </FormField>

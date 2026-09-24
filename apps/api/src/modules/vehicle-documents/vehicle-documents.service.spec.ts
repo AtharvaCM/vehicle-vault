@@ -58,8 +58,15 @@ describe('VehicleDocumentsService', () => {
     ensureVehicleExists: vi.fn(),
   };
 
+  // Renewal sync runs in its own transaction; with no papers in these rows it
+  // finds nothing to roll or adopt (its own spec is `renewal-link.spec.ts`).
+  const tx = {
+    insurancePolicy: { findMany: vi.fn().mockResolvedValue([]) },
+    complianceDocument: { findMany: vi.fn().mockResolvedValue([]) },
+  };
   const prisma = {
     attachment: { findMany: vi.fn().mockResolvedValue([]) },
+    $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
   };
   const storageService = { deleteObject: vi.fn().mockResolvedValue('deleted') };
   const auditService = {
@@ -73,6 +80,7 @@ describe('VehicleDocumentsService', () => {
   };
   const notificationsService = {
     markReadForDocument: vi.fn().mockResolvedValue(undefined),
+    markReadForReminder: vi.fn().mockResolvedValue(undefined),
   };
 
   let insurance: VehicleDocumentAdapter;
@@ -82,6 +90,8 @@ describe('VehicleDocumentsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prisma.attachment.findMany.mockResolvedValue([]);
+    tx.insurancePolicy.findMany.mockResolvedValue([]);
+    tx.complianceDocument.findMany.mockResolvedValue([]);
     storageService.deleteObject.mockResolvedValue('deleted');
     vehiclesService.ensureVehicleExists.mockResolvedValue(undefined);
     auditService.track.mockResolvedValue(undefined);

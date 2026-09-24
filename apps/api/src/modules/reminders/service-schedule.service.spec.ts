@@ -7,7 +7,13 @@ import { ServiceScheduleService, type CompletedReminder } from './service-schedu
 describe('ServiceScheduleService', () => {
   const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   const prisma = {
-    reminder: { findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
+    // `findUnique` is renewal linking reading a new reminder back; null: nothing to link.
+    reminder: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     maintenanceRecord: { findMany: vi.fn() },
     serviceBaseline: { findMany: vi.fn() },
     $transaction: vi.fn(),

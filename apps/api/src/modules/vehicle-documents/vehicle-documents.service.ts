@@ -16,6 +16,7 @@ import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { NotificationsService } from '../notifications/notifications.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
+import { isRenewalKind, syncRenewals } from '../reminders/renewal-link';
 import { pickLatestDocument } from './document-recency';
 import { VEHICLE_DOCUMENT_ADAPTERS, type VehicleDocumentAdapter } from './types';
 
@@ -100,7 +101,30 @@ export class VehicleDocumentsService {
       after: created as unknown as Record<string, unknown>,
     });
     await this.markSupersededNotificationsRead(userId, vehicleId, adapter);
+    await this.syncRenewalReminders(userId, vehicleId, input.kind);
     return created;
+  }
+
+  /**
+   * Papers drive their own renewal reminders (`reminders/renewal-link.ts`):
+   * after a paper is added or edited, its reminder is rolled to a renewal,
+   * re-dated to a changed expiry, or adopted. A reminder completed by a
+   * renewal is moot on the bell too.
+   */
+  private async syncRenewalReminders(
+    userId: string,
+    vehicleId: string,
+    kind: VehicleDocumentKind,
+  ): Promise<void> {
+    if (!isRenewalKind(kind)) return;
+    const { completedReminderIds } = await this.prisma.$transaction((tx) =>
+      syncRenewals({ tx, auditService: this.auditService, actorUserId: userId }, vehicleId, kind),
+    );
+    await Promise.all(
+      completedReminderIds.map((reminderId) =>
+        this.notificationsService.markReadForReminder(userId, reminderId),
+      ),
+    );
   }
 
   /**
@@ -145,6 +169,7 @@ export class VehicleDocumentsService {
       before: owned as unknown as Record<string, unknown>,
       after: updated as unknown as Record<string, unknown>,
     });
+    await this.syncRenewalReminders(userId, owned.vehicleId, input.kind);
     return updated;
   }
 

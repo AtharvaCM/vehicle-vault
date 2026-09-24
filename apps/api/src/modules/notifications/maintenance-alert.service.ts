@@ -185,6 +185,10 @@ export class MaintenanceAlertService {
       where: {
         vehicleId,
         status: { not: 'completed' },
+        // A renewal that follows a paper is announced by the paper's own
+        // expiry alert: one renewal, one notification.
+        insurancePolicyId: null,
+        complianceDocumentId: null,
         OR: [{ dueOdometer: { not: null } }, { dueDate: { not: null } }],
       },
     });

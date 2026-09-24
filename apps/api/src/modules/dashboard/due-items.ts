@@ -120,9 +120,52 @@ export function buildDueItems(input: DueItemsInput): UpcomingItem[] {
     documentSnoozes,
   } = input;
   const items: UpcomingItem[] = [];
+  // Renewals are one thing: an open reminder that follows a paper rides on
+  // the paper's row, which carries its title and id.
+  const renewalByPaper = new Map(
+    reminders
+      .filter((reminder) => reminder.renewsDocument && reminder.status !== ReminderStatus.Completed)
+      .map((reminder) => [reminder.renewsDocument!.id, reminder]),
+  );
+  const shownWithPaper = new Set<string>();
+
+  for (const document of latestDocuments.values()) {
+    // A superseded policy never shows as expired: only the latest per
+    // (vehicle, kind) is considered, and an open-ended one never expires.
+    if (document.endDate === null) continue;
+    const vehicle = vehicleById.get(document.vehicleId);
+    if (!vehicle) continue;
+
+    const daysUntilDue = daysUntil(today, document.endDate);
+    let urgency = documentUrgency(daysUntilDue);
+    if (!urgency) continue;
+    // A snooze only defers the heads-up window; it never hides a document
+    // that has actually come due.
+    const snoozedUntil = documentSnoozes.get(document.id);
+    const snoozed =
+      snoozedUntil !== undefined && (urgency === 'this_week' || urgency === 'this_month');
+    if (snoozed) urgency = 'later';
+    const renewal = renewalByPaper.get(document.id);
+    if (renewal) shownWithPaper.add(renewal.id);
+
+    items.push({
+      ...rowVehicleFields(vehicle),
+      id: document.id,
+      kind: 'document',
+      urgency,
+      title: renewal?.title ?? DOCUMENT_KIND_TITLES[document.kind],
+      documentKind: document.kind,
+      provider: document.provider ?? undefined,
+      dueDate: document.endDate.toISOString(),
+      daysUntilDue,
+      ...(renewal ? { reminderId: renewal.id } : {}),
+      ...(snoozed ? { snoozedUntil: snoozedUntil.toISOString() } : {}),
+    });
+  }
 
   for (const reminder of reminders) {
     if (reminder.status === ReminderStatus.Completed) continue;
+    if (shownWithPaper.has(reminder.id)) continue;
     // The tyre walk-around is judged from the readings, as in the bell: the
     // `tyre-check` row below, not this one.
     if (isAlertedFromMeasurements(reminder)) continue;
@@ -148,37 +191,6 @@ export function buildDueItems(input: DueItemsInput): UpcomingItem[] {
       daysUntilDue,
       dueOdometer: reminder.dueOdometer,
       kmUntilDue,
-    });
-  }
-
-  for (const document of latestDocuments.values()) {
-    // A superseded policy never shows as expired: only the latest per
-    // (vehicle, kind) is considered, and an open-ended one never expires.
-    if (document.endDate === null) continue;
-    const vehicle = vehicleById.get(document.vehicleId);
-    if (!vehicle) continue;
-
-    const daysUntilDue = daysUntil(today, document.endDate);
-    let urgency = documentUrgency(daysUntilDue);
-    if (!urgency) continue;
-    // A snooze only defers the heads-up window; it never hides a document
-    // that has actually come due.
-    const snoozedUntil = documentSnoozes.get(document.id);
-    const snoozed =
-      snoozedUntil !== undefined && (urgency === 'this_week' || urgency === 'this_month');
-    if (snoozed) urgency = 'later';
-
-    items.push({
-      ...rowVehicleFields(vehicle),
-      id: document.id,
-      kind: 'document',
-      urgency,
-      title: DOCUMENT_KIND_TITLES[document.kind],
-      documentKind: document.kind,
-      provider: document.provider ?? undefined,
-      dueDate: document.endDate.toISOString(),
-      daysUntilDue,
-      ...(snoozed ? { snoozedUntil: snoozedUntil.toISOString() } : {}),
     });
   }
 

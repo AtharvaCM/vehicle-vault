@@ -9,6 +9,7 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { documentKindTitles } from '@/features/vehicle-documents/utils/document-kind-labels';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
@@ -161,6 +162,21 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
         />
 
         {actionError ? <InlineError message={actionError} /> : null}
+
+        {reminder.renewsDocument ? (
+          <p className="text-ui text-fg-2" data-testid="reminder-follows-paper">
+            Follows the {documentKindTitles[reminder.renewsDocument.kind].toLowerCase()}: due when
+            it ends, and renewing it closes this reminder and starts the next.{' '}
+            <Link
+              className="font-semibold text-brand hover:underline"
+              params={{ vehicleId: reminder.vehicleId }}
+              search={{ tab: 'papers' }}
+              to="/vehicles/$vehicleId"
+            >
+              See papers
+            </Link>
+          </p>
+        ) : null}
 
         <ReminderSummaryCard reminder={reminder} vehicleLabel={vehicleLabel} />
       </PageContainer>

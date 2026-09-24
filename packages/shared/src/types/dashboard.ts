@@ -101,6 +101,12 @@ export type DashboardAttentionItem = {
   documentKind?: VehicleDocumentKind;
   /** Documents only: insurer / issuing authority. */
   provider?: string;
+  /**
+   * Documents only: the open renewal reminder that follows this paper. The
+   * row stands for both (its title is the reminder's), and the reminder has
+   * no row of its own: one renewal, one row.
+   */
+  reminderId?: string;
   /** Loan EMI only. */
   loanId?: string;
   /** Loan EMI only: the EMI amount. */

@@ -88,6 +88,7 @@ enum ReminderType {
   inspection
   emission
   custom
+  registration
 }
 
 enum ReminderStatus {
@@ -811,9 +812,9 @@ model MaintenanceLineItem {
 }
 
 model Reminder {
-  id                        String             @id @default(uuid()) @db.Uuid
-  vehicleId                 String             @db.Uuid
-  title                     String             @db.VarChar(120)
+  id                        String              @id @default(uuid()) @db.Uuid
+  vehicleId                 String              @db.Uuid
+  title                     String              @db.VarChar(120)
   type                      ReminderType
   dueDate                   DateTime?
   dueOdometer               Int?
@@ -823,21 +824,30 @@ model Reminder {
   /// The confirmed service this reminder was made from, when the workshop wrote
   /// down when to come back. Unique: a record keeps one reminder and refreshes
   /// it. Set null if the record goes, since the reminder may still be wanted.
-  sourceMaintenanceRecordId String?            @unique @db.Uuid
+  sourceMaintenanceRecordId String?             @unique @db.Uuid
   /// Where the reminder came from, when it was the suggested service schedule:
   /// the schedule item's slug (`engine_oil_change`, `tyre_inspection`). Null for
   /// a hand-written or record-made reminder.
-  catalogSlug               String?            @db.VarChar(64)
+  catalogSlug               String?             @db.VarChar(64)
   /// The repeat rule. Completing a reminder with one creates the next
   /// occurrence: due this many months and/or kilometres later, whichever comes
   /// first when both are set. Both null: it does not repeat. Kept free of
   /// anything reminder-specific so a document expiry can carry the same pair.
   repeatEveryMonths         Int?
   repeatEveryKm             Int?
-  createdAt                 DateTime           @default(now())
-  updatedAt                 DateTime           @updatedAt
-  vehicle                   Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  sourceMaintenanceRecord   MaintenanceRecord? @relation(fields: [sourceMaintenanceRecordId], references: [id], onDelete: SetNull)
+  /// The paper a renewal reminder follows (at most one of the two is set): its
+  /// due date is the paper's end date while linked, and renewing the paper
+  /// completes it and links a successor to the new one. Unique: a paper has
+  /// one renewal. Set null when the paper is deleted, which leaves a plain
+  /// reminder dated where the paper ended. See `reminders/renewal-link.ts`.
+  insurancePolicyId         String?             @unique @db.Uuid
+  complianceDocumentId      String?             @unique @db.Uuid
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  vehicle                   Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  sourceMaintenanceRecord   MaintenanceRecord?  @relation(fields: [sourceMaintenanceRecordId], references: [id], onDelete: SetNull)
+  insurancePolicy           InsurancePolicy?    @relation(fields: [insurancePolicyId], references: [id], onDelete: SetNull)
+  complianceDocument        ComplianceDocument? @relation(fields: [complianceDocumentId], references: [id], onDelete: SetNull)
 
   @@index([vehicleId, createdAt(sort: Desc)])
   @@index([status, dueDate])
@@ -1042,6 +1052,7 @@ model InsurancePolicy {
   vehicle       Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   attachments   Attachment[]
   claims        Claim[]
+  renewal       Reminder?
 
   @@index([vehicleId, endDate])
 }
@@ -1129,6 +1140,7 @@ model ComplianceDocument {
   updatedAt   DateTime               @updatedAt
   vehicle     Vehicle                @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   attachments Attachment[]
+  renewal     Reminder?
 
   @@index([vehicleId, kind])
   @@index([vehicleId, endDate])
