@@ -42,6 +42,17 @@
   --plate-ev: #1e7f4a;
   --plate-ev-ink: #ffffff;
 
+  /*
+   * Chart series, in this fixed order: a series keeps its slot whatever else is
+   * shown. Validated as a set for colour-blind separation and >= 3:1 against the
+   * card (the Chart wrapper's doc says how); none is a status colour.
+   */
+  --chart-1: #00909a;
+  --chart-2: #e0692f;
+  --chart-3: #2a78d6;
+  --chart-4: #d0508e;
+  --chart-5: #6a4fc4;
+
   --overlay-shadow: 0 1px 2px rgb(21 24 30 / 0.08), 0 8px 24px rgb(21 24 30 / 0.12);
   /* Dims the page behind a dialog or sheet. */
   --scrim: rgb(15 18 22 / 0.4);
@@ -74,6 +85,13 @@
   --ok-tint: #253834;
   --ended: #aeb4bd;
   --ended-dot: #5b626d;
+
+  /* The same five hues, stepped for the dark card. */
+  --chart-1: #22a3a8;
+  --chart-2: #d9652c;
+  --chart-3: #3f87e0;
+  --chart-4: #d85b93;
+  --chart-5: #8f7ce8;
 
   --overlay-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
   --scrim: rgb(0 0 0 / 0.6);
@@ -111,6 +129,12 @@
   --color-plate-ev: var(--plate-ev);
   --color-plate-ev-ink: var(--plate-ev-ink);
   --color-scrim: var(--scrim);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   /* The shadcn names the UI components read, mapped onto the tokens. */
   --color-background: var(--surface-card);

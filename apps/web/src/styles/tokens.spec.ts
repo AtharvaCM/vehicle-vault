@@ -81,3 +81,18 @@ describe.each([
     expect(contrast(fg!, bg!)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+/** Chart marks are not text: they need 3:1 against the card they sit on (WCAG 1.4.11). */
+const CHART_SERIES = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'];
+
+describe.each([
+  ['light', light],
+  ['dark', dark],
+])('%s chart series', (_, tokens) => {
+  it.each(CHART_SERIES)('%s stands out from the card (3:1)', (series) => {
+    const mark = tokens.get(series);
+
+    expect(mark, `--${series}`).toBeDefined();
+    expect(contrast(mark!, tokens.get('surface-card')!)).toBeGreaterThanOrEqual(3);
+  });
+});

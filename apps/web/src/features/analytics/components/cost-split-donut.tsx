@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { PieChart as PieIcon } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { format } from '@/lib/format';
+import { ChartRange, ShareBar } from '@/components/shared/chart';
+import { Figure } from '@/components/shared/figure';
+import { Money } from '@/components/shared/money';
+import { SectionHeader } from '@/components/shared/section-header';
+import { Card } from '@/components/ui/card';
 
 import { costSplitQueryOptions } from '../api/get-cost-split';
 import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
+import { SPEND_SERIES } from '../utils/spend-series';
 
 type RangePreset = Extract<CostRangePreset, '30d' | '90d' | '1y' | 'all'>;
 
@@ -19,101 +20,50 @@ const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
   { value: 'all', label: 'All time' },
 ];
 
-const BUCKET_COLORS: Record<string, string> = {
-  Fuel: '#f59e0b',
-  Maintenance: '#0f172a',
-  Accessories: '#0ea5e9',
-  Insurance: '#10b981',
-  'Loan interest': '#f43f5e',
-};
-
 type Props = {
   vehicleId?: string;
   defaultRange?: RangePreset;
 };
 
+/**
+ * Where the money went: the range's total, then one bar split by category
+ * with each part named, its amount and its share. A bar and a list read at a
+ * glance on a phone, where a donut's slices had to be matched to a legend.
+ */
 export function CostSplitDonut({ vehicleId, defaultRange = '1y' }: Props) {
   const [range, setRange] = useState<RangePreset>(defaultRange);
   const params = useMemo(() => ({ ...rangeToParams(range), vehicleId }), [range, vehicleId]);
   const query = useQuery(costSplitQueryOptions(params));
 
-  const chartData = useMemo(() => {
+  const shares = useMemo(() => {
     if (!query.data) return [];
-    const b = query.data.buckets;
-    return [
-      { name: 'Fuel', value: Number(b.fuel) },
-      { name: 'Maintenance', value: Number(b.maintenance) },
-      { name: 'Accessories', value: Number(b.accessories) },
-      { name: 'Insurance', value: Number(b.insurance) },
-      { name: 'Loan interest', value: Number(b.loanInterest) },
-    ].filter((d) => d.value > 0);
+    const buckets = query.data.buckets;
+    return SPEND_SERIES.map((series) => ({ ...series, value: Number(buckets[series.key]) }));
   }, [query.data]);
 
   const total = query.data ? Number(query.data.buckets.total) : 0;
+  const rangeLabel = RANGE_OPTIONS.find((option) => option.value === range)?.label ?? '';
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <PieIcon className="h-4 w-4 text-fg-3" />
-            Cost split
-          </CardTitle>
-          <CardDescription>Where your money went</CardDescription>
-        </div>
-        <ToggleGroup
-          aria-label="Range"
-          onValueChange={(value) => {
-            if (value) setRange(value as RangePreset);
-          }}
-          type="single"
-          value={range}
-        >
-          {RANGE_OPTIONS.map((option) => (
-            <ToggleGroupItem key={option.value} value={option.value}>
-              {option.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </CardHeader>
-      <CardContent>
-        {query.isLoading ? (
-          <p className="text-sm text-fg-3">Loading analytics…</p>
-        ) : query.isError ? (
-          <p className="text-sm text-late">Failed to load cost split.</p>
-        ) : chartData.length === 0 ? (
-          <p className="text-sm text-fg-3">No spend recorded in this range yet.</p>
-        ) : (
-          <div className="space-y-3">
-            <div className="h-64 w-full" data-testid="cost-split-chart">
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={2}
-                  >
-                    {chartData.map((entry) => (
-                      <Cell key={entry.name} fill={BUCKET_COLORS[entry.name]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => format.money(Number(value ?? 0))}
-                    contentStyle={{ borderRadius: 8, fontSize: 12 }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="text-center text-sm font-medium text-fg-2">
-              Total: {format.money(total)}
-            </p>
-          </div>
-        )}
-      </CardContent>
+    <Card className="flex min-w-0 flex-col gap-4" data-testid="cost-split-card">
+      <SectionHeader as="h3" description="By category" title="Where the money went" />
+      <ChartRange onChange={setRange} options={RANGE_OPTIONS} value={range} />
+      {query.isLoading ? (
+        <p className="text-body text-fg-3">Loading your spend…</p>
+      ) : query.isError ? (
+        <p className="text-body text-late">Your spend could not be loaded. Try again shortly.</p>
+      ) : total <= 0 ? (
+        <p className="text-body text-fg-2">No spend recorded in this range yet.</p>
+      ) : (
+        <>
+          <Figure
+            label={range === 'all' ? 'Spent in all' : `Spent, last ${rangeLabel.toLowerCase()}`}
+            size="lg"
+            value={<Money value={total} />}
+          />
+          <ShareBar label={`Spend by category, ${rangeLabel.toLowerCase()}`} shares={shares} />
+        </>
+      )}
     </Card>
   );
 }

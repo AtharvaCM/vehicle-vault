@@ -129,11 +129,11 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
             <Stat label="Prepaid" value={format.money(loan.prepaidToDate)} />
           </div>
 
-          <section className="space-y-2 rounded-md border border-border p-4">
-            <header className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Amortization</h3>
-              <span className="text-xs text-muted-foreground">
-                Principal vs interest per EMI · balance line
+          <section className="flex min-w-0 flex-col gap-3 rounded-card border border-line p-4">
+            <header className="flex flex-col gap-0.5">
+              <h3 className="font-display text-lead font-semibold text-fg">Schedule</h3>
+              <span className="text-small text-fg-2">
+                What each EMI pays, and the balance left after it
               </span>
             </header>
             <LoanScheduleChart loanId={loan.id} />
