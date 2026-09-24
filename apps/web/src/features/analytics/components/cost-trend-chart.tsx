@@ -1,23 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-import { TrendingUp } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Chart, ChartRange } from '@/components/shared/chart';
+import { SectionHeader } from '@/components/shared/section-header';
+import { Card } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from '@/lib/format';
 
 import { costTrendQueryOptions } from '../api/get-cost-trend';
 import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
+import { SPEND_SERIES } from '../utils/spend-series';
 
 type RangePreset = Extract<CostRangePreset, '6m' | '1y' | '2y' | 'all'>;
 
@@ -35,6 +27,13 @@ type Props = {
   defaultRange?: RangePreset;
 };
 
+const perKm = (value: number) => `${format.money(value, { decimals: 2 })}/km`;
+
+/**
+ * Spend per month as stacked bars, one colour per category, the bar's height
+ * the month's total; or the cost of each kilometre driven that month. Months
+ * are totals, so they are bars: a line would claim values between them.
+ */
 export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
   const [range, setRange] = useState<RangePreset>(defaultRange);
   const [mode, setMode] = useState<Mode>('total');
@@ -52,149 +51,77 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
       insurance: Number(p.insurance),
       loanInterest: Number(p.loanInterest),
       costPerKm: p.costPerKm ? Number(p.costPerKm) : null,
-      km: p.km,
     }));
   }, [query.data]);
 
-  const hasAnyData = chartData.some(
-    (p) => p.total > 0 || (p.costPerKm !== null && p.costPerKm > 0),
+  // Only the categories this range has any spend in: an empty one would be a
+  // legend entry for nothing. Each keeps its own colour either way.
+  const series = useMemo(
+    () => SPEND_SERIES.filter((item) => chartData.some((point) => point[item.key] !== 0)),
+    [chartData],
   );
+  const hasAnyData =
+    mode === 'total'
+      ? chartData.some((p) => p.total > 0)
+      : chartData.some((p) => p.costPerKm !== null && p.costPerKm > 0);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-fg-3" />
-            Ownership trend
-          </CardTitle>
-          <CardDescription>
-            {mode === 'total' ? 'Monthly spend by category' : 'Cost per kilometre driven'}
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ToggleGroup
-            aria-label="Value shown"
-            onValueChange={(value) => {
-              if (value) setMode(value as Mode);
-            }}
-            type="single"
-            value={mode}
-          >
-            <ToggleGroupItem value="total">₹/month</ToggleGroupItem>
-            <ToggleGroupItem value="costPerKm">₹/km</ToggleGroupItem>
-          </ToggleGroup>
-          <ToggleGroup
-            aria-label="Range"
-            onValueChange={(value) => {
-              if (value) setRange(value as RangePreset);
-            }}
-            type="single"
-            value={range}
-          >
-            {RANGE_OPTIONS.map((option) => (
-              <ToggleGroupItem key={option.value} value={option.value}>
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {query.isLoading ? (
-          <p className="text-sm text-fg-3">Loading trend…</p>
-        ) : query.isError ? (
-          <p className="text-sm text-late">Failed to load cost trend.</p>
-        ) : !hasAnyData ? (
-          <p className="text-sm text-fg-3">No spend recorded in this range yet.</p>
-        ) : (
-          <div className="h-72 w-full" data-testid="cost-trend-chart">
-            <ResponsiveContainer>
-              <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="period" fontSize={11} stroke="#64748b" />
-                <YAxis
-                  fontSize={11}
-                  stroke="#64748b"
-                  tickFormatter={(v: number) => format.money(v)}
-                  width={80}
-                />
-                <Tooltip
-                  formatter={(value, name) => {
-                    const n = Number(value ?? 0);
-                    return [format.money(n), String(name)];
-                  }}
-                  contentStyle={{ borderRadius: 8, fontSize: 12 }}
-                />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                {mode === 'total' ? (
-                  <>
-                    <Line
-                      type="monotone"
-                      dataKey="fuel"
-                      name="Fuel"
-                      stroke="#f59e0b"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="maintenance"
-                      name="Maintenance"
-                      stroke="#0f172a"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="accessories"
-                      name="Accessories"
-                      stroke="#0ea5e9"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="insurance"
-                      name="Insurance"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="loanInterest"
-                      name="Loan interest"
-                      stroke="#f43f5e"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      name="Total"
-                      stroke="#64748b"
-                      strokeDasharray="4 4"
-                      strokeWidth={2}
-                      dot
-                    />
-                  </>
-                ) : (
-                  <Line
-                    type="monotone"
-                    dataKey="costPerKm"
-                    name="₹ / km"
-                    stroke="#0f172a"
-                    strokeWidth={2}
-                    dot
-                    connectNulls
-                  />
-                )}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </CardContent>
+    <Card className="flex min-w-0 flex-col gap-4" data-testid="cost-trend-card">
+      <SectionHeader
+        as="h3"
+        description={
+          mode === 'total' ? 'Spend each month, by category' : 'What each kilometre driven cost'
+        }
+        title="Monthly spend"
+      />
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <ToggleGroup
+          aria-label="Show"
+          className="flex w-full sm:inline-flex sm:w-auto"
+          onValueChange={(value) => {
+            if (value) setMode(value as Mode);
+          }}
+          type="single"
+          value={mode}
+        >
+          <ToggleGroupItem className="flex-1 sm:flex-none" value="total">
+            Per month
+          </ToggleGroupItem>
+          <ToggleGroupItem className="flex-1 sm:flex-none" value="costPerKm">
+            Per km
+          </ToggleGroupItem>
+        </ToggleGroup>
+        <ChartRange onChange={setRange} options={RANGE_OPTIONS} value={range} />
+      </div>
+      {query.isLoading ? (
+        <p className="text-body text-fg-3">Loading your spend…</p>
+      ) : query.isError ? (
+        <p className="text-body text-late">Your spend could not be loaded. Try again shortly.</p>
+      ) : !hasAnyData ? (
+        <p className="text-body text-fg-2">
+          {mode === 'total'
+            ? 'No spend recorded in this range yet.'
+            : 'Log fuel with odometer readings to see what each kilometre costs.'}
+        </p>
+      ) : mode === 'total' ? (
+        <Chart
+          data={chartData}
+          form="stacked"
+          label="Spend each month, by category"
+          series={series}
+          xKey="period"
+        />
+      ) : (
+        <Chart
+          data={chartData}
+          form="bar"
+          label="Cost per kilometre, each month"
+          series={[{ key: 'costPerKm', label: 'Cost per km', slot: 1 }]}
+          axisFormat={(value) => format.money(value)}
+          valueFormat={perKm}
+          xKey="period"
+        />
+      )}
     </Card>
   );
 }

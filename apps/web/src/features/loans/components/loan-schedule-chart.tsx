@@ -1,17 +1,6 @@
 import { useMemo } from 'react';
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 
-import { format } from '@/lib/format';
+import { Chart } from '@/components/shared/chart';
 
 import { useLoanSchedule } from '../hooks/use-loan-schedule';
 
@@ -19,96 +8,68 @@ type Props = {
   loanId: string;
 };
 
+/**
+ * The schedule as two charts on one scale each, never one chart with two
+ * y-axes: what each month's EMI pays (principal, interest, any prepayment,
+ * stacked), then the balance left, which holds between EMIs and drops at each,
+ * so it is drawn as steps.
+ */
 export function LoanScheduleChart({ loanId }: Props) {
   const query = useLoanSchedule(loanId);
 
-  const data = useMemo(() => {
-    if (!query.data) return [];
-    return query.data.map((point) => ({
-      period: point.period,
-      principal: point.principal,
-      interest: point.interest,
-      prepayment: point.prepayment,
-      balance: point.balance,
-    }));
-  }, [query.data]);
+  const data = useMemo(
+    () =>
+      (query.data ?? []).map((point) => ({
+        period: point.period,
+        principal: point.principal,
+        interest: point.interest,
+        prepayment: point.prepayment,
+        balance: point.balance,
+      })),
+    [query.data],
+  );
+  const hasPrepayment = data.some((point) => point.prepayment > 0);
 
   if (query.isLoading) {
-    return <p className="text-xs text-muted-foreground">Loading schedule…</p>;
+    return <p className="text-small text-fg-3">Loading the schedule…</p>;
   }
   if (query.isError) {
-    return <p className="text-xs text-rose-600">Failed to load schedule.</p>;
+    return <p className="text-small text-late">The schedule could not be loaded.</p>;
   }
   if (!data.length) {
-    return <p className="text-xs text-muted-foreground">No schedule yet.</p>;
+    return <p className="text-small text-fg-2">No schedule yet.</p>;
   }
 
   return (
-    <div className="h-64 w-full" data-testid="loan-schedule-chart">
-      <ResponsiveContainer>
-        <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="period" fontSize={10} stroke="#64748b" interval="preserveStartEnd" />
-          <YAxis
-            yAxisId="left"
-            fontSize={10}
-            stroke="#64748b"
-            tickFormatter={(v: number) => format.money(v)}
-            width={70}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            fontSize={10}
-            stroke="#64748b"
-            tickFormatter={(v: number) => format.money(v)}
-            width={70}
-          />
-          <Tooltip
-            formatter={(value, name) => [format.money(Number(value ?? 0)), String(name)]}
-            contentStyle={{ borderRadius: 8, fontSize: 12 }}
-          />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Area
-            yAxisId="left"
-            type="monotone"
-            dataKey="principal"
-            name="Principal"
-            stackId="emi"
-            stroke="#10b981"
-            fill="#10b981"
-            fillOpacity={0.5}
-          />
-          <Area
-            yAxisId="left"
-            type="monotone"
-            dataKey="interest"
-            name="Interest"
-            stackId="emi"
-            stroke="#f59e0b"
-            fill="#f59e0b"
-            fillOpacity={0.5}
-          />
-          <Area
-            yAxisId="left"
-            type="monotone"
-            dataKey="prepayment"
-            name="Prepayment"
-            stroke="#6366f1"
-            fill="#6366f1"
-            fillOpacity={0.35}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="balance"
-            name="Balance"
-            stroke="#0f172a"
-            strokeWidth={2}
-            dot={false}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+    <div className="flex min-w-0 flex-col gap-6" data-testid="loan-schedule-chart">
+      <section className="flex min-w-0 flex-col gap-2">
+        <h4 className="text-body font-semibold text-fg">What each EMI pays</h4>
+        <Chart
+          data={data}
+          form="stacked"
+          height={200}
+          label="What each EMI pays, by month"
+          series={[
+            { key: 'principal', label: 'Principal', slot: 1 },
+            { key: 'interest', label: 'Interest', slot: 2 },
+            ...(hasPrepayment
+              ? [{ key: 'prepayment' as const, label: 'Prepayment', slot: 3 as const }]
+              : []),
+          ]}
+          xKey="period"
+        />
+      </section>
+      <section className="flex min-w-0 flex-col gap-2">
+        <h4 className="text-body font-semibold text-fg">Balance left</h4>
+        <Chart
+          data={data}
+          form="step"
+          height={180}
+          label="Balance left after each EMI"
+          series={[{ key: 'balance', label: 'Balance', slot: 3 }]}
+          xKey="period"
+        />
+      </section>
     </div>
   );
 }

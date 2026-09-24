@@ -72,3 +72,23 @@ export function distance(km: NumberInput, { decimals = 0 }: Pick<NumberOptions, 
 export function odometer(km: NumberInput) {
   return distance(km);
 }
+
+/**
+ * "₹950", "₹4.2k", "₹38k", "₹1.3L", "₹2.1Cr": rupees shortened the Indian way,
+ * for chart axes where a full "₹1,31,624" crowds the ticks. Anywhere a person
+ * reads an amount, use `money`.
+ */
+export function compactMoney(value: NumberInput) {
+  if (!isReadable(value)) return EMPTY;
+
+  const sign = value < 0 ? '-' : '';
+  const size = Math.abs(value);
+  const short = (amount: number, unit: string) =>
+    `${sign}₹${number(amount, { decimals: amount < 10 ? 1 : 0 })}${unit}`;
+
+  if (size >= 1_00_00_000) return short(size / 1_00_00_000, 'Cr');
+  if (size >= 1_00_000) return short(size / 1_00_000, 'L');
+  if (size >= 1_000) return short(size / 1_000, 'k');
+
+  return `${sign}₹${number(size, { decimals: 0 })}`;
+}

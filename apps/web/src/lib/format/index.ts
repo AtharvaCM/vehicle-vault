@@ -7,12 +7,13 @@
 import { date, daysUntil } from './date';
 import { EMPTY } from './empty';
 import { enumLabel, enumOptions } from './enum-label';
-import { distance, money, number, odometer } from './number';
+import { compactMoney, distance, money, number, odometer } from './number';
 import { registration, spokenRegistration } from './registration';
 import { relativeDue } from './relative-due';
 
 export const format = {
   money,
+  compactMoney,
   number,
   distance,
   odometer,

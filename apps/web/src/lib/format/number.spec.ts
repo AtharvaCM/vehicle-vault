@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { distance, money, number, odometer } from './number';
+import { compactMoney, distance, money, number, odometer } from './number';
 
 describe('money', () => {
   it('groups rupees the Indian way: thousands, then lakhs, then crores', () => {
@@ -79,5 +79,22 @@ describe('distance and odometer', () => {
   it('never prints "NaN km"', () => {
     expect(distance(Number.NaN)).toBe('—');
     expect(odometer(undefined)).toBe('—');
+  });
+});
+
+describe('compactMoney', () => {
+  it('shortens rupees the Indian way for chart axes', () => {
+    expect(compactMoney(950)).toBe('₹950');
+    expect(compactMoney(4_200)).toBe('₹4.2k');
+    expect(compactMoney(38_000)).toBe('₹38k');
+    expect(compactMoney(1_31_624)).toBe('₹1.3L');
+    expect(compactMoney(21_00_000)).toBe('₹21L');
+    expect(compactMoney(2_10_00_000)).toBe('₹2.1Cr');
+  });
+
+  it('keeps the sign and shows a dash for no amount', () => {
+    expect(compactMoney(-4_200)).toBe('-₹4.2k');
+    expect(compactMoney(0)).toBe('₹0');
+    expect(compactMoney(null)).toBe('—');
   });
 });

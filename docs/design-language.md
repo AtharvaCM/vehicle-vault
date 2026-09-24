@@ -83,6 +83,14 @@ Variants: private (white), electric (green, white text), BH series (`22 BH 1234 
 - Motion: 150ms colour/opacity transitions; one orchestrated moment (the attention list settling on load); all motion behind `prefers-reduced-motion`.
 - Icons: lucide, 1.75 stroke, 16 / 20 / 22 only.
 
+## Charts (`Chart`)
+
+- Five series colours, `--chart-1` to `--chart-5` (light `#00909A` teal, `#E0692F` orange, `#2A78D6` blue, `#D0508E` magenta, `#6A4FC4` violet; dark `#22A3A8`, `#D9652C`, `#3F87E0`, `#D85B93`, `#8F7CE8`). None of them is a status colour. They were validated as a set, in this order, for colour-blind separation of neighbours, a normal-vision floor, lightness band and chroma, and each is at least 3:1 against the card. A series keeps its slot for good: spend is Service 1, Fuel 2, Insurance 3, Accessories 4, Loan interest 5. There is no sixth colour; more series fold into "Other".
+- Totals per month are bars, stacked when they split by category, with 2px of card between segments and 4px rounding at the data end. A value that holds between months (a loan balance) is a step. A line never stands for a monthly total.
+- One value axis per chart: two measures on different scales are two charts. The axis shortens rupees (₹1.3L), the tooltip gives them in full, and months read "Sep 2026".
+- More than one series gets a legend, with its text in text colours. Every chart carries its numbers as a table for screen readers. A range is picked with the segmented control (`ChartRange`).
+- A whole split into parts is a share bar with each part named, its amount and its share, not a donut.
+
 ## Key patterns (drawn on the canvas)
 
 - **Home:** date → H1 count ("4 things need you this week") → one-sentence status → attention list grouped Late / This week (plate · task · when · verb) → recently logged; side column: Papers health bar, Garage status per vehicle, Costs.
