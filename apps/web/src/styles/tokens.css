@@ -29,8 +29,11 @@
   --soon: #8a5300;
   --soon-dot: #d98200;
   --soon-tint: #fff1d6;
+  /* Text on a solid soon fill (the dot colour), where a status is the whole banner. */
+  --on-soon: #15181e;
   /* The boards' #1E7F4A reads 4.37:1 on its tint; this is the nearest that clears AA. */
   --ok: #1c7a47;
+  --on-ok: #ffffff;
   --ok-tint: #e4f3ea;
   --ended: #4a505c;
   --ended-dot: #c4c8d0;
@@ -81,7 +84,9 @@
   --soon: #f5b452;
   --soon-dot: #f5b452;
   --soon-tint: #3b3329;
+  --on-soon: #0f1216;
   --ok: #6fcf97;
+  --on-ok: #0f1216;
   --ok-tint: #253834;
   --ended: #aeb4bd;
   --ended-dot: #5b626d;
@@ -118,7 +123,9 @@
   --color-soon: var(--soon);
   --color-soon-dot: var(--soon-dot);
   --color-soon-tint: var(--soon-tint);
+  --color-on-soon: var(--on-soon);
   --color-ok: var(--ok);
+  --color-on-ok: var(--on-ok);
   --color-ok-tint: var(--ok-tint);
   --color-ended: var(--ended);
   --color-ended-dot: var(--ended-dot);
