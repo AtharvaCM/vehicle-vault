@@ -118,7 +118,8 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   const vehicleUrl = page.url();
 
-  await page.getByRole('link', { name: /edit vehicle/i }).click();
+  await page.getByRole('button', { name: 'More vehicle actions' }).click();
+  await page.getByRole('menuitem', { name: 'Edit vehicle' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/edit$/);
   await expect(page.locator('#vehicle-type')).toContainText('SUV');
   await expect(page.locator('#vehicle-make')).toContainText('Hyundai');
@@ -132,10 +133,8 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
   await expect(page.getByText('Odometer: 16,250 km')).toBeVisible();
 
-  await page
-    .getByRole('link', { name: /log service/i })
-    .first()
-    .click();
+  await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
+  await page.getByRole('menuitem', { name: 'Service' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
   await page.getByLabel(/service date/i).fill('2026-03-20');
   await page.getByLabel(/^odometer$/i).fill('16250');
@@ -165,10 +164,8 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.goto(vehicleUrl);
   await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
 
-  await page
-    .getByRole('link', { name: /^add reminder$/i })
-    .first()
-    .click();
+  await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
+  await page.getByRole('menuitem', { name: 'Reminder' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/reminders\/new$/);
   await page.getByLabel(/^title$/i).fill(reminderTitle);
   await page.getByLabel(/due date/i).fill('2026-04-20');

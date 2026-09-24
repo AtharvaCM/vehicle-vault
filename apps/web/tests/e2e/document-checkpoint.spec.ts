@@ -58,7 +58,7 @@ test('a document is two taps from the vehicle, full screen on a phone', async ({
   });
 
   // Attach the certificate on the card first, as an owner would.
-  await page.goto(`${vehicleUrl}?tab=protection`);
+  await page.goto(`${vehicleUrl}?tab=papers`);
   await page
     .getByRole('region', { name: 'Document files' })
     .first()
@@ -66,10 +66,10 @@ test('a document is two taps from the vehicle, full screen on a phone', async ({
     .setInputFiles(pucPdf);
   await expect(page.getByRole('button', { name: /^sample-receipt\.pdf/ })).toBeVisible();
 
-  // On a phone, from the vehicle: tap the Protection tab, then Show.
+  // On a phone, from the vehicle: tap the Papers tab, then Show.
   await page.setViewportSize(PHONE);
   await page.goto(vehicleUrl);
-  await page.getByRole('tab', { name: 'Protection' }).click();
+  await page.getByRole('tab', { name: /^Papers/ }).click();
   await page.getByRole('link', { name: 'Show PUC Certificate full screen' }).click();
 
   const view = page.getByTestId('document-checkpoint');
@@ -87,7 +87,7 @@ test('a document is two taps from the vehicle, full screen on a phone', async ({
 
   // And back to where it came from.
   await view.getByRole('link', { name: 'Back to the vehicle' }).click();
-  await expect(page).toHaveURL(/tab=protection/);
+  await expect(page).toHaveURL(/tab=papers/);
 });
 
 test.afterAll(async () => {

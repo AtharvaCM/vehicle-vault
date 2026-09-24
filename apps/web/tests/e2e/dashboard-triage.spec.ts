@@ -25,10 +25,8 @@ test('the triage dashboard surfaces a due reminder and clears it on Done', async
     registrationNumber,
   });
 
-  await page
-    .getByRole('link', { name: /^add reminder$/i })
-    .first()
-    .click();
+  await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
+  await page.getByRole('menuitem', { name: 'Reminder' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/reminders\/new$/);
   await page.getByLabel(/^title$/i).fill(reminderTitle);
   await page.getByLabel(/due date/i).fill('2026-09-06');

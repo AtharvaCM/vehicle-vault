@@ -55,13 +55,17 @@ test('a vehicle can be added without naming its variant', async ({ page }) => {
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
   // Make and model, with no gap where the variant would have been.
-  await expect(page.getByText('Hyundai Creta · 15,200 km', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Hyundai Creta · 15,200 km, updated today', { exact: true }),
+  ).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Tech Specs' }).click();
+  await page.getByRole('tab', { name: 'More' }).click();
+  await page.getByRole('link', { name: 'Tech specs' }).click();
   await expect(page.getByText('No variant on file')).toBeVisible();
 
   // The trim can be filled in later, from the same form.
-  await page.getByRole('link', { name: /edit vehicle/i }).click();
+  await page.getByRole('button', { name: 'More vehicle actions' }).click();
+  await page.getByRole('menuitem', { name: 'Edit vehicle' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/edit$/);
   await expect(page.locator('#vehicle-variant')).toContainText('Select variant, or skip');
 });

@@ -17,9 +17,9 @@ import {
 import { cn } from '@/lib/utils';
 
 import type { DashboardDataGap, DashboardVehicleHealth } from '../types/dashboard';
-import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
+import type { VehicleDetailSearch } from '@/features/vehicles/types/vehicle-detail-search';
 import { format } from '@/lib/format';
-import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
+import { ATTENTION_KIND_SEARCH } from '../utils/attention-kind-tab';
 import { describeVehicleDocuments } from '../utils/describe-vehicle-documents';
 import { vehicleHealthStatus } from '../utils/status';
 import { OdometerQuickUpdate } from './odometer-quick-update';
@@ -58,14 +58,14 @@ function MicroRow({ label, children }: MicroRowProps) {
  */
 const DATA_GAPS: Record<
   DashboardDataGap,
-  { text: string; fill: VehicleDetailTab | 'edit' | null }
+  { text: string; fill: VehicleDetailSearch | 'edit' | null }
 > = {
-  service_history: { text: 'Service history incomplete', fill: 'maintenance' },
+  service_history: { text: 'Service history incomplete', fill: { tab: 'history' } },
   odometer: { text: 'Odometer not updated lately', fill: null },
-  insurance: { text: 'No current insurance', fill: 'protection' },
+  insurance: { text: 'No current insurance', fill: { tab: 'papers' } },
   catalog_link: { text: 'Not linked to a catalog model', fill: 'edit' },
-  puc: { text: 'No current PUC', fill: 'protection' },
-  tyres: { text: 'Tyres not tracked', fill: 'tyres' },
+  puc: { text: 'No current PUC', fill: { tab: 'papers' } },
+  tyres: { text: 'Tyres not tracked', fill: { tab: 'more', section: 'tyres' } },
   purchase_price: { text: 'No purchase price', fill: 'edit' },
 };
 
@@ -104,7 +104,7 @@ function DataHealthText({
       <Link
         className={INLINE_LINK}
         params={{ vehicleId: vehicle.id }}
-        search={{ tab: fill }}
+        search={fill}
         to="/vehicles/$vehicleId"
       >
         {text}
@@ -166,12 +166,12 @@ function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
 export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   const canEdit = vehicle.currentUserRole !== 'viewer';
   const documents = describeVehicleDocuments(vehicle, today);
-  const statusTab: VehicleDetailTab | undefined =
+  const statusSearch: VehicleDetailSearch | undefined =
     vehicle.status === 'ok' || !vehicle.nextDue
       ? undefined
       : vehicle.nextDue.kind === 'reminder'
-        ? 'reminders'
-        : ATTENTION_KIND_TABS[vehicle.nextDue.kind];
+        ? { tab: 'reminders' }
+        : ATTENTION_KIND_SEARCH[vehicle.nextDue.kind];
   const kmSinceService = vehicle.lastService ? vehicle.odometer - vehicle.lastService.odometer : 0;
   const health = vehicleHealthStatus(vehicle);
   const nextDueStatusValue = vehicle.nextDue ? nextDueStatus(vehicle.nextDue) : null;
@@ -204,7 +204,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           <Link
             className="rounded-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             params={{ vehicleId: vehicle.id }}
-            search={statusTab ? { tab: statusTab } : {}}
+            search={statusSearch ?? {}}
             to="/vehicles/$vehicleId"
           >
             <StatusPill status={health.status}>{health.words}</StatusPill>
@@ -231,7 +231,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           <Link
             className="rounded-sm hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             params={{ vehicleId: vehicle.id }}
-            search={{ tab: 'protection' }}
+            search={{ tab: 'papers' }}
             to="/vehicles/$vehicleId"
           >
             <StatusDot status={DOCUMENT_STATUS[documents.tone]}>{documents.text}</StatusDot>
@@ -326,7 +326,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
                 <Link
                   className="cursor-pointer"
                   params={{ vehicleId: vehicle.id }}
-                  search={{ tab: 'fuel' }}
+                  search={{ tab: 'history', view: 'fuel' }}
                   to="/vehicles/$vehicleId"
                 >
                   Add fuel
@@ -336,7 +336,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
                 <Link
                   className="cursor-pointer"
                   params={{ vehicleId: vehicle.id }}
-                  search={{ tab: 'protection' }}
+                  search={{ tab: 'papers' }}
                   to="/vehicles/$vehicleId"
                 >
                   Documents

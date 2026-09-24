@@ -235,7 +235,7 @@ export function AttentionQueue({
                   <Link
                     className={buttonVariants({ variant: 'outline', size: 'sm' })}
                     params={{ vehicleId: firstVehicle.id }}
-                    search={{ tab: 'protection' }}
+                    search={{ tab: 'papers' }}
                     to="/vehicles/$vehicleId"
                   >
                     Add documents

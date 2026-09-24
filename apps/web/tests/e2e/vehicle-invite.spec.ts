@@ -24,7 +24,7 @@ async function ownerInvites(page: Page, email: string, suffix: string) {
     registrationNumber: `MH12IV${suffix.slice(-4)}`,
   });
 
-  await page.getByRole('tab', { name: 'Members' }).click();
+  await page.goto(`${vehicleUrl}?tab=more&section=members`);
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByRole('button', { name: 'Send invite' }).click();
 

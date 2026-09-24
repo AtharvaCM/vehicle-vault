@@ -1,18 +1,18 @@
-import type { VehicleDetailTab } from '@/features/vehicles/types/vehicle-detail-search';
+import type { VehicleDetailSearch } from '@/features/vehicles/types/vehicle-detail-search';
 
 import type { DashboardAttentionKind } from '../types/dashboard';
 
 /**
- * The vehicle tab that fixes each kind of attention row — the same tab its
- * alert links to. A reminder has a page of its own instead.
+ * The vehicle tab search that fixes each kind of attention row — the same
+ * place its alert links to. A reminder has a page of its own instead.
  */
-export const ATTENTION_KIND_TABS: Record<
+export const ATTENTION_KIND_SEARCH: Record<
   Exclude<DashboardAttentionKind, 'reminder'>,
-  VehicleDetailTab
+  VehicleDetailSearch
 > = {
-  document: 'protection',
-  loan_emi: 'loans',
-  tyre: 'tyres',
-  service_baseline: 'maintenance',
-  accessory: 'accessories',
+  document: { tab: 'papers' },
+  loan_emi: { tab: 'more', section: 'loans' },
+  tyre: { tab: 'more', section: 'tyres' },
+  service_baseline: { tab: 'history' },
+  accessory: { tab: 'more', section: 'accessories' },
 };

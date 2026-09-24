@@ -11,7 +11,7 @@ function uniqueSuffix() {
 /**
  * A PUC test measures what comes out of a tailpipe, so an electric vehicle is
  * exempt, and nothing should ask it for one: not the new-vehicle prompt, not
- * the dashboard's documents row, not the Protection tab.
+ * the dashboard's documents row, not the Papers tab.
  */
 test('an electric vehicle is never asked for a PUC certificate', async ({ page }) => {
   const suffix = uniqueSuffix();
@@ -65,7 +65,7 @@ test('an electric vehicle is never asked for a PUC certificate', async ({ page }
   await expect(documents).toBeVisible();
   await expect(card).not.toContainText('PUC');
 
-  // The row opens the Protection tab, which points it at its RC instead.
+  // The row opens the Papers tab, which points it at its RC instead.
   await documents.click();
   await expect(page.getByText('Track your RC and road tax')).toBeVisible();
   await expect(page.getByText('Electric vehicles are exempt from PUC')).toBeVisible();

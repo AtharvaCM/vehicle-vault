@@ -91,7 +91,7 @@ test('vehicle header, service records and papers show labels, not raw enum value
   expect(await rawEnumTexts(page)).toEqual([]);
 
   // The service list gives the category a label, and money in Indian grouping.
-  await page.goto(`${vehicleUrl}?tab=maintenance`);
+  await page.goto(`${vehicleUrl}?tab=history`);
   await expect(page.getByText('Engine oil', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('₹1,31,624').first()).toBeVisible();
   expect(await rawEnumTexts(page)).toEqual([]);
@@ -101,7 +101,7 @@ test('vehicle header, service records and papers show labels, not raw enum value
   expect(await rawEnumTexts(page)).toEqual([]);
 
   // Papers carry the one date style.
-  await page.goto(`${vehicleUrl}?tab=protection`);
+  await page.goto(`${vehicleUrl}?tab=papers`);
   await expect(page.getByText('1 Jan 2031').first()).toBeVisible();
   expect(await rawEnumTexts(page)).toEqual([]);
 });

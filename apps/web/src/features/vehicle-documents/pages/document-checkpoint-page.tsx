@@ -159,7 +159,7 @@ export function DocumentCheckpointPage({
       aria-label="Back to the vehicle"
       className="flex h-11 w-11 items-center justify-center rounded-full text-fg-2 hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       params={{ vehicleId }}
-      search={{ tab: 'protection' }}
+      search={{ tab: 'papers' }}
       to="/vehicles/$vehicleId"
     >
       <ArrowLeft aria-hidden="true" className="h-6 w-6" />

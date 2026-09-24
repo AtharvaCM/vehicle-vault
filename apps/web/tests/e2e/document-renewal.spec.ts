@@ -54,7 +54,7 @@ test('renewing a policy carries it over and takes its alert with it', async ({ p
   await expect(attention.filter({ hasText: 'Insurance policy' })).toBeVisible();
 
   // Renew from the card: the form arrives filled in.
-  await page.goto(`${vehicleUrl}?tab=protection`);
+  await page.goto(`${vehicleUrl}?tab=papers`);
   await page.getByRole('button', { name: 'Renew', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText(/Renewing: details are copied/)).toBeVisible();

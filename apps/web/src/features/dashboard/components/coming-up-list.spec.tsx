@@ -41,6 +41,6 @@ describe('ComingUpList', () => {
 
     const row = screen.getByRole('link', { name: /Unknown service history/ });
     expect(row).toHaveTextContent('Brake pads, coolant and 1 more');
-    expect(row).toHaveAttribute('data-search', JSON.stringify({ tab: 'maintenance' }));
+    expect(row).toHaveAttribute('data-search', JSON.stringify({ tab: 'history' }));
   });
 });

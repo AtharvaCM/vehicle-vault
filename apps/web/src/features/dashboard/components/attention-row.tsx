@@ -13,7 +13,7 @@ import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import type { DashboardAttentionItem, DashboardAttentionKind } from '../types/dashboard';
-import { ATTENTION_KIND_TABS } from '../utils/attention-kind-tab';
+import { ATTENTION_KIND_SEARCH } from '../utils/attention-kind-tab';
 import { formatOdometerMeta, formatRelativeDue } from '../utils/format-due';
 import { URGENCY_STATUS } from '../utils/status';
 import { useMediaQuery } from '../hooks/use-media-query';
@@ -49,7 +49,7 @@ export function AttentionItemLink({ item, className, children }: AttentionItemLi
     <Link
       className={className}
       params={{ vehicleId: item.vehicleId }}
-      search={{ tab: ATTENTION_KIND_TABS[item.kind] }}
+      search={ATTENTION_KIND_SEARCH[item.kind]}
       to="/vehicles/$vehicleId"
     >
       {children}
@@ -233,7 +233,7 @@ export function AttentionRow({
             <Link
               className={buttonVariants({ size: 'sm', variant: 'outline' })}
               params={{ vehicleId: item.vehicleId }}
-              search={{ tab: 'protection' }}
+              search={{ tab: 'papers' }}
               to="/vehicles/$vehicleId"
             >
               Renew
@@ -249,7 +249,7 @@ export function AttentionRow({
               className: 'max-sm:hidden',
             })}
             params={{ vehicleId: item.vehicleId }}
-            search={{ tab: ATTENTION_KIND_TABS[item.kind] }}
+            search={ATTENTION_KIND_SEARCH[item.kind]}
             to="/vehicles/$vehicleId"
           >
             {KIND_ACTIONS[item.kind]}
