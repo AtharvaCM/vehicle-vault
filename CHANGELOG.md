@@ -1,3 +1,10 @@
+# [1.84.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.83.0...v1.84.0) (2026-09-24)
+
+
+### Features
+
+* **web:** one place per list, on the vehicle's tabs ([a02a9b8](https://github.com/AtharvaCM/vehicle-vault/commit/a02a9b8dafb194ec605a7534a7b3052ca7f24a67)), closes [#278](https://github.com/AtharvaCM/vehicle-vault/issues/278)
+
 # [1.83.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.82.0...v1.83.0) (2026-09-24)
 
 
