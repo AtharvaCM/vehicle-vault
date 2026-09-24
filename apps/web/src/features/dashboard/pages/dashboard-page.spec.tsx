@@ -30,7 +30,7 @@ vi.mock('../hooks/use-dashboard-summary', () => ({
   useDashboardSummary: () => ({ isPending: false, isError: false, data: summary.current }),
 }));
 // Beside the point here, and each reaches for data of its own.
-vi.mock('../components/spend-section', () => ({ SpendSection: () => null }));
+vi.mock('../components/costs-summary-line', () => ({ CostsSummaryLine: () => null }));
 vi.mock('@/features/pwa/components/install-app-card', () => ({ InstallAppCard: () => null }));
 
 import { DashboardPage } from './dashboard-page';
