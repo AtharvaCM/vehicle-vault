@@ -140,7 +140,7 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
               <CardTitle>Good reminder habits</CardTitle>
               <CardDescription>Clear reminders are easier to act on later.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+            <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
               <p>Use a due date for calendar items like insurance, PUC, or time-based servicing.</p>
               <p>Use a due odometer when the work depends on kilometres travelled.</p>
               <p>

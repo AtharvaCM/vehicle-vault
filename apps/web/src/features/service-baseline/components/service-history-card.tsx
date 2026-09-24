@@ -107,7 +107,7 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
   const unanswered = coverageQuery.data?.unansweredCount ?? 0;
 
   return (
-    <Card className="border-slate-200/60 bg-white/70">
+    <Card className="border-line/60 bg-surface/70">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg font-bold">Service history baseline</CardTitle>
@@ -135,7 +135,7 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
 
         {canEdit ? (
           <div className="flex items-center justify-end gap-3 pt-2">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-fg-3">
               {pending.length === 0
                 ? 'No changes to save'
                 : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
@@ -173,18 +173,18 @@ function BaselineRow({
 
   if (readOnly && isEditable(entry)) {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-slate-50/60 px-3 py-2">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-        <span className="text-xs text-slate-500">{describeAnswer(entry)}</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-page/60 px-3 py-2">
+        <span className="text-sm font-medium text-fg-2">{label}</span>
+        <span className="text-xs text-fg-3">{describeAnswer(entry)}</span>
       </div>
     );
   }
 
   if (!isEditable(entry)) {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-slate-50/60 px-3 py-2">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-        <span className="text-xs text-slate-500">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-page/60 px-3 py-2">
+        <span className="text-sm font-medium text-fg-2">{label}</span>
+        <span className="text-xs text-fg-3">
           Logged service at {format.odometer(entry.lastDoneOdometer)}
         </span>
       </div>
@@ -194,8 +194,8 @@ function BaselineRow({
   const isUnknown = draft?.status === ServiceBaselineStatus.Unknown;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200/60 px-3 py-2">
-      <span className="min-w-32 flex-1 text-sm font-medium text-slate-700">{label}</span>
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line/60 px-3 py-2">
+      <span className="min-w-32 flex-1 text-sm font-medium text-fg-2">{label}</span>
 
       <div className="flex items-center gap-2">
         <Input

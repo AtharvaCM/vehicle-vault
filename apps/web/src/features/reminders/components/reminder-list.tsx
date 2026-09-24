@@ -37,13 +37,11 @@ export function ReminderList({
               reminder={reminder}
               selectionControl={
                 onSelectionChange ? (
-                  <label className="flex items-center justify-center rounded-md border border-border/70 bg-white p-2 shadow-xs">
+                  <label className="flex items-center justify-center rounded-md border border-border/70 bg-surface p-2 shadow-xs">
                     <input
                       aria-label={`Select reminder ${reminder.title}`}
                       checked={selectedReminderIds.includes(reminder.id)}
-                      className={cn(
-                        'h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-400',
-                      )}
+                      className={cn('h-4 w-4 rounded border-line text-fg focus:ring-line')}
                       onChange={(event) =>
                         onSelectionChange(reminder.id, event.currentTarget.checked)
                       }
@@ -56,7 +54,7 @@ export function ReminderList({
             />
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-500">
+          <p className="rounded-xl border border-dashed border-line px-4 py-5 text-sm text-fg-3">
             {emptyMessage}
           </p>
         )}

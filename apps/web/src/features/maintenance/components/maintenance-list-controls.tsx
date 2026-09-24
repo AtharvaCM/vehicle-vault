@@ -54,14 +54,12 @@ export function MaintenanceListControls({
     searchValue.trim().length > 0 || category !== 'all' || sortBy !== 'service-date-desc';
 
   return (
-    <div className="rounded-xl border border-border/70 bg-white p-4 shadow-xs">
+    <div className="rounded-xl border border-border/70 bg-surface p-4 shadow-xs">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_220px_220px_auto] lg:items-end">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Search
-          </p>
+          <p className="text-caption font-medium text-fg-3">Search</p>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-3" />
             <Input
               className="pl-9"
               onChange={(event) => onSearchChange(event.target.value)}
@@ -72,9 +70,7 @@ export function MaintenanceListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Category
-          </p>
+          <p className="text-caption font-medium text-fg-3">Category</p>
           <Select
             onValueChange={(value) => onCategoryChange(value as MaintenanceCategory | 'all')}
             value={category}
@@ -94,9 +90,7 @@ export function MaintenanceListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Sort
-          </p>
+          <p className="text-caption font-medium text-fg-3">Sort</p>
           <Select
             onValueChange={(value) => onSortChange(value as MaintenanceSortOption)}
             value={sortBy}

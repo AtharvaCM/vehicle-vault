@@ -108,8 +108,8 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Accessories</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-lg font-semibold text-fg">Accessories</h2>
+          <p className="text-sm text-fg-3">
             {accessories.length > 0
               ? `${accessories.length} item${accessories.length === 1 ? '' : 's'}${
                   totalSpend != null
@@ -142,9 +142,7 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
         <div className="space-y-6">
           {fitted.length > 0 ? (
             <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                On the vehicle
-              </h3>
+              <h3 className="text-caption font-medium text-fg-3">On the vehicle</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 {fitted.map((accessory) => (
                   <AccessoryCard
@@ -161,9 +159,7 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
 
           {notFitted.length > 0 ? (
             <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Bought, not fitted
-              </h3>
+              <h3 className="text-caption font-medium text-fg-3">Bought, not fitted</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 {notFitted.map((accessory) => (
                   <AccessoryCard
@@ -180,9 +176,7 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
 
           {removed.length > 0 ? (
             <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Removed
-              </h3>
+              <h3 className="text-caption font-medium text-fg-3">Removed</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 {removed.map((accessory) => (
                   <AccessoryCard

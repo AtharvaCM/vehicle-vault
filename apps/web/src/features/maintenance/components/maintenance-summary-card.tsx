@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react';
-
+import { Figure } from '@/components/shared/figure';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
@@ -25,29 +24,29 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
         <CardDescription>Review the recorded details for this service record.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
-        <Detail
+        <Figure
           label="Category"
           value={<Badge>{format.enumLabel('maintenanceCategory', record.category)}</Badge>}
         />
-        <Detail label="Service date" value={format.date(record.serviceDate)} />
-        <Detail label="Odometer" value={format.odometer(record.odometer)} />
-        <Detail
+        <Figure label="Service date" value={format.date(record.serviceDate)} />
+        <Figure label="Odometer" value={format.odometer(record.odometer)} />
+        <Figure
           label="Total cost"
           value={format.money(record.totalCost, { currency: record.currencyCode })}
         />
-        <Detail
+        <Figure
           label="Workshop or garage"
           value={record.workshopName?.trim() || 'Workshop not specified'}
         />
-        <Detail
+        <Figure
           label="Invoice / job card"
           value={record.invoiceNumber?.trim() || 'Not specified'}
         />
-        <Detail
+        <Figure
           label="Next due date"
           value={record.nextDueDate ? format.date(record.nextDueDate) : 'Not specified'}
         />
-        <Detail
+        <Figure
           label="Next due odometer"
           value={
             record.nextDueOdometer !== undefined
@@ -55,7 +54,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
               : 'Not specified'
           }
         />
-        <Detail
+        <Figure
           label="Added via"
           value={
             <Badge tone="neutral">
@@ -63,7 +62,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
             </Badge>
           }
         />
-        <Detail
+        <Figure
           label="Status"
           value={
             <Badge tone="neutral">
@@ -71,16 +70,16 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
             </Badge>
           }
         />
-        <Detail label="Added" value={format.date(record.createdAt, 'dateTime')} />
-        <Detail label="Last updated" value={format.date(record.updatedAt, 'dateTime')} />
-        <Detail
+        <Figure label="Added" value={format.date(record.createdAt, 'dateTime')} />
+        <Figure label="Last updated" value={format.date(record.updatedAt, 'dateTime')} />
+        <Figure
           label="Notes"
           value={record.notes?.trim() || 'No additional service notes were recorded.'}
           className="md:col-span-2"
         />
 
         {hasStructuredCosts ? (
-          <Detail
+          <Figure
             className="md:col-span-2"
             label="Structured breakdown"
             value={
@@ -113,7 +112,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
         ) : null}
 
         {record.lineItems?.length ? (
-          <Detail
+          <Figure
             className="md:col-span-2"
             label="Structured items"
             value={
@@ -121,12 +120,12 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                 {record.lineItems.map((lineItem) => (
                   <div
                     key={lineItem.id}
-                    className="rounded-2xl border border-border/70 bg-slate-50/70 px-4 py-3"
+                    className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3"
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-slate-900">{lineItem.name}</span>
+                          <span className="font-medium text-fg">{lineItem.name}</span>
                           <Badge tone="neutral">
                             {format.enumLabel('maintenanceLineItemKind', lineItem.kind)}
                           </Badge>
@@ -136,7 +135,7 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                             </Badge>
                           ) : null}
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-fg-3">
                           {[
                             lineItem.brand,
                             lineItem.partNumber,
@@ -151,14 +150,14 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
                             .join(' • ') || 'No extra item metadata'}
                         </p>
                       </div>
-                      <div className="text-sm font-semibold text-slate-900">
+                      <div className="text-sm font-semibold text-fg">
                         {typeof lineItem.lineTotal === 'number'
                           ? format.money(lineItem.lineTotal, { currency: record.currencyCode })
                           : '—'}
                       </div>
                     </div>
                     {lineItem.notes ? (
-                      <p className="mt-2 text-sm text-slate-600">{lineItem.notes}</p>
+                      <p className="mt-2 text-sm text-fg-2">{lineItem.notes}</p>
                     ) : null}
                   </div>
                 ))}
@@ -171,28 +170,10 @@ export function MaintenanceSummaryCard({ record }: MaintenanceSummaryCardProps) 
   );
 }
 
-type DetailProps = {
-  className?: string;
-  label: string;
-  value: ReactNode;
-};
-
-function Detail({ className, label, value }: DetailProps) {
-  return (
-    <div className={className}>
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <div className="mt-2 text-sm text-slate-900">{value}</div>
-    </div>
-  );
-}
-
 function BreakdownRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-white px-3 py-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-        {label}
-      </p>
-      <p className="mt-1 text-sm text-slate-900">{value}</p>
+    <div className="rounded-xl border border-border/70 bg-surface px-3 py-2">
+      <Figure label={label} value={value} />
     </div>
   );
 }

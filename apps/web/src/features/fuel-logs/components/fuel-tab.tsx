@@ -132,10 +132,8 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Fuel history</h3>
-          <p className="text-sm text-slate-500">
-            Track your fuel consumption and efficiency over time.
-          </p>
+          <h3 className="text-lg font-bold text-fg">Fuel history</h3>
+          <p className="text-sm text-fg-3">Track your fuel consumption and efficiency over time.</p>
         </div>
         {canEdit ? (
           <div className="flex flex-wrap gap-2">
@@ -173,7 +171,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
                 <div className="relative">
                   <Scan className="h-4 w-4" />
                   <span
-                    className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${scanStatus.data?.available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
+                    className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-surface ${scanStatus.data?.available ? 'bg-ok shadow-[0_0_8px_var(--ok)]' : 'bg-soon-dot'}`}
                   />
                 </div>
               )}

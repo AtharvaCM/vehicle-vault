@@ -213,9 +213,7 @@ export function ReminderForm({
       </CardHeader>
       <CardContent>
         <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Quick fill
-          </p>
+          <p className="mb-2 text-xs font-medium text-fg-3">Quick fill</p>
           <div className="flex flex-wrap gap-2">
             {presets.map((preset) => (
               <Button
@@ -223,7 +221,7 @@ export function ReminderForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-lg border-slate-200 bg-slate-50 text-xs hover:bg-slate-100 hover:text-slate-900"
+                className="h-8 rounded-lg border-line bg-page text-xs hover:bg-line-subtle hover:text-fg"
                 onClick={() => {
                   form.setValue('title', preset.title, { shouldDirty: true });
                   form.setValue('type', preset.type, { shouldDirty: true });
@@ -374,7 +372,7 @@ export function ReminderForm({
               </FormField>
             ) : null}
           </div>
-          <p className="-mt-2 text-sm leading-5 text-slate-500">
+          <p className="-mt-2 text-sm leading-5 text-fg-3">
             {repeat === 'none'
               ? 'Marking it done ends it.'
               : repeat === 'custom'
@@ -398,7 +396,7 @@ export function ReminderForm({
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
+            <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-sm leading-5 text-ok">
               {submissionState}
             </p>
           ) : null}
@@ -407,7 +405,7 @@ export function ReminderForm({
             <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
+            <p className="text-sm leading-5 text-fg-3 sm:max-w-md">
               {isSubmitting ? 'Saving reminder...' : submitHint}
             </p>
           </div>

@@ -41,10 +41,10 @@ export function AttachmentItem({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 @xl:flex-row @xl:items-center @xl:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-page px-4 py-4 @xl:flex-row @xl:items-center @xl:justify-between">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium text-slate-950">{attachment.originalFileName}</p>
+          <p className="font-medium text-fg">{attachment.originalFileName}</p>
           <Badge>{format.enumLabel('attachmentKind', attachment.kind)}</Badge>
           {attachment.extraction ? (
             <Badge
@@ -64,7 +64,7 @@ export function AttachmentItem({
             </Badge>
           ) : null}
         </div>
-        <div className="space-y-1 text-sm text-slate-600">
+        <div className="space-y-1 text-sm text-fg-2">
           <p>
             {attachment.mimeType} • {formatFileSize(attachment.size)}
           </p>
@@ -74,7 +74,7 @@ export function AttachmentItem({
 
       <div className="flex flex-wrap gap-2">
         <button
-          className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-50"
+          className="inline-flex h-10 items-center justify-center rounded-xl bg-surface px-4 text-sm font-medium text-fg ring-1 ring-inset ring-line transition-colors hover:bg-page"
           onClick={handleOpen}
           type="button"
         >

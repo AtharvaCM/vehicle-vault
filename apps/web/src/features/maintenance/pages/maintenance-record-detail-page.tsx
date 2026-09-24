@@ -133,16 +133,16 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         {isDraftRecord(record) ? (
           <section
             aria-labelledby="draft-record-heading"
-            className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 rounded-xl border border-soon/30 bg-soon-tint p-4 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <MaintenanceDraftBadge />
-                <h2 className="font-semibold text-amber-950" id="draft-record-heading">
+                <h2 className="font-semibold text-soon" id="draft-record-heading">
                   Nobody has confirmed this record yet
                 </h2>
               </div>
-              <p className="text-sm text-amber-900">
+              <p className="text-sm text-soon">
                 {canEdit
                   ? 'It is not counted in costs, reports or reminders until it is. Check what was read, then confirm it.'
                   : 'It is not counted in costs, reports or reminders until an owner or editor of this vehicle confirms it.'}

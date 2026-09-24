@@ -183,7 +183,7 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
               <CardTitle>Keep reminders actionable</CardTitle>
               <CardDescription>Clear reminder details are easier to trust later.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+            <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
               <p>
                 Use edits when a reminder&apos;s title, timing, or kilometre target was logged
                 incorrectly.

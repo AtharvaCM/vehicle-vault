@@ -169,8 +169,8 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
       <div className="space-y-6">
-        <Card className="border-slate-200/60 bg-white overflow-hidden">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+        <Card className="border-line/60 bg-surface overflow-hidden">
+          <CardHeader className="bg-page/50 border-b border-line-subtle">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg font-bold">Wheel &amp; tyre geometry</CardTitle>
@@ -183,7 +183,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge
                   variant="outline"
-                  className="bg-white font-bold tracking-tight uppercase text-[10px]"
+                  className="bg-surface font-bold tracking-tight uppercase text-caption"
                 >
                   {hasMeasurements
                     ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
@@ -211,12 +211,12 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           <CardContent className="p-8 sm:p-12">
             <div
               aria-label={describeDiagram(insights, measured, hasMeasurements, twoWheeler)}
-              className="relative mx-auto flex aspect-1/2 w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-slate-200 bg-slate-50/30"
+              className="relative mx-auto flex aspect-1/2 w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-line bg-page/30"
               role="img"
             >
               {/* Horizontal axles */}
-              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-slate-200" />
-              <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-slate-200" />
+              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-line" />
+              <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-line" />
 
               {/*
                 Each corner now shows its own measured condition. Without
@@ -234,10 +234,8 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                 />
               ))}
 
-              <div className="w-1/2 h-2/3 border border-slate-200/50 rounded-2xl flex items-center justify-center">
-                <div className="text-[10px] font-black text-slate-300 uppercase rotate-90">
-                  Chassis
-                </div>
+              <div className="w-1/2 h-2/3 border border-line/50 rounded-2xl flex items-center justify-center">
+                <div className="text-caption font-black text-fg-3 uppercase rotate-90">Chassis</div>
               </div>
             </div>
           </CardContent>
@@ -295,7 +293,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       </div>
 
       <div className="space-y-6">
-        <Card className="border-slate-200/60 bg-white">
+        <Card className="border-line/60 bg-surface">
           <CardHeader>
             <CardTitle className="text-base font-bold">Tyre records</CardTitle>
             <CardDescription>
@@ -309,38 +307,36 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
             {insights.records.slice(0, TYRE_RECORD_PREVIEW).map((record) => (
               <div
                 key={record.id}
-                className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-3"
+                className="flex items-start gap-4 rounded-xl border border-line-subtle bg-page/50 p-3"
               >
                 <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                 <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-tight text-slate-900">
+                  <p className="text-xs font-bold uppercase tracking-tight text-fg">
                     {format.enumLabel('maintenanceCategory', record.category)}
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-caption text-fg-3">
                     {format.date(record.serviceDate)} • {format.odometer(record.odometer)}
                   </p>
                 </div>
               </div>
             ))}
             {insights.records.length === 0 ? (
-              <p className="text-xs text-slate-400 italic text-center py-4">
-                No tyre records found.
-              </p>
+              <p className="text-xs text-fg-3 italic text-center py-4">No tyre records found.</p>
             ) : null}
           </CardContent>
         </Card>
 
         {insights.lastReplacement ? (
-          <Card className="border-slate-200/60 bg-white">
+          <Card className="border-line/60 bg-surface">
             <CardHeader>
               <CardTitle className="text-base font-bold">Current tyres</CardTitle>
               <CardDescription>Fitted at the last recorded replacement.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-black tracking-tighter text-slate-900">
+              <p className="text-2xl font-black tracking-tighter text-fg">
                 {format.odometer(insights.lastReplacement.odometer)}
               </p>
-              <p className="mt-1 text-[11px] font-medium text-slate-500">
+              <p className="mt-1 text-caption font-medium text-fg-3">
                 fitted {format.date(insights.lastReplacement.serviceDate)}
               </p>
             </CardContent>
@@ -414,37 +410,37 @@ const CONDITION_COPY: Record<
   illegal: {
     label: 'Not roadworthy',
     icon: AlertCircle,
-    border: 'border-rose-600',
-    icons: 'text-rose-500',
-    card: 'bg-rose-50 border-rose-200',
+    border: 'border-late',
+    icons: 'text-late',
+    card: 'bg-late-tint border-late/30',
   },
   replace: {
     label: 'Replace',
     icon: AlertCircle,
-    border: 'border-rose-500/60',
-    icons: 'text-rose-500',
-    card: 'bg-rose-50 border-rose-100',
+    border: 'border-late/60',
+    icons: 'text-late',
+    card: 'bg-late-tint border-late/30',
   },
   warn: {
     label: 'Wearing',
     icon: Clock,
-    border: 'border-orange-500/60',
-    icons: 'text-orange-500',
-    card: 'bg-orange-50 border-orange-100',
+    border: 'border-soon/60',
+    icons: 'text-soon',
+    card: 'bg-soon-tint border-soon/30',
   },
   healthy: {
     label: 'Healthy',
     icon: ShieldCheck,
-    border: 'border-emerald-500/50',
-    icons: 'text-emerald-500',
-    card: 'bg-emerald-50 border-emerald-100',
+    border: 'border-ok/50',
+    icons: 'text-ok',
+    card: 'bg-ok-tint border-ok/30',
   },
   unknown: {
     label: 'Not measured',
     icon: HelpCircle,
-    border: 'border-slate-400/40 border-dashed',
-    icons: 'text-slate-400',
-    card: 'bg-slate-50 border-slate-200',
+    border: 'border-ended/40 border-dashed',
+    icons: 'text-ended',
+    card: 'bg-page border-line',
   },
 };
 
@@ -524,18 +520,23 @@ function TyreGlyph({ corner, measured, status }: TyreGlyphProps) {
     <div aria-hidden="true" className={cn('absolute flex flex-col items-center', posClasses)}>
       <div
         className={cn(
-          'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2 bg-slate-900',
+          'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2',
+          // A tyre is black rubber, the same in both token sets — like the number
+          // plate (see tokens.css), there is no semantic token for "always dark".
+          // eslint-disable-next-line vv/no-palette-colors -- physical object, not a UI surface; see comment above
+          'bg-slate-900',
           appearance.border,
         )}
       >
         {/* Decorative tread lines; the depth figure below is the measured one. */}
         {Array.from({ length: 6 }, (_, index) => (
+          // eslint-disable-next-line vv/no-palette-colors -- tread line on the always-dark tyre body above
           <div key={index} className="h-px w-full bg-slate-800" />
         ))}
         <Icon className={cn('absolute h-3 w-3', appearance.icons)} />
       </div>
       {measured?.treadDepthMm != null ? (
-        <span className="mt-1 text-[9px] font-black tabular-nums text-slate-500">
+        <span className="mt-1 text-caption font-black tabular-nums text-fg-3">
           {measured.treadDepthMm.toFixed(1)}mm
         </span>
       ) : null}
@@ -582,34 +583,29 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
   return (
     <div className={cn('rounded-2xl border p-5', appearance.card)} data-testid="tyre-corner">
       <div className="mb-3 flex items-center justify-between">
-        <div className={cn('rounded-xl bg-white p-2 shadow-xs', appearance.icons)}>
+        <div className={cn('rounded-xl bg-surface p-2 shadow-xs', appearance.icons)}>
           <Icon className="h-4 w-4" />
         </div>
-        <Badge
-          variant="outline"
-          className="bg-white text-[9px] font-black uppercase tracking-wider"
-        >
-          {appearance.label}
-        </Badge>
+        <Badge variant="outline">{appearance.label}</Badge>
       </div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-black tracking-tighter tabular-nums text-slate-900">
+      <p className="text-caption font-medium text-fg-3">{label}</p>
+      <p className="mt-1 text-2xl font-black tracking-tighter tabular-nums text-fg">
         {condition.treadDepthMm != null ? `${condition.treadDepthMm.toFixed(1)} mm` : '—'}
       </p>
-      <p className="mt-1 text-[11px] font-medium leading-4 text-slate-600">{condition.summary}</p>
-      {recorded ? <p className="mt-1 text-[11px] text-slate-500">{recorded}</p> : null}
+      <p className="mt-1 text-caption font-medium leading-4 text-fg-2">{condition.summary}</p>
+      {recorded ? <p className="mt-1 text-caption text-fg-3">{recorded}</p> : null}
       <div className="mt-2 space-y-0.5">
         {condition.estimatedKmRemaining != null ? (
-          <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+          <p className="text-caption font-bold uppercase tracking-tighter text-fg-3">
             ~{format.distance(condition.estimatedKmRemaining)} left at current wear
           </p>
         ) : null}
         {condition.lastInspectedAt ? (
-          <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+          <p className="text-caption font-bold uppercase tracking-tighter text-fg-3">
             Checked {formatDistanceToNow(new Date(condition.lastInspectedAt), { addSuffix: true })}
           </p>
         ) : (
-          <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+          <p className="text-caption font-bold uppercase tracking-tighter text-fg-3">
             Never inspected
           </p>
         )}
@@ -660,27 +656,28 @@ function formatReading(reading: TyreInspection): string {
 /** Every reading of one tyre, newest first, folded away until asked for. */
 function TyreReadings({ label, readings }: { label: string; readings: TyreInspection[] }) {
   if (readings.length === 0) {
-    return <p className="mt-3 text-[11px] text-slate-500">No readings yet.</p>;
+    return <p className="mt-3 text-caption text-fg-3">No readings yet.</p>;
   }
 
   return (
-    <details className="group mt-3 rounded-xl border border-slate-200/70 bg-white/70">
-      <summary className="cursor-pointer select-none px-3 py-2 text-[11px] font-bold text-slate-700">
+    <details className="group mt-3 rounded-xl border border-line/70 bg-surface/70">
+      <summary className="cursor-pointer select-none px-3 py-2 text-caption font-bold text-fg-2">
         Readings ({readings.length})
       </summary>
-      <ol aria-label={`${label} tyre readings, newest first`} className="divide-y divide-slate-100">
+      <ol
+        aria-label={`${label} tyre readings, newest first`}
+        className="divide-y divide-line-subtle"
+      >
         {readings.map((reading) => (
-          <li className="px-3 py-2 text-[11px]" key={reading.id}>
+          <li className="px-3 py-2 text-caption" key={reading.id}>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-              <span className="text-slate-500">
+              <span className="text-fg-3">
                 <time dateTime={reading.inspectedAt}>{format.date(reading.inspectedAt)}</time> ·{' '}
                 {format.odometer(reading.odometer)}
               </span>
-              <span className="font-bold tabular-nums text-slate-900">
-                {formatReading(reading)}
-              </span>
+              <span className="font-bold tabular-nums text-fg">{formatReading(reading)}</span>
             </div>
-            {reading.notes ? <p className="mt-0.5 text-slate-500">{reading.notes}</p> : null}
+            {reading.notes ? <p className="mt-0.5 text-fg-3">{reading.notes}</p> : null}
           </li>
         ))}
       </ol>
@@ -696,44 +693,39 @@ interface MetricCardProps {
 
 function MetricCard({ icon, label, metric }: MetricCardProps) {
   const cardClasses = {
-    healthy: 'bg-emerald-50 border-emerald-100',
-    due: 'bg-orange-50 border-orange-100',
-    overdue: 'bg-rose-50 border-rose-100',
-    unknown: 'bg-slate-50 border-slate-200',
+    healthy: 'bg-ok-tint border-ok/30',
+    due: 'bg-soon-tint border-soon/30',
+    overdue: 'bg-late-tint border-late/30',
+    unknown: 'bg-page border-line',
   }[metric.status];
 
   const iconClasses = {
-    healthy: 'text-emerald-600',
-    due: 'text-orange-600',
-    overdue: 'text-rose-600',
-    unknown: 'text-slate-500',
+    healthy: 'text-ok',
+    due: 'text-soon',
+    overdue: 'text-late',
+    unknown: 'text-fg-3',
   }[metric.status];
 
   return (
-    <div className={cn('rounded-2xl border p-5 transition-all', cardClasses)}>
+    <div className={cn('rounded-2xl border p-5 transition-colors', cardClasses)}>
       <div className="mb-3 flex items-center justify-between">
-        <div className={cn('rounded-xl bg-white p-2 shadow-xs', iconClasses)}>{icon}</div>
-        <Badge
-          variant="outline"
-          className="bg-white text-[9px] font-black uppercase tracking-wider"
-        >
-          {STATUS_COPY[metric.status].label}
-        </Badge>
+        <div className={cn('rounded-xl bg-surface p-2 shadow-xs', iconClasses)}>{icon}</div>
+        <Badge variant="outline">{STATUS_COPY[metric.status].label}</Badge>
       </div>
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
-        <p className="mt-1 text-2xl font-black tracking-tighter text-slate-900">
+        <p className="text-caption font-medium text-fg-3">{label}</p>
+        <p className="mt-1 text-2xl font-black tracking-tighter text-fg">
           {format.distance(metric.kmSince)}
         </p>
-        <p className="mt-1 text-[11px] font-medium text-slate-500">{describeBaseline(metric)}</p>
+        <p className="mt-1 text-caption font-medium text-fg-3">{describeBaseline(metric)}</p>
         {metric.lastRecord ? (
-          <p className="mt-2 text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+          <p className="mt-2 text-caption font-bold uppercase tracking-tighter text-fg-3">
             Last:{' '}
             {formatDistanceToNow(new Date(metric.lastRecord.serviceDate), { addSuffix: true })}
           </p>
         ) : null}
         {metric.status !== 'unknown' && metric.kmRemaining !== null ? (
-          <p className="mt-2 text-[9px] font-bold uppercase tracking-tighter text-slate-400">
+          <p className="mt-2 text-caption font-bold uppercase tracking-tighter text-fg-3">
             {metric.kmRemaining >= 0
               ? `${format.distance(metric.kmRemaining)} to go`
               : `${format.distance(Math.abs(metric.kmRemaining))} past due`}

@@ -3,6 +3,7 @@ import { BellRing, ChevronRight } from 'lucide-react';
 import { ReminderStatus } from '@vehicle-vault/shared';
 import type { ReactNode } from 'react';
 
+import { Figure } from '@/components/shared/figure';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { format } from '@/lib/format';
@@ -34,7 +35,7 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
   const chevron = (
     <div
       className={cn(
-        'ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-primary',
+        'ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-fg-3 transition-colors group-hover:text-primary',
         // With no strip to sit in, it rides the text's row, at the distance from the
         // card's edge the strip would have kept. A stacked card has no room to spare:
         // there it goes, rather than take 60px from a title that already truncates.
@@ -47,11 +48,11 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
 
   const urgencyColor =
     reminder.status === ReminderStatus.Overdue
-      ? 'bg-rose-500'
+      ? 'bg-late'
       : reminder.status === ReminderStatus.DueToday
-        ? 'bg-amber-500'
+        ? 'bg-soon-dot'
         : reminder.status === ReminderStatus.Completed
-          ? 'bg-slate-300'
+          ? 'bg-ended-dot'
           : 'bg-primary';
 
   return (
@@ -62,9 +63,9 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
       <Card
         className={cn(
-          '@container relative flex-1 overflow-hidden border-slate-200/60 bg-white/70 p-0 transition-all duration-300 hover:border-primary/20 hover:bg-white sm:p-5',
-          reminder.status === ReminderStatus.Overdue && 'border-rose-200/60',
-          reminder.status === ReminderStatus.DueToday && 'border-amber-200/60',
+          '@container relative flex-1 overflow-hidden border-line/60 bg-surface/70 p-0 transition-colors duration-300 hover:border-primary/20 hover:bg-surface sm:p-5',
+          reminder.status === ReminderStatus.Overdue && 'border-late/30',
+          reminder.status === ReminderStatus.DueToday && 'border-soon/30',
         )}
       >
         {/* Urgency Accent Bar */}
@@ -80,28 +81,23 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
         >
           {/* Main Content */}
           <div className="flex min-w-0 flex-1 items-center gap-4 p-3 pl-4 sm:p-5 sm:pl-6">
-            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-page text-fg-3 group-hover:bg-primary/10 group-hover:text-primary transition-colors sm:flex">
               <BellRing className="h-5 w-5" />
             </div>
 
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="truncate font-bold text-slate-900 group-hover:text-primary transition-colors">
+                <p className="truncate font-bold text-fg group-hover:text-primary transition-colors">
                   {reminder.title}
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge
-                    variant="outline"
-                    className="bg-white text-[10px] font-bold uppercase tracking-widest"
-                  >
-                    {format.enumLabel('reminderType', reminder.type)}
-                  </Badge>
+                  <Badge variant="outline">{format.enumLabel('reminderType', reminder.type)}</Badge>
                   <ReminderStatusBadge status={reminder.status} />
                 </div>
               </div>
-              <div className="flex flex-col gap-y-1 text-[13px] font-medium text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
+              <div className="flex flex-col gap-y-1 text-small font-medium text-fg-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
                 {vehicleLabel ? <span>{vehicleLabel}</span> : null}
-                {vehicleLabel ? <span className="hidden text-slate-300 sm:inline">•</span> : null}
+                {vehicleLabel ? <span className="hidden text-fg-3 sm:inline">•</span> : null}
                 {reminder.dueDate ? (
                   <span>Due {format.date(reminder.dueDate)}</span>
                 ) : (
@@ -109,9 +105,9 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
                 )}
                 {reminder.status !== ReminderStatus.Completed && reminder.usageProjection ? (
                   <>
-                    <span className="hidden text-slate-300 sm:inline">•</span>
+                    <span className="hidden text-fg-3 sm:inline">•</span>
                     <span
-                      className="text-slate-500"
+                      className="text-fg-3"
                       title={`Based on ${format.number(reminder.usageProjection.kmPerDay, { decimals: 1, fixed: true })} km/day from the last ${reminder.usageProjection.sampleDays} days of fuel logs — ${PROJECTION_CONFIDENCE_LABEL[reminder.usageProjection.confidence]}`}
                     >
                       Projected ~{format.date(reminder.usageProjection.projectedDueDate)}
@@ -125,18 +121,11 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
           {/* Metrics & Action */}
           {hasFigures ? (
             <div
-              className="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent max-sm:@xl:px-6 max-sm:@xl:py-0"
+              className="flex items-center justify-between border-t border-line-subtle bg-page/30 p-3 sm:p-4 @xl:border-l @xl:border-t-0 @xl:bg-transparent max-sm:@xl:px-6 max-sm:@xl:py-0"
               data-testid="reminder-figures"
             >
               <div className="flex items-center gap-8 @xl:gap-10">
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Target ODO
-                  </p>
-                  <p className="text-[13px] font-semibold tabular-nums text-slate-700">
-                    {format.odometer(dueOdometer)}
-                  </p>
-                </div>
+                <Figure label="Target ODO" value={format.odometer(dueOdometer)} />
               </div>
 
               {chevron}
