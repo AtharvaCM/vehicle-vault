@@ -19,6 +19,7 @@ export const MIGRATED_PATHS = [
   'src/features/analytics/**',
   'src/features/vehicles/**',
   'src/features/maintenance/**',
+  'src/features/history/**',
   'src/features/service-baseline/**',
   'src/features/reminders/**',
   'src/features/fuel-logs/**',
