@@ -88,7 +88,7 @@ export function VehiclePickerMenu({
               {...buildLink(vehicle.id)}
               className="flex cursor-pointer flex-col items-start gap-0.5"
             >
-              <span className="text-sm font-medium text-fg">{vehicle.displayName}</span>
+              <span className="text-ui font-medium text-fg">{vehicle.displayName}</span>
               <span className="text-caption tabular-nums text-fg-3">
                 {vehicle.registrationNumber}
               </span>

@@ -104,7 +104,7 @@ export function Topbar() {
           <div className="hidden h-8 w-px bg-line-subtle/60 xl:block" />
 
           <div className="flex items-baseline gap-2">
-            <h2 className="text-base font-bold tracking-tight text-fg">{activeSection}</h2>
+            <h2 className="text-lead font-bold tracking-tight text-fg">{activeSection}</h2>
           </div>
         </div>
 
@@ -142,7 +142,7 @@ export function Topbar() {
             <DropdownMenuContent align="end" className="w-64 rounded-xl border-line/60 p-1.5">
               <DropdownMenuLabel className="px-3 py-2">
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-semibold text-fg">{auth.user?.name}</p>
+                  <p className="text-ui font-semibold text-fg">{auth.user?.name}</p>
                   <p className="truncate text-caption font-normal text-fg-3">{auth.user?.email}</p>
                 </div>
               </DropdownMenuLabel>
@@ -210,7 +210,7 @@ export function Topbar() {
                 className: 'bg-primary text-primary-foreground border-transparent',
               }}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-semibold text-fg-2 transition-colors hover:bg-page active:scale-95',
+                'inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-caption font-semibold text-fg-2 transition-colors hover:bg-page active:scale-95',
               )}
               to={item.to}
             >

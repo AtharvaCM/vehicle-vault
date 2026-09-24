@@ -97,7 +97,7 @@ export function VehicleSetupPrompt({ dismissedAt, fuelType, vehicleId }: Vehicle
   return (
     <Card className="border-primary/20 bg-primary/5">
       <CardHeader className="space-y-1">
-        <CardTitle className="flex items-center gap-2 text-lg font-black">
+        <CardTitle className="flex items-center gap-2 text-lead font-black">
           <ShieldCheck className="h-5 w-5 text-primary" />
           Never miss a renewal
         </CardTitle>

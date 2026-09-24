@@ -101,7 +101,7 @@ export function VerifyEmailPage() {
       >
         <div className="flex flex-col items-center justify-center py-8">
           <Loader2 className="h-12 w-12 animate-spin text-fg" />
-          <p className="mt-4 text-sm text-fg-3">This will only take a moment.</p>
+          <p className="mt-4 text-ui text-fg-3">This will only take a moment.</p>
         </div>
       </AuthPageShell>
     );

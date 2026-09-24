@@ -134,7 +134,7 @@ export function VehiclePickerDialog({
                 className="flex flex-col items-start gap-0.5 rounded-lg border border-input px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
                 onClick={() => setOpen(false)}
               >
-                <span className="text-sm font-medium text-fg">
+                <span className="text-ui font-medium text-fg">
                   {getVehicleDisplayName(vehicle)}
                 </span>
                 <span className="text-caption tabular-nums text-fg-3">

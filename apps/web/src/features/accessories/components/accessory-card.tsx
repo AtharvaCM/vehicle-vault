@@ -34,8 +34,8 @@ export function AccessoryCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle className="text-base">{accessory.name}</CardTitle>
-            {accessory.brand ? <p className="text-sm text-fg-3">{accessory.brand}</p> : null}
+            <CardTitle className="text-lead">{accessory.name}</CardTitle>
+            {accessory.brand ? <p className="text-ui text-fg-3">{accessory.brand}</p> : null}
           </div>
           <Badge tone={isRemoved ? 'neutral' : isFitted ? 'accent' : 'warning'}>
             {isRemoved ? 'Removed' : isFitted ? 'Fitted' : 'Not fitted'}
@@ -44,7 +44,7 @@ export function AccessoryCard({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-2 gap-3 text-ui">
           <Figure
             label="Cost"
             value={format.money(accessory.cost, { currency: accessory.currencyCode })}
@@ -81,7 +81,7 @@ export function AccessoryCard({
         {accessory.warrantyExpiresAt ? (
           <p
             className={
-              warrantyDays != null && warrantyDays <= 30 ? 'text-sm text-soon' : 'text-sm text-fg-3'
+              warrantyDays != null && warrantyDays <= 30 ? 'text-ui text-soon' : 'text-ui text-fg-3'
             }
           >
             {warrantyDays != null && warrantyDays < 0
@@ -90,7 +90,7 @@ export function AccessoryCard({
           </p>
         ) : null}
 
-        {accessory.notes ? <p className="text-sm text-fg-2">{accessory.notes}</p> : null}
+        {accessory.notes ? <p className="text-ui text-fg-2">{accessory.notes}</p> : null}
 
         {onEdit || onDelete ? (
           <div className="flex items-center gap-2">

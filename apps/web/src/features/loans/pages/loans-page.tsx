@@ -234,10 +234,10 @@ export function LoansPage() {
           </DialogHeader>
 
           {scanStatus.data?.available ? (
-            <div className="flex items-center justify-between rounded-md border border-brand/30 bg-brand-tint/60 p-3 text-sm">
+            <div className="flex items-center justify-between rounded-md border border-brand/30 bg-brand-tint/60 p-3 text-ui">
               <div>
                 <div className="font-medium text-brand">Scan sanction letter / agreement</div>
-                <div className="text-xs text-brand">
+                <div className="text-caption text-brand">
                   AI extracts lender, principal, rate, tenure, start date.
                 </div>
               </div>
@@ -371,7 +371,7 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="text-caption font-medium text-muted-foreground">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-foreground">{value}</div>
+      <div className="mt-1 text-heading font-semibold text-foreground">{value}</div>
     </div>
   );
 }

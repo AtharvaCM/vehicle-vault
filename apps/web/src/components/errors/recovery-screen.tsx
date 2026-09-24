@@ -25,8 +25,8 @@ export function RecoveryScreen({
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-soon-tint ring-8 ring-soon-tint/60">
         <TriangleAlert className="h-6 w-6 text-soon" />
       </div>
-      <h1 className="text-xl font-semibold text-fg">Something went wrong</h1>
-      <p className="text-sm leading-6 text-fg-2">
+      <h1 className="text-heading font-semibold text-fg">Something went wrong</h1>
+      <p className="text-ui leading-6 text-fg-2">
         This page hit an error it could not recover from. Reloading usually fixes it; if it keeps
         happening, the dashboard is a safe place to start again.
       </p>

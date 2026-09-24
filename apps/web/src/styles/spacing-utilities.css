@@ -1,0 +1,37 @@
+/*
+ * space-y and divide-y the Tailwind 3 way. v4 moved the gap onto the bottom of
+ * every child but the last, which does nothing on an inline child (a <label>),
+ * an absolutely positioned one (an sr-only heading) or a Radix tab panel's
+ * `hidden` siblings, and loses to a child's own margin. These rules put the gap
+ * back on the top of each visible child after the first, as v3 did, and clear
+ * the bottom margin v4 gives the first child.
+ */
+@utility space-y-* {
+  & > :not([hidden]) ~ :not([hidden]) {
+    margin-top: calc(var(--spacing) * --value(number));
+    margin-bottom: 0;
+  }
+
+  & > :first-child:not(:last-child) {
+    margin-bottom: 0;
+  }
+}
+
+@utility divide-y {
+  & > :not([hidden]) ~ :not([hidden]) {
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-bottom-width: 0;
+  }
+
+  & > :first-child:not(:last-child) {
+    border-bottom-width: 0;
+  }
+}
+
+@utility divide-* {
+  & > :not([hidden]) ~ :not([hidden]) {
+    border-color: --value(--color-*);
+    border-color: --alpha(--value(--color-*) / calc(--modifier(integer) * 1%));
+  }
+}

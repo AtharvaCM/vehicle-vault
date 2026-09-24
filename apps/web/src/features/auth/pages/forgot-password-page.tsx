@@ -98,7 +98,7 @@ export function ForgotPasswordPage() {
           <div className="space-y-4" role="status">
             <div className="flex items-start gap-3 rounded-2xl border border-ok/30 bg-ok-tint p-4">
               <MailCheck aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-ok" />
-              <div className="space-y-1 text-sm text-ok">
+              <div className="space-y-1 text-ui text-ok">
                 <p className="font-semibold">Check your email</p>
                 <p>
                   If an account exists for {state.email}, we’ve sent it a link to set a new
@@ -129,11 +129,11 @@ export function ForgotPasswordPage() {
                 Use a different email
               </Button>
             </div>
-            {submitError ? <p className="text-sm text-late">{submitError}</p> : null}
+            {submitError ? <p className="text-ui text-late">{submitError}</p> : null}
           </div>
         ) : state.kind === 'unavailable' ? (
           <div
-            className="space-y-1 rounded-2xl border border-soon/30 bg-soon-tint p-4 text-sm text-soon"
+            className="space-y-1 rounded-2xl border border-soon/30 bg-soon-tint p-4 text-ui text-soon"
             role="status"
           >
             <p className="font-semibold">Password reset by email isn’t available yet</p>
@@ -156,15 +156,15 @@ export function ForgotPasswordPage() {
         {preview ? (
           <div className="space-y-3 rounded-2xl border border-line bg-page p-4">
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-fg">Development reset preview</p>
-              <p className="text-xs leading-5 text-fg-2">
+              <p className="text-ui font-semibold text-fg">Development reset preview</p>
+              <p className="text-caption leading-5 text-fg-2">
                 This environment shows the reset link here so you can continue without a mailbox.
               </p>
             </div>
 
             <Input readOnly value={preview.token} />
 
-            <div className="flex flex-col gap-2 text-xs text-fg-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 text-caption text-fg-2 sm:flex-row sm:items-center sm:justify-between">
               <span>
                 {preview.expiresAt ? `Expires ${format.date(preview.expiresAt, 'dateTime')}` : null}
               </span>

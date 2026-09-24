@@ -23,8 +23,10 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
         <div>
-          <CardTitle className="text-base">{loan.lender}</CardTitle>
-          {vehicleLabel ? <p className="text-xs text-muted-foreground">{vehicleLabel}</p> : null}
+          <CardTitle className="text-lead">{loan.lender}</CardTitle>
+          {vehicleLabel ? (
+            <p className="text-caption text-muted-foreground">{vehicleLabel}</p>
+          ) : null}
         </div>
         <span
           className={`rounded-full px-2 py-0.5 text-caption font-medium ${
@@ -34,7 +36,7 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
           {format.enumLabel('loanStatus', loan.status)}
         </span>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0 text-sm">
+      <CardContent className="space-y-3 pt-0 text-ui">
         <div className="grid grid-cols-3 gap-3">
           <Figure label="EMI" value={format.money(loan.emiAmount)} />
           <Figure label="Rate" value={`${loan.interestRate}% /yr`} />
@@ -45,7 +47,7 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
         </div>
 
         <div>
-          <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="mb-1 flex items-center justify-between text-caption text-muted-foreground">
             <span>Principal paid</span>
             <span>
               {paidPct}% • {loan.monthsRemaining} mo left

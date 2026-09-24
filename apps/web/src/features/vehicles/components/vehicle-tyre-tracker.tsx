@@ -173,7 +173,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           <CardHeader className="bg-page/50 border-b border-line-subtle">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle className="text-lg font-bold">Wheel &amp; tyre geometry</CardTitle>
+                <CardTitle className="text-lead font-bold">Wheel &amp; tyre geometry</CardTitle>
                 <CardDescription>
                   {hasMeasurements
                     ? 'Per-corner condition from recorded tread depth and tyre age.'
@@ -292,7 +292,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       <div className="space-y-6">
         <Card className="border-line/60 bg-surface">
           <CardHeader>
-            <CardTitle className="text-base font-bold">Tyre records</CardTitle>
+            <CardTitle className="text-lead font-bold">Tyre records</CardTitle>
             <CardDescription>
               Rotations, alignments, replacements and punctures.
               {insights.records.length > TYRE_RECORD_PREVIEW
@@ -308,7 +308,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               >
                 <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-fg">
+                  <p className="text-caption font-bold text-fg">
                     {format.enumLabel('maintenanceCategory', record.category)}
                   </p>
                   <p className="text-caption text-fg-3">
@@ -318,7 +318,9 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
               </div>
             ))}
             {insights.records.length === 0 ? (
-              <p className="text-xs text-fg-3 italic text-center py-4">No tyre records found.</p>
+              <p className="text-caption text-fg-3 italic text-center py-4">
+                No tyre records found.
+              </p>
             ) : null}
           </CardContent>
         </Card>
@@ -326,11 +328,11 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
         {insights.lastReplacement ? (
           <Card className="border-line/60 bg-surface">
             <CardHeader>
-              <CardTitle className="text-base font-bold">Current tyres</CardTitle>
+              <CardTitle className="text-lead font-bold">Current tyres</CardTitle>
               <CardDescription>Fitted at the last recorded replacement.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-black tracking-tighter text-fg">
+              <p className="text-title font-black tracking-tighter text-fg">
                 {format.odometer(insights.lastReplacement.odometer)}
               </p>
               <p className="mt-1 text-caption font-medium text-fg-3">
@@ -518,17 +520,14 @@ function TyreGlyph({ corner, measured, status }: TyreGlyphProps) {
       <div
         className={cn(
           'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2',
-          // A tyre is black rubber, the same in both token sets — like the number
-          // plate (see tokens.css), there is no semantic token for "always dark".
-          // eslint-disable-next-line vv/no-palette-colors -- physical object, not a UI surface; see comment above
-          'bg-slate-900',
+          // A tyre is black rubber in both themes, like the number plate.
+          'bg-tyre',
           appearance.border,
         )}
       >
         {/* Decorative tread lines; the depth figure below is the measured one. */}
         {Array.from({ length: 6 }, (_, index) => (
-          // eslint-disable-next-line vv/no-palette-colors -- tread line on the always-dark tyre body above
-          <div key={index} className="h-px w-full bg-slate-800" />
+          <div key={index} className="h-px w-full bg-tyre-tread" />
         ))}
         <Icon className={cn('absolute h-3 w-3', appearance.icons)} />
       </div>
@@ -586,7 +585,7 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
         <Badge variant="outline">{appearance.label}</Badge>
       </div>
       <p className="text-caption font-medium text-fg-3">{label}</p>
-      <p className="mt-1 text-2xl font-black tracking-tighter tabular-nums text-fg">
+      <p className="mt-1 text-title font-black tracking-tighter tabular-nums text-fg">
         {condition.treadDepthMm != null ? `${condition.treadDepthMm.toFixed(1)} mm` : '—'}
       </p>
       <p className="mt-1 text-caption font-medium leading-4 text-fg-2">{condition.summary}</p>
@@ -709,7 +708,7 @@ function MetricCard({ icon, label, metric }: MetricCardProps) {
       </div>
       <div>
         <p className="text-caption font-medium text-fg-3">{label}</p>
-        <p className="mt-1 text-2xl font-black tracking-tighter text-fg">
+        <p className="mt-1 text-title font-black tracking-tighter text-fg">
           {format.distance(metric.kmSince)}
         </p>
         <p className="mt-1 text-caption font-medium text-fg-3">{describeBaseline(metric)}</p>

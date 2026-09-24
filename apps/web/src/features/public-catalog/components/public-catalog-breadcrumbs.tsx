@@ -16,7 +16,7 @@ export function PublicCatalogBreadcrumbs({ page }: PublicCatalogBreadcrumbsProps
 
   return (
     <nav aria-label="Breadcrumb" className="mb-3">
-      <ol className="-ml-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm">
+      <ol className="-ml-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-ui">
         {crumbs.map((crumb, index) => {
           const isCurrent = index === crumbs.length - 1;
           return (

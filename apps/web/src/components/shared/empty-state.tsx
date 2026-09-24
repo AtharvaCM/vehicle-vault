@@ -32,8 +32,8 @@ export function EmptyState({
         <Icon className="h-6 w-6 text-fg-3" />
       </div>
       <div className="space-y-2">
-        <h3 className="text-base font-semibold text-foreground">{title}</h3>
-        <p className="max-w-2xl text-sm leading-5 text-muted-foreground">{description}</p>
+        <h3 className="text-lead font-semibold text-foreground">{title}</h3>
+        <p className="max-w-2xl text-ui leading-5 text-muted-foreground">{description}</p>
       </div>
 
       {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}

@@ -268,13 +268,13 @@ export function DocumentFormDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           {showAiBanner && (
-            <div className="rounded-md border border-soon/30 bg-soon-tint px-3 py-2 text-xs text-soon">
+            <div className="rounded-md border border-soon/30 bg-soon-tint px-3 py-2 text-caption text-soon">
               Fields below were filled by AI from your uploaded document. Please verify before
               saving.
             </div>
           )}
           {showRenewalNote && (
-            <div className="rounded-md border border-brand/30 bg-brand-tint px-3 py-2 text-xs text-brand">
+            <div className="rounded-md border border-brand/30 bg-brand-tint px-3 py-2 text-caption text-brand">
               Renewing: details are copied from the current record, with the next term suggested.
               The current record stays in the history.
             </div>

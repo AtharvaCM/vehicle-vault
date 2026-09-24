@@ -65,7 +65,7 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
                     ))}
                   </p>
                 ) : null}
-                <p className="line-clamp-2 text-xs text-fg-3">{insight.reason}</p>
+                <p className="line-clamp-2 text-caption text-fg-3">{insight.reason}</p>
               </div>
               {insight.vehicleId ? (
                 <div className="flex shrink-0 gap-2">

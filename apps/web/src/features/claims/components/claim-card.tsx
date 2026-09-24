@@ -66,7 +66,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
             <h4 className="font-black text-fg leading-tight">
               {claim.claimNumber ? `#${claim.claimNumber}` : 'Claim (no number yet)'}
             </h4>
-            <p className="text-xs font-bold text-fg-3 flex items-center gap-1">
+            <p className="text-caption font-bold text-fg-3 flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               Filed {format.date(claim.filedDate)}
               {claim.settledDate ? ` · Settled ${format.date(claim.settledDate)}` : ''}
@@ -77,7 +77,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-3 gap-3 text-caption">
           <div className="space-y-1">
             <p className="text-caption font-medium text-fg-3">Gross bill</p>
             <p className="font-bold text-fg tabular-nums">{format.money(claim.grossAmount)}</p>
@@ -95,7 +95,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
         </div>
 
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-line-subtle">
-          <div className="text-xs text-fg-3 flex items-center gap-2">
+          <div className="text-caption text-fg-3 flex items-center gap-2">
             {claim.maintenanceRecordId ? (
               <span className="flex items-center gap-1">
                 <Wrench className="h-3 w-3" /> Linked to service record
@@ -132,7 +132,7 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
         </div>
 
         {claim.notes ? (
-          <div className="rounded-lg bg-page border border-line-subtle p-3 text-xs text-fg-2 flex items-start gap-2">
+          <div className="rounded-lg bg-page border border-line-subtle p-3 text-caption text-fg-2 flex items-start gap-2">
             <ReceiptText className="h-3 w-3 mt-0.5 shrink-0" />
             <span>{claim.notes}</span>
           </div>

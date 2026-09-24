@@ -27,6 +27,8 @@ const PALETTE_CLASS = new RegExp(
   `^-?(?:${COLOR_UTILITIES})-(?:(?:${PALETTE_FAMILIES})-(?:50|[1-9]00|950)|white|black)(?:/\\S+)?$`,
 );
 const ARBITRARY_FONT_SIZE = /^text-\[(?:length:)?[\d.]+(?:px|rem|em)\]$/;
+/** Tailwind's own sizes (14px `text-sm`, 18px `text-lg`…) sit off the design scale. */
+const DEFAULT_FONT_SIZE = /^text-(?:xs|sm|base|lg|xl|[2-9]xl)(?:\/\S+)?$/;
 
 function classTokens(text) {
   return text.split(/\s+/).filter(Boolean);
@@ -66,8 +68,14 @@ export const rules = {
   'no-arbitrary-font-size': tokenRule({
     description: 'Font sizes come from the type scale.',
     message:
-      '`{{className}}` is an arbitrary font size. Use the scale: text-caption, text-small, text-body, text-lead, text-heading, text-title, text-display.',
+      '`{{className}}` is an arbitrary font size. Use the scale: text-caption, text-small, text-ui, text-body, text-field, text-lead, text-heading, text-title, text-display.',
     matches: (utility) => ARBITRARY_FONT_SIZE.test(utility),
+  }),
+  'no-default-font-size': tokenRule({
+    description: "Font sizes come from the type scale, not Tailwind's defaults.",
+    message:
+      '`{{className}}` is a Tailwind default size, off the design scale. Use text-caption, text-small, text-ui, text-body, text-field, text-lead, text-heading, text-title, text-display; see docs/design-language.md.',
+    matches: (utility) => DEFAULT_FONT_SIZE.test(utility),
   }),
   'no-transition-all': tokenRule({
     description: 'Transitions name what they animate.',

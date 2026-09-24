@@ -363,9 +363,9 @@ export function MaintenanceForm({
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-brand" />
-              <CardTitle className="text-sm font-semibold text-brand">Smart suggestions</CardTitle>
+              <CardTitle className="text-ui font-semibold text-brand">Smart suggestions</CardTitle>
             </div>
-            <CardDescription className="text-xs text-brand">
+            <CardDescription className="text-caption text-brand">
               Based on your vehicle&apos;s usage trend, you might need these services soon.
             </CardDescription>
           </CardHeader>
@@ -377,7 +377,7 @@ export function MaintenanceForm({
                   className="flex flex-col rounded-lg border border-brand/30 bg-surface p-3 shadow-xs"
                 >
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-bold text-brand">
+                    <span className="text-caption font-bold text-brand">
                       {format.enumLabel('maintenanceCategory', suggestion.category)}
                     </span>
                     <span
@@ -392,7 +392,7 @@ export function MaintenanceForm({
                       {PRIORITY_LABEL[suggestion.priority]}
                     </span>
                   </div>
-                  <p className="mb-3 text-xs leading-relaxed text-fg-2">{suggestion.reason}</p>
+                  <p className="mb-3 text-caption leading-relaxed text-fg-2">{suggestion.reason}</p>
                   <div className="mt-auto flex items-center justify-between gap-2">
                     <div className="flex flex-col gap-0.5">
                       {suggestion.estimatedOdometerDue ? (
@@ -440,12 +440,12 @@ export function MaintenanceForm({
         </CardHeader>
         <CardContent>
           <div className="mb-6">
-            <p className="mb-2 text-xs font-medium text-fg-3">Common tasks</p>
+            <p className="mb-2 text-caption font-medium text-fg-3">Common tasks</p>
             <div className="flex flex-wrap gap-2">
               {quickPresets.map((preset) => (
                 <Button
                   key={preset.label}
-                  className="h-8 rounded-lg border-line bg-page text-xs hover:bg-line-subtle hover:text-fg"
+                  className="h-8 rounded-lg border-line bg-page text-caption hover:bg-line-subtle hover:text-fg"
                   onClick={() => {
                     form.setValue('category', preset.category, { shouldDirty: true });
                     form.setValue('notes', preset.note, { shouldDirty: true });
@@ -476,14 +476,14 @@ export function MaintenanceForm({
               </TabsList>
 
               <TabsContent className="space-y-5" value="quick">
-                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-sm text-fg-2">
+                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-ui text-fg-2">
                   Best for fast logging when you mainly need the date, odometer, category, and
                   total.
                 </div>
               </TabsContent>
 
               <TabsContent className="space-y-5" value="detailed">
-                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-sm text-fg-2">
+                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-ui text-fg-2">
                   Use structured items when the invoice breaks work into jobs, parts, fluids, taxes,
                   or discounts.
                 </div>
@@ -676,7 +676,7 @@ export function MaintenanceForm({
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-2">
                         <Wrench className="h-4 w-4 text-fg-3" />
-                        <CardTitle className="text-sm">Structured summary</CardTitle>
+                        <CardTitle className="text-ui">Structured summary</CardTitle>
                       </div>
                       <CardDescription>
                         Keep the invoice mappable even when each workshop formats it differently.
@@ -727,10 +727,10 @@ export function MaintenanceForm({
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-2">
                         <WalletCards className="h-4 w-4 text-fg-3" />
-                        <CardTitle className="text-sm">How totals work</CardTitle>
+                        <CardTitle className="text-ui">How totals work</CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm leading-6 text-fg-2">
+                    <CardContent className="space-y-2 text-ui leading-6 text-fg-2">
                       <p>Parts, fluids, labour, fees, jobs, and taxes add to the total.</p>
                       <p>Discount items subtract from the total automatically.</p>
                       <p>If you do not add structured items yet, the manual total still works.</p>
@@ -752,7 +752,7 @@ export function MaintenanceForm({
 
             {lowOdometerWarning && lowOdometerWarning.odometer === enteredOdometer ? (
               <div
-                className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-2.5 text-sm leading-5 text-soon"
+                className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-2.5 text-ui leading-5 text-soon"
                 role="alert"
               >
                 <p>
@@ -786,7 +786,7 @@ export function MaintenanceForm({
             ) : null}
 
             {submissionState ? (
-              <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-sm leading-5 text-ok">
+              <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-ui leading-5 text-ok">
                 {submissionState}
               </p>
             ) : null}
@@ -799,7 +799,7 @@ export function MaintenanceForm({
               >
                 {isSubmitting ? submittingLabel : submitLabel}
               </Button>
-              <p className="text-sm leading-5 text-fg-3 sm:max-w-md">
+              <p className="text-ui leading-5 text-fg-3 sm:max-w-md">
                 {isSubmitting ? 'Saving service record...' : submitHint}
               </p>
             </div>

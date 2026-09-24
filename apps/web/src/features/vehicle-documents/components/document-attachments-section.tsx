@@ -114,7 +114,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
       </div>
 
       {attachmentsQuery.isPending ? (
-        <p className="text-xs text-fg-3">Loading…</p>
+        <p className="text-caption text-fg-3">Loading…</p>
       ) : attachmentsQuery.isError ? (
         <InlineError
           message={getApiErrorMessage(
@@ -123,7 +123,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
           )}
         />
       ) : attachments.length ? (
-        <ul className="divide-y divide-line-subtle text-sm">
+        <ul className="divide-y divide-line-subtle text-ui">
           {attachments.map((attachment) => (
             <li className="flex items-center justify-between gap-2 py-1.5" key={attachment.id}>
               <button
@@ -134,7 +134,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
                 <span className="truncate font-medium text-fg-2">
                   {attachment.originalFileName}
                 </span>
-                <span className="text-xs text-fg-3">
+                <span className="text-caption text-fg-3">
                   {formatFileSize(attachment.size)} · {format.date(attachment.uploadedAt)}
                 </span>
               </button>
@@ -154,7 +154,7 @@ export function DocumentAttachmentsSection({ documentId, kind }: DocumentAttachm
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-fg-3">
+        <p className="text-caption text-fg-3">
           {canEdit ? `No files yet. ${EMPTY_HINT[kind]}` : 'No files yet.'}
         </p>
       )}

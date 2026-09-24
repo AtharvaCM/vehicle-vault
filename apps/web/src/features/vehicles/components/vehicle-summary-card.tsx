@@ -25,7 +25,7 @@ export function VehicleSummaryCard({ vehicle }: VehicleSummaryCardProps) {
           {vehicle.registrationNumber} • {describeVehicleModel(vehicle)}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 text-sm text-fg-2 sm:grid-cols-2">
+      <CardContent className="grid gap-4 text-ui text-fg-2 sm:grid-cols-2">
         <p>Year: {vehicle.year}</p>
         <p>Odometer: {format.odometer(vehicle.odometer)}</p>
         <p>Added: {format.date(vehicle.createdAt)}</p>

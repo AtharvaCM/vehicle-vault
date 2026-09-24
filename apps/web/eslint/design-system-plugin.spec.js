@@ -43,6 +43,18 @@ tester.run('no-arbitrary-font-size', rules['no-arbitrary-font-size'], {
   ],
 });
 
+tester.run('no-default-font-size', rules['no-default-font-size'], {
+  valid: [
+    '<p className="text-ui text-small text-fg-3 text-field md:text-body" />',
+    '<p className="text-late text-center text-sm-foo" />',
+  ],
+  invalid: [
+    { code: '<p className="text-sm" />', errors: found },
+    { code: "cn('md:text-2xl')", errors: found },
+    { code: '<p className="text-lg/6" />', errors: found },
+  ],
+});
+
 tester.run('no-transition-all', rules['no-transition-all'], {
   valid: ['<a className="transition-colors duration-150" />'],
   invalid: [
@@ -73,6 +85,7 @@ describe('severity by path', () => {
   const eslint = new ESLint({ cwd: webRoot });
   const code = [
     "export const label = 'text-slate-500 uppercase tracking-widest transition-all text-[11px]';",
+    "export const size = 'text-sm';",
     "export const ask = () => window.confirm('Sure?');",
     '',
   ].join('\n');
@@ -92,6 +105,7 @@ describe('severity by path', () => {
         ['vv/no-micro-labels', 1],
         ['vv/no-transition-all', 1],
         ['vv/no-arbitrary-font-size', 1],
+        ['vv/no-default-font-size', 1],
         ['no-restricted-properties', 1],
       ]),
     );
@@ -106,6 +120,7 @@ describe('severity by path', () => {
         ['vv/no-micro-labels', 2],
         ['vv/no-transition-all', 2],
         ['vv/no-arbitrary-font-size', 2],
+        ['vv/no-default-font-size', 2],
         ['no-restricted-properties', 2],
       ]),
     );

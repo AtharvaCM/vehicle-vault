@@ -48,7 +48,7 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="rounded-xl border border-line bg-page px-4 py-3 text-sm text-fg-2">
+          <p className="rounded-xl border border-line bg-page px-4 py-3 text-ui text-fg-2">
             Looking up specifications…
           </p>
         </CardContent>
@@ -210,7 +210,7 @@ function SpecCard({ title, icon, items }: SpecCardProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex items-center gap-2 text-lead">
           {icon}
           {title}
         </CardTitle>

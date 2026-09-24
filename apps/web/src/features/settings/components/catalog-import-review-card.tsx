@@ -141,7 +141,7 @@ function CatalogImportReviewPanel() {
               )}
             />
           ) : !runsQuery.data?.length ? (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-page/70 p-5 text-sm text-fg-2">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-page/70 p-5 text-ui text-fg-2">
               No import runs have been staged yet. Run `pnpm catalog:import:all` to capture the next
               review batch.
             </div>
@@ -252,7 +252,7 @@ function RunRow({ run, onOpen }: { run: VehicleCatalogImportRunReview; onOpen: (
           <RunStateBadge run={run} />
           <Badge tone="neutral">{run.marketCode}</Badge>
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-fg-3">
           <span>
             Captured{' '}
             {run.snapshotCapturedAt ? format.date(run.snapshotCapturedAt, 'dateTime') : 'Unknown'}
@@ -330,8 +330,8 @@ function CatalogImportDetail({
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <div className="space-y-4 rounded-2xl border border-border/70 bg-page/70 p-4">
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-fg">Diff summary</p>
-            <p className="text-sm text-fg-2">
+            <p className="text-ui font-semibold text-fg">Diff summary</p>
+            <p className="text-ui text-fg-2">
               Compare this staged snapshot with what is currently published for the same source key.
             </p>
           </div>
@@ -351,8 +351,8 @@ function CatalogImportDetail({
 
         <div className="space-y-4 rounded-2xl border border-border/70 bg-surface p-4">
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-fg">Snapshot contents</p>
-            <p className="text-sm text-fg-2">
+            <p className="text-ui font-semibold text-fg">Snapshot contents</p>
+            <p className="text-ui text-fg-2">
               This is the staged catalog payload that will be published if approved.
             </p>
           </div>
@@ -366,11 +366,11 @@ function CatalogImportDetail({
                   <p className="font-medium text-fg">{make.name}</p>
                   <Badge tone="accent">{format.enumLabel('vehicleType', make.vehicleType)}</Badge>
                 </div>
-                <div className="mt-2 space-y-2 text-sm text-fg-2">
+                <div className="mt-2 space-y-2 text-ui text-fg-2">
                   {make.models.map((model) => (
                     <div key={model.name} className="rounded-xl bg-page/80 px-3 py-2">
                       <p className="font-medium text-fg">{model.name}</p>
-                      <p className="mt-1 text-xs text-fg-3">
+                      <p className="mt-1 text-caption text-fg-3">
                         {model.generations.length} generation
                         {model.generations.length === 1 ? '' : 's'} ·{' '}
                         {model.generations.reduce(
@@ -390,8 +390,8 @@ function CatalogImportDetail({
 
       <div className="space-y-4 rounded-2xl border border-border/70 bg-surface p-4">
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-fg">Published source reviews</p>
-          <p className="text-sm text-fg-2">
+          <p className="text-ui font-semibold text-fg">Published source reviews</p>
+          <p className="text-ui text-fg-2">
             Add provenance notes or correct ambiguous year ranges on the currently published source
             rows. Those corrections stay attached to future imports for the same source.
           </p>
@@ -408,7 +408,7 @@ function CatalogImportDetail({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-fg-3">
+          <p className="text-ui text-fg-3">
             No published source data exists for this importer yet. Publish the first trusted run
             before manual provenance review is needed.
           </p>
@@ -444,7 +444,7 @@ function CatalogImportDetail({
             />
           </div>
         ) : (
-          <div className="rounded-xl border border-border/70 bg-page px-3 py-2 text-sm text-fg-2">
+          <div className="rounded-xl border border-border/70 bg-page px-3 py-2 text-ui text-fg-2">
             {detail.publishedAt
               ? `Published ${format.date(detail.publishedAt, 'dateTime')}`
               : 'Only successful staged runs can be published.'}
@@ -532,15 +532,15 @@ function PublishedOfferingReviewRow({
             </Badge>
             {offering.manualOverrideApplied ? <Badge tone="warning">Reviewed</Badge> : null}
           </div>
-          <p className="text-sm text-fg-2">
+          <p className="text-ui text-fg-2">
             {offering.makeName} / {offering.modelName} / {offering.generationName}
           </p>
           {offering.reviewNote ? (
-            <p className="text-sm leading-6 text-fg-2">
+            <p className="text-ui leading-6 text-fg-2">
               <span className="font-medium text-fg">Source note:</span> {offering.reviewNote}
             </p>
           ) : (
-            <p className="text-sm text-fg-3">No manual provenance note added yet.</p>
+            <p className="text-ui text-fg-3">No manual provenance note added yet.</p>
           )}
         </div>
 
@@ -595,7 +595,7 @@ function PublishedOfferingReviewRow({
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-fg-2">
+          <label className="flex items-center gap-2 text-ui text-fg-2">
             <input
               checked={isCurrent}
               className="h-4 w-4 rounded border border-line text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
@@ -652,10 +652,10 @@ function SummaryMetric({ label, value, icon }: { label: string; value: number; i
   return (
     <div className="rounded-2xl border border-border/70 bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-fg-2">{label}</p>
+        <p className="text-ui text-fg-2">{label}</p>
         <span className="text-fg-3">{icon}</span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-fg">{value}</p>
+      <p className="mt-2 text-title font-semibold tracking-tight text-fg">{value}</p>
     </div>
   );
 }
@@ -671,7 +671,7 @@ function DiffList({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-fg">{label}</p>
+      <p className="text-ui font-medium text-fg">{label}</p>
       {values.length ? (
         <div className="flex flex-wrap gap-2">
           {values.map((value) => (
@@ -681,7 +681,7 @@ function DiffList({
           ))}
         </div>
       ) : (
-        <p className="text-sm text-fg-3">{emptyCopy}</p>
+        <p className="text-ui text-fg-3">{emptyCopy}</p>
       )}
     </div>
   );
@@ -694,13 +694,13 @@ function ChangedVariantList({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-fg">Changed variants</p>
+      <p className="text-ui font-medium text-fg">Changed variants</p>
       {changes.length ? (
         <ul className="space-y-2">
           {changes.map((change) => (
             <li key={change.variant} className="rounded-xl border border-border/60 bg-surface p-3">
-              <p className="text-sm font-medium text-fg">{change.variant}</p>
-              <dl className="mt-1 space-y-0.5 text-xs text-fg-2">
+              <p className="text-ui font-medium text-fg">{change.variant}</p>
+              <dl className="mt-1 space-y-0.5 text-caption text-fg-2">
                 {change.changes.map((fieldChange) => (
                   <div key={fieldChange.field} className="flex flex-wrap gap-x-1">
                     <dt className="font-medium text-fg-2">{fieldChange.field}:</dt>
@@ -714,7 +714,7 @@ function ChangedVariantList({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-fg-3">No changes detected in this category.</p>
+        <p className="text-ui text-fg-3">No changes detected in this category.</p>
       )}
     </div>
   );

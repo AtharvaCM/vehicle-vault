@@ -72,7 +72,7 @@ export function SearchableSelect({
         <Button
           aria-controls={id ? `${id}-content` : undefined}
           aria-expanded={open}
-          className="h-10 w-full justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm font-normal text-left shadow-none hover:bg-background"
+          className="h-10 w-full justify-between rounded-xl border border-input bg-background px-3 py-2 text-ui font-normal text-left shadow-none hover:bg-background"
           disabled={disabled}
           id={id}
           role="combobox"

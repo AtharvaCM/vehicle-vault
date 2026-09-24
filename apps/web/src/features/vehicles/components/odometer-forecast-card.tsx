@@ -51,9 +51,9 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
     <Card className="overflow-hidden border-line/50 bg-surface shadow-xs transition-colors">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
-          <CardTitle className="text-sm font-medium text-fg-3">Odometer estimate</CardTitle>
+          <CardTitle className="text-ui font-medium text-fg-3">Odometer estimate</CardTitle>
           <div className="flex items-center gap-2">
-            <h3 className="text-2xl font-bold tracking-tight text-fg">
+            <h3 className="text-title font-bold tracking-tight text-fg">
               {format.odometer(
                 canPredict ? insights.currentOdometerPredicted : insights.lastRecordedOdometer,
               )}
@@ -64,7 +64,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
               </Badge>
             ) : null}
           </div>
-          <p className="text-xs text-fg-3">
+          <p className="text-caption text-fg-3">
             {canPredict
               ? 'Predicted current odometer'
               : `Last recorded (${lastRecordedDate}). Log another reading to see a prediction.`}
@@ -78,20 +78,20 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-fg-3">
+              <div className="flex items-center gap-1.5 text-caption text-fg-3">
                 <Calendar className="h-3.5 w-3.5" />
                 <span>Avg. daily</span>
               </div>
-              <p className="text-sm font-semibold text-fg-2">
+              <p className="text-ui font-semibold text-fg-2">
                 {insights.averageDailyMileage} km/day
               </p>
             </div>
             <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-fg-3">
+              <div className="flex items-center gap-1.5 text-caption text-fg-3">
                 <Gauge className="h-3.5 w-3.5" />
                 <span>Avg. monthly</span>
               </div>
-              <p className="text-sm font-semibold text-fg-2">
+              <p className="text-ui font-semibold text-fg-2">
                 {format.distance(insights.averageMonthlyMileage)}
               </p>
             </div>
@@ -109,7 +109,7 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
                     <Info className="h-4 w-4 text-fg-3" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[200px] text-xs">
+                <TooltipContent side="top" className="max-w-[200px] text-caption">
                   {confidenceMessages[insights.confidence]}
                 </TooltipContent>
               </Tooltip>

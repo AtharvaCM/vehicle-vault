@@ -37,7 +37,7 @@ export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerPro
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <MailWarning aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-soon" />
-          <p className="min-w-0 text-sm text-soon">
+          <p className="min-w-0 text-ui text-soon">
             <span className="font-semibold">
               Verify your email — {daysLeft <= 1 ? 'last day' : `${daysLeft} days left`}.
             </span>{' '}

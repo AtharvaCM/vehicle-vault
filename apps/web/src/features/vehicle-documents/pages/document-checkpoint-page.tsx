@@ -63,16 +63,16 @@ function ValidityBanner({ validity }: { validity: Validity }) {
   if (validity.state === 'expired') {
     return (
       <div className="rounded-2xl bg-late px-5 py-4 text-on-late" role="status">
-        <p className="text-2xl font-black tracking-tight">EXPIRED</p>
-        <p className="text-sm font-semibold">Ran out on {day(validity.endDate)}</p>
+        <p className="text-title font-black tracking-tight">EXPIRED</p>
+        <p className="text-ui font-semibold">Ran out on {day(validity.endDate)}</p>
       </div>
     );
   }
   if (validity.state === 'expiring') {
     return (
       <div className="rounded-2xl bg-soon-dot px-5 py-4 text-on-soon" role="status">
-        <p className="text-2xl font-black tracking-tight">VALID</p>
-        <p className="text-sm font-semibold">
+        <p className="text-title font-black tracking-tight">VALID</p>
+        <p className="text-ui font-semibold">
           {validity.days === 0 ? 'Runs out today' : `Runs out in ${validity.days} days`}, on{' '}
           {day(validity.endDate)}
         </p>
@@ -81,8 +81,8 @@ function ValidityBanner({ validity }: { validity: Validity }) {
   }
   return (
     <div className="rounded-2xl bg-ok px-5 py-4 text-on-ok" role="status">
-      <p className="text-2xl font-black tracking-tight">VALID</p>
-      <p className="text-sm font-semibold">
+      <p className="text-title font-black tracking-tight">VALID</p>
+      <p className="text-ui font-semibold">
         {validity.endDate ? `Until ${day(validity.endDate)}` : 'Does not expire'}
       </p>
     </div>
@@ -105,7 +105,7 @@ function DocumentFile({ attachment }: { attachment: Attachment }) {
       );
     }
     return (
-      <p className="text-sm text-fg-3">
+      <p className="text-ui text-fg-3">
         {image.isError ? `Couldn't load ${attachment.originalFileName}.` : 'Loading the photo…'}
       </p>
     );
@@ -113,7 +113,7 @@ function DocumentFile({ attachment }: { attachment: Attachment }) {
 
   return (
     <Button
-      className="h-12 w-full justify-start gap-2 text-base"
+      className="h-12 w-full justify-start gap-2 text-body"
       onClick={() => {
         openApiFileInNewTab(endpoints.attachments.file(attachment.id)).catch((error) =>
           appToast.error({ title: getApiErrorMessage(error, 'Could not open the file') }),
@@ -186,15 +186,15 @@ export function DocumentCheckpointPage({
         <div className="space-y-1">
           <p className="text-caption font-black text-fg-3">{NUMBER_LABELS[documentKind]}</p>
           {document.number ? (
-            <p className="break-all text-4xl font-black tabular-nums tracking-tight text-fg">
+            <p className="break-all font-mono text-title font-semibold text-fg">
               {document.number}
             </p>
           ) : (
-            <p className="text-xl font-bold text-fg-3">Not recorded</p>
+            <p className="text-heading font-bold text-fg-3">Not recorded</p>
           )}
         </div>
 
-        <dl className="grid gap-4 text-lg">
+        <dl className="grid gap-4 text-lead">
           <div>
             <dt className="text-caption font-black text-fg-3">{ISSUER_LABELS[documentKind]}</dt>
             <dd className={cn('font-bold', document.provider ? 'text-fg' : 'text-fg-3')}>
@@ -212,13 +212,13 @@ export function DocumentCheckpointPage({
 
         <section aria-label="The document" className="space-y-3">
           {attachmentsQuery.isPending ? (
-            <p className="text-sm text-fg-3">Loading the file…</p>
+            <p className="text-ui text-fg-3">Loading the file…</p>
           ) : attachments.length ? (
             attachments.map((attachment) => (
               <DocumentFile attachment={attachment} key={attachment.id} />
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-line p-4 text-sm text-fg-3">
+            <p className="rounded-xl border border-dashed border-line p-4 text-ui text-fg-3">
               No file attached. Add a photo or the PDF from the document&apos;s card.
             </p>
           )}
@@ -236,7 +236,7 @@ export function DocumentCheckpointPage({
       <div className="mx-auto max-w-lg px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(0.5rem+env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center gap-2">
           {backLink}
-          <h1 className="min-w-0 truncate text-lg font-black text-fg">
+          <h1 className="min-w-0 truncate text-lead font-black text-fg">
             {documentKind ? documentKindTitles[documentKind] : 'Document'}
           </h1>
         </header>

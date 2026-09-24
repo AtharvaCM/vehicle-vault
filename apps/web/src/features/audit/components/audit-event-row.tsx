@@ -43,7 +43,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={tone === 'neutral' ? 'neutral' : tone}>{label}</Badge>
             {resourceLabel ? (
-              <span className="text-xs font-medium text-fg-3">{resourceLabel}</span>
+              <span className="text-caption font-medium text-fg-3">{resourceLabel}</span>
             ) : null}
             {event.resourceId ? (
               <span className="font-mono text-caption text-fg-3">
@@ -66,7 +66,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
         </div>
         <div className="flex items-center justify-between gap-2">
           <time
-            className="whitespace-nowrap text-xs tabular-nums text-fg-3"
+            className="whitespace-nowrap text-caption tabular-nums text-fg-3"
             dateTime={event.occurredAt}
           >
             {format.date(event.occurredAt, 'dateTime')}
@@ -89,7 +89,7 @@ export function AuditEventRow({ event }: AuditEventRowProps) {
               {event.changedFields.map((field) => (
                 <div
                   key={field}
-                  className="grid grid-cols-[7rem_minmax(0,1fr)] items-baseline gap-2 text-xs"
+                  className="grid grid-cols-[7rem_minmax(0,1fr)] items-baseline gap-2 text-caption"
                 >
                   {/* Field names, ids and JSON have nowhere to wrap, so they may break
                       mid-word rather than widen the page. */}

@@ -147,7 +147,7 @@ export function LoanForm({
         />
       </FormField>
 
-      <div className="rounded-md border border-border bg-muted/30 p-4 text-sm">
+      <div className="rounded-md border border-border bg-muted/30 p-4 text-ui">
         <div className="font-medium text-foreground/90">Preview</div>
         <div className="mt-2 grid grid-cols-3 gap-3">
           <Figure label="EMI" value={format.money(emiPreview)} />

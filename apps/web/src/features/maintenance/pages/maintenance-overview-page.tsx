@@ -194,7 +194,7 @@ export function MaintenanceOverviewPage({
             <StatCard
               accent={
                 draftCount > 0 ? (
-                  <span className="text-xs font-medium text-soon">
+                  <span className="text-caption font-medium text-soon">
                     {draftCount} draft{draftCount === 1 ? '' : 's'} to confirm
                   </span>
                 ) : null
@@ -213,7 +213,7 @@ export function MaintenanceOverviewPage({
             <StatCard
               accent={
                 latestServiceDate ? (
-                  <span className="text-xs font-medium text-fg-3">
+                  <span className="text-caption font-medium text-fg-3">
                     Latest {format.date(latestServiceDate)}
                   </span>
                 ) : null
@@ -252,7 +252,7 @@ export function MaintenanceOverviewPage({
             description="Browse every logged service record across your vehicles."
             title="All service records"
             action={
-              <div className="flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 whitespace-nowrap text-ui text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
                 <span>{filteredRecords.length} visible</span>
               </div>

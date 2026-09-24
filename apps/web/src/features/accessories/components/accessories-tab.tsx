@@ -108,8 +108,8 @@ export function AccessoriesTab({ vehicleId }: AccessoriesTabProps) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-fg">Accessories</h2>
-          <p className="text-sm text-fg-3">
+          <h2 className="text-lead font-semibold text-fg">Accessories</h2>
+          <p className="text-ui text-fg-3">
             {accessories.length > 0
               ? `${accessories.length} item${accessories.length === 1 ? '' : 's'}${
                   totalSpend != null

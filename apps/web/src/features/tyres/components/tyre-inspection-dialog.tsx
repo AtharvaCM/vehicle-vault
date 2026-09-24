@@ -135,7 +135,7 @@ export function TyreInspectionDialog({
 
         {fitted.length === 0 ? (
           <div className="grid gap-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-ui text-muted-foreground">
               No tyres are being tracked for this vehicle yet. Add a tyre first, then you can record
               readings against it.
             </p>
@@ -168,7 +168,7 @@ export function TyreInspectionDialog({
             <div className="grid gap-3">
               <p className="text-small font-medium text-foreground/90">Readings</p>
               {errors.readings?.root?.message ? (
-                <p className="text-xs leading-5 text-late">{errors.readings.root.message}</p>
+                <p className="text-caption leading-5 text-late">{errors.readings.root.message}</p>
               ) : null}
 
               {fitted.map((tyre, index) => (
@@ -177,7 +177,7 @@ export function TyreInspectionDialog({
                   className="grid gap-3 rounded-xl border border-line bg-page/60 p-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-fg">
+                    <p className="text-caption font-bold text-fg">
                       {format.enumLabel('tyrePosition', tyre.position)}
                     </p>
                     <p className="truncate text-caption text-fg-3">

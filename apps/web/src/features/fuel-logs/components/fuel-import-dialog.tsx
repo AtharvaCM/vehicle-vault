@@ -187,8 +187,8 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
               <div className="rounded-full bg-primary/10 p-4 mb-4 group-hover:scale-110 transition-transform">
                 <Upload className="h-8 w-8 text-primary" />
               </div>
-              <h4 className="text-lg font-bold text-fg mb-2">Select CSV file</h4>
-              <p className="text-sm text-fg-3 text-center max-w-[300px] mb-6">
+              <h4 className="text-lead font-bold text-fg mb-2">Select CSV file</h4>
+              <p className="text-ui text-fg-3 text-center max-w-[300px] mb-6">
                 Upload your fuel registry. We&apos;ll help you map the columns in the next step.
               </p>
               <input
@@ -210,8 +210,10 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
             <div className="space-y-6">
               <div className="flex items-center justify-between px-1">
                 <div className="space-y-0.5">
-                  <h4 className="text-sm font-bold">Column mapping</h4>
-                  <p className="text-xs text-fg-3">Map your CSV headers to our registry fields.</p>
+                  <h4 className="text-ui font-bold">Column mapping</h4>
+                  <p className="text-caption text-fg-3">
+                    Map your CSV headers to our registry fields.
+                  </p>
                 </div>
                 <Badge variant="secondary" className="font-mono">
                   {csvRows.length} rows detected
@@ -225,7 +227,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                     <div className="grid gap-4 sm:grid-cols-2">
                       {REQUIRED_FIELDS.map((field) => (
                         <div key={field.id} className="space-y-2">
-                          <label className="text-xs font-bold text-fg-2">
+                          <label className="text-caption font-bold text-fg-2">
                             {field.label} <span className="text-destructive">*</span>
                           </label>
                           <Select
@@ -253,7 +255,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
                     <div className="grid gap-4 sm:grid-cols-2">
                       {OPTIONAL_FIELDS.map((field) => (
                         <div key={field.id} className="space-y-2">
-                          <label className="text-xs font-bold text-fg-2">{field.label}</label>
+                          <label className="text-caption font-bold text-fg-2">{field.label}</label>
                           <Select
                             value={mapping[field.id] ?? SKIP_MAPPING_VALUE}
                             onValueChange={(val) =>
@@ -293,17 +295,17 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
             <div className="space-y-6">
               <div className="flex items-center justify-between px-1">
                 <div className="space-y-0.5">
-                  <h4 className="text-sm font-bold text-ok flex items-center gap-2">
+                  <h4 className="text-ui font-bold text-ok flex items-center gap-2">
                     <Check className="h-4 w-4" /> Ready for ingestion
                   </h4>
-                  <p className="text-xs text-fg-3">
+                  <p className="text-caption text-fg-3">
                     Previewing first 5 of {csvRows.length} records.
                   </p>
                 </div>
               </div>
 
               <div className="rounded-xl border border-line overflow-hidden">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-caption">
                   <thead className="bg-page border-b border-line">
                     <tr>
                       <th className="px-3 py-2 font-bold text-fg-3">Date</th>
@@ -339,7 +341,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
 
               <div className="bg-soon-tint border border-soon/30 p-3 rounded-lg flex gap-3">
                 <AlertCircle className="h-4 w-4 text-soon shrink-0 mt-0.5" />
-                <p className="text-xs text-soon italic">
+                <p className="text-caption text-soon italic">
                   Note: We&apos;ve detected numeric formats and prepared them for the registry.
                   Please ensure dates are valid.
                 </p>
@@ -350,8 +352,8 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
               <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <h4 className="text-lg font-bold">Ingesting data...</h4>
-              <p className="text-sm text-fg-3">
+              <h4 className="text-lead font-bold">Ingesting data...</h4>
+              <p className="text-ui text-fg-3">
                 Processing {csvRows.length} records across the registry.
               </p>
             </div>

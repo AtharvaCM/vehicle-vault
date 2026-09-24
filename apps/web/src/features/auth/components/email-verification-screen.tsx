@@ -17,7 +17,7 @@ export function EmailVerificationScreen() {
             <Mail className="h-10 w-10 text-fg" />
           </div>
 
-          <h2 className="text-2xl font-extrabold tracking-tight text-fg">Verify your email</h2>
+          <h2 className="text-title font-extrabold tracking-tight text-fg">Verify your email</h2>
           <p className="mt-3 text-fg-3">
             We&apos;ve sent a verification link to{' '}
             <span className="break-all font-semibold text-fg">{user?.email}</span>. Open it to keep
@@ -53,7 +53,7 @@ export function EmailVerificationScreen() {
           </Button>
         </div>
 
-        <div className="mt-8 border-t border-line-subtle pt-6 text-center text-sm text-fg-3">
+        <div className="mt-8 border-t border-line-subtle pt-6 text-center text-ui text-fg-3">
           <p>
             Need help?{' '}
             <a

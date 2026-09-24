@@ -36,12 +36,12 @@ export function BulkReminderActions({
             <ListChecks className="h-4 w-4 text-fg-2" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-fg">
+            <p className="text-ui font-semibold text-fg">
               {hasSelection
                 ? `${selectedCount} reminder${selectedCount === 1 ? '' : 's'} selected`
                 : 'Select reminders to take action'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-ui text-muted-foreground">
               {hasSelection
                 ? 'Mark selected reminders as completed or remove them in one step.'
                 : `You can select all ${visibleCount} visible reminders from the current filtered view.`}

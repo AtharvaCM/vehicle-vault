@@ -140,8 +140,8 @@ export function PublicSpecSections({ specs }: PublicSpecSectionsProps) {
           className="rounded-xl border border-line bg-surface p-4 shadow-xs"
           key={section.title}
         >
-          <h3 className="text-sm font-semibold text-fg">{section.title}</h3>
-          <dl className="mt-3 divide-y divide-line-subtle text-sm">
+          <h3 className="text-ui font-semibold text-fg">{section.title}</h3>
+          <dl className="mt-3 divide-y divide-line-subtle text-ui">
             {section.rows.map(([label, value, unit]) => (
               <div className="flex justify-between gap-4 py-2" key={label}>
                 <dt className="text-fg-2">{label}</dt>

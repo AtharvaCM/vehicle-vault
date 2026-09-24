@@ -64,7 +64,7 @@ export function AttachmentItem({
             </Badge>
           ) : null}
         </div>
-        <div className="space-y-1 text-sm text-fg-2">
+        <div className="space-y-1 text-ui text-fg-2">
           <p>
             {attachment.mimeType} • {formatFileSize(attachment.size)}
           </p>
@@ -74,7 +74,7 @@ export function AttachmentItem({
 
       <div className="flex flex-wrap gap-2">
         <button
-          className="inline-flex h-10 items-center justify-center rounded-xl bg-surface px-4 text-sm font-medium text-fg ring-1 ring-inset ring-line transition-colors hover:bg-page"
+          className="inline-flex h-10 items-center justify-center rounded-xl bg-surface px-4 text-ui font-medium text-fg ring-1 ring-inset ring-line transition-colors hover:bg-page"
           onClick={handleOpen}
           type="button"
         >

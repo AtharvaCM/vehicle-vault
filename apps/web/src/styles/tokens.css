@@ -47,6 +47,10 @@
   --plate-ev: #1e7f4a;
   --plate-ev-ink: #ffffff;
 
+  /* A tyre is black rubber, also the same in both sets. */
+  --tyre: #0f172a;
+  --tyre-tread: #1e293b;
+
   /*
    * Chart series, in this fixed order: a series keeps its slot whatever else is
    * shown. Validated as a set for colour-blind separation and >= 3:1 against the
@@ -138,6 +142,8 @@
   --color-plate-strip: var(--plate-strip);
   --color-plate-ev: var(--plate-ev);
   --color-plate-ev-ink: var(--plate-ev-ink);
+  --color-tyre: var(--tyre);
+  --color-tyre-tread: var(--tyre-tread);
   --color-scrim: var(--scrim);
 
   --color-chart-1: var(--chart-1);
@@ -176,13 +182,22 @@
   --font-display: 'Anek Latin', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* The type scale: 12 · 13 · 15 · 17 · 20 · 28 · 40. Nothing smaller than 12. */
+  /*
+   * The type scale: 12 · 13 · 14 · 15 · 16 · 17 · 20 · 28 · 40. Nothing smaller
+   * than 12. `ui` (14) is for controls, navigation and dense rows; `field` (16)
+   * is form-field text below md, where anything smaller makes iOS Safari zoom
+   * the page on focus.
+   */
   --text-caption: 0.75rem;
   --text-caption--line-height: 1rem;
   --text-small: 0.8125rem;
   --text-small--line-height: 1.125rem;
+  --text-ui: 0.875rem;
+  --text-ui--line-height: 1.25rem;
   --text-body: 0.9375rem;
   --text-body--line-height: 1.375rem;
+  --text-field: 1rem;
+  --text-field--line-height: 1.5rem;
   --text-lead: 1.0625rem;
   --text-lead--line-height: 1.5rem;
   --text-heading: 1.25rem;

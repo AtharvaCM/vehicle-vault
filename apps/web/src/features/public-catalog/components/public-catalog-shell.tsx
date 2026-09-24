@@ -28,14 +28,14 @@ export function PublicCatalogShell({ children }: PublicCatalogShellProps) {
         </Link>
         {isAuthenticated ? (
           <Link
-            className="rounded-lg px-3 py-2 text-sm font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
+            className="rounded-lg px-3 py-2 text-ui font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
             to="/dashboard"
           >
             Open your garage
           </Link>
         ) : (
           <Link
-            className="rounded-lg px-3 py-2 text-sm font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
+            className="rounded-lg px-3 py-2 text-ui font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
             to="/login"
           >
             Sign in
@@ -45,7 +45,7 @@ export function PublicCatalogShell({ children }: PublicCatalogShellProps) {
 
       <main className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">{children}</main>
 
-      <footer className="mx-auto max-w-4xl px-4 py-8 text-sm text-fg-2 sm:px-6">
+      <footer className="mx-auto max-w-4xl px-4 py-8 text-ui text-fg-2 sm:px-6">
         © {new Date().getFullYear()} {APP_NAME}
       </footer>
     </div>
