@@ -1,3 +1,10 @@
+# [1.80.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.4...v1.80.0) (2026-09-24)
+
+
+### Features
+
+* **web:** navigate by Home, Garage, Upcoming, History and Costs ([ff267fe](https://github.com/AtharvaCM/vehicle-vault/commit/ff267fe3487306e82d439121139307f7c7bfa3ff)), closes [#275](https://github.com/AtharvaCM/vehicle-vault/issues/275)
+
 ## [1.79.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.3...v1.79.4) (2026-09-24)
 
 
