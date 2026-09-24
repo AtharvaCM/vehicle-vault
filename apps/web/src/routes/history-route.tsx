@@ -3,18 +3,18 @@ import { createRoute, useNavigate } from '@tanstack/react-router';
 import { appRoute } from './app-route';
 import { createLazyPage } from './lazy-page';
 import {
-  normalizeMaintenanceListSearch,
-  type MaintenanceListSearch,
-} from '@/features/maintenance/types/maintenance-list-search';
+  normalizeHistorySearch,
+  type HistorySearch,
+} from '@/features/history/types/history-search';
 
-const MaintenanceOverviewPage = createLazyPage(
+const HistoryPage = createLazyPage(
   () =>
-    import('@/features/maintenance/pages/maintenance-overview-page').then((module) => ({
-      default: module.MaintenanceOverviewPage,
+    import('@/features/history/pages/history-page').then((module) => ({
+      default: module.HistoryPage,
     })),
   {
     title: 'Loading history',
-    description: 'Loading your service history.',
+    description: 'Loading what was done across your garage.',
   },
 );
 
@@ -22,20 +22,20 @@ function HistoryRouteComponent() {
   const search = historyRoute.useSearch();
   const navigate = useNavigate();
 
-  function updateSearch(next: Partial<MaintenanceListSearch>) {
+  function updateSearch(next: Partial<HistorySearch>) {
     void navigate({
       to: '/history',
-      search: (previous) => normalizeMaintenanceListSearch({ ...previous, ...next }),
+      search: (previous) => normalizeHistorySearch({ ...previous, ...next }),
       replace: true,
     });
   }
 
-  return <MaintenanceOverviewPage onSearchStateChange={updateSearch} searchState={search} />;
+  return <HistoryPage onSearchStateChange={updateSearch} searchState={search} />;
 }
 
 export const historyRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'history',
-  validateSearch: normalizeMaintenanceListSearch,
+  validateSearch: normalizeHistorySearch,
   component: HistoryRouteComponent,
 });

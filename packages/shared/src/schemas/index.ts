@@ -15,3 +15,4 @@ export * from './vehicle-sharing.schema';
 export * from './tyre.schema';
 export * from './accessory.schema';
 export * from './service-baseline.schema';
+export * from './history.schema';

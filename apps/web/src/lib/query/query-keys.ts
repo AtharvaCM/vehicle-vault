@@ -81,7 +81,6 @@ export const queryKeys = {
   },
   maintenance: {
     all: () => ['maintenance'] as const,
-    global: () => [...queryKeys.maintenance.all(), 'global'] as const,
     list: (vehicleId: string) => [...queryKeys.maintenance.all(), 'list', vehicleId] as const,
     detail: (recordId: string) => [...queryKeys.maintenance.all(), 'detail', recordId] as const,
   },
@@ -158,6 +157,15 @@ export const queryKeys = {
     all: () => ['notifications'] as const,
     list: () => [...queryKeys.notifications.all(), 'list'] as const,
     preferences: () => [...queryKeys.notifications.all(), 'preferences'] as const,
+  },
+  /**
+   * Under the audit root: every write the timeline shows (a service, a fill, an
+   * odometer reading) is audited, and its mutation already invalidates `audit.all()`.
+   */
+  history: {
+    all: () => [...queryKeys.audit.all(), 'history'] as const,
+    list: (params: { vehicleId?: string; kind?: string }) =>
+      [...queryKeys.history.all(), params.vehicleId ?? 'all', params.kind ?? 'all'] as const,
   },
   audit: {
     all: () => ['audit'] as const,
