@@ -1,3 +1,10 @@
+# [1.78.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.77.0...v1.78.0) (2026-09-24)
+
+
+### Features
+
+* **web:** on-ok and on-soon tokens for solid status fills ([f0b4c68](https://github.com/AtharvaCM/vehicle-vault/commit/f0b4c680111c8e509749244d28cc6314bac8718f))
+
 # [1.77.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.76.0...v1.77.0) (2026-09-24)
 
 
