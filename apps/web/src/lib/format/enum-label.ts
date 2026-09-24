@@ -130,6 +130,7 @@ const reminderType = {
   [ReminderType.Inspection]: 'Inspection',
   [ReminderType.Emission]: 'Emission test',
   [ReminderType.Custom]: 'Custom',
+  [ReminderType.Registration]: 'Registration',
 } satisfies Record<ReminderType, string>;
 
 const serviceBaselineStatus = {

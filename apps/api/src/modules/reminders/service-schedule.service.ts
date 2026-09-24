@@ -24,6 +24,7 @@ import {
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { TyresService } from '../tyres/tyres.service';
+import { linkRenewalReminder } from './renewal-link';
 import { addMonths, nextOccurrenceDue, type RepeatAnchor } from './repeat-rule';
 import {
   filterCatalogForVehicle,
@@ -194,6 +195,12 @@ export class ServiceScheduleService {
           vehicleId,
           properties: { source: 'schedule' },
         });
+        // A PUC or insurance item follows the paper when the vehicle has one on file.
+        await linkRenewalReminder(
+          { tx, auditService: this.auditService, actorUserId: userId },
+          reminder.id,
+          now,
+        );
         created.push(reminder.id);
       }
     });

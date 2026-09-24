@@ -11,6 +11,7 @@ describe('RemindersService', () => {
     delete: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
 
@@ -29,6 +30,8 @@ describe('RemindersService', () => {
       delete: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      // Renewal linking reads the reminder back; null means nothing to link.
+      findUnique: vi.fn().mockResolvedValue(null),
       update: vi.fn(),
     },
     fuelLog: { findMany: vi.fn().mockResolvedValue([]) },

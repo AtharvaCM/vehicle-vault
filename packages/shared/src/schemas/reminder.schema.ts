@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { ReminderStatus, ReminderType } from '../enums';
+import { VehicleDocumentKindSchema, type VehicleDocumentKind } from '../types/vehicle-document';
 
 const isoDateTimeString = z.string().datetime({ offset: true });
 
@@ -14,6 +15,23 @@ export const REMINDER_REPEAT_MAX_KM = 200000;
 
 const repeatEveryMonths = z.number().int().min(1).max(REMINDER_REPEAT_MAX_MONTHS);
 const repeatEveryKm = z.number().int().min(1).max(REMINDER_REPEAT_MAX_KM);
+
+/**
+ * A **renewal**: a reminder of one of these types follows the vehicle's paper
+ * of the matching kind. While linked, its due date is the paper's end date,
+ * and renewing the paper completes it and links a successor to the new paper.
+ */
+export const RENEWAL_DOCUMENT_KIND_BY_REMINDER_TYPE: Partial<
+  Record<
+    ReminderType,
+    Extract<VehicleDocumentKind, 'insurance' | 'puc' | 'road_tax' | 'registration'>
+  >
+> = {
+  [ReminderType.Insurance]: 'insurance',
+  [ReminderType.Puc]: 'puc',
+  [ReminderType.Tax]: 'road_tax',
+  [ReminderType.Registration]: 'registration',
+};
 
 export const ReminderCreateSchema = z
   .object({
@@ -71,6 +89,11 @@ export const ReminderSchema = z.object({
   repeatEveryKm: repeatEveryKm.optional(),
   createdAt: isoDateTimeString,
   updatedAt: isoDateTimeString,
+  /**
+   * The paper this renewal follows. Present while linked: `dueDate` is then
+   * the paper's end date and cannot be set on the reminder itself.
+   */
+  renewsDocument: z.object({ kind: VehicleDocumentKindSchema, id: z.string().uuid() }).optional(),
   /**
    * Server-derived projection of when `dueOdometer` will be reached based on
    * recent fuel-log usage cadence. Present only when reminder has a

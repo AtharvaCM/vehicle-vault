@@ -8,4 +8,5 @@ export enum ReminderType {
   Inspection = 'inspection',
   Emission = 'emission',
   Custom = 'custom',
+  Registration = 'registration',
 }

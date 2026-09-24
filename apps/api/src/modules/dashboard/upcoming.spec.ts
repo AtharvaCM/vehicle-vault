@@ -101,6 +101,7 @@ const SECOND = vehicle('second', 'Second Car', 'MH12DM0004', 45000);
 const DEMO = {
   vehicles: [SUV, HATCH, BIKE, SECOND],
   reminders: [
+    // Follows the policy: one renewal, one row (#283).
     reminder({
       id: 'suv-insurance-renewal',
       vehicleId: 'suv',
@@ -108,6 +109,7 @@ const DEMO = {
       type: ReminderType.Insurance,
       status: ReminderStatus.Overdue,
       dueDate: daysFromNow(-3).toISOString(),
+      renewsDocument: { kind: 'insurance', id: 'suv-insurance' },
     }),
     reminder({
       id: 'suv-alignment',
@@ -135,7 +137,7 @@ const DEMO = {
       vehicleId: 'suv',
       kind: 'insurance',
       provider: 'HDFC ERGO',
-      endDate: daysFromNow(5),
+      endDate: daysFromNow(-3),
     }),
     paper({ id: 'suv-puc', vehicleId: 'suv', kind: 'puc', endDate: daysFromNow(200) }),
     // Ended 120 days ago: off the timeline, as it is off Home.
@@ -263,13 +265,19 @@ describe('Upcoming timeline', () => {
     expect(timeline.counts.this_month).toBe(summary.attentionCounts.thisMonth);
 
     expect(near.map((item) => [item.id, item.urgency])).toEqual([
-      ['suv-insurance-renewal', 'overdue'],
+      ['suv-insurance', 'overdue'],
       ['hatch-oil', 'today'],
       ['emi:bike-loan', 'this_week'],
       ['suv-alignment', 'this_week'],
-      ['suv-insurance', 'this_week'],
       ['second-timing-belt', 'this_month'],
     ]);
+    // The lapsed policy and its renewal reminder are one row, under the reminder's name.
+    expect(near[0]).toMatchObject({
+      kind: 'document',
+      title: 'Insurance renewal',
+      reminderId: 'suv-insurance-renewal',
+    });
+    expect(timeline.items.map((item) => item.id)).not.toContain('suv-insurance-renewal');
     // Everything else with a date, soonest first; the long-lapsed warranty is not here.
     expect(
       timeline.items.filter((item) => item.urgency === 'later').map((item) => item.id),
@@ -284,23 +292,26 @@ describe('Upcoming timeline', () => {
       'hatch-road-tax',
     ]);
     expect(laterTotal).toBe(8);
-    expect(timeline.counts).toEqual({ late: 1, this_week: 4, this_month: 1, later: 8 });
+    expect(timeline.counts).toEqual({ late: 1, this_week: 3, this_month: 1, later: 8 });
   });
 
   it('keeps agreeing when a paper is snoozed: Home drops it, Upcoming holds it for later', async () => {
     arrange({
       ...DEMO,
-      dismissals: [{ documentId: 'suv-insurance', dismissedUntil: daysFromNow(14) }],
+      documents: DEMO.documents.map((document) =>
+        document.id === 'second-insurance' ? { ...document, endDate: daysFromNow(12) } : document,
+      ),
+      dismissals: [{ documentId: 'second-insurance', dismissedUntil: daysFromNow(14) }],
     });
 
     const summary = await service.getSummary('demo');
     const { timeline } = await service.getUpcoming('demo', {});
 
-    expect(summary.attention.map((item) => item.id)).not.toContain('suv-insurance');
+    expect(summary.attention.map((item) => item.id)).not.toContain('second-insurance');
     expect(timeline.counts.this_week).toBe(
       summary.attentionCounts.today + summary.attentionCounts.thisWeek,
     );
-    expect(timeline.items.find((item) => item.id === 'suv-insurance')).toMatchObject({
+    expect(timeline.items.find((item) => item.id === 'second-insurance')).toMatchObject({
       urgency: 'later',
       snoozedUntil: daysFromNow(14).toISOString(),
     });
@@ -353,11 +364,11 @@ describe('Upcoming timeline', () => {
 
     const suvOnly = await service.getUpcoming('demo', { vehicleId: 'suv' });
     expect(new Set(suvOnly.timeline.items.map((item) => item.vehicleId))).toEqual(new Set(['suv']));
-    expect(suvOnly.timeline.counts).toEqual({ late: 1, this_week: 2, this_month: 0, later: 1 });
+    expect(suvOnly.timeline.counts).toEqual({ late: 1, this_week: 1, this_month: 0, later: 1 });
 
     const papers = await service.getUpcoming('demo', { kind: 'papers' });
     expect(new Set(papers.timeline.items.map((item) => item.kind))).toEqual(new Set(['document']));
-    expect(papers.timeline.counts).toEqual({ late: 0, this_week: 1, this_month: 0, later: 8 });
+    expect(papers.timeline.counts).toEqual({ late: 1, this_week: 0, this_month: 0, later: 8 });
 
     const emis = await service.getUpcoming('demo', { kind: 'emis' });
     expect(emis.timeline.items.map((item) => item.id)).toEqual(['emi:bike-loan']);
@@ -372,8 +383,8 @@ describe('Upcoming timeline', () => {
     const laterOf = (items: { id: string; urgency: string }[]) =>
       items.filter((item) => item.urgency === 'later').map((item) => item.id);
 
-    expect(first.timeline.items.filter((item) => item.urgency !== 'later')).toHaveLength(6);
-    expect(second.timeline.items.filter((item) => item.urgency !== 'later')).toHaveLength(6);
+    expect(first.timeline.items.filter((item) => item.urgency !== 'later')).toHaveLength(5);
+    expect(second.timeline.items.filter((item) => item.urgency !== 'later')).toHaveLength(5);
     expect([
       ...laterOf(first.timeline.items),
       ...laterOf(second.timeline.items),

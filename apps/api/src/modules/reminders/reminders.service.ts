@@ -7,6 +7,7 @@ import {
   ReminderUpdateSchema,
   type Reminder,
   type UpdateReminderInput,
+  type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -22,6 +23,7 @@ import type { UpdateReminderDto } from './dto/update-reminder.dto';
 import { ServiceScheduleService } from './service-schedule.service';
 import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-projection';
 import { computeReminderStatus, reminderStatusPriority } from './reminder-status';
+import { linkRenewalReminder, linkedPaperId, renewalKindOf } from './renewal-link';
 
 const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
 /** How far "Snooze" moves a reminder: a week on its date, 500 km on its odometer. */
@@ -29,15 +31,18 @@ export const REMINDER_SNOOZE_DAYS = 7;
 export const REMINDER_SNOOZE_KM = 500;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type ReminderWithVehicle = Prisma.ReminderGetPayload<{
-  include: {
-    vehicle: {
-      select: {
-        odometer: true;
-      };
-    };
-  };
-}>;
+function utcDayOf(date: Date): number {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+/** What a reminder is read with: the odometer its status counts from, and the paper it may follow. */
+const REMINDER_INCLUDE = {
+  vehicle: { select: { odometer: true } },
+  insurancePolicy: { select: { id: true, endDate: true } },
+  complianceDocument: { select: { id: true, kind: true, endDate: true } },
+} satisfies Prisma.ReminderInclude;
+
+type ReminderWithVehicle = Prisma.ReminderGetPayload<{ include: typeof REMINDER_INCLUDE }>;
 
 @Injectable()
 export class RemindersService {
@@ -56,13 +61,7 @@ export class RemindersService {
       where: {
         vehicle: { members: { some: { userId } } },
       },
-      include: {
-        vehicle: {
-          select: {
-            odometer: true,
-          },
-        },
-      },
+      include: REMINDER_INCLUDE,
       orderBy: {
         createdAt: 'desc',
       },
@@ -149,6 +148,11 @@ export class RemindersService {
         vehicleId,
         properties: { source: 'manual' },
       });
+      // A renewal follows the vehicle's paper of its kind, when it has one.
+      await linkRenewalReminder(
+        { tx, auditService: this.auditService, actorUserId: userId },
+        created.id,
+      );
       return created;
     });
 
@@ -159,7 +163,23 @@ export class RemindersService {
     const reminder = await this.getStoredReminderById(userId, reminderId);
     await this.access.assertEditor(userId, reminder.vehicleId);
     const input = this.validateUpdateReminderInput(payload);
-    const dueDate = input.dueDate !== undefined ? input.dueDate : reminder.dueDate?.toISOString();
+    const paper = this.followedPaper(reminder);
+    // Changing the type away from the paper's kind stops it following the paper.
+    const unlinks =
+      paper !== null && input.type !== undefined && renewalKindOf(input.type) !== paper.kind;
+    if (paper && !unlinks && input.dueDate !== undefined && paper.endDate) {
+      if (utcDayOf(new Date(input.dueDate)) !== utcDayOf(paper.endDate)) {
+        throw new BadRequestException(
+          'This reminder follows its paper: its due date is the paper’s end date. Change the paper instead.',
+        );
+      }
+    }
+    const dueDate =
+      paper && !unlinks && paper.endDate
+        ? paper.endDate.toISOString()
+        : input.dueDate !== undefined
+          ? input.dueDate
+          : reminder.dueDate?.toISOString();
     const dueOdometer =
       input.dueOdometer !== undefined ? input.dueOdometer : (reminder.dueOdometer ?? undefined);
     const reminderStatus = this.computeReminderStatus(
@@ -177,13 +197,14 @@ export class RemindersService {
         data: {
           title: input.title,
           type: input.type as PrismaReminderType,
-          dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
           dueOdometer: input.dueOdometer,
           notes: input.notes,
           // Undefined leaves the rule as it is; null stops that dimension.
           repeatEveryMonths: input.repeatEveryMonths,
           repeatEveryKm: input.repeatEveryKm,
           status: reminderStatus,
+          ...(unlinks ? { insurancePolicyId: null, complianceDocumentId: null } : {}),
         },
       });
       await this.auditService.track(tx, {
@@ -195,6 +216,12 @@ export class RemindersService {
         before: reminder as unknown as Record<string, unknown>,
         after: updated as unknown as Record<string, unknown>,
       });
+      if (!paper || unlinks) {
+        await linkRenewalReminder(
+          { tx, auditService: this.auditService, actorUserId: userId },
+          reminderId,
+        );
+      }
     });
 
     return this.getReminderById(userId, reminderId);
@@ -256,6 +283,11 @@ export class RemindersService {
     await this.access.assertEditor(userId, before.vehicleId);
     if (before.completedAt) {
       throw new BadRequestException('A completed reminder cannot be snoozed');
+    }
+    if (linkedPaperId(before)) {
+      throw new BadRequestException(
+        'This reminder follows its paper: snooze the paper, or renew it.',
+      );
     }
 
     const now = new Date();
@@ -322,13 +354,7 @@ export class RemindersService {
     const limit = query.limit ?? 20;
     const reminders = await this.prisma.reminder.findMany({
       where,
-      include: {
-        vehicle: {
-          select: {
-            odometer: true,
-          },
-        },
-      },
+      include: REMINDER_INCLUDE,
       orderBy: {
         createdAt: 'desc',
       },
@@ -362,13 +388,7 @@ export class RemindersService {
         id: reminderId,
         vehicle: { members: { some: { userId } } },
       },
-      include: {
-        vehicle: {
-          select: {
-            odometer: true,
-          },
-        },
-      },
+      include: REMINDER_INCLUDE,
     });
 
     if (!reminder) {
@@ -378,7 +398,13 @@ export class RemindersService {
     return reminder;
   }
 
-  private toReminder(reminder: ReminderWithVehicle, cadence?: UsageCadence): Reminder {
+  private toReminder(stored: ReminderWithVehicle, cadence?: UsageCadence): Reminder {
+    const paper = this.followedPaper(stored);
+    // While it follows a paper, the paper's end date is its due date. The
+    // column is kept in step on every paper write; reading it from the paper
+    // means no path that forgets can make the two disagree.
+    const reminder =
+      paper?.endDate && !stored.completedAt ? { ...stored, dueDate: paper.endDate } : stored;
     const status = this.computeReminderStatus(
       {
         dueDate: reminder.dueDate?.toISOString(),
@@ -420,8 +446,22 @@ export class RemindersService {
       repeatEveryKm: reminder.repeatEveryKm ?? undefined,
       createdAt: reminder.createdAt.toISOString(),
       updatedAt: reminder.updatedAt.toISOString(),
+      ...(paper ? { renewsDocument: { kind: paper.kind, id: paper.id } } : {}),
       usageProjection,
     };
+  }
+
+  /** The paper a renewal reminder follows, as its kind, id and end date. */
+  private followedPaper(
+    reminder: Pick<ReminderWithVehicle, 'insurancePolicy' | 'complianceDocument'>,
+  ): { kind: VehicleDocumentKind; id: string; endDate: Date | null } | null {
+    if (reminder.insurancePolicy) {
+      return { kind: 'insurance', ...reminder.insurancePolicy };
+    }
+    if (reminder.complianceDocument) {
+      return reminder.complianceDocument;
+    }
+    return null;
   }
 
   private async loadCadenceMap(vehicleIds: string[]): Promise<Map<string, UsageCadence>> {
