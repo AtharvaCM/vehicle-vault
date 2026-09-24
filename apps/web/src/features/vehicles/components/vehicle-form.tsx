@@ -658,11 +658,11 @@ export function VehicleForm({
           </div>
 
           {canUseCatalogSelectors && manualFrom ? (
-            <p className="text-sm leading-5 text-slate-500">
+            <p className="text-sm leading-5 text-fg-3">
               You are entering the{' '}
               {formatFieldList(catalogFields.slice(catalogFields.indexOf(manualFrom)))} by hand.{' '}
               <button
-                className="font-medium text-slate-700 underline underline-offset-2"
+                className="font-medium text-fg-2 underline underline-offset-2"
                 onClick={() => {
                   for (const field of catalogFields.slice(catalogFields.indexOf(manualFrom))) {
                     form.setValue(field, '', { shouldDirty: true });
@@ -675,20 +675,20 @@ export function VehicleForm({
               </button>
             </p>
           ) : canUseCatalogSelectors ? (
-            <p className="text-sm leading-5 text-slate-500">
+            <p className="text-sm leading-5 text-fg-3">
               Start with vehicle type and year, then search the India catalog for the correct make,
               model, and variant.
             </p>
           ) : catalogError ? (
             <div className="space-y-2">
               <InlineError message={catalogError} />
-              <p className="text-sm leading-5 text-slate-500">
+              <p className="text-sm leading-5 text-fg-3">
                 The catalog is temporarily unavailable, so you can enter make, model, and variant
                 manually.
               </p>
             </div>
           ) : (
-            <p className="text-sm leading-5 text-slate-500">
+            <p className="text-sm leading-5 text-fg-3">
               Catalog search is available for cars, SUVs, and motorcycles. Other vehicle types can
               be entered manually for now.
             </p>
@@ -697,7 +697,7 @@ export function VehicleForm({
           {submitError ? <InlineError message={submitError} /> : null}
 
           {submissionState ? (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-5 text-emerald-700">
+            <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-sm leading-5 text-ok">
               {submissionState}
             </p>
           ) : null}
@@ -706,7 +706,7 @@ export function VehicleForm({
             <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-sm leading-5 text-slate-500 sm:max-w-md">
+            <p className="text-sm leading-5 text-fg-3 sm:max-w-md">
               {isSubmitting ? 'Saving vehicle details...' : submitHint}
             </p>
           </div>

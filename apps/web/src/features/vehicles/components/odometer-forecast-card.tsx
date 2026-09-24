@@ -24,9 +24,9 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
   }
 
   const confidenceColors = {
-    low: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    medium: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    high: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    low: 'bg-soon-tint text-soon border-soon/20',
+    medium: 'bg-brand-tint text-brand border-brand/20',
+    high: 'bg-ok-tint text-ok border-ok/20',
   };
 
   const confidenceMessages = {
@@ -48,14 +48,12 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
   const lastRecordedDate = format.date(insights.lastRecordedDate);
 
   return (
-    <Card className="overflow-hidden border-zinc-200/50 bg-white shadow-xs transition-all hover:shadow-md dark:border-zinc-800/50 dark:bg-zinc-900/50">
+    <Card className="overflow-hidden border-line/50 bg-surface shadow-xs transition-colors">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
-          <CardTitle className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Odometer estimate
-          </CardTitle>
+          <CardTitle className="text-sm font-medium text-fg-3">Odometer estimate</CardTitle>
           <div className="flex items-center gap-2">
-            <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-2xl font-bold tracking-tight text-fg">
               {format.odometer(
                 canPredict ? insights.currentOdometerPredicted : insights.lastRecordedOdometer,
               )}
@@ -66,40 +64,40 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
               </Badge>
             ) : null}
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-fg-3">
             {canPredict
               ? 'Predicted current odometer'
               : `Last recorded (${lastRecordedDate}). Log another reading to see a prediction.`}
           </p>
         </div>
-        <div className="rounded-full bg-zinc-100 p-2.5 dark:bg-zinc-800">
-          <TrendingUp className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+        <div className="rounded-full bg-page p-2.5">
+          <TrendingUp className="h-5 w-5 text-fg-2" />
         </div>
       </CardHeader>
       {canPredict ? (
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-1.5 text-xs text-fg-3">
                 <Calendar className="h-3.5 w-3.5" />
                 <span>Avg. daily</span>
               </div>
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              <p className="text-sm font-semibold text-fg-2">
                 {insights.averageDailyMileage} km/day
               </p>
             </div>
             <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-1.5 text-xs text-fg-3">
                 <Gauge className="h-3.5 w-3.5" />
                 <span>Avg. monthly</span>
               </div>
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              <p className="text-sm font-semibold text-fg-2">
                 {format.distance(insights.averageMonthlyMileage)}
               </p>
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
+          <div className="mt-6 flex items-center justify-between border-t border-line-subtle pt-4">
             <Figure
               label="Last recorded"
               value={`${format.odometer(insights.lastRecordedOdometer)} (${lastRecordedDate})`}
@@ -107,8 +105,8 @@ export function OdometerForecastCard({ vehicleId }: OdometerForecastCardProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="cursor-help rounded-full p-1 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                    <Info className="h-4 w-4 text-zinc-400" />
+                  <div className="cursor-help rounded-full p-1 transition-colors hover:bg-page">
+                    <Info className="h-4 w-4 text-fg-3" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[200px] text-xs">

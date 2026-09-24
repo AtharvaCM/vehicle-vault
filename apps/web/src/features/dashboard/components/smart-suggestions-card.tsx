@@ -11,7 +11,7 @@ type SmartSuggestionsCardProps = {
 };
 
 function MetaDot() {
-  return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />;
+  return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-line" />;
 }
 
 export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
@@ -25,7 +25,7 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
       description="Based on each vehicle's service intervals and driving pace."
       title="Smart suggestions"
     >
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-line-subtle">
         {insights.map((insight) => {
           const meta = [
             insight.vehicleLabel,
@@ -42,7 +42,7 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
             >
               <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-2">
-                  <p className="min-w-0 truncate font-semibold text-slate-900">
+                  <p className="min-w-0 truncate font-semibold text-fg">
                     {format.enumLabel('maintenanceCategory', insight.category)}
                   </p>
                   {insight.priority === 'high' ? (
@@ -56,7 +56,7 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
                   )}
                 </div>
                 {meta.length > 0 ? (
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500">
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-fg-3">
                     {meta.map((segment, index) => (
                       <span className="flex items-center gap-x-2 tabular-nums" key={segment}>
                         {index > 0 ? <MetaDot /> : null}
@@ -65,7 +65,7 @@ export function SmartSuggestionsCard({ insights }: SmartSuggestionsCardProps) {
                     ))}
                   </p>
                 ) : null}
-                <p className="line-clamp-2 text-xs text-slate-500">{insight.reason}</p>
+                <p className="line-clamp-2 text-xs text-fg-3">{insight.reason}</p>
               </div>
               {insight.vehicleId ? (
                 <div className="flex shrink-0 gap-2">

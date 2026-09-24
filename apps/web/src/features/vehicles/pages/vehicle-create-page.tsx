@@ -99,7 +99,7 @@ export function VehicleCreatePage() {
               A few accurate basics make every later record easier to trust.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
+          <CardContent className="space-y-3 text-sm leading-6 text-fg-2">
             <p>
               Start with the current odometer so future due dates and due kilometres stay realistic.
             </p>

@@ -16,9 +16,9 @@ const SHORT_LABELS: Partial<Record<(typeof BAR_DESTINATIONS)[number], string>> =
 };
 
 // The active colour keys off the `data-status="active"` TanStack's Link sets: an
-// `activeProps` class would tie with `text-slate-500` and lose on stylesheet order.
+// `activeProps` class would tie with `text-fg-3` and lose on stylesheet order.
 const ITEM_CLASS =
-  'flex min-w-0 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-slate-500 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-[status=active]:text-primary';
+  'flex min-w-0 flex-col items-center justify-center gap-1 text-caption font-semibold text-fg-3 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-[status=active]:text-primary';
 
 /**
  * Primary navigation below `md`, within thumb reach. The sidebar only appears at
@@ -35,7 +35,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/60 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line/60 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       data-testid="bottom-nav"
     >
       <div className="grid h-16 grid-cols-5">

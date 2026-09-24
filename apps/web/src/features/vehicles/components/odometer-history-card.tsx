@@ -25,13 +25,13 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
             {insights.history.slice(0, 5).map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-start justify-between gap-4 rounded-xl border border-border/70 bg-slate-50/70 px-4 py-3"
+                className="flex items-start justify-between gap-4 rounded-xl border border-border/70 bg-page/70 px-4 py-3"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-950">{entry.label}</p>
+                    <p className="text-sm font-semibold text-fg">{entry.label}</p>
                     {entry.kind === 'current' ? (
-                      <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                      <span className="rounded-full bg-fg px-2 py-0.5 text-caption font-medium text-surface">
                         Current
                       </span>
                     ) : null}
@@ -39,9 +39,7 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
                   <p className="text-xs text-muted-foreground">{format.date(entry.date)}</p>
                 </div>
                 <div className="space-y-1 text-right">
-                  <p className="text-sm font-semibold text-slate-950">
-                    {format.odometer(entry.odometer)}
-                  </p>
+                  <p className="text-sm font-semibold text-fg">{format.odometer(entry.odometer)}</p>
                   {entry.totalCost !== undefined ? (
                     <p className="text-xs text-muted-foreground">
                       <Money value={entry.totalCost} />
@@ -52,17 +50,17 @@ export function OdometerHistoryCard({ insights }: OdometerHistoryCardProps) {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border/80 bg-slate-50/70 px-4 py-6 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border/80 bg-page/70 px-4 py-6 text-sm text-muted-foreground">
             Log the first service visit with an odometer reading to start a useful odometer history.
           </div>
         )}
 
-        <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-white px-4 py-3">
-          <div className="rounded-lg border border-border/70 bg-slate-50 p-2">
-            <Activity className="h-4 w-4 text-slate-600" />
+        <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-surface px-4 py-3">
+          <div className="rounded-lg border border-border/70 bg-page p-2">
+            <Activity className="h-4 w-4 text-fg-2" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-950">Why this matters</p>
+            <p className="text-sm font-semibold text-fg">Why this matters</p>
             <p className="text-sm text-muted-foreground">
               Consistent odometer entries make kilometre-based reminders and service planning more
               reliable.

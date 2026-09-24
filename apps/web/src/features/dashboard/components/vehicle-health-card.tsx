@@ -47,7 +47,7 @@ function MicroRow({ label, children }: MicroRowProps) {
   return (
     <div className="min-w-0 space-y-0.5">
       <p className="text-small text-fg-2">{label}</p>
-      <div className="min-w-0 truncate text-[12px] font-medium text-slate-700">{children}</div>
+      <div className="min-w-0 truncate text-caption font-medium text-fg-2">{children}</div>
     </div>
   );
 }
@@ -84,7 +84,7 @@ function DataHealthText({
   if (!health) return null;
 
   if (health.nextGap === null) {
-    return <span className="text-emerald-700">Complete</span>;
+    return <span className="text-ok">Complete</span>;
   }
 
   const { text, fill } = DATA_GAPS[health.nextGap];
@@ -179,9 +179,9 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
   return (
     <Card
       className={cn(
-        '@container flex flex-col gap-3 border-slate-200/60 bg-white/70 transition-colors hover:bg-white',
-        vehicle.status === 'overdue' && 'border-rose-200/60',
-        vehicle.status === 'due_soon' && 'border-amber-200/60',
+        '@container flex flex-col gap-3 border-line/60 bg-surface/70 transition-colors hover:bg-surface',
+        vehicle.status === 'overdue' && 'border-late/60',
+        vehicle.status === 'due_soon' && 'border-soon/60',
       )}
       data-testid="vehicle-health-card"
       size="sm"
@@ -210,7 +210,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
             <StatusPill status={health.status}>{health.words}</StatusPill>
           </Link>
           {vehicle.currentUserRole !== 'owner' ? (
-            <Badge className="bg-blue-100 text-blue-800">Shared · {vehicle.currentUserRole}</Badge>
+            <Badge variant="accent">Shared · {vehicle.currentUserRole}</Badge>
           ) : null}
         </div>
       </div>
@@ -248,7 +248,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
               {kmSinceService > 0 ? ` · ${format.distance(kmSinceService)} ago` : ''}
             </Link>
           ) : (
-            <span className="text-slate-400">No service logged</span>
+            <span className="text-fg-3">No service logged</span>
           )}
         </MicroRow>
         {vehicle.dataHealth ? (
@@ -277,10 +277,10 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           alone (on a phone) or the menu alone (for a viewer) fit beside the reading. Both
           rows can still wrap, so a long reading or a wide font never pushes a button out
           of the card. */}
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line-subtle pt-3">
         <span
           className={cn(
-            'shrink-0 whitespace-nowrap text-[12px] tabular-nums text-slate-500',
+            'shrink-0 whitespace-nowrap text-caption tabular-nums text-fg-3',
             canEdit && 'sm:basis-full sm:@[22rem]:basis-auto',
           )}
         >

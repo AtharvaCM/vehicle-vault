@@ -30,7 +30,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
 
       <Card
         className={cn(
-          'flex-1 overflow-hidden border-slate-200/60 bg-white/70 transition-all duration-300 hover:border-primary/20 hover:bg-white',
+          'flex-1 overflow-hidden border-line/60 bg-surface/70 transition-colors duration-300 hover:border-primary/20 hover:bg-surface',
           selected && 'ring-2 ring-primary',
         )}
       >
@@ -53,7 +53,7 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               <Badge tone="accent">{format.enumLabel('vehicleType', vehicle.vehicleType)}</Badge>
               {vehicle.currentUserRole && vehicle.currentUserRole !== 'owner' ? (
-                <Badge className="bg-blue-100 text-blue-800">
+                <Badge tone="accent">
                   Shared • {format.enumLabel('vehicleRole', vehicle.currentUserRole)}
                 </Badge>
               ) : null}
@@ -61,26 +61,22 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
           </div>
 
           {/* Metadata Section - Hidden on very small screens, grid on mobile, flex on desktop */}
-          <div className="grid grid-cols-2 gap-4 border-t border-slate-100 bg-slate-50/30 p-5 sm:flex sm:items-center sm:gap-8 sm:border-l sm:border-t-0 sm:px-8 sm:py-6">
+          <div className="grid grid-cols-2 gap-4 border-t border-line-subtle bg-page/30 p-5 sm:flex sm:items-center sm:gap-8 sm:border-l sm:border-t-0 sm:px-8 sm:py-6">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Odometer
-              </p>
-              <p className="text-[13px] font-semibold tabular-nums text-slate-700">
+              <p className="text-caption font-medium text-fg-3">Odometer</p>
+              <p className="text-small font-semibold tabular-nums text-fg-2">
                 {format.odometer(vehicle.odometer)}
               </p>
             </div>
 
             <div className="hidden space-y-1 lg:block">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Fuel type
-              </p>
-              <p className="text-[13px] font-semibold text-slate-700">
+              <p className="text-caption font-medium text-fg-3">Fuel type</p>
+              <p className="text-small font-semibold text-fg-2">
                 {format.enumLabel('fuelType', vehicle.fuelType)}
               </p>
             </div>
 
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-primary sm:ml-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-fg-3 transition-colors group-hover:translate-x-1 group-hover:text-primary sm:ml-4">
               <ChevronRight className="h-4 w-4" />
             </div>
           </div>

@@ -75,7 +75,7 @@ export function attentionBadgeLabel(item: DashboardAttentionItem) {
 }
 
 function MetaDot() {
-  return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-slate-300" />;
+  return <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-line" />;
 }
 
 /**
@@ -146,7 +146,7 @@ export function AttentionRow({
 
   if (item.kind === 'loan_emi' && item.amount !== undefined) {
     meta.push(
-      <span className="shrink-0 font-medium text-slate-700" key="amount">
+      <span className="shrink-0 font-medium text-fg-2" key="amount">
         <Money value={item.amount} />
       </span>,
     );
@@ -173,19 +173,19 @@ export function AttentionRow({
           />
         ) : null}
         <div className="flex min-w-0 items-center gap-2">
-          <p className="min-w-0 truncate font-semibold text-slate-900 transition-colors group-hover:text-primary">
+          <p className="min-w-0 truncate font-semibold text-fg transition-colors group-hover:text-primary">
             {item.title}
           </p>
-          <Badge className="shrink-0 bg-white text-[10px]" variant="outline">
+          <Badge className="shrink-0 bg-surface text-caption" variant="outline">
             {attentionBadgeLabel(item)}
           </Badge>
           {item.kind === 'document' && item.provider ? (
-            <span className="hidden min-w-0 truncate text-[13px] text-slate-500 sm:inline">
+            <span className="hidden min-w-0 truncate text-small text-fg-3 sm:inline">
               {item.provider}
             </span>
           ) : null}
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-fg-3">
           {meta.map((segment, index) => (
             <span className="flex min-w-0 items-center gap-x-2" key={index}>
               {index > 0 ? <MetaDot /> : null}

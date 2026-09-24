@@ -32,7 +32,7 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
   return (
     <section aria-labelledby="coming-up-heading" className="space-y-2">
       <SectionHeader description="Next 30 days" id="coming-up-heading" title="Coming up" />
-      <div className="divide-y divide-slate-100 rounded-xl border border-slate-200/60 bg-white/70">
+      <div className="divide-y divide-line-subtle rounded-xl border border-line/60 bg-surface/70">
         {items.map((item) => {
           const Icon = KIND_ICONS[item.kind];
 
@@ -42,16 +42,14 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
               item={item}
               key={item.id}
             >
-              <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
-              <span className="min-w-0 truncate font-medium text-slate-900 transition-colors group-hover:text-primary">
+              <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-fg-3" />
+              <span className="min-w-0 truncate font-medium text-fg transition-colors group-hover:text-primary">
                 {item.title}
               </span>
               {showVehicle ? (
-                <span className="min-w-0 truncate text-[13px] text-slate-500">
-                  {item.vehicleName}
-                </span>
+                <span className="min-w-0 truncate text-small text-fg-3">{item.vehicleName}</span>
               ) : null}
-              <span className="ml-auto shrink-0 text-[13px] tabular-nums text-slate-500">
+              <span className="ml-auto shrink-0 text-small tabular-nums text-fg-3">
                 {formatRelativeDue(item)}
                 {item.dueDate ? (
                   <span className="hidden sm:inline"> · {format.date(item.dueDate)}</span>

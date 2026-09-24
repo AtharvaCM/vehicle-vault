@@ -175,7 +175,7 @@ export function VehicleDetailPage({
     <VehicleAccessProvider role={currentUserRole}>
       <div className="min-h-screen">
         {/* Premium Hero Section */}
-        <div className="border-b border-slate-200/60 bg-white">
+        <div className="border-b border-line/60 bg-surface">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-4">
@@ -183,7 +183,7 @@ export function VehicleDetailPage({
                   <Link
                     aria-label="Back to your vehicles"
                     to="/vehicles"
-                    className="flex size-11 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors md:h-8 md:w-8"
+                    className="flex size-11 items-center justify-center rounded-full bg-page text-fg-3 hover:bg-page hover:text-fg-2 transition-colors md:h-8 md:w-8"
                   >
                     <ChevronRight className="h-4 w-4 rotate-180" />
                   </Link>
@@ -212,13 +212,13 @@ export function VehicleDetailPage({
                     label="Odometer"
                     value={format.odometer(vehicle.odometer)}
                   />
-                  <div className="h-8 w-px bg-slate-100 hidden sm:block" />
+                  <div className="h-8 w-px bg-page hidden sm:block" />
                   <HeroMetric
                     icon={<Fuel className="h-4 w-4" />}
                     label="Fuel type"
                     value={format.enumLabel('fuelType', vehicle.fuelType)}
                   />
-                  <div className="h-8 w-px bg-slate-100 hidden sm:block" />
+                  <div className="h-8 w-px bg-page hidden sm:block" />
                   <HeroMetric
                     icon={<CarFront className="h-4 w-4" />}
                     label="Vehicle type"
@@ -238,7 +238,7 @@ export function VehicleDetailPage({
                       >
                         Edit vehicle
                       </Link>
-                      <div className="h-10 w-px bg-slate-200/60 hidden sm:block" />
+                      <div className="h-10 w-px bg-line-subtle/60 hidden sm:block" />
                       <Link
                         className={cn(buttonVariants({ variant: 'default' }), ' bg-primary')}
                         params={{ vehicleId }}
@@ -263,10 +263,7 @@ export function VehicleDetailPage({
                         <LayoutGrid className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-56 rounded-xl border-slate-200/60"
-                    >
+                    <DropdownMenuContent align="end" className="w-56 rounded-xl border-line/60">
                       <DropdownMenuItem asChild>
                         <Link
                           params={{ vehicleId }}
@@ -316,7 +313,7 @@ export function VehicleDetailPage({
                       {isOwner ? <DropdownMenuSeparator /> : null}
                       {isOwner ? (
                         <DropdownMenuItem
-                          className="text-rose-600 focus:bg-rose-50 focus:text-rose-700 cursor-pointer"
+                          className="text-late focus:bg-late-tint focus:text-late cursor-pointer"
                           onSelect={(e) => e.preventDefault()}
                         >
                           <ConfirmActionDialog
@@ -361,73 +358,73 @@ export function VehicleDetailPage({
             {/* Eleven tabs are wider than a phone, and than some desktops: the strip
                 scrolls sideways rather than clipping, with the selected tab kept in view. */}
             <TabsList
-              className="relative inline-flex h-auto min-h-11 max-w-full items-center justify-start overflow-x-auto overscroll-x-contain rounded-xl bg-slate-100/80 p-1 shadow-inner scrollbar-thin"
+              className="relative inline-flex h-auto min-h-11 max-w-full items-center justify-start overflow-x-auto overscroll-x-contain rounded-xl bg-page/80 p-1 shadow-inner scrollbar-thin"
               ref={tabListRef}
             >
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="overview"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="maintenance"
               >
                 Service log
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="specs"
               >
                 Tech specs
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="reminders"
               >
                 Reminders
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="fuel"
               >
                 Fuel
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="tyres"
               >
                 Tyres
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="accessories"
               >
                 Accessories
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="protection"
               >
                 Protection
               </TabsTrigger>
               {isOwner ? (
                 <TabsTrigger
-                  className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                  className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                   value="loans"
                 >
                   Loans
                 </TabsTrigger>
               ) : null}
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="members"
               >
                 Members
               </TabsTrigger>
               <TabsTrigger
-                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-primary transition-all"
+                className="rounded-lg px-6 py-2 text-sm font-bold data-[state=active]:bg-surface data-[state=active]:text-primary transition-colors"
                 value="activity"
               >
                 Activity
@@ -500,12 +497,12 @@ export function VehicleDetailPage({
                   vehicleId={vehicleId}
                   visibleCount={undefined}
                 />
-                <Card className="h-fit border-slate-200/60 bg-white/70">
+                <Card className="h-fit border-line/60 bg-surface/70">
                   <CardHeader>
                     <CardTitle className="text-lg font-bold">Vehicle health</CardTitle>
                     <CardDescription>Maintain a perfect digital service record.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
+                  <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
                     <div className="flex gap-3">
                       <div className="mt-1 shrink-0 text-primary">
                         <ClipboardList className="h-4 w-4" />
@@ -540,12 +537,12 @@ export function VehicleDetailPage({
                   visibleCount={undefined}
                   visibleReminders={activeReminders}
                 />
-                <Card className="h-fit border-slate-200/60 bg-white/70">
+                <Card className="h-fit border-line/60 bg-surface/70">
                   <CardHeader>
                     <CardTitle className="text-lg font-bold">Preventative care</CardTitle>
                     <CardDescription>Stay ahead of service tasks.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
+                  <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
                     <p>Set a due date, a due odometer, or both depending on the job.</p>
                     <p>
                       Overdue and due today reminders show up on the dashboard and reminder lists.
@@ -561,14 +558,14 @@ export function VehicleDetailPage({
                 <FuelTab vehicleId={vehicleId} />
                 <div className="h-fit space-y-6">
                   <FuelEconomyCard vehicleId={vehicleId} />
-                  <Card className="h-fit border-slate-200/60 bg-white/70">
+                  <Card className="h-fit border-line/60 bg-surface/70">
                     <CardHeader>
                       <CardTitle className="text-lg font-bold">
                         Getting an accurate figure
                       </CardTitle>
                       <CardDescription>Economy is measured between fill-ups.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
+                    <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
                       <div className="flex gap-3">
                         <div className="mt-1 shrink-0 text-primary">
                           <Fuel className="h-4 w-4" />
@@ -611,8 +608,8 @@ export function VehicleDetailPage({
               <MembersTab vehicleId={vehicleId} currentUserRole={currentUserRole} />
             </TabsContent>
             <TabsContent value="activity" className="animate-in fade-in duration-500">
-              <Card className="border-slate-200/60 bg-white">
-                <CardHeader className="border-b border-slate-100 pb-4">
+              <Card className="border-line/60 bg-surface">
+                <CardHeader className="border-b border-line-subtle pb-4">
                   <CardTitle className="text-lg font-bold">Activity log</CardTitle>
                   <CardDescription>
                     Every change to this vehicle and its records, newest first. Click an entry to
@@ -681,8 +678,8 @@ function MaintenancePanel({
       : (maintenanceQuery.data ?? []).slice(0, visibleCount);
 
   return (
-    <Card className="border-slate-200/60 bg-white">
-      <CardHeader className="border-b border-slate-100 pb-4">
+    <Card className="border-line/60 bg-surface">
+      <CardHeader className="border-b border-line-subtle pb-4">
         <SectionHeader
           actions={
             <>
@@ -713,8 +710,8 @@ function MaintenancePanel({
       <CardContent className="pt-5 sm:p-5">
         {maintenanceQuery.isPending ? (
           <div className="animate-pulse space-y-3">
-            <div className="h-20 bg-slate-50 rounded-xl" />
-            <div className="h-20 bg-slate-50 rounded-xl" />
+            <div className="h-20 bg-page rounded-xl" />
+            <div className="h-20 bg-page rounded-xl" />
           </div>
         ) : maintenanceQuery.isError ? (
           <EmptyState
@@ -771,8 +768,8 @@ function ReminderPanel({
       : (visibleReminders ?? []).slice(0, visibleCount);
 
   return (
-    <Card className="border-slate-200/60 bg-white">
-      <CardHeader className="border-b border-slate-100 pb-4">
+    <Card className="border-line/60 bg-surface">
+      <CardHeader className="border-b border-line-subtle pb-4">
         <SectionHeader
           actions={
             <>
@@ -803,8 +800,8 @@ function ReminderPanel({
       <CardContent className="pt-5 sm:p-5">
         {remindersQuery.isPending ? (
           <div className="animate-pulse space-y-3">
-            <div className="h-20 bg-slate-50 rounded-xl" />
-            <div className="h-20 bg-slate-50 rounded-xl" />
+            <div className="h-20 bg-page rounded-xl" />
+            <div className="h-20 bg-page rounded-xl" />
           </div>
         ) : remindersQuery.isError ? (
           <EmptyState

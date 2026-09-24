@@ -21,18 +21,16 @@ const STEPS = [
 
 export function DashboardOnboarding() {
   return (
-    <Card className="border-slate-200/60 bg-white/70 sm:p-8">
+    <Card className="border-line/60 bg-surface/70 sm:p-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 shadow-inner">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-page text-fg-3 shadow-inner">
           <CarFront aria-hidden="true" className="h-7 w-7" />
         </div>
 
         <div className="min-w-0 flex-1 space-y-6">
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              Set up your garage
-            </h2>
-            <p className="max-w-2xl text-sm leading-6 text-slate-500">
+            <h2 className="text-xl font-semibold tracking-tight text-fg">Set up your garage</h2>
+            <p className="max-w-2xl text-sm leading-6 text-fg-3">
               Add the first vehicle — yours or a family member&apos;s. Reminders, insurance and PUC
               dates, and service history all hang off each vehicle.
             </p>
@@ -46,12 +44,12 @@ export function DashboardOnboarding() {
           <ol className="grid gap-4 sm:grid-cols-3">
             {STEPS.map((step, index) => (
               <li className="flex gap-3" key={step.title}>
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold tabular-nums text-white">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fg text-caption font-bold tabular-nums text-surface">
                   {index + 1}
                 </span>
                 <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-slate-900">{step.title}</p>
-                  <p className="text-[13px] leading-5 text-slate-500">{step.description}</p>
+                  <p className="text-sm font-semibold text-fg">{step.title}</p>
+                  <p className="text-small leading-5 text-fg-3">{step.description}</p>
                 </div>
               </li>
             ))}

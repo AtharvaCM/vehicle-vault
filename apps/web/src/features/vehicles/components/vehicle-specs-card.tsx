@@ -2,6 +2,7 @@ import { Car, Fuel, Gauge, Ruler, ShieldCheck, CircleDot } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
+import { Figure } from '@/components/shared/figure';
 
 import type { VehicleVariantSpec } from '../hooks/use-variant-specs';
 import { useVariantSpecs } from '../hooks/use-variant-specs';
@@ -47,7 +48,7 @@ export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <p className="rounded-xl border border-line bg-page px-4 py-3 text-sm text-fg-2">
             Looking up specifications…
           </p>
         </CardContent>
@@ -217,14 +218,8 @@ function SpecCard({ title, icon, items }: SpecCardProps) {
       <CardContent>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <div
-              className="rounded-2xl border border-border/70 bg-slate-50/80 p-3"
-              key={item.label}
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {item.label}
-              </p>
-              <p className="mt-1.5 text-sm font-semibold text-foreground">{item.value}</p>
+            <div className="rounded-2xl border border-border/70 bg-page/80 p-3" key={item.label}>
+              <Figure label={item.label} value={item.value} />
             </div>
           ))}
         </div>

@@ -4,6 +4,7 @@ import designSystem from './eslint/design-system-plugin.js';
 import {
   MICRO_LABEL_ALLOWED,
   MIGRATED_PATHS,
+  MIGRATION_PENDING_PATHS,
   NO_MICRO_LABEL_PATHS,
 } from './eslint/design-system-paths.js';
 
@@ -63,14 +64,20 @@ export default [
   },
   {
     files: MIGRATED_PATHS,
-    ignores: ['src/**/*.spec.{ts,tsx}'],
+    ignores: ['src/**/*.spec.{ts,tsx}', ...MIGRATION_PENDING_PATHS],
     rules: designSystemRules('error'),
   },
-  {
-    files: NO_MICRO_LABEL_PATHS,
-    ignores: ['src/**/*.spec.{ts,tsx}'],
-    rules: { 'vv/no-micro-labels': 'error' },
-  },
+  // ESLint's flat config rejects an empty `files` array, so the block goes
+  // while the list is empty.
+  ...(NO_MICRO_LABEL_PATHS.length > 0
+    ? [
+        {
+          files: NO_MICRO_LABEL_PATHS,
+          ignores: ['src/**/*.spec.{ts,tsx}'],
+          rules: { 'vv/no-micro-labels': 'error' },
+        },
+      ]
+    : []),
   {
     files: MICRO_LABEL_ALLOWED,
     rules: { 'vv/no-micro-labels': 'off' },
