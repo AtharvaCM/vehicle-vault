@@ -1,3 +1,10 @@
+# [1.74.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.73.0...v1.74.0) (2026-09-24)
+
+
+### Features
+
+* **web:** controls on the design tokens, 44 px touch targets and the missing primitives ([e17ed7a](https://github.com/AtharvaCM/vehicle-vault/commit/e17ed7a816688d4299f8b726fc45d240f6227c40)), closes [#244](https://github.com/AtharvaCM/vehicle-vault/issues/244)
+
 # [1.73.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.72.0...v1.73.0) (2026-09-23)
 
 
