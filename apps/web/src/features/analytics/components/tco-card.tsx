@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { TCO_MIN_COST_PER_KM_DISTANCE_KM, type TcoResponse } from '@vehicle-vault/shared';
+import type { TcoResponse } from '@vehicle-vault/shared';
 
 import { Figure } from '@/components/shared/figure';
 import { Money } from '@/components/shared/money';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { format } from '@/lib/format';
 
 import { tcoQueryOptions } from '../api/get-tco';
+import { costPerKmHint } from '../utils/cost-per-km-hint';
 
 type Props = {
   vehicleId: string;
@@ -124,12 +125,6 @@ function TcoBody({ data: tco }: { data: TcoResponse }) {
       ) : null}
     </div>
   );
-}
-
-function costPerKmHint(tco: TcoResponse): string {
-  if (tco.derived.costPerKm) return format.distance(tco.kmSincePurchase);
-  if (tco.purchaseOdometer == null) return 'Add the odometer at purchase to see cost per km';
-  return `${format.distance(tco.kmSincePurchase)} so far; shown from ${format.distance(TCO_MIN_COST_PER_KM_DISTANCE_KM)}`;
 }
 
 function Metric({ label, value, hint }: { label: string; value: ReactNode; hint: string }) {

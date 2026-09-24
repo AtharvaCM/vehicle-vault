@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import type { CreateVehicleLoanInput, VehicleLoan } from '@vehicle-vault/shared';
 
-import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
-import { ErrorState } from '@/components/shared/error-state';
-import { LoadingState } from '@/components/shared/loading-state';
-import { PageTitle } from '@/components/shared/page-title';
+import { Figure } from '@/components/shared/figure';
+import { Money } from '@/components/shared/money';
+import { SectionHeader } from '@/components/shared/section-header';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -33,12 +32,11 @@ import {
 } from '@/components/ui/select';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
-import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
-import { LoanCard } from '../components/loan-card';
-import { LoanDetailDialog } from '../components/loan-detail-dialog';
-import { LoanForm } from '../components/loan-form';
+import { LoanCard } from './loan-card';
+import { LoanDetailDialog } from './loan-detail-dialog';
+import { LoanForm } from './loan-form';
 import { useCreateLoan } from '../hooks/use-create-loan';
 import { useDeleteLoan } from '../hooks/use-delete-loan';
 import { useLoans } from '../hooks/use-loans';
@@ -46,7 +44,14 @@ import { useScanLoanDocument, useLoanScanStatus } from '../hooks/use-scan-loan-d
 import { useUpdateLoan } from '../hooks/use-update-loan';
 import type { LoanFormValues } from '../schemas/loan-form.schema';
 
-export function LoansPage() {
+/**
+ * The Loans page's whole body (#281: moved onto Costs), unchanged except for
+ * losing its own page chrome: `CostsPage` supplies the `PageContainer`, and
+ * "Add loan" moves into this section's own header action. Loading and error
+ * states are in-section messages, not a full-page takeover, matching the
+ * Spend charts beside it.
+ */
+export function LoansSection() {
   const loansQuery = useLoans();
   const vehiclesQuery = useVehicles();
   const deleteMutation = useDeleteLoan();
@@ -150,80 +155,80 @@ export function LoansPage() {
     }
   };
 
-  if (loansQuery.isLoading) {
-    return (
-      <PageContainer>
-        <LoadingState title="Vehicle loans" description="Loading your loans…" />
-      </PageContainer>
-    );
-  }
-  if (loansQuery.isError) {
-    return (
-      <PageContainer>
-        <ErrorState
-          title="Could not load loans"
-          description={getApiErrorMessage(loansQuery.error, 'Failed to load loans')}
-        />
-      </PageContainer>
-    );
-  }
-
   return (
-    <PageContainer>
-      <div className="flex items-start justify-between gap-4">
-        <PageTitle
-          title="Vehicle loans"
-          description="Track financing across vehicles to see real cost of ownership."
-        />
-        <Button
-          onClick={() => {
-            setCreateOpen(true);
-            setSelectedVehicleId(vehicles[0]?.id ?? null);
-          }}
-          disabled={!vehicles.length}
-        >
-          Add loan
-        </Button>
-      </div>
+    <section aria-labelledby="loans-heading" className="space-y-4" id="loans">
+      <SectionHeader
+        actions={
+          <Button
+            disabled={!vehicles.length}
+            onClick={() => {
+              setCreateOpen(true);
+              setSelectedVehicleId(vehicles[0]?.id ?? null);
+            }}
+          >
+            Add loan
+          </Button>
+        }
+        description="Track financing across vehicles to see real cost of ownership."
+        id="loans-heading"
+        title="Loans"
+      />
 
-      {loans.length ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <SummaryStat label="Monthly EMI (active)" value={format.money(totals.emi)} />
-          <SummaryStat label="Outstanding" value={format.money(totals.outstanding)} />
-          <SummaryStat label="Interest paid" value={format.money(totals.interestPaid)} />
-        </div>
-      ) : null}
+      {loansQuery.isLoading ? (
+        <p className="text-body text-fg-3">Loading your loans…</p>
+      ) : loansQuery.isError ? (
+        <p className="text-body text-late">
+          {getApiErrorMessage(loansQuery.error, 'Your loans could not be loaded')}
+        </p>
+      ) : (
+        <>
+          {loans.length ? (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-card border border-line bg-surface p-4">
+                <Figure label="Monthly EMIs" value={<Money value={totals.emi} />} />
+              </div>
+              <div className="rounded-card border border-line bg-surface p-4">
+                <Figure label="Still owed" value={<Money value={totals.outstanding} />} />
+              </div>
+              <div className="rounded-card border border-line bg-surface p-4">
+                <Figure
+                  label="Interest paid so far"
+                  value={<Money value={totals.interestPaid} />}
+                />
+              </div>
+            </div>
+          ) : null}
 
-      <div className="mt-6">
-        {!loans.length ? (
-          <EmptyState
-            title="No loans yet"
-            description="Add a loan to include EMI and interest in your cost analysis."
-          />
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {loans.map((loan) => (
-              <LoanCard
-                key={loan.id}
-                loan={loan}
-                vehicleLabel={vehicleLabelById[loan.vehicleId]}
-                onDelete={setLoanToDelete}
-                onManage={setSelectedLoan}
-                onEdit={setLoanToEdit}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          {!loans.length ? (
+            <EmptyState
+              description="Add a loan to include EMI and interest in your cost analysis."
+              title="No loans yet"
+            />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {loans.map((loan) => (
+                <LoanCard
+                  key={loan.id}
+                  loan={loan}
+                  onDelete={setLoanToDelete}
+                  onEdit={setLoanToEdit}
+                  onManage={setSelectedLoan}
+                  vehicleLabel={vehicleLabelById[loan.vehicleId]}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       <Dialog
-        open={isCreateOpen}
         onOpenChange={(open) => {
           if (!open) {
             setCreateOpen(false);
             setScannedDraft(null);
           }
         }}
+        open={isCreateOpen}
       >
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
@@ -242,18 +247,18 @@ export function LoansPage() {
                 </div>
               </div>
               <input
-                ref={scanFileInputRef}
-                type="file"
-                capture="environment"
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                capture="environment"
                 className="hidden"
                 onChange={handleScanFileChange}
+                ref={scanFileInputRef}
+                type="file"
               />
               <Button
-                variant="outline"
                 className="border-brand/30 text-brand hover:bg-brand-tint"
                 disabled={scanMutation.isPending}
                 onClick={() => scanFileInputRef.current?.click()}
+                variant="outline"
               >
                 {scanMutation.isPending ? 'Scanning…' : 'Scan document'}
               </Button>
@@ -266,8 +271,8 @@ export function LoansPage() {
                 Vehicle
               </label>
               <Select
-                value={selectedVehicleId ?? undefined}
                 onValueChange={(v) => setSelectedVehicleId(v)}
+                value={selectedVehicleId ?? undefined}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Pick a vehicle" />
@@ -283,15 +288,15 @@ export function LoansPage() {
             </div>
 
             <LoanForm
-              key={`create-${scanFormKey}`}
+              initialValues={scannedDraft ?? undefined}
               isSubmitting={createMutation.isPending}
+              key={`create-${scanFormKey}`}
               onSubmit={handleCreate}
               submitError={
                 createMutation.isError
                   ? getApiErrorMessage(createMutation.error, 'Could not save loan')
                   : null
               }
-              initialValues={scannedDraft ?? undefined}
             />
           </div>
         </DialogContent>
@@ -299,11 +304,11 @@ export function LoansPage() {
 
       <LoanDetailDialog
         loan={selectedLoan ? (loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan) : null}
-        vehicleLabel={selectedLoan ? vehicleLabelById[selectedLoan.vehicleId] : undefined}
         onOpenChange={(open) => !open && setSelectedLoan(null)}
+        vehicleLabel={selectedLoan ? vehicleLabelById[selectedLoan.vehicleId] : undefined}
       />
 
-      <Dialog open={loanToEdit !== null} onOpenChange={(open) => !open && setLoanToEdit(null)}>
+      <Dialog onOpenChange={(open) => !open && setLoanToEdit(null)} open={loanToEdit !== null}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit loan</DialogTitle>
@@ -314,15 +319,6 @@ export function LoansPage() {
           </DialogHeader>
           {loanToEdit ? (
             <LoanForm
-              key={loanToEdit.id}
-              isSubmitting={updateMutation.isPending}
-              onSubmit={handleEdit}
-              submitLabel="Save changes"
-              submitError={
-                updateMutation.isError
-                  ? getApiErrorMessage(updateMutation.error, 'Could not update loan')
-                  : null
-              }
               initialValues={{
                 lender: loanToEdit.lender,
                 accountNumber: loanToEdit.accountNumber ?? '',
@@ -332,14 +328,23 @@ export function LoansPage() {
                 startDate: loanToEdit.startDate.slice(0, 10),
                 notes: loanToEdit.notes ?? '',
               }}
+              isSubmitting={updateMutation.isPending}
+              key={loanToEdit.id}
+              onSubmit={handleEdit}
+              submitError={
+                updateMutation.isError
+                  ? getApiErrorMessage(updateMutation.error, 'Could not update loan')
+                  : null
+              }
+              submitLabel="Save changes"
             />
           ) : null}
         </DialogContent>
       </Dialog>
 
       <AlertDialog
-        open={loanToDelete !== null}
         onOpenChange={(open) => !open && setLoanToDelete(null)}
+        open={loanToDelete !== null}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -363,15 +368,6 @@ export function LoansPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </PageContainer>
-  );
-}
-
-function SummaryStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-caption font-medium text-muted-foreground">{label}</div>
-      <div className="mt-1 text-heading font-semibold text-foreground">{value}</div>
-    </div>
+    </section>
   );
 }

@@ -14,7 +14,7 @@ const DESTINATIONS: Array<[label: string, path: string, heading: string]> = [
   ['Garage', '/garage', 'Garage'],
   ['Upcoming', '/upcoming', 'Upcoming'],
   ['History', '/history', 'History'],
-  ['Costs', '/costs', 'Vehicle loans'],
+  ['Costs', '/costs', 'Costs'],
 ];
 
 function uniqueSuffix() {
@@ -160,7 +160,7 @@ test('old addresses land on the new pages, query string and all', async ({ page 
     ['/vehicles?sort=year-desc', /\/garage\?sort=year-desc$/, 'Garage'],
     ['/reminders?kind=papers', /\/upcoming\?kind=papers$/, 'Upcoming'],
     ['/maintenance?search=oil', /\/history\?search=oil$/, 'History'],
-    ['/loans', /\/costs$/, 'Vehicle loans'],
+    ['/loans', /\/costs$/, 'Costs'],
   ];
   for (const [from, to, heading] of moves) {
     await page.goto(from);
