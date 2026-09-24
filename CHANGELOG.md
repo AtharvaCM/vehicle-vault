@@ -1,3 +1,10 @@
+# [1.85.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.84.0...v1.85.0) (2026-09-24)
+
+
+### Features
+
+* garage history timeline of service, fuel and odometer ([98ec576](https://github.com/AtharvaCM/vehicle-vault/commit/98ec576dfec7677e81da0e91d5f8932681149eae)), closes [#280](https://github.com/AtharvaCM/vehicle-vault/issues/280)
+
 # [1.84.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.83.0...v1.84.0) (2026-09-24)
 
 
