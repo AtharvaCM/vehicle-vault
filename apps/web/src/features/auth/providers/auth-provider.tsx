@@ -211,7 +211,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         return persistAuthResponse(outcome.response).accessToken;
       },
-      onUnauthorized: () => clearSession(true, 'unauthorized'),
+      onUnauthorized: () => {
+        // No session means nothing expired. After a sign-out, queries still
+        // mounted refetch without a token and come back 401; that is not a
+        // session running out, so no "Session expired" and no redirect.
+        if (sessionRef.current) {
+          clearSession(true, 'unauthorized');
+        }
+      },
     });
   }, [clearSession, persistAuthResponse, requestSessionRefresh]);
 
