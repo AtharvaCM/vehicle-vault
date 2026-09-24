@@ -1,3 +1,10 @@
+# [1.88.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.87.0...v1.88.0) (2026-09-24)
+
+
+### Features
+
+* renewals are one thing, papers drive their own reminders ([2f90cd1](https://github.com/AtharvaCM/vehicle-vault/commit/2f90cd1520317d943387b4c205eaeab582eda2b9)), closes [#283](https://github.com/AtharvaCM/vehicle-vault/issues/283)
+
 # [1.87.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.86.0...v1.87.0) (2026-09-24)
 
 
