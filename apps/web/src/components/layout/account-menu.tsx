@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { canSeeCatalogReview, canSeeUsers } from '@/features/admin/lib/admin-access';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { themePreferences, useThemePreference, type ThemePreference } from '@/lib/theme';
 import { cn } from '@/lib/utils';
@@ -65,7 +66,8 @@ export function AccountMenu({ trigger, className }: AccountMenuProps) {
   const signOut = useSignOut();
   const [themePreference, setThemePreference] = useThemePreference();
   const name = auth.user?.name;
-  const isAdmin = auth.user?.role === 'admin';
+  const isAdmin = canSeeUsers(auth.user);
+  const isCurator = !isAdmin && canSeeCatalogReview(auth.user);
 
   return (
     <DropdownMenu>
@@ -123,11 +125,12 @@ export function AccountMenu({ trigger, className }: AccountMenuProps) {
             Notification preferences
           </Link>
         </DropdownMenuItem>
-        {isAdmin ? (
+        {/* Admins get the whole area; a curator, only the catalog they curate. */}
+        {isAdmin || isCurator ? (
           <DropdownMenuItem asChild>
-            <Link to="/admin/users">
+            <Link to={isAdmin ? '/admin' : '/admin/catalog'}>
               <Shield aria-hidden="true" className="size-4 text-fg-3" />
-              Admin
+              {isAdmin ? 'Admin' : 'Catalog curation'}
             </Link>
           </DropdownMenuItem>
         ) : null}

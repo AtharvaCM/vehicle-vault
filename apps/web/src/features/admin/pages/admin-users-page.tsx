@@ -16,6 +16,7 @@ import { queryKeys } from '@/lib/query/query-keys';
 import { appToast } from '@/lib/toast';
 
 import { forceLogoutUser } from '../api/force-logout-user';
+import { AdminSectionNav } from '../components/admin-section-nav';
 import { useAdminUsers } from '../hooks/use-admin-users';
 
 const PAGE_SIZE = 25;
@@ -62,6 +63,7 @@ export function AdminUsersPage() {
   return (
     <PageContainer>
       <PageTitle description="Search, audit, and force-sign-out user accounts." title="Users" />
+      <AdminSectionNav />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
