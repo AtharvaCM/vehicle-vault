@@ -107,7 +107,7 @@ export function OAuthCallbackPage() {
                 description:
                   destination.to === '/vehicles/new'
                     ? 'Add the rest of your vehicle’s details to start tracking it.'
-                    : 'Opening your garage dashboard.',
+                    : 'Taking you to Home.',
               }
             : {}),
         });

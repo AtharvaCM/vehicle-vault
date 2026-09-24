@@ -5,7 +5,7 @@ import { ApiError } from '@/lib/api/api-error';
 
 import { ResourceLoadError, classifyResourceLoadError } from './resource-load-error';
 
-const listAction = <a href="/vehicles">Your vehicles</a>;
+const listAction = <a href="/garage">Your garage</a>;
 
 describe('classifyResourceLoadError', () => {
   it('reads a 404 as not-found', () => {
@@ -41,7 +41,7 @@ describe('ResourceLoadError', () => {
     expect(screen.getByText("This vehicle isn't in your garage.")).toBeInTheDocument();
     expect(screen.getAllByText('Vehicle not found').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Your vehicles' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Your garage' })).toBeInTheDocument();
   });
 
   it('tells removed access apart from a plain not-found', () => {
@@ -111,7 +111,7 @@ describe('ResourceLoadError', () => {
         />,
       );
 
-      expect(screen.getByRole('link', { name: 'Your vehicles' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Your garage' })).toBeInTheDocument();
       unmount();
     }
   });

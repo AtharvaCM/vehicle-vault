@@ -40,7 +40,7 @@ function AttentionTile({ focus, active, ...body }: FocusTileProps) {
       aria-current={active ? 'true' : undefined}
       className={cn(TILE_BASE, active && TILE_ACTIVE)}
       search={{ focus }}
-      to="/dashboard"
+      to="/home"
     >
       <TileBody {...body} />
     </Link>
@@ -49,7 +49,7 @@ function AttentionTile({ focus, active, ...body }: FocusTileProps) {
 
 function GarageTile(body: TileBodyProps) {
   return (
-    <Link className={TILE_BASE} hash="garage" to="/dashboard">
+    <Link className={TILE_BASE} hash="garage" to="/home">
       <TileBody {...body} />
     </Link>
   );

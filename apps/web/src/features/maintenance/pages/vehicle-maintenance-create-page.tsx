@@ -211,8 +211,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
         />
         <EmptyState
           action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-              Back to vehicles
+            <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+              Back to Garage
             </Link>
           }
           description="The requested vehicle could not be found, so a service record cannot be created for it."

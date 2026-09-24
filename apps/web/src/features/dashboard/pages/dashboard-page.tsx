@@ -37,7 +37,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
   if (dashboardSummaryQuery.isPending) {
     return (
       <PageContainer className="pb-10">
-        <PageTitle description="Checking what's due…" title="Dashboard" />
+        <PageTitle description="Checking what's due…" title="Home" />
         <DashboardSkeleton />
       </PageContainer>
     );
@@ -48,7 +48,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
       <PageContainer className="pb-10">
         <PageTitle
           description="See urgent reminders, recent services, and garage activity at a glance."
-          title="Dashboard"
+          title="Home"
         />
         <ErrorState
           action={
@@ -70,7 +70,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
       <PageContainer className="pb-10">
         <PageTitle
           description="Add your first vehicle and we'll keep track of what's due."
-          title="Dashboard"
+          title="Home"
         />
         <DashboardOnboarding />
       </PageContainer>
@@ -114,7 +114,7 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
           ) : undefined
         }
         description={dashboardHeadline(summary)}
-        title="Dashboard"
+        title="Home"
       />
 
       <AttentionSummary focus={focus} summary={summary} />

@@ -40,7 +40,7 @@ test('a service and a fuel fill are logged from the dashboard on a phone', async
   const vehicle = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
 
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/dashboard');
+  await page.goto('/home');
 
   await page.getByRole('button', { name: 'Log service' }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Log a service' });

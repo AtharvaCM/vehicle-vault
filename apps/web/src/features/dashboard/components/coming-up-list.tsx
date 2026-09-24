@@ -63,9 +63,9 @@ export function ComingUpList({ items, showVehicle }: ComingUpListProps) {
         <Link
           className={buttonVariants({ variant: 'ghost', size: 'sm' })}
           search={{ status: ReminderStatus.Upcoming }}
-          to="/reminders"
+          to="/upcoming"
         >
-          All reminders
+          Everything upcoming
         </Link>
       </div>
     </section>

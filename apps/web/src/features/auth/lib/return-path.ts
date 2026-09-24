@@ -21,7 +21,7 @@ export function validateReturnPathSearch(search: Record<string, unknown>): Retur
   return next ? { next } : {};
 }
 
-export type AfterAuthDestination = { href: string } | { to: '/vehicles/new' | '/dashboard' };
+export type AfterAuthDestination = { href: string } | { to: '/vehicles/new' | '/home' };
 
 /**
  * Where to go once signed in: back where the visitor was going, else on to a

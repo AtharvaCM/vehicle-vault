@@ -169,8 +169,8 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
         />
         <ErrorState
           action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/maintenance">
-              Back to maintenance
+            <Link className={buttonVariants({ variant: 'secondary' })} to="/history">
+              Back to History
             </Link>
           }
           description={

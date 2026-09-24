@@ -219,6 +219,6 @@ export function catalogIntentAttribution(intent: CatalogIntent | null): { catalo
  * for it, the dashboard otherwise. Shared by registration, sign-in and email
  * verification so each carries a visitor on to the vehicle they came for.
  */
-export function afterSignInDestination(now: number = Date.now()): '/vehicles/new' | '/dashboard' {
-  return readCatalogIntent(now) ? '/vehicles/new' : '/dashboard';
+export function afterSignInDestination(now: number = Date.now()): '/vehicles/new' | '/home' {
+  return readCatalogIntent(now) ? '/vehicles/new' : '/home';
 }

@@ -77,7 +77,7 @@ test.describe('touch targets on a phone', () => {
   });
 
   test('home: buttons and the vehicle row menu are at least 44 px', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/home');
     await expect(page.getByTestId('vehicle-health-card').first()).toBeVisible();
 
     await expectThumbSized(page);

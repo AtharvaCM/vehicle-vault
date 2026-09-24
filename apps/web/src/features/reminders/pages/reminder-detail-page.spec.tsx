@@ -138,10 +138,7 @@ describe('ReminderDetailPage errors', () => {
 
     expect(screen.getByText("This reminder isn't in your garage.")).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Your reminders' })).toHaveAttribute(
-      'href',
-      '/reminders',
-    );
+    expect(screen.getByRole('link', { name: 'Upcoming' })).toHaveAttribute('href', '/upcoming');
   });
 
   it('tells a viewer whose access was removed why, not just that it failed', () => {

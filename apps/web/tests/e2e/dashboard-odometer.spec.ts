@@ -28,7 +28,7 @@ test('the odometer is updated from the dashboard health card', async ({ page }) 
     registrationNumber: `MH12OD${suffix.slice(-4)}`,
   });
 
-  await page.goto('/dashboard');
+  await page.goto('/home');
   const card = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
   await expect(card).toContainText('15,200 km');
 
@@ -43,7 +43,7 @@ test('the odometer is updated from the dashboard health card', async ({ page }) 
   await page.getByLabel('New reading (km)').fill('15950');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByLabel('New reading (km)')).toBeHidden();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/home$/);
   await expect(card).toContainText('15,950 km');
 
   // The API holds the same line as the card.

@@ -108,8 +108,8 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
         />
         <ErrorState
           action={
-            <Link className={buttonVariants({ variant: 'secondary' })} to="/reminders">
-              Back to reminders
+            <Link className={buttonVariants({ variant: 'secondary' })} to="/upcoming">
+              Back to Upcoming
             </Link>
           }
           description={

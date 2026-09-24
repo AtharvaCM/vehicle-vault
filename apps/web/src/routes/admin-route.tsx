@@ -19,7 +19,7 @@ export const adminUsersRoute = createRoute({
   path: 'admin/users',
   beforeLoad: ({ context }) => {
     if (context.auth.user?.role !== 'admin') {
-      throw redirect({ to: '/dashboard' });
+      throw redirect({ to: '/home' });
     }
   },
   component: AdminUsersPage,

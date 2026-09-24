@@ -119,8 +119,8 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
         {isNotFound ? (
           <EmptyState
             action={
-              <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-                Back to vehicles
+              <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+                Back to Garage
               </Link>
             }
             description="The requested vehicle could not be found, so it cannot be edited."
@@ -129,8 +129,8 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
         ) : (
           <ErrorState
             action={
-              <Link className={buttonVariants({ variant: 'secondary' })} to="/vehicles">
-                Back to vehicles
+              <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+                Back to Garage
               </Link>
             }
             description="We couldn't load this vehicle. Try again in a moment."

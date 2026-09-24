@@ -51,7 +51,7 @@ function InShellNotFound() {
         There is nothing at this address. It may have moved, or the link may be mistyped.
       </p>
       <Button asChild>
-        <Link to="/dashboard">Back to dashboard</Link>
+        <Link to="/home">Back to Home</Link>
       </Button>
     </div>
   );

@@ -35,7 +35,7 @@ test('the triage dashboard surfaces a due reminder and clears it on Done', async
   await page.getByRole('button', { name: /save reminder/i }).click();
   await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
 
-  await page.goto('/dashboard');
+  await page.goto('/home');
 
   await expect(page.getByText('Needs attention')).toBeVisible();
   const row = page.getByTestId('attention-row').filter({ hasText: reminderTitle });

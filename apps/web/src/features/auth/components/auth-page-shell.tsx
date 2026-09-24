@@ -37,7 +37,7 @@ export function AuthPageShell({
               <h2 className="text-ui font-semibold text-fg">Why this matters</h2>
               <ul className="mt-4 grid gap-3 text-ui leading-6 text-fg-2">
                 <li>Keep every vehicle, service entry, reminder, and receipt in one place.</li>
-                <li>See dashboard counts and urgent items for your own garage only.</li>
+                <li>See what is due and urgent for your own garage only.</li>
                 <li>Pick up where you left off whenever you come back.</li>
               </ul>
             </div>

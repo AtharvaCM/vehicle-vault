@@ -186,7 +186,7 @@ export function AttentionQueue({
                 </Button>
               ) : null}
               {summary.attentionTotal > ATTENTION_CAP ? (
-                <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/reminders">
+                <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/upcoming">
                   See all reminders
                 </Link>
               ) : null}
@@ -271,8 +271,8 @@ export function AttentionQueue({
               {urgentCount > 0 ? (
                 <StatusPill status={counts.overdue > 0 ? 'late' : 'soon'}>{urgentCount}</StatusPill>
               ) : null}
-              <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/reminders">
-                All reminders
+              <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/upcoming">
+                Everything upcoming
               </Link>
             </>
           }

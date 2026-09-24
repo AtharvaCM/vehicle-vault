@@ -46,7 +46,7 @@ export function LoansCard({ loans, today = new Date() }: LoansCardProps) {
   return (
     <SectionCard
       action={
-        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/loans">
+        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/costs">
           Manage
         </Link>
       }

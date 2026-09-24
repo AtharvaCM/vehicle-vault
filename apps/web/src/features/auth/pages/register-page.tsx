@@ -52,7 +52,7 @@ export function RegisterPage() {
               description:
                 destination.to === '/vehicles/new'
                   ? 'Add the rest of your vehicle’s details to start tracking it.'
-                  : 'Your dashboard is ready.',
+                  : 'Your account is ready.',
             }
           : {}),
       });

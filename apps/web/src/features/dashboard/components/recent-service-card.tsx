@@ -29,7 +29,7 @@ export function RecentServiceCard({ recentMaintenance, vehicles }: RecentService
   return (
     <SectionCard
       action={
-        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/maintenance">
+        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/history">
           All records
         </Link>
       }

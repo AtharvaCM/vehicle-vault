@@ -43,5 +43,5 @@ function AppErrorFallback({ onNavigate }: { onNavigate: () => void }) {
     return () => window.removeEventListener('popstate', onNavigate);
   }, [onNavigate]);
 
-  return <RecoveryScreen onGoToDashboard={() => window.location.assign('/dashboard')} />;
+  return <RecoveryScreen onGoToDashboard={() => window.location.assign('/home')} />;
 }

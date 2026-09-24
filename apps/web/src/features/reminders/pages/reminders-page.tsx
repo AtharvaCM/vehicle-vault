@@ -176,7 +176,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
           />
         }
         description="Track overdue, due today, upcoming, and completed reminders across your garage."
-        title="Reminders"
+        title="Upcoming"
       />
 
       {remindersQuery.isPending ? (
@@ -266,7 +266,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
                   <Button onClick={resetControls} variant="secondary">
                     Clear filters
                   </Button>
-                  <Link className={buttonVariants()} to="/vehicles">
+                  <Link className={buttonVariants()} to="/garage">
                     Create reminder from vehicle
                   </Link>
                 </div>
@@ -279,7 +279,7 @@ export function RemindersPage({ searchState, onSearchStateChange }: RemindersPag
       ) : (
         <EmptyState
           action={
-            <Link className={buttonVariants()} to="/vehicles">
+            <Link className={buttonVariants()} to="/garage">
               Create reminder from vehicle
             </Link>
           }

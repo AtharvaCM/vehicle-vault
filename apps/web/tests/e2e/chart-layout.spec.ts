@@ -75,7 +75,7 @@ test('spend charts stay inside their cards at 390px, also after a resize', async
   });
 
   await page.setViewportSize(DESKTOP);
-  await page.goto('/dashboard');
+  await page.goto('/home');
   const trend = page.getByRole('figure', { name: 'Spend each month, by category' });
   await expect(trend).toBeVisible();
   await expect(page.getByRole('group', { name: /Spend by category/ })).toBeVisible();
@@ -90,7 +90,7 @@ test('spend charts stay inside their cards at 390px, also after a resize', async
   }
 
   // A fresh load on a phone: the charts wait behind "Show spending".
-  await page.goto('/dashboard');
+  await page.goto('/home');
   await page.getByText('Show spending').click();
   await expect(trend).toBeVisible();
   await page.waitForTimeout(1_000);

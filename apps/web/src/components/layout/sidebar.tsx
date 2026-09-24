@@ -1,183 +1,68 @@
-import type { LucideIcon } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 
-import {
-  CarFront,
-  ChevronRight,
-  Coins,
-  LayoutDashboard,
-  LogOut,
-  Settings,
-  Shield,
-  Siren,
-  Wrench,
-} from 'lucide-react';
-import { Link, useNavigate } from '@tanstack/react-router';
-
-import { APP_NAME } from '@vehicle-vault/shared';
-
-import { useAuth } from '@/features/auth/hooks/use-auth';
-import { Button } from '@/components/ui/button';
-import { appToast } from '@/lib/toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-type NavigationItem = {
-  label: string;
-  subtitle: string;
-  to:
-    | '/dashboard'
-    | '/vehicles'
-    | '/maintenance'
-    | '/reminders'
-    | '/loans'
-    | '/settings'
-    | '/admin/users';
-  icon: LucideIcon;
-  exact?: boolean;
-};
+import { AccountMenu } from './account-menu';
+import { BrandMark } from './brand-mark';
+import { primaryNavigation } from './navigation';
+import { useActiveSection } from './use-active-section';
 
-export const appNavigation: NavigationItem[] = [
-  {
-    label: 'Dashboard',
-    subtitle: 'Overview',
-    to: '/dashboard',
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
-    label: 'Vehicles',
-    subtitle: 'Your garage',
-    to: '/vehicles',
-    icon: CarFront,
-  },
-  {
-    label: 'Maintenance',
-    subtitle: 'Service history',
-    to: '/maintenance',
-    icon: Wrench,
-    exact: true,
-  },
-  {
-    label: 'Reminders',
-    subtitle: 'Due items',
-    to: '/reminders',
-    icon: Siren,
-    exact: true,
-  },
-  {
-    label: 'Loans',
-    subtitle: 'Financing & EMI',
-    to: '/loans',
-    icon: Coins,
-    exact: true,
-  },
-  {
-    label: 'Settings',
-    subtitle: 'Account',
-    to: '/settings',
-    icon: Settings,
-    exact: true,
-  },
-];
-
-export const adminNavigation: NavigationItem[] = [
-  {
-    label: 'Users',
-    subtitle: 'Admin',
-    to: '/admin/users',
-    icon: Shield,
-    exact: true,
-  },
-];
-
+/**
+ * The one navigation from `md` up. From `xl` it is the full sidebar: logo,
+ * the five destinations with their names, and the account row at its foot.
+ * Between `md` and `xl` the same list collapses to an icon rail, with each
+ * name in a tooltip (and still the link's accessible name), and the account
+ * menu moves to the topbar. Below `md` the bottom bar takes over.
+ */
 export function Sidebar() {
-  const auth = useAuth();
-  const navigate = useNavigate();
-  const navItems =
-    auth.user?.role === 'admin' ? [...appNavigation, ...adminNavigation] : appNavigation;
-
-  const handleLogout = async () => {
-    auth.logout();
-    appToast.info({
-      title: 'Signed out',
-      description: 'Your Vehicle Vault session has been cleared.',
-    });
-    await navigate({ to: '/login' });
-  };
+  const activeSection = useActiveSection();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-line/60 bg-page/40 xl:flex xl:flex-col">
-      <div className="px-6 py-8">
-        <Link
-          className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
-          to="/dashboard"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-small font-bold text-primary-foreground">
-            VV
-          </div>
-          <div className="min-w-0">
-            <p className="text-ui font-bold tracking-tight text-fg">{APP_NAME}</p>
-          </div>
-        </Link>
+    <div
+      className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col border-r border-line bg-surface md:flex xl:w-[232px]"
+      data-testid="sidebar"
+    >
+      <Link
+        className="mx-auto mt-6 mb-6 flex rounded-control focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring xl:mx-6"
+        to="/home"
+      >
+        <BrandMark className="xl:hidden" />
+        <BrandMark className="hidden xl:flex" withName />
+      </Link>
+
+      <nav aria-label="Primary" className="flex flex-col gap-0.5 px-3 xl:px-4">
+        {primaryNavigation.map((item) => {
+          const Icon = item.icon;
+          const isActive = item.section === activeSection;
+
+          return (
+            <Tooltip key={item.to}>
+              <TooltipTrigger asChild>
+                <Link
+                  className={cn(
+                    'flex h-11 items-center justify-center gap-3 rounded-control text-ui font-medium text-fg-2 transition-colors hover:bg-page hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring xl:h-10 xl:justify-start xl:px-3',
+                    isActive &&
+                      'bg-brand-tint font-semibold text-brand hover:bg-brand-tint hover:text-brand',
+                  )}
+                  data-active={isActive || undefined}
+                  to={item.to}
+                >
+                  <Icon aria-hidden="true" className="size-5 xl:size-4" strokeWidth={1.75} />
+                  <span className="sr-only xl:not-sr-only">{item.label}</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent className="xl:hidden" side="right">
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto hidden border-t border-line px-3 py-4 xl:block">
+        <AccountMenu trigger="row" />
       </div>
-
-      <div className="flex flex-1 flex-col justify-between px-3 pb-8">
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.to}
-                activeOptions={{ exact: item.exact ?? false }}
-                activeProps={{
-                  className: 'bg-surface text-primary border-line/60',
-                }}
-                className={cn(
-                  'group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-ui font-medium text-fg-2 transition-colors hover:bg-surface/50 hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
-                )}
-                to={item.to}
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-transparent transition-colors group-hover:bg-page group-data-[state=active]:bg-primary/5 group-data-[state=active]:text-primary">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <span className="flex-1">{item.label}</span>
-                <ChevronRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-40 group-data-[state=active]:opacity-0" />
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="px-2">
-          <div className="rounded-xl border border-line/50 bg-surface/50 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-page text-fg-2">
-                <span className="text-caption font-bold">{auth.user?.name?.charAt(0)}</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-small font-semibold text-fg">{auth.user?.name}</p>
-                <p className="truncate text-caption text-fg-3">{auth.user?.email}</p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Link to="/settings">
-                <Button className="w-full text-caption" size="sm" variant="ghost">
-                  <Settings className="mr-1.5 h-3 w-3" />
-                  Settings
-                </Button>
-              </Link>
-              <Button
-                className="w-full text-caption text-late hover:bg-late-tint hover:text-late"
-                onClick={handleLogout}
-                size="sm"
-                variant="ghost"
-              >
-                <LogOut className="mr-1.5 h-3 w-3" />
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
+    </div>
   );
 }

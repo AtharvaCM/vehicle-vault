@@ -4,7 +4,7 @@ import { formatRelativeDue } from './format-due';
 
 type HeadlineInput = Pick<DashboardSummary, 'attention' | 'attentionCounts'>;
 
-/** The page description under the "Dashboard" H1. */
+/** The page description under the Home H1. */
 export function dashboardHeadline({ attention, attentionCounts }: HeadlineInput) {
   const urgentCount = attentionCount(attentionCounts);
 

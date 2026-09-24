@@ -19,7 +19,7 @@ export async function registerUnverified(page: Page, { email, name, password }: 
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole('button', { name: /create account/i }).click();
 
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/home$/);
 }
 
 /**
@@ -32,5 +32,5 @@ export async function registerAndSignIn(page: Page, credentials: Credentials) {
   await markUserEmailVerified(credentials.email);
 
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
 }

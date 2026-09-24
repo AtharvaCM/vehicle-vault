@@ -24,7 +24,7 @@ export function GarageGrid({ vehicles, vehiclesTotal }: GarageGridProps) {
             {vehiclesTotal} vehicle{vehiclesTotal === 1 ? '' : 's'}
           </span>
         </div>
-        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/vehicles">
+        <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/garage">
           All vehicles
         </Link>
       </div>
@@ -36,7 +36,7 @@ export function GarageGrid({ vehicles, vehiclesTotal }: GarageGridProps) {
         {hiddenCount > 0 ? (
           <Link
             className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-line bg-page/60 p-4 text-ui font-medium text-fg-2 transition-colors hover:border-primary/30 hover:bg-surface hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            to="/vehicles"
+            to="/garage"
           >
             +{hiddenCount} more in Vehicles
           </Link>

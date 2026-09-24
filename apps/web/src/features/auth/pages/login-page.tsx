@@ -32,8 +32,8 @@ export function LoginPage() {
       const destination = afterAuthDestination(next);
       appToast.success({
         title: 'Signed in',
-        ...('to' in destination && destination.to === '/dashboard'
-          ? { description: 'Opening your garage dashboard.' }
+        ...('to' in destination && destination.to === '/home'
+          ? { description: 'Taking you to Home.' }
           : {}),
       });
       // Back where they were going, else on to a vehicle picked on a catalog
