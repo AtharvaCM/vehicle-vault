@@ -21,21 +21,19 @@ export function AuthPageShell({
   useDocumentTitle(`${title} | ${APP_NAME}`);
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-page px-4 py-10 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl items-center">
         <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-              {APP_NAME}
-            </p>
+            <p className="text-small font-medium text-fg-3">{APP_NAME}</p>
             <div className="space-y-4">
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-950">{title}</h1>
-              <p className="max-w-xl text-base leading-7 text-slate-600">{description}</p>
+              <h1 className="text-4xl font-semibold tracking-tight text-fg">{title}</h1>
+              <p className="max-w-xl text-base leading-7 text-fg-2">{description}</p>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6">
-              <h2 className="text-sm font-semibold text-slate-900">Why this matters</h2>
-              <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
+            <div className="rounded-3xl border border-line bg-surface p-6">
+              <h2 className="text-sm font-semibold text-fg">Why this matters</h2>
+              <ul className="mt-4 grid gap-3 text-sm leading-6 text-fg-2">
                 <li>Keep every vehicle, service entry, reminder, and receipt in one place.</li>
                 <li>See dashboard counts and urgent items for your own garage only.</li>
                 <li>Pick up where you left off whenever you come back.</li>
@@ -43,16 +41,14 @@ export function AuthPageShell({
             </div>
           </div>
 
-          <Card className="border-slate-200 shadow-xs">
+          <Card className="border-line shadow-xs">
             <CardHeader>
               <CardTitle>{title}</CardTitle>
               <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {children}
-              <div className="border-t border-slate-200 pt-4 text-sm text-slate-600">
-                {alternateAction}
-              </div>
+              <div className="border-t border-line pt-4 text-sm text-fg-2">{alternateAction}</div>
             </CardContent>
           </Card>
         </div>
@@ -76,11 +72,7 @@ export function AuthPageLink({
   return (
     <p>
       {text}{' '}
-      <Link
-        className="font-semibold text-slate-900 hover:text-slate-700"
-        search={next ? { next } : {}}
-        to={to}
-      >
+      <Link className="font-semibold text-fg hover:text-fg-2" search={next ? { next } : {}} to={to}>
         {label}
       </Link>
     </p>

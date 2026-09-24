@@ -137,15 +137,15 @@ export function PublicSpecSections({ specs }: PublicSpecSectionsProps) {
       {sections.map((section) => (
         <section
           aria-label={section.title}
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs"
+          className="rounded-xl border border-line bg-surface p-4 shadow-xs"
           key={section.title}
         >
-          <h3 className="text-sm font-semibold text-slate-950">{section.title}</h3>
-          <dl className="mt-3 divide-y divide-slate-100 text-sm">
+          <h3 className="text-sm font-semibold text-fg">{section.title}</h3>
+          <dl className="mt-3 divide-y divide-line-subtle text-sm">
             {section.rows.map(([label, value, unit]) => (
               <div className="flex justify-between gap-4 py-2" key={label}>
-                <dt className="text-slate-600">{label}</dt>
-                <dd className="min-w-0 text-right font-medium text-slate-900 wrap-anywhere">
+                <dt className="text-fg-2">{label}</dt>
+                <dd className="min-w-0 text-right font-medium text-fg wrap-anywhere">
                   {formatValue(value, unit)}
                 </dd>
               </div>

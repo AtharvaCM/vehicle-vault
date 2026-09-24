@@ -70,10 +70,10 @@ export function PublicMakePageView({ page }: PublicMakePageViewProps) {
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-make-page">
       <header>
         <PublicCatalogBreadcrumbs page={page} />
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 wrap-anywhere sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg wrap-anywhere sm:text-4xl">
           {`${page.make.name} ${SEGMENT_NOUNS[page.segment]}`}
         </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 text-sm leading-6 text-fg-2">
           {`${count} ${count === 1 ? 'model' : 'models'}. Pick yours for its variants, service schedule and specs.`}
         </p>
       </header>
@@ -106,25 +106,23 @@ function ModelList({
 }) {
   return (
     <section aria-labelledby={id} className="space-y-3">
-      <h2 className="text-lg font-semibold tracking-tight text-slate-950" id={id}>
+      <h2 className="text-lg font-semibold tracking-tight text-fg" id={id}>
         {heading}
       </h2>
-      <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+      <ul className="divide-y divide-line-subtle overflow-hidden rounded-xl border border-line bg-surface shadow-xs">
         {models.map((model) => (
           <li key={model.slug}>
             <PublicCatalogLink
               address={{ segment: page.segment, make: page.make.slug, model: model.slug }}
-              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 sm:px-5"
+              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-page focus-visible:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:px-5"
             >
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-slate-900 wrap-anywhere">
+                <span className="block text-sm font-medium text-fg wrap-anywhere">
                   {`${page.make.name} ${model.name}`}
                 </span>
-                <span className="mt-0.5 block text-sm text-slate-600">
-                  {describeMakeModel(model)}
-                </span>
+                <span className="mt-0.5 block text-sm text-fg-2">{describeMakeModel(model)}</span>
               </span>
-              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-fg-3" />
             </PublicCatalogLink>
           </li>
         ))}

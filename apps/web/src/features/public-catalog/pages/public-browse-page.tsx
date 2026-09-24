@@ -66,22 +66,22 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
   return (
     <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-browse-page">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg sm:text-4xl">
           {copy.heading}
         </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 text-sm leading-6 text-fg-2">
           {`The service schedule, a running-cost estimate and the specs for every ${copy.noun} variant in our catalog. Start with the make.`}
         </p>
         <PublicCatalogLink
           address={{ segment: copy.other }}
-          className="-ml-1 mt-2 inline-flex rounded-lg px-1 py-1 text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-950 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="-ml-1 mt-2 inline-flex rounded-lg px-1 py-1 text-sm font-medium text-fg-2 underline underline-offset-4 hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
         >
           {copy.otherLabel}
         </PublicCatalogLink>
       </header>
 
       {page.makes.length === 0 ? (
-        <p className="rounded-xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-xs">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-sm text-fg-2 shadow-xs">
           Nothing here yet.
         </p>
       ) : (
@@ -94,17 +94,17 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
               <li key={make.slug}>
                 <PublicCatalogLink
                   address={{ segment: page.segment, make: make.slug }}
-                  className="flex h-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xs hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                  className="flex h-full items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-xs hover:bg-page focus-visible:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium text-slate-900 wrap-anywhere">
+                    <span className="block text-sm font-medium text-fg wrap-anywhere">
                       {make.name}
                     </span>
-                    <span className="mt-0.5 block text-sm text-slate-600">
+                    <span className="mt-0.5 block text-sm text-fg-2">
                       {`${make.modelCount} ${make.modelCount === 1 ? 'model' : 'models'}`}
                     </span>
                   </span>
-                  <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
+                  <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-fg-3" />
                 </PublicCatalogLink>
               </li>
             ))}

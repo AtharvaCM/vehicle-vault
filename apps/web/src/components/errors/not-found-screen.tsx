@@ -43,11 +43,11 @@ function InShellNotFound() {
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 ring-8 ring-slate-100/60">
-        <Compass className="h-6 w-6 text-slate-600" />
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-page ring-8 ring-page/60">
+        <Compass className="h-6 w-6 text-fg-2" />
       </div>
-      <h1 className="text-xl font-semibold text-slate-900">Page not found</h1>
-      <p className="text-sm leading-6 text-slate-600">
+      <h1 className="text-xl font-semibold text-fg">Page not found</h1>
+      <p className="text-sm leading-6 text-fg-2">
         There is nothing at this address. It may have moved, or the link may be mistyped.
       </p>
       <Button asChild>

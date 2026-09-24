@@ -84,7 +84,7 @@ export function VerifyEmailPage() {
   const alternateAction = isAuthenticated ? (
     <p>
       Back to{' '}
-      <Link className="font-semibold text-slate-900 hover:text-slate-700" to="/dashboard">
+      <Link className="font-semibold text-fg hover:text-fg-2" to="/dashboard">
         your garage
       </Link>
     </p>
@@ -100,8 +100,8 @@ export function VerifyEmailPage() {
         alternateAction={alternateAction}
       >
         <div className="flex flex-col items-center justify-center py-8">
-          <Loader2 className="h-12 w-12 animate-spin text-slate-900" />
-          <p className="mt-4 text-sm text-slate-500">This will only take a moment.</p>
+          <Loader2 className="h-12 w-12 animate-spin text-fg" />
+          <p className="mt-4 text-sm text-fg-3">This will only take a moment.</p>
         </div>
       </AuthPageShell>
     );
@@ -119,13 +119,13 @@ export function VerifyEmailPage() {
         alternateAction={alternateAction}
       >
         <div className="flex flex-col items-center py-4">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50/50">
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-ok-tint ring-8 ring-ok-tint/50">
+            <CheckCircle2 className="h-10 w-10 text-ok" />
           </div>
 
           <Button
             asChild
-            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full flex h-11 items-center justify-center gap-2 rounded-xl transition-colors"
           >
             {isAuthenticated ? (
               <Link to="/dashboard">
@@ -154,8 +154,8 @@ export function VerifyEmailPage() {
       alternateAction={alternateAction}
     >
       <div className="flex flex-col items-center gap-3 py-4">
-        <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 ring-8 ring-red-50/50">
-          <XCircle className="h-10 w-10 text-red-600" />
+        <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-late-tint ring-8 ring-late-tint/50">
+          <XCircle className="h-10 w-10 text-late" />
         </div>
 
         {state === 'failed' && token ? (

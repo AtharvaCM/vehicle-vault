@@ -63,13 +63,11 @@ export function LandingPage() {
   useDocumentTitle(`${APP_NAME} — service history, documents and reminders for your vehicle`);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-page text-fg">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-600">
-          {APP_NAME}
-        </span>
+        <span className="text-small font-medium text-fg-3">{APP_NAME}</span>
         <Link
-          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="rounded-lg px-3 py-2 text-sm font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
           to="/login"
         >
           Sign in
@@ -78,11 +76,11 @@ export function LandingPage() {
 
       <main>
         <section className="mx-auto max-w-6xl px-4 pb-14 pt-8 sm:px-6 sm:pb-20 sm:pt-14">
-          <p className="text-sm font-medium text-slate-600">For cars and two-wheelers in India</p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+          <p className="text-sm font-medium text-fg-2">For cars and two-wheelers in India</p>
+          <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-fg sm:text-5xl">
             One record of your vehicle — its service history, its documents, and what’s due next.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-fg-2">
             Vehicle Vault keeps the servicing, insurance, PUC and upcoming work for every vehicle
             you own in one place, and tells you before something falls due.
           </p>
@@ -112,13 +110,13 @@ export function LandingPage() {
               key={feature.title}
             >
               <div className={index % 2 === 1 ? 'lg:order-2' : undefined}>
-                <feature.icon aria-hidden="true" className="h-6 w-6 text-slate-700" />
-                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                <feature.icon aria-hidden="true" className="h-6 w-6 text-fg-2" />
+                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-fg">
                   {feature.title}
                 </h3>
-                <p className="mt-3 text-base leading-7 text-slate-600">{feature.body}</p>
+                <p className="mt-3 text-base leading-7 text-fg-2">{feature.body}</p>
               </div>
-              <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+              <figure className="overflow-hidden rounded-2xl border border-line bg-surface shadow-xs">
                 <img
                   alt={feature.alt}
                   className="h-auto w-full"
@@ -137,10 +135,10 @@ export function LandingPage() {
           aria-labelledby="catalog-heading"
           className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24"
         >
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950" id="catalog-heading">
+          <h2 className="text-2xl font-semibold tracking-tight text-fg" id="catalog-heading">
             Look up a car or bike
           </h2>
-          <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
+          <p className="mt-2 max-w-2xl text-base leading-7 text-fg-2">
             Its service schedule, a running-cost estimate and its specs, by make and model. No
             account needed.
           </p>
@@ -154,16 +152,16 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t border-slate-200 bg-white">
+        <section className="border-t border-line bg-surface">
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-            <p className="max-w-3xl text-lg leading-8 text-slate-700">
+            <p className="max-w-3xl text-lg leading-8 text-fg-2">
               Built for the daily commuter who wants reminders that just work, the enthusiast who
               tracks every part and rupee, and the family keeping several vehicles in order.
             </p>
-            <h2 className="mt-10 text-2xl font-semibold tracking-tight text-slate-950">
+            <h2 className="mt-10 text-2xl font-semibold tracking-tight text-fg">
               Start with one vehicle.
             </h2>
-            <p className="mt-2 text-base leading-7 text-slate-600">
+            <p className="mt-2 text-base leading-7 text-fg-2">
               Add your vehicle once, then log services and documents as they happen.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -181,7 +179,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-600 sm:px-6">
+      <footer className="mx-auto max-w-6xl px-4 py-8 text-sm text-fg-2 sm:px-6">
         © {new Date().getFullYear()} {APP_NAME}
       </footer>
     </div>

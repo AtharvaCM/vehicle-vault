@@ -47,9 +47,9 @@ export function OAuthButtons({ next }: { next?: string }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs uppercase tracking-wider text-slate-500">or</span>
-        <span className="h-px flex-1 bg-slate-200" />
+        <span className="h-px flex-1 bg-line-subtle" />
+        <span className="text-small font-medium text-fg-3">or</span>
+        <span className="h-px flex-1 bg-line-subtle" />
       </div>
       <div className="space-y-2">
         {providers.map((provider) => (
