@@ -27,7 +27,6 @@ const PALETTE_CLASS = new RegExp(
   `^-?(?:${COLOR_UTILITIES})-(?:(?:${PALETTE_FAMILIES})-(?:50|[1-9]00|950)|white|black)(?:/\\S+)?$`,
 );
 const ARBITRARY_FONT_SIZE = /^text-\[(?:length:)?[\d.]+(?:px|rem|em)\]$/;
-const WIDE_TRACKING = /^tracking-(?:wide|wider|widest|\[[^\]]+\])$/;
 
 function classTokens(text) {
   return text.split(/\s+/).filter(Boolean);
@@ -76,25 +75,12 @@ export const rules = {
       '`{{className}}` animates every property, layout included. Use transition-colors or transition-opacity.',
     matches: (utility) => utility === 'transition-all',
   }),
-  'no-micro-labels': {
-    meta: {
-      type: 'suggestion',
-      docs: { description: 'No uppercase, widely tracked micro-labels: sentence case everywhere.' },
-      schema: [],
-      messages: {
-        found:
-          'Uppercase with `{{className}}` is a micro-label. The design language is sentence case; figures get their label from the Figure component.',
-      },
-    },
-    create(context) {
-      return forEachClassString(context, (tokens, node) => {
-        const utilities = tokens.map(utilityOf);
-        if (!utilities.includes('uppercase')) return;
-        const tracking = tokens.find((token) => WIDE_TRACKING.test(utilityOf(token)));
-        if (tracking) context.report({ node, messageId: 'found', data: { className: tracking } });
-      });
-    },
-  },
+  'no-micro-labels': tokenRule({
+    description: 'No uppercase labels: sentence case everywhere.',
+    message:
+      '`{{className}}` sets text in capitals. The design language is sentence case: write the string that way (map data-driven words to labels); figures get their label from the Figure component.',
+    matches: (utility) => utility === 'uppercase',
+  }),
 };
 
 export default { meta: { name: 'vehicle-vault-design-system' }, rules };

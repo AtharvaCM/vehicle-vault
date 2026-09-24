@@ -1,3 +1,10 @@
+## [1.79.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.79.0...v1.79.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **web:** flag every uppercase class, not only widely tracked ones ([#271](https://github.com/AtharvaCM/vehicle-vault/issues/271)) ([bee01f8](https://github.com/AtharvaCM/vehicle-vault/commit/bee01f840c4423a113f3746374a5b8422e7d927c))
+
 # [1.79.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.78.0...v1.79.0) (2026-09-24)
 
 

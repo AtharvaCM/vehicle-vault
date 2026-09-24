@@ -54,12 +54,17 @@ tester.run('no-transition-all', rules['no-transition-all'], {
 tester.run('no-micro-labels', rules['no-micro-labels'], {
   valid: [
     '<span className="text-small text-fg-3" />',
-    '<span className="uppercase" />',
     '<span className="tracking-wide" />',
+    '<span className="normal-case lowercase capitalize" />',
+    "const label = 'Uppercase letters';",
   ],
   invalid: [
     { code: '<span className="text-xs uppercase tracking-wider" />', errors: found },
     { code: "cn('uppercase tracking-[0.12em] text-fg-3')", errors: found },
+    { code: '<span className="uppercase" />', errors: found },
+    { code: '<th className="text-caption uppercase tracking-tight" />', errors: found },
+    { code: "cn('font-medium', 'sm:uppercase tracking-tighter')", errors: found },
+    { code: '<p className="data-[state=open]:!uppercase" />', errors: found },
   ],
 });
 
