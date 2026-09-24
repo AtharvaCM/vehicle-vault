@@ -4,6 +4,7 @@ import { outOfPocket, type Claim, type ClaimStatus } from '@vehicle-vault/shared
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/shared/confirm';
 import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
@@ -38,7 +39,16 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
   const pocket = outOfPocket(claim);
 
   async function handleDelete() {
-    if (!confirm('Delete this claim? This cannot be undone.')) return;
+    if (
+      !(await confirm({
+        title: 'Delete this claim?',
+        description: "It can't be undone.",
+        confirmLabel: 'Delete',
+        destructive: true,
+      }))
+    ) {
+      return;
+    }
     try {
       await deleteMutation.mutateAsync(claim.id);
       appToast.success({ title: 'Claim removed', description: 'History updated.' });

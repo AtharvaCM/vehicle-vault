@@ -15,6 +15,7 @@ import { type VehicleDocument } from '@vehicle-vault/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/shared/confirm';
 import { format } from '@/lib/format';
 import { useDeleteVehicleDocument } from '../hooks/use-documents';
 import {
@@ -86,20 +87,26 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   );
 
   async function handleDelete() {
+    const noun = documentKindNouns[document.kind].toLowerCase();
     if (
-      confirm(
-        `Are you sure you want to delete this ${documentKindNouns[document.kind].toLowerCase()} record?`,
-      )
+      !(await confirm({
+        title: `Delete this ${noun} record?`,
+        description: "It can't be undone.",
+        confirmLabel: 'Delete',
+        destructive: true,
+      }))
     ) {
-      try {
-        await deleteMutation.mutateAsync({ id: document.id, kind: document.kind });
-        appToast.success({
-          title: `${documentKindNouns[document.kind]} removed`,
-          description: 'History updated.',
-        });
-      } catch {
-        appToast.error({ title: 'Delete failed', description: 'Failed to remove record.' });
-      }
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync({ id: document.id, kind: document.kind });
+      appToast.success({
+        title: `${documentKindNouns[document.kind]} removed`,
+        description: 'History updated.',
+      });
+    } catch {
+      appToast.error({ title: 'Delete failed', description: 'Failed to remove record.' });
     }
   }
 
@@ -190,7 +197,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 text-slate-400 hover:text-primary rounded-full"
+                    className="text-slate-400 hover:text-primary rounded-full md:h-8 md:w-8"
                     onClick={() => onEdit(document)}
                     aria-label="Edit document"
                   >
@@ -201,7 +208,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
+                    className="text-slate-400 hover:text-rose-600 rounded-full md:h-8 md:w-8"
                     onClick={handleDelete}
                     aria-label="Delete document"
                     disabled={deleteMutation.isPending}
@@ -304,7 +311,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 text-slate-400 hover:text-primary rounded-full"
+                    className="text-slate-400 hover:text-primary rounded-full md:h-8 md:w-8"
                     onClick={() => onEdit(document)}
                     aria-label="Edit document"
                   >
@@ -315,7 +322,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
+                    className="text-slate-400 hover:text-rose-600 rounded-full md:h-8 md:w-8"
                     onClick={handleDelete}
                     aria-label="Delete document"
                     disabled={deleteMutation.isPending}
@@ -413,7 +420,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 text-slate-400 hover:text-primary rounded-full"
+                  className="text-slate-400 hover:text-primary rounded-full md:h-8 md:w-8"
                   onClick={() => onEdit(document)}
                   aria-label="Edit document"
                 >
@@ -424,7 +431,7 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 text-slate-400 hover:text-rose-600 rounded-full"
+                  className="text-slate-400 hover:text-rose-600 rounded-full md:h-8 md:w-8"
                   onClick={handleDelete}
                   aria-label="Delete document"
                   disabled={deleteMutation.isPending}

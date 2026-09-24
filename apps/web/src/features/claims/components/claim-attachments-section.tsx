@@ -16,6 +16,7 @@ import {
 import type { Claim, ClaimExtractionSuggestion } from '@vehicle-vault/shared';
 
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/shared/confirm';
 import { InlineError } from '@/components/shared/inline-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { openApiFileInNewTab } from '@/lib/api/open-api-file';
@@ -108,7 +109,16 @@ export function ClaimAttachmentsSection({
   }
 
   async function handleDelete(attachmentId: string) {
-    if (!confirm('Delete this attachment?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete this attachment?',
+        description: "It can't be undone.",
+        confirmLabel: 'Delete',
+        destructive: true,
+      }))
+    ) {
+      return;
+    }
     try {
       await deleteMutation.mutateAsync(attachmentId);
       if (suggestion?.attachmentId === attachmentId) setSuggestion(null);
@@ -228,39 +238,45 @@ export function ClaimAttachmentsSection({
                             </p>
                           </div>
                           {ocrAvailable && canEdit ? (
-                            <button
-                              type="button"
-                              onClick={() => handleExtract(att.id)}
-                              disabled={extractMutation.isPending}
-                              className="text-indigo-500 hover:text-indigo-700 disabled:opacity-40"
+                            <Button
                               aria-label="Extract claim fields"
+                              className="text-indigo-500 hover:text-indigo-700 hover:bg-transparent disabled:opacity-40"
+                              disabled={extractMutation.isPending}
+                              onClick={() => handleExtract(att.id)}
+                              size="icon-sm"
                               title="Extract claim fields with AI"
+                              type="button"
+                              variant="ghost"
                             >
                               {isExtractingThis ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Sparkles className="h-4 w-4" />
                               )}
-                            </button>
+                            </Button>
                           ) : null}
-                          <button
-                            type="button"
-                            onClick={() => handleOpen(att.id)}
-                            className="text-slate-500 hover:text-slate-900"
+                          <Button
                             aria-label="Download attachment"
+                            className="text-slate-500 hover:text-slate-900 hover:bg-transparent"
+                            onClick={() => handleOpen(att.id)}
+                            size="icon-sm"
+                            type="button"
+                            variant="ghost"
                           >
                             <Download className="h-4 w-4" />
-                          </button>
+                          </Button>
                           {canEdit ? (
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(att.id)}
-                              disabled={deleteMutation.isPending}
-                              className="text-rose-400 hover:text-rose-600"
+                            <Button
                               aria-label="Delete attachment"
+                              className="text-rose-400 hover:text-rose-600 hover:bg-transparent"
+                              disabled={deleteMutation.isPending}
+                              onClick={() => handleDelete(att.id)}
+                              size="icon-sm"
+                              type="button"
+                              variant="ghost"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                            </Button>
                           ) : null}
                         </div>
 
@@ -453,14 +469,16 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
             </span>
           ) : null}
         </span>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="text-indigo-400 hover:text-indigo-700"
+        <Button
           aria-label="Dismiss suggestion"
+          className="text-indigo-400 hover:text-indigo-700 hover:bg-transparent"
+          onClick={onDismiss}
+          size="icon-xs"
+          type="button"
+          variant="ghost"
         >
           <X className="h-3 w-3" />
-        </button>
+        </Button>
       </div>
 
       {hasInitialFindings ? (

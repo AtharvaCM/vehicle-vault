@@ -52,6 +52,7 @@ const TEXT_PAIRS: Array<[text: string, background: string]> = [
   ['on-brand', 'brand'],
   ['late', 'surface-card'],
   ['late', 'late-tint'],
+  ['on-late', 'late'],
   ['soon', 'surface-card'],
   ['soon', 'soon-tint'],
   ['ok', 'surface-card'],

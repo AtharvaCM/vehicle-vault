@@ -82,13 +82,13 @@ test('user can manage insurance and warranty documents via unified route', async
   await expect(page.getByText('Updated Motors Warranty')).toBeVisible();
 
   // ── 7. Delete Both ─────────────────────────────────────────────────
-  page.on('dialog', (dialog) => dialog.accept());
 
   // Delete warranty (the trash icon is the second button in the card)
   const updatedWarrantyCard = page
     .locator('[class*="border-slate"]')
     .filter({ hasText: 'Updated Motors Warranty' });
   await updatedWarrantyCard.getByRole('button').nth(1).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByText('Updated Motors Warranty')).not.toBeVisible();
 
   // Delete insurance
@@ -96,6 +96,7 @@ test('user can manage insurance and warranty documents via unified route', async
     .locator('[class*="border-slate"]')
     .filter({ hasText: 'Updated Insurance Corp' });
   await updatedInsuranceCard.getByRole('button').nth(1).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByText('Updated Insurance Corp')).not.toBeVisible();
 });
 

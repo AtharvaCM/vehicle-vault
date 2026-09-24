@@ -13,7 +13,7 @@ import {
 import { TrendingUp } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from '@/lib/format';
 
 import { costTrendQueryOptions } from '../api/get-cost-trend';
@@ -22,10 +22,10 @@ import { rangeToParams, type CostRangePreset } from '../utils/range-to-params';
 type RangePreset = Extract<CostRangePreset, '6m' | '1y' | '2y' | 'all'>;
 
 const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
-  { value: '6m', label: '6m' },
-  { value: '1y', label: '1y' },
-  { value: '2y', label: '2y' },
-  { value: 'all', label: 'All' },
+  { value: '6m', label: '6 months' },
+  { value: '1y', label: '12 months' },
+  { value: '2y', label: '2 years' },
+  { value: 'all', label: 'All time' },
 ];
 
 type Mode = 'total' | 'costPerKm';
@@ -65,7 +65,7 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-slate-500" />
+            <TrendingUp className="h-4 w-4 text-fg-3" />
             Ownership trend
           </CardTitle>
           <CardDescription>
@@ -73,46 +73,40 @@ export function CostTrendChart({ vehicleId, defaultRange = '1y' }: Props) {
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="flex flex-wrap gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant={mode === 'total' ? 'default' : 'outline'}
-              onClick={() => setMode('total')}
-            >
-              ₹/month
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={mode === 'costPerKm' ? 'default' : 'outline'}
-              onClick={() => setMode('costPerKm')}
-            >
-              ₹/km
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-1">
+          <ToggleGroup
+            aria-label="Value shown"
+            onValueChange={(value) => {
+              if (value) setMode(value as Mode);
+            }}
+            type="single"
+            value={mode}
+          >
+            <ToggleGroupItem value="total">₹/month</ToggleGroupItem>
+            <ToggleGroupItem value="costPerKm">₹/km</ToggleGroupItem>
+          </ToggleGroup>
+          <ToggleGroup
+            aria-label="Range"
+            onValueChange={(value) => {
+              if (value) setRange(value as RangePreset);
+            }}
+            type="single"
+            value={range}
+          >
             {RANGE_OPTIONS.map((option) => (
-              <Button
-                key={option.value}
-                type="button"
-                size="sm"
-                variant={range === option.value ? 'default' : 'outline'}
-                onClick={() => setRange(option.value)}
-              >
+              <ToggleGroupItem key={option.value} value={option.value}>
                 {option.label}
-              </Button>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
         </div>
       </CardHeader>
       <CardContent>
         {query.isLoading ? (
-          <p className="text-sm text-slate-500">Loading trend…</p>
+          <p className="text-sm text-fg-3">Loading trend…</p>
         ) : query.isError ? (
-          <p className="text-sm text-red-600">Failed to load cost trend.</p>
+          <p className="text-sm text-late">Failed to load cost trend.</p>
         ) : !hasAnyData ? (
-          <p className="text-sm text-slate-500">No spend recorded in this range yet.</p>
+          <p className="text-sm text-fg-3">No spend recorded in this range yet.</p>
         ) : (
           <div className="h-72 w-full" data-testid="cost-trend-chart">
             <ResponsiveContainer>

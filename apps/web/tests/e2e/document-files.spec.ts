@@ -72,8 +72,8 @@ test('a policy keeps its file, and loses it with the policy', async ({ page }) =
   // Upload again, then delete the policy: its file goes with it.
   await files.getByLabel('Add files to this document').setInputFiles(policyPdf);
   await expect(files.getByRole('button', { name: /^sample-receipt\.pdf/ })).toBeVisible();
-  page.once('dialog', (dialog) => void dialog.accept());
   await card.getByRole('button', { name: 'Delete document' }).first().click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByText(policy.provider!)).toHaveCount(0);
   await expect
     .poll(() => prisma.attachment.count({ where: { insurancePolicyId: policy.id } }))
@@ -118,8 +118,8 @@ test('a PUC certificate keeps its photo, and loses it with the record', async ({
     .poll(() => prisma.attachment.count({ where: { complianceDocumentId: puc.id } }))
     .toBe(1);
 
-  page.once('dialog', (dialog) => void dialog.accept());
   await card.getByRole('button', { name: 'Delete document' }).first().click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByText(puc.provider!)).toHaveCount(0);
   await expect
     .poll(() => prisma.attachment.count({ where: { complianceDocumentId: puc.id } }))

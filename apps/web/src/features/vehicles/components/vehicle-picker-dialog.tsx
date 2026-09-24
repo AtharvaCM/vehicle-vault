@@ -1,7 +1,7 @@
 import { Link, type LinkProps } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants, type TextButtonSize } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -39,7 +39,7 @@ type VehiclePickerDialogProps = {
   dialogTitle?: string;
   dialogDescription?: string;
   variant?: React.ComponentProps<typeof Button>['variant'];
-  size?: React.ComponentProps<typeof Button>['size'];
+  size?: TextButtonSize;
   className?: string;
 };
 

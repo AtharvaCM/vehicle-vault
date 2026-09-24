@@ -49,11 +49,11 @@ import { ServiceHistoryCard } from '@/features/service-baseline/components/servi
 import { ProtectionTab } from '../components/protection-tab';
 import { accessFor, useVehicleAccess, VehicleAccessProvider } from '../context/vehicle-access';
 import { VehicleSetupPrompt } from '../components/vehicle-setup-prompt';
+import { ResaleReportDialog } from '../components/resale-report-dialog';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
 import { TcoCard } from '@/features/analytics/components/tco-card';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
 
-import { downloadResaleReportPdf } from '../api/download-resale-report';
 import { downloadServiceHistoryPdf } from '../api/download-service-history';
 import { useDeleteVehicle } from '../hooks/use-delete-vehicle';
 import { useVehicle } from '../hooks/use-vehicle';
@@ -77,6 +77,7 @@ export function VehicleDetailPage({
 }: VehicleDetailPageProps) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [isResaleDialogOpen, setIsResaleDialogOpen] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
   const remindersQuery = useVehicleReminders(vehicleId);
@@ -177,8 +178,9 @@ export function VehicleDetailPage({
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Link
+                    aria-label="Back to your vehicles"
                     to="/vehicles"
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    className="flex size-11 items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors md:h-8 md:w-8"
                   >
                     <ChevronRight className="h-4 w-4 rotate-180" />
                   </Link>
@@ -306,44 +308,7 @@ export function VehicleDetailPage({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="cursor-pointer"
-                        onSelect={async (event) => {
-                          event.preventDefault();
-                          const vehicle = vehicleQuery.data;
-                          if (!vehicle) return;
-                          const input = window.prompt(
-                            'Optional asking price (₹). Leave blank to omit.',
-                            '',
-                          );
-                          if (input === null) return;
-                          const trimmed = input.trim();
-                          const askingPrice = trimmed === '' ? undefined : Number(trimmed);
-                          if (
-                            askingPrice != null &&
-                            (!Number.isFinite(askingPrice) || askingPrice < 0)
-                          ) {
-                            appToast.error({
-                              title: 'Invalid asking price',
-                              description: 'Enter a positive number or leave blank.',
-                            });
-                            return;
-                          }
-                          try {
-                            await downloadResaleReportPdf(
-                              vehicle.id,
-                              vehicle.registrationNumber,
-                              askingPrice,
-                            );
-                            appToast.success({
-                              title: 'Resale report downloaded',
-                              description: 'Buyer-facing PDF saved.',
-                            });
-                          } catch (error) {
-                            appToast.error({
-                              title: 'Could not generate report',
-                              description: getApiErrorMessage(error),
-                            });
-                          }
-                        }}
+                        onClick={() => setIsResaleDialogOpen(true)}
                       >
                         Download resale report (PDF)
                       </DropdownMenuItem>
@@ -372,6 +337,13 @@ export function VehicleDetailPage({
             </div>
           </div>
         </div>
+
+        <ResaleReportDialog
+          onOpenChange={setIsResaleDialogOpen}
+          open={isResaleDialogOpen}
+          registrationNumber={vehicle.registrationNumber}
+          vehicleId={vehicle.id}
+        />
 
         <PageContainer className="py-8">
           {actionError ? (

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Plus, Scan, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/shared/confirm';
 import { ErrorState } from '@/components/shared/error-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -102,19 +103,28 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
   };
 
   const handleDelete = async (logId: string) => {
-    if (confirm('Are you sure you want to delete this fuel log?')) {
-      try {
-        await deleteMutation.mutateAsync(logId);
-        appToast.success({
-          title: 'Fuel log deleted',
-          description: 'The record was removed.',
-        });
-      } catch {
-        appToast.error({
-          title: 'Failed to delete log',
-          description: 'Please try again.',
-        });
-      }
+    if (
+      !(await confirm({
+        title: 'Delete this fuel log?',
+        description: "It can't be undone.",
+        confirmLabel: 'Delete',
+        destructive: true,
+      }))
+    ) {
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync(logId);
+      appToast.success({
+        title: 'Fuel log deleted',
+        description: 'The record was removed.',
+      });
+    } catch {
+      appToast.error({
+        title: 'Failed to delete log',
+        description: 'Please try again.',
+      });
     }
   };
 

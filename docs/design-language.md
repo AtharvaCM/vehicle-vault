@@ -30,6 +30,7 @@ Semantic names only; screens never use palette colours (`slate-500`, `rose-50`) 
 | brand.tint              | `--brand-tint` → `bg-brand-tint`       | `#E3F0F0`                                   | `#1E2A2C` | Active nav, selected chips                           |
 | late (Brake red)        | `--late`, `--late-tint`                | `#B42318` on `#FCE9E7`                      | `#FF8A80` | Overdue, expired, errors                             |
 | soon (Indicator amber)  | `--soon`, `--soon-dot`, `--soon-tint`  | text `#8A5300`, dot `#D98200`, bg `#FFF1D6` | `#F5B452` | Due today or this week                               |
+| on late                 | `--on-late` → `text-on-late`           | `#FFFFFF`                                   | `#0F1216` | Text on a late fill (the final Delete in a confirm)  |
 | ok (PUC green)          | `--ok`, `--ok-tint`                    | `#1C7A47` on `#E4F3EA`                      | `#6FCF97` | Valid, done, all clear                               |
 | ended                   | `--ended`, `--ended-dot`               | text `#4A505C`, dot `#C4C8D0`               | `#AEB4BD` | Lapsed but not urgent (e.g. warranty ended)          |
 | plate.strip (HSRP blue) | `--plate-strip`                        | `#1D4E9E`                                   | same      | Only the plate's IND strip                           |
@@ -46,9 +47,11 @@ The shadcn variables the UI components read are mapped onto these tokens:
 | `muted-foreground`                                 | text.2           |
 | `muted`, `secondary`, `accent`                     | surface.page     |
 | `primary` / `primary-foreground`                   | brand / on brand |
-| `destructive` / `destructive-foreground`           | late / white     |
+| `destructive` / `destructive-foreground`           | late / on late   |
 | `border`, `input`                                  | border           |
 | `ring`                                             | brand            |
+
+A `--scrim` token dims the page behind dialogs and sheets.
 
 Every token pair used for text meets WCAG AA (4.5:1). `apps/web/src/styles/tokens.spec.ts` reads `tokens.css` and checks each pair, in both light and dark. Class names are merged by `cn` (`apps/web/src/lib/utils.ts`), which is taught the token names; add a new token there too.
 

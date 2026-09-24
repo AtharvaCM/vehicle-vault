@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 
 import { router } from '@/app/router';
+import { confirm } from '@/components/shared/confirm';
 
 type UseUnsavedChangesGuardOptions = {
   when: boolean;
   message?: string;
 };
 
-const DEFAULT_MESSAGE = 'You have unsaved changes. Leave this page anyway?';
+const DEFAULT_MESSAGE = 'You have changes that are not saved. Leave this page anyway?';
 
 export function useUnsavedChangesGuard({
   when,
@@ -28,12 +29,20 @@ export function useUnsavedChangesGuard({
 
     return router.history.block({
       enableBeforeUnload: () => !bypassRef.current,
-      blockerFn: () => {
+      // Truthy blocks the navigation; the router waits for the answer.
+      blockerFn: async () => {
         if (bypassRef.current) {
           return false;
         }
 
-        return !window.confirm(messageRef.current);
+        const leave = await confirm({
+          title: messageRef.current,
+          confirmLabel: 'Leave',
+          cancelLabel: 'Stay',
+          destructive: true,
+        });
+
+        return !leave;
       },
     });
   }, [when]);

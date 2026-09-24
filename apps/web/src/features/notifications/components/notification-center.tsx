@@ -59,9 +59,10 @@ export function NotificationCenter() {
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 md:h-9 md:w-9"
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
@@ -69,7 +70,6 @@ export function NotificationCenter() {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-          <span className="sr-only">Notifications</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent

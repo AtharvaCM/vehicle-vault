@@ -327,7 +327,7 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label={`More actions for ${vehicle.displayName}`}
-                className="h-7 w-7"
+                className="md:h-7 md:w-7"
                 size="icon-xs"
                 type="button"
                 variant="ghost"

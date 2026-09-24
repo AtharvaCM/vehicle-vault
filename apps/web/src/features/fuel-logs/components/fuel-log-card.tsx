@@ -91,7 +91,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                    className="text-slate-400 hover:text-slate-600 md:h-8 md:w-8"
                     aria-label="Fuel log actions"
                   >
                     <MoreVertical className="h-4 w-4" />

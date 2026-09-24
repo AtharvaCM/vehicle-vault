@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants, type TextButtonSize } from '@/components/ui/button';
 
 type ConfirmActionDialogProps = {
   title: string;
@@ -21,7 +21,7 @@ type ConfirmActionDialogProps = {
   isPending?: boolean;
   onConfirm: () => Promise<void> | void;
   triggerVariant?: React.ComponentProps<typeof Button>['variant'];
-  triggerSize?: React.ComponentProps<typeof Button>['size'];
+  triggerSize?: TextButtonSize;
   triggerIcon?: ReactNode;
   className?: string;
   /**
@@ -62,7 +62,7 @@ export function ConfirmActionDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-white hover:bg-destructive/90"
+            className={buttonVariants({ variant: 'destructive' })}
             disabled={isPending}
             onClick={(event) => {
               event.preventDefault();

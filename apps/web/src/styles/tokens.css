@@ -24,6 +24,7 @@
   --brand-tint: #e3f0f0;
 
   --late: #b42318;
+  --on-late: #ffffff;
   --late-tint: #fce9e7;
   --soon: #8a5300;
   --soon-dot: #d98200;
@@ -42,6 +43,8 @@
   --plate-ev-ink: #ffffff;
 
   --overlay-shadow: 0 1px 2px rgb(21 24 30 / 0.08), 0 8px 24px rgb(21 24 30 / 0.12);
+  /* Dims the page behind a dialog or sheet. */
+  --scrim: rgb(15 18 22 / 0.4);
 }
 
 /* Defined, not yet switchable: the dark-mode slice decides when `.dark` applies. */
@@ -62,6 +65,7 @@
 
   /* The spec gives each status one dark colour; each tint is it at 16% over the card. */
   --late: #ff8a80;
+  --on-late: #0f1216;
   --late-tint: #3c2d30;
   --soon: #f5b452;
   --soon-dot: #f5b452;
@@ -72,6 +76,7 @@
   --ended-dot: #5b626d;
 
   --overlay-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
+  --scrim: rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
@@ -90,6 +95,7 @@
   --color-brand-tint: var(--brand-tint);
 
   --color-late: var(--late);
+  --color-on-late: var(--on-late);
   --color-late-tint: var(--late-tint);
   --color-soon: var(--soon);
   --color-soon-dot: var(--soon-dot);
@@ -104,6 +110,7 @@
   --color-plate-strip: var(--plate-strip);
   --color-plate-ev: var(--plate-ev);
   --color-plate-ev-ink: var(--plate-ev-ink);
+  --color-scrim: var(--scrim);
 
   /* The shadcn names the UI components read, mapped onto the tokens. */
   --color-background: var(--surface-card);
@@ -121,7 +128,7 @@
   --color-accent: var(--surface-page);
   --color-accent-foreground: var(--fg);
   --color-destructive: var(--late);
-  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground: var(--on-late);
   --color-border: var(--line);
   --color-input: var(--line);
   --color-ring: var(--brand);
