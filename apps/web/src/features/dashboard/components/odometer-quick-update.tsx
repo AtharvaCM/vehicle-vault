@@ -86,7 +86,8 @@ export function OdometerQuickUpdate({
       <PopoverTrigger asChild>
         <button
           aria-label={`Update odometer for ${displayName}`}
-          className="rounded-sm font-semibold text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+          // An inline word in a line of text: an invisible margin makes it a 44px target on phones.
+          className="relative rounded-sm font-semibold text-primary hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-3 max-md:before:content-['']"
           type="button"
         >
           Update

@@ -9,8 +9,8 @@ export function Toaster() {
       toastOptions={{
         classNames: {
           toast: 'rounded-card border border-border shadow-overlay',
-          title: 'text-sm font-semibold',
-          description: 'text-sm text-muted-foreground',
+          title: 'text-body font-semibold',
+          description: 'text-small text-fg-2',
           actionButton: 'rounded-control',
           cancelButton: 'rounded-control',
         },

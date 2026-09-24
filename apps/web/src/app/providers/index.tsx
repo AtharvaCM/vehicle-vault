@@ -3,6 +3,7 @@ import { RouterProvider } from '@tanstack/react-router';
 
 import { router as appRouter } from '@/app/router';
 import { AppErrorBoundary } from '@/components/errors/app-error-boundary';
+import { ConfirmHost } from '@/components/shared/confirm';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth/hooks/use-auth';
@@ -36,6 +37,7 @@ export function AppProviders({
           <AuthProvider>
             <AppRouterProvider queryClient={queryClient} router={router} />
             <Toaster />
+            <ConfirmHost />
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>

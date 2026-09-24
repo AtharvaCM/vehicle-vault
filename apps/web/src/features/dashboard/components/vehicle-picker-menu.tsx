@@ -2,7 +2,7 @@ import { Link, type LinkProps } from '@tanstack/react-router';
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants, type TextButtonSize } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +25,7 @@ type VehiclePickerMenuProps = {
   /** Builds the typed link for a chosen vehicle, e.g. `/vehicles/$vehicleId/reminders/new`. */
   buildLink: (vehicleId: string) => LinkProps;
   variant?: React.ComponentProps<typeof Button>['variant'];
-  size?: React.ComponentProps<typeof Button>['size'];
+  size?: TextButtonSize;
   className?: string;
 };
 

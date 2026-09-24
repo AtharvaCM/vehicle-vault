@@ -76,9 +76,13 @@ export function Topbar() {
           <Sheet onOpenChange={setIsMobileNavOpen} open={isMobileNavOpen}>
             <SheetTrigger asChild>
               {/* Below md the bottom bar's More opens the same menu. */}
-              <Button className="hidden md:inline-flex xl:hidden" size="icon-sm" variant="ghost">
+              <Button
+                aria-label="Open navigation"
+                className="hidden md:inline-flex xl:hidden"
+                size="icon-sm"
+                variant="ghost"
+              >
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Open navigation</span>
               </Button>
             </SheetTrigger>
             <MobileNavSheetContent onClose={() => setIsMobileNavOpen(false)} />
@@ -113,7 +117,8 @@ export function Topbar() {
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label={auth.user?.name || 'User profile'}
-                className="h-9 w-9 rounded-full border-slate-200/60 p-0 hover:bg-slate-50"
+                className="rounded-full border-slate-200/60 p-0 hover:bg-slate-50 md:h-9 md:w-9"
+                size="icon"
                 variant="outline"
               >
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
