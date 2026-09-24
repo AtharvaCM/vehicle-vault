@@ -105,7 +105,7 @@ export function SearchableSelect({
                 >
                   <Check
                     className={cn(
-                      'h-4 w-4 text-slate-900',
+                      'h-4 w-4 text-fg',
                       value === option.value ? 'opacity-100' : 'opacity-0',
                     )}
                   />
@@ -124,7 +124,7 @@ export function SearchableSelect({
                   }}
                   value="__manual-entry__"
                 >
-                  <PencilLine className="h-4 w-4 text-slate-500" />
+                  <PencilLine className="h-4 w-4 text-fg-3" />
                   <span className="truncate">
                     {typedQuery
                       ? `Can't find it? Enter "${typedQuery}" manually`

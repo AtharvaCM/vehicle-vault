@@ -4,7 +4,12 @@
  * each migration slice adds its area here in the same PR that migrates it, and
  * from then on CI fails if the area regresses.
  */
-export const MIGRATED_PATHS = ['src/styles/**', 'src/lib/**', 'src/components/ui/**'];
+export const MIGRATED_PATHS = [
+  'src/styles/**',
+  'src/lib/**',
+  'src/components/ui/**',
+  'src/components/shared/**',
+];
 
 /**
  * Screens moved onto the status and figure components (#246) before the rest of
