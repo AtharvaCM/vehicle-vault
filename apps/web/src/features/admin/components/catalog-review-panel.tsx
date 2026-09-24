@@ -33,7 +33,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
-import { useAuth } from '@/features/auth/hooks/use-auth';
 
 import { useCatalogImportRunDetail } from '../hooks/use-catalog-import-run-detail';
 import { useCatalogImportRuns } from '../hooks/use-catalog-import-runs';
@@ -48,24 +47,12 @@ import { useUpdateVehicleCatalogOfferingReview } from '../hooks/use-update-vehic
  * same way, so this is about not showing a workspace command to a car owner, not
  * about hiding data.
  */
-export function CatalogImportReviewCard() {
-  const { user } = useAuth();
-
-  if (!canSeeCatalogReview(user)) {
-    return null;
-  }
-
-  return <CatalogImportReviewPanel />;
-}
-
-export function canSeeCatalogReview(
-  user: { role?: string; allowedCatalogSources?: string[] } | null | undefined,
-): boolean {
-  if (!user) return false;
-  return user.role === 'admin' || (user.allowedCatalogSources?.length ?? 0) > 0;
-}
-
-function CatalogImportReviewPanel() {
+/**
+ * Staged catalog imports, reviewed before they are published into the trusted
+ * make/model/variant catalog. Shown in the admin area's Catalog curation
+ * section, whose route admits admins and curators (`canSeeCatalogReview`).
+ */
+export function CatalogImportReviewPanel() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const runsQuery = useCatalogImportRuns();
   const detailQuery = useCatalogImportRunDetail(selectedRunId);

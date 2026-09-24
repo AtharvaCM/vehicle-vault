@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const auth = vi.hoisted(() => ({ role: 'user', logout: vi.fn() }));
+const auth = vi.hoisted(() => ({
+  role: 'user',
+  allowedCatalogSources: [] as string[],
+  logout: vi.fn(),
+}));
 const navigate = vi.hoisted(() => vi.fn());
 
 vi.mock('@tanstack/react-router', () => ({
@@ -16,7 +20,12 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 vi.mock('@/features/auth/hooks/use-auth', () => ({
   useAuth: () => ({
-    user: { name: 'Asha Kulkarni', email: 'asha@example.test', role: auth.role },
+    user: {
+      name: 'Asha Kulkarni',
+      email: 'asha@example.test',
+      role: auth.role,
+      allowedCatalogSources: auth.allowedCatalogSources,
+    },
     logout: auth.logout,
   }),
 }));
@@ -33,6 +42,7 @@ async function openMenu() {
 describe('AccountMenu', () => {
   beforeEach(() => {
     auth.role = 'user';
+    auth.allowedCatalogSources = [];
     auth.logout.mockClear();
     navigate.mockClear();
   });
@@ -60,10 +70,18 @@ describe('AccountMenu', () => {
     auth.role = 'admin';
     const { menu } = await openMenu();
 
-    expect(within(menu).getByRole('menuitem', { name: 'Admin' })).toHaveAttribute(
+    expect(within(menu).getByRole('menuitem', { name: 'Admin' })).toHaveAttribute('href', '/admin');
+  });
+
+  it('shows a curator Catalog curation, not Admin', async () => {
+    auth.allowedCatalogSources = ['tata-india'];
+    const { menu } = await openMenu();
+
+    expect(within(menu).getByRole('menuitem', { name: 'Catalog curation' })).toHaveAttribute(
       'href',
-      '/admin/users',
+      '/admin/catalog',
     );
+    expect(within(menu).queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
   });
 
   it('signs out and goes to sign-in', async () => {

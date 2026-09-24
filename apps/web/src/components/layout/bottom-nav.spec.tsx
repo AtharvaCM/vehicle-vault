@@ -108,9 +108,6 @@ describe('BottomNav', () => {
     await user.click(screen.getByRole('button', { name: 'More' }));
 
     const sheet = await screen.findByRole('dialog', { name: 'More' });
-    expect(within(sheet).getByRole('link', { name: 'Admin' })).toHaveAttribute(
-      'href',
-      '/admin/users',
-    );
+    expect(within(sheet).getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
   });
 });

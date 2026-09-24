@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { canSeeCatalogReview, canSeeUsers } from '@/features/admin/lib/admin-access';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { themePreferences, useThemePreference, type ThemePreference } from '@/lib/theme';
 import { cn } from '@/lib/utils';
@@ -93,10 +94,15 @@ export function MoreSheetContent({ onClose }: { onClose: () => void }) {
           <BellRing aria-hidden="true" className="size-5 text-fg-3" strokeWidth={1.75} />
           Notification preferences
         </SheetLink>
-        {auth.user?.role === 'admin' ? (
-          <SheetLink to="/admin/users">
+        {canSeeUsers(auth.user) ? (
+          <SheetLink to="/admin">
             <Shield aria-hidden="true" className="size-5 text-fg-3" strokeWidth={1.75} />
             Admin
+          </SheetLink>
+        ) : canSeeCatalogReview(auth.user) ? (
+          <SheetLink to="/admin/catalog">
+            <Shield aria-hidden="true" className="size-5 text-fg-3" strokeWidth={1.75} />
+            Catalog curation
           </SheetLink>
         ) : null}
 

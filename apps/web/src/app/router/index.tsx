@@ -4,6 +4,9 @@ import { NotFoundScreen } from '@/components/errors/not-found-screen';
 import { RouteError } from '@/components/errors/route-error';
 import { queryClient } from '@/lib/query/query-client';
 import {
+  adminCatalogRoute,
+  adminIndexRoute,
+  adminRoute,
   adminUsersRoute,
   appRoute,
   forgotPasswordRoute,
@@ -67,7 +70,7 @@ const protectedRouteTree = appRoute.addChildren([
   settingsRoute,
   settingsActivityRoute,
   settingsPreferencesRoute,
-  adminUsersRoute,
+  adminRoute.addChildren([adminIndexRoute, adminUsersRoute, adminCatalogRoute]),
 ]);
 
 /** Exported so tests can build a router over the real tree with their own history. */

@@ -13,6 +13,7 @@ export type Crumb = { label: string; link?: LinkProps };
 
 const GARAGE: Crumb = { label: 'Garage', link: { to: '/garage' } };
 const SETTINGS: Crumb = { label: 'Settings', link: { to: '/settings' } };
+const ADMIN: Crumb = { label: 'Admin', link: { to: '/admin' } };
 
 /**
  * Where a deep page sits, in place of repeating its title: "Garage / Family
@@ -62,6 +63,10 @@ export function Breadcrumbs({ fallback = null }: { fallback?: ReactNode }) {
       return <Trail crumbs={[SETTINGS, { label: 'Activity' }]} />;
     case '/settings/preferences':
       return <Trail crumbs={[SETTINGS, { label: 'Notification preferences' }]} />;
+    case '/admin/users':
+      return <Trail crumbs={[ADMIN, { label: 'Users' }]} />;
+    case '/admin/catalog':
+      return <Trail crumbs={[ADMIN, { label: 'Catalog curation' }]} />;
     default:
       return fallback;
   }

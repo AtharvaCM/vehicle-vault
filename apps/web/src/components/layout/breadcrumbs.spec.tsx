@@ -112,4 +112,11 @@ describe('Breadcrumbs', () => {
 
     expect(trail()).toEqual(['Settings', 'Notification preferences']);
   });
+
+  it('puts the admin sections under Admin', () => {
+    match.current = { fullPath: '/admin/catalog', params: {} };
+    render(<Breadcrumbs />);
+
+    expect(trail()).toEqual(['Admin', 'Catalog curation']);
+  });
 });

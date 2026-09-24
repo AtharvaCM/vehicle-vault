@@ -2,14 +2,12 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const auth = vi.hoisted(() => ({ current: { user: {} as Record<string, unknown> | null } }));
 const useCatalogImportRuns = vi.hoisted(() => vi.fn());
 const idleMutation = vi.hoisted(() => () => ({ mutateAsync: vi.fn(), isPending: false }));
 const detailQuery = vi.hoisted(() => ({ current: { data: undefined } as Record<string, unknown> }));
 const publish = vi.hoisted(() => vi.fn());
 const archiveMissing = vi.hoisted(() => vi.fn());
 
-vi.mock('@/features/auth/hooks/use-auth', () => ({ useAuth: () => auth.current }));
 vi.mock('../hooks/use-catalog-import-runs', () => ({ useCatalogImportRuns }));
 vi.mock('../hooks/use-catalog-import-run-detail', () => ({
   useCatalogImportRunDetail: (runId: string | null) =>
@@ -25,44 +23,23 @@ vi.mock('../hooks/use-update-vehicle-catalog-offering-review', () => ({
   useUpdateVehicleCatalogOfferingReview: idleMutation,
 }));
 
-import { CatalogImportReviewCard, canSeeCatalogReview } from './catalog-import-review-card';
+import { CatalogImportReviewPanel } from './catalog-review-panel';
 
-describe('CatalogImportReviewCard', () => {
+describe('CatalogImportReviewPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useCatalogImportRuns.mockReturnValue({ data: [], isPending: false, isError: false });
   });
 
-  it('shows a regular user nothing, and never asks for import runs', () => {
-    auth.current = { user: { role: 'user', allowedCatalogSources: [] } };
-    const { container } = render(<CatalogImportReviewCard />);
-
-    expect(container).toBeEmptyDOMElement();
-    expect(useCatalogImportRuns).not.toHaveBeenCalled();
-  });
-
-  it('shows a user with a source grant the card as before', () => {
-    auth.current = { user: { role: 'user', allowedCatalogSources: ['tata-india'] } };
-    render(<CatalogImportReviewCard />);
+  it('asks for the import runs and shows the review card', () => {
+    render(<CatalogImportReviewPanel />);
 
     expect(screen.getByText('Catalog review')).toBeInTheDocument();
     expect(useCatalogImportRuns).toHaveBeenCalled();
   });
-
-  it('shows an admin the card even without a grant', () => {
-    auth.current = { user: { role: 'admin', allowedCatalogSources: [] } };
-    render(<CatalogImportReviewCard />);
-
-    expect(screen.getByText('Catalog review')).toBeInTheDocument();
-  });
-
-  it('treats a signed-out or unloaded user as not permitted', () => {
-    expect(canSeeCatalogReview(null)).toBe(false);
-    expect(canSeeCatalogReview({})).toBe(false);
-  });
 });
 
-describe('CatalogImportReviewCard publishing', () => {
+describe('CatalogImportReviewPanel publishing', () => {
   const diff = {
     incomingCounts: { makes: 1, models: 3, generations: 3, variants: 12, offerings: 12 },
     publishedCounts: { makes: 1, models: 2, generations: 2, variants: 9, offerings: 9 },
@@ -90,7 +67,6 @@ describe('CatalogImportReviewCard publishing', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    auth.current = { user: { role: 'admin', allowedCatalogSources: ['*'] } };
     useCatalogImportRuns.mockReturnValue({ data: [run], isPending: false, isError: false });
     detailQuery.current = {
       data: { ...run, dataset: [], publishedOfferings: [] },
@@ -102,14 +78,14 @@ describe('CatalogImportReviewCard publishing', () => {
   });
 
   it('offers no publish on the run list, only the review', () => {
-    render(<CatalogImportReviewCard />);
+    render(<CatalogImportReviewPanel />);
 
     expect(screen.getByRole('button', { name: /review diff/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /publish/i })).not.toBeInTheDocument();
   });
 
   it('shows what changed in each changed variant', async () => {
-    render(<CatalogImportReviewCard />);
+    render(<CatalogImportReviewPanel />);
     await userEvent.click(screen.getByRole('button', { name: /review diff/i }));
 
     expect(screen.getByText('Honda / Amaze / 3 / S')).toBeInTheDocument();
@@ -117,7 +93,7 @@ describe('CatalogImportReviewCard publishing', () => {
   });
 
   it('publishes only after a confirmation that restates the impact', async () => {
-    render(<CatalogImportReviewCard />);
+    render(<CatalogImportReviewPanel />);
     await userEvent.click(screen.getByRole('button', { name: /review diff/i }));
     await userEvent.click(screen.getByRole('button', { name: 'Approve and publish' }));
 
@@ -134,7 +110,7 @@ describe('CatalogImportReviewCard publishing', () => {
   });
 
   it('archives missing variants only after its own confirmation', async () => {
-    render(<CatalogImportReviewCard />);
+    render(<CatalogImportReviewPanel />);
     await userEvent.click(screen.getByRole('button', { name: /review diff/i }));
     await userEvent.click(screen.getByRole('button', { name: 'Archive missing as historical' }));
 
