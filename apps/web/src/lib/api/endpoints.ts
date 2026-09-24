@@ -77,8 +77,10 @@ export const endpoints = {
       `/public-catalog/${[segment, make].map(encodeURIComponent).join('/')}`,
     browse: (segment: string) => `/public-catalog/${encodeURIComponent(segment)}`,
   },
+  history: {
+    list: '/history',
+  },
   maintenance: {
-    all: '/maintenance-records',
     list: (vehicleId: string) => `/vehicles/${vehicleId}/maintenance-records`,
     create: (vehicleId: string) => `/vehicles/${vehicleId}/maintenance-records`,
     bulk: (vehicleId: string) => `/vehicles/${vehicleId}/maintenance-records/bulk`,
