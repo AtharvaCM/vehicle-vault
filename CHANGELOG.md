@@ -1,3 +1,10 @@
+# [1.83.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.82.0...v1.83.0) (2026-09-24)
+
+
+### Features
+
+* **web:** vehicle page with an identity header and five tabs ([f7f8120](https://github.com/AtharvaCM/vehicle-vault/commit/f7f812051346b20ae3bc9af62485327ddfece4ae)), closes [#276](https://github.com/AtharvaCM/vehicle-vault/issues/276)
+
 # [1.82.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.81.0...v1.82.0) (2026-09-24)
 
 
