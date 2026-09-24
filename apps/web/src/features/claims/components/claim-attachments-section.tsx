@@ -185,17 +185,17 @@ export function ClaimAttachmentsSection({
   }
 
   return (
-    <div className="space-y-2 pt-3 border-t border-slate-100">
+    <div className="space-y-2 pt-3 border-t border-line-subtle">
       <button
         type="button"
         onClick={() => setIsExpanded((v) => !v)}
-        className="flex w-full items-center justify-between text-xs text-slate-600 hover:text-slate-900 transition-colors"
+        className="flex w-full items-center justify-between text-xs text-fg-2 hover:text-fg transition-colors"
       >
-        <span className="flex items-center gap-1.5 font-bold uppercase tracking-widest text-[10px]">
+        <span className="flex items-center gap-1.5 font-bold text-caption">
           <Paperclip className="h-3 w-3" />
           Receipts &amp; documents
           {attachments.length > 0 ? (
-            <span className="ml-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black tabular-nums">
+            <span className="ml-1 rounded-full bg-page px-1.5 py-0.5 text-caption font-black tabular-nums">
               {attachments.length}
             </span>
           ) : null}
@@ -206,7 +206,7 @@ export function ClaimAttachmentsSection({
       {isExpanded ? (
         <div className="space-y-3 pt-2">
           {attachmentsQuery.isPending ? (
-            <p className="text-xs text-slate-400">Loading…</p>
+            <p className="text-xs text-fg-3">Loading…</p>
           ) : attachmentsQuery.isError ? (
             <InlineError
               message={getApiErrorMessage(
@@ -225,22 +225,22 @@ export function ClaimAttachmentsSection({
                     return (
                       <li
                         key={att.id}
-                        className="rounded-md border border-slate-100 bg-slate-50/50 p-2 space-y-2"
+                        className="rounded-md border border-line-subtle bg-page/50 p-2 space-y-2"
                       >
                         <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-slate-500 shrink-0" />
+                          <Icon className="h-4 w-4 text-fg-3 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">
+                            <p className="text-xs font-bold text-fg truncate">
                               {att.originalFileName}
                             </p>
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-caption text-fg-3">
                               {formatBytes(att.size)} · {format.date(att.uploadedAt)}
                             </p>
                           </div>
                           {ocrAvailable && canEdit ? (
                             <Button
                               aria-label="Extract claim fields"
-                              className="text-indigo-500 hover:text-indigo-700 hover:bg-transparent disabled:opacity-40"
+                              className="text-brand hover:text-brand hover:bg-transparent disabled:opacity-40"
                               disabled={extractMutation.isPending}
                               onClick={() => handleExtract(att.id)}
                               size="icon-sm"
@@ -257,7 +257,7 @@ export function ClaimAttachmentsSection({
                           ) : null}
                           <Button
                             aria-label="Download attachment"
-                            className="text-slate-500 hover:text-slate-900 hover:bg-transparent"
+                            className="text-fg-3 hover:text-fg hover:bg-transparent"
                             onClick={() => handleOpen(att.id)}
                             size="icon-sm"
                             type="button"
@@ -268,7 +268,7 @@ export function ClaimAttachmentsSection({
                           {canEdit ? (
                             <Button
                               aria-label="Delete attachment"
-                              className="text-rose-400 hover:text-rose-600 hover:bg-transparent"
+                              className="text-late hover:text-late hover:bg-transparent"
                               disabled={deleteMutation.isPending}
                               onClick={() => handleDelete(att.id)}
                               size="icon-sm"
@@ -293,7 +293,7 @@ export function ClaimAttachmentsSection({
                   })}
                 </ul>
               ) : (
-                <p className="text-xs text-slate-400 italic">No attachments yet.</p>
+                <p className="text-xs text-fg-3 italic">No attachments yet.</p>
               )}
 
               {canEdit ? (
@@ -318,7 +318,7 @@ export function ClaimAttachmentsSection({
                     <UploadCloud className="h-4 w-4" />
                     {uploadMutation.isPending ? 'Uploading…' : 'Upload receipts / photos'}
                   </Button>
-                  <p className="text-[10px] text-slate-400 mt-1.5">
+                  <p className="text-caption text-fg-3 mt-1.5">
                     JPEG, PNG, WEBP, HEIC, or PDF · up to 5 MB each
                     {ocrAvailable ? ' · ✨ AI can suggest claim fields from each file' : ''}
                   </p>
@@ -447,31 +447,29 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
           type="checkbox"
           checked={draft.included[key]}
           onChange={() => toggleIncluded(key)}
-          className="h-3 w-3 accent-indigo-600"
+          className="h-3 w-3 accent-brand"
         />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 w-28 shrink-0">
-          {FIELD_LABEL[key]}
-        </span>
+        <span className="text-caption font-bold text-fg-3 w-28 shrink-0">{FIELD_LABEL[key]}</span>
         <div className="flex-1">{input}</div>
       </label>
     );
   }
 
   return (
-    <div className="rounded-md border border-indigo-100 bg-indigo-50/40 p-3 space-y-3">
+    <div className="rounded-md border border-brand/30 bg-brand-tint/40 p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700 flex items-center gap-1">
+        <span className="text-caption font-black text-brand flex items-center gap-1">
           <Sparkles className="h-3 w-3" />
           AI suggestion (editable)
           {typeof suggestion.confidence === 'number' ? (
-            <span className="text-indigo-400 normal-case tracking-normal">
+            <span className="text-brand">
               · {Math.round(suggestion.confidence * 100)}% confidence
             </span>
           ) : null}
         </span>
         <Button
           aria-label="Dismiss suggestion"
-          className="text-indigo-400 hover:text-indigo-700 hover:bg-transparent"
+          className="text-brand hover:text-brand hover:bg-transparent"
           onClick={onDismiss}
           size="icon-xs"
           type="button"
@@ -483,7 +481,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
 
       {hasInitialFindings ? (
         <>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-caption text-fg-3">
             Uncheck a field to skip it. Edit values to correct OCR mistakes before applying.
           </p>
           <div className="space-y-2">
@@ -562,7 +560,7 @@ function SuggestionPanel({ suggestion, onApply, onDismiss, isApplying }: Suggest
           </Button>
         </>
       ) : (
-        <p className="text-xs text-slate-500 italic">
+        <p className="text-xs text-fg-3 italic">
           AI could not detect claim fields in this document.
         </p>
       )}

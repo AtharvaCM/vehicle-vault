@@ -107,7 +107,7 @@ export function MaintenanceClaimLinkCard({
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         {isPending ? (
-          <p className="text-xs text-slate-400">Loading claims…</p>
+          <p className="text-xs text-fg-3">Loading claims…</p>
         ) : isError ? (
           <InlineError
             message={getApiErrorMessage(
@@ -116,18 +116,16 @@ export function MaintenanceClaimLinkCard({
             )}
           />
         ) : linkedClaim ? (
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3 space-y-2">
+          <div className="rounded-lg border border-ok/30 bg-ok-tint/50 p-3 space-y-2">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
-                  Linked claim
-                </p>
-                <p className="font-bold text-slate-900">
+                <p className="text-caption font-black text-ok">Linked claim</p>
+                <p className="font-bold text-fg">
                   {linkedClaim.claimNumber ? `#${linkedClaim.claimNumber}` : 'Claim (no number)'}
                 </p>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-fg-2">
                   {format.money(linkedClaim.grossAmount)} gross ·{' '}
-                  <span className="text-rose-600">
+                  <span className="text-late">
                     {format.money(outOfPocket(linkedClaim))} out of pocket
                   </span>{' '}
                   · filed {format.date(linkedClaim.filedDate)}
@@ -148,7 +146,7 @@ export function MaintenanceClaimLinkCard({
           <div className="space-y-3">
             {unlinkedClaims.length > 0 ? (
               <>
-                <p className="text-xs text-slate-500">Link to an existing unlinked claim:</p>
+                <p className="text-xs text-fg-3">Link to an existing unlinked claim:</p>
                 <div className="flex gap-2">
                   <Select onValueChange={setPickerValue} value={pickerValue}>
                     <SelectTrigger className="flex-1">
@@ -174,10 +172,10 @@ export function MaintenanceClaimLinkCard({
                 </div>
               </>
             ) : (
-              <p className="text-xs text-slate-500">No unlinked claims on this vehicle.</p>
+              <p className="text-xs text-fg-3">No unlinked claims on this vehicle.</p>
             )}
 
-            <div className="pt-2 border-t border-slate-100">
+            <div className="pt-2 border-t border-line-subtle">
               <Button
                 variant="outline"
                 size="sm"

@@ -74,7 +74,7 @@ const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanB
         <span className="relative mr-2 inline-flex">
           <Scan className="h-4 w-4" />
           <span
-            className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-white dark:border-zinc-950 ${available ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400'}`}
+            className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-surface ${available ? 'bg-ok shadow-[0_0_8px_var(--ok)]' : 'bg-soon-dot'}`}
           />
         </span>
       )}
@@ -248,7 +248,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Insurance policies</h3>
+              <h3 className="text-xl font-bold text-fg">Insurance policies</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -306,7 +306,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ReceiptText className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Insurance claims</h3>
+              <h3 className="text-xl font-bold text-fg">Insurance claims</h3>
             </div>
             {canEdit ? (
               <Button
@@ -324,7 +324,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
 
           <div className="grid gap-4">
             {claimsQuery.isPending ? (
-              <p className="text-xs text-slate-400">Loading claims…</p>
+              <p className="text-xs text-fg-3">Loading claims…</p>
             ) : claimsQuery.isError ? (
               <ErrorState
                 action={
@@ -372,7 +372,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Car className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Warranty coverage</h3>
+              <h3 className="text-xl font-bold text-fg">Warranty coverage</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -422,7 +422,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <FileBadge className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Registration &amp; papers</h3>
+              <h3 className="text-xl font-bold text-fg">Registration &amp; papers</h3>
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
@@ -492,12 +492,12 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
       </div>
 
       <aside className="space-y-6">
-        <Card className="border-slate-200/60 bg-white/70 sticky top-24">
+        <Card className="border-line/60 bg-surface/70 sticky top-24">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Papers guide</CardTitle>
             <CardDescription>Managing your vehicle protection.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-[13px] leading-relaxed text-slate-500">
+          <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
             <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
               <p className="font-bold text-primary mb-1">Insurance</p>
               <p>
@@ -505,15 +505,15 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
                 your policy PDF in the attachments.
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <p className="font-bold text-slate-700 mb-1">Warranty</p>
+            <div className="p-3 rounded-xl bg-page border border-line-subtle">
+              <p className="font-bold text-fg-2 mb-1">Warranty</p>
               <p>
                 Warranties often have date AND odometer limits. We track whichever comes first to
                 keep you informed.
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <p className="font-bold text-slate-700 mb-1">PUC &amp; road tax</p>
+            <div className="p-3 rounded-xl bg-page border border-line-subtle">
+              <p className="font-bold text-fg-2 mb-1">PUC &amp; road tax</p>
               <p>
                 {pucRequired
                   ? 'PUC certificates typically last 6–12 months and are mandatory.'

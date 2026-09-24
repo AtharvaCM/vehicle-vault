@@ -234,10 +234,10 @@ export function LoansPage() {
           </DialogHeader>
 
           {scanStatus.data?.available ? (
-            <div className="flex items-center justify-between rounded-md border border-indigo-200 bg-indigo-50/60 p-3 text-sm">
+            <div className="flex items-center justify-between rounded-md border border-brand/30 bg-brand-tint/60 p-3 text-sm">
               <div>
-                <div className="font-medium text-indigo-900">Scan sanction letter / agreement</div>
-                <div className="text-xs text-indigo-700">
+                <div className="font-medium text-brand">Scan sanction letter / agreement</div>
+                <div className="text-xs text-brand">
                   AI extracts lender, principal, rate, tenure, start date.
                 </div>
               </div>
@@ -251,7 +251,7 @@ export function LoansPage() {
               />
               <Button
                 variant="outline"
-                className="border-indigo-300 text-indigo-900 hover:bg-indigo-100"
+                className="border-brand/30 text-brand hover:bg-brand-tint"
                 disabled={scanMutation.isPending}
                 onClick={() => scanFileInputRef.current?.click()}
               >
@@ -262,7 +262,7 @@ export function LoansPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-foreground/90">
+              <label className="mb-1.5 block text-small font-medium text-foreground/90">
                 Vehicle
               </label>
               <Select
@@ -351,7 +351,7 @@ export function LoansPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-on-late hover:bg-destructive/90"
               disabled={deleteMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
@@ -370,7 +370,7 @@ export function LoansPage() {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-caption font-medium text-muted-foreground">{label}</div>
       <div className="mt-1 text-xl font-semibold text-foreground">{value}</div>
     </div>
   );

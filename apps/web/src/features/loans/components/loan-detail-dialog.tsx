@@ -163,7 +163,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                      className="text-late hover:bg-late-tint hover:text-late"
                       disabled={delPrep.isPending}
                       onClick={() => handleDeletePrepayment(p.id)}
                     >
@@ -224,16 +224,16 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
           </section>
 
           {!isClosed ? (
-            <div className="flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">
+            <div className="flex items-center justify-between rounded-md border border-soon/30 bg-soon-tint p-3 text-sm">
               <div>
-                <div className="font-medium text-amber-900">Foreclose loan</div>
-                <div className="text-xs text-amber-700">
+                <div className="font-medium text-soon">Foreclose loan</div>
+                <div className="text-xs text-soon">
                   Pay off outstanding {format.money(loan.outstandingBalance)} and close.
                 </div>
               </div>
               <Button
                 variant="outline"
-                className="border-amber-300 text-amber-900 hover:bg-amber-100"
+                className="border-soon/30 text-soon hover:bg-soon-tint"
                 onClick={() => setConfirmForeclose(true)}
               >
                 Foreclose
@@ -273,7 +273,7 @@ export function LoanDetailDialog({ loan, vehicleLabel, onOpenChange }: Props) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-muted/30 p-3">
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-caption font-medium text-muted-foreground">{label}</div>
       <div className="mt-0.5 text-base font-semibold text-foreground">{value}</div>
     </div>
   );

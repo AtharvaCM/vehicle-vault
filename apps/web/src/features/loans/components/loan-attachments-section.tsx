@@ -98,7 +98,7 @@ export function LoanAttachmentsSection({ loanId }: Props) {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                className="text-late hover:bg-late-tint hover:text-late"
                 disabled={del.isPending}
                 onClick={() => handleDelete(att.id)}
               >

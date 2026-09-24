@@ -26,10 +26,10 @@ const STATUS_LABEL: Record<ClaimStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<ClaimStatus, string> = {
-  filed: 'bg-sky-50 text-sky-600 border-sky-100',
-  approved: 'bg-amber-50 text-amber-600 border-amber-100',
-  settled: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-  rejected: 'bg-rose-50 text-rose-600 border-rose-100',
+  filed: 'bg-brand-tint text-brand border-brand/30',
+  approved: 'bg-soon-tint text-soon border-soon/30',
+  settled: 'bg-ok-tint text-ok border-ok/30',
+  rejected: 'bg-late-tint text-late border-late/30',
 };
 
 export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
@@ -58,15 +58,15 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
   }
 
   return (
-    <Card className="border-slate-200/60 bg-white overflow-hidden hover:border-primary/20 transition-all">
+    <Card className="border-line/60 bg-surface overflow-hidden hover:border-primary/20 transition-colors">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Claim</p>
-            <h4 className="font-black text-slate-900 leading-tight">
+            <p className="text-caption font-medium text-fg-3">Claim</p>
+            <h4 className="font-black text-fg leading-tight">
               {claim.claimNumber ? `#${claim.claimNumber}` : 'Claim (no number yet)'}
             </h4>
-            <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <p className="text-xs font-bold text-fg-3 flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               Filed {format.date(claim.filedDate)}
               {claim.settledDate ? ` · Settled ${format.date(claim.settledDate)}` : ''}
@@ -79,37 +79,29 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
 
         <div className="grid grid-cols-3 gap-3 text-xs">
           <div className="space-y-1">
-            <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
-              Gross bill
-            </p>
-            <p className="font-bold text-slate-900 tabular-nums">
-              {format.money(claim.grossAmount)}
-            </p>
+            <p className="text-caption font-medium text-fg-3">Gross bill</p>
+            <p className="font-bold text-fg tabular-nums">{format.money(claim.grossAmount)}</p>
           </div>
           <div className="space-y-1">
-            <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
-              Insurer paid
-            </p>
-            <p className="font-bold text-emerald-600 tabular-nums">
+            <p className="text-caption font-medium text-fg-3">Insurer paid</p>
+            <p className="font-bold text-ok tabular-nums">
               {format.money(claim.insurerPaidAmount)}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="font-black uppercase tracking-widest text-slate-400 text-[10px]">
-              Out of pocket
-            </p>
-            <p className="font-bold text-rose-600 tabular-nums">{format.money(pocket)}</p>
+            <p className="text-caption font-medium text-fg-3">Out of pocket</p>
+            <p className="font-bold text-late tabular-nums">{format.money(pocket)}</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
-          <div className="text-xs text-slate-500 flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 pt-2 border-t border-line-subtle">
+          <div className="text-xs text-fg-3 flex items-center gap-2">
             {claim.maintenanceRecordId ? (
               <span className="flex items-center gap-1">
                 <Wrench className="h-3 w-3" /> Linked to service record
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-slate-400">
+              <span className="flex items-center gap-1 text-fg-3">
                 <Link2 className="h-3 w-3" /> No service record linked
               </span>
             )}
@@ -133,14 +125,14 @@ export function ClaimCard({ claim, vehicleId, onEdit }: ClaimCardProps) {
                 aria-label="Delete claim"
                 disabled={deleteMutation.isPending}
               >
-                <Trash2 className="h-4 w-4 text-rose-500" />
+                <Trash2 className="h-4 w-4 text-late" />
               </Button>
             ) : null}
           </div>
         </div>
 
         {claim.notes ? (
-          <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 text-xs text-slate-600 flex items-start gap-2">
+          <div className="rounded-lg bg-page border border-line-subtle p-3 text-xs text-fg-2 flex items-start gap-2">
             <ReceiptText className="h-3 w-3 mt-0.5 shrink-0" />
             <span>{claim.notes}</span>
           </div>

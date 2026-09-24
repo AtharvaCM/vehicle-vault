@@ -62,7 +62,7 @@ function validityOf(document: VehicleDocument, today = new Date()): Validity {
 function ValidityBanner({ validity }: { validity: Validity }) {
   if (validity.state === 'expired') {
     return (
-      <div className="rounded-2xl bg-rose-600 px-5 py-4 text-white" role="status">
+      <div className="rounded-2xl bg-late px-5 py-4 text-on-late" role="status">
         <p className="text-2xl font-black tracking-tight">EXPIRED</p>
         <p className="text-sm font-semibold">Ran out on {day(validity.endDate)}</p>
       </div>
@@ -70,7 +70,7 @@ function ValidityBanner({ validity }: { validity: Validity }) {
   }
   if (validity.state === 'expiring') {
     return (
-      <div className="rounded-2xl bg-amber-500 px-5 py-4 text-white" role="status">
+      <div className="rounded-2xl bg-soon-dot px-5 py-4 text-on-soon" role="status">
         <p className="text-2xl font-black tracking-tight">VALID</p>
         <p className="text-sm font-semibold">
           {validity.days === 0 ? 'Runs out today' : `Runs out in ${validity.days} days`}, on{' '}
@@ -80,7 +80,7 @@ function ValidityBanner({ validity }: { validity: Validity }) {
     );
   }
   return (
-    <div className="rounded-2xl bg-emerald-600 px-5 py-4 text-white" role="status">
+    <div className="rounded-2xl bg-ok px-5 py-4 text-on-ok" role="status">
       <p className="text-2xl font-black tracking-tight">VALID</p>
       <p className="text-sm font-semibold">
         {validity.endDate ? `Until ${day(validity.endDate)}` : 'Does not expire'}
@@ -99,13 +99,13 @@ function DocumentFile({ attachment }: { attachment: Attachment }) {
       return (
         <img
           alt={attachment.originalFileName}
-          className="w-full rounded-xl border border-slate-200 object-contain"
+          className="w-full rounded-xl border border-line object-contain"
           src={image.objectUrl}
         />
       );
     }
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-fg-3">
         {image.isError ? `Couldn't load ${attachment.originalFileName}.` : 'Loading the photo…'}
       </p>
     );
@@ -157,7 +157,7 @@ export function DocumentCheckpointPage({
   const backLink = (
     <Link
       aria-label="Back to the vehicle"
-      className="flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-11 w-11 items-center justify-center rounded-full text-fg-2 hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       params={{ vehicleId }}
       search={{ tab: 'protection' }}
       to="/vehicles/$vehicleId"
@@ -168,15 +168,15 @@ export function DocumentCheckpointPage({
 
   let body: React.ReactNode;
   if (documentsQuery.isPending) {
-    body = <p className="text-slate-500">Loading the document…</p>;
+    body = <p className="text-fg-3">Loading the document…</p>;
   } else if (documentsQuery.isError) {
     body = (
-      <p className="text-slate-600">
+      <p className="text-fg-2">
         {getApiErrorMessage(documentsQuery.error, "Couldn't load this document.")}
       </p>
     );
   } else if (!document || !documentKind) {
-    body = <p className="text-slate-600">This document isn&apos;t on this vehicle.</p>;
+    body = <p className="text-fg-2">This document isn&apos;t on this vehicle.</p>;
   } else {
     const attachments = attachmentsQuery.data ?? [];
     body = (
@@ -184,32 +184,26 @@ export function DocumentCheckpointPage({
         <ValidityBanner validity={validityOf(document)} />
 
         <div className="space-y-1">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400">
-            {NUMBER_LABELS[documentKind]}
-          </p>
+          <p className="text-caption font-black text-fg-3">{NUMBER_LABELS[documentKind]}</p>
           {document.number ? (
-            <p className="break-all text-4xl font-black tabular-nums tracking-tight text-slate-900">
+            <p className="break-all text-4xl font-black tabular-nums tracking-tight text-fg">
               {document.number}
             </p>
           ) : (
-            <p className="text-xl font-bold text-slate-400">Not recorded</p>
+            <p className="text-xl font-bold text-fg-3">Not recorded</p>
           )}
         </div>
 
         <dl className="grid gap-4 text-lg">
           <div>
-            <dt className="text-xs font-black uppercase tracking-widest text-slate-400">
-              {ISSUER_LABELS[documentKind]}
-            </dt>
-            <dd
-              className={cn('font-bold', document.provider ? 'text-slate-900' : 'text-slate-400')}
-            >
+            <dt className="text-caption font-black text-fg-3">{ISSUER_LABELS[documentKind]}</dt>
+            <dd className={cn('font-bold', document.provider ? 'text-fg' : 'text-fg-3')}>
               {document.provider ?? 'Not recorded'}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-black uppercase tracking-widest text-slate-400">Valid</dt>
-            <dd className="font-bold text-slate-900">
+            <dt className="text-caption font-black text-fg-3">Valid</dt>
+            <dd className="font-bold text-fg">
               {document.startDate ? `${day(document.startDate)} to ` : 'Until '}
               {document.endDate ? day(document.endDate) : 'no expiry'}
             </dd>
@@ -218,13 +212,13 @@ export function DocumentCheckpointPage({
 
         <section aria-label="The document" className="space-y-3">
           {attachmentsQuery.isPending ? (
-            <p className="text-sm text-slate-500">Loading the file…</p>
+            <p className="text-sm text-fg-3">Loading the file…</p>
           ) : attachments.length ? (
             attachments.map((attachment) => (
               <DocumentFile attachment={attachment} key={attachment.id} />
             ))
           ) : (
-            <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+            <p className="rounded-xl border border-dashed border-line p-4 text-sm text-fg-3">
               No file attached. Add a photo or the PDF from the document&apos;s card.
             </p>
           )}
@@ -235,11 +229,14 @@ export function DocumentCheckpointPage({
 
   return (
     // Over the app's own chrome: at a checkpoint the document is the only thing on screen.
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-white" data-testid="document-checkpoint">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-surface"
+      data-testid="document-checkpoint"
+    >
       <div className="mx-auto max-w-lg px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(0.5rem+env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center gap-2">
           {backLink}
-          <h1 className="min-w-0 truncate text-lg font-black text-slate-900">
+          <h1 className="min-w-0 truncate text-lg font-black text-fg">
             {documentKind ? documentKindTitles[documentKind] : 'Document'}
           </h1>
         </header>

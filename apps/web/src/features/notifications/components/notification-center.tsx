@@ -45,13 +45,13 @@ export function NotificationCenter() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 text-soon" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-rose-500" />;
+        return <AlertCircle className="h-4 w-4 text-late" />;
       case 'success':
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-ok" />;
       default:
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <Info className="h-4 w-4 text-brand" />;
     }
   };
 
@@ -62,28 +62,28 @@ export function NotificationCenter() {
           aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
           variant="ghost"
           size="icon"
-          className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 md:h-9 md:w-9"
+          className="relative rounded-full text-fg-3 hover:bg-page hover:text-fg md:h-9 md:w-9"
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute right-2 top-2 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-rose-500 text-[8px] font-bold text-white dark:border-zinc-950">
+            <span className="absolute right-2 top-2 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-surface bg-late text-caption font-bold text-on-late">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 p-0 sm:w-96 rounded-xl border-slate-200/60 overflow-hidden"
+        className="w-80 p-0 sm:w-96 rounded-xl border-line/60 overflow-hidden"
         align="end"
       >
         <div className="flex items-center justify-between p-4 pb-2">
-          <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
+          <h4 className="text-sm font-bold text-fg">Notifications</h4>
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/5 px-2"
+                className="h-8 text-caption font-semibold text-primary hover:text-primary hover:bg-primary/5 px-2"
                 onClick={() => markAllRead.mutate()}
                 disabled={markAllRead.isPending}
               >
@@ -94,7 +94,7 @@ export function NotificationCenter() {
           </div>
         </div>
 
-        <div className="h-px bg-slate-100/80" />
+        <div className="h-px bg-line-subtle/80" />
 
         <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
           {isLoading ? (
@@ -104,13 +104,13 @@ export function NotificationCenter() {
           ) : notifications.length === 0 ? (
             <EmptyBell />
           ) : (
-            <div className="divide-y divide-slate-50/80">
+            <div className="divide-y divide-line-subtle/80">
               {notifications.map((notif) => (
                 <button
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={cn(
-                    'w-full text-left p-4 transition-colors hover:bg-slate-50/80 focus:outline-hidden focus:bg-slate-50',
+                    'w-full text-left p-4 transition-colors hover:bg-page/80 focus:outline-hidden focus:bg-page',
                     !notif.isRead && 'bg-primary/2',
                   )}
                 >
@@ -120,8 +120,8 @@ export function NotificationCenter() {
                       <div className="flex items-start justify-between gap-2">
                         <p
                           className={cn(
-                            'text-[13px] leading-tight',
-                            notif.isRead ? 'text-slate-600' : 'font-bold text-slate-900',
+                            'text-small leading-tight',
+                            notif.isRead ? 'text-fg-2' : 'font-bold text-fg',
                           )}
                         >
                           {notif.title}
@@ -130,16 +130,16 @@ export function NotificationCenter() {
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                         )}
                       </div>
-                      <p className="mt-1 text-xs text-slate-500 leading-normal line-clamp-2">
+                      <p className="mt-1 text-xs text-fg-3 leading-normal line-clamp-2">
                         {notif.message}
                       </p>
                       <div className="mt-2.5 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                        <div className="flex items-center gap-1.5 text-caption text-fg-3 font-medium">
                           <Clock className="h-3 w-3" />
                           {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
                         </div>
                         {notif.link && (
-                          <div className="flex items-center gap-1 text-[10px] font-bold text-primary group">
+                          <div className="flex items-center gap-1 text-caption font-bold text-primary group">
                             Details
                             <ExternalLink className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
                           </div>
@@ -153,12 +153,12 @@ export function NotificationCenter() {
           )}
         </div>
 
-        <div className="h-px bg-slate-100/80" />
+        <div className="h-px bg-line-subtle/80" />
 
-        <div className="p-2 bg-slate-50/50">
+        <div className="p-2 bg-page/50">
           <Button
             variant="ghost"
-            className="w-full text-xs text-slate-500 font-semibold h-8 hover:bg-slate-100/80"
+            className="w-full text-xs text-fg-3 font-semibold h-8 hover:bg-page/80"
             asChild
           >
             {/* Push for this device, and which alerts go by email or push, live there. */}
@@ -183,12 +183,12 @@ function EmptyBell() {
 
   return (
     <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-      <div className="rounded-full bg-slate-50 p-3 mb-3">
-        <Bell className="h-6 w-6 text-slate-300" />
+      <div className="rounded-full bg-page p-3 mb-3">
+        <Bell className="h-6 w-6 text-fg-3" />
       </div>
       {pending > 0 ? (
         <>
-          <p className="text-sm font-medium text-slate-900">No new alerts</p>
+          <p className="text-sm font-medium text-fg">No new alerts</p>
           <Link to="/dashboard" className="text-xs text-primary font-semibold mt-1 hover:underline">
             {pending === 1
               ? '1 thing needs your attention on the dashboard'
@@ -197,10 +197,8 @@ function EmptyBell() {
         </>
       ) : (
         <>
-          <p className="text-sm font-medium text-slate-900">All caught up!</p>
-          <p className="text-xs text-slate-500 mt-1">
-            No new maintenance alerts for your vehicles.
-          </p>
+          <p className="text-sm font-medium text-fg">All caught up!</p>
+          <p className="text-xs text-fg-3 mt-1">No new maintenance alerts for your vehicles.</p>
         </>
       )}
     </div>
