@@ -1,15 +1,15 @@
-import { useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import {
-  RotateCw,
-  Settings2,
-  ShieldCheck,
   AlertCircle,
+  CircleDot,
+  ClipboardCheck,
   Clock,
   HelpCircle,
   Plus,
-  ClipboardCheck,
-  Gauge,
+  ShieldCheck,
+  Wrench,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import {
   isTwoWheeler,
   TyrePosition,
@@ -20,16 +20,13 @@ import {
   type TyreInspection,
   type Vehicle,
 } from '@vehicle-vault/shared';
-import { formatDistanceToNow } from 'date-fns';
-import type { ReactNode } from 'react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
-import { EmptyState, EmptyStateAction } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
+import { SectionHeader } from '@/components/shared/section-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
@@ -38,23 +35,37 @@ import { cn } from '@/lib/utils';
 import type { useMaintenanceRecords } from '../../maintenance/hooks/use-maintenance-records';
 import { TyreFormDialog } from '../../tyres/components/tyre-form-dialog';
 import { TyreInspectionDialog } from '../../tyres/components/tyre-inspection-dialog';
-import { formatDotCode } from '../../tyres/schemas/tyre-form.schema';
+import { TyreSetupDialog } from '../../tyres/components/tyre-setup-dialog';
 import {
   useDeleteTyre,
   useVehicleTyreCondition,
   useVehicleTyreInspections,
   useVehicleTyres,
 } from '../../tyres/hooks/use-tyres';
+import { formatDotCode } from '../../tyres/schemas/tyre-form.schema';
+import { tyreHistory, type TyreHistoryItem } from '../../tyres/utils/tyre-history';
+import { LEVEL_WORDS, tyreVerdict, wheelReading } from '../../tyres/utils/tyre-verdict';
+import { useVehicleAccess } from '../context/vehicle-access';
 import { useVariantSpecs } from '../hooks/use-variant-specs';
 import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
-import { useVehicleAccess } from '../context/vehicle-access';
 
 interface VehicleTyreTrackerProps {
   vehicle: Vehicle | null;
   maintenanceQuery: ReturnType<typeof useMaintenanceRecords>;
 }
 
+/** Past this many entries the history folds the rest behind "Show all". */
+const HISTORY_PREVIEW = 8;
+
+/**
+ * More → Tyres. With tyres on file: a verdict line on top, led by the tyre
+ * that needs the most attention, a diagram matched to the vehicle type with
+ * each wheel's tread and age, and one history list. Without: one card that
+ * starts a three-step setup. The verdicts are the API's (tread and age
+ * limits), never worked out here; rotation and alignment come from the
+ * service intervals the API resolves.
+ */
 export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTrackerProps) {
   const { canEdit } = useVehicleAccess();
   const records = useMemo<MaintenanceRecord[]>(
@@ -66,10 +77,6 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   // linked to a variant. Deciding an interval here instead would put this tab
   // and the alert engine into open disagreement about the same vehicle.
   const intervalsQuery = useVehicleIntervals(vehicle?.id ?? '');
-
-  // Measured per-corner condition. Where this exists it outranks every
-  // service-interval inference: tread depth and manufacture age are the facts
-  // that decide whether a tyre is safe, and neither can be derived from dates.
   const conditionQuery = useVehicleTyreCondition(vehicle?.id ?? '');
   const tyresQuery = useVehicleTyres(vehicle?.id ?? '');
   const inspectionsQuery = useVehicleTyreInspections(vehicle?.id ?? '');
@@ -85,29 +92,31 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
     ? specsQuery.data?.tyreSize?.trim() || null
     : null;
 
-  const [openDialog, setOpenDialog] = useState<'tyre' | 'inspection' | null>(null);
+  const [openDialog, setOpenDialog] = useState<'tyre' | 'inspection' | 'setup' | null>(null);
   // Kept after the dialog closes, so it does not turn into "Add a tyre" while
   // it animates out.
   const [editTarget, setEditTarget] = useState<Tyre | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
-  const tyreById = useMemo(
-    () => new Map((tyresQuery.data ?? []).map((tyre) => [tyre.id, tyre])),
-    [tyresQuery.data],
-  );
-  // The API returns readings newest first; grouping keeps that order.
+  const tyres = useMemo(() => tyresQuery.data ?? [], [tyresQuery.data]);
+  const tyreById = useMemo(() => new Map(tyres.map((tyre) => [tyre.id, tyre])), [tyres]);
   const readingsByTyre = useMemo(() => {
     const byTyre = new Map<string, TyreInspection[]>();
     for (const reading of inspectionsQuery.data ?? []) {
-      const list = byTyre.get(reading.tyreId);
-      if (list) {
-        list.push(reading);
-      } else {
-        byTyre.set(reading.tyreId, [reading]);
-      }
+      byTyre.set(reading.tyreId, [...(byTyre.get(reading.tyreId) ?? []), reading]);
     }
     return byTyre;
   }, [inspectionsQuery.data]);
+
+  const insights = useMemo(
+    () => getTyreInsights({ vehicle, records, intervals: intervalsQuery.data }),
+    [vehicle, records, intervalsQuery.data],
+  );
+  const history = useMemo(
+    () => tyreHistory({ tyres, readings: inspectionsQuery.data ?? [], records: insights.records }),
+    [tyres, inspectionsQuery.data, insights.records],
+  );
 
   function startEditing(tyre: Tyre) {
     setEditTarget(tyre);
@@ -129,12 +138,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
     }
   }
 
-  const insights = useMemo(
-    () => getTyreInsights({ vehicle, records, intervals: intervalsQuery.data }),
-    [vehicle, records, intervalsQuery.data],
-  );
-
-  // Tyre history is derived entirely from maintenance records; without this the
+  // Tyre history is derived partly from maintenance records; without this the
   // panel reports "no rotations logged" whenever the records request fails.
   if (maintenanceQuery.isError) {
     return (
@@ -166,202 +170,120 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   }
 
   const measured = conditionQuery.data?.tyres ?? [];
-  const hasMeasurements = measured.length > 0;
+  const hasTyres = measured.length > 0;
   // Two-wheelers get a front/rear layout and carry no rotation service of their
-  // own, so the merged badge and the diagram must not fold rotation into them.
+  // own, so the rotation row goes and alignment is named for them.
   const twoWheeler = vehicle ? isTwoWheeler(vehicle.vehicleType) : false;
-  const serviceStatus = twoWheeler
-    ? insights.alignment.status
-    : mergeStatus(insights.rotation.status, insights.alignment.status);
-  const byPosition = new Map(measured.map((tyre) => [tyre.position, tyre]));
-  const diagramCorners = twoWheeler ? TWO_WHEEL_DIAGRAM_CORNERS : FOUR_WHEEL_DIAGRAM_CORNERS;
-  const alignmentLabel = twoWheeler ? 'Wheel alignment / balancing' : 'Wheel alignment';
+  const verdict = tyreVerdict(measured);
+  const serviceMetrics: Array<[string, TyreMetric]> = [
+    ...(twoWheeler ? [] : ([['Tyre rotation', insights.rotation]] as Array<[string, TyreMetric]>)),
+    [twoWheeler ? 'Wheel alignment / balancing' : 'Wheel alignment', insights.alignment],
+  ];
+  const visibleHistory = showAllHistory ? history : history.slice(0, HISTORY_PREVIEW);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-      <div className="space-y-6">
-        <Card className="border-line/60 bg-surface overflow-hidden">
-          <CardHeader className="bg-page/50 border-b border-line-subtle">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-lead font-bold">Wheel &amp; tyre geometry</CardTitle>
-                <CardDescription>
-                  {hasMeasurements
-                    ? 'Per-corner condition from recorded tread depth and tyre age.'
-                    : 'Derived from logged service history. Add tyres to track tread and age.'}
-                </CardDescription>
-                {catalogTyreSize ? (
-                  <p className="mt-1 text-small text-fg-2" data-testid="catalog-tyre-size">
-                    Size for this variant:{' '}
-                    <span className="font-semibold text-fg">{catalogTyreSize}</span>
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <Badge variant="outline" className="bg-surface font-bold text-caption">
-                  {hasMeasurements
-                    ? CONDITION_COPY[conditionQuery.data?.overall ?? 'unknown'].label
-                    : STATUS_COPY[serviceStatus].label}
-                </Badge>
-                {canEdit ? (
-                  <>
-                    <Button onClick={() => setOpenDialog('tyre')} size="sm" variant="secondary">
-                      <Plus className="mr-1 h-3.5 w-3.5" />
-                      Add tyre
-                    </Button>
-                    <Button
-                      onClick={() => setOpenDialog('inspection')}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
-                      Log inspection
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-8 sm:p-12">
-            <div
-              aria-label={describeDiagram(insights, measured, hasMeasurements, twoWheeler)}
-              className="relative mx-auto flex aspect-1/2 w-full max-w-[180px] items-center justify-center rounded-[40px] border-2 border-line bg-page/30"
-              role="img"
-            >
-              {/* Horizontal axles */}
-              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-line" />
-              <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[120%] h-1 bg-line" />
-
-              {/*
-                Each corner now shows its own measured condition. Without
-                measurements they fall back to one shared service-derived status,
-                because rotation is a four-wheel operation and alignment is axle
-                geometry — neither describes an individual tyre. A two-wheeler
-                gets one front and one rear glyph instead of four corners.
-              */}
-              {diagramCorners.map(({ corner, position }) => (
-                <TyreGlyph
-                  key={corner}
-                  corner={corner}
-                  measured={byPosition.get(position) ?? null}
-                  status={hasMeasurements ? null : serviceStatus}
-                />
-              ))}
-
-              <div className="w-1/2 h-2/3 border border-line/50 rounded-2xl flex items-center justify-center">
-                <div className="text-caption font-black text-fg-3 rotate-90">Chassis</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {hasMeasurements ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {measured.map((condition) => {
-              const tyre = tyreById.get(condition.tyreId);
-
-              return (
-                <CornerCard
-                  condition={condition}
-                  isDeleting={deleteTyre.isPending && deleteTyre.variables === condition.tyreId}
-                  key={condition.tyreId}
-                  onDelete={canEdit && tyre ? () => handleDelete(tyre) : undefined}
-                  onEdit={canEdit && tyre ? () => startEditing(tyre) : undefined}
-                  readings={readingsByTyre.get(condition.tyreId) ?? []}
-                  tyre={tyre ?? null}
-                />
-              );
-            })}
+    <div className="space-y-6" data-testid="tyres">
+      {hasTyres ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            {verdict ? <VerdictLine verdict={verdict} /> : null}
+            {catalogTyreSize ? <SizeLine size={catalogTyreSize} /> : null}
           </div>
-        ) : (
-          <EmptyState
-            action={
-              canEdit ? (
-                <EmptyStateAction onClick={() => setOpenDialog('tyre')} size="sm">
-                  Add a tyre
-                </EmptyStateAction>
-              ) : undefined
-            }
-            description="Tread depth and manufacture date decide whether a tyre is safe, and neither can be inferred from service dates. Add your tyres to track them per corner."
-            icon={Gauge}
-            title="No tyres tracked yet"
-          />
-        )}
-
-        <div className={cn('grid gap-4', twoWheeler ? 'sm:grid-cols-1' : 'sm:grid-cols-2')}>
-          {/* Rotation swaps tyres front-to-back and side-to-side; a two-wheeler
-              has neither a side pair nor a rotation service to track. */}
-          {twoWheeler ? null : (
-            <MetricCard
-              icon={<RotateCw className="h-4 w-4" />}
-              label="Tyre rotation"
-              metric={insights.rotation}
-            />
-          )}
-          <MetricCard
-            icon={<Settings2 className="h-4 w-4" />}
-            label={alignmentLabel}
-            metric={insights.alignment}
-          />
+          {canEdit ? (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button onClick={() => setOpenDialog('inspection')} type="button">
+                <ClipboardCheck aria-hidden="true" />
+                Log inspection
+              </Button>
+              <Button onClick={() => setOpenDialog('tyre')} type="button" variant="outline">
+                <Plus aria-hidden="true" />
+                Add tyre
+              </Button>
+            </div>
+          ) : null}
         </div>
-      </div>
-
-      <div className="space-y-6">
-        <Card className="border-line/60 bg-surface">
-          <CardHeader>
-            <CardTitle className="text-lead font-bold">Tyre records</CardTitle>
-            <CardDescription>
-              Rotations, alignments, replacements and punctures.
-              {insights.records.length > TYRE_RECORD_PREVIEW
-                ? ` Showing ${TYRE_RECORD_PREVIEW} of ${insights.records.length}.`
-                : null}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {insights.records.slice(0, TYRE_RECORD_PREVIEW).map((record) => (
-              <div
-                key={record.id}
-                className="flex items-start gap-4 rounded-xl border border-line-subtle bg-page/50 p-3"
-              >
-                <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                <div className="space-y-1">
-                  <p className="text-caption font-bold text-fg">
-                    {format.enumLabel('maintenanceCategory', record.category)}
-                  </p>
-                  <p className="text-caption text-fg-3">
-                    {format.date(record.serviceDate)} • {format.odometer(record.odometer)}
-                  </p>
-                </div>
+      ) : (
+        <Card data-testid="tyres-empty">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <CircleDot aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-fg-3" />
+              <div className="min-w-0">
+                <p className="text-body font-semibold text-fg">Add your tyres</p>
+                <p className="text-small text-fg-2">
+                  Tread depth and age decide if a tyre is safe. Service dates can’t tell you either.
+                </p>
+                {catalogTyreSize ? <SizeLine size={catalogTyreSize} /> : null}
               </div>
-            ))}
-            {insights.records.length === 0 ? (
-              <p className="text-caption text-fg-3 italic text-center py-4">
-                No tyre records found.
-              </p>
+            </div>
+            {canEdit ? (
+              <Button className="shrink-0" onClick={() => setOpenDialog('setup')} type="button">
+                Add tyres
+              </Button>
             ) : null}
           </CardContent>
         </Card>
+      )}
 
-        {insights.lastReplacement ? (
-          <Card className="border-line/60 bg-surface">
-            <CardHeader>
-              <CardTitle className="text-lead font-bold">Current tyres</CardTitle>
-              <CardDescription>Fitted at the last recorded replacement.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-title font-black tracking-tighter text-fg">
-                {format.odometer(insights.lastReplacement.odometer)}
-              </p>
-              <p className="mt-1 text-caption font-medium text-fg-3">
-                fitted {format.date(insights.lastReplacement.serviceDate)}
-              </p>
-            </CardContent>
+      {hasTyres ? (
+        <WheelDiagram
+          conditions={measured}
+          deletingId={deleteTyre.isPending ? (deleteTyre.variables ?? null) : null}
+          onDelete={canEdit ? handleDelete : undefined}
+          onEdit={canEdit ? startEditing : undefined}
+          readingsByTyre={readingsByTyre}
+          tyreById={tyreById}
+          twoWheeler={twoWheeler}
+        />
+      ) : null}
+
+      <section aria-labelledby="tyre-services" className="space-y-2">
+        <SectionHeader as="h3" id="tyre-services" title="Rotation and alignment" />
+        <Card className="divide-y divide-line-subtle p-0">
+          {serviceMetrics.map(([label, metric]) => (
+            <MetricRow key={label} label={label} metric={metric} />
+          ))}
+        </Card>
+      </section>
+
+      <section aria-labelledby="tyre-history" className="space-y-2">
+        <SectionHeader as="h3" id="tyre-history" title="History" />
+        {history.length === 0 ? (
+          <p className="px-1 text-small text-fg-3">
+            Inspections, rotations, replacements and punctures show up here.
+          </p>
+        ) : (
+          <Card className="p-0">
+            <ul aria-label="Tyre history, newest first" className="divide-y divide-line-subtle">
+              {visibleHistory.map((item) => (
+                <HistoryItem item={item} key={item.key} />
+              ))}
+            </ul>
+            {history.length > HISTORY_PREVIEW ? (
+              <div className="border-t border-line-subtle px-4 py-2">
+                <Button
+                  onClick={() => setShowAllHistory((current) => !current)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {showAllHistory ? 'Show fewer' : `Show all ${history.length}`}
+                </Button>
+              </div>
+            ) : null}
           </Card>
-        ) : null}
-      </div>
+        )}
+      </section>
 
       {vehicle ? (
         <>
+          <TyreSetupDialog
+            catalogSize={catalogTyreSize}
+            onOpenChange={(open) => setOpenDialog(open ? 'setup' : null)}
+            open={openDialog === 'setup'}
+            vehicleId={vehicle.id}
+            vehicleOdometer={vehicle.odometer}
+            vehicleType={vehicle.vehicleType}
+          />
           <TyreFormDialog
             defaultSize={catalogTyreSize}
             isOpen={openDialog === 'tyre'}
@@ -373,7 +295,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
           <TyreInspectionDialog
             isOpen={openDialog === 'inspection'}
             onClose={() => setOpenDialog(null)}
-            tyres={tyresQuery.data ?? []}
+            tyres={tyres}
             vehicleId={vehicle.id}
             vehicleOdometer={vehicle.odometer}
           />
@@ -393,190 +315,44 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   );
 }
 
-const TYRE_RECORD_PREVIEW = 5;
-
-/** Says where the interval came from, so a vehicle-specific figure is visibly not a guess. */
-const INTERVAL_SOURCE_NOTE: Record<TyreMetric['intervalSource'], string | null> = {
-  workshop: ' • per workshop',
-  variant: ' • per manufacturer',
-  default: null,
-  fallback: null,
-};
-
-/**
- * Screen position -> the tyre actually fitted there. The spare has no corner
- * on the diagram.
- */
-const FOUR_WHEEL_DIAGRAM_CORNERS = [
-  { corner: 'top-left' as const, position: TyrePosition.FrontLeft },
-  { corner: 'top-right' as const, position: TyrePosition.FrontRight },
-  { corner: 'bottom-left' as const, position: TyrePosition.RearLeft },
-  { corner: 'bottom-right' as const, position: TyrePosition.RearRight },
-];
-
-/** A two-wheeler has one front and one rear tyre, not four corners. */
-const TWO_WHEEL_DIAGRAM_CORNERS = [
-  { corner: 'top' as const, position: TyrePosition.Front },
-  { corner: 'bottom' as const, position: TyrePosition.Rear },
-];
-
-const CONDITION_COPY: Record<
+const LEVEL_APPEARANCE: Record<
   TyreConditionLevel,
-  { label: string; icon: typeof ShieldCheck; border: string; icons: string; card: string }
+  { icon: typeof ShieldCheck; text: string; ring: string; tint: string }
 > = {
-  illegal: {
-    label: 'Not roadworthy',
-    icon: AlertCircle,
-    border: 'border-late',
-    icons: 'text-late',
-    card: 'bg-late-tint border-late/30',
-  },
-  replace: {
-    label: 'Replace',
-    icon: AlertCircle,
-    border: 'border-late/60',
-    icons: 'text-late',
-    card: 'bg-late-tint border-late/30',
-  },
-  warn: {
-    label: 'Wearing',
-    icon: Clock,
-    border: 'border-soon/60',
-    icons: 'text-soon',
-    card: 'bg-soon-tint border-soon/30',
-  },
-  healthy: {
-    label: 'Healthy',
-    icon: ShieldCheck,
-    border: 'border-ok/50',
-    icons: 'text-ok',
-    card: 'bg-ok-tint border-ok/30',
-  },
+  illegal: { icon: AlertCircle, text: 'text-late', ring: 'border-late', tint: 'bg-late-tint' },
+  replace: { icon: AlertCircle, text: 'text-late', ring: 'border-late/60', tint: 'bg-late-tint' },
+  warn: { icon: Clock, text: 'text-soon', ring: 'border-soon/60', tint: 'bg-soon-tint' },
+  healthy: { icon: ShieldCheck, text: 'text-ok', ring: 'border-ok/50', tint: 'bg-surface' },
   unknown: {
-    label: 'Not measured',
     icon: HelpCircle,
-    border: 'border-ended/40 border-dashed',
-    icons: 'text-ended',
-    card: 'bg-page border-line',
+    text: 'text-fg-3',
+    ring: 'border-line border-dashed',
+    tint: 'bg-surface',
   },
 };
 
-/**
- * The diagram is the whole point of the tab, so its text alternative has to
- * carry the same information rather than just naming a colour.
- */
-function describeDiagram(
-  insights: ReturnType<typeof getTyreInsights>,
-  measured: TyreCondition[],
-  hasMeasurements: boolean,
-  twoWheeler: boolean,
-): string {
-  if (!hasMeasurements) {
-    // Rotation is not a two-wheeler service, so its status has nothing true to
-    // report here — the same reason its card is hidden below the diagram.
-    const rotationPhrase = twoWheeler
-      ? ''
-      : `Tyre rotation: ${STATUS_COPY[insights.rotation.status].label}. `;
-    const alignmentPhrase = twoWheeler ? 'Wheel alignment / balancing' : 'Wheel alignment';
-
-    return (
-      `Wheel diagram. ${rotationPhrase}` +
-      `${alignmentPhrase}: ${STATUS_COPY[insights.alignment.status].label}. ` +
-      'Individual tyre condition is not tracked.'
-    );
-  }
-
-  const corners = measured
-    .map((tyre) => `${format.enumLabel('tyrePosition', tyre.position)}: ${tyre.summary}`)
-    .join(' ');
-
-  return `Wheel diagram showing measured tyre condition. ${corners}`;
-}
-
-const STATUS_COPY: Record<TyreStatus, { label: string; icon: typeof ShieldCheck }> = {
-  healthy: { label: 'Healthy', icon: ShieldCheck },
-  due: { label: 'Due soon', icon: Clock },
-  overdue: { label: 'Overdue', icon: AlertCircle },
-  unknown: { label: 'Not tracked', icon: HelpCircle },
-};
-
-/** The diagram shows one condition for the whole vehicle, so the worst applicable state wins. */
-function mergeStatus(...statuses: TyreStatus[]): TyreStatus {
-  const rank: Record<TyreStatus, number> = { overdue: 0, due: 1, unknown: 2, healthy: 3 };
-  return statuses.reduce((worst, next) => (rank[next] < rank[worst] ? next : worst));
-}
-
-interface TyreGlyphProps {
-  /** Four-corner positions for a car; 'top'/'bottom' centre the glyph for a two-wheeler. */
-  corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top' | 'bottom';
-  /** Measured condition when the tyre is tracked. */
-  measured: TyreCondition | null;
-  /** Service-derived fallback, used only when nothing is measured. */
-  status: TyreStatus | null;
-}
-
-function TyreGlyph({ corner, measured, status }: TyreGlyphProps) {
-  const posClasses = {
-    'top-left': '-top-4 -left-8 sm:-left-10',
-    'top-right': '-top-4 -right-8 sm:-right-10',
-    'bottom-left': '-bottom-4 -left-8 sm:-left-10',
-    'bottom-right': '-bottom-4 -right-8 sm:-right-10',
-    top: '-top-4 left-1/2 -translate-x-1/2',
-    bottom: '-bottom-4 left-1/2 -translate-x-1/2',
-  }[corner];
-
-  const appearance = measured
-    ? CONDITION_COPY[measured.level]
-    : CONDITION_COPY[status ? SERVICE_TO_CONDITION[status] : 'unknown'];
-
+function VerdictLine({ verdict }: { verdict: NonNullable<ReturnType<typeof tyreVerdict>> }) {
+  const appearance = LEVEL_APPEARANCE[verdict.level];
   const Icon = appearance.icon;
 
   return (
-    // The wrapper carries the positioning so the depth label can sit outside the
-    // tread box, which clips its own overflow.
-    <div aria-hidden="true" className={cn('absolute flex flex-col items-center', posClasses)}>
-      <div
-        className={cn(
-          'flex h-20 w-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg border-2',
-          // A tyre is black rubber in both themes, like the number plate.
-          'bg-tyre',
-          appearance.border,
-        )}
-      >
-        {/* Decorative tread lines; the depth figure below is the measured one. */}
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="h-px w-full bg-tyre-tread" />
-        ))}
-        <Icon className={cn('absolute h-3 w-3', appearance.icons)} />
-      </div>
-      {measured?.treadDepthMm != null ? (
-        <span className="mt-1 text-caption font-black tabular-nums text-fg-3">
-          {measured.treadDepthMm.toFixed(1)}mm
-        </span>
-      ) : null}
-    </div>
+    <p
+      className="flex items-start gap-2 text-lead font-semibold text-fg"
+      data-level={verdict.level}
+      data-testid="tyre-verdict"
+    >
+      <Icon aria-hidden="true" className={cn('mt-1 size-5 shrink-0', appearance.text)} />
+      <span>{verdict.text}</span>
+    </p>
   );
 }
 
-/** Maps a service-schedule verdict onto the condition palette when nothing is measured. */
-const SERVICE_TO_CONDITION: Record<TyreStatus, TyreConditionLevel> = {
-  healthy: 'healthy',
-  due: 'warn',
-  overdue: 'replace',
-  unknown: 'unknown',
-};
-
-interface CornerCardProps {
-  /** The grading, exactly as the API returns it; nothing here re-derives it. */
-  condition: TyreCondition;
-  /** The recorded tyre behind the grading: its brand, size and DOT code. */
-  tyre: Tyre | null;
-  /** This tyre's readings, newest first. */
-  readings: TyreInspection[];
-  /** Omitted for someone who cannot change the vehicle; the control goes with it. */
-  onEdit?: () => void;
-  onDelete?: () => Promise<void>;
-  isDeleting: boolean;
+function SizeLine({ size }: { size: string }) {
+  return (
+    <p className="mt-1 text-small text-fg-2" data-testid="catalog-tyre-size">
+      Size for this variant: <span className="font-semibold text-fg">{size}</span>
+    </p>
+  );
 }
 
 /** "Michelin Primacy 4 · 205/55 R16 · DOT 3624": what is written on the tyre. */
@@ -587,48 +363,157 @@ function describeTyre(tyre: Tyre): string | null {
   return [name, tyre.size, dot ? `DOT ${dot}` : null].filter(Boolean).join(' · ') || null;
 }
 
-/** One measured corner: what it reads, why that matters, and how long it has left. */
-function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }: CornerCardProps) {
-  const appearance = CONDITION_COPY[condition.level];
-  const Icon = appearance.icon;
-  const label = format.enumLabel('tyrePosition', condition.position);
-  const recorded = tyre ? describeTyre(tyre) : null;
+/** Screen order for a car: front pair, then rear pair; the spare sits below. */
+const FOUR_WHEEL_ORDER = [
+  TyrePosition.FrontLeft,
+  TyrePosition.FrontRight,
+  TyrePosition.RearLeft,
+  TyrePosition.RearRight,
+];
+const TWO_WHEEL_ORDER = [TyrePosition.Front, TyrePosition.Rear];
+
+/**
+ * The wheels where they sit on the vehicle: a car's four around its body, a
+ * two-wheeler's front over rear. Each carries its tread and age in words, so
+ * the diagram reads without colour. The spare, if tracked, sits below.
+ */
+function WheelDiagram({
+  conditions,
+  twoWheeler,
+  tyreById,
+  readingsByTyre,
+  onEdit,
+  onDelete,
+  deletingId,
+}: {
+  conditions: TyreCondition[];
+  twoWheeler: boolean;
+  tyreById: Map<string, Tyre>;
+  readingsByTyre: Map<string, TyreInspection[]>;
+  onEdit?: (tyre: Tyre) => void;
+  onDelete?: (tyre: Tyre) => Promise<void>;
+  deletingId: string | null;
+}) {
+  const byPosition = new Map(conditions.map((condition) => [condition.position, condition]));
+  const order = twoWheeler ? TWO_WHEEL_ORDER : FOUR_WHEEL_ORDER;
+  const spare = byPosition.get(TyrePosition.Spare);
+  const description = conditions
+    .map(
+      (condition) =>
+        `${format.enumLabel('tyrePosition', condition.position)}: ${wheelReading(condition)}, ${LEVEL_WORDS[condition.level].toLowerCase()}.`,
+    )
+    .join(' ');
+
+  const wheel = (position: TyrePosition) => {
+    const condition = byPosition.get(position);
+    const tyre = condition ? tyreById.get(condition.tyreId) : undefined;
+    return (
+      <WheelTile
+        condition={condition ?? null}
+        isDeleting={Boolean(tyre && deletingId === tyre.id)}
+        key={position}
+        onDelete={onDelete && tyre ? () => onDelete(tyre) : undefined}
+        onEdit={onEdit && tyre ? () => onEdit(tyre) : undefined}
+        position={position}
+        readingCount={tyre ? (readingsByTyre.get(tyre.id)?.length ?? 0) : 0}
+        tyre={tyre ?? null}
+      />
+    );
+  };
 
   return (
-    <div className={cn('rounded-2xl border p-5', appearance.card)} data-testid="tyre-corner">
-      <div className="mb-3 flex items-center justify-between">
-        <div className={cn('rounded-xl bg-surface p-2 shadow-xs', appearance.icons)}>
-          <Icon className="h-4 w-4" />
-        </div>
-        <Badge variant="outline">{appearance.label}</Badge>
-      </div>
-      <p className="text-caption font-medium text-fg-3">{label}</p>
-      <p className="mt-1 text-title font-black tracking-tighter tabular-nums text-fg">
-        {condition.treadDepthMm != null ? `${condition.treadDepthMm.toFixed(1)} mm` : '—'}
-      </p>
-      <p className="mt-1 text-caption font-medium leading-4 text-fg-2">{condition.summary}</p>
-      {recorded ? <p className="mt-1 text-caption text-fg-3">{recorded}</p> : null}
-      <div className="mt-2 space-y-0.5">
-        {condition.estimatedKmRemaining != null ? (
-          <p className="text-caption font-bold text-fg-3">
-            ~{format.distance(condition.estimatedKmRemaining)} left at current wear
-          </p>
-        ) : null}
-        {condition.lastInspectedAt ? (
-          <p className="text-caption font-bold text-fg-3">
-            Checked {formatDistanceToNow(new Date(condition.lastInspectedAt), { addSuffix: true })}
-          </p>
-        ) : (
-          <p className="text-caption font-bold text-fg-3">Never inspected</p>
+    <figure
+      aria-label={`Wheel diagram. ${description}`}
+      className="max-w-3xl space-y-3"
+      data-testid="wheel-diagram"
+    >
+      <div
+        className={cn(
+          'relative grid gap-3',
+          twoWheeler ? 'mx-auto max-w-sm grid-cols-1' : 'grid-cols-2',
         )}
+      >
+        {/* The body the wheels hang off: decoration only. */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none absolute border-2 border-line bg-page/60',
+            twoWheeler
+              ? 'inset-y-6 left-1/2 w-2 -translate-x-1/2 rounded-full'
+              : 'inset-x-1/4 inset-y-6 rounded-[2rem]',
+          )}
+        />
+        {order.map(wheel)}
       </div>
+      {spare ? <div className="max-w-sm">{wheel(TyrePosition.Spare)}</div> : null}
+    </figure>
+  );
+}
 
-      <TyreReadings label={label} readings={readings} />
+function WheelTile({
+  position,
+  condition,
+  tyre,
+  readingCount,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: {
+  position: TyrePosition;
+  condition: TyreCondition | null;
+  tyre: Tyre | null;
+  readingCount: number;
+  onEdit?: () => void;
+  onDelete?: () => Promise<void>;
+  isDeleting: boolean;
+}) {
+  const label = format.enumLabel('tyrePosition', position);
+  const level = condition?.level ?? 'unknown';
+  const appearance = LEVEL_APPEARANCE[level];
+  const Icon = appearance.icon;
+  const written = tyre ? describeTyre(tyre) : null;
 
+  return (
+    <div
+      className={cn('relative rounded-card border-2 p-4', appearance.ring, appearance.tint)}
+      data-level={level}
+      data-testid="tyre-corner"
+    >
+      <p className="text-small font-semibold text-fg-2">{label}</p>
+      {condition ? (
+        <>
+          <p className="mt-0.5 text-body font-semibold tabular-nums text-fg">
+            {wheelReading(condition)}
+          </p>
+          <p
+            className={cn(
+              'mt-1 flex items-center gap-1.5 text-small font-semibold',
+              appearance.text,
+            )}
+          >
+            <Icon aria-hidden="true" className="size-4" />
+            {LEVEL_WORDS[level]}
+          </p>
+          {condition.estimatedKmRemaining != null ? (
+            <p className="mt-1 text-small text-fg-3">
+              ~{format.distance(condition.estimatedKmRemaining)} left at this wear
+            </p>
+          ) : null}
+          {written ? <p className="mt-1 text-small text-fg-3">{written}</p> : null}
+        </>
+      ) : (
+        <p className="mt-0.5 text-small text-fg-3">No tyre on file</p>
+      )}
       {onEdit || onDelete ? (
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-2 flex flex-wrap gap-1">
           {onEdit ? (
-            <Button onClick={onEdit} size="sm" variant="secondary">
+            <Button
+              aria-label={`Edit the ${label.toLowerCase()} tyre`}
+              onClick={onEdit}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
               Edit
             </Button>
           ) : null}
@@ -636,8 +521,8 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
             <ConfirmActionDialog
               confirmLabel="Delete tyre"
               description={`${
-                readings.length > 0
-                  ? `Its ${readings.length} reading${readings.length === 1 ? '' : 's'} will be deleted with it.`
+                readingCount > 0
+                  ? `Its ${readingCount} reading${readingCount === 1 ? '' : 's'} will be deleted with it.`
                   : 'It has no readings yet.'
               } If it was replaced, add the new tyre instead: that keeps this one's history. This cannot be undone.`}
               isPending={isDeleting}
@@ -653,101 +538,20 @@ function CornerCard({ condition, tyre, readings, onEdit, onDelete, isDeleting }:
   );
 }
 
-/** Reading values as they were recorded, not rounded to the card's one decimal. */
-function formatReading(reading: TyreInspection): string {
-  const figure = (value: number) => format.number(value, { decimals: 2 });
+const STATUS_WORDS: Record<TyreStatus, string> = {
+  healthy: 'Healthy',
+  due: 'Due soon',
+  overdue: 'Overdue',
+  unknown: 'Not tracked',
+};
 
-  return [
-    reading.treadDepthMm != null ? `${figure(reading.treadDepthMm)} mm tread` : null,
-    reading.pressurePsi != null ? `${figure(reading.pressurePsi)} psi` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-}
-
-/** Every reading of one tyre, newest first, folded away until asked for. */
-function TyreReadings({ label, readings }: { label: string; readings: TyreInspection[] }) {
-  if (readings.length === 0) {
-    return <p className="mt-3 text-caption text-fg-3">No readings yet.</p>;
-  }
-
-  return (
-    <details className="group mt-3 rounded-xl border border-line/70 bg-surface/70">
-      <summary className="cursor-pointer select-none px-3 py-2 text-caption font-bold text-fg-2">
-        Readings ({readings.length})
-      </summary>
-      <ol
-        aria-label={`${label} tyre readings, newest first`}
-        className="divide-y divide-line-subtle"
-      >
-        {readings.map((reading) => (
-          <li className="px-3 py-2 text-caption" key={reading.id}>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-              <span className="text-fg-3">
-                <time dateTime={reading.inspectedAt}>{format.date(reading.inspectedAt)}</time> ·{' '}
-                {format.odometer(reading.odometer)}
-              </span>
-              <span className="font-bold tabular-nums text-fg">{formatReading(reading)}</span>
-            </div>
-            {reading.notes ? <p className="mt-0.5 text-fg-3">{reading.notes}</p> : null}
-          </li>
-        ))}
-      </ol>
-    </details>
-  );
-}
-
-interface MetricCardProps {
-  icon: ReactNode;
-  label: string;
-  metric: TyreMetric;
-}
-
-function MetricCard({ icon, label, metric }: MetricCardProps) {
-  const cardClasses = {
-    healthy: 'bg-ok-tint border-ok/30',
-    due: 'bg-soon-tint border-soon/30',
-    overdue: 'bg-late-tint border-late/30',
-    unknown: 'bg-page border-line',
-  }[metric.status];
-
-  const iconClasses = {
-    healthy: 'text-ok',
-    due: 'text-soon',
-    overdue: 'text-late',
-    unknown: 'text-fg-3',
-  }[metric.status];
-
-  return (
-    <div className={cn('rounded-2xl border p-5 transition-colors', cardClasses)}>
-      <div className="mb-3 flex items-center justify-between">
-        <div className={cn('rounded-xl bg-surface p-2 shadow-xs', iconClasses)}>{icon}</div>
-        <Badge variant="outline">{STATUS_COPY[metric.status].label}</Badge>
-      </div>
-      <div>
-        <p className="text-caption font-medium text-fg-3">{label}</p>
-        <p className="mt-1 text-title font-black tracking-tighter text-fg">
-          {format.distance(metric.kmSince)}
-        </p>
-        <p className="mt-1 text-caption font-medium text-fg-3">{describeBaseline(metric)}</p>
-        {metric.lastRecord ? (
-          <p className="mt-2 text-caption font-bold text-fg-3">
-            Last:{' '}
-            {formatDistanceToNow(new Date(metric.lastRecord.serviceDate), { addSuffix: true })}
-          </p>
-        ) : null}
-        {metric.status !== 'unknown' && metric.kmRemaining !== null ? (
-          <p className="mt-2 text-caption font-bold text-fg-3">
-            {metric.kmRemaining >= 0
-              ? `${format.distance(metric.kmRemaining)} to go`
-              : `${format.distance(Math.abs(metric.kmRemaining))} past due`}
-            {INTERVAL_SOURCE_NOTE[metric.intervalSource]}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
+/** Says where the interval came from, so a vehicle-specific figure is visibly not a guess. */
+const INTERVAL_SOURCE_NOTE: Record<TyreMetric['intervalSource'], string | null> = {
+  workshop: ' · per workshop',
+  variant: ' · per manufacturer',
+  default: null,
+  fallback: null,
+};
 
 /** The same number means different things depending on what it was measured from. */
 function describeBaseline(metric: TyreMetric): string {
@@ -761,4 +565,64 @@ function describeBaseline(metric: TyreMetric): string {
     case 'none':
       return 'No service logged yet';
   }
+}
+
+/** One service on the rotation/alignment clock: how far since, and how far to go. */
+function MetricRow({ label, metric }: { label: string; metric: TyreMetric }) {
+  const tone = {
+    healthy: 'text-ok',
+    due: 'text-soon',
+    overdue: 'text-late',
+    unknown: 'text-fg-3',
+  }[metric.status];
+
+  return (
+    <div className="px-4 py-3" data-testid="tyre-service">
+      <p className="flex flex-wrap items-center gap-x-2 text-body font-semibold text-fg">
+        <Wrench aria-hidden="true" className="size-4 text-fg-3" />
+        {label}
+        <span className={cn('text-small font-semibold', tone)}>{STATUS_WORDS[metric.status]}</span>
+      </p>
+      <p className="text-small text-fg-2">
+        {metric.origin === 'none' ? null : `${format.distance(metric.kmSince)} `}
+        <span>{describeBaseline(metric)}</span>
+        {metric.status !== 'unknown' && metric.kmRemaining !== null ? (
+          <>
+            {' · '}
+            <span>
+              {metric.kmRemaining >= 0
+                ? `${format.distance(metric.kmRemaining)} to go`
+                : `${format.distance(Math.abs(metric.kmRemaining))} past due`}
+            </span>
+            {INTERVAL_SOURCE_NOTE[metric.intervalSource]}
+          </>
+        ) : null}
+      </p>
+    </div>
+  );
+}
+
+function HistoryItem({ item }: { item: TyreHistoryItem }) {
+  const body = (
+    <>
+      <p className="font-semibold text-fg [overflow-wrap:anywhere]">{item.title}</p>
+      <p className="text-small text-fg-2">{item.details.join(' · ')}</p>
+    </>
+  );
+
+  return (
+    <li data-kind={item.kind} data-testid="tyre-history-item">
+      {item.recordId ? (
+        <Link
+          className="block px-4 py-3 hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          params={{ recordId: item.recordId }}
+          to="/maintenance-records/$recordId"
+        >
+          {body}
+        </Link>
+      ) : (
+        <div className="px-4 py-3">{body}</div>
+      )}
+    </li>
+  );
 }

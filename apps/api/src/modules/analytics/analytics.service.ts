@@ -589,9 +589,12 @@ export class AnalyticsService {
       ownershipMonths = Math.max(0, months);
     }
 
+    // Running cost: an accessory is a one-off buy, not a cost of driving, so it
+    // stays in lifetime spend (its own slice) and out of ₹/km (#320).
+    const runningSpend = netSpend.minus(accessories);
     const costPerKm =
       kmSincePurchase >= TCO_MIN_COST_PER_KM_DISTANCE_KM
-        ? netSpend.div(kmSincePurchase).toFixed(2)
+        ? runningSpend.div(kmSincePurchase).toFixed(2)
         : null;
     const costPerMonth =
       ownershipMonths && ownershipMonths > 0 ? netSpend.div(ownershipMonths).toFixed(2) : null;

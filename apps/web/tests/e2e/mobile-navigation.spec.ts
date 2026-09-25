@@ -338,7 +338,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['tab=more&section=about', [/We don't have specs for this variant yet|Tyres /]],
     ['tab=reminders', [reminderTitle]],
     ['tab=history&view=fuel', ['42.5 L fuel fill']],
-    ['tab=more&section=tyres', ['Log inspection']],
+    ['tab=more&section=tyres', ['Add your tyres']],
     ['tab=more&section=accessories', ['No accessories yet']],
     ['tab=papers', ['Add Policy']],
     ['tab=more&section=loans', [lender]],

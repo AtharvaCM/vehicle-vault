@@ -98,13 +98,13 @@ for (const viewport of VIEWPORTS) {
     await page.goto(`${vehicleUrl}?tab=specs`);
     await expect(page.getByTestId('vehicle-about')).toBeVisible();
 
-    // Tyres shows the size, and a new tyre starts with it.
+    // Tyres shows the size, and adding tyres starts with it.
     await page.goto(`${vehicleUrl}?tab=more&section=tyres`);
     await expect(page.getByTestId('catalog-tyre-size')).toHaveText(
       'Size for this variant: 215/60 R17',
     );
-    await page.getByRole('button', { name: 'Add tyre' }).click();
-    await expect(page.getByLabel('Size')).toHaveValue('215/60 R17');
+    await page.getByRole('button', { name: 'Add tyres' }).click();
+    await expect(page.getByRole('dialog').getByLabel('Size')).toHaveValue('215/60 R17');
 
     await prisma.vehicleCatalogVariantSpec.delete({ where: { id: spec.id } });
     createdSpecIds.splice(createdSpecIds.indexOf(spec.id), 1);
