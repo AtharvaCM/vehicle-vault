@@ -1,3 +1,10 @@
+# [1.109.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.108.0...v1.109.0) (2026-09-25)
+
+
+### Features
+
+* keep accessories in History, with their receipts ([d67b67d](https://github.com/AtharvaCM/vehicle-vault/commit/d67b67df86bb892214a41ade4d6a9181bd99d39f)), closes [#336](https://github.com/AtharvaCM/vehicle-vault/issues/336)
+
 # [1.108.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.107.0...v1.108.0) (2026-09-25)
 
 
