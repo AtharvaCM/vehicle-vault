@@ -11,6 +11,7 @@ describe('AdminService', () => {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    authSession: { deleteMany: vi.fn() },
     $transaction: vi.fn(),
   };
   const auditService = { track: vi.fn().mockResolvedValue(undefined) };
@@ -89,13 +90,11 @@ describe('AdminService', () => {
       );
     });
 
-    it('clears refresh token and audits when user was logged in', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u1', refreshTokenHash: 'abc' });
+    it('signs out every session and audits when user was logged in', async () => {
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
+      prisma.authSession.deleteMany.mockResolvedValue({ count: 2 });
       const result = await service.forceLogout('admin-1', 'u1');
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'u1' },
-        data: { refreshTokenHash: null },
-      });
+      expect(prisma.authSession.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
       expect(auditService.track).toHaveBeenCalledTimes(1);
       expect(auditService.track.mock.calls[0][1]).toMatchObject({
         actorUserId: 'admin-1',
@@ -105,8 +104,9 @@ describe('AdminService', () => {
       expect(result).toEqual({ userId: 'u1', refreshTokenCleared: true });
     });
 
-    it('still succeeds when user had no active refresh token', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u1', refreshTokenHash: null });
+    it('still succeeds when user had no session', async () => {
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
+      prisma.authSession.deleteMany.mockResolvedValue({ count: 0 });
       const result = await service.forceLogout('admin-1', 'u1');
       expect(result).toEqual({ userId: 'u1', refreshTokenCleared: false });
     });

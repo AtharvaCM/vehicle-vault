@@ -1,13 +1,13 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { User } from '@prisma/client';
-import type { AuthUser } from '@vehicle-vault/shared';
 
 import { AppConfigService } from '../../config/app-config.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { RefreshTokenPayload } from './auth.types';
+import { NO_SESSION_CONTEXT, type SessionContext } from './session-context';
 
 export type IssuedToken = {
   token: string;
@@ -25,6 +25,16 @@ export type ConsumedPasswordResetUser = {
   id: string;
   email: string;
   name: string;
+};
+
+export type IssuedSession = {
+  sessionId: string;
+  refreshToken: string;
+};
+
+export type VerifiedRefresh = {
+  user: User;
+  sessionId: string;
 };
 
 export const EMAIL_VERIFICATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -153,64 +163,119 @@ export class TokenService {
   }
 
   /**
-   * Issue a fresh refresh-token JWT, persist its SHA-256 hash on the user
-   * (replacing any previous one), and return the JWT. Called after register,
-   * login, and refresh — the "rotate" name reflects that every successful
-   * auth flow replaces the prior refresh credential.
+   * Start a session for a sign-in (register, login, OAuth): a fresh refresh
+   * JWT whose SHA-256 hash is stored on a new `AuthSession` row. Other
+   * sessions are left alone, so a second device no longer signs out the first.
    */
-  async rotateRefreshToken(authUser: AuthUser): Promise<string> {
-    const payload: RefreshTokenPayload = {
-      sub: authUser.id,
-      type: 'refresh',
-    };
-
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: this.appConfigService.jwtRefreshSecret,
-      expiresIn: this.appConfigService.jwtRefreshExpiresIn as never,
+  async startSession(userId: string, context: SessionContext): Promise<IssuedSession> {
+    const refreshToken = await this.signRefreshToken(userId);
+    const session = await this.prisma.authSession.create({
+      data: {
+        userId,
+        refreshTokenHash: this.hash(refreshToken),
+        userAgent: context.userAgent,
+        location: context.location,
+      },
+      select: { id: true },
     });
 
-    await this.prisma.user.update({
-      where: { id: authUser.id },
-      data: { refreshTokenHash: this.hash(refreshToken) },
-    });
-
-    return refreshToken;
+    return { sessionId: session.id, refreshToken };
   }
 
   /**
-   * Verify a refresh-token JWT and confirm it matches the stored hash for
-   * the claimed user. Throws UnauthorizedException on any failure. The hash
-   * comparison uses `crypto.timingSafeEqual` to close the side-channel that
-   * a naive `===` would expose.
+   * Replace a session's refresh token with a fresh one, which is what every
+   * refresh does: the old token stops working at once. Marks the session
+   * active now, and records the device again when the request says what it
+   * is. Throws when the session is gone (revoked meanwhile).
    */
-  async verifyRefreshToken(refreshToken: string): Promise<User> {
-    const user = await this.verifyRefreshTokenInternal(refreshToken);
-    if (!user) {
+  async rotateSession(
+    userId: string,
+    sessionId: string,
+    context: SessionContext = NO_SESSION_CONTEXT,
+  ): Promise<IssuedSession> {
+    const refreshToken = await this.signRefreshToken(userId);
+    const { count } = await this.prisma.authSession.updateMany({
+      where: { id: sessionId, userId },
+      data: {
+        refreshTokenHash: this.hash(refreshToken),
+        lastActiveAt: new Date(),
+        ...(context.userAgent ? { userAgent: context.userAgent } : {}),
+        ...(context.location ? { location: context.location } : {}),
+      },
+    });
+    if (count === 0) {
       throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
     }
-    return user;
+
+    return { sessionId, refreshToken };
+  }
+
+  /**
+   * Verify a refresh-token JWT and find the session holding its hash. Throws
+   * UnauthorizedException on any failure, including a session that was
+   * signed out. The lookup is by the hash itself (a unique index), so no
+   * secret is compared byte by byte here.
+   */
+  async verifyRefreshToken(refreshToken: string): Promise<VerifiedRefresh> {
+    const verified = await this.verifyRefreshTokenInternal(refreshToken);
+    if (!verified) {
+      throw new UnauthorizedException(INVALID_REFRESH_TOKEN_MESSAGE);
+    }
+    return verified;
   }
 
   /**
    * Lenient counterpart for callers (e.g. logout) that should silently
    * tolerate invalid tokens instead of surfacing a 401.
    */
-  async tryVerifyRefreshToken(refreshToken: string): Promise<User | null> {
+  async tryVerifyRefreshToken(refreshToken: string): Promise<VerifiedRefresh | null> {
     return this.verifyRefreshTokenInternal(refreshToken);
   }
 
-  /**
-   * Clear the persisted refresh-token hash, immediately invalidating any
-   * outstanding refresh JWT for this user.
-   */
-  async revokeRefreshToken(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshTokenHash: null },
+  /** The user's sessions, most recently active first. */
+  async listSessions(userId: string) {
+    return this.prisma.authSession.findMany({
+      where: { userId },
+      orderBy: [{ lastActiveAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, userAgent: true, location: true, createdAt: true, lastActiveAt: true },
     });
   }
 
-  private async verifyRefreshTokenInternal(refreshToken: string): Promise<User | null> {
+  /** Sign one session out. False when the user has no such session. */
+  async revokeSession(userId: string, sessionId: string): Promise<boolean> {
+    const { count } = await this.prisma.authSession.deleteMany({
+      where: { id: sessionId, userId },
+    });
+    return count > 0;
+  }
+
+  /**
+   * Sign out every session of the user, or every one but `exceptSessionId`.
+   * Returns how many were signed out.
+   */
+  async revokeSessions(userId: string, exceptSessionId?: string | null): Promise<number> {
+    const { count } = await this.prisma.authSession.deleteMany({
+      where: { userId, ...(exceptSessionId ? { id: { not: exceptSessionId } } : {}) },
+    });
+    return count;
+  }
+
+  private async signRefreshToken(userId: string): Promise<string> {
+    const payload: RefreshTokenPayload = {
+      sub: userId,
+      type: 'refresh',
+      // Two sign-ins in the same second would otherwise sign the same token,
+      // and the second session could not store its hash.
+      jti: randomUUID(),
+    };
+
+    return this.jwtService.signAsync(payload, {
+      secret: this.appConfigService.jwtRefreshSecret,
+      expiresIn: this.appConfigService.jwtRefreshExpiresIn as never,
+    });
+  }
+
+  private async verifyRefreshTokenInternal(refreshToken: string): Promise<VerifiedRefresh | null> {
     let payload: RefreshTokenPayload;
     try {
       payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(refreshToken, {
@@ -224,19 +289,16 @@ export class TokenService {
       return null;
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
+    const session = await this.prisma.authSession.findUnique({
+      where: { refreshTokenHash: this.hash(refreshToken) },
+      select: { id: true, user: true },
     });
 
-    if (!user || !user.refreshTokenHash) {
+    if (!session || session.user.id !== payload.sub) {
       return null;
     }
 
-    if (!this.timingSafeCompare(user.refreshTokenHash, this.hash(refreshToken))) {
-      return null;
-    }
-
-    return user;
+    return { user: session.user, sessionId: session.id };
   }
 
   private generate(bytes = 32): string {
@@ -245,14 +307,6 @@ export class TokenService {
 
   private hash(token: string): string {
     return createHash('sha256').update(token).digest('hex');
-  }
-
-  private timingSafeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    const aBuf = Buffer.from(a, 'hex');
-    const bBuf = Buffer.from(b, 'hex');
-    if (aBuf.length !== bBuf.length) return false;
-    return timingSafeEqual(aBuf, bBuf);
   }
 
   private buildVerificationUrl(token: string): string {

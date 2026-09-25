@@ -42,14 +42,22 @@ describe('OAuthController callback', () => {
       res,
     );
 
-    expect(oauthService.loginOrLink).toHaveBeenCalledWith(profile, { catalogModel: 'city' });
+    expect(oauthService.loginOrLink).toHaveBeenCalledWith(
+      profile,
+      { catalogModel: 'city' },
+      { userAgent: null, location: null },
+    );
     expect(fragment()).toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
   });
 
   it('passes no model when the state carried none', async () => {
     await controller.githubCallback({ user: profile, authInfo: { state: {} } }, res);
 
-    expect(oauthService.loginOrLink).toHaveBeenCalledWith(profile, { catalogModel: undefined });
+    expect(oauthService.loginOrLink).toHaveBeenCalledWith(
+      profile,
+      { catalogModel: undefined },
+      { userAgent: null, location: null },
+    );
   });
 
   it('ignores anything in authInfo that is not a catalog slug', async () => {
@@ -63,7 +71,11 @@ describe('OAuthController callback', () => {
 
       await controller.googleCallback({ user: profile, authInfo }, res);
 
-      expect(oauthService.loginOrLink).toHaveBeenCalledWith(profile, { catalogModel: undefined });
+      expect(oauthService.loginOrLink).toHaveBeenCalledWith(
+        profile,
+        { catalogModel: undefined },
+        { userAgent: null, location: null },
+      );
     }
   });
 

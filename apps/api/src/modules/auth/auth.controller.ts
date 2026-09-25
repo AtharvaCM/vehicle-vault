@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Ip, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { CurrentSessionId } from '../../common/auth/decorators/current-session-id.decorator';
 import { CurrentUser } from '../../common/auth/decorators/current-user.decorator';
 import { Public } from '../../common/auth/decorators/public.decorator';
 import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
@@ -15,6 +16,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { CurrentSessionContext, type SessionContext } from './session-context';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -26,8 +28,8 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
-  async register(@Body() body: RegisterDto) {
-    return successResponse(await this.authService.register(body));
+  async register(@Body() body: RegisterDto, @CurrentSessionContext() context: SessionContext) {
+    return successResponse(await this.authService.register(body, context));
   }
 
   /**
@@ -39,16 +41,20 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
-  async login(@Body() body: LoginDto, @Ip() clientIp: string) {
-    return successResponse(await this.authService.login(body, clientIp));
+  async login(
+    @Body() body: LoginDto,
+    @Ip() clientIp: string,
+    @CurrentSessionContext() context: SessionContext,
+  ) {
+    return successResponse(await this.authService.login(body, clientIp, context));
   }
 
   @Public()
   @RateLimit('token')
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh authentication token' })
-  async refresh(@Body() body: RefreshTokenDto) {
-    return successResponse(await this.authService.refresh(body));
+  async refresh(@Body() body: RefreshTokenDto, @CurrentSessionContext() context: SessionContext) {
+    return successResponse(await this.authService.refresh(body, context));
   }
 
   @Public()
@@ -87,8 +93,49 @@ export class AuthController {
   @Post('password')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change (or first set) the password of the signed-in account' })
-  async changePassword(@CurrentUser() user: AuthUser, @Body() body: PasswordChangeDto) {
-    return successResponse(await this.authService.changePassword(user.id, body));
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @CurrentSessionId() sessionId: string | null,
+    @CurrentSessionContext() context: SessionContext,
+    @Body() body: PasswordChangeDto,
+  ) {
+    return successResponse(
+      await this.authService.changePassword(user.id, body, sessionId, context),
+    );
+  }
+
+  /** Settings → Security: where this account is signed in. */
+  @Get('sessions')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "The signed-in account's sessions, most recently active first" })
+  async listSessions(@CurrentUser() user: AuthUser, @CurrentSessionId() sessionId: string | null) {
+    return successResponse(await this.authService.listSessions(user.id, sessionId));
+  }
+
+  /** Declared before `sessions/:sessionId`, so "others" is never read as an id. */
+  @RateLimit('token')
+  @Delete('sessions/others')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sign out every session but this one' })
+  async revokeOtherSessions(
+    @CurrentUser() user: AuthUser,
+    @CurrentSessionId() sessionId: string | null,
+  ) {
+    return successResponse(await this.authService.revokeOtherSessions(user.id, sessionId));
+  }
+
+  @RateLimit('token')
+  @Delete('sessions/:sessionId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sign out one session' })
+  async revokeSession(
+    @CurrentUser() user: AuthUser,
+    @CurrentSessionId() currentSessionId: string | null,
+    @Param('sessionId', new ParseUUIDPipe()) sessionId: string,
+  ) {
+    return successResponse(
+      await this.authService.revokeSession(user.id, sessionId, currentSessionId),
+    );
   }
 
   @Get('security')
