@@ -1,3 +1,10 @@
+# [1.114.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.113.0...v1.114.0) (2026-09-25)
+
+
+### Features
+
+* carry a new account from sign-up to its first reminder ([fbc26ea](https://github.com/AtharvaCM/vehicle-vault/commit/fbc26ea41d8520ab90582ca6a7171a8333f761fb)), closes [#346](https://github.com/AtharvaCM/vehicle-vault/issues/346)
+
 # [1.113.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.112.0...v1.113.0) (2026-09-25)
 
 
