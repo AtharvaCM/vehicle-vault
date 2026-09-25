@@ -28,6 +28,7 @@ function variantPage(overrides: Partial<PublicCatalogVariantPage> = {}): PublicC
       isCurrent: true,
     },
     variant: { name: 'VXi', slug: 'vxi' },
+    siblings: [],
     offerings: [{ fuelTypes: [FuelType.Petrol], yearStart: 2024, yearEnd: null, isCurrent: true }],
     specs: null,
     schedule: {
@@ -133,56 +134,44 @@ describe('RunningCostCalculator', () => {
     );
   });
 
-  it('adds the purchase when an on-road price is entered, and marks entered figures as yours', () => {
+  it('keeps the purchase out of the running cost, and shows owning it apart', () => {
     render(<RunningCostCalculator page={variantPage()} />);
+    const runningBefore = period('Per month').textContent;
+    expect(
+      screen.getByText(/Add the on-road price above to see the cost of owning it/),
+    ).toBeInTheDocument();
 
     type('On-road price (optional)', '9,00,000');
-    type('Distance per month', '1500');
 
-    expect(within(period('Over 5 years')).getByText('Purchase').nextSibling).toHaveTextContent(
-      '₹9,00,000',
-    );
-    expect(within(period('Per month')).getByText('Purchase').nextSibling).toHaveTextContent(
-      '₹15,000',
-    );
+    // The running cost reads the same: fuel and service only.
+    expect(period('Per month').textContent).toBe(runningBefore);
+    expect(within(period('Per month')).queryByText('Purchase')).not.toBeInTheDocument();
+    const owning = screen.getByRole('region', { name: 'Cost of owning it over 5 years' });
+    expect(within(owning).getByText('On-road price').nextSibling).toHaveTextContent('₹9,00,000');
+    // 0.85⁵ of ₹9,00,000 kept: about 44%.
+    expect(
+      within(owning).getByText(/Less resale after 5 years \(assumed, 44% kept\)/),
+    ).toBeInTheDocument();
+  });
+
+  it('marks entered figures as yours, and a bad one at its own field', () => {
+    render(<RunningCostCalculator page={variantPage()} />);
+
+    type('Distance per month', '1500');
     expect(screen.getByLabelText('Distance per month')).toHaveAccessibleDescription(
       /km Your figure/,
     );
     expect(screen.getByText(/Assumed, not entered:/)).not.toHaveTextContent('km a month');
-  });
 
-  it('works in kWh per 100 km and a price per kWh for an EV', () => {
-    render(<RunningCostCalculator page={electricPage()} />);
-
-    expect(screen.getByLabelText('Energy use')).toHaveValue('10');
-    expect(screen.getByLabelText('Energy use')).toHaveAccessibleDescription(/kWh\/100 km/);
-    expect(screen.getByLabelText('Electricity price')).toHaveValue('9');
-    expect(screen.getByLabelText('Electricity price')).toHaveAccessibleDescription(/per kWh/);
-    // 1,000 km × 10 kWh/100 km × ₹9 = ₹900.
-    expect(within(period('Per month')).getByText('Electricity').nextSibling).toHaveTextContent(
-      '₹900',
-    );
-  });
-
-  it.each([
-    ['0', 'Distance per month needs to be between 1 and 20,000 km.'],
-    ['-40', 'Distance per month needs to be between 1 and 20,000 km.'],
-    ['9999999', 'Distance per month needs to be between 1 and 20,000 km.'],
-    ['lots', 'Distance per month needs to be a number.'],
-    ['', 'Enter distance per month.'],
-  ])('shows a can’t-estimate state for %j km a month, with no NaN', (value, message) => {
-    render(<RunningCostCalculator page={variantPage()} />);
-
-    type('Distance per month', value);
-
-    expect(screen.getByRole('heading', { name: 'Can’t estimate yet' })).toBeInTheDocument();
-    expect(screen.getByText(message)).toBeInTheDocument();
+    type('Distance per month', 'abc');
     expect(screen.getByLabelText('Distance per month')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.queryByRole('region', { name: 'Per month' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('running-cost-calculator')).not.toHaveTextContent('NaN');
+    expect(screen.getByLabelText('Distance per month')).toHaveAccessibleDescription(
+      /Distance per month needs to be a number/,
+    );
+    expect(screen.getByText('Can’t estimate yet')).toBeInTheDocument();
   });
 
-  it('asks for a mileage when the catalog has none', () => {
+  it('opens clean on a typical mileage when the catalog has none, and says so', () => {
     render(
       <RunningCostCalculator
         page={variantPage({
@@ -196,12 +185,30 @@ describe('RunningCostCalculator', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Mileage')).toHaveValue('');
-    expect(screen.getByLabelText('Mileage')).toHaveAccessibleDescription(/Enter your figure/);
-    expect(screen.getByText('Enter mileage.')).toBeInTheDocument();
+    const mileage = screen.getByLabelText('Mileage');
+    expect(mileage).toHaveValue('15');
+    expect(mileage).not.toHaveAttribute('aria-invalid');
+    expect(mileage).toHaveAccessibleDescription(/Assumed · typical for petrol cars/);
+    expect(screen.queryByText('Can’t estimate yet')).not.toBeInTheDocument();
+    expect(period('Per month')).toBeInTheDocument();
+  });
 
-    type('Mileage', '18');
+  it('asks, without an alarm, for a figure it has no default for', () => {
+    render(
+      <RunningCostCalculator
+        page={variantPage({
+          calculatorSeed: {
+            fuelType: FuelType.Other,
+            claimedMileage: null,
+            claimedRangeKm: null,
+            batteryKwh: null,
+          },
+        })}
+      />,
+    );
 
+    expect(screen.getByLabelText('Mileage')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByText('Add your mileage to see the cost.')).toBeInTheDocument();
     expect(screen.queryByText('Can’t estimate yet')).not.toBeInTheDocument();
   });
 

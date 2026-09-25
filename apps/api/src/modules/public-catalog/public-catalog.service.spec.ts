@@ -72,6 +72,11 @@ function variantRow(overrides: Record<string, unknown> = {}) {
       isCurrent: true,
       sourceName: 'carwale',
       sourceUrl: 'https://source.example.test/hyundai/i20',
+      variants: [
+        { name: 'Asta', slug: 'asta' },
+        { name: 'Magna', slug: 'magna' },
+        { name: 'Sportz', slug: 'sportz' },
+      ],
       model: {
         id: 'model-1',
         name: 'i20',
@@ -184,6 +189,11 @@ describe('PublicCatalogService', () => {
         model: { name: 'i20', slug: 'i20' },
         generation: { name: 'i20 lineup', slug: 'i20-lineup', yearStart: 2020, isCurrent: true },
         variant: { name: 'Asta', slug: 'asta' },
+        // The generation's other variants, never itself.
+        siblings: [
+          { name: 'Magna', slug: 'magna' },
+          { name: 'Sportz', slug: 'sportz' },
+        ],
       });
       expect(page.offerings).toEqual([
         { fuelTypes: ['petrol', 'cng'], yearStart: 2023, yearEnd: null, isCurrent: true },
@@ -642,13 +652,14 @@ describe('PublicCatalogService', () => {
           },
         }),
       );
-      expect(page).toEqual({
-        segment: 'cars',
-        makes: [
-          { name: 'Honda', slug: 'honda', modelCount: 1 },
-          { name: 'Hyundai', slug: 'hyundai', modelCount: 4 },
-        ],
-      });
+      expect(page.segment).toBe('cars');
+      expect(page.makes).toEqual([
+        { name: 'Honda', slug: 'honda', modelCount: 1 },
+        { name: 'Hyundai', slug: 'hyundai', modelCount: 4 },
+      ]);
+      // And every model, for the page's search: the builder's own spec covers the rest.
+      expect(page.models).toHaveLength(5);
+      expect(page.models[0]).toMatchObject({ slug: 'city', make: { slug: 'honda' } });
     });
 
     it('gives an empty browse page, not an error, when a segment has nothing yet', async () => {
@@ -657,6 +668,7 @@ describe('PublicCatalogService', () => {
       await expect(service.getBrowsePage('bikes')).resolves.toEqual({
         segment: 'bikes',
         makes: [],
+        models: [],
       });
     });
   });

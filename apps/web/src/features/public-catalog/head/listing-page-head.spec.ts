@@ -49,6 +49,7 @@ const browsePage: PublicCatalogBrowsePage = {
     { name: 'Kia', slug: 'kia', modelCount: 5 },
     { name: 'Tata', slug: 'tata', modelCount: 9 },
   ],
+  models: [],
 };
 
 describe('publicCatalogPath', () => {
@@ -165,17 +166,17 @@ describe('browsePageHead', () => {
       'Service schedules, running costs and specs for cars from 4 makes sold in India: ' +
         'Honda, Hyundai, Kia and 1 more.',
     );
-    expect(browsePageHead({ segment: 'bikes', makes: [] }, { origin: ORIGIN }).title).toBe(
-      'Bikes by make — models, service schedules and specs | Vehicle Vault',
-    );
+    expect(
+      browsePageHead({ segment: 'bikes', makes: [], models: [] }, { origin: ORIGIN }).title,
+    ).toBe('Bikes by make — models, service schedules and specs | Vehicle Vault');
   });
 
   it('is indexed whenever indexing is on and it lists a make, and never with indexing off', () => {
     expect(browsePageHead(browsePage, { indexing: true }).robots).toBe('index, follow');
     expect(browsePageHead(browsePage, { indexing: false }).robots).toBe('noindex');
-    expect(browsePageHead({ segment: 'bikes', makes: [] }, { indexing: true }).robots).toBe(
-      'noindex',
-    );
+    expect(
+      browsePageHead({ segment: 'bikes', makes: [], models: [] }, { indexing: true }).robots,
+    ).toBe('noindex');
   });
 
   it('describes its makes as an ItemList, with no breadcrumbs above the top', () => {
@@ -183,6 +184,7 @@ describe('browsePageHead', () => {
       {
         segment: 'bikes',
         makes: [{ name: 'Royal Enfield', slug: 'royal-enfield', modelCount: 3 }],
+        models: [],
       },
       { origin: ORIGIN },
     );

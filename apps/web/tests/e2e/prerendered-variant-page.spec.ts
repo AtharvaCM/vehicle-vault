@@ -178,7 +178,7 @@ test.describe('prerendered variant page', () => {
     await expect.poll(async () => (await isReactOwned(page)).hydrated).toBe(true);
     expect(await isReactOwned(page)).toEqual({ sameNode: true, hydrated: true });
 
-    const calculator = page.getByRole('region', { name: 'Running cost' });
+    const calculator = page.getByRole('region', { name: 'What it costs to run' });
     await expect(calculator.getByLabel('Distance per month')).toHaveValue('1500');
     const monthlyFuel = calculator
       .getByRole('region', { name: 'Per month' })

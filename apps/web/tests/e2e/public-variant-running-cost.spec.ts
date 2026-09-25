@@ -49,7 +49,7 @@ test.describe('running-cost calculator on the public variant page', () => {
     await page.setViewportSize(PHONE);
     await page.goto(path);
 
-    const calculator = page.getByRole('region', { name: 'Running cost' });
+    const calculator = page.getByRole('region', { name: 'What it costs to run' });
     await expect(calculator).toBeVisible();
     // It opens on the claimed mileage and a default petrol price, both marked as assumed.
     await expect(calculator.getByLabel('Mileage')).toHaveValue('20.3');
@@ -61,13 +61,14 @@ test.describe('running-cost calculator on the public variant page', () => {
     await calculator.getByLabel('On-road price (optional)').fill('8,00,000');
 
     const perMonth = calculator.getByRole('region', { name: 'Per month' });
-    // 1,500 km ÷ 20.3 km/L × ₹100, and ₹8,00,000 spread over 60 months.
+    // 1,500 km ÷ 20.3 km/L × ₹100: the running cost is fuel and service, never the price.
     await expect(perMonth.getByRole('definition').first()).toHaveText('₹7,389');
-    await expect(perMonth.getByRole('definition').last()).toHaveText('₹13,333');
+    await expect(perMonth.getByRole('definition')).toHaveCount(2);
     await expect(calculator.getByRole('region', { name: 'Per year' })).toBeVisible();
-    await expect(
-      calculator.getByRole('region', { name: 'Over 5 years' }).getByText('₹8,00,000'),
-    ).toBeVisible();
+    // The price goes into the cost of owning it, apart, with an assumed resale.
+    const owning = calculator.getByRole('region', { name: 'Cost of owning it over 5 years' });
+    await expect(owning.getByRole('definition').first()).toHaveText('₹8,00,000');
+    await expect(owning).toContainText('assumed, 44% kept');
     await expect(calculator).not.toContainText('NaN');
     const totalBefore = await perMonth.locator('p').first().textContent();
     await expectNoSidewaysScroll(page);
@@ -102,7 +103,7 @@ test.describe('running-cost calculator on the public variant page', () => {
     await page.setViewportSize(PHONE);
     await page.goto(path);
 
-    const calculator = page.getByRole('region', { name: 'Running cost' });
+    const calculator = page.getByRole('region', { name: 'What it costs to run' });
     await calculator.getByLabel('Distance per month').fill('1500');
     await calculator.getByLabel('Petrol price').fill('100');
 

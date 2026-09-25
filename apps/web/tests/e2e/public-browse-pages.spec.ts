@@ -93,11 +93,12 @@ test.describe('public make and browse pages', () => {
   }) => {
     await page.setViewportSize(PHONE);
     await page.goto('/');
-    await page.getByRole('link', { name: 'Browse cars' }).click();
+    // The landing page's Find your vehicle.
+    await page.getByRole('link', { name: 'All cars' }).click();
 
     // Browse: every make once, whatever rows it has.
     await expect(page).toHaveURL(/\/cars$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Cars by make' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Cars in India' })).toBeVisible();
     await expect(page).toHaveTitle(/^Cars by make — /);
     const makes = page.getByRole('region', { name: 'Makes' });
     await expect(
@@ -156,7 +157,7 @@ test.describe('public make and browse pages', () => {
     await expect(page).toHaveURL(new RegExp(`/cars/${make.slug}$`));
 
     await breadcrumbs(page).getByRole('link', { name: 'Cars', exact: true }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Cars by make' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Cars in India' })).toBeVisible();
     await expect(page).toHaveURL(/\/cars$/);
   });
 
@@ -173,10 +174,10 @@ test.describe('public make and browse pages', () => {
     });
     await page.setViewportSize(PHONE);
     await page.goto('/');
-    await page.getByRole('link', { name: 'Browse bikes' }).click();
+    await page.getByRole('link', { name: 'All bikes' }).click();
 
     await expect(page).toHaveURL(/\/bikes$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Bikes by make' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Bikes in India' })).toBeVisible();
     await page
       .getByRole('region', { name: 'Makes' })
       .getByRole('link', { name: new RegExp(`^${literal(bikeMake.name)}`) })

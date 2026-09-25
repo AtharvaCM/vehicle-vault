@@ -1,3 +1,18 @@
+# [1.113.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.112.0...v1.113.0) (2026-09-25)
+
+
+### Features
+
+* lead the landing page with the product and the catalog ([56e15e0](https://github.com/AtharvaCM/vehicle-vault/commit/56e15e02438bc650a9c1c775a593fd5628211cdc)), closes [#342](https://github.com/AtharvaCM/vehicle-vault/issues/342)
+* lead the variant page with key facts and an honest running cost ([2ab3c53](https://github.com/AtharvaCM/vehicle-vault/commit/2ab3c536e8d143932c057fbf7462cc61ac0eaf68)), closes [#344](https://github.com/AtharvaCM/vehicle-vault/issues/344)
+
+# [1.112.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.111.0...v1.112.0) (2026-09-25)
+
+
+### Features
+
+* make the catalog's browse page a front door ([1e011a4](https://github.com/AtharvaCM/vehicle-vault/commit/1e011a4c5384e0e296eaba13f22ee37f81bf43f6)), closes [#345](https://github.com/AtharvaCM/vehicle-vault/issues/345)
+
 # [1.111.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.110.0...v1.111.0) (2026-09-25)
 
 

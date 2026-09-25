@@ -3,13 +3,16 @@ import {
   FuelType,
   MaintenanceCategory,
   OWNERSHIP_COST_DEFAULTS_AS_OF,
+  ASSUMED_VALUE_KEPT_PER_YEAR,
   OWNERSHIP_COST_LIMITS,
+  defaultEfficiency,
   estimateOwnershipCost,
   ownershipCostDefaults,
   ownershipCostEnergyUnits,
   VehicleType,
   type OwnershipCostBreakdown,
   type OwnershipCostDefaultedField,
+  type OwnershipCostEfficiencySource,
   type OwnershipCostEnergyUnits,
   type OwnershipCostEstimate,
   type OwnershipCostInput,
@@ -79,9 +82,17 @@ function Calculator({ page, storageKey }: RunningCostCalculatorProps & { storage
   const units = ownershipCostEnergyUnits(base.fuelType);
   const labels = fieldLabels(base.fuelType, units);
 
+  const efficiencySource = defaultEfficiency(base)?.source ?? null;
+
   const result = estimateOwnershipCost({ ...base, ...visitorInput(entered) });
-  const problemFields = new Set(
-    result.kind === 'cannot-estimate' ? result.problems.map((p) => p.field) : [],
+  // Only a field the visitor has typed in is ever marked wrong: the calculator
+  // never opens in an error state.
+  const problems = new Map(
+    (result.kind === 'cannot-estimate' ? result.problems : [])
+      .filter(
+        (problem) => problem.field !== 'serviceInterval' && entered[problem.field] !== undefined,
+      )
+      .map((problem) => [problem.field, describeProblem(problem, labels, units)]),
   );
   const hasEntered = Object.keys(entered).length > 0;
 
@@ -92,10 +103,10 @@ function Calculator({ page, storageKey }: RunningCostCalculatorProps & { storage
       data-testid="running-cost-calculator"
     >
       <h2 className="text-lead font-semibold tracking-tight text-fg" id="running-cost-heading">
-        Running cost
+        What it costs to run
       </h2>
       <p className="mt-1 text-ui leading-6 text-fg-2">
-        An estimate, not a quote. Change any figure to match how you drive.
+        Fuel and servicing: an estimate, not a quote. Change any figure to match how you drive.
       </p>
 
       <form
@@ -106,10 +117,10 @@ function Calculator({ page, storageKey }: RunningCostCalculatorProps & { storage
         {FIELD_ORDER.map((field) => (
           <CalculatorField
             adornment={labels[field]}
-            assumption={assumptionHint(field, base, units)}
+            assumption={assumptionHint(field, base, units, efficiencySource)}
             defaultValue={field === 'onRoadPrice' ? null : defaults[field]}
             enteredValue={entered[field]}
-            invalid={problemFields.has(field)}
+            problem={problems.get(field) ?? null}
             key={field}
             optional={field === 'onRoadPrice'}
             onChange={(value) => setEntered((current) => ({ ...current, [field]: value }))}
@@ -133,7 +144,12 @@ function Calculator({ page, storageKey }: RunningCostCalculatorProps & { storage
         {result.kind === 'estimate' ? (
           <EstimateView estimate={result} labels={labels} vehicleType={base.vehicleType} />
         ) : (
-          <CannotEstimate labels={labels} problems={result.problems} units={units} />
+          <CannotEstimate
+            entered={entered}
+            labels={labels}
+            problems={result.problems}
+            units={units}
+          />
         )}
       </div>
     </section>
@@ -171,7 +187,8 @@ type CalculatorFieldProps = {
   assumption: string;
   defaultValue: number | null;
   enteredValue: string | undefined;
-  invalid: boolean;
+  /** What is wrong with what the visitor typed, said at the field; null when nothing is. */
+  problem: string | null;
   optional: boolean;
   onChange: (value: string) => void;
 };
@@ -181,7 +198,7 @@ function CalculatorField({
   assumption,
   defaultValue,
   enteredValue,
-  invalid,
+  problem,
   optional,
   onChange,
 }: CalculatorFieldProps) {
@@ -208,7 +225,7 @@ function CalculatorField({
         ) : null}
         <Input
           aria-describedby={describedBy}
-          aria-invalid={invalid || undefined}
+          aria-invalid={problem ? true : undefined}
           autoComplete="off"
           className="h-10 min-w-0 flex-1 bg-surface text-field tabular-nums aria-invalid:border-late sm:text-ui"
           id={id}
@@ -224,7 +241,9 @@ function CalculatorField({
         ) : null}
       </div>
       <p className="text-caption leading-5 text-fg-3" id={hintId}>
-        {isEntered ? (
+        {problem ? (
+          <span className="font-medium text-late">{problem}</span>
+        ) : isEntered ? (
           <span className="font-medium text-fg-2">Your figure</span>
         ) : optional ? (
           assumption
@@ -272,13 +291,12 @@ function EstimateView({
             <dl className="mt-2 space-y-1 text-ui">
               <BreakdownRow label={labels.energy} value={breakdown.energy} />
               <BreakdownRow label="Service" value={breakdown.service} />
-              {breakdown.purchase !== null ? (
-                <BreakdownRow label="Purchase" value={breakdown.purchase} />
-              ) : null}
             </dl>
           </section>
         ))}
       </div>
+
+      <OwnershipView estimate={estimate} />
 
       <div className="rounded-lg bg-page p-3 text-ui leading-6 text-fg-2">
         <h3 className="font-medium text-fg">How this is worked out</h3>
@@ -299,16 +317,57 @@ function EstimateView({
             {estimate.serviceVisitsPerYear === 1 ? 'visit' : 'visits'} a year, from the schedule’s
             regular service ({describeInterval(estimate.inputs.serviceInterval).toLowerCase()}).
           </li>
-          {estimate.inputs.onRoadPrice !== null ? (
-            <li>
-              Purchase: the on-road price counted once over {formatQuantity(years)}{' '}
-              {years === 1 ? 'year' : 'years'} and spread evenly across each year and month.
-            </li>
-          ) : null}
+          <li>
+            Running cost is fuel and servicing only; the price you pay for it is counted in the cost
+            of owning it, never here.
+          </li>
           <li>Not included: insurance, tyres, repairs, loan interest, parking and tolls.</li>
         </ul>
       </div>
     </div>
+  );
+}
+
+/**
+ * The cost of owning it over the years, apart from the running cost: shown once
+ * the visitor adds an on-road price, with the resale it assumes said plainly.
+ */
+function OwnershipView({ estimate }: { estimate: OwnershipCostEstimate }) {
+  const { years } = estimate.inputs;
+  const period = `${formatQuantity(years)} ${years === 1 ? 'year' : 'years'}`;
+  const { ownership } = estimate;
+
+  if (!ownership) {
+    return (
+      <p className="text-ui text-fg-2">
+        Add the on-road price above to see the cost of owning it over {period}, resale included.
+      </p>
+    );
+  }
+
+  const keptPercent = Math.round(ASSUMED_VALUE_KEPT_PER_YEAR ** years * 100);
+  return (
+    <section
+      aria-labelledby="ownership-heading"
+      className="rounded-lg border border-line p-3"
+      data-testid="ownership-cost"
+    >
+      <h3 className="text-ui font-medium text-fg-2" id="ownership-heading">
+        Cost of owning it over {period}
+      </h3>
+      <p className="mt-1 text-title font-semibold tabular-nums tracking-tight text-fg">
+        {format.money(ownership.total)}
+      </p>
+      <p className="text-ui text-fg-2">about {format.money(ownership.perMonth)} a month</p>
+      <dl className="mt-2 space-y-1 text-ui">
+        <BreakdownRow label="On-road price" value={ownership.onRoadPrice} />
+        <BreakdownRow
+          label={`Less resale after ${period} (assumed, ${keptPercent}% kept)`}
+          value={-ownership.resaleValue}
+        />
+        <BreakdownRow label={`Running it for ${period}`} value={ownership.running} />
+      </dl>
+    </section>
   );
 }
 
@@ -322,24 +381,48 @@ function BreakdownRow({ label, value }: { label: string; value: number }) {
 }
 
 function CannotEstimate({
+  entered,
   labels,
   problems,
   units,
 }: {
+  entered: EnteredValues;
   labels: ReturnType<typeof fieldLabels>;
   problems: OwnershipCostProblem[];
   units: OwnershipCostEnergyUnits;
 }) {
+  const typedWrong = problems.some(
+    (problem) => problem.field !== 'serviceInterval' && entered[problem.field] !== undefined,
+  );
+
+  if (!typedWrong) {
+    // Nothing the visitor typed is wrong: a figure the page has no default for
+    // is simply still to be added. Say what, without an alarm.
+    return (
+      <div className="rounded-lg bg-page p-3 text-ui leading-6 text-fg-2">
+        {problems.map((problem) => (
+          <p key={problem.field}>{describeMissing(problem, labels, units)}</p>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-soon/30 bg-soon-tint p-3 text-ui leading-6 text-soon">
       <h3 className="font-medium">Can’t estimate yet</h3>
-      <ul className="mt-1 list-disc space-y-1 pl-5">
-        {problems.map((problem) => (
-          <li key={problem.field}>{describeProblem(problem, labels, units)}</li>
-        ))}
-      </ul>
+      <p className="mt-1">Fix the figure marked above to see the cost.</p>
     </div>
   );
+}
+
+function describeMissing(
+  problem: OwnershipCostProblem,
+  labels: ReturnType<typeof fieldLabels>,
+  units: OwnershipCostEnergyUnits,
+) {
+  if (problem.field === 'serviceInterval') return describeProblem(problem, labels, units);
+  const name = labels[problem.field].label.replace(' (optional)', '').toLowerCase();
+  return `Add your ${name} to see the cost.`;
 }
 
 function describeProblem(
@@ -376,11 +459,15 @@ function assumptionHint(
   field: OwnershipCostVisitorField,
   base: ReturnType<typeof baseInput>,
   units: OwnershipCostEnergyUnits,
+  efficiencySource: OwnershipCostEfficiencySource | null,
 ) {
   switch (field) {
     case 'kmPerMonth':
       return 'a typical month’s driving';
     case 'efficiency':
+      if (efficiencySource === 'typical') {
+        return `typical for ${formatFuelType(base.fuelType).toLowerCase()} ${vehicleNoun(base.vehicleType)}; we have no claimed figure for this one`;
+      }
       return units.kind === 'electric'
         ? 'the battery over the claimed range; real use is usually higher'
         : 'the maker’s claimed figure; real-world mileage is usually lower';
@@ -393,7 +480,7 @@ function assumptionHint(
     case 'years':
       return 'a typical ownership period';
     case 'onRoadPrice':
-      return 'Add it to see the total cost of owning it.';
+      return 'Add it to see the cost of owning it, resale included.';
   }
 }
 
@@ -408,6 +495,9 @@ function describeAssumed(
     case 'kmPerMonth':
       return `${formatQuantity(inputs.kmPerMonth)} km a month`;
     case 'efficiency':
+      if (estimate.efficiencySource === 'typical') {
+        return `a typical ${formatQuantity(inputs.efficiency)} ${units.efficiencyUnit}`;
+      }
       return units.kind === 'electric'
         ? `${formatQuantity(inputs.efficiency)} kWh/100 km from the claimed range`
         : `the claimed ${formatQuantity(inputs.efficiency)} ${units.efficiencyUnit}`;
