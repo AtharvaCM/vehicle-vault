@@ -652,13 +652,14 @@ describe('PublicCatalogService', () => {
           },
         }),
       );
-      expect(page).toEqual({
-        segment: 'cars',
-        makes: [
-          { name: 'Honda', slug: 'honda', modelCount: 1 },
-          { name: 'Hyundai', slug: 'hyundai', modelCount: 4 },
-        ],
-      });
+      expect(page.segment).toBe('cars');
+      expect(page.makes).toEqual([
+        { name: 'Honda', slug: 'honda', modelCount: 1 },
+        { name: 'Hyundai', slug: 'hyundai', modelCount: 4 },
+      ]);
+      // And every model, for the page's search: the builder's own spec covers the rest.
+      expect(page.models).toHaveLength(5);
+      expect(page.models[0]).toMatchObject({ slug: 'city', make: { slug: 'honda' } });
     });
 
     it('gives an empty browse page, not an error, when a segment has nothing yet', async () => {
@@ -667,6 +668,7 @@ describe('PublicCatalogService', () => {
       await expect(service.getBrowsePage('bikes')).resolves.toEqual({
         segment: 'bikes',
         makes: [],
+        models: [],
       });
     });
   });

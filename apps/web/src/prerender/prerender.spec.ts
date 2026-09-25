@@ -756,13 +756,13 @@ describe('prerenderPublicCatalog', () => {
       await run(fixtureFetch(catalogRoutes));
 
       const cars = rootOf(await readPage('/cars'));
-      expect(cars).toMatch(/<h1[^>]*>Cars by make<\/h1>/);
+      expect(cars).toMatch(/<h1[^>]*>Cars in India<\/h1>/);
       expect(cars).toMatch(/<a[^>]*href="\/cars\/hyundai"[^>]*>.*Hyundai.*1 model/);
       expect(cars).not.toContain('royal-enfield');
       expect(cars).not.toContain('Loading the makes');
 
       const bikes = rootOf(await readPage('/bikes'));
-      expect(bikes).toMatch(/<h1[^>]*>Bikes by make<\/h1>/);
+      expect(bikes).toMatch(/<h1[^>]*>Bikes in India<\/h1>/);
       expect(bikes).toContain('href="/bikes/royal-enfield"');
     });
 
@@ -840,6 +840,12 @@ describe('prerenderPublicCatalog', () => {
       expect(browse?.state.data).toEqual({
         segment: 'bikes',
         makes: [{ name: 'Royal Enfield', slug: 'royal-enfield', modelCount: 1 }],
+        models: [
+          expect.objectContaining({
+            make: { name: 'Royal Enfield', slug: 'royal-enfield' },
+            variantCount: 1,
+          }),
+        ],
       });
     });
 

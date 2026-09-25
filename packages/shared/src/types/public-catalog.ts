@@ -322,11 +322,23 @@ export interface PublicCatalogBrowseMake extends PublicCatalogNamedSlug {
   modelCount: number;
 }
 
+/** One model as a browse page knows it: enough to find it by name and link to it. */
+export interface PublicCatalogBrowseModel extends PublicCatalogNamedSlug {
+  make: PublicCatalogNamedSlug;
+  /** How many variant pages it has. */
+  variantCount: number;
+  /** Any of its variants is on sale now. */
+  isCurrent: boolean;
+}
+
 /**
  * The public page for a segment, `/cars` or `/bikes`: every make with a public
- * page there, by name. Empty only when the catalog has nothing in the segment.
+ * page there, by name, and every model, by make then name, for the page's
+ * search and popular models. Empty only when the catalog has nothing in the
+ * segment.
  */
 export interface PublicCatalogBrowsePage {
   segment: PublicCatalogSegment;
   makes: PublicCatalogBrowseMake[];
+  models: PublicCatalogBrowseModel[];
 }

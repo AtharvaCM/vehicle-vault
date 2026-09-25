@@ -213,12 +213,13 @@ describe('buildPublicCatalogMakePage', () => {
 });
 
 describe('buildPublicCatalogBrowsePage', () => {
-  it('lists each make once by name, with how many models it has across its rows', () => {
+  it('lists each make once by name, and each model once by make then name', () => {
     const page = buildPublicCatalogBrowsePage(
       [
         entry({ model: 'i20', variant: 'Asta' }),
-        entry({ model: 'i20', variant: 'Sportz' }),
+        entry({ model: 'i20', variant: 'Sportz', isCurrent: false, yearEnd: 2022 }),
         entry({ model: 'Creta', variant: 'SX', vehicleType: VehicleType.SUV }),
+        entry({ model: 'Santro', variant: 'Era', isCurrent: false, yearEnd: 2022 }),
         entry({ model: 'City', variant: 'V', make: { name: 'Honda', slug: 'honda' } }),
         entry({
           model: 'Classic 350',
@@ -235,7 +236,38 @@ describe('buildPublicCatalogBrowsePage', () => {
       segment: 'cars',
       makes: [
         { name: 'Honda', slug: 'honda', modelCount: 1 },
-        { name: 'Hyundai', slug: 'hyundai', modelCount: 2 },
+        { name: 'Hyundai', slug: 'hyundai', modelCount: 3 },
+      ],
+      models: [
+        {
+          name: 'City',
+          slug: 'city',
+          make: { name: 'Honda', slug: 'honda' },
+          variantCount: 1,
+          isCurrent: true,
+        },
+        {
+          name: 'Creta',
+          slug: 'creta',
+          make: { name: 'Hyundai', slug: 'hyundai' },
+          variantCount: 1,
+          isCurrent: true,
+        },
+        // On sale while any of its variants is.
+        {
+          name: 'i20',
+          slug: 'i20',
+          make: { name: 'Hyundai', slug: 'hyundai' },
+          variantCount: 2,
+          isCurrent: true,
+        },
+        {
+          name: 'Santro',
+          slug: 'santro',
+          make: { name: 'Hyundai', slug: 'hyundai' },
+          variantCount: 1,
+          isCurrent: false,
+        },
       ],
     });
   });
@@ -243,6 +275,6 @@ describe('buildPublicCatalogBrowsePage', () => {
   it('is empty for a segment with nothing in it', () => {
     expect(
       buildPublicCatalogBrowsePage([entry({ model: 'i20', variant: 'Asta' })], 'bikes'),
-    ).toEqual({ segment: 'bikes', makes: [] });
+    ).toEqual({ segment: 'bikes', makes: [], models: [] });
   });
 });

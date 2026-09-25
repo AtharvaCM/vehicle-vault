@@ -101,7 +101,8 @@ export function TrackThisVehicle({ page }: TrackThisVehicleProps) {
   return (
     <section
       aria-labelledby="track-this-vehicle-heading"
-      className="rounded-xl border border-line bg-surface p-4 shadow-xs sm:p-5"
+      className="scroll-mt-20 rounded-xl border border-line bg-surface p-4 shadow-xs sm:p-5"
+      id="track-this-vehicle"
     >
       <h2
         className="text-lead font-semibold tracking-tight text-fg"

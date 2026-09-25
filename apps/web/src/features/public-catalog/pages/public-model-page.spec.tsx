@@ -202,6 +202,18 @@ describe('PublicModelPageView', () => {
     );
   });
 
+  it('points to the offer from under the title', () => {
+    render(<PublicModelPageView page={modelPage()} />);
+
+    expect(screen.getByRole('link', { name: 'Own one? Track it free' })).toHaveAttribute(
+      'href',
+      '#track-this-vehicle',
+    );
+    expect(document.getElementById('track-this-vehicle')).toHaveAccessibleName(
+      'Own a Hyundai i20?',
+    );
+  });
+
   it('links a bike model’s variants under /bikes', () => {
     render(
       <PublicModelPageView
