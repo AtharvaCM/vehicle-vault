@@ -335,7 +335,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   const tabs: Array<[string, Array<string | RegExp>]> = [
     ['tab=overview', [workshop, reminderTitle]],
     ['tab=history', [workshop]],
-    ['tab=more&section=specs', [/No specifications available|Engine & drivetrain/]],
+    ['tab=more&section=about', [/We don't have specs for this variant yet|Tyres /]],
     ['tab=reminders', [reminderTitle]],
     ['tab=history&view=fuel', ['42.5 L fuel fill']],
     ['tab=more&section=tyres', ['Log inspection']],

@@ -11,7 +11,7 @@ export type VehicleHistoryView = (typeof vehicleHistoryViews)[number];
 
 /** The sections the More tab lists, each opened on its own. */
 export const vehicleMoreSections = [
-  'specs',
+  'about',
   'tyres',
   'accessories',
   'loans',
@@ -45,7 +45,7 @@ export const legacyVehicleDetailTabs = {
   fuel: { tab: 'history', view: 'fuel' },
   reminders: { tab: 'reminders' },
   protection: { tab: 'papers' },
-  specs: { tab: 'more', section: 'specs' },
+  specs: { tab: 'more', section: 'about' },
   tyres: { tab: 'more', section: 'tyres' },
   accessories: { tab: 'more', section: 'accessories' },
   loans: { tab: 'more', section: 'loans' },
@@ -93,7 +93,10 @@ export function normalizeVehicleDetailSearch(search: Record<string, unknown>): V
   }
 
   if (tab === 'more') {
-    const section = isOneOf(vehicleMoreSections, source.section) ? source.section : undefined;
+    // Tech specs became About this vehicle (#319); links to the old section
+    // still open it.
+    const requested = source.section === 'specs' ? 'about' : source.section;
+    const section = isOneOf(vehicleMoreSections, requested) ? requested : undefined;
     return { tab, ...(section ? { section } : {}) };
   }
 

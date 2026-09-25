@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { compare, hash } from 'bcryptjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from './auth.service';
@@ -766,6 +768,97 @@ describe('AuthService', () => {
     await expect(service.getMe('user-1')).resolves.toMatchObject({
       emailVerified: true,
       emailVerificationDueAt: null,
+    });
+  });
+
+  describe('changePassword', () => {
+    const record = {
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      role: 'user',
+      emailVerified: true,
+      allowedCatalogSources: [],
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    it('checks the current password, stores the new one, and rotates the refresh token', async () => {
+      const passwordHash = await hash('old-password-1', 4);
+      prisma.user.findUnique.mockResolvedValueOnce({ ...record, passwordHash });
+      prisma.user.update.mockResolvedValueOnce({ ...record });
+      jwtService.signAsync.mockResolvedValueOnce('access-token');
+
+      const response = await service.changePassword('user-1', {
+        currentPassword: 'old-password-1',
+        newPassword: 'new-password-2',
+      });
+
+      const data = prisma.user.update.mock.calls[0]![0].data as { passwordHash: string };
+      expect(await compare('new-password-2', data.passwordHash)).toBe(true);
+      expect(tokenService.rotateRefreshToken).toHaveBeenCalledTimes(1);
+      expect(response).toMatchObject({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'auth.password_changed',
+          after: { firstPassword: false },
+        }),
+      );
+    });
+
+    it('refuses a wrong current password with a 400, changing nothing', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...record,
+        passwordHash: await hash('old-password-1', 4),
+      });
+
+      await expect(
+        service.changePassword('user-1', {
+          currentPassword: 'nope',
+          newPassword: 'new-password-2',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(tokenService.rotateRefreshToken).not.toHaveBeenCalled();
+    });
+
+    it('lets an account with no password set its first one', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ ...record, passwordHash: null });
+      prisma.user.update.mockResolvedValueOnce({ ...record });
+      jwtService.signAsync.mockResolvedValueOnce('access-token');
+
+      await service.changePassword('user-1', { newPassword: 'first-password-1' });
+
+      expect(prisma.user.update).toHaveBeenCalledTimes(1);
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ after: { firstPassword: true } }),
+      );
+    });
+
+    it('holds a new password to the same length rules as sign-up', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ ...record, passwordHash: null });
+
+      await expect(service.changePassword('user-1', { newPassword: 'short' })).rejects.toThrow();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getSecurity', () => {
+    it('says whether there is a password and which providers are linked', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({
+        passwordHash: null,
+        oauthAccounts: [{ provider: 'google' }, { provider: 'google' }],
+      });
+
+      await expect(service.getSecurity('user-1')).resolves.toEqual({
+        hasPassword: false,
+        oauthProviders: ['google'],
+      });
     });
   });
 });

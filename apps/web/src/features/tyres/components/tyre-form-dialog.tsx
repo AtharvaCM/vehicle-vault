@@ -51,6 +51,8 @@ interface TyreFormDialogProps {
   vehicleType: VehicleType;
   /** Corner to preselect, e.g. when fitting from an empty position. */
   defaultPosition?: TyrePosition;
+  /** The catalogue's tyre size for the variant, prefilled on a new tyre. */
+  defaultSize?: string | null;
   /**
    * The tyre to correct. The form then edits it in place instead of fitting a
    * new one, and its readings stay with it.
@@ -91,12 +93,16 @@ function valuesFromTyre(tyre: Tyre): TyreFormValues {
   };
 }
 
-function buildDefaults(vehicleOdometer: number, defaultPosition: TyrePosition): TyreFormValues {
+function buildDefaults(
+  vehicleOdometer: number,
+  defaultPosition: TyrePosition,
+  defaultSize: string,
+): TyreFormValues {
   return {
     position: defaultPosition,
     brand: '',
     model: '',
-    size: '',
+    size: defaultSize,
     dotCode: '',
     fittedDate: new Date().toISOString().slice(0, 10),
     fittedOdometer: vehicleOdometer,
@@ -112,6 +118,7 @@ export function TyreFormDialog({
   vehicleOdometer,
   vehicleType,
   defaultPosition,
+  defaultSize,
   tyre,
 }: TyreFormDialogProps) {
   const createMutation = useCreateTyre(vehicleId);
@@ -119,6 +126,7 @@ export function TyreFormDialog({
   const isPending = createMutation.isPending || updateMutation.isPending;
   const positionOptions = positionOptionsFor(vehicleType);
   const resolvedDefaultPosition = defaultPosition ?? positionOptions[0];
+  const resolvedDefaultSize = defaultSize?.trim() ?? '';
 
   const {
     control,
@@ -130,14 +138,18 @@ export function TyreFormDialog({
     resolver: zodResolver(tyreFormSchema),
     defaultValues: tyre
       ? valuesFromTyre(tyre)
-      : buildDefaults(vehicleOdometer, resolvedDefaultPosition),
+      : buildDefaults(vehicleOdometer, resolvedDefaultPosition, resolvedDefaultSize),
   });
 
   useEffect(() => {
     if (isOpen) {
-      reset(tyre ? valuesFromTyre(tyre) : buildDefaults(vehicleOdometer, resolvedDefaultPosition));
+      reset(
+        tyre
+          ? valuesFromTyre(tyre)
+          : buildDefaults(vehicleOdometer, resolvedDefaultPosition, resolvedDefaultSize),
+      );
     }
-  }, [isOpen, tyre, vehicleOdometer, resolvedDefaultPosition, reset]);
+  }, [isOpen, tyre, vehicleOdometer, resolvedDefaultPosition, resolvedDefaultSize, reset]);
 
   async function onSubmit(values: TyreFormValues) {
     const dot = parseDotCode(values.dotCode);

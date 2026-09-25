@@ -6,6 +6,8 @@ import {
   LoginSchema,
   PasswordResetConfirmResponseSchema,
   PasswordResetConfirmSchema,
+  PasswordChangeSchema,
+  AccountSecuritySchema,
   PasswordResetRequestResponseSchema,
   PasswordResetRequestSchema,
   RefreshTokenSchema,
@@ -23,6 +25,8 @@ export type RegisterInput = z.infer<typeof RegisterSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>;
 export type PasswordResetRequestInput = z.infer<typeof PasswordResetRequestSchema>;
+export type PasswordChangeInput = z.infer<typeof PasswordChangeSchema>;
+export type AccountSecurity = z.infer<typeof AccountSecuritySchema>;
 export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchema>;
 export type PasswordResetRequestResponse = z.infer<typeof PasswordResetRequestResponseSchema>;
 export type PasswordResetConfirmResponse = z.infer<typeof PasswordResetConfirmResponseSchema>;

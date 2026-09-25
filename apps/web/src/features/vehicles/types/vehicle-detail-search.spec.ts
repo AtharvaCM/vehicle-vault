@@ -49,6 +49,13 @@ describe('normalizeVehicleDetailSearch', () => {
     });
   });
 
+  it('opens About this vehicle for a link to the old Tech specs section', () => {
+    expect(normalizeVehicleDetailSearch({ tab: 'more', section: 'specs' })).toEqual({
+      tab: 'more',
+      section: 'about',
+    });
+  });
+
   it('drops a view or section that belongs to another tab', () => {
     expect(normalizeVehicleDetailSearch({ tab: 'papers', view: 'fuel' })).toEqual({
       tab: 'papers',
@@ -78,7 +85,7 @@ describe('the eleven old tab values', () => {
     ['fuel', { tab: 'history', view: 'fuel' }],
     ['reminders', { tab: 'reminders' }],
     ['protection', { tab: 'papers' }],
-    ['specs', { tab: 'more', section: 'specs' }],
+    ['specs', { tab: 'more', section: 'about' }],
     ['tyres', { tab: 'more', section: 'tyres' }],
     ['accessories', { tab: 'more', section: 'accessories' }],
     ['loans', { tab: 'more', section: 'loans' }],
