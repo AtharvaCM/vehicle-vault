@@ -125,7 +125,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=history`));
 
       await page.goto('/home');
-      await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
       await expect(page.getByTestId('attention-row').filter({ hasText: title })).toHaveCount(0);
 
       // Closed, and the next one counted from the record: 10,000 km on from its

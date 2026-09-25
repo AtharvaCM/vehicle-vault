@@ -69,7 +69,7 @@ for (const viewport of viewports) {
     });
 
     await page.goto('/home');
-    await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
 
     const summaryRow = page.getByTestId('vehicle-summary-row').filter({ hasText: nickname });
     await summaryRow.getByRole('link').first().click();

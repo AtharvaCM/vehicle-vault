@@ -23,7 +23,7 @@ test('an admin reaches Users and Catalog curation from the account menu', async 
   // re-reads the account on load.
   await prisma.user.update({ where: { email }, data: { role: 'admin' } });
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
 
   await page.getByRole('button', { name: /^Account menu for / }).click();
   await page.getByRole('menuitem', { name: 'Admin' }).click();

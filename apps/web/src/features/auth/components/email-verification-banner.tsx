@@ -1,3 +1,4 @@
+import { useRouter } from '@tanstack/react-router';
 import { MailWarning, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,8 +22,11 @@ export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerPro
   const { user } = useAuth();
   const { resend, isResending, hasSent } = useResendVerification(user?.email);
   const [isDismissed, setIsDismissed] = useState(() => (user ? wasDismissedToday(user.id) : false));
+  // Home's setup checklist carries the email step while the grace period runs
+  // (#346): one reminder there, not a banner above it saying the same.
+  const onHome = useRouter({ warn: false })?.state.location.pathname === '/home';
 
-  if (!user || isDismissed) {
+  if (!user || isDismissed || onHome) {
     return null;
   }
 

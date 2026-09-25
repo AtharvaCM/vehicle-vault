@@ -9,8 +9,9 @@ type Credentials = {
 };
 
 /**
- * Registers through the form. The new account is signed straight in and lands
- * on the dashboard unverified, inside its week of grace, with the banner up.
+ * Registers through the form. The new account is signed straight in, unverified
+ * and inside its week of grace, on the add-vehicle form (#346); this goes on to
+ * Home, where the setup checklist welcomes it.
  */
 export async function registerUnverified(page: Page, { email, name, password }: Credentials) {
   await page.goto('/register');
@@ -19,7 +20,9 @@ export async function registerUnverified(page: Page, { email, name, password }: 
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole('button', { name: /create account/i }).click();
 
-  await expect(page).toHaveURL(/\/home$/);
+  await expect(page).toHaveURL(/\/vehicles\/new$/);
+  await page.goto('/home');
+  await expect(page.getByRole('heading', { level: 1, name: /^Welcome/ })).toBeVisible();
 }
 
 /**
@@ -32,5 +35,5 @@ export async function registerAndSignIn(page: Page, credentials: Credentials) {
   await markUserEmailVerified(credentials.email);
 
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByTestId('setup-checklist')).toBeVisible();
 }

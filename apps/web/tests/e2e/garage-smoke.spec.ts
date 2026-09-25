@@ -61,7 +61,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await registerAndSignIn(page, { email, name, password });
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
 
   await page.getByRole('button', { name: new RegExp(name) }).click();
   await page.getByRole('menuitem', { name: /sign out/i }).click();

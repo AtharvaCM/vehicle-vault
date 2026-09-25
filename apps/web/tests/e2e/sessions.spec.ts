@@ -100,7 +100,7 @@ for (const viewport of VIEWPORTS) {
 
     // This device carried on, and each sign-out was recorded.
     await page.goto('/home');
-    await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     const actions = await prisma.auditEvent.findMany({
       where: { actorUserId: user.id, action: { startsWith: 'auth.' } },

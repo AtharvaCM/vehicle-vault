@@ -76,7 +76,7 @@ test('renewing a policy carries it over and takes its alert with it', async ({ p
 
   // The renewal is a year off, so the dashboard has nothing to flag.
   await page.goto('/home');
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
   await expect(attention).toHaveCount(0);
 });
 

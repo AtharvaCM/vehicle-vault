@@ -8,7 +8,6 @@ import {
   readCatalogIntent,
 } from '@/features/catalog-intent/lib/catalog-intent';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
-import { appToast } from '@/lib/toast';
 
 import { register } from '../api/register';
 import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
@@ -46,19 +45,14 @@ export function RegisterPage() {
       // navigation below: the add-vehicle form's route checks it, and a stale
       // "signed out" would bounce through /login to the dashboard.
       flushSync(() => auth.setSession(authResponse));
+      // A new account goes on to add its vehicle (#346), prefilled when a
+      // catalog page picked one, unless a return path says where it was going.
+      // No toast: the next page says what happens next.
       const destination = afterAuthDestination(next);
-      appToast.success({
-        title: 'Account created',
-        ...('to' in destination
-          ? {
-              description:
-                destination.to === '/vehicles/new'
-                  ? 'Add the rest of your vehicle’s details to start tracking it.'
-                  : 'Your account is ready.',
-            }
-          : {}),
-      });
-      await navigateAfterAuth(navigate, destination);
+      await navigateAfterAuth(
+        navigate,
+        'to' in destination ? { to: '/vehicles/new' } : destination,
+      );
     } catch (error) {
       // One error per failure: under the form, not a toast saying it again.
       setSubmitError(getApiErrorMessage(error, 'Unable to create the account right now.'));

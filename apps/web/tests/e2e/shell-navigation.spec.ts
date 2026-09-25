@@ -155,8 +155,9 @@ test('every top-level page is one click away, and a deep page says where it sits
 test('old addresses land on the new pages, query string and all', async ({ page }) => {
   await signIn(page, 'Redirects');
 
-  const moves: Array<[from: string, to: RegExp, heading: string]> = [
-    ['/dashboard?focus=overdue', /\/home\?focus=overdue$/, 'Home'],
+  const moves: Array<[from: string, to: RegExp, heading: string | RegExp]> = [
+    // A new account with no vehicle is welcomed on Home (#346).
+    ['/dashboard?focus=overdue', /\/home\?focus=overdue$/, /^(Home|Welcome)/],
     ['/vehicles?sort=year-desc', /\/garage\?sort=year-desc$/, 'Garage'],
     ['/reminders?kind=papers', /\/upcoming\?kind=papers$/, 'Upcoming'],
     ['/maintenance?search=oil', /\/history\?search=oil$/, 'History'],
