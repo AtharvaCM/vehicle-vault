@@ -75,19 +75,17 @@ export class AdminService {
   async forceLogout(actorUserId: string, targetUserId: string): Promise<AdminForceLogoutResponse> {
     const target = await this.prisma.user.findUnique({
       where: { id: targetUserId },
-      select: { id: true, refreshTokenHash: true },
+      select: { id: true },
     });
     if (!target) {
       throw new NotFoundException(`User ${targetUserId} was not found`);
     }
 
-    const wasLoggedIn = target.refreshTokenHash != null;
-
+    let wasLoggedIn = false;
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: targetUserId },
-        data: { refreshTokenHash: null },
-      });
+      // Every session: each fails its next refresh and lands on sign-in.
+      const { count } = await tx.authSession.deleteMany({ where: { userId: targetUserId } });
+      wasLoggedIn = count > 0;
       await this.auditService.track(tx, {
         actorUserId,
         ownerUserId: targetUserId,

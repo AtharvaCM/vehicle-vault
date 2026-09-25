@@ -8,6 +8,8 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import type { IncomingHttpHeaders } from 'node:http';
+
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { OAuthProvider } from '@prisma/client';
@@ -19,6 +21,7 @@ import { AppConfigService } from '../../config/app-config.service';
 import { OAuthCallbackGuard, type OAuthCallbackRequest } from './oauth-callback.guard';
 import { toCatalogModel, type OAuthStateInfo } from './oauth-state';
 import { OAuthService, type OAuthProfile } from './oauth.service';
+import { sessionContextFrom } from './session-context';
 
 type RequestWithOAuthUser = OAuthCallbackRequest & { user?: OAuthProfile };
 type RedirectResponse = { redirect: (url: string) => void };
@@ -129,9 +132,11 @@ export class OAuthController {
       return;
     }
     try {
-      const response = await this.oauthService.loginOrLink(profile, {
-        catalogModel: catalogModelFrom(req.authInfo),
-      });
+      const response = await this.oauthService.loginOrLink(
+        profile,
+        { catalogModel: catalogModelFrom(req.authInfo) },
+        sessionContextFrom(req as { headers?: IncomingHttpHeaders }),
+      );
       res.redirect(
         this.buildRedirect({
           accessToken: response.accessToken,

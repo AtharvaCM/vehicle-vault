@@ -657,7 +657,6 @@ model User {
   passwordHash                    String?                   @db.VarChar(255)
   passwordResetTokenExpiresAt     DateTime?
   passwordResetTokenHash          String?                   @db.Char(64)
-  refreshTokenHash                String?                   @db.Char(64)
   createdAt                       DateTime                  @default(now())
   updatedAt                       DateTime                  @updatedAt
   emailVerified                   Boolean                   @default(false)
@@ -683,6 +682,25 @@ model User {
   alertRaises                     AlertRaise[]
   productEvents                   ProductEvent[]
   notificationPreferences         NotificationPreference[]
+  authSessions                    AuthSession[]
+}
+
+/// One signed-in device: the hash of its current refresh token, rotated on
+/// every refresh, and what the Security settings list shows about it. Deleting
+/// the row signs that device out at its next refresh.
+model AuthSession {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  refreshTokenHash String   @unique @db.Char(64)
+  /// As the browser sent it, cut to fit; read into "Chrome on macOS" for display.
+  userAgent        String?  @db.VarChar(400)
+  /// Approximate place from the edge's location headers, when there are any.
+  location         String?  @db.VarChar(120)
+  createdAt        DateTime @default(now())
+  lastActiveAt     DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastActiveAt(sort: Desc)])
 }
 
 enum Role {

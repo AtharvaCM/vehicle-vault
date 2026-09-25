@@ -1,20 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { BellRing, ChevronRight, Download, History, ScanSearch } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { InlineError } from '@/components/shared/inline-error';
 import { PageTitle } from '@/components/shared/page-title';
 import { StatusPill } from '@/components/shared/status-pill';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { accountSecurityQueryOptions } from '../api/account-security';
 import { ChangePasswordDialog } from '../components/change-password-dialog';
+import { SessionRows } from '../components/session-rows';
+import { SettingsRow, SettingsSection } from '../components/settings-layout';
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
 import { useReconcileAttachments } from '../hooks/use-reconcile-attachments';
 
@@ -122,6 +123,7 @@ export function SettingsPage() {
             label="Sign-in methods"
             value={signInMethods.length ? signInMethods.join(' · ') : security ? '—' : 'Loading…'}
           />
+          <SessionRows />
         </SettingsSection>
 
         <SettingsSection title="Notifications">
@@ -209,43 +211,5 @@ export function SettingsPage() {
         />
       ) : null}
     </PageContainer>
-  );
-}
-
-/** One group of Settings rows under its heading. */
-function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
-  const id = `settings-${title.toLowerCase().replace(/[^a-z]+/g, '-')}`;
-
-  return (
-    <section aria-labelledby={id} className="space-y-2">
-      <h2 className="px-1 text-body font-semibold text-fg-2" id={id}>
-        {title}
-      </h2>
-      <Card className="divide-y divide-line-subtle p-0">{children}</Card>
-    </section>
-  );
-}
-
-/** A Settings row owns one decision: what it is, how it stands, and the way to change it. */
-function SettingsRow({
-  label,
-  value,
-  action,
-}: {
-  label: string;
-  value: ReactNode;
-  action?: ReactNode;
-}) {
-  return (
-    <div
-      className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:gap-4"
-      data-testid="settings-row"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="text-body font-medium text-fg">{label}</p>
-        <div className="text-small text-fg-2">{value}</div>
-      </div>
-      {action ? <div className="shrink-0 sm:-mr-2">{action}</div> : null}
-    </div>
   );
 }

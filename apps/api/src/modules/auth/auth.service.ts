@@ -4,6 +4,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { compare, hash } from 'bcryptjs';
 import {
   AccountSecuritySchema,
   AuthResponseSchema,
+  AuthSessionListSchema,
   AuthUserSchema,
   LoginSchema,
   PasswordChangeSchema,
@@ -26,6 +28,7 @@ import {
   ResendVerificationSchema,
   type AccountSecurity,
   type AuthResponse,
+  type AuthSession,
   type AuthUser,
   type LoginInput,
   type PasswordResetConfirmInput,
@@ -61,6 +64,7 @@ import type { RegisterDto } from './dto/register.dto';
 import type { VerifyEmailDto } from './dto/verify-email.dto';
 import type { ResendVerificationDto } from './dto/resend-verification.dto';
 import type { JwtPayload } from './auth.types';
+import { describeUserAgent, NO_SESSION_CONTEXT, type SessionContext } from './session-context';
 
 type UserRecord = {
   id: string;
@@ -71,7 +75,6 @@ type UserRecord = {
   passwordResetTokenHash?: string | null;
   emailVerified: boolean;
   emailVerificationTokenHash?: string | null;
-  refreshTokenHash?: string | null;
   role: UserRole;
   allowedCatalogSources: string[];
   createdAt: Date;
@@ -96,7 +99,7 @@ export class AuthService {
     private readonly productEvents: ProductEventsService,
   ) {}
 
-  async register(payload: RegisterDto) {
+  async register(payload: RegisterDto, context: SessionContext = NO_SESSION_CONTEXT) {
     const input = this.validateRegisterInput(payload);
     const passwordHash = await hash(input.password, 12);
 
@@ -147,7 +150,7 @@ export class AuthService {
         );
       }
 
-      return this.buildAuthResponse(this.toUser(user));
+      return this.buildAuthResponse(this.toUser(user), { context });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('An account with this email already exists.');
@@ -163,7 +166,11 @@ export class AuthService {
    * but after the email is known, so a refused attempt is still recorded
    * against the account it was aimed at, where its owner can see it.
    */
-  async login(payload: LoginDto, clientIp = 'unknown') {
+  async login(
+    payload: LoginDto,
+    clientIp = 'unknown',
+    context: SessionContext = NO_SESSION_CONTEXT,
+  ) {
     const input = this.validateLoginInput(payload);
     const email = input.email.trim().toLowerCase();
 
@@ -198,10 +205,14 @@ export class AuthService {
       action: AUDIT_ACTIONS.auth.loginSucceeded,
       resourceType: AuditResourceType.user,
       resourceId: user.id,
-      after: { email: user.email },
+      after: {
+        email: user.email,
+        device: describeUserAgent(context.userAgent),
+        location: context.location,
+      },
     });
 
-    return this.buildAuthResponse(this.toUser(user));
+    return this.buildAuthResponse(this.toUser(user), { context });
   }
 
   /**
@@ -224,10 +235,10 @@ export class AuthService {
     });
   }
 
-  async refresh(payload: RefreshTokenDto) {
+  async refresh(payload: RefreshTokenDto, context: SessionContext = NO_SESSION_CONTEXT) {
     const input = this.validateRefreshTokenInput(payload);
-    const user = await this.tokenService.verifyRefreshToken(input.refreshToken);
-    return this.buildAuthResponse(this.toUser(user));
+    const { user, sessionId } = await this.tokenService.verifyRefreshToken(input.refreshToken);
+    return this.buildAuthResponse(this.toUser(user), { sessionId, context });
   }
 
   async requestPasswordReset(
@@ -291,9 +302,11 @@ export class AuthService {
       },
       data: {
         passwordHash,
-        refreshTokenHash: null,
       },
     });
+    // Whoever asked for the reset may not be the only one holding the account:
+    // every session ends, and the new password starts the next one.
+    await this.tokenService.revokeSessions(user.id);
 
     return PasswordResetConfirmResponseSchema.parse({
       reset: true,
@@ -341,9 +354,11 @@ export class AuthService {
 
   async logout(payload: RefreshTokenDto) {
     const input = this.validateRefreshTokenInput(payload);
-    const user = await this.tokenService.tryVerifyRefreshToken(input.refreshToken);
-    if (!user) return;
-    await this.tokenService.revokeRefreshToken(user.id);
+    const verified = await this.tokenService.tryVerifyRefreshToken(input.refreshToken);
+    if (!verified) return;
+    const { user, sessionId } = verified;
+    // This device only: the others stay signed in.
+    await this.tokenService.revokeSession(user.id, sessionId);
     await this.auditService.track(this.prisma, {
       actorUserId: user.id,
       ownerUserId: user.id,
@@ -356,11 +371,17 @@ export class AuthService {
   /**
    * Changes the password of a signed-in account. With a password on file the
    * current one must match; an account that only signs in with Google or
-   * GitHub sets its first one. The refresh token is rotated and returned, so
-   * this session carries on while every other one is signed out (there is one
-   * refresh token per account).
+   * GitHub sets its first one. Every other session is signed out; this one
+   * (`sessionId`, from the access token) carries on with a rotated refresh
+   * token, returned here. Without a session id (a token from before sessions)
+   * a new session is started instead.
    */
-  async changePassword(userId: string, payload: PasswordChangeDto): Promise<AuthResponse> {
+  async changePassword(
+    userId: string,
+    payload: PasswordChangeDto,
+    sessionId?: string | null,
+    context: SessionContext = NO_SESSION_CONTEXT,
+  ): Promise<AuthResponse> {
     const input = PasswordChangeSchema.parse(payload);
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('Invalid authentication token.');
@@ -384,8 +405,81 @@ export class AuthService {
       resourceId: user.id,
       after: { firstPassword: !user.passwordHash },
     });
+    await this.tokenService.revokeSessions(user.id, sessionId);
 
-    return this.buildAuthResponse(this.toUser(updated));
+    return this.buildAuthResponse(
+      this.toUser(updated),
+      sessionId ? { sessionId, context } : { context },
+    );
+  }
+
+  /** Settings → Security: where the account is signed in, this device marked. */
+  async listSessions(userId: string, currentSessionId?: string | null): Promise<AuthSession[]> {
+    const sessions = await this.tokenService.listSessions(userId);
+
+    return AuthSessionListSchema.parse(
+      sessions.map((session) => ({
+        id: session.id,
+        device: describeUserAgent(session.userAgent),
+        location: session.location,
+        createdAt: session.createdAt.toISOString(),
+        lastActiveAt: session.lastActiveAt.toISOString(),
+        current: session.id === currentSessionId,
+      })),
+    );
+  }
+
+  /**
+   * Sign one session out; it fails its next refresh and lands on sign-in.
+   * Any of the user's sessions, this one included (Sign out does that from
+   * the device itself). 404 for a session that is not theirs or already gone.
+   */
+  async revokeSession(userId: string, sessionId: string, currentSessionId?: string | null) {
+    const session = (await this.tokenService.listSessions(userId)).find(
+      (candidate) => candidate.id === sessionId,
+    );
+    if (!session || !(await this.tokenService.revokeSession(userId, sessionId))) {
+      throw new NotFoundException('That session has already been signed out.');
+    }
+
+    await this.auditService.track(this.prisma, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: AUDIT_ACTIONS.auth.sessionRevoked,
+      resourceType: AuditResourceType.user,
+      resourceId: userId,
+      after: {
+        sessionId,
+        device: describeUserAgent(session.userAgent),
+        location: session.location,
+        current: sessionId === currentSessionId,
+      },
+    });
+
+    return { revoked: true };
+  }
+
+  /** "Sign out other devices": every session but the one asking. */
+  async revokeOtherSessions(userId: string, currentSessionId?: string | null) {
+    // A token from before sessions names none, so "the others" cannot be told
+    // apart from this one. It is refreshed within the hour, and names one then.
+    if (!currentSessionId) {
+      throw new BadRequestException('Reload the page, then try again.');
+    }
+
+    const count = await this.tokenService.revokeSessions(userId, currentSessionId);
+    if (count > 0) {
+      await this.auditService.track(this.prisma, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.auth.otherSessionsRevoked,
+        resourceType: AuditResourceType.user,
+        resourceId: userId,
+        after: { count },
+      });
+    }
+
+    return { revoked: count };
   }
 
   /** How the account can sign in: a password, and which providers are linked. */
@@ -432,10 +526,21 @@ export class AuthService {
     return this.toUser(user);
   }
 
-  private async buildAuthResponse(user: User): Promise<AuthResponse> {
+  /**
+   * Tokens for a sign-in: a new session, or with `sessionId` the same session
+   * with its refresh token rotated. The access token names the session, which
+   * is how "This device" and "Sign out other devices" know which one is asking.
+   */
+  private async buildAuthResponse(
+    user: User,
+    { sessionId, context }: { sessionId?: string; context: SessionContext },
+  ): Promise<AuthResponse> {
     const authUser = this.toAuthUser(user);
-    const accessToken = await this.signAccessToken(authUser);
-    const refreshToken = await this.tokenService.rotateRefreshToken(authUser);
+    const session = sessionId
+      ? await this.tokenService.rotateSession(authUser.id, sessionId, context)
+      : await this.tokenService.startSession(authUser.id, context);
+    const accessToken = await this.signAccessToken(authUser, session.sessionId);
+    const refreshToken = session.refreshToken;
 
     return AuthResponseSchema.parse({
       user: authUser,
@@ -444,11 +549,12 @@ export class AuthService {
     });
   }
 
-  private async signAccessToken(authUser: AuthUser) {
+  private async signAccessToken(authUser: AuthUser, sessionId: string) {
     const payload: JwtPayload = {
       sub: authUser.id,
       email: authUser.email,
       name: authUser.name,
+      sid: sessionId,
     };
 
     return this.jwtService.signAsync(payload);

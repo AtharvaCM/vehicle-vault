@@ -25,18 +25,21 @@ function baseUser() {
 describe('OAuthService.loginOrLink', () => {
   const productEvents = { record: vi.fn(), recordFirst: vi.fn() };
   let prisma: ReturnType<typeof basePrisma>;
-  const tokenService = { rotateRefreshToken: vi.fn() };
+  const tokenService = { startSession: vi.fn() };
   const jwtService = { signAsync: vi.fn() };
   const auditService = { track: vi.fn().mockResolvedValue(undefined) };
   let service: OAuthService;
 
   beforeEach(() => {
     prisma = basePrisma();
-    tokenService.rotateRefreshToken.mockReset();
+    tokenService.startSession.mockReset();
     jwtService.signAsync.mockReset();
     auditService.track.mockReset();
     auditService.track.mockResolvedValue(undefined);
-    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
+    tokenService.startSession.mockResolvedValue({
+      sessionId: 'session-1',
+      refreshToken: 'refresh-token',
+    });
     jwtService.signAsync.mockResolvedValue('access-token');
     service = new OAuthService(
       prisma as never,
@@ -61,7 +64,13 @@ describe('OAuthService.loginOrLink', () => {
     const response = await service.loginOrLink(profile);
 
     expect(response.accessToken).toBe('access-token');
+    expect(response.refreshToken).toBe('refresh-token');
     expect(response.user.email).toBe('alice@example.com');
+    // Its own session, named in the access token, as a password sign-in gets.
+    expect(tokenService.startSession).toHaveBeenCalledWith('user-1', {
+      userAgent: null,
+      location: null,
+    });
     expect(prisma.user.create).not.toHaveBeenCalled();
     expect(prisma.oAuthAccount.create).not.toHaveBeenCalled();
   });
