@@ -1,3 +1,10 @@
+# [1.103.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.102.0...v1.103.0) (2026-09-25)
+
+
+### Features
+
+* make Settings a directory, and let you change your password ([7c6be63](https://github.com/AtharvaCM/vehicle-vault/commit/7c6be63829fec84b1a592fc3c44dc67d32e1c6ba)), closes [#315](https://github.com/AtharvaCM/vehicle-vault/issues/315)
+
 # [1.102.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.101.0...v1.102.0) (2026-09-25)
 
 
