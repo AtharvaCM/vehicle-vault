@@ -174,25 +174,51 @@ describe('HistoryPage month headers', () => {
     expect(august.getByTestId('history-month-total')).not.toHaveTextContent('Spent');
   });
 
-  it('shows the drafts notice banner when there is a draft', () => {
-    setQueries({ vehicles: ONE_VEHICLE, page: TWO_MONTH_PAGE });
-
-    render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{}} />);
-
-    expect(screen.getByTestId('history-drafts')).toHaveTextContent(
-      '1 service is a draft. It is marked below and left out of the totals until it is confirmed.',
-    );
-  });
-
-  it('shows no drafts notice when there are none', () => {
+  it('sums up the year and links the draft waiting longest', () => {
     setQueries({
       vehicles: ONE_VEHICLE,
-      page: { ...TWO_MONTH_PAGE, draftCount: 0 },
+      page: {
+        ...TWO_MONTH_PAGE,
+        firstDraftId: 'record-draft',
+        year: { year: 2026, serviceCount: 3, serviceSpend: '15200.00' },
+      },
     });
 
     render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{}} />);
 
-    expect(screen.queryByTestId('history-drafts')).not.toBeInTheDocument();
+    const summary = screen.getByTestId('history-summary');
+    expect(summary).toHaveTextContent('₹15,200 on 3 services in 2026 · 1 draft to confirm →');
+    expect(screen.getByRole('link', { name: '1 draft to confirm →' })).toHaveAttribute(
+      'href',
+      '/maintenance-records/$recordId/edit',
+    );
+  });
+
+  it('says when no service was logged this year, and names no drafts when there are none', () => {
+    setQueries({
+      vehicles: ONE_VEHICLE,
+      page: {
+        ...TWO_MONTH_PAGE,
+        draftCount: 0,
+        year: { year: 2026, serviceCount: 0, serviceSpend: '0.00' },
+      },
+    });
+
+    render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{}} />);
+
+    expect(screen.getByTestId('history-summary')).toHaveTextContent('No services logged in 2026');
+    expect(screen.queryByText(/to confirm/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the plain description when the kind filter leaves services out', () => {
+    setQueries({ vehicles: ONE_VEHICLE, page: { ...TWO_MONTH_PAGE, draftCount: 0, year: null } });
+
+    render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{ kind: 'fuel' }} />);
+
+    expect(screen.queryByTestId('history-summary')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Every service, fuel fill and odometer reading across your garage.'),
+    ).toBeInTheDocument();
   });
 });
 

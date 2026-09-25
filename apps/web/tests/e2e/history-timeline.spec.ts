@@ -72,6 +72,9 @@ function checkNoHorizontalOverflow(page: Page) {
   }));
 }
 
+/** Set to a directory to keep screenshots (PR evidence); unset in CI. */
+const SHOTS = process.env.E2E_SCREENSHOT_DIR;
+
 test('the garage-wide history timeline: grouped, totalled, filterable and responsive', async ({
   page,
 }) => {
@@ -159,6 +162,15 @@ test('the garage-wide history timeline: grouped, totalled, filterable and respon
   const monthHeadings = page.getByRole('main').locator('h2');
   await expect(monthHeadings).toHaveText([THIS_MONTH_LABEL, LAST_MONTH_LABEL]);
 
+  // One summary line, its draft linked to where it is confirmed (#310).
+  const summary = page.getByTestId('history-summary');
+  await expect(summary).toContainText(`in ${new Date().getFullYear()}`);
+  await expect(summary.getByRole('link', { name: '1 draft to confirm →' })).toHaveAttribute(
+    'href',
+    /\/maintenance-records\/[^/]+\/edit$/,
+  );
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/history-1440.png`, animations: 'disabled' });
+
   const thisMonth = page.getByTestId('history-month').filter({ hasText: THIS_MONTH_LABEL });
   await expect(thisMonth.getByTestId('history-month-total')).toContainText('₹7,200');
   await expect(thisMonth.getByTestId('history-month-total')).toContainText('1 draft not counted');
@@ -213,8 +225,26 @@ test('the garage-wide history timeline: grouped, totalled, filterable and respon
   const overflow = await checkNoHorizontalOverflow(page);
   expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.innerWidth);
 
-  await page.getByRole('radio', { name: 'Fuel' }).click();
+  // Log service is pinned above the bottom bar, and never covers the last row.
+  const pinned = page.getByTestId('history-log-service');
+  await expect(pinned).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const lastRow = (await page.getByTestId('history-row').last().boundingBox())!;
+  const pinnedBox = (await pinned.boundingBox())!;
+  expect(lastRow.y + lastRow.height).toBeLessThanOrEqual(pinnedBox.y);
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/history-390.png`, animations: 'disabled' });
+
+  // On a phone the filters are in a sheet.
+  await expect(page.getByRole('radio', { name: 'Fuel' })).toBeHidden();
+  await page.getByRole('button', { name: 'Filters' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Filters' });
+  if (SHOTS) {
+    await page.screenshot({ path: `${SHOTS}/history-filters-390.png`, animations: 'disabled' });
+  }
+  await sheet.getByRole('radio', { name: 'Fuel' }).click();
   await expect(page).toHaveURL(/[?&]kind=fuel(&|$)/);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Filters (1)' })).toBeVisible();
   await expect(page.getByTestId('history-row')).toHaveCount(1);
   const overflowFiltered = await checkNoHorizontalOverflow(page);
   expect(overflowFiltered.scrollWidth).toBeLessThanOrEqual(overflowFiltered.innerWidth);
