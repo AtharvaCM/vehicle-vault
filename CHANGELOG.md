@@ -1,3 +1,10 @@
+# [1.89.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.88.0...v1.89.0) (2026-09-25)
+
+
+### Features
+
+* **web:** show every paper in one view, offline too ([6ac6983](https://github.com/AtharvaCM/vehicle-vault/commit/6ac6983a1b95efd8e2cf3da9f5a47a0425868d0d)), closes [#296](https://github.com/AtharvaCM/vehicle-vault/issues/296)
+
 # [1.88.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.87.0...v1.88.0) (2026-09-24)
 
 
