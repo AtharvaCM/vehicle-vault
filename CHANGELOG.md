@@ -1,3 +1,17 @@
+# [1.112.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.111.0...v1.112.0) (2026-09-25)
+
+
+### Features
+
+* make the catalog's browse page a front door ([1e011a4](https://github.com/AtharvaCM/vehicle-vault/commit/1e011a4c5384e0e296eaba13f22ee37f81bf43f6)), closes [#345](https://github.com/AtharvaCM/vehicle-vault/issues/345)
+
+# [1.111.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.110.0...v1.111.0) (2026-09-25)
+
+
+### Features
+
+* make sign-in and register one card with Google first ([5f29936](https://github.com/AtharvaCM/vehicle-vault/commit/5f29936508b64630619bee74c68078fe9d0d7b29)), closes [#343](https://github.com/AtharvaCM/vehicle-vault/issues/343)
+
 # [1.110.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.109.0...v1.110.0) (2026-09-25)
 
 

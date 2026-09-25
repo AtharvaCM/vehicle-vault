@@ -1,6 +1,7 @@
 import type { FuelType } from '../enums/fuel-type.enum';
 import type {
   PublicCatalogBrowseMake,
+  PublicCatalogBrowseModel,
   PublicCatalogBrowsePage,
   PublicCatalogIndexEntry,
   PublicCatalogMakeModel,
@@ -78,6 +79,7 @@ export function buildPublicCatalogBrowsePage(
   segment: PublicCatalogSegment,
 ): PublicCatalogBrowsePage {
   const makes = new Map<string, { make: PublicCatalogNamedSlug; models: Set<string> }>();
+  const models = new Map<string, PublicCatalogBrowseModel>();
   for (const entry of entries) {
     if (entry.segment !== segment) continue;
     const make = makes.get(entry.make.slug) ?? {
@@ -86,18 +88,29 @@ export function buildPublicCatalogBrowsePage(
     };
     make.models.add(entry.model.slug);
     makes.set(entry.make.slug, make);
+
+    const key = `${entry.make.slug}/${entry.model.slug}`;
+    const model = models.get(key);
+    models.set(key, {
+      name: entry.model.name,
+      slug: entry.model.slug,
+      make: make.make,
+      variantCount: (model?.variantCount ?? 0) + 1,
+      isCurrent: Boolean(model?.isCurrent) || entry.isCurrent,
+    });
   }
 
   return {
     segment,
     makes: [...makes.values()]
       .map(
-        ({ make, models }): PublicCatalogBrowseMake => ({
+        ({ make, models: makeModels }): PublicCatalogBrowseMake => ({
           ...make,
-          modelCount: models.size,
+          modelCount: makeModels.size,
         }),
       )
       .sort(compareNames),
+    models: [...models.values()].sort((a, b) => compareNames(a.make, b.make) || compareNames(a, b)),
   };
 }
 

@@ -62,12 +62,22 @@ describe('PublicMakePageView', () => {
         .getAllByRole('link')
         .map((link) => [link.textContent, link.getAttribute('href')]),
     ).toEqual([
-      ['Hyundai CretaPetrol, Diesel · 2015 – present · 14 variants', '/cars/hyundai/creta'],
-      ['Hyundai i20Petrol · 2020 – present · 1 variant', '/cars/hyundai/i20'],
+      ['Hyundai Creta Petrol, Diesel · 2015 – present · 14 variants', '/cars/hyundai/creta'],
+      ['Hyundai i20 Petrol · 2020 – present · 1 variant', '/cars/hyundai/i20'],
     ]);
     const earlier = screen.getByRole('region', { name: 'No longer sold' });
     expect(within(earlier).getByRole('link')).toHaveAttribute('href', '/cars/hyundai/santro');
     expect(within(earlier).getByText('Petrol, CNG · 2018 – 2022 · 3 variants')).toBeInTheDocument();
+  });
+
+  it('offers an owner of the make to track theirs', () => {
+    render(<PublicMakePageView page={makePage()} />);
+
+    const offer = screen.getByRole('region', { name: 'Own a Hyundai?' });
+    expect(within(offer).getByRole('link', { name: 'Track your Hyundai' })).toHaveAttribute(
+      'href',
+      '/register',
+    );
   });
 
   it('lists every model under one heading when none is on sale', () => {

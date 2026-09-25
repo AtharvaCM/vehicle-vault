@@ -10,6 +10,7 @@ import { usePublicMakePage, type PublicMakeSlugs } from '../api/use-public-make-
 import { PublicCatalogBreadcrumbs } from '../components/public-catalog-breadcrumbs';
 import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
+import { TrackYourVehicleOffer } from '../components/track-your-vehicle-offer';
 import { makePageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
 import { describeMakeModel } from '../utils/format-public-catalog';
@@ -89,6 +90,11 @@ export function PublicMakePageView({ page }: PublicMakePageViewProps) {
           page={page}
         />
       ) : null}
+
+      <TrackYourVehicleOffer
+        action={`Track your ${page.make.name}`}
+        heading={`Own a ${page.make.name}?`}
+      />
     </article>
   );
 }
@@ -109,20 +115,23 @@ function ModelList({
       <h2 className="text-lead font-semibold tracking-tight text-fg" id={id}>
         {heading}
       </h2>
-      <ul className="divide-y divide-line-subtle overflow-hidden rounded-xl border border-line bg-surface shadow-xs">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {models.map((model) => (
           <li key={model.slug}>
             <PublicCatalogLink
               address={{ segment: page.segment, make: page.make.slug, model: model.slug }}
-              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-page focus-visible:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:px-5"
+              className="group flex h-full flex-col justify-between gap-3 rounded-card border border-line bg-surface p-4 shadow-xs hover:border-fg-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand sm:p-5"
             >
-              <span className="min-w-0">
-                <span className="block text-ui font-medium text-fg wrap-anywhere">
-                  {`${page.make.name} ${model.name}`}
-                </span>
-                <span className="mt-0.5 block text-ui text-fg-2">{describeMakeModel(model)}</span>
+              <span className="block font-semibold text-fg wrap-anywhere">
+                {`${page.make.name} ${model.name}`}
+              </span>{' '}
+              <span className="flex items-end justify-between gap-2">
+                <span className="text-small text-fg-2">{describeMakeModel(model)}</span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="size-4 shrink-0 text-fg-3 group-hover:text-fg"
+                />
               </span>
-              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-fg-3" />
             </PublicCatalogLink>
           </li>
         ))}
