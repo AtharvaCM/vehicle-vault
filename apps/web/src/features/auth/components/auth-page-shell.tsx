@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { APP_NAME } from '@vehicle-vault/shared';
 import type { ReactNode } from 'react';
 
+import { PublicFrame } from '@/components/public/public-frame';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -21,11 +22,10 @@ export function AuthPageShell({
   useDocumentTitle(`${title} | ${APP_NAME}`);
 
   return (
-    <div className="min-h-screen bg-page px-4 py-10 text-fg sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl items-center">
+    <PublicFrame>
+      <div className="mx-auto flex max-w-5xl items-center px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
-            <p className="text-small font-medium text-fg-3">{APP_NAME}</p>
             <div className="space-y-4">
               <h1 className="text-title font-semibold tracking-tight text-fg sm:text-display">
                 {title}
@@ -55,7 +55,7 @@ export function AuthPageShell({
           </Card>
         </div>
       </div>
-    </div>
+    </PublicFrame>
   );
 }
 

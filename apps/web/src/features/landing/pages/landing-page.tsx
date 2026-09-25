@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { APP_NAME } from '@vehicle-vault/shared';
 import { ArrowRight, BellRing, ScanLine, ShieldCheck, type LucideIcon } from 'lucide-react';
 
+import { PublicFrame } from '@/components/public/public-frame';
 import { Button } from '@/components/ui/button';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
@@ -63,17 +64,7 @@ export function LandingPage() {
   useDocumentTitle(`${APP_NAME} — service history, documents and reminders for your vehicle`);
 
   return (
-    <div className="min-h-screen bg-page text-fg">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <span className="text-small font-medium text-fg-3">{APP_NAME}</span>
-        <Link
-          className="rounded-lg px-3 py-2 text-ui font-medium text-fg hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
-          to="/login"
-        >
-          Sign in
-        </Link>
-      </header>
-
+    <PublicFrame width="wide">
       <main>
         <section className="mx-auto max-w-6xl px-4 pb-14 pt-8 sm:px-6 sm:pb-20 sm:pt-14">
           <p className="text-ui font-medium text-fg-2">For cars and two-wheelers in India</p>
@@ -178,10 +169,6 @@ export function LandingPage() {
           </div>
         </section>
       </main>
-
-      <footer className="mx-auto max-w-6xl px-4 py-8 text-ui text-fg-2 sm:px-6">
-        © {new Date().getFullYear()} {APP_NAME}
-      </footer>
-    </div>
+    </PublicFrame>
   );
 }

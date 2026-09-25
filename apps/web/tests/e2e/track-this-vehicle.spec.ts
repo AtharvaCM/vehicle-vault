@@ -185,7 +185,11 @@ test.describe('Track this vehicle', () => {
 
     await pressTrackThisVehicle(page, variant);
     await expect(page).toHaveURL(/\/register$/);
-    await page.getByRole('link', { name: 'Sign in', exact: true }).click();
+    // The card's link, which keeps the intent; the header's Sign in is plain.
+    await page
+      .locator('p', { hasText: 'Already have an account?' })
+      .getByRole('link', { name: 'Sign in', exact: true })
+      .click();
 
     await expect(page).toHaveURL(/\/login$/);
     await page.getByLabel(/email address/i).fill(account.email);

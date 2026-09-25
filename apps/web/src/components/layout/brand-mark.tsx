@@ -7,7 +7,16 @@ import { cn } from '@/lib/utils';
  * where there is room (`withName`). The plate stays white in dark mode, like
  * every plate.
  */
-export function BrandMark({ withName, className }: { withName?: boolean; className?: string }) {
+export function BrandMark({
+  withName,
+  className,
+  nameClassName,
+}: {
+  withName?: boolean;
+  className?: string;
+  /** For the wordmark, e.g. to hide it on a phone and keep only the plate. */
+  nameClassName?: string;
+}) {
   return (
     <span className={cn('flex items-center gap-2.5', className)}>
       <span
@@ -20,7 +29,12 @@ export function BrandMark({ withName, className }: { withName?: boolean; classNa
         </span>
       </span>
       {withName ? (
-        <span className="font-display text-lead font-semibold text-fg [font-stretch:90%]">
+        <span
+          className={cn(
+            'font-display text-lead font-semibold text-fg [font-stretch:90%]',
+            nameClassName,
+          )}
+        >
           {APP_NAME}
         </span>
       ) : (
