@@ -143,7 +143,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByLabel(/workshop or garage/i).fill(workshopName);
   await page.getByLabel('Total on the bill').fill('4500');
   await page.getByRole('button', { name: /^Notes/ }).click();
-  await page.getByLabel(/notes/i).fill('Oil change and general inspection');
+  await page.getByRole('textbox', { name: 'Notes' }).fill('Oil change and general inspection');
   await page.getByRole('button', { name: 'Save service' }).click();
 
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\?tab=history$/);
@@ -157,7 +157,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByRole('button', { name: /^Workshop/ }).click();
   await page.getByLabel(/workshop or garage/i).fill(updatedWorkshopName);
   await page.getByRole('button', { name: /^Notes/ }).click();
-  await page.getByLabel(/notes/i).fill('Updated record after reviewing invoice');
+  await page.getByRole('textbox', { name: 'Notes' }).fill('Updated record after reviewing invoice');
   await page.getByRole('button', { name: /save changes/i }).click();
 
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
