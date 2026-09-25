@@ -2,8 +2,36 @@ import { z } from 'zod';
 
 import { FuelType, VehicleRole, VehicleType } from '../enums';
 
+/**
+ * The two Indian registration formats this app recognises, with capturing
+ * groups so a caller can both validate a plate and split it into the groups
+ * it prints: state · district · series · number, or year · BH · number ·
+ * series. The single source both the web's plate input/display and this
+ * schema's validation match a registration against.
+ */
+// MH12DM0002, DL3CAB1234, KA01EV2024, and an older MH121234 with no series.
+export const STANDARD_REGISTRATION = /^([A-Z]{2})(\d{1,2})([A-Z]{0,3})(\d{1,4})$/;
+// Bharat series: 22BH1234AA (year of registration, BH, number, series).
+export const BHARAT_REGISTRATION = /^(\d{2})(BH)(\d{4})([A-Z]{1,2})$/;
+
+/** Upper-cased, spaces and punctuation stripped: what the two formats are matched against. */
+export function compactRegistrationNumber(value: string): string {
+  return value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
+/** Whether a registration, in any spacing or case, is a recognised Indian plate. */
+export function isValidRegistrationNumber(value: string): boolean {
+  const compact = compactRegistrationNumber(value);
+  return STANDARD_REGISTRATION.test(compact) || BHARAT_REGISTRATION.test(compact);
+}
+
 export const VehicleCreateSchema = z.object({
-  registrationNumber: z.string().trim().min(1).max(20),
+  registrationNumber: z.string().trim().min(1).max(20).refine(isValidRegistrationNumber, {
+    message: 'Enter a valid Indian registration number, e.g. MH12AB1234',
+  }),
   make: z.string().trim().min(1).max(80),
   model: z.string().trim().min(1).max(80),
   /**

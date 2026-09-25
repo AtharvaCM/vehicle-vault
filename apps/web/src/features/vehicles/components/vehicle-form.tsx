@@ -1,6 +1,7 @@
 import {
   DEFAULT_VEHICLE_CATALOG_MARKET,
   FuelType,
+  isValidRegistrationNumber,
   type VehicleCatalogVariantOption,
   VehicleType,
 } from '@vehicle-vault/shared';
@@ -9,6 +10,7 @@ import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
+import { PlateInput } from '@/components/shared/plate-input';
 import {
   SearchableSelect,
   type SearchableSelectOption,
@@ -72,15 +74,16 @@ type VehicleFormProps = {
   mode?: 'create' | 'edit';
 };
 
-const defaultVehicleValues: VehicleFormValues = {
+// `year` and `odometer` are left out: neither is preselected. An owner types
+// the actual year on the plate's papers and the actual reading on the
+// odometer, rather than confirming a guess (today's year, zero km).
+const defaultVehicleValues: Partial<VehicleFormValues> = {
   registrationNumber: '',
   make: '',
   model: '',
   variant: '',
-  year: new Date().getFullYear(),
   vehicleType: VehicleType.Car,
   fuelType: FuelType.Petrol,
-  odometer: 0,
   nickname: '',
 };
 
@@ -356,20 +359,46 @@ export function VehicleForm({
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="grid gap-3.5 md:grid-cols-2">
-            <FormField
-              htmlFor="vehicle-registration-number"
-              label="Registration number"
-              error={form.formState.errors.registrationNumber?.message}
-            >
-              <Input
-                id="vehicle-registration-number"
-                {...form.register('registrationNumber')}
-                aria-invalid={Boolean(form.formState.errors.registrationNumber)}
-                placeholder="MH12AB1234"
-              />
-            </FormField>
+          <FormField
+            htmlFor="vehicle-registration-number"
+            label="Registration number"
+            error={form.formState.errors.registrationNumber?.message}
+          >
+            <Controller
+              control={form.control}
+              name="registrationNumber"
+              render={({ field }) => (
+                <PlateInput
+                  id="vehicle-registration-number"
+                  onBlur={() => {
+                    field.onBlur();
+                    if (field.value && !isValidRegistrationNumber(field.value)) {
+                      form.setError('registrationNumber', {
+                        message: 'Enter a valid Indian registration number, e.g. MH12AB1234',
+                      });
+                    } else {
+                      form.clearErrors('registrationNumber');
+                    }
+                  }}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    // A blur once flagged it invalid: typing further and fixing
+                    // it clears the error right away rather than waiting for
+                    // another blur, so correcting a plate is not a two-step dance.
+                    if (
+                      form.formState.errors.registrationNumber &&
+                      isValidRegistrationNumber(value)
+                    ) {
+                      form.clearErrors('registrationNumber');
+                    }
+                  }}
+                  value={field.value}
+                />
+              )}
+            />
+          </FormField>
 
+          <div className="grid gap-3.5 md:grid-cols-2">
             <FormField
               htmlFor="vehicle-type"
               label="Vehicle type"
@@ -447,6 +476,7 @@ export function VehicleForm({
                 })}
                 aria-invalid={Boolean(form.formState.errors.year)}
                 min={1900}
+                placeholder="e.g. 2021"
                 type="number"
               />
             </FormField>
@@ -607,6 +637,11 @@ export function VehicleForm({
             </FormField>
 
             <FormField
+              description={
+                mode === 'create'
+                  ? 'Use the reading on the dashboard now — reminders and due-by-km start counting from here.'
+                  : undefined
+              }
               htmlFor="vehicle-odometer"
               label="Odometer"
               error={form.formState.errors.odometer?.message}
@@ -616,6 +651,7 @@ export function VehicleForm({
                 {...form.register('odometer', { valueAsNumber: true })}
                 aria-invalid={Boolean(form.formState.errors.odometer)}
                 min={0}
+                placeholder="e.g. 15000"
                 type="number"
               />
             </FormField>

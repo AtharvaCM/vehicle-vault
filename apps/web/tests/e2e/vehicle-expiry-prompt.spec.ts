@@ -8,7 +8,11 @@ function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
-/** Everything up to landing on the newly created vehicle's page. */
+/**
+ * Everything up to clicking Save on the add-vehicle form. The papers step —
+ * the setup prompt this file exercises — comes next, still on
+ * `/vehicles/new`; landing on the vehicle page waits for it to be answered.
+ */
 async function addVehicle(page: import('@playwright/test').Page, suffix: string) {
   await page
     .getByRole('link', { name: /add vehicle/i })
@@ -35,8 +39,6 @@ async function addVehicle(page: import('@playwright/test').Page, suffix: string)
 
   await page.getByLabel('Odometer', { exact: true }).fill('15200');
   await page.getByRole('button', { name: /save vehicle/i }).click();
-
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
 }
 
 /**
@@ -60,7 +62,8 @@ test('a new vehicle asks for the insurance and PUC expiry, once', async ({ page 
   await page.getByLabel('PUC expires on').fill('2026-12-15');
   await page.getByRole('button', { name: 'Save dates' }).click();
 
-  // Answering puts the prompt away for good.
+  // Answering puts the prompt away for good and lands on the vehicle.
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
   await page.reload();
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
@@ -84,8 +87,10 @@ test('the prompt can be skipped in one click and does not come back', async ({ p
   await addVehicle(page, suffix);
 
   await expect(page.getByText('Never miss a renewal')).toBeVisible();
-  await page.getByRole('button', { name: 'Not now' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
 
+  // Skipping also lands on the vehicle, and the prompt stays away for good.
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
   await page.reload();
   await expect(page.getByText('Never miss a renewal')).toBeHidden();

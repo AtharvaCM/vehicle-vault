@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseRegistration, registration, spokenRegistration } from './registration';
+import {
+  formatRegistrationInput,
+  parseRegistration,
+  registration,
+  spokenRegistration,
+} from './registration';
 
 describe('registration', () => {
   it('prints state · district · series · number', () => {
@@ -35,6 +40,34 @@ describe('registration', () => {
     expect(registration('')).toBe('—');
     expect(registration(null)).toBe('—');
     expect(parseRegistration(undefined).groups).toEqual([]);
+  });
+});
+
+describe('formatRegistrationInput', () => {
+  it('groups a standard plate the instant the string typed so far completes it', () => {
+    expect(formatRegistrationInput('mh12dm0002')).toBe('MH 12 DM 0002');
+    expect(formatRegistrationInput('MH12DM0')).toBe('MH 12 DM 0');
+    // No number digit yet: not a complete plate, so left ungrouped.
+    expect(formatRegistrationInput('MH12DM')).toBe('MH12DM');
+  });
+
+  it('groups a Bharat series plate as year · BH · number · series', () => {
+    expect(formatRegistrationInput('22bh1234aa')).toBe('22 BH 1234 AA');
+    expect(formatRegistrationInput('22Bh1234A')).toBe('22 BH 1234 A');
+  });
+
+  it('upper-cases and strips punctuation while typing, whatever was typed', () => {
+    expect(formatRegistrationInput('mh-12 dm/0002')).toBe('MH 12 DM 0002');
+    expect(formatRegistrationInput('mh')).toBe('MH');
+  });
+
+  it('leaves unrecognisable input upper-cased and compact, not grouped', () => {
+    expect(formatRegistrationInput('temp reg 42')).toBe('TEMPREG42');
+    expect(formatRegistrationInput('')).toBe('');
+  });
+
+  it('stops taking characters past the longest recognised plate', () => {
+    expect(formatRegistrationInput('ABCDEFGHIJKLMNOPQ')).toBe('ABCDEFGHIJK');
   });
 });
 

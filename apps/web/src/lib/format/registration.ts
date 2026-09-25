@@ -1,3 +1,5 @@
+import { BHARAT_REGISTRATION, STANDARD_REGISTRATION } from '@vehicle-vault/shared';
+
 import { EMPTY } from './empty';
 
 export type RegistrationParts = {
@@ -6,11 +8,6 @@ export type RegistrationParts = {
   /** The groups in the order the plate prints them. */
   groups: string[];
 };
-
-// MH12DM0002, DL3CAB1234, KA01EV2024, and an older MH121234 with no series.
-const STANDARD = /^([A-Z]{2})(\d{1,2})([A-Z]{0,3})(\d{1,4})$/;
-// Bharat series: 22BH1234AA (year of registration, BH, number, series).
-const BHARAT = /^(\d{2})(BH)(\d{4})([A-Z]{1,2})$/;
 
 /**
  * An Indian registration split into the groups a plate prints, whatever
@@ -23,10 +20,10 @@ export function parseRegistration(value: string | null | undefined): Registratio
   const typed = (value ?? '').trim().toUpperCase();
   const compact = typed.replace(/[^A-Z0-9]/g, '');
 
-  const bharat = BHARAT.exec(compact);
+  const bharat = BHARAT_REGISTRATION.exec(compact);
   if (bharat) return { kind: 'bh', groups: bharat.slice(1) };
 
-  const standard = STANDARD.exec(compact);
+  const standard = STANDARD_REGISTRATION.exec(compact);
   if (standard) return { kind: 'standard', groups: standard.slice(1).filter(Boolean) };
 
   const tidied = typed.replace(/\s+/g, ' ');
@@ -38,6 +35,27 @@ export function registration(value: string | null | undefined) {
   const { groups } = parseRegistration(value);
 
   return groups.length ? groups.join(' ') : EMPTY;
+}
+
+/** The longest recognised plate, `[A-Z]{2}\d{2}[A-Z]{3}\d{4}`: nothing typed past it is kept. */
+const MAX_COMPACT_LENGTH = 11;
+
+/**
+ * Live formatting for the plate input: upper-cased as it is typed, and
+ * grouped the moment the characters typed so far spell out a complete Indian
+ * registration — "mh12dm0002" becomes "MH 12 DM 0002" the instant the last
+ * digit lands. Before that it is shown plain, with no forced spacing, so a
+ * plate still being typed (or something the format will never recognise)
+ * never gets grouped wrong partway through.
+ */
+export function formatRegistrationInput(raw: string): string {
+  const compact = raw
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, MAX_COMPACT_LENGTH);
+  const { kind, groups } = parseRegistration(compact);
+
+  return kind === 'unknown' ? compact : groups.join(' ');
 }
 
 /**
