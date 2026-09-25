@@ -47,6 +47,8 @@ The garage's record of what was done, newest first, across every vehicle the use
 
 **History summary fields** (#310): each `GET /history` page also carries `year` (this UTC calendar year's confirmed services on the filtered vehicles: count and summed `totalCost`, drafts excluded by the draft invariant; null when `kind` leaves services out) and `firstDraftId` (the oldest draft by `createdAt`, null when there are none).
 
+**History search** (#325): `GET /history?search=` finds services by workshop, invoice number, notes or category, and fills by station or notes (case-insensitive `contains`). A category matches when the search is part of its enum value in words (`engine_oil` → "engine oil"), which is how the web labels them, so the API keeps no copy of the labels (`categoriesMatching`). Odometer readings have no words and drop out of a search. Month totals follow the search; the year summary and the draft count do not.
+
 **Vehicle setup prompt**:
 The two-date question a newly created **Vehicle** lands on: insurance expiry and PUC expiry, or insurance alone for an electric vehicle (**PUC exemption**). Answering either creates a **VehicleDocument** of that kind carrying nothing but the expiry, so the expiry alerts start the minute the vehicle exists. `Vehicle.setupPromptDismissedAt` records that it was answered or skipped, and `POST /vehicles/:id/setup-prompt/dismiss` (editor) sets it once — unaudited, like a dashboard snooze, since it records a question being asked rather than a change to the vehicle.
 _Avoid_: onboarding wizard (there is no multi-step flow).

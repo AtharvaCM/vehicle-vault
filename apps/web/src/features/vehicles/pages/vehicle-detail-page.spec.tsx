@@ -39,6 +39,14 @@ vi.mock('../hooks/use-vehicle', () => ({ useVehicle: () => vehicleQuery.current 
 vi.mock('../hooks/use-delete-vehicle', () => ({
   useDeleteVehicle: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+vi.mock('@/features/history/hooks/use-history', () => ({
+  useHistory: () => ({
+    data: { pages: [] },
+    isPending: false,
+    isError: false,
+    hasNextPage: false,
+  }),
+}));
 vi.mock('@/features/maintenance/hooks/use-maintenance-records', () => ({
   useMaintenanceRecords: () => ({ data: [], isPending: false, isError: false, isSuccess: true }),
 }));

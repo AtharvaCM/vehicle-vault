@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ClipboardList, SlidersHorizontal } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { HistoryKind, HistoryPage } from '@vehicle-vault/shared';
 
 import { PageContainer } from '@/components/layout/page-container';
@@ -20,13 +20,13 @@ import {
 } from '@/components/ui/sheet';
 import { VehiclePickerDialog } from '@/features/vehicles/components/vehicle-picker-dialog';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
-import { format } from '@/lib/format';
 
 import { HistoryFilters } from '../components/history-filters';
-import { HistoryRow, type HistoryVehicle } from '../components/history-row';
+import type { HistoryVehicle } from '../components/history-row';
+import { HistorySearchBox } from '../components/history-search-box';
+import { HistoryTimeline, selectableServiceIds } from '../components/history-timeline';
 import { useHistory } from '../hooks/use-history';
 import type { HistorySearch } from '../types/history-search';
-import { groupHistory, monthStart } from '../utils/group-history';
 
 const TITLE = 'History';
 const DESCRIPTION = 'Every service, fuel fill and odometer reading across your garage.';
@@ -125,18 +125,25 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
     ? searchState.vehicle
     : undefined;
   const kind = searchState.kind;
+  const search = searchState.search;
   const historyQuery = useHistory(
-    { vehicleId, kind },
+    { vehicleId, kind, search },
     { enabled: !searchState.vehicle || !vehiclesQuery.isPending },
   );
+  const [isSelecting, setIsSelecting] = useState(false);
 
   const vehicleById = useMemo(
     () => new Map(vehicles.map((vehicle) => [vehicle.id, vehicle])),
     [vehicles],
   );
-  const groups = useMemo(() => groupHistory(historyQuery.data?.pages ?? []), [historyQuery.data]);
-  const firstPage = historyQuery.data?.pages[0];
-  const isFiltered = Boolean(vehicleId || kind);
+  const pages = historyQuery.data?.pages;
+  const hasEntries = Boolean(pages?.some((page) => page.entries.length > 0));
+  const canSelect = useMemo(
+    () => selectableServiceIds(pages ?? [], vehicleById).length > 0,
+    [pages, vehicleById],
+  );
+  const firstPage = pages?.[0];
+  const isFiltered = Boolean(vehicleId || kind || search);
   const showVehicle = vehicles.length > 1;
   // From md up in the header; below it, pinned above the bottom bar instead.
   const logService = (
@@ -144,6 +151,18 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
       <LogServiceButton isLoading={vehiclesQuery.isPending} vehicles={vehicles} />
     </div>
   );
+  // Only while there is a service the user may delete on screen; viewers never see it.
+  const selectButton =
+    canSelect || isSelecting ? (
+      <Button
+        aria-pressed={isSelecting}
+        onClick={() => setIsSelecting((current) => !current)}
+        type="button"
+        variant="outline"
+      >
+        {isSelecting ? 'Done' : 'Select'}
+      </Button>
+    ) : null;
   const filters = (
     <HistoryFilters
       kind={kind}
@@ -211,11 +230,17 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
   return (
     <PageContainer className="pb-24 md:pb-10">
       <PageTitle
-        actions={logService}
+        actions={
+          <>
+            {selectButton}
+            {logService}
+          </>
+        }
         description={<HistorySummary page={firstPage} />}
         title={TITLE}
       />
 
+      <HistorySearchBox onChange={(next) => onSearchStateChange({ search: next })} value={search} />
       <div className="hidden md:block">{filters}</div>
       <Sheet>
         <SheetTrigger asChild>
@@ -248,18 +273,24 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
         />
       </div>
 
-      {groups.length === 0 ? (
+      {!hasEntries ? (
         isFiltered ? (
           <EmptyState
             action={
               <Button
-                onClick={() => onSearchStateChange({ vehicle: undefined, kind: undefined })}
+                onClick={() =>
+                  onSearchStateChange({ vehicle: undefined, kind: undefined, search: undefined })
+                }
                 variant="secondary"
               >
                 Clear filters
               </Button>
             }
-            description="Nothing logged matches these filters. Try another vehicle or kind."
+            description={
+              search
+                ? `Nothing logged matches “${search}”. Try other words, or clear the filters.`
+                : 'Nothing logged matches these filters. Try another vehicle or kind.'
+            }
             icon={ClipboardList}
             title="Nothing here"
           />
@@ -278,59 +309,13 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
           />
         )
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-surface">
-          {groups.map((group) => {
-            const headingId = `history-${group.month}`;
-
-            return (
-              <section
-                aria-labelledby={headingId}
-                className="border-t border-line-subtle first:border-t-0"
-                data-testid="history-month"
-                key={group.month}
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line-subtle bg-page/60 px-4 py-2.5 sm:px-5">
-                  <h2 className="font-display text-lead font-semibold text-fg" id={headingId}>
-                    {format.date(monthStart(group.month), 'monthYearLong')}
-                  </h2>
-                  <p className="text-small text-fg-2" data-testid="history-month-total">
-                    {group.total !== null ? (
-                      <>
-                        Spent <Money className="font-semibold text-fg" value={group.total} />
-                      </>
-                    ) : null}
-                    {group.total !== null && group.draftCount > 0 ? ' · ' : null}
-                    {group.draftCount > 0
-                      ? `${group.draftCount} draft${group.draftCount === 1 ? '' : 's'} not counted`
-                      : null}
-                  </p>
-                </div>
-                <ul className="divide-y divide-line-subtle">
-                  {group.entries.map((entry) => (
-                    <HistoryRow
-                      entry={entry}
-                      key={`${entry.kind}:${entry.id}`}
-                      showVehicle={showVehicle}
-                      vehicle={vehicleById.get(entry.vehicleId)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-          {historyQuery.hasNextPage ? (
-            <div className="flex justify-center border-t border-line-subtle px-4 py-4">
-              <Button
-                disabled={historyQuery.isFetchingNextPage}
-                onClick={() => void historyQuery.fetchNextPage()}
-                type="button"
-                variant="outline"
-              >
-                {historyQuery.isFetchingNextPage ? 'Loading older entries…' : 'Show older entries'}
-              </Button>
-            </div>
-          ) : null}
-        </div>
+        <HistoryTimeline
+          onSelectingDone={() => setIsSelecting(false)}
+          query={historyQuery}
+          selecting={isSelecting}
+          showVehicle={showVehicle}
+          vehicleById={vehicleById}
+        />
       )}
     </PageContainer>
   );

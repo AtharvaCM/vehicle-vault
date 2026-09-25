@@ -3,7 +3,12 @@ import { AuditResourceType, Prisma } from '@prisma/client';
 import { MaintenanceCategory, MaintenanceRecordStatus } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { encodeHistoryCursor, historyMonth, HistoryService } from './history.service';
+import {
+  categoriesMatching,
+  encodeHistoryCursor,
+  historyMonth,
+  HistoryService,
+} from './history.service';
 
 type Mock = ReturnType<typeof vi.fn>;
 
@@ -72,6 +77,18 @@ describe('historyMonth', () => {
     // 20:30 UTC on 30 Sep is 02:00 on 1 Oct in India.
     expect(historyMonth(new Date('2026-09-30T20:30:00.000Z'))).toBe('2026-10');
     expect(historyMonth(new Date('2026-09-30T00:00:00.000Z'))).toBe('2026-09');
+  });
+});
+
+describe('categoriesMatching', () => {
+  it('finds a category by the words of its label', () => {
+    expect(categoriesMatching('engine oil')).toEqual([MaintenanceCategory.EngineOil]);
+    expect(categoriesMatching('Oil')).toEqual([
+      MaintenanceCategory.EngineOil,
+      MaintenanceCategory.OilFilter,
+    ]);
+    expect(categoriesMatching('PUC')).toEqual([MaintenanceCategory.Puc]);
+    expect(categoriesMatching('Torque Garage')).toEqual([]);
   });
 });
 
@@ -299,6 +316,100 @@ describe('HistoryService.list', () => {
     );
     expect(page.draftCount).toBe(0);
     expect(page.months).toEqual([{ month: '2026-09', total: null, draftCount: 0 }]);
+  });
+
+  describe('search', () => {
+    const serviceMatch = {
+      AND: [
+        {
+          OR: [
+            { workshopName: { contains: 'oil', mode: 'insensitive' } },
+            { invoiceNumber: { contains: 'oil', mode: 'insensitive' } },
+            { notes: { contains: 'oil', mode: 'insensitive' } },
+            {
+              category: { in: [MaintenanceCategory.EngineOil, MaintenanceCategory.OilFilter] },
+            },
+          ],
+        },
+      ],
+    };
+    const fuelMatch = {
+      AND: [
+        {
+          OR: [
+            { location: { contains: 'oil', mode: 'insensitive' } },
+            { notes: { contains: 'oil', mode: 'insensitive' } },
+          ],
+        },
+      ],
+    };
+
+    it('finds services by category, workshop, invoice and notes, and fills by station', async () => {
+      prisma.maintenanceRecord.findMany
+        .mockResolvedValueOnce([service(2, '2026-09-10T00:00:00.000Z')])
+        .mockResolvedValueOnce([]);
+      prisma.fuelLog.findMany
+        .mockResolvedValueOnce([fuel(1, '2026-09-05T00:00:00.000Z')])
+        .mockResolvedValueOnce([]);
+      prisma.maintenanceRecord.count.mockResolvedValueOnce(0);
+
+      const page = await history.list('user-1', { search: 'oil' });
+
+      expect(prisma.maintenanceRecord.findMany).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ where: { vehicleId: { in: [V1, V2] }, ...serviceMatch } }),
+      );
+      expect(prisma.fuelLog.findMany).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ where: { vehicleId: { in: [V1, V2] }, ...fuelMatch } }),
+      );
+      expect(page.entries.map((entry) => entry.kind)).toEqual(['service', 'fuel']);
+    });
+
+    it('leaves odometer readings out, since they carry no words', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([]);
+      prisma.maintenanceRecord.count.mockResolvedValueOnce(0);
+
+      await history.list('user-1', { search: 'oil' });
+
+      expect(prisma.auditEvent.findMany).not.toHaveBeenCalled();
+    });
+
+    it('totals the months over what it finds, and the year over the whole garage', async () => {
+      prisma.maintenanceRecord.findMany
+        .mockResolvedValueOnce([service(2, '2026-09-10T00:00:00.000Z')])
+        .mockResolvedValueOnce([]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      prisma.maintenanceRecord.count.mockResolvedValueOnce(0);
+
+      await history.list('user-1', { search: 'oil' });
+
+      expect(prisma.maintenanceRecord.findMany).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ where: expect.objectContaining(serviceMatch) }),
+      );
+      expect(prisma.fuelLog.findMany).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ where: expect.objectContaining(fuelMatch) }),
+      );
+      expect(prisma.maintenanceRecord.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.not.objectContaining(serviceMatch) }),
+      );
+    });
+
+    it('still counts every draft on the vehicles, found or not', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValueOnce([]);
+      prisma.fuelLog.findMany.mockResolvedValueOnce([]);
+      prisma.maintenanceRecord.count.mockResolvedValueOnce(2);
+
+      const page = await history.list('user-1', { search: 'oil' });
+
+      expect(prisma.maintenanceRecord.count).toHaveBeenCalledWith({
+        where: { vehicleId: { in: [V1, V2] }, status: MaintenanceRecordStatus.Draft },
+      });
+      expect(page.draftCount).toBe(2);
+    });
   });
 
   it('refuses a vehicle the user cannot see', async () => {

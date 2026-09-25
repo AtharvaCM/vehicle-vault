@@ -394,23 +394,27 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await expectFillFitsPhone(card, title, figures);
   }
 
-  // From xl the sidebar opens and the history list sits beside it, which
-  // leaves a record card narrower at 1280px than on a tablet.
-  const recordCard: [string, string[]] = [workshop, ['14,800 km', '₹8,450']];
-  const desktopPages: Array<[string, string, Array<[string, string[]]>]> = [
-    // The Overview lists rows, not cards, since #307: only the sideways check applies.
-    ['The overview tab', `${vehicleUrl}?tab=overview`, []],
-    ['The history tab', `${vehicleUrl}?tab=history`, [recordCard]],
+  // The Overview lists rows, not cards, since #307, and the History tab lists
+  // the History list's rows since #325: the sideways check applies to both,
+  // and a service row must keep its cost inside it at 1280px, where the
+  // sidebar opens beside the list.
+  const desktopPages: Array<[string, string]> = [
+    ['The overview tab', `${vehicleUrl}?tab=overview`],
+    ['The history tab', `${vehicleUrl}?tab=history`],
   ];
   await page.setViewportSize(DESKTOP);
-  for (const [where, path, cards] of desktopPages) {
+  for (const [where, path] of desktopPages) {
     await page.goto(path);
-    for (const [title, figures] of cards) {
-      const card = page.getByRole('main').getByRole('link', { name: title }).first();
-      await expectReadableCard(card, title, figures);
-    }
     await expectNoSidewaysScroll(page, where);
   }
+  const serviceRow = page.getByTestId('history-row').filter({ hasText: workshop });
+  await expect(serviceRow).toBeVisible();
+  const rowBox = (await serviceRow.boundingBox())!;
+  const costBox = (await serviceRow.getByText('₹8,450', { exact: true }).boundingBox())!;
+  expect(
+    costBox.x + costBox.width,
+    'The service row pushes its cost out of view.',
+  ).toBeLessThanOrEqual(rowBox.x + rowBox.width);
 
   // The fuel tab splits the same way, and a fill's three figures and menu need
   // more room beside its text than a record's two figures. So it is measured at

@@ -24,7 +24,7 @@ describe('normalizeHistorySearch', () => {
     });
   });
 
-  it('drops the old maintenance list search, category and sort params', () => {
+  it("keeps the old maintenance list's search, and drops its category and sort", () => {
     expect(
       normalizeHistorySearch({
         vehicle: VEHICLE_ID,
@@ -33,7 +33,16 @@ describe('normalizeHistorySearch', () => {
         category: 'engine_oil',
         sort: 'date_desc',
       }),
-    ).toEqual({ vehicle: VEHICLE_ID, kind: 'service' });
+    ).toEqual({ vehicle: VEHICLE_ID, kind: 'service', search: 'torque' });
+  });
+
+  it('trims a search, caps it at 100 characters, and drops a blank one', () => {
+    expect(normalizeHistorySearch({ search: '  Torque Garage ' })).toEqual({
+      search: 'Torque Garage',
+    });
+    expect(normalizeHistorySearch({ search: 'x'.repeat(120) }).search).toHaveLength(100);
+    expect(normalizeHistorySearch({ search: '   ' })).toEqual({});
+    expect(normalizeHistorySearch({ search: 7 })).toEqual({});
   });
 
   it('returns an empty object when nothing valid is set', () => {
