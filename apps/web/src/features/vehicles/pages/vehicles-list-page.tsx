@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
@@ -7,12 +8,15 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useDashboardSummary } from '@/features/dashboard/hooks/use-dashboard-summary';
+import type { DashboardVehicleHealth } from '@/features/dashboard/types/dashboard';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { BulkVehicleActions } from '../components/bulk-vehicle-actions';
-import { VehicleListControls } from '../components/vehicle-list-controls';
-import { VehicleList } from '../components/vehicle-list';
+import { byUrgency, GarageRow } from '../components/garage-row';
 import { useBulkDeleteVehicles } from '../hooks/use-bulk-delete-vehicles';
 import { useVehicles } from '../hooks/use-vehicles';
 import {
@@ -21,6 +25,9 @@ import {
   type VehicleSortOption,
 } from '../types/vehicle-list-search';
 
+/** Search shows up once the garage is longer than this: below it, the list is the search. */
+const SEARCH_FROM = 6;
+
 type VehiclesListPageProps = {
   searchState: VehicleListSearch;
   onSearchStateChange: (next: Partial<VehicleListSearch>) => void;
@@ -28,8 +35,17 @@ type VehiclesListPageProps = {
 
 export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesListPageProps) {
   const vehiclesQuery = useVehicles();
+  const summaryQuery = useDashboardSummary();
   const bulkDeleteMutation = useBulkDeleteVehicles();
+  const [isSelecting, setIsSelecting] = useState(false);
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
+  const health = useMemo(
+    () =>
+      new Map<string, DashboardVehicleHealth>(
+        (summaryQuery.data?.vehicles ?? []).map((entry) => [entry.id, entry]),
+      ),
+    [summaryQuery.data?.vehicles],
+  );
   const searchValue = searchState.search ?? '';
   const sortBy: VehicleSortOption = searchState.sort ?? defaultVehicleSort;
 
@@ -65,11 +81,13 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
           case 'year-desc':
             return right.year - left.year;
           case 'updated-desc':
-          default:
             return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+          case 'urgency':
+          default:
+            return byUrgency(health)(left, right);
         }
       });
-  }, [searchValue, sortBy, vehiclesQuery.data]);
+  }, [health, searchValue, sortBy, vehiclesQuery.data]);
   const visibleVehicleIds = useMemo(
     () => filteredVehicles.map((vehicle) => vehicle.id),
     [filteredVehicles],
@@ -87,6 +105,11 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
 
   function resetControls() {
     onSearchStateChange({});
+  }
+
+  function stopSelecting() {
+    setIsSelecting(false);
+    setSelectedVehicleIds([]);
   }
 
   function handleSelectionChange(vehicleId: string, checked: boolean) {
@@ -112,7 +135,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
         title: 'Vehicles deleted',
         description: `Deleted ${idsToDelete.length} vehicle${idsToDelete.length === 1 ? '' : 's'}.`,
       });
-      setSelectedVehicleIds([]);
+      stopSelecting();
     } catch (error) {
       appToast.error({
         title: 'Unable to delete vehicles',
@@ -128,9 +151,21 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
     <PageContainer>
       <PageTitle
         actions={
-          <Link className={buttonVariants()} to="/vehicles/new">
-            Add vehicle
-          </Link>
+          <>
+            {(vehiclesQuery.data?.length ?? 0) > 1 ? (
+              <Button
+                aria-pressed={isSelecting}
+                onClick={() => (isSelecting ? stopSelecting() : setIsSelecting(true))}
+                type="button"
+                variant="outline"
+              >
+                {isSelecting ? 'Done' : 'Select'}
+              </Button>
+            ) : null}
+            <Link className={buttonVariants()} to="/vehicles/new">
+              Add vehicle
+            </Link>
+          </>
         }
         description="Keep every vehicle in one place so service history, reminders, and receipts stay connected."
         title="Garage"
@@ -155,43 +190,63 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
         />
       ) : vehiclesQuery.data.length ? (
         <div className="space-y-4">
-          <VehicleListControls
-            onReset={resetControls}
-            onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
-            onSortChange={(value) => onSearchStateChange({ sort: value })}
-            resultCount={filteredVehicles.length}
-            searchValue={searchValue}
-            sortBy={sortBy}
-            totalCount={vehiclesQuery.data.length}
-          />
-          <BulkVehicleActions
-            isDeleting={bulkDeleteMutation.isPending}
-            onClearSelection={() => setSelectedVehicleIds([])}
-            onDeleteSelected={handleBulkDelete}
-            onSelectAllVisible={() => setSelectedVehicleIds(visibleVehicleIds)}
-            selectedVehicles={selectedVehicles}
-            visibleCount={visibleVehicleIds.length}
-          />
-          {filteredVehicles.length ? (
-            <VehicleList
-              onSelectionChange={handleSelectionChange}
-              selectedVehicleIds={selectedVehicleIds}
-              vehicles={filteredVehicles}
+          {vehiclesQuery.data.length > SEARCH_FROM || searchValue ? (
+            <div className="relative max-w-md">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3"
+              />
+              <Input
+                aria-label="Search vehicles"
+                className="pl-9"
+                onChange={(event) =>
+                  onSearchStateChange({ search: event.currentTarget.value || undefined })
+                }
+                placeholder="Search by name, plate or model"
+                type="search"
+                value={searchValue}
+              />
+            </div>
+          ) : null}
+          {isSelecting ? (
+            <BulkVehicleActions
+              isDeleting={bulkDeleteMutation.isPending}
+              onClearSelection={() => setSelectedVehicleIds([])}
+              onDeleteSelected={handleBulkDelete}
+              onSelectAllVisible={() => setSelectedVehicleIds(visibleVehicleIds)}
+              selectedVehicles={selectedVehicles}
+              visibleCount={visibleVehicleIds.length}
             />
+          ) : null}
+          {filteredVehicles.length ? (
+            <Card className="overflow-hidden p-0">
+              <ul aria-label="Vehicles" className="divide-y divide-line-subtle">
+                {filteredVehicles.map((vehicle) => (
+                  <GarageRow
+                    health={health.get(vehicle.id)}
+                    key={vehicle.id}
+                    onSelectedChange={(checked) => handleSelectionChange(vehicle.id, checked)}
+                    selectable={isSelecting}
+                    selected={selectedVehicleIds.includes(vehicle.id)}
+                    vehicle={vehicle}
+                  />
+                ))}
+              </ul>
+            </Card>
           ) : (
             <EmptyState
               action={
                 <div className="flex flex-wrap gap-3">
                   <Button onClick={resetControls} variant="secondary">
-                    Clear filters
+                    Clear search
                   </Button>
                   <Link className={buttonVariants()} to="/vehicles/new">
                     Add vehicle
                   </Link>
                 </div>
               }
-              description="Try a different search or sort to bring more vehicles into view."
-              title="No vehicles match these filters"
+              description="Try a different search to bring more vehicles into view."
+              title="No vehicles match this search"
             />
           )}
         </div>

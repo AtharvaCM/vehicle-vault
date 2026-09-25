@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, SlidersHorizontal } from 'lucide-react';
 import { useMemo } from 'react';
-import type { HistoryKind } from '@vehicle-vault/shared';
+import type { HistoryKind, HistoryPage } from '@vehicle-vault/shared';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -10,6 +10,14 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { Money } from '@/components/shared/money';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { VehiclePickerDialog } from '@/features/vehicles/components/vehicle-picker-dialog';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { format } from '@/lib/format';
@@ -33,10 +41,12 @@ function LogServiceButton({
   vehicles,
   isLoading,
   label = 'Log service',
+  className,
 }: {
   vehicles: HistoryVehicle[];
   isLoading: boolean;
   label?: string;
+  className?: string;
 }) {
   return (
     <VehiclePickerDialog
@@ -45,6 +55,7 @@ function LogServiceButton({
         params: { vehicleId },
       })}
       dialogDescription="Choose which vehicle this service is for."
+      className={className}
       dialogTitle="Log service"
       isLoading={isLoading}
       triggerLabel={label}
@@ -53,10 +64,51 @@ function LogServiceButton({
   );
 }
 
-function draftsNotice(count: number) {
-  return count === 1
-    ? '1 service is a draft. It is marked below and left out of the totals until it is confirmed.'
-    : `${count} services are drafts. They are marked below and left out of the totals until they are confirmed.`;
+/**
+ * The page's one summary line: "₹15,200 on 3 services in 2026 · 1 draft to
+ * confirm", the drafts linked to the one waiting longest. Services only, and
+ * only while the kind filter includes them; the month headers carry the rest.
+ */
+function HistorySummary({ page }: { page: HistoryPage | undefined }) {
+  const year = page?.year;
+  const drafts = page?.draftCount ?? 0;
+  if (!year && drafts === 0) return DESCRIPTION;
+
+  const services =
+    year && year.serviceCount > 0 ? (
+      <>
+        <Money className="font-semibold text-fg" value={Number(year.serviceSpend)} /> on{' '}
+        {year.serviceCount} service{year.serviceCount === 1 ? '' : 's'} in {year.year}
+      </>
+    ) : year ? (
+      `No services logged in ${year.year}`
+    ) : null;
+  const draftWords = `${drafts} draft${drafts === 1 ? '' : 's'} to confirm`;
+
+  return (
+    <span data-testid="history-summary">
+      {services}
+      {services && drafts > 0 ? ' · ' : null}
+      {drafts > 0 ? (
+        page?.firstDraftId ? (
+          <Link
+            className="font-medium text-soon underline-offset-2 hover:underline"
+            params={{ recordId: page.firstDraftId }}
+            to="/maintenance-records/$recordId/edit"
+          >
+            {draftWords} →
+          </Link>
+        ) : (
+          <span className="font-medium text-soon">{draftWords}</span>
+        )
+      ) : null}
+    </span>
+  );
+}
+
+/** The vehicle and kind filters, and how many are set, for the phone's Filters button. */
+function activeFilterCount(search: HistorySearch) {
+  return Number(Boolean(search.vehicle)) + Number(Boolean(search.kind));
 }
 
 /**
@@ -83,10 +135,25 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
     [vehicles],
   );
   const groups = useMemo(() => groupHistory(historyQuery.data?.pages ?? []), [historyQuery.data]);
-  const draftCount = historyQuery.data?.pages[0]?.draftCount ?? 0;
+  const firstPage = historyQuery.data?.pages[0];
   const isFiltered = Boolean(vehicleId || kind);
   const showVehicle = vehicles.length > 1;
-  const logService = <LogServiceButton isLoading={vehiclesQuery.isPending} vehicles={vehicles} />;
+  // From md up in the header; below it, pinned above the bottom bar instead.
+  const logService = (
+    <div className="hidden md:block">
+      <LogServiceButton isLoading={vehiclesQuery.isPending} vehicles={vehicles} />
+    </div>
+  );
+  const filters = (
+    <HistoryFilters
+      kind={kind}
+      onKindChange={(next: HistoryKind | undefined) => onSearchStateChange({ kind: next })}
+      onVehicleChange={(next) => onSearchStateChange({ vehicle: next })}
+      vehicleId={vehicleId}
+      vehicles={vehicles}
+    />
+  );
+  const filterCount = activeFilterCount({ vehicle: vehicleId, kind });
 
   if (historyQuery.isPending || vehiclesQuery.isPending) {
     return (
@@ -142,25 +209,44 @@ export function HistoryPage({ searchState, onSearchStateChange }: HistoryPagePro
   }
 
   return (
-    <PageContainer>
-      <PageTitle actions={logService} description={DESCRIPTION} title={TITLE} />
-
-      <HistoryFilters
-        kind={kind}
-        onKindChange={(next: HistoryKind | undefined) => onSearchStateChange({ kind: next })}
-        onVehicleChange={(next) => onSearchStateChange({ vehicle: next })}
-        vehicleId={vehicleId}
-        vehicles={vehicles}
+    <PageContainer className="pb-24 md:pb-10">
+      <PageTitle
+        actions={logService}
+        description={<HistorySummary page={firstPage} />}
+        title={TITLE}
       />
 
-      {draftCount > 0 ? (
-        <p
-          className="rounded-card border border-soon/30 bg-soon-tint/70 px-4 py-3 text-small text-soon"
-          data-testid="history-drafts"
+      <div className="hidden md:block">{filters}</div>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button className="w-full md:hidden" type="button" variant="outline">
+            <SlidersHorizontal aria-hidden="true" />
+            {filterCount > 0 ? `Filters (${filterCount})` : 'Filters'}
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          className="rounded-t-sheet px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          side="bottom"
         >
-          {draftsNotice(draftCount)}
-        </p>
-      ) : null}
+          <SheetHeader className="text-left">
+            <SheetTitle>Filters</SheetTitle>
+            <SheetDescription>Which vehicle, and which kind of entry.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-3">{filters}</div>
+        </SheetContent>
+      </Sheet>
+
+      {/* The phone's Log service: pinned above the bottom bar, full width. */}
+      <div
+        data-testid="history-log-service"
+        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-surface/95 px-4 py-2 backdrop-blur-md md:hidden"
+      >
+        <LogServiceButton
+          className="w-full"
+          isLoading={vehiclesQuery.isPending}
+          vehicles={vehicles}
+        />
+      </div>
 
       {groups.length === 0 ? (
         isFiltered ? (

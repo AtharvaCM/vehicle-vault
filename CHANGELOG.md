@@ -1,3 +1,22 @@
+# [1.98.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.97.0...v1.98.0) (2026-09-25)
+
+
+### Features
+
+* **web:** turn the garage into a status list led by the plate ([07a58e5](https://github.com/AtharvaCM/vehicle-vault/commit/07a58e596e9dbe829001e18ea67575aef2bff7e2)), closes [#308](https://github.com/AtharvaCM/vehicle-vault/issues/308)
+
+# [1.97.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.96.0...v1.97.0) (2026-09-25)
+
+
+### Bug Fixes
+
+* **web:** keep papers two taps from Home, and say when nothing is tracked ([bb5efd0](https://github.com/AtharvaCM/vehicle-vault/commit/bb5efd0564d88628a6c49834ee446d5e7bef891a))
+
+
+### Features
+
+* **web:** turn Home into a to-do list with a status line ([51d3fc4](https://github.com/AtharvaCM/vehicle-vault/commit/51d3fc45786e8232152acfb828a6699665ef9994)), closes [#306](https://github.com/AtharvaCM/vehicle-vault/issues/306)
+
 # [1.96.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.95.0...v1.96.0) (2026-09-25)
 
 

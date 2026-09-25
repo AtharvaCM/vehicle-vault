@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { UpcomingRow } from './upcoming-row';
 
 vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn(),
   Link: ({
     children,
     params,

@@ -56,7 +56,12 @@ function reading(n: number, occurredAt: string, before: unknown, after: unknown,
 
 function makePrisma() {
   return {
-    maintenanceRecord: { findMany: vi.fn(), count: vi.fn() },
+    maintenanceRecord: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
+      aggregate: vi.fn().mockResolvedValue({ _count: { _all: 0 }, _sum: { totalCost: null } }),
+    },
     fuelLog: { findMany: vi.fn() },
     auditEvent: { findMany: vi.fn() },
   };
@@ -315,8 +320,58 @@ describe('HistoryService.list', () => {
       entries: [],
       months: [],
       draftCount: 0,
+      firstDraftId: null,
+      year: null,
       nextCursor: null,
     });
     expect(prisma.fuelLog.findMany).not.toHaveBeenCalled();
+  });
+
+  describe('summary line', () => {
+    it("counts this year's confirmed services and what they cost", async () => {
+      stubSources({ services: [service(1, '2026-09-10T00:00:00.000Z')] });
+      prisma.maintenanceRecord.aggregate.mockResolvedValueOnce({
+        _count: { _all: 3 },
+        _sum: { totalCost: new Prisma.Decimal('15200') },
+      });
+
+      const page = await history.list('user-1', {});
+
+      const year = new Date().getUTCFullYear();
+      expect(page.year).toEqual({ year, serviceCount: 3, serviceSpend: '15200.00' });
+      expect(prisma.maintenanceRecord.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            vehicleId: { in: [V1, V2] },
+            status: MaintenanceRecordStatus.Confirmed,
+            serviceDate: {
+              gte: new Date(Date.UTC(year, 0, 1)),
+              lt: new Date(Date.UTC(year + 1, 0, 1)),
+            },
+          }),
+        }),
+      );
+    });
+
+    it('names the oldest draft when there are drafts to confirm', async () => {
+      stubSources({ drafts: 2 });
+      prisma.maintenanceRecord.findFirst.mockResolvedValueOnce({ id: 'draft-oldest' });
+
+      const page = await history.list('user-1', {});
+
+      expect(page.firstDraftId).toBe('draft-oldest');
+      expect(prisma.maintenanceRecord.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }),
+      );
+    });
+
+    it('has no year summary when the kind filter leaves services out', async () => {
+      prisma.fuelLog.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+      const page = await history.list('user-1', { kind: 'fuel' });
+
+      expect(page.year).toBeNull();
+      expect(prisma.maintenanceRecord.aggregate).not.toHaveBeenCalled();
+    });
   });
 });
