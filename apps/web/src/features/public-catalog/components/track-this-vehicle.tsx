@@ -1,7 +1,7 @@
 import { Link, useRouter } from '@tanstack/react-router';
 import type { PublicCatalogModelPage, PublicCatalogVariantPage } from '@vehicle-vault/shared';
 import { ArrowRight } from 'lucide-react';
-import { useContext } from 'react';
+import { useContext, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AuthContext } from '@/features/auth/providers/auth-provider';
@@ -20,7 +20,8 @@ type TrackThisVehicleProps = {
  * the intent. A model page's intent names make and model only, and the form
  * leaves the variant for the owner.
  */
-export function TrackThisVehicle({ page }: TrackThisVehicleProps) {
+/** Where Track this vehicle goes for this page: its link target and the catalog intent it carries. */
+function useTrackTarget(page: PublicCatalogVariantPage | PublicCatalogModelPage) {
   const isAuthenticated = useContext(AuthContext)?.isAuthenticated ?? false;
   const isVariant = 'variant' in page;
   const catalog = toCatalogIntentParam(
@@ -34,11 +35,62 @@ export function TrackThisVehicle({ page }: TrackThisVehicleProps) {
         }
       : { segment: page.segment, make: page.make.slug, model: page.model.slug },
   );
-  const vehicleName = isVariant
-    ? `${page.make.name} ${page.model.name} ${page.variant.name}`
-    : `${page.make.name} ${page.model.name}`;
+  const to: '/vehicles/new' | '/register' = isAuthenticated ? '/vehicles/new' : '/register';
+  return { isVariant, catalog, to };
+}
+
+function TrackLink({
+  page,
+  className,
+  children,
+}: {
+  page: PublicCatalogVariantPage | PublicCatalogModelPage;
+  className?: string;
+  children: ReactNode;
+}) {
+  const { catalog, to } = useTrackTarget(page);
   const router = useRouter({ warn: false });
-  const to = isAuthenticated ? '/vehicles/new' : '/register';
+  return router ? (
+    <Link className={className} search={{ catalog }} to={to}>
+      {children}
+    </Link>
+  ) : (
+    // Rendered with no router at all, as a prerender may be.
+    <a className={className} href={`${to}?${new URLSearchParams({ catalog })}`}>
+      {children}
+    </a>
+  );
+}
+
+/**
+ * On a phone, the offer stays in reach (#344): a bar along the bottom of a
+ * variant page, carrying the same intent as the page's Track this vehicle.
+ * From `md` up the page is short enough to reach the offer itself.
+ */
+export function TrackThisVehicleBar({ page }: { page: PublicCatalogVariantPage }) {
+  return (
+    <div
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur md:hidden"
+      data-testid="track-this-vehicle-bar"
+    >
+      <TrackLink
+        className="flex min-h-11 items-center justify-between gap-3 rounded-control bg-primary px-4 text-ui font-semibold text-primary-foreground"
+        page={page}
+      >
+        <span className="min-w-0 truncate">
+          Track your {page.model.name} {page.variant.name} free
+        </span>
+        <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
+      </TrackLink>
+    </div>
+  );
+}
+
+export function TrackThisVehicle({ page }: TrackThisVehicleProps) {
+  const { isVariant } = useTrackTarget(page);
+  const vehicleName = isVariant
+    ? `${page.make.name} ${page.model.name} ${(page as PublicCatalogVariantPage).variant.name}`
+    : `${page.make.name} ${page.model.name}`;
   const label = (
     <>
       Track this vehicle
@@ -66,14 +118,7 @@ export function TrackThisVehicle({ page }: TrackThisVehicleProps) {
           : 'We’ll fill in the make and model for you; add the variant if you know it.'}
       </p>
       <Button asChild className="mt-4 w-full sm:w-auto" size="lg">
-        {router ? (
-          <Link search={{ catalog }} to={to}>
-            {label}
-          </Link>
-        ) : (
-          // Rendered with no router at all, as a prerender may be.
-          <a href={`${to}?${new URLSearchParams({ catalog })}`}>{label}</a>
-        )}
+        <TrackLink page={page}>{label}</TrackLink>
       </Button>
     </section>
   );

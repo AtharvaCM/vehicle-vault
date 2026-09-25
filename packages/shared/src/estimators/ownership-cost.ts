@@ -3,8 +3,10 @@ import { VehicleType } from '../enums/vehicle-type.enum';
 
 /**
  * Ownership-cost estimator: what a vehicle costs to run each month, each year
- * and over the years someone keeps it, split into energy, service and
- * (optionally) the purchase itself.
+ * and over the years someone keeps it, split into energy and service. Given an
+ * on-road price, it also works out the cost of owning it over those years: the
+ * price, less an assumed resale value, plus the running cost. The running
+ * cost never includes the purchase.
  *
  * A pure function over plain numbers. Anything the caller leaves `undefined`
  * is filled from the defaults below and named in `defaulted`, so a page can
@@ -58,6 +60,49 @@ export const DEFAULT_KM_PER_MONTH: Readonly<Record<VehicleType, number>> = {
 };
 
 export const DEFAULT_OWNERSHIP_YEARS = 5;
+
+/**
+ * Typical real-world efficiency by vehicle type and fuel, for a variant the
+ * catalog has no claimed figure for: km/L (km/kg for CNG), or kWh per 100 km
+ * for an EV. Rough national figures, dated with the prices above; a page says
+ * they are typical, not the variant's own.
+ */
+export const TYPICAL_EFFICIENCY: Readonly<
+  Partial<Record<VehicleType, Partial<Record<FuelType, number>>>>
+> = {
+  [VehicleType.Car]: {
+    [FuelType.Petrol]: 15,
+    [FuelType.Diesel]: 19,
+    [FuelType.CNG]: 22,
+    [FuelType.Hybrid]: 22,
+    [FuelType.LPG]: 13,
+    [FuelType.Electric]: 14,
+  },
+  [VehicleType.SUV]: {
+    [FuelType.Petrol]: 12,
+    [FuelType.Diesel]: 15,
+    [FuelType.CNG]: 18,
+    [FuelType.Hybrid]: 19,
+    [FuelType.Electric]: 17,
+  },
+  [VehicleType.Van]: {
+    [FuelType.Petrol]: 13,
+    [FuelType.Diesel]: 16,
+    [FuelType.CNG]: 20,
+    [FuelType.Electric]: 18,
+  },
+  [VehicleType.Motorcycle]: {
+    [FuelType.Petrol]: 45,
+    [FuelType.Electric]: 3,
+  },
+};
+
+/**
+ * The share of its value a vehicle is assumed to keep each year, for the cost
+ * of ownership: about 15% lost a year, so roughly 44% is left after five.
+ * Real resale varies a lot by model and condition; a page says it is assumed.
+ */
+export const ASSUMED_VALUE_KEPT_PER_YEAR = 0.85;
 
 /**
  * The accepted range of each input, inclusive. Anything outside it is treated
@@ -164,13 +209,29 @@ export interface OwnershipCostInput {
 /** The value each defaulted input takes; null when there is no default for this vehicle. */
 export type OwnershipCostDefaults = Record<OwnershipCostDefaultedField, number | null>;
 
-/** Rupees, for one period. `purchase` is null when no on-road price was given. */
+/** The running cost for one period, in rupees: energy and service, never the purchase. */
 export interface OwnershipCostBreakdown {
   energy: number;
   service: number;
-  purchase: number | null;
   total: number;
 }
+
+/**
+ * The cost of owning it over `inputs.years`, in rupees, when an on-road price
+ * was given: the price, less what it might sell for at the end, plus running
+ * it for those years.
+ */
+export interface OwnershipCostOwnership {
+  onRoadPrice: number;
+  /** Assumed, from `ASSUMED_VALUE_KEPT_PER_YEAR`. */
+  resaleValue: number;
+  running: number;
+  total: number;
+  perMonth: number;
+}
+
+/** Where a defaulted efficiency came from: the maker's claim, or a typical figure for the type and fuel. */
+export type OwnershipCostEfficiencySource = 'claimed' | 'typical';
 
 export interface OwnershipCostEstimate {
   kind: 'estimate';
@@ -190,10 +251,13 @@ export interface OwnershipCostEstimate {
   defaulted: OwnershipCostDefaultedField[];
   /** Average periodic services a year; fractional, since visits fall where they fall. */
   serviceVisitsPerYear: number;
+  /** Where the efficiency came from when the visitor left it alone; null when they gave one. */
+  efficiencySource: OwnershipCostEfficiencySource | null;
   perMonth: OwnershipCostBreakdown;
   perYear: OwnershipCostBreakdown;
-  /** Over `inputs.years`. The purchase is counted once, here in full. */
   overYears: OwnershipCostBreakdown;
+  /** Null when no on-road price was given. */
+  ownership: OwnershipCostOwnership | null;
 }
 
 export type OwnershipCostProblemKind = 'missing' | 'not-a-number' | 'too-small' | 'too-large';
@@ -231,6 +295,16 @@ export function claimedEfficiency(
   return isPositive(claimed.mileage) ? claimed.mileage : null;
 }
 
+/** The efficiency a visitor starts from: the maker's claim, else a typical figure; null when neither exists. */
+export function defaultEfficiency(
+  input: Pick<OwnershipCostInput, 'fuelType' | 'vehicleType' | 'claimed'>,
+): { value: number; source: OwnershipCostEfficiencySource } | null {
+  const claimed = claimedEfficiency(input.fuelType, input.claimed);
+  if (claimed !== null) return { value: claimed, source: 'claimed' };
+  const typical = TYPICAL_EFFICIENCY[input.vehicleType]?.[input.fuelType];
+  return typical === undefined ? null : { value: typical, source: 'typical' };
+}
+
 /** What each input falls back to for this vehicle when the visitor leaves it alone. */
 export function ownershipCostDefaults(
   input: Pick<OwnershipCostInput, 'fuelType' | 'vehicleType' | 'claimed'> & {
@@ -240,7 +314,7 @@ export function ownershipCostDefaults(
   return {
     kmPerMonth: DEFAULT_KM_PER_MONTH[input.vehicleType] ?? null,
     years: DEFAULT_OWNERSHIP_YEARS,
-    efficiency: claimedEfficiency(input.fuelType, input.claimed),
+    efficiency: defaultEfficiency(input)?.value ?? null,
     energyPrice: DEFAULT_ENERGY_PRICE_INR[input.fuelType] ?? null,
     serviceCostPerVisit: DEFAULT_SERVICE_COST_PER_VISIT_INR[input.vehicleType] ?? null,
     servicesPerYear: defaultServicesPerYear(input.vehicleType, input.serviceInterval ?? null),
@@ -320,7 +394,7 @@ export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostR
     serviceVisitsPerYear = defaultVisits ?? 0;
   }
 
-  // A blank or absent on-road price leaves the purchase out; a given one must make sense.
+  // A blank or absent on-road price leaves ownership out; a given one must make sense.
   const onRoadPrice =
     input.onRoadPrice === undefined || input.onRoadPrice === null
       ? null
@@ -340,6 +414,7 @@ export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostR
   const servicePerYear = serviceVisitsPerYear * serviceCostPerVisit;
 
   const months = years * 12;
+  const overYears = breakdown(energyPerMonth * months, servicePerYear * years);
 
   return {
     kind: 'estimate',
@@ -356,18 +431,24 @@ export function estimateOwnershipCost(input: OwnershipCostInput): OwnershipCostR
     },
     defaulted,
     serviceVisitsPerYear,
-    perMonth: breakdown(energyPerMonth, servicePerYear / 12, onRoadPrice && onRoadPrice / months),
-    perYear: breakdown(energyPerMonth * 12, servicePerYear, onRoadPrice && onRoadPrice / years),
-    overYears: breakdown(energyPerMonth * months, servicePerYear * years, onRoadPrice),
+    efficiencySource: defaulted.includes('efficiency')
+      ? (defaultEfficiency(input)?.source ?? null)
+      : null,
+    perMonth: breakdown(energyPerMonth, servicePerYear / 12),
+    perYear: breakdown(energyPerMonth * 12, servicePerYear),
+    overYears,
+    ownership: onRoadPrice === null ? null : ownership(onRoadPrice, years, overYears.total),
   };
 }
 
-function breakdown(
-  energy: number,
-  service: number,
-  purchase: number | null,
-): OwnershipCostBreakdown {
-  return { energy, service, purchase, total: energy + service + (purchase ?? 0) };
+function breakdown(energy: number, service: number): OwnershipCostBreakdown {
+  return { energy, service, total: energy + service };
+}
+
+function ownership(onRoadPrice: number, years: number, running: number): OwnershipCostOwnership {
+  const resaleValue = onRoadPrice * ASSUMED_VALUE_KEPT_PER_YEAR ** years;
+  const total = onRoadPrice - resaleValue + running;
+  return { onRoadPrice, resaleValue, running, total, perMonth: total / (years * 12) };
 }
 
 function check(

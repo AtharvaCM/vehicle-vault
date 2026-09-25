@@ -40,6 +40,7 @@ function page(overrides: Partial<PublicCatalogVariantPage> = {}): PublicCatalogV
       isCurrent: true,
     },
     variant: { name: 'Asta', slug: 'asta' },
+    siblings: [],
     offerings: [{ fuelTypes: [FuelType.Petrol], yearStart: 2023, yearEnd: null, isCurrent: true }],
     specs: null,
     schedule: {

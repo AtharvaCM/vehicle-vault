@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/api/api-error';
 
 import { usePublicVariantPage, type PublicVariantSlugs } from '../api/use-public-variant-page';
 import { PublicCatalogBreadcrumbs } from '../components/public-catalog-breadcrumbs';
+import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
@@ -14,7 +15,8 @@ import { RunningCostCalculator } from '../components/running-cost-calculator';
 import { variantPageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
 import { describeOffering } from '../utils/format-public-catalog';
-import { TrackThisVehicle } from '../components/track-this-vehicle';
+import { TrackThisVehicle, TrackThisVehicleBar } from '../components/track-this-vehicle';
+import { VariantKeyFacts } from '../components/variant-key-facts';
 
 export { variantPageTitle } from '../head/public-page-head';
 
@@ -62,43 +64,70 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
   usePublicPageHead(variantPageHead(page));
 
   const heading = `${page.make.name} ${page.model.name} ${page.variant.name}`;
+  // "Amaze lineup" is a name the import makes up when a model has no named
+  // generation; a real one ("4th Gen") helps tell the variant apart.
+  const generationName =
+    page.generation.name.toLowerCase() === `${page.model.name} lineup`.toLowerCase()
+      ? null
+      : page.generation.name;
+  const meta = [generationName, ...page.offerings.map(describeOffering)]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <article className="space-y-6 pt-4 sm:pt-8" data-testid="public-variant-page">
+    // Room at the bottom on a phone for the Track bar.
+    <article className="space-y-6 pb-20 pt-4 sm:pt-8 md:pb-0" data-testid="public-variant-page">
       <header>
         <PublicCatalogBreadcrumbs page={page} />
-        <p className="text-ui font-medium text-fg-2 wrap-anywhere">{page.generation.name}</p>
-        <h1 className="mt-2 text-title font-semibold tracking-tight text-fg wrap-anywhere sm:text-display">
+        <h1 className="font-display text-title font-semibold tracking-tight text-fg wrap-anywhere sm:text-display">
           {heading}
         </h1>
-        {page.offerings.length > 0 ? (
-          <ul aria-label="Offered" className="mt-3 flex flex-wrap gap-2">
-            {page.offerings.map((offering) => (
-              <li
-                className="rounded-full border border-line bg-surface px-3 py-1 text-ui text-fg-2"
-                key={describeOffering(offering)}
-              >
-                {describeOffering(offering)}
-              </li>
+        {meta ? <p className="mt-2 text-ui text-fg-2">{meta}</p> : null}
+        {page.siblings.length > 0 ? (
+          <nav aria-label="Other variants" className="mt-2 text-ui text-fg-2">
+            Other {page.model.name} variants:{' '}
+            {page.siblings.map((sibling, index) => (
+              <span key={sibling.slug}>
+                {index > 0 ? ' · ' : null}
+                <PublicCatalogLink
+                  address={{
+                    segment: page.segment,
+                    make: page.make.slug,
+                    model: page.model.slug,
+                    generation: page.generation.slug,
+                    variant: sibling.slug,
+                  }}
+                  className="font-medium text-fg underline underline-offset-4 hover:text-fg-2"
+                >
+                  {sibling.name}
+                </PublicCatalogLink>
+              </span>
             ))}
-          </ul>
+          </nav>
         ) : null}
       </header>
 
-      <PublicServiceSchedule schedule={page.schedule} />
+      <VariantKeyFacts page={page} />
 
       <RunningCostCalculator page={page} />
 
-      {page.specs ? (
-        <section aria-labelledby="specs-heading" className="space-y-3">
-          <h2 className="text-lead font-semibold tracking-tight text-fg" id="specs-heading">
-            Specifications
-          </h2>
+      <section aria-labelledby="specs-heading" className="space-y-3">
+        <h2 className="text-lead font-semibold tracking-tight text-fg" id="specs-heading">
+          Specifications
+        </h2>
+        {page.specs ? (
           <PublicSpecSections specs={page.specs} />
-        </section>
-      ) : null}
+        ) : (
+          <p className="rounded-card border border-line bg-surface px-4 py-3 text-ui text-fg-2">
+            We don’t have this variant’s specifications yet.
+          </p>
+        )}
+      </section>
+
+      <PublicServiceSchedule schedule={page.schedule} />
 
       <TrackThisVehicle page={page} />
+      <TrackThisVehicleBar page={page} />
     </article>
   );
 }

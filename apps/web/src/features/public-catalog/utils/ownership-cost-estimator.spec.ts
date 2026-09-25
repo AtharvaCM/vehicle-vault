@@ -4,6 +4,7 @@
  * source, so its specs live here, beside the calculator that uses it.
  */
 import {
+  ASSUMED_VALUE_KEPT_PER_YEAR,
   DEFAULT_ENERGY_PRICE_INR,
   DEFAULT_KM_PER_MONTH,
   DEFAULT_OWNERSHIP_YEARS,
@@ -11,6 +12,7 @@ import {
   FuelType,
   OWNERSHIP_COST_DEFAULTS_AS_OF,
   OWNERSHIP_COST_LIMITS,
+  TYPICAL_EFFICIENCY,
   VehicleType,
   claimedEfficiency,
   estimateOwnershipCost,
@@ -161,15 +163,17 @@ describe('estimateOwnershipCost — electric', () => {
     expect(claimedEfficiency(FuelType.Electric, claimed)).toBeNull();
   });
 
-  it('cannot estimate an EV with no efficiency given and nothing to derive one from', () => {
-    const result = estimateOwnershipCost(
-      electricCar({ efficiency: undefined, claimed: { batteryKwh: 30, rangeKm: null } }),
+  it('falls back to a typical EV figure when there is nothing to derive one from', () => {
+    const estimate = expectEstimate(
+      estimateOwnershipCost(
+        electricCar({ efficiency: undefined, claimed: { batteryKwh: 30, rangeKm: null } }),
+      ),
     );
 
-    expect(result).toEqual({
-      kind: 'cannot-estimate',
-      problems: [{ field: 'efficiency', problem: 'missing' }],
-    });
+    expect(estimate.inputs.efficiency).toBe(
+      TYPICAL_EFFICIENCY[VehicleType.Car]?.[FuelType.Electric],
+    );
+    expect(estimate.efficiencySource).toBe('typical');
   });
 });
 
@@ -249,30 +253,41 @@ describe('estimateOwnershipCost — service visits from the interval', () => {
 });
 
 describe('estimateOwnershipCost — on-road price', () => {
-  it('leaves the purchase out when no price is given', () => {
+  it('leaves ownership out when no price is given', () => {
     const estimate = expectEstimate(estimateOwnershipCost(petrolCar()));
 
     expect(estimate.inputs.onRoadPrice).toBeNull();
-    expect(estimate.perMonth.purchase).toBeNull();
-    expect(estimate.perYear.purchase).toBeNull();
-    expect(estimate.overYears.purchase).toBeNull();
+    expect(estimate.ownership).toBeNull();
   });
 
   it('treats a blank price as no price', () => {
     const estimate = expectEstimate(estimateOwnershipCost(petrolCar({ onRoadPrice: null })));
 
-    expect(estimate.overYears.purchase).toBeNull();
+    expect(estimate.ownership).toBeNull();
     expect(estimate.defaulted).toEqual([]);
   });
 
-  it('counts the price in full over the years and spreads it across each year and month', () => {
-    const estimate = expectEstimate(estimateOwnershipCost(petrolCar({ onRoadPrice: 900_000 })));
+  it('never puts the purchase into the running cost', () => {
+    const without = expectEstimate(estimateOwnershipCost(petrolCar()));
+    const withPrice = expectEstimate(estimateOwnershipCost(petrolCar({ onRoadPrice: 900_000 })));
 
-    expect(estimate.overYears.purchase).toBe(900_000);
-    expect(estimate.perYear.purchase).toBe(180_000);
-    expect(estimate.perMonth.purchase).toBe(15_000);
-    expect(estimate.overYears.total).toBeCloseTo(300_000 + 36_000 + 900_000);
-    expect(estimate.perMonth.total).toBeCloseTo(5000 + 600 + 15_000);
+    expect(withPrice.perMonth).toEqual(without.perMonth);
+    expect(withPrice.perYear).toEqual(without.perYear);
+    expect(withPrice.overYears).toEqual(without.overYears);
+    expect(Object.keys(withPrice.perMonth).sort()).toEqual(['energy', 'service', 'total']);
+  });
+
+  it('works out ownership as the price, less an assumed resale, plus running it', () => {
+    const estimate = expectEstimate(estimateOwnershipCost(petrolCar({ onRoadPrice: 900_000 })));
+    const resale = 900_000 * ASSUMED_VALUE_KEPT_PER_YEAR ** 5;
+
+    expect(estimate.ownership?.onRoadPrice).toBe(900_000);
+    expect(estimate.ownership?.resaleValue).toBeCloseTo(resale);
+    // About 44% kept after five years.
+    expect(resale / 900_000).toBeCloseTo(0.44, 2);
+    expect(estimate.ownership?.running).toBeCloseTo(336_000);
+    expect(estimate.ownership?.total).toBeCloseTo(900_000 - resale + 336_000);
+    expect(estimate.ownership?.perMonth).toBeCloseTo((900_000 - resale + 336_000) / 60);
   });
 
   it.each([
@@ -354,7 +369,8 @@ describe('estimateOwnershipCost — defaulted inputs', () => {
     });
     expect(dieselSuv.energyPrice).toBe(DEFAULT_ENERGY_PRICE_INR[FuelType.Diesel]);
     expect(dieselSuv.serviceCostPerVisit).toBe(DEFAULT_SERVICE_COST_PER_VISIT_INR[VehicleType.SUV]);
-    expect(dieselSuv.efficiency).toBeNull();
+    // No claimed figure: a typical one for a diesel SUV.
+    expect(dieselSuv.efficiency).toBe(TYPICAL_EFFICIENCY[VehicleType.SUV]?.[FuelType.Diesel]);
   });
 
   it('has a default price for every fuel but other', () => {
@@ -369,9 +385,28 @@ describe('estimateOwnershipCost — defaulted inputs', () => {
     expect(OWNERSHIP_COST_DEFAULTS_AS_OF).toMatch(/^\d{4}-\d{2}$/);
   });
 
-  it('cannot estimate a liquid fuel with no claimed mileage and none given', () => {
-    expect(
+  it('starts a liquid fuel with no claimed mileage from a typical figure, and says so', () => {
+    const estimate = expectEstimate(
       estimateOwnershipCost(petrolCar({ efficiency: undefined, claimed: { mileage: null } })),
+    );
+
+    expect(estimate.inputs.efficiency).toBe(15);
+    expect(estimate.efficiencySource).toBe('typical');
+    expect(estimate.defaulted).toEqual(['efficiency']);
+  });
+
+  it('says a claimed figure is claimed, and a given one is neither', () => {
+    expect(
+      expectEstimate(estimateOwnershipCost(petrolCar({ efficiency: undefined }))).efficiencySource,
+    ).toBe('claimed');
+    expect(expectEstimate(estimateOwnershipCost(petrolCar())).efficiencySource).toBeNull();
+  });
+
+  it('cannot estimate a fuel with no typical figure and no claim', () => {
+    expect(
+      estimateOwnershipCost(
+        petrolCar({ fuelType: FuelType.Other, efficiency: undefined, claimed: { mileage: null } }),
+      ),
     ).toEqual({ kind: 'cannot-estimate', problems: [{ field: 'efficiency', problem: 'missing' }] });
   });
 

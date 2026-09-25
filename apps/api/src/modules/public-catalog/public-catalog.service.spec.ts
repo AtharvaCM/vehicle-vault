@@ -72,6 +72,11 @@ function variantRow(overrides: Record<string, unknown> = {}) {
       isCurrent: true,
       sourceName: 'carwale',
       sourceUrl: 'https://source.example.test/hyundai/i20',
+      variants: [
+        { name: 'Asta', slug: 'asta' },
+        { name: 'Magna', slug: 'magna' },
+        { name: 'Sportz', slug: 'sportz' },
+      ],
       model: {
         id: 'model-1',
         name: 'i20',
@@ -184,6 +189,11 @@ describe('PublicCatalogService', () => {
         model: { name: 'i20', slug: 'i20' },
         generation: { name: 'i20 lineup', slug: 'i20-lineup', yearStart: 2020, isCurrent: true },
         variant: { name: 'Asta', slug: 'asta' },
+        // The generation's other variants, never itself.
+        siblings: [
+          { name: 'Magna', slug: 'magna' },
+          { name: 'Sportz', slug: 'sportz' },
+        ],
       });
       expect(page.offerings).toEqual([
         { fuelTypes: ['petrol', 'cng'], yearStart: 2023, yearEnd: null, isCurrent: true },
