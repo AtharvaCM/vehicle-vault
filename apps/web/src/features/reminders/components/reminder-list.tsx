@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { cn } from '@/lib/utils';
 
 import type { Reminder } from '../types/reminder';
+import { ReminderActions } from './reminder-actions';
 import { ReminderCard } from './reminder-card';
 
 type ReminderListProps = {
@@ -12,6 +13,10 @@ type ReminderListProps = {
   reminders: Reminder[];
   title: string;
   vehicleLabelById?: Record<string, string>;
+  /** Offers Done and Snooze on each open reminder; set for someone who can edit the vehicle. */
+  showActions?: boolean;
+  /** The vehicle's odometer, for the snooze preview. */
+  currentOdometer?: number;
 };
 
 export function ReminderList({
@@ -22,6 +27,8 @@ export function ReminderList({
   reminders,
   title,
   vehicleLabelById,
+  showActions = false,
+  currentOdometer,
 }: ReminderListProps) {
   return (
     <Card className="p-3 sm:p-5">
@@ -33,6 +40,11 @@ export function ReminderList({
         {reminders.length ? (
           reminders.map((reminder) => (
             <ReminderCard
+              actions={
+                showActions ? (
+                  <ReminderActions currentOdometer={currentOdometer} reminder={reminder} />
+                ) : undefined
+              }
               key={reminder.id}
               reminder={reminder}
               selectionControl={

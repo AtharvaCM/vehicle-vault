@@ -16,6 +16,8 @@ type ReminderCardProps = {
   reminder: Reminder;
   selectionControl?: ReactNode;
   vehicleLabel?: string;
+  /** Done and Snooze, in a strip below the card's link (a link cannot hold a button). */
+  actions?: ReactNode;
 };
 
 /** Plain wording for a projection's confidence, instead of the raw enum value. */
@@ -25,7 +27,12 @@ const PROJECTION_CONFIDENCE_LABEL: Record<'low' | 'medium' | 'high', string> = {
   high: 'a confident estimate',
 };
 
-export function ReminderCard({ reminder, selectionControl, vehicleLabel }: ReminderCardProps) {
+export function ReminderCard({
+  reminder,
+  selectionControl,
+  vehicleLabel,
+  actions,
+}: ReminderCardProps) {
   // The target odometer is the card's only figure, and a reminder needs either that
   // or a date, so a date-only one has nothing to put in a figures strip. It gets no
   // strip at all then, rather than an empty band under its text holding the chevron.
@@ -134,6 +141,14 @@ export function ReminderCard({ reminder, selectionControl, vehicleLabel }: Remin
             chevron
           )}
         </Link>
+        {actions ? (
+          <div
+            className="flex justify-end border-t border-line-subtle px-3 py-2 sm:-mx-5 sm:-mb-5 sm:mt-0 sm:px-5"
+            data-testid="reminder-actions"
+          >
+            {actions}
+          </div>
+        ) : null}
       </Card>
     </div>
   );

@@ -8,7 +8,10 @@ import { StatusDot, StatusPill } from '@/components/shared/status-pill';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ReminderDoneDialog } from '@/features/reminders/components/reminder-done-dialog';
+import { SnoozeReminderDialog } from '@/features/reminders/components/snooze-reminder-dialog';
 import { useCompleteReminder } from '@/features/reminders/hooks/use-complete-reminder';
+import { reminderDoneAction } from '@/features/reminders/utils/reminder-done';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
@@ -60,6 +63,9 @@ export function AttentionQueue({
   const snoozeDocument = useSnoozeDocument();
   const [expanded, setExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  // The service reminder whose Done asks "log it now?", and the reminder being snoozed.
+  const [asking, setAsking] = useState<DashboardAttentionItem | null>(null);
+  const [snoozing, setSnoozing] = useState<DashboardAttentionItem | null>(null);
 
   const counts = summary.attentionCounts;
   const urgentCount = counts.overdue + counts.today + counts.thisWeek;
@@ -83,6 +89,15 @@ export function AttentionQueue({
 
   function clearFocus() {
     onSearchStateChange({ focus: undefined });
+  }
+
+  /** Done: a service reminder asks whether to log it first; anything else is ticked off. */
+  function handleDone(item: DashboardAttentionItem) {
+    if (reminderDoneAction(item) === 'log') {
+      setAsking(item);
+      return;
+    }
+    handleComplete(item);
   }
 
   function handleComplete(item: DashboardAttentionItem) {
@@ -164,8 +179,9 @@ export function AttentionQueue({
                       isPending={pendingIds.has(item.id) || completedIds.has(item.id)}
                       item={item}
                       key={item.id}
-                      onComplete={handleComplete}
+                      onComplete={handleDone}
                       onSnooze={handleSnooze}
+                      onSnoozeReminder={setSnoozing}
                       showVehicle={showVehicle}
                     />
                   ))}
@@ -295,6 +311,29 @@ export function AttentionQueue({
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>
+
+      <ReminderDoneDialog
+        onMarkDone={() => {
+          if (asking) handleComplete(asking);
+        }}
+        onOpenChange={(open) => {
+          if (!open) setAsking(null);
+        }}
+        reminder={asking}
+      />
+      <SnoozeReminderDialog
+        currentOdometer={
+          snoozing?.dueOdometer !== undefined && snoozing.kmUntilDue !== undefined
+            ? snoozing.dueOdometer - snoozing.kmUntilDue
+            : undefined
+        }
+        onOpenChange={(open) => {
+          if (!open) setSnoozing(null);
+        }}
+        // Not dimmed like a completed row: a week's snooze can leave it on Home, re-dated.
+        onSnoozed={(reminder) => setAnnouncement(`${reminder.title} snoozed.`)}
+        reminder={snoozing}
+      />
     </Card>
   );
 }

@@ -234,9 +234,12 @@ for (const viewport of VIEWPORTS) {
       await page.goto('/upcoming');
 
       const serviceRow = page.getByTestId('upcoming-row').filter({ hasText: titles.serviceSoon });
+      // It opens the form on the reminder's category, naming the reminder it answers.
       await expect(serviceRow.getByRole('link', { name: 'Log service' })).toHaveAttribute(
         'href',
-        new RegExp(`/vehicles/${vehicleA.id}/maintenance/new$`),
+        new RegExp(
+          `/vehicles/${vehicleA.id}/maintenance/new\\?category=periodic_service&reminderId=`,
+        ),
       );
 
       const paperRow = page.getByTestId('upcoming-row').filter({ hasText: PAPER_TITLE });
@@ -265,7 +268,11 @@ for (const viewport of VIEWPORTS) {
 
       const weekRow = weekGroup.getByTestId('upcoming-row').filter({ hasText: titles.serviceSoon });
       await weekRow.getByRole('button', { name: `More actions for ${titles.serviceSoon}` }).click();
-      await page.getByRole('menuitem', { name: 'Snooze a week' }).click();
+      await page.getByRole('menuitem', { name: 'Snooze' }).click();
+      // The shared Snooze dialog, on its default week.
+      const snooze = page.getByRole('dialog', { name: `Snooze ${titles.serviceSoon}` });
+      await expect(snooze.getByRole('radio', { name: '1 week' })).toBeChecked();
+      await snooze.getByRole('button', { name: 'Snooze', exact: true }).click();
 
       // +7 days on a 3-day-out reminder lands 10 days out: no longer This
       // week, wherever it lands (This week or This month, per the note above).

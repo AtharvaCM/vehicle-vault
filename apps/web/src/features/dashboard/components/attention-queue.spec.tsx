@@ -1,7 +1,7 @@
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes } from 'react';
-import { ReminderStatus } from '@vehicle-vault/shared';
+import { MaintenanceCategory, ReminderStatus } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { appToast } from '@/lib/toast';
@@ -238,6 +238,64 @@ describe('AttentionQueue', () => {
 
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mutate).toHaveBeenCalledWith('reminder-overdue', expect.any(Object));
+  });
+
+  it('asks a service reminder’s Done whether to log the service first', async () => {
+    const user = userEvent.setup();
+    const oilChange = makeAttentionItem({
+      id: 'reminder-oil',
+      title: 'Engine oil change',
+      logCategory: MaintenanceCategory.EngineOil,
+    });
+
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[oilChange]}
+        summary={makeSummary({
+          attention: [oilChange],
+          attentionTotal: 1,
+          attentionCounts: makeAttentionCounts({ thisWeek: 1, total: 1 }),
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Mark Engine oil change done' }));
+
+    expect(mutate).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', { name: 'Done with Engine oil change?' });
+    const log = within(dialog).getByRole('link', { name: 'Log the service now' });
+    expect(log).toHaveAttribute('href', '/vehicles/$vehicleId/maintenance/new');
+    expect(log).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ category: 'engine_oil', reminderId: 'reminder-oil' }),
+    );
+
+    await user.click(within(dialog).getByRole('button', { name: 'Mark done without logging' }));
+    expect(mutate).toHaveBeenCalledWith('reminder-oil', expect.any(Object));
+  });
+
+  it('opens the shared Snooze from a reminder row', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[overdueReminder]}
+        summary={makeSummary({
+          attention: [overdueReminder],
+          attentionTotal: 1,
+          attentionCounts: makeAttentionCounts({ overdue: 1, total: 1 }),
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Snooze Brake pads' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Snooze Brake pads' });
+    expect(within(dialog).getByRole('radio', { name: '1 week' })).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: '1 month' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('radio', { name: 'Pick a date' })).toBeInTheDocument();
   });
 
   it('keeps the row disabled after success and announces the completion', async () => {
