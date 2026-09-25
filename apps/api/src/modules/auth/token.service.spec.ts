@@ -18,6 +18,10 @@ describe('TokenService', () => {
 
   type PrismaMock = {
     user: UserDelegateMock;
+    authSession: Record<
+      'create' | 'updateMany' | 'findUnique' | 'findMany' | 'deleteMany',
+      ReturnType<typeof vi.fn>
+    >;
   };
 
   type JwtServiceMock = {
@@ -30,6 +34,13 @@ describe('TokenService', () => {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+    },
+    authSession: {
+      create: vi.fn(),
+      updateMany: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
   };
 
@@ -292,171 +303,164 @@ describe('TokenService', () => {
     });
   });
 
-  describe('rotateRefreshToken', () => {
-    const authUser = {
-      id: 'user-1',
-      email: 'atharva@example.com',
-      name: 'Atharva',
-      emailVerified: true,
-      allowedCatalogSources: [],
-    };
+  describe('startSession', () => {
+    it('signs a refresh JWT with its own id, and stores its hash on a new session', async () => {
+      jwtService.signAsync.mockResolvedValueOnce('refresh.jwt.value');
+      prisma.authSession.create.mockResolvedValueOnce({ id: 'session-1' });
 
-    it('signs a refresh JWT, persists its hash, and returns the JWT', async () => {
-      jwtService.signAsync.mockResolvedValueOnce('refresh-jwt');
-      prisma.user.update.mockResolvedValue(undefined);
-
-      const refreshToken = await service.rotateRefreshToken(authUser as never);
-
-      expect(refreshToken).toBe('refresh-jwt');
-      expect(jwtService.signAsync).toHaveBeenCalledWith(
-        { sub: 'user-1', type: 'refresh' },
-        {
-          secret: 'refresh-secret',
-          expiresIn: '30d',
-        },
-      );
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { refreshTokenHash: hash('refresh-jwt') },
+      const issued = await service.startSession('user-1', {
+        userAgent: 'Mozilla/5.0 Chrome/120',
+        location: 'Pune, India',
       });
+
+      expect(issued).toEqual({ sessionId: 'session-1', refreshToken: 'refresh.jwt.value' });
+      expect(jwtService.signAsync).toHaveBeenCalledWith(
+        { sub: 'user-1', type: 'refresh', jti: expect.any(String) },
+        { secret: 'refresh-secret', expiresIn: '30d' },
+      );
+      expect(prisma.authSession.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-1',
+          refreshTokenHash: hash('refresh.jwt.value'),
+          userAgent: 'Mozilla/5.0 Chrome/120',
+          location: 'Pune, India',
+        },
+        select: { id: true },
+      });
+    });
+
+    it('gives two sign-ins in the same second different tokens', async () => {
+      prisma.authSession.create.mockResolvedValue({ id: 'session' });
+      jwtService.signAsync.mockResolvedValue('jwt');
+
+      await service.startSession('user-1', { userAgent: null, location: null });
+      await service.startSession('user-1', { userAgent: null, location: null });
+
+      const [first, second] = jwtService.signAsync.mock.calls.map(([payload]) => payload.jti);
+      expect(first).not.toBe(second);
+    });
+  });
+
+  describe('rotateSession', () => {
+    it("replaces the session's hash and marks it active, keeping the device when none is sent", async () => {
+      jwtService.signAsync.mockResolvedValueOnce('next.jwt');
+      prisma.authSession.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      const issued = await service.rotateSession('user-1', 'session-1');
+
+      expect(issued).toEqual({ sessionId: 'session-1', refreshToken: 'next.jwt' });
+      expect(prisma.authSession.updateMany).toHaveBeenCalledWith({
+        where: { id: 'session-1', userId: 'user-1' },
+        data: { refreshTokenHash: hash('next.jwt'), lastActiveAt: expect.any(Date) },
+      });
+    });
+
+    it('records the device again when the refresh says what it is', async () => {
+      jwtService.signAsync.mockResolvedValueOnce('next.jwt');
+      prisma.authSession.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.rotateSession('user-1', 'session-1', {
+        userAgent: 'Firefox/130',
+        location: 'India',
+      });
+
+      expect(prisma.authSession.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userAgent: 'Firefox/130', location: 'India' }),
+        }),
+      );
+    });
+
+    it('refuses a session signed out meanwhile', async () => {
+      jwtService.signAsync.mockResolvedValueOnce('next.jwt');
+      prisma.authSession.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      await expect(service.rotateSession('user-1', 'gone')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
     });
   });
 
   describe('verifyRefreshToken', () => {
-    const refreshJwt = 'current-refresh-jwt';
+    const user = { id: 'user-1', email: 'a@b.c' };
 
-    it('returns the user when JWT verifies and stored hash matches', async () => {
+    it('finds the session by the hash of the token, and returns its user', async () => {
       jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'refresh' });
-      prisma.user.findUnique.mockResolvedValueOnce({
-        id: 'user-1',
-        email: 'atharva@example.com',
-        name: 'Atharva',
-        refreshTokenHash: hash(refreshJwt),
-      });
+      prisma.authSession.findUnique.mockResolvedValueOnce({ id: 'session-1', user });
 
-      const result = await service.verifyRefreshToken(refreshJwt);
-
-      expect(jwtService.verifyAsync).toHaveBeenCalledWith(refreshJwt, {
-        secret: 'refresh-secret',
+      await expect(service.verifyRefreshToken('refresh.jwt')).resolves.toEqual({
+        user,
+        sessionId: 'session-1',
       });
-      expect(result.id).toBe('user-1');
+      expect(prisma.authSession.findUnique).toHaveBeenCalledWith({
+        where: { refreshTokenHash: hash('refresh.jwt') },
+        select: { id: true, user: true },
+      });
     });
 
-    it('throws when the JWT signature does not verify', async () => {
+    it('refuses a token whose session was signed out', async () => {
+      jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'refresh' });
+      prisma.authSession.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.verifyRefreshToken('refresh.jwt')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+
+    it('refuses a token whose session belongs to someone else', async () => {
+      jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-2', type: 'refresh' });
+      prisma.authSession.findUnique.mockResolvedValueOnce({ id: 'session-1', user });
+
+      await expect(service.verifyRefreshToken('refresh.jwt')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+
+    it('refuses a JWT that does not verify, or is not a refresh token', async () => {
       jwtService.verifyAsync.mockRejectedValueOnce(new Error('bad signature'));
-
-      await expect(service.verifyRefreshToken(refreshJwt)).rejects.toBeInstanceOf(
+      await expect(service.verifyRefreshToken('forged')).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    });
 
-    it('throws when payload.type is not "refresh"', async () => {
       jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'access' });
-
-      await expect(service.verifyRefreshToken(refreshJwt)).rejects.toBeInstanceOf(
+      await expect(service.verifyRefreshToken('access.jwt')).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      expect(prisma.authSession.findUnique).not.toHaveBeenCalled();
     });
 
-    it('throws when payload.sub is missing', async () => {
-      jwtService.verifyAsync.mockResolvedValueOnce({ type: 'refresh' });
-
-      await expect(service.verifyRefreshToken(refreshJwt)).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
-    });
-
-    it('throws when the user has no persisted refreshTokenHash (logged out)', async () => {
+    it('is lenient through tryVerifyRefreshToken', async () => {
       jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'refresh' });
-      prisma.user.findUnique.mockResolvedValueOnce({
-        id: 'user-1',
-        email: 'atharva@example.com',
-        name: 'Atharva',
-        refreshTokenHash: null,
-      });
+      prisma.authSession.findUnique.mockResolvedValueOnce(null);
 
-      await expect(service.verifyRefreshToken(refreshJwt)).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
-    });
-
-    it('throws when the stored hash does not match the supplied JWT (timing-safe path)', async () => {
-      jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'refresh' });
-      prisma.user.findUnique.mockResolvedValueOnce({
-        id: 'user-1',
-        email: 'atharva@example.com',
-        name: 'Atharva',
-        refreshTokenHash: hash('different-jwt'),
-      });
-
-      await expect(service.verifyRefreshToken(refreshJwt)).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(service.tryVerifyRefreshToken('refresh.jwt')).resolves.toBeNull();
     });
   });
 
-  describe('tryVerifyRefreshToken', () => {
-    it('returns the user on the happy path', async () => {
-      jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'refresh' });
-      prisma.user.findUnique.mockResolvedValueOnce({
-        id: 'user-1',
-        refreshTokenHash: hash('jwt'),
+  describe('revoking sessions', () => {
+    it("signs out one of the user's sessions, and says whether there was one", async () => {
+      prisma.authSession.deleteMany.mockResolvedValueOnce({ count: 1 });
+      await expect(service.revokeSession('user-1', 'session-1')).resolves.toBe(true);
+      expect(prisma.authSession.deleteMany).toHaveBeenCalledWith({
+        where: { id: 'session-1', userId: 'user-1' },
       });
 
-      const result = await service.tryVerifyRefreshToken('jwt');
-      expect(result?.id).toBe('user-1');
+      prisma.authSession.deleteMany.mockResolvedValueOnce({ count: 0 });
+      await expect(service.revokeSession('user-1', 'someone-elses')).resolves.toBe(false);
     });
 
-    it('returns null instead of throwing when verification fails', async () => {
-      jwtService.verifyAsync.mockRejectedValueOnce(new Error('expired'));
-
-      await expect(service.tryVerifyRefreshToken('jwt')).resolves.toBeNull();
-    });
-
-    it('returns null when the hash mismatches (timing-safe path)', async () => {
-      jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', type: 'refresh' });
-      prisma.user.findUnique.mockResolvedValueOnce({
-        id: 'user-1',
-        refreshTokenHash: hash('other-jwt'),
+    it('signs out every session, or every one but this', async () => {
+      prisma.authSession.deleteMany.mockResolvedValueOnce({ count: 3 });
+      await expect(service.revokeSessions('user-1')).resolves.toBe(3);
+      expect(prisma.authSession.deleteMany).toHaveBeenLastCalledWith({
+        where: { userId: 'user-1' },
       });
 
-      await expect(service.tryVerifyRefreshToken('jwt')).resolves.toBeNull();
-    });
-  });
-
-  describe('revokeRefreshToken', () => {
-    it('clears the persisted refreshTokenHash', async () => {
-      prisma.user.update.mockResolvedValue(undefined);
-
-      await service.revokeRefreshToken('user-1');
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { refreshTokenHash: null },
+      prisma.authSession.deleteMany.mockResolvedValueOnce({ count: 2 });
+      await expect(service.revokeSessions('user-1', 'session-1')).resolves.toBe(2);
+      expect(prisma.authSession.deleteMany).toHaveBeenLastCalledWith({
+        where: { userId: 'user-1', id: { not: 'session-1' } },
       });
-    });
-  });
-
-  describe('timingSafeCompare helper', () => {
-    // The helper is private but reachable via class cast. Validates the
-    // crypto.timingSafeEqual-backed contract that slice 3c will rely on.
-    type WithHelper = TokenService & {
-      timingSafeCompare(a: string, b: string): boolean;
-    };
-
-    it('returns true for identical hex digests', () => {
-      const a = hash('same');
-      expect((service as WithHelper).timingSafeCompare(a, a)).toBe(true);
-    });
-
-    it('returns false for differing hex digests of the same length', () => {
-      expect((service as WithHelper).timingSafeCompare(hash('a'), hash('b'))).toBe(false);
-    });
-
-    it('returns false for digests of differing lengths without throwing', () => {
-      expect((service as WithHelper).timingSafeCompare('abcd', 'abcdef')).toBe(false);
     });
   });
 });

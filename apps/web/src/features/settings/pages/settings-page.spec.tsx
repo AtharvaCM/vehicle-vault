@@ -32,6 +32,11 @@ vi.mock('../api/account-security', () => ({
   }),
   changePassword: api.changePassword,
 }));
+vi.mock('../api/sessions', () => ({
+  sessionsQueryOptions: () => ({ queryKey: ['account', 'sessions'], queryFn: async () => [] }),
+  revokeSession: vi.fn(),
+  revokeOtherSessions: vi.fn(),
+}));
 vi.mock('../hooks/use-download-account-export', () => ({
   useDownloadAccountExport: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false }),
 }));

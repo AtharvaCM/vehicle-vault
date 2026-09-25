@@ -102,3 +102,21 @@ export const PasswordResetRequestResponseSchema = z.object({
 export const PasswordResetConfirmResponseSchema = z.object({
   reset: z.literal(true),
 });
+
+/**
+ * One signed-in session as Settings → Security lists it. The refresh token
+ * itself never leaves the server; `device` is the user agent in words.
+ */
+export const AuthSessionSchema = z.object({
+  id: z.string().uuid(),
+  /** "Chrome on macOS". Null for a session carried over from before devices were recorded. */
+  device: z.string().nullable(),
+  /** Approximate place ("Pune, Maharashtra, India"), when the edge said. */
+  location: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  lastActiveAt: z.string().datetime(),
+  /** The session making this request. */
+  current: z.boolean(),
+});
+
+export const AuthSessionListSchema = z.array(AuthSessionSchema);

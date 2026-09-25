@@ -11,6 +11,9 @@ export const endpoints = {
     resendVerification: '/auth/resend-verification',
     password: '/auth/password',
     security: '/auth/security',
+    sessions: '/auth/sessions',
+    otherSessions: '/auth/sessions/others',
+    session: (sessionId: string) => `/auth/sessions/${sessionId}`,
   },
   dashboard: {
     summary: '/dashboard/summary',

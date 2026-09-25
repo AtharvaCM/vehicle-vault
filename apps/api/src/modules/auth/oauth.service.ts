@@ -20,6 +20,7 @@ import {
 } from './email-verification-deadline';
 import { TokenService } from './token.service';
 import type { JwtPayload } from './auth.types';
+import { describeUserAgent, NO_SESSION_CONTEXT, type SessionContext } from './session-context';
 
 /** Where an OAuth sign-in came from, for `account_created`. */
 export type OAuthAttribution = {
@@ -58,6 +59,7 @@ export class OAuthService {
   async loginOrLink(
     profile: OAuthProfile,
     attribution: OAuthAttribution = {},
+    context: SessionContext = NO_SESSION_CONTEXT,
   ): Promise<AuthResponse> {
     if (!profile.providerAccountId) {
       throw new UnauthorizedException('OAuth provider did not return an account id.');
@@ -111,10 +113,15 @@ export class OAuthService {
       action: AUDIT_ACTIONS.auth.loginSucceeded,
       resourceType: AuditResourceType.user,
       resourceId: user.id,
-      after: { provider: profile.provider, email: user.email },
+      after: {
+        provider: profile.provider,
+        email: user.email,
+        device: describeUserAgent(context.userAgent),
+        location: context.location,
+      },
     });
 
-    return this.buildAuthResponse(this.toUser(user));
+    return this.buildAuthResponse(this.toUser(user), context);
   }
 
   private async findUserByLinkedAccount(profile: OAuthProfile) {
@@ -173,15 +180,17 @@ export class OAuthService {
     });
   }
 
-  private async buildAuthResponse(user: User): Promise<AuthResponse> {
+  /** A new session for this sign-in, as `AuthService` starts one for a password sign-in. */
+  private async buildAuthResponse(user: User, context: SessionContext): Promise<AuthResponse> {
     const authUser = this.toAuthUser(user);
+    const { sessionId, refreshToken } = await this.tokenService.startSession(authUser.id, context);
     const payload: JwtPayload = {
       sub: authUser.id,
       email: authUser.email,
       name: authUser.name,
+      sid: sessionId,
     };
     const accessToken = await this.jwtService.signAsync(payload);
-    const refreshToken = await this.tokenService.rotateRefreshToken(authUser);
 
     return AuthResponseSchema.parse({
       user: authUser,

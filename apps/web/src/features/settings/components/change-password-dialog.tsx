@@ -20,6 +20,7 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { accountSecurityQueryOptions, changePassword } from '../api/account-security';
+import { sessionsQueryOptions } from '../api/sessions';
 
 type ChangePasswordDialogProps = {
   open: boolean;
@@ -72,7 +73,10 @@ export function ChangePasswordDialog({
         newPassword: values.newPassword,
       });
       auth.setSession(session);
-      await queryClient.invalidateQueries({ queryKey: accountSecurityQueryOptions().queryKey });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: accountSecurityQueryOptions().queryKey }),
+        queryClient.invalidateQueries({ queryKey: sessionsQueryOptions().queryKey }),
+      ]);
       appToast.success({
         title: hasPassword ? 'Password changed' : 'Password set',
         description: 'Any other device signed in to your account has been signed out.',

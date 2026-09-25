@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -47,10 +48,13 @@ describe('AuthService', () => {
     consumeEmailVerification: ReturnType<typeof vi.fn>;
     issuePasswordReset: ReturnType<typeof vi.fn>;
     consumePasswordReset: ReturnType<typeof vi.fn>;
-    rotateRefreshToken: ReturnType<typeof vi.fn>;
+    startSession: ReturnType<typeof vi.fn>;
+    rotateSession: ReturnType<typeof vi.fn>;
     verifyRefreshToken: ReturnType<typeof vi.fn>;
     tryVerifyRefreshToken: ReturnType<typeof vi.fn>;
-    revokeRefreshToken: ReturnType<typeof vi.fn>;
+    listSessions: ReturnType<typeof vi.fn>;
+    revokeSession: ReturnType<typeof vi.fn>;
+    revokeSessions: ReturnType<typeof vi.fn>;
   };
 
   const createdAt = new Date('2026-03-20T00:00:00.000Z');
@@ -87,10 +91,13 @@ describe('AuthService', () => {
     consumeEmailVerification: vi.fn(),
     issuePasswordReset: vi.fn(),
     consumePasswordReset: vi.fn(),
-    rotateRefreshToken: vi.fn(),
+    startSession: vi.fn(),
+    rotateSession: vi.fn(),
     verifyRefreshToken: vi.fn(),
     tryVerifyRefreshToken: vi.fn(),
-    revokeRefreshToken: vi.fn(),
+    listSessions: vi.fn(),
+    revokeSession: vi.fn(),
+    revokeSessions: vi.fn(),
   };
 
   const auditService = {
@@ -133,9 +140,18 @@ describe('AuthService', () => {
       email: 'atharva@example.com',
       name: 'Atharva',
     });
-    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
+    tokenService.startSession.mockResolvedValue({
+      sessionId: 'session-1',
+      refreshToken: 'refresh-token',
+    });
+    tokenService.rotateSession.mockImplementation(async (_userId: string, sessionId: string) => ({
+      sessionId,
+      refreshToken: 'refresh-token',
+    }));
     tokenService.tryVerifyRefreshToken.mockResolvedValue(null);
-    tokenService.revokeRefreshToken.mockResolvedValue(undefined);
+    tokenService.listSessions.mockResolvedValue([]);
+    tokenService.revokeSession.mockResolvedValue(true);
+    tokenService.revokeSessions.mockResolvedValue(0);
     auditService.track.mockResolvedValue(undefined);
     rateLimit.hit.mockReturnValue({ limited: false });
     service = new AuthService(
@@ -159,7 +175,6 @@ describe('AuthService', () => {
       updatedAt: createdAt,
     });
     jwtService.signAsync.mockResolvedValueOnce('access-token');
-    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
 
     const result = await service.register({
       name: '  Atharva  ',
@@ -187,8 +202,13 @@ describe('AuthService', () => {
           'https://vehicle-vault-eight.vercel.app/verify-email?token=verification-token',
       }),
     );
-    expect(tokenService.rotateRefreshToken).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'user-1', email: 'atharva@example.com' }),
+    // A sign-up is a new session; the access token names it.
+    expect(tokenService.startSession).toHaveBeenCalledWith('user-1', {
+      userAgent: null,
+      location: null,
+    });
+    expect(jwtService.signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ sub: 'user-1', sid: 'session-1' }),
     );
     expect(result).toEqual({
       accessToken: 'access-token',
@@ -238,7 +258,6 @@ describe('AuthService', () => {
       updatedAt: createdAt,
     });
     jwtService.signAsync.mockResolvedValueOnce('access-token');
-    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
 
     await service.register({
       name: 'Atharva',
@@ -279,7 +298,6 @@ describe('AuthService', () => {
       updatedAt: createdAt,
     });
     jwtService.signAsync.mockResolvedValueOnce('access-token');
-    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
     mailService.sendVerificationEmail.mockRejectedValueOnce(
       new ServiceUnavailableException('Email delivery is not configured.'),
     );
@@ -355,7 +373,7 @@ describe('AuthService', () => {
         where: { email: 'atharva@example.com' },
         select: { id: true },
       });
-      expect(tokenService.rotateRefreshToken).not.toHaveBeenCalled();
+      expect(tokenService.startSession).not.toHaveBeenCalled();
     });
 
     it('still records a throttled attempt against the account it was aimed at', async () => {
@@ -425,20 +443,34 @@ describe('AuthService', () => {
       updatedAt: createdAt,
     });
     jwtService.signAsync.mockResolvedValueOnce('access-token');
-    tokenService.rotateRefreshToken.mockResolvedValue('refresh-token');
 
-    const result = await service.login({
-      email: '  ATHARVA@example.com ',
-      password: 'password123',
-    });
+    const context = {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Chrome/120.0 Safari/537.36',
+      location: 'Pune, India',
+    };
+    const result = await service.login(
+      {
+        email: '  ATHARVA@example.com ',
+        password: 'password123',
+      },
+      '203.0.113.9',
+      context,
+    );
 
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
       where: {
         email: 'atharva@example.com',
       },
     });
-    expect(tokenService.rotateRefreshToken).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'user-1' }),
+    // Another device's session is left alone: this sign-in starts its own.
+    expect(tokenService.startSession).toHaveBeenCalledWith('user-1', context);
+    expect(tokenService.revokeSessions).not.toHaveBeenCalled();
+    expect(auditService.track).toHaveBeenCalledWith(
+      prisma,
+      expect.objectContaining({
+        action: 'auth.login_succeeded',
+        after: { email: 'atharva@example.com', device: 'Chrome on macOS', location: 'Pune, India' },
+      }),
     );
     expect(result.accessToken).toBe('access-token');
     expect(result.refreshToken).toBe('refresh-token');
@@ -446,14 +478,20 @@ describe('AuthService', () => {
 
   it('refreshes the session via TokenService.verifyRefreshToken and rotates the refresh credential', async () => {
     tokenService.verifyRefreshToken.mockResolvedValue({
-      id: 'user-1',
-      name: 'Atharva',
-      email: 'atharva@example.com',
-      createdAt,
-      updatedAt: createdAt,
+      user: {
+        id: 'user-1',
+        name: 'Atharva',
+        email: 'atharva@example.com',
+        createdAt,
+        updatedAt: createdAt,
+      },
+      sessionId: 'session-7',
     });
     jwtService.signAsync.mockResolvedValueOnce('next-access-token');
-    tokenService.rotateRefreshToken.mockResolvedValue('next-refresh-token');
+    tokenService.rotateSession.mockResolvedValueOnce({
+      sessionId: 'session-7',
+      refreshToken: 'next-refresh-token',
+    });
 
     const result = await service.refresh({
       refreshToken: 'current-refresh-token',
@@ -461,8 +499,14 @@ describe('AuthService', () => {
 
     expect(tokenService.verifyRefreshToken).toHaveBeenCalledWith('current-refresh-token');
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    expect(tokenService.rotateRefreshToken).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'user-1' }),
+    // The same session, its token rotated: no new session per refresh.
+    expect(tokenService.rotateSession).toHaveBeenCalledWith('user-1', 'session-7', {
+      userAgent: null,
+      location: null,
+    });
+    expect(tokenService.startSession).not.toHaveBeenCalled();
+    expect(jwtService.signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ sid: 'session-7' }),
     );
     expect(result).toEqual({
       accessToken: 'next-access-token',
@@ -489,17 +533,19 @@ describe('AuthService', () => {
         refreshToken: 'current-refresh-token',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(tokenService.rotateRefreshToken).not.toHaveBeenCalled();
+    expect(tokenService.rotateSession).not.toHaveBeenCalled();
   });
 
-  it('clears the stored refresh token hash on logout', async () => {
+  it("signs out this device's session on logout, and no other", async () => {
     tokenService.tryVerifyRefreshToken.mockResolvedValueOnce({
-      id: 'user-1',
-      name: 'Atharva',
-      email: 'atharva@example.com',
-      refreshTokenHash: 'stored-refresh-hash',
-      createdAt,
-      updatedAt: createdAt,
+      user: {
+        id: 'user-1',
+        name: 'Atharva',
+        email: 'atharva@example.com',
+        createdAt,
+        updatedAt: createdAt,
+      },
+      sessionId: 'session-3',
     });
 
     await expect(
@@ -509,7 +555,8 @@ describe('AuthService', () => {
     ).resolves.toBeUndefined();
 
     expect(tokenService.tryVerifyRefreshToken).toHaveBeenCalledWith('current-refresh-token');
-    expect(tokenService.revokeRefreshToken).toHaveBeenCalledWith('user-1');
+    expect(tokenService.revokeSession).toHaveBeenCalledWith('user-1', 'session-3');
+    expect(tokenService.revokeSessions).not.toHaveBeenCalled();
   });
 
   it('silently no-ops on logout when TokenService rejects the refresh token', async () => {
@@ -521,7 +568,7 @@ describe('AuthService', () => {
       }),
     ).resolves.toBeUndefined();
 
-    expect(tokenService.revokeRefreshToken).not.toHaveBeenCalled();
+    expect(tokenService.revokeSession).not.toHaveBeenCalled();
   });
 
   it('delegates issuance to TokenService and returns the preview token outside production', async () => {
@@ -605,7 +652,7 @@ describe('AuthService', () => {
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
-  it('consumes the reset token via TokenService and revokes the refresh session', async () => {
+  it('consumes the reset token via TokenService and signs out every session', async () => {
     prisma.user.update = vi.fn().mockResolvedValue(undefined);
 
     const result = await service.resetPassword({
@@ -620,9 +667,9 @@ describe('AuthService', () => {
       },
       data: {
         passwordHash: expect.any(String),
-        refreshTokenHash: null,
       },
     });
+    expect(tokenService.revokeSessions).toHaveBeenCalledWith('user-1');
     expect(prisma.user.update.mock.calls[0]?.[0]?.data.passwordHash).not.toBe(
       'updated-password123',
     );
@@ -789,14 +836,21 @@ describe('AuthService', () => {
       prisma.user.update.mockResolvedValueOnce({ ...record });
       jwtService.signAsync.mockResolvedValueOnce('access-token');
 
-      const response = await service.changePassword('user-1', {
-        currentPassword: 'old-password-1',
-        newPassword: 'new-password-2',
-      });
+      const response = await service.changePassword(
+        'user-1',
+        { currentPassword: 'old-password-1', newPassword: 'new-password-2' },
+        'session-this',
+      );
 
       const data = prisma.user.update.mock.calls[0]![0].data as { passwordHash: string };
       expect(await compare('new-password-2', data.passwordHash)).toBe(true);
-      expect(tokenService.rotateRefreshToken).toHaveBeenCalledTimes(1);
+      // Every other device is signed out; this one carries on, rotated.
+      expect(tokenService.revokeSessions).toHaveBeenCalledWith('user-1', 'session-this');
+      expect(tokenService.rotateSession).toHaveBeenCalledWith('user-1', 'session-this', {
+        userAgent: null,
+        location: null,
+      });
+      expect(tokenService.startSession).not.toHaveBeenCalled();
       expect(response).toMatchObject({
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
@@ -823,7 +877,7 @@ describe('AuthService', () => {
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(prisma.user.update).not.toHaveBeenCalled();
-      expect(tokenService.rotateRefreshToken).not.toHaveBeenCalled();
+      expect(tokenService.startSession).not.toHaveBeenCalled();
     });
 
     it('lets an account with no password set its first one', async () => {
@@ -859,6 +913,89 @@ describe('AuthService', () => {
         hasPassword: false,
         oauthProviders: ['google'],
       });
+    });
+  });
+
+  describe('sessions', () => {
+    const THIS = '11111111-1111-4111-8111-111111111111';
+    const OLD = '22222222-2222-4222-8222-222222222222';
+    const at = new Date('2026-09-25T10:00:00.000Z');
+    const rows = [
+      {
+        id: THIS,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Version/17.0 Mobile Safari/604.1',
+        location: 'Pune, Maharashtra, India',
+        createdAt: at,
+        lastActiveAt: at,
+      },
+      { id: OLD, userAgent: null, location: null, createdAt: at, lastActiveAt: at },
+    ];
+
+    it('lists them in words, with no token, and marks the one asking', async () => {
+      tokenService.listSessions.mockResolvedValueOnce(rows);
+
+      await expect(service.listSessions('user-1', THIS)).resolves.toEqual([
+        {
+          id: THIS,
+          device: 'Safari on iPhone',
+          location: 'Pune, Maharashtra, India',
+          createdAt: at.toISOString(),
+          lastActiveAt: at.toISOString(),
+          current: true,
+        },
+        {
+          id: OLD,
+          device: null,
+          location: null,
+          createdAt: at.toISOString(),
+          lastActiveAt: at.toISOString(),
+          current: false,
+        },
+      ]);
+    });
+
+    it('signs one out and audits it', async () => {
+      tokenService.listSessions.mockResolvedValueOnce(rows);
+
+      await expect(service.revokeSession('user-1', OLD, THIS)).resolves.toEqual({ revoked: true });
+      expect(tokenService.revokeSession).toHaveBeenCalledWith('user-1', OLD);
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'auth.session_revoked',
+          after: { sessionId: OLD, device: null, location: null, current: false },
+        }),
+      );
+    });
+
+    it("404s a session that is not the user's, and audits nothing", async () => {
+      tokenService.listSessions.mockResolvedValueOnce(rows);
+
+      await expect(service.revokeSession('user-1', 'someone-elses', THIS)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(tokenService.revokeSession).not.toHaveBeenCalled();
+      expect(auditService.track).not.toHaveBeenCalled();
+    });
+
+    it('signs out every other session and audits how many', async () => {
+      tokenService.revokeSessions.mockResolvedValueOnce(2);
+
+      await expect(service.revokeOtherSessions('user-1', THIS)).resolves.toEqual({
+        revoked: 2,
+      });
+      expect(tokenService.revokeSessions).toHaveBeenCalledWith('user-1', THIS);
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'auth.other_sessions_revoked', after: { count: 2 } }),
+      );
+    });
+
+    it('refuses to sign out "the others" for a token that names no session', async () => {
+      await expect(service.revokeOtherSessions('user-1', null)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(tokenService.revokeSessions).not.toHaveBeenCalled();
     });
   });
 });
