@@ -1,3 +1,10 @@
+# [1.101.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.100.0...v1.101.0) (2026-09-25)
+
+
+### Features
+
+* **web:** make a service record read like a receipt ([0779d70](https://github.com/AtharvaCM/vehicle-vault/commit/0779d704f144e4ad5017a8b4deae4b40aaf30460)), closes [#313](https://github.com/AtharvaCM/vehicle-vault/issues/313)
+
 # [1.100.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.99.0...v1.100.0) (2026-09-25)
 
 
