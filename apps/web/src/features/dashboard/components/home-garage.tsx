@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { FuelType } from '@vehicle-vault/shared';
+import { IdCard } from 'lucide-react';
 
 import { NumberPlate } from '@/components/shared/number-plate';
 import { StatusDot, StatusPill } from '@/components/shared/status-pill';
@@ -49,10 +50,13 @@ export function HomeGarage({ vehicles, vehiclesTotal }: HomeGarageProps) {
           const health = vehicleHealthStatus(vehicle);
 
           return (
-            <li className="shrink-0" key={vehicle.id}>
+            <li
+              className="flex shrink-0 items-stretch rounded-card border border-line bg-surface transition-colors hover:border-brand"
+              data-testid="garage-chip"
+              key={vehicle.id}
+            >
               <Link
-                className="flex min-h-14 items-center gap-3 rounded-card border border-line bg-surface px-3 py-2 transition-colors hover:border-brand focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                data-testid="garage-chip"
+                className="flex min-h-14 items-center gap-3 rounded-l-card py-2 pl-3 pr-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                 params={{ vehicleId: vehicle.id }}
                 to="/vehicles/$vehicleId"
               >
@@ -68,6 +72,8 @@ export function HomeGarage({ vehicles, vehiclesTotal }: HomeGarageProps) {
                   <StatusDot status={health.status}>{health.words}</StatusDot>
                 </span>
               </Link>
+              {/* Two taps from Home to the papers, for every role (#296). */}
+              <ShowPapersLink vehicle={vehicle} />
             </li>
           );
         })}
@@ -106,13 +112,38 @@ function VehicleSummaryRow({ vehicle }: { vehicle: DashboardVehicleHealth }) {
             registration={vehicle.registrationNumber}
           />
         </Link>
-        <StatusPill status={health.status}>{health.words}</StatusPill>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <StatusPill status={health.status}>{health.words}</StatusPill>
+          <Link
+            aria-label={`Show papers for ${vehicle.displayName}`}
+            className={buttonVariants({ size: 'sm', variant: 'outline' })}
+            params={{ vehicleId: vehicle.id }}
+            to="/vehicles/$vehicleId/papers"
+          >
+            <IdCard aria-hidden="true" />
+            Show papers
+          </Link>
+        </div>
       </div>
-      <div className="grid gap-2.5 sm:grid-cols-3">
+      {/* Two across until lg: three across, the odometer's Update ran out of room at 640px. */}
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         <NextDueRow vehicle={vehicle} />
         <PapersRow vehicle={vehicle} />
         <OdometerRow canEdit={canEdit} showReading vehicle={vehicle} />
       </div>
     </Card>
+  );
+}
+
+function ShowPapersLink({ vehicle }: { vehicle: DashboardVehicleHealth }) {
+  return (
+    <Link
+      aria-label={`Show papers for ${vehicle.displayName}`}
+      className="flex w-11 shrink-0 items-center justify-center rounded-r-card border-l border-line-subtle text-fg-2 hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      params={{ vehicleId: vehicle.id }}
+      to="/vehicles/$vehicleId/papers"
+    >
+      <IdCard aria-hidden="true" className="size-5" />
+    </Link>
   );
 }

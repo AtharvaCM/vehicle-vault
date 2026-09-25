@@ -123,6 +123,7 @@ describe('DashboardPage status', () => {
 
     expect(screen.queryByTestId('all-clear')).not.toBeInTheDocument();
     expect(screen.getByText('Nothing is being tracked yet')).toBeInTheDocument();
+    expect(screen.getByText('Nothing tracked yet')).toBeInTheDocument();
   });
 });
 
@@ -143,6 +144,10 @@ describe('DashboardPage garage', () => {
     expect(chips[0]).toHaveTextContent('Family SUV');
     expect(chips[0]).toHaveTextContent('1 late');
     expect(chips[1]).toHaveTextContent('All clear');
+    // Two taps from Home to the papers, for each vehicle.
+    expect(
+      within(chips[0]!).getByRole('link', { name: 'Show papers for Family SUV' }),
+    ).toBeInTheDocument();
   });
 
   it('shows one vehicle as a summary row, its odometer updatable in place', () => {
@@ -154,6 +159,7 @@ describe('DashboardPage garage', () => {
       within(row).getByRole('button', { name: 'Update odometer for Commuter' }),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('garage-strip')).not.toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: 'Show papers for Commuter' })).toBeInTheDocument();
   });
 });
 

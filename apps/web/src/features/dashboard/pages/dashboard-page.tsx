@@ -75,11 +75,15 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
   const focus = isDashboardFocus(searchState.focus) ? searchState.focus : undefined;
   const { queue, comingUp } = splitAttention(summary.attention, focus);
   const showVehicle = summary.vehicles.length > 1;
-  const headline = dashboardHeadline(summary);
   const urgent = attentionCount(summary.attentionCounts);
+  const nothingTracked = isNothingTracked(summary, queue);
+  // "All clear" would say more than it knows: the queue asks for papers or a reminder instead.
+  const headline = nothingTracked
+    ? { status: 'info' as const, text: 'Nothing tracked yet' }
+    : dashboardHeadline(summary);
   // Logging is for the vehicles the user can change; a viewer is offered none of it.
   const canLog = summary.vehicles.some((vehicle) => vehicle.currentUserRole !== 'viewer');
-  const allClear = !focus && urgent === 0 && !isNothingTracked(summary, queue);
+  const allClear = !focus && urgent === 0 && !nothingTracked;
 
   return (
     <PageContainer className="pb-10">
