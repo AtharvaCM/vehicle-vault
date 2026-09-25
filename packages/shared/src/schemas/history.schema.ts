@@ -78,6 +78,24 @@ export const HistoryPageSchema = z.object({
   months: z.array(HistoryMonthSchema),
   /** Drafts waiting to be confirmed on the filtered vehicles, across all time. */
   draftCount: z.number().int().nonnegative(),
+  /**
+   * The oldest of those drafts, where "N drafts to confirm" leads. Null when
+   * there is none. Omitted by older API versions.
+   */
+  firstDraftId: z.string().nullable().optional(),
+  /**
+   * This calendar year's confirmed services on the filtered vehicles, for the
+   * page's summary line ("₹15,200 on 3 services in 2026"). Null when the kind
+   * filter leaves services out. Omitted by older API versions.
+   */
+  year: z
+    .object({
+      year: z.number().int(),
+      serviceCount: z.number().int().nonnegative(),
+      serviceSpend: decimalString,
+    })
+    .nullable()
+    .optional(),
   nextCursor: z.string().nullable(),
 });
 
