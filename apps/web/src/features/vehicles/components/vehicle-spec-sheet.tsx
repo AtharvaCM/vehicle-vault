@@ -1,84 +1,18 @@
 import { Car, Fuel, Gauge, Ruler, ShieldCheck, CircleDot } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/shared/empty-state';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Figure } from '@/components/shared/figure';
 
 import type { VehicleVariantSpec } from '../hooks/use-variant-specs';
-import { useVariantSpecs } from '../hooks/use-variant-specs';
 
-type VehicleSpecsCardProps = {
-  make: string;
-  model: string;
-  /** Optional on a vehicle; specs are published per variant, so without it there is nothing to look up. */
-  variant?: string;
-};
-
-export function VehicleSpecsCard({ make, model, variant }: VehicleSpecsCardProps) {
-  const specsQuery = useVariantSpecs(make, model, variant ?? '');
-
-  // The lookup is keyed by variant, so it never runs without one. Say why,
-  // rather than leaving the card loading forever.
-  if (!variant?.trim()) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Vehicle specifications</CardTitle>
-          <CardDescription>
-            Specifications are published per variant, and this vehicle has none on file.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            description={`Add the variant for your ${make} ${model} from Edit vehicle, and its specifications will appear here.`}
-            title="No variant on file"
-          />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (specsQuery.isPending) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Vehicle specifications</CardTitle>
-          <CardDescription>
-            Loading specs for {make} {model} {variant}…
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="rounded-xl border border-line bg-page px-4 py-3 text-ui text-fg-2">
-            Looking up specifications…
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (specsQuery.isError || !specsQuery.data) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Vehicle specifications</CardTitle>
-          <CardDescription>
-            Specifications for {make} {model} {variant}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            description="Specs for this variant haven't been added to the catalog yet. They'll appear here once available."
-            title="No specifications available"
-          />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const specs = specsQuery.data;
-
+/**
+ * Every figure the catalogue has for a variant, grouped as a spec sheet. Only
+ * the groups with something in them show. About this vehicle opens it under
+ * the one-line summary, and it owns the lookup and its empty states.
+ */
+export function VehicleSpecSheet({ specs }: { specs: VehicleVariantSpec }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="spec-sheet">
       <EngineSection specs={specs} />
       <DimensionsSection specs={specs} />
       <PerformanceSection specs={specs} />

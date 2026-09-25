@@ -17,9 +17,13 @@ const tyresList = vi.hoisted(() => ({ current: [] as Tyre[] }));
 const readingsList = vi.hoisted(() => ({ current: [] as TyreInspection[] }));
 const updateTyre = vi.hoisted(() => vi.fn());
 const deleteTyre = vi.hoisted(() => vi.fn());
+const variantSpecs = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 
 vi.mock('../hooks/use-vehicle-intervals', () => ({
   useVehicleIntervals: () => intervalsQuery.current,
+}));
+vi.mock('../hooks/use-variant-specs', () => ({
+  useVariantSpecs: () => variantSpecs.current,
 }));
 vi.mock('../../tyres/hooks/use-tyres', () => ({
   useVehicleTyreCondition: () => conditionQuery.current,
@@ -94,6 +98,23 @@ describe('VehicleTyreTracker', () => {
     };
     // No tyres tracked by default; the measured path is opted into per test.
     conditionQuery.current = { data: undefined };
+    variantSpecs.current = { data: undefined };
+  });
+
+  it("shows the variant's tyre size from the catalogue", () => {
+    variantSpecs.current = { data: { tyreSize: '205/55 R16' } };
+    renderTracker(settled([]));
+
+    expect(screen.getByTestId('catalog-tyre-size')).toHaveTextContent(
+      'Size for this variant: 205/55 R16',
+    );
+  });
+
+  it('says nothing about size for a vehicle with no variant', () => {
+    variantSpecs.current = { data: { tyreSize: '205/55 R16' } };
+    renderTracker(settled([]), royalEnfield);
+
+    expect(screen.queryByTestId('catalog-tyre-size')).not.toBeInTheDocument();
   });
 
   it('does not call a new vehicle overdue when nothing has been logged', () => {
