@@ -1,3 +1,10 @@
+# [1.96.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.95.0...v1.96.0) (2026-09-25)
+
+
+### Features
+
+* **web:** the vehicle Overview answers "is it OK, what's next" ([70afb04](https://github.com/AtharvaCM/vehicle-vault/commit/70afb045afaac956efbaf23b85c59d20dfc5d50c)), closes [#307](https://github.com/AtharvaCM/vehicle-vault/issues/307)
+
 # [1.95.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.94.0...v1.95.0) (2026-09-25)
 
 
