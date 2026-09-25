@@ -15,8 +15,80 @@ function prismaMock() {
     fuelLog: { findMany: vi.fn() },
     tyre: { findMany: vi.fn() },
     accessory: { findMany: vi.fn() },
+    user: { findMany: vi.fn().mockResolvedValue([]) },
+    vehicleLoan: { findMany: vi.fn() },
   };
 }
+
+describe('AuditQueryService feed details', () => {
+  let prisma: ReturnType<typeof prismaMock>;
+  let service: AuditQueryService;
+
+  beforeEach(() => {
+    prisma = prismaMock();
+    service = new AuditQueryService(prisma as never);
+  });
+
+  it('names the actor, as "you" for the caller, and says whether the record still exists', async () => {
+    prisma.auditEvent.findMany.mockResolvedValue([
+      {
+        id: 'e1',
+        occurredAt: new Date('2026-09-25T10:00:00Z'),
+        actorUserId: 'user-1',
+        resourceType: AuditResourceType.fuel_log,
+        resourceId: 'fill-kept',
+      },
+      {
+        id: 'e2',
+        occurredAt: new Date('2026-09-25T09:00:00Z'),
+        actorUserId: 'user-2',
+        resourceType: AuditResourceType.fuel_log,
+        resourceId: 'fill-gone',
+      },
+      {
+        id: 'e3',
+        occurredAt: new Date('2026-09-25T08:00:00Z'),
+        actorUserId: null,
+        resourceType: AuditResourceType.user,
+        resourceId: 'user-1',
+      },
+    ]);
+    prisma.user.findMany.mockResolvedValue([
+      { id: 'user-1', name: 'Asha' },
+      { id: 'user-2', name: 'Priya' },
+    ]);
+    prisma.fuelLog.findMany.mockResolvedValue([{ id: 'fill-kept' }]);
+
+    const { events } = await service.listForOwner('user-1', {});
+
+    expect(events.map((event) => [event.actor, event.resourceExists])).toEqual([
+      [{ name: 'Asha', isYou: true }, true],
+      [{ name: 'Priya', isYou: false }, false],
+      [null, null],
+    ]);
+    // One lookup per kind of record on the page.
+    expect(prisma.fuelLog.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.fuelLog.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ['fill-kept', 'fill-gone'] } },
+      select: { id: true },
+    });
+  });
+
+  it('splits sign-ins and security from garage changes', async () => {
+    prisma.auditEvent.findMany.mockResolvedValue([]);
+    const security = [{ action: { startsWith: 'auth.' } }, { action: { startsWith: 'admin.' } }];
+
+    await service.listForOwner('user-1', { category: 'security' });
+    expect(prisma.auditEvent.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ AND: [{ OR: security }] }) }),
+    );
+
+    await service.listForOwner('user-1', { category: 'garage' });
+    expect(prisma.auditEvent.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ AND: [{ NOT: security }] }) }),
+    );
+  });
+});
 
 describe('AuditQueryService.listForOwner', () => {
   let prisma: ReturnType<typeof prismaMock>;

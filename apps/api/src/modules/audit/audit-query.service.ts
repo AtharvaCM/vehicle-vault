@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AuditResourceType, Prisma } from '@prisma/client';
+import { AuditResourceType, Prisma, type AuditEvent } from '@prisma/client';
+import { SECURITY_AUDIT_PREFIXES } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
 
@@ -11,10 +12,25 @@ export type AuditCursor = {
   id: string;
 };
 
+export const AUDIT_CATEGORIES = ['security', 'garage'] as const;
+export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
+
+/**
+ * An event as the activity feed reads it: who did it in words ("You", or
+ * their name), and whether the record it is about still exists, so a
+ * sentence links only to something that will open.
+ */
+export type AuditFeedEvent = AuditEvent & {
+  actor: { name: string; isYou: boolean } | null;
+  /** Null for events about no record, or a kind with nothing to open. */
+  resourceExists: boolean | null;
+};
+
 export type AuditQueryFilters = {
   resourceType?: AuditResourceType;
   action?: string;
   actionPrefix?: string;
+  category?: AuditCategory;
   from?: Date;
   to?: Date;
   cursor?: string;
@@ -35,6 +51,23 @@ export type AuditQueryFilters = {
  * The owner-scoping relies on the denormalised `ownerUserId` column, so
  * neither method needs a 7-way join. See ADR-0004.
  */
+type IdRows = Promise<{ id: string }[]>;
+type Lookup = (prisma: PrismaService, ids: string[]) => IdRows;
+
+/** The kinds of record a sentence can open, and how to tell which still exist. */
+const RESOURCE_LOOKUP: Partial<Record<AuditResourceType, Lookup>> = {
+  vehicle: (prisma, ids) =>
+    prisma.vehicle.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+  maintenance_record: (prisma, ids) =>
+    prisma.maintenanceRecord.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+  reminder: (prisma, ids) =>
+    prisma.reminder.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+  fuel_log: (prisma, ids) =>
+    prisma.fuelLog.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+  vehicle_loan: (prisma, ids) =>
+    prisma.vehicleLoan.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+};
+
 @Injectable()
 export class AuditQueryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -44,7 +77,7 @@ export class AuditQueryService {
       OR: [{ ownerUserId: userId }, { actorUserId: userId }],
       ...this.commonFilters(filters),
     };
-    return this.executeQuery(where, filters);
+    return this.executeQuery(userId, where, filters);
   }
 
   async listForVehicle(userId: string, vehicleId: string, filters: AuditQueryFilters) {
@@ -98,7 +131,7 @@ export class AuditQueryService {
       where.OR = [{ resourceType: AuditResourceType.vehicle, resourceId: vehicleId }];
     }
 
-    return this.executeQuery(where, filters);
+    return this.executeQuery(userId, where, filters);
   }
 
   private commonFilters(filters: AuditQueryFilters): Prisma.AuditEventWhereInput {
@@ -106,6 +139,12 @@ export class AuditQueryService {
     if (filters.resourceType) where.resourceType = filters.resourceType;
     if (filters.action) where.action = filters.action;
     if (filters.actionPrefix) where.action = { startsWith: filters.actionPrefix };
+    if (filters.category) {
+      const security = SECURITY_AUDIT_PREFIXES.map((prefix) => ({
+        action: { startsWith: prefix },
+      }));
+      where.AND = [filters.category === 'security' ? { OR: security } : { NOT: security }];
+    }
     if (filters.from || filters.to) {
       where.occurredAt = {
         ...(filters.from ? { gte: filters.from } : {}),
@@ -115,7 +154,11 @@ export class AuditQueryService {
     return where;
   }
 
-  private async executeQuery(where: Prisma.AuditEventWhereInput, filters: AuditQueryFilters) {
+  private async executeQuery(
+    userId: string,
+    where: Prisma.AuditEventWhereInput,
+    filters: AuditQueryFilters,
+  ) {
     const limit = Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const cursor = filters.cursor ? this.decodeCursor(filters.cursor) : null;
 
@@ -152,9 +195,59 @@ export class AuditQueryService {
         : null;
 
     return {
-      events,
+      events: await this.describe(userId, events),
       nextCursor,
     };
+  }
+
+  /**
+   * Adds the actor's name and whether each record still exists: two small
+   * lookups per page (one per kind of record on it), not one per event.
+   */
+  private async describe(userId: string, events: AuditEvent[]): Promise<AuditFeedEvent[]> {
+    const actorIds = [
+      ...new Set(events.flatMap((event) => (event.actorUserId ? [event.actorUserId] : []))),
+    ];
+    const idsByType = new Map<AuditResourceType, Set<string>>();
+    for (const event of events) {
+      if (!event.resourceType || !event.resourceId || !(event.resourceType in RESOURCE_LOOKUP)) {
+        continue;
+      }
+      const ids = idsByType.get(event.resourceType) ?? new Set<string>();
+      ids.add(event.resourceId);
+      idsByType.set(event.resourceType, ids);
+    }
+
+    const [actors, existing] = await Promise.all([
+      actorIds.length > 0
+        ? this.prisma.user.findMany({
+            where: { id: { in: actorIds } },
+            select: { id: true, name: true },
+          })
+        : [],
+      Promise.all(
+        [...idsByType.entries()].map(async ([type, ids]) => {
+          const found = await RESOURCE_LOOKUP[type]!(this.prisma, [...ids]);
+          return found.map((row) => `${type}:${row.id}`);
+        }),
+      ),
+    ]);
+    const nameById = new Map(actors.map((actor) => [actor.id, actor.name]));
+    const exists = new Set(existing.flat());
+
+    return events.map((event) => ({
+      ...event,
+      actor: event.actorUserId
+        ? {
+            name: nameById.get(event.actorUserId) ?? 'Someone',
+            isYou: event.actorUserId === userId,
+          }
+        : null,
+      resourceExists:
+        event.resourceType && event.resourceId && event.resourceType in RESOURCE_LOOKUP
+          ? exists.has(`${event.resourceType}:${event.resourceId}`)
+          : null,
+    }));
   }
 
   private encodeCursor(cursor: AuditCursor): string {

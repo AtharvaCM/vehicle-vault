@@ -343,7 +343,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['tab=papers', ['Add Policy']],
     ['tab=more&section=loans', [lender]],
     ['tab=more&section=members', [invitee]],
-    ['tab=more&section=activity', ['Reminder created']],
+    ['tab=more&section=activity', [`You added the reminder “${reminderTitle}”`]],
   ];
   for (const [search, loaded] of tabs) {
     await page.goto(`${vehicleUrl}?${search}`);
@@ -354,14 +354,11 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await expectNoSqueezedIcons(page, `The vehicle page at ?${search}`);
   }
 
-  // Opened, an activity entry lists every changed value: ids and JSON with
-  // nowhere to wrap.
-  const closed = page.getByRole('tabpanel').locator('button[aria-expanded="false"]');
-  for (let remaining = await closed.count(); remaining > 0; remaining -= 1) {
-    await closed.first().click();
-  }
-  await expect(closed).toHaveCount(0);
-  await expectNoSidewaysScroll(page, 'The activity tab, every entry open');
+  // With technical details on, every entry lists each changed value: ids and
+  // JSON with nowhere to wrap.
+  await page.getByRole('switch', { name: 'Show technical details' }).click();
+  await expect(page.getByTestId('activity-technical').first()).toBeVisible();
+  await expectNoSidewaysScroll(page, 'The activity tab, technical details on');
 
   const pages: Array<[string, string]> = [
     ['/home', workshop],
@@ -370,7 +367,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['/upcoming', reminderTitle],
     ['/costs', lender],
     ['/settings', 'Download JSON backup'],
-    ['/settings/activity', 'Reminder created'],
+    ['/settings/activity', `You added the reminder “${reminderTitle}”`],
     [`/reminders/${reminder.id}`, reminderTitle],
   ];
   for (const [path, loaded] of pages) {

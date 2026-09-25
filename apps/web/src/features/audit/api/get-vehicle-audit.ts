@@ -16,6 +16,7 @@ export async function getVehicleAudit(
         resourceType: filters.resourceType,
         action: filters.action,
         actionPrefix: filters.actionPrefix,
+        category: filters.category,
         from: filters.from,
         to: filters.to,
         limit: filters.limit,

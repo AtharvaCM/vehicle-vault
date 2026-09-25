@@ -8,7 +8,18 @@ export type AuditResourceType =
   | 'fuel_log'
   | 'user'
   | 'oauth_account'
-  | 'attachment';
+  | 'attachment'
+  | 'vehicle_loan'
+  | 'loan_prepayment'
+  | 'vehicle_member'
+  | 'vehicle_invite'
+  | 'compliance_document'
+  | 'tyre'
+  | 'accessory'
+  | 'service_baseline';
+
+/** Settings → Activity's two views. */
+export type AuditCategory = 'security' | 'garage';
 
 export type AuditEvent = {
   id: string;
@@ -23,6 +34,10 @@ export type AuditEvent = {
   changedFields: string[];
   ipAddress: string | null;
   userAgent: string | null;
+  /** Who did it: "You", or their name. Null when nobody did (the system). */
+  actor?: { name: string; isYou: boolean } | null;
+  /** Whether the record still exists to open; null when there is nothing to open. */
+  resourceExists?: boolean | null;
 };
 
 export type AuditListResponse = {
@@ -34,6 +49,7 @@ export type AuditQueryFilters = {
   resourceType?: AuditResourceType;
   action?: string;
   actionPrefix?: string;
+  category?: AuditCategory;
   from?: string;
   to?: string;
   limit?: number;

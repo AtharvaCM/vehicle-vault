@@ -2,68 +2,58 @@ import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { PageTitle } from '@/components/shared/page-title';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { AuditFeed } from '@/features/audit/components/audit-feed';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ActivityFeed } from '@/features/audit/components/activity-feed';
 import { useMyAudit } from '@/features/audit/hooks/use-my-audit';
-import type { AuditResourceType } from '@/features/audit/types/audit-event';
+import type { AuditCategory } from '@/features/audit/types/audit-event';
 
-const RESOURCE_FILTERS: { value: AuditResourceType; label: string }[] = [
-  { value: 'vehicle', label: 'Vehicles' },
-  { value: 'maintenance_record', label: 'Service' },
-  { value: 'reminder', label: 'Reminders' },
-  { value: 'fuel_log', label: 'Fuel logs' },
-  { value: 'insurance_policy', label: 'Insurance' },
-  { value: 'warranty', label: 'Warranties' },
-  { value: 'claim', label: 'Claims' },
-  { value: 'attachment', label: 'Attachments' },
-  { value: 'user', label: 'Account' },
+const VIEWS: { value: AuditCategory; label: string }[] = [
+  { value: 'garage', label: 'Garage changes' },
+  { value: 'security', label: 'Sign-ins & security' },
 ];
 
-const ALL = 'all';
-
+/**
+ * Settings → Activity: what happened, in sentences, split in two. Garage
+ * changes are everything done to vehicles and their records; sign-ins and
+ * security are sign-ins, failed attempts, and password and session changes,
+ * with "Not you?" beside anything that could be someone else.
+ */
 export function ActivityPage() {
-  const [filter, setFilter] = useState<string>(ALL);
-  const resourceType = filter === ALL ? undefined : (filter as AuditResourceType);
-  const query = useMyAudit(resourceType);
+  const [view, setView] = useState<AuditCategory>('garage');
+  const query = useMyAudit(view);
 
   return (
     <PageContainer>
-      <PageTitle
-        description="Every change made to your garage, newest first. Click an entry to see what changed."
-        title="Activity"
-      />
+      <PageTitle description="What happened in your account, newest first." title="Activity" />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle className="text-lead font-bold">Account activity</CardTitle>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="All activity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All activity</SelectItem>
-              {RESOURCE_FILTERS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          <AuditFeed
-            query={query}
-            emptyDescription="Once you start adding vehicles and logging service, your history shows up here."
-          />
-        </CardContent>
-      </Card>
+      <ToggleGroup
+        aria-label="Show"
+        className="flex w-full sm:inline-flex sm:w-auto"
+        onValueChange={(value) => {
+          if (value) setView(value as AuditCategory);
+        }}
+        type="single"
+        value={view}
+      >
+        {VIEWS.map((option) => (
+          <ToggleGroupItem className="flex-1 sm:flex-none" key={option.value} value={option.value}>
+            {option.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+
+      <ActivityFeed
+        // The account's own log: its owner may see the raw changes.
+        allowTechnicalDetails
+        emptyDescription={
+          view === 'garage'
+            ? 'Once you add a vehicle and log a service, it shows up here.'
+            : 'Sign-ins and password changes show up here.'
+        }
+        key={view}
+        notYou={view === 'security'}
+        query={query}
+      />
     </PageContainer>
   );
 }

@@ -4,10 +4,9 @@ import type { ReactNode } from 'react';
 import type { Vehicle, VehicleRole } from '@vehicle-vault/shared';
 
 import { SectionHeader } from '@/components/shared/section-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { AccessoriesTab } from '@/features/accessories/components/accessories-tab';
-import { AuditFeed } from '@/features/audit/components/audit-feed';
+import { ActivityFeed } from '@/features/audit/components/activity-feed';
 import type { useVehicleAudit } from '@/features/audit/hooks/use-vehicle-audit';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
 import type { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
@@ -28,7 +27,7 @@ const sections: Record<
   accessories: { title: 'Accessories', description: "What's fitted, with its warranty" },
   loans: { title: 'Loans', description: "EMIs and what's left to pay", ownerOnly: true },
   members: { title: 'Members', description: 'Who can see this vehicle or log for it' },
-  activity: { title: 'Activity', description: 'Every change, newest first' },
+  activity: { title: 'Activity', description: 'Every change, in words, newest first' },
 };
 
 type VehicleMoreTabProps = {
@@ -177,6 +176,7 @@ function MoreSection({
   maintenanceQuery: ReturnType<typeof useMaintenanceRecords>;
 }) {
   const vehicleId = vehicle.id;
+  const { isOwner } = useVehicleAccess();
 
   switch (section) {
     case 'about':
@@ -196,21 +196,12 @@ function MoreSection({
       return <MembersTab currentUserRole={currentUserRole} vehicleId={vehicleId} />;
     case 'activity':
       return (
-        <Card className="border-line/60 bg-surface">
-          <CardHeader className="border-b border-line-subtle pb-4">
-            <CardTitle className="text-lead font-bold">Activity log</CardTitle>
-            <CardDescription>
-              Every change to this vehicle and its records, newest first. Click an entry to see what
-              changed.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-5">
-            <AuditFeed
-              emptyDescription="Changes to this vehicle and its service, reminders, fuel, and documents will show up here."
-              query={auditQuery}
-            />
-          </CardContent>
-        </Card>
+        <ActivityFeed
+          // Only an owner sees a vehicle's activity; the raw changes are theirs too.
+          allowTechnicalDetails={isOwner}
+          emptyDescription="Changes to this vehicle and its service, reminders, fuel and papers show up here."
+          query={auditQuery}
+        />
       );
   }
 }

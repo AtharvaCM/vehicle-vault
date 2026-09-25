@@ -7,7 +7,8 @@ import { getVehicleAudit } from '../api/get-vehicle-audit';
 export function useVehicleAudit(vehicleId: string) {
   return useInfiniteQuery({
     queryKey: queryKeys.audit.byVehicle(vehicleId),
-    queryFn: ({ pageParam }) => getVehicleAudit(vehicleId, {}, pageParam),
+    // A vehicle's activity is its garage changes only; sign-ins are the account's.
+    queryFn: ({ pageParam }) => getVehicleAudit(vehicleId, { category: 'garage' }, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
