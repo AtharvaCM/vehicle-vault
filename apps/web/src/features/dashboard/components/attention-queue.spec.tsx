@@ -450,30 +450,6 @@ describe('AttentionQueue', () => {
     });
   });
 
-  it('shows the filter chip and clears the focus', async () => {
-    const user = userEvent.setup();
-    const onSearchStateChange = vi.fn();
-
-    renderWithProviders(
-      <AttentionQueue
-        focus="overdue"
-        onSearchStateChange={onSearchStateChange}
-        queue={[overdueReminder]}
-        summary={makeSummary({
-          attention: [overdueReminder],
-          attentionTotal: 1,
-          attentionCounts: makeAttentionCounts({ overdue: 1, total: 1 }),
-        })}
-      />,
-    );
-
-    expect(screen.getByText('Showing: Overdue')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Clear' }));
-
-    expect(onSearchStateChange).toHaveBeenCalledWith({ focus: undefined });
-  });
-
   it('shows the focused empty state with a clear action', async () => {
     const user = userEvent.setup();
     const onSearchStateChange = vi.fn();

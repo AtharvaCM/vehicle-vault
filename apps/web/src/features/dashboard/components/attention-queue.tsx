@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { SectionHeader } from '@/components/shared/section-header';
 import { StatusDot, StatusPill } from '@/components/shared/status-pill';
-import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ReminderDoneDialog } from '@/features/reminders/components/reminder-done-dialog';
@@ -24,6 +23,7 @@ import type {
 import type { DashboardFocus, DashboardSearch } from '../types/dashboard-search';
 import { URGENCY_STATUS } from '../utils/status';
 import { urgencyLabel } from '../utils/format-due';
+import { isNothingTracked } from '../utils/select-attention';
 import { AttentionRow } from './attention-row';
 import { VehiclePickerMenu } from './vehicle-picker-menu';
 
@@ -39,10 +39,10 @@ const GROUP_WORDS: Record<DashboardUrgency, string> = {
   this_month: 'This month',
 };
 
-const FOCUS_LABELS: Record<DashboardFocus, { chip: string; empty: string }> = {
-  overdue: { chip: 'Overdue', empty: 'Nothing overdue' },
-  week: { chip: 'Due this week', empty: 'Nothing due this week' },
-  documents: { chip: 'Documents expiring', empty: 'Nothing expiring' },
+const FOCUS_EMPTY: Record<DashboardFocus, string> = {
+  overdue: 'Nothing overdue',
+  week: 'Nothing due this week',
+  documents: 'Nothing expiring',
 };
 
 type AttentionQueueProps = {
@@ -94,11 +94,7 @@ export function AttentionQueue({
     items: visibleRows.filter((item) => item.urgency === urgency),
   })).filter((group) => group.items.length > 0);
 
-  const nothingTracked =
-    queue.length === 0 &&
-    counts.total === 0 &&
-    summary.vehicles.every((vehicle) => vehicle.documents.insurance?.state === 'missing') &&
-    Object.values(summary.reminderCounts).every((count) => count === 0);
+  const nothingTracked = isNothingTracked(summary, queue);
 
   function clearFocus() {
     onSearchStateChange({ focus: undefined });
@@ -250,7 +246,7 @@ export function AttentionQueue({
               </Button>
             }
             description="Clear the filter to see everything else."
-            title={FOCUS_LABELS[focus].empty}
+            title={FOCUS_EMPTY[focus]}
           />
         </div>
       );
@@ -312,7 +308,8 @@ export function AttentionQueue({
         <SectionHeader
           actions={
             <>
-              {urgentCount > 0 ? (
+              {/* Home's filter chips carry the counts; a vehicle's queue has none. */}
+              {scope && urgentCount > 0 ? (
                 <StatusPill status={counts.overdue > 0 ? 'late' : 'soon'}>{urgentCount}</StatusPill>
               ) : null}
               {scope ? (
@@ -331,21 +328,9 @@ export function AttentionQueue({
               )}
             </>
           }
-          description={
-            scope ? undefined : 'Everything due or wrong across every vehicle, most urgent first.'
-          }
           title="Needs attention"
         />
       </CardHeader>
-
-      {focus ? (
-        <div className="flex items-center gap-2 border-b border-line-subtle bg-page/60 px-5 py-2">
-          <Badge variant="outline">Showing: {FOCUS_LABELS[focus].chip}</Badge>
-          <Button onClick={clearFocus} size="xs" type="button" variant="ghost">
-            Clear
-          </Button>
-        </div>
-      ) : null}
 
       <CardContent className="p-0">{renderBody()}</CardContent>
 

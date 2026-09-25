@@ -1,5 +1,9 @@
 import type { DashboardFocus } from '../types/dashboard-search';
-import type { DashboardAttentionItem, DashboardUrgency } from '../types/dashboard';
+import type {
+  DashboardAttentionItem,
+  DashboardSummary,
+  DashboardUrgency,
+} from '../types/dashboard';
 
 export const COMING_UP_LIMIT = 5;
 
@@ -35,4 +39,21 @@ export function splitAttention(
     : attention.filter((item) => item.urgency === 'this_month').slice(0, COMING_UP_LIMIT);
 
   return { queue, comingUp };
+}
+
+/**
+ * Nothing is tracked at all yet: no reminders, no insurance on any vehicle and
+ * nothing due. Home then asks for papers or a reminder rather than calling a
+ * garage it knows nothing about "All clear".
+ */
+export function isNothingTracked(
+  summary: Pick<DashboardSummary, 'attentionCounts' | 'vehicles' | 'reminderCounts'>,
+  queue: DashboardAttentionItem[],
+) {
+  return (
+    queue.length === 0 &&
+    summary.attentionCounts.total === 0 &&
+    summary.vehicles.every((vehicle) => vehicle.documents.insurance?.state === 'missing') &&
+    Object.values(summary.reminderCounts).every((count) => count === 0)
+  );
 }

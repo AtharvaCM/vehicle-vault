@@ -1,12 +1,14 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
+import { FuelType, VehicleRole, VehicleType } from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { makeSummary, makeVehicle } from '../test/fixtures';
+import { makeAttentionCounts, makeAttentionItem, makeSummary, makeVehicle } from '../test/fixtures';
 import { renderWithProviders } from '../test/render';
-import type { DashboardSummary } from '../types/dashboard';
+import type { DashboardSummary, DashboardVehicleHealth } from '../types/dashboard';
 
 const summary = vi.hoisted(() => ({ current: undefined as unknown as DashboardSummary }));
+const garage = vi.hoisted(() => ({ current: [] as unknown[] }));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -29,38 +31,169 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('../hooks/use-dashboard-summary', () => ({
   useDashboardSummary: () => ({ isPending: false, isError: false, data: summary.current }),
 }));
+// The Log menu offers the garage the vehicles list knows about.
+vi.mock('@/features/vehicles/hooks/use-vehicles', () => ({
+  useVehicles: () => ({ isPending: false, data: garage.current }),
+}));
 // Beside the point here, and each reaches for data of its own.
 vi.mock('../components/costs-summary-line', () => ({ CostsSummaryLine: () => null }));
 vi.mock('@/features/pwa/components/install-app-card', () => ({ InstallAppCard: () => null }));
 
 import { DashboardPage } from './dashboard-page';
 
-function showDashboard(vehicles: ReturnType<typeof makeVehicle>[]) {
+function asVehicle(vehicle: DashboardVehicleHealth) {
+  return {
+    id: vehicle.id,
+    registrationNumber: vehicle.registrationNumber,
+    make: 'Maruti',
+    model: 'Swift',
+    nickname: vehicle.displayName,
+    year: 2023,
+    vehicleType: VehicleType.Car,
+    fuelType: FuelType.Petrol,
+    odometer: vehicle.odometer,
+    currentUserRole: vehicle.currentUserRole as VehicleRole,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+}
+
+function showDashboard(
+  vehicles: DashboardVehicleHealth[],
+  overrides: Partial<DashboardSummary> = {},
+  focus?: 'overdue',
+) {
   summary.current = makeSummary({
     vehicles,
     vehiclesTotal: vehicles.length,
     totalVehicles: vehicles.length,
+    // Something is tracked, so an empty queue reads as "All clear".
+    reminderCounts: { overdue: 0, dueToday: 0, upcoming: 1, completed: 0 },
+    ...overrides,
   });
-  renderWithProviders(<DashboardPage onSearchStateChange={vi.fn()} searchState={{}} />);
+  garage.current = vehicles.map(asVehicle);
+  renderWithProviders(<DashboardPage onSearchStateChange={vi.fn()} searchState={{ focus }} />);
 }
 
-describe('DashboardPage logging', () => {
-  it('logs a service or fuel in one tap each', () => {
-    showDashboard([makeVehicle({ id: 'vehicle-1', displayName: 'Swift' })]);
+const late = {
+  attention: [makeAttentionItem({ id: 'late', title: 'Insurance renewal', urgency: 'overdue' })],
+  attentionCounts: makeAttentionCounts({ overdue: 1, thisWeek: 3, urgentVehicles: 2, total: 4 }),
+} satisfies Partial<DashboardSummary>;
 
-    fireEvent.click(screen.getByRole('button', { name: 'Log service' }));
-    expect(screen.getByRole('dialog', { name: 'Log a service' })).toBeInTheDocument();
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+describe('DashboardPage status', () => {
+  it('opens on one status line and the queue, with its filters', () => {
+    showDashboard([makeVehicle({ id: 'vehicle-1' }), makeVehicle({ id: 'vehicle-2' })], late);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Log fuel' }));
-    expect(screen.getByRole('dialog', { name: 'Log fuel' })).toBeInTheDocument();
+    expect(screen.getByText('1 late · 3 this week · across 2 vehicles')).toBeInTheDocument();
+    const filters = screen.getByRole('navigation', { name: 'Filter what needs attention' });
+    expect(within(filters).getByRole('link', { name: /Late\s*1/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
+    expect(screen.queryByTestId('all-clear')).not.toBeInTheDocument();
   });
 
-  it('offers a viewer neither', () => {
-    showDashboard([makeVehicle({ id: 'vehicle-1', currentUserRole: 'viewer' })]);
+  it('is "All clear", naming what comes next, when nothing is late or due this week', () => {
+    showDashboard([makeVehicle()], {
+      attention: [
+        makeAttentionItem({ title: 'Timing belt check', urgency: 'this_month', daysUntilDue: 20 }),
+      ],
+      attentionCounts: makeAttentionCounts({ thisMonth: 1, total: 1 }),
+    });
+
+    const panel = screen.getByTestId('all-clear');
+    expect(panel).toHaveTextContent('All clear.');
+    expect(panel).toHaveTextContent('Next: Timing belt check');
+    expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('navigation', { name: 'Filter what needs attention' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('asks for papers or a reminder instead of "All clear" when nothing is tracked', () => {
+    showDashboard(
+      [
+        makeVehicle({
+          documents: {
+            insurance: { state: 'missing', endDate: null },
+            puc: { state: 'missing', endDate: null },
+          },
+        }),
+      ],
+      { reminderCounts: { overdue: 0, dueToday: 0, upcoming: 0, completed: 0 } },
+    );
+
+    expect(screen.queryByTestId('all-clear')).not.toBeInTheDocument();
+    expect(screen.getByText('Nothing is being tracked yet')).toBeInTheDocument();
+    expect(screen.getByText('Nothing tracked yet')).toBeInTheDocument();
+  });
+});
+
+describe('DashboardPage garage', () => {
+  it('shows a compact strip for several vehicles', () => {
+    showDashboard([
+      makeVehicle({
+        id: 'vehicle-1',
+        displayName: 'Family SUV',
+        status: 'overdue',
+        overdueCount: 1,
+      }),
+      makeVehicle({ id: 'vehicle-2', displayName: 'Daily hatch' }),
+    ]);
+
+    const chips = within(screen.getByTestId('garage-strip')).getAllByTestId('garage-chip');
+    expect(chips).toHaveLength(2);
+    expect(chips[0]).toHaveTextContent('Family SUV');
+    expect(chips[0]).toHaveTextContent('1 late');
+    expect(chips[1]).toHaveTextContent('All clear');
+    // Two taps from Home to the papers, for each vehicle.
+    expect(
+      within(chips[0]!).getByRole('link', { name: 'Show papers for Family SUV' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows one vehicle as a summary row, its odometer updatable in place', () => {
+    showDashboard([makeVehicle({ displayName: 'Commuter', odometer: 15_200 })]);
+
+    const row = screen.getByTestId('vehicle-summary-row');
+    expect(row).toHaveTextContent('15,200 km');
+    expect(
+      within(row).getByRole('button', { name: 'Update odometer for Commuter' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('garage-strip')).not.toBeInTheDocument();
+    expect(within(row).getByRole('link', { name: 'Show papers for Commuter' })).toBeInTheDocument();
+  });
+});
+
+describe('DashboardPage logging', () => {
+  it('logs from one "Log" menu of five writes', () => {
+    showDashboard([makeVehicle({ id: 'vehicle-1', displayName: 'Swift' })]);
 
     expect(screen.queryByRole('button', { name: 'Log service' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Log fuel' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('home-log-button'));
+    const menu = screen.getByRole('dialog', { name: 'Log' });
+    expect(
+      within(menu)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(
+      expect.arrayContaining([
+        'Log service',
+        'Log fuel',
+        'Update odometer',
+        'Add paper',
+        'Add reminder',
+      ]),
+    );
+    expect(within(menu).queryByRole('button', { name: 'Add vehicle' })).not.toBeInTheDocument();
+
+    // One vehicle it could be, so the service form opens straight away.
+    fireEvent.click(within(menu).getByRole('button', { name: 'Log service' }));
+    expect(screen.getByRole('dialog', { name: 'Log a service' })).toBeInTheDocument();
+  });
+
+  it('offers a viewer no Log menu', () => {
+    showDashboard([makeVehicle({ id: 'vehicle-1', currentUserRole: 'viewer' })]);
+
+    expect(screen.queryByTestId('home-log-button')).not.toBeInTheDocument();
   });
 
   it('logs only against the vehicles the user can change', () => {
@@ -74,10 +207,11 @@ describe('DashboardPage logging', () => {
       }),
     ]);
 
-    // The header's, first on the page; the recent-service card has a picker of its own.
-    fireEvent.click(screen.getAllByRole('button', { name: 'Log service' })[0]!);
+    fireEvent.click(screen.getByTestId('home-log-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Log fuel' }));
 
     // Only one vehicle can be logged against, so there is nothing to choose.
-    expect(screen.queryByLabelText('Vehicle')).not.toBeInTheDocument();
+    expect(screen.queryByText('Which vehicle?')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Log fuel' })).toBeInTheDocument();
   });
 });

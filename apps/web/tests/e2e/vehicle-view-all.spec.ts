@@ -71,8 +71,8 @@ for (const viewport of viewports) {
     await page.goto('/home');
     await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
 
-    const garageCard = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
-    await garageCard.getByRole('link').first().click();
+    const summaryRow = page.getByTestId('vehicle-summary-row').filter({ hasText: nickname });
+    await summaryRow.getByRole('link').first().click();
     await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}$`));
 
     const strip = page.getByRole('tablist', { name: 'Vehicle sections' });

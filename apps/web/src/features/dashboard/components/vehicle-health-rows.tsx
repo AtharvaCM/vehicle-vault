@@ -224,14 +224,18 @@ export function OdometerRow({
   canEdit,
   today,
   bare = false,
+  showReading = false,
 }: RowProps & {
   canEdit: boolean;
   today?: Date;
+  /** Leads with the reading itself, where nothing else on the card shows it. */
+  showReading?: boolean;
   /** Without its label: under a reading that already says "Odometer". */
   bare?: boolean;
 }) {
   const body = (
     <>
+      {showReading ? `${format.odometer(vehicle.odometer)} · ` : null}
       Updated {formatRelativeAgo(vehicle.odometerUpdatedAt, today)}
       {canEdit ? (
         <>
