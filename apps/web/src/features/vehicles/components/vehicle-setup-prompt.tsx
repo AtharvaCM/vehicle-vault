@@ -25,6 +25,8 @@ type VehicleSetupPromptProps = {
    * Undefined from an API that predates the prompt, which cannot save it.
    */
   dismissedAt: string | null | undefined;
+  /** Fires once the prompt is put away, saved or skipped — the add-vehicle flow's cue to move on. */
+  onDismissed?: () => void;
 };
 
 /**
@@ -35,7 +37,12 @@ type VehicleSetupPromptProps = {
  * Protection tab; the insurer and the policy number are filled in later, by a
  * scan or an edit.
  */
-export function VehicleSetupPrompt({ dismissedAt, fuelType, vehicleId }: VehicleSetupPromptProps) {
+export function VehicleSetupPrompt({
+  dismissedAt,
+  fuelType,
+  onDismissed,
+  vehicleId,
+}: VehicleSetupPromptProps) {
   const { canEdit } = useVehicleAccess();
   const documentsQuery = useVehicleDocuments(vehicleId);
   const createDocument = useCreateVehicleDocument(vehicleId);
@@ -69,7 +76,10 @@ export function VehicleSetupPrompt({ dismissedAt, fuelType, vehicleId }: Vehicle
         title: 'Could not close the prompt',
         description: getApiErrorMessage(error),
       });
+      return;
     }
+
+    onDismissed?.();
   }
 
   async function save() {
@@ -138,7 +148,7 @@ export function VehicleSetupPrompt({ dismissedAt, fuelType, vehicleId }: Vehicle
             {createDocument.isPending ? 'Saving...' : 'Save dates'}
           </Button>
           <Button disabled={isSaving} onClick={() => void dismiss()} variant="ghost">
-            Not now
+            Skip for now
           </Button>
         </div>
       </CardContent>

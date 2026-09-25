@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
+import { skipVehicleSetupPrompt } from './helpers/vehicle-form';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,6 +114,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByLabel(/nickname/i).fill(initialNickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 
+  await skipVehicleSetupPrompt(page);
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: initialNickname })).toBeVisible();
 
