@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { MoreHorizontal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { upcomingGroupOf, type UpcomingGroup, type UpcomingItem } from '@vehicle-vault/shared';
@@ -6,6 +6,7 @@ import { upcomingGroupOf, type UpcomingGroup, type UpcomingItem } from '@vehicle
 import { DueLine } from '@/components/shared/due-line';
 import { Money } from '@/components/shared/money';
 import { StatusDot, type Status } from '@/components/shared/status-pill';
+import { SwipeRow, type SwipeAction } from '@/components/shared/swipe-row';
 import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -119,12 +120,16 @@ export function UpcomingRow({
 }: UpcomingRowProps) {
   // `sm` and up: the due words and date stack at the row's end; narrower, they read inline.
   const isWideRow = useMediaQuery('(min-width: 640px)');
+  const navigate = useNavigate();
   const group = upcomingGroupOf(item.urgency);
   const isViewer = item.currentUserRole === 'viewer';
   const emphasise = group === 'late' || group === 'this_week';
 
   let primary: ReactNode;
   const overflow: OverflowEntry[] = [];
+  // On a phone the row swipes: right for its primary verb, left for Snooze.
+  let swipeRight: SwipeAction | undefined;
+  let swipeLeft: SwipeAction | undefined;
 
   if (item.kind === 'reminder') {
     if (isViewer) {
@@ -137,6 +142,10 @@ export function UpcomingRow({
           View
         </Link>
       );
+      swipeRight = {
+        label: 'View',
+        run: () => void navigate({ to: '/reminders/$reminderId', params: { reminderId: item.id } }),
+      };
     } else if (reminderDoneAction(item) === 'log') {
       // Its Done is logging the service: the form opens on its category, and
       // saving the record completes the reminder.
@@ -154,6 +163,16 @@ export function UpcomingRow({
         { label: 'Mark done without logging', onSelect: () => onComplete(item) },
         { label: 'Snooze', onSelect: () => onSnoozeReminder(item) },
       );
+      swipeRight = {
+        label: 'Log service',
+        run: () =>
+          void navigate({
+            to: '/vehicles/$vehicleId/maintenance/new',
+            params: { vehicleId: item.vehicleId },
+            search: logServiceSearchFor(item),
+          }),
+      };
+      swipeLeft = { label: 'Snooze', run: () => onSnoozeReminder(item) };
     } else {
       primary = (
         <Button
@@ -167,6 +186,8 @@ export function UpcomingRow({
         </Button>
       );
       overflow.push({ label: 'Snooze', onSelect: () => onSnoozeReminder(item) });
+      swipeRight = { label: 'Done', run: () => onComplete(item) };
+      swipeLeft = { label: 'Snooze', run: () => onSnoozeReminder(item) };
     }
   } else if (item.kind === 'document') {
     primary = (
@@ -179,8 +200,18 @@ export function UpcomingRow({
         {isViewer ? 'View papers' : 'Renew'}
       </Link>
     );
+    swipeRight = {
+      label: isViewer ? 'View papers' : 'Renew',
+      run: () =>
+        void navigate({
+          to: '/vehicles/$vehicleId',
+          params: { vehicleId: item.vehicleId },
+          search: { tab: 'papers' },
+        }),
+    };
     if (isPaperSnoozeEligible(item)) {
       overflow.push({ label: 'Snooze', onSelect: () => onSnoozePaper(item) });
+      swipeLeft = { label: 'Snooze', run: () => onSnoozePaper(item) };
     }
   } else {
     primary = (
@@ -193,6 +224,19 @@ export function UpcomingRow({
         {KIND_ACTIONS[item.kind]}
       </Link>
     );
+    const label = KIND_ACTIONS[item.kind];
+    const kindSearch = ATTENTION_KIND_SEARCH[item.kind];
+    if (label) {
+      swipeRight = {
+        label,
+        run: () =>
+          void navigate({
+            to: '/vehicles/$vehicleId',
+            params: { vehicleId: item.vehicleId },
+            search: kindSearch,
+          }),
+      };
+    }
   }
 
   const dueMode: 'due' | 'ends' = EXPIRING_KINDS.includes(item.kind) ? 'ends' : 'due';
@@ -215,83 +259,85 @@ export function UpcomingRow({
     'min-w-0 self-center rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
   return (
-    <div
-      className={cn(
-        // Phone: plate, then "when" across the rest of the first line; the title
-        // across the plate's column and the middle, the verb at the end. A wide
-        // "when" never squeezes the title that way.
-        'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3',
-        showVehicle
-          ? 'sm:grid-cols-[132px_minmax(0,1fr)_112px_auto]'
-          : 'sm:grid-cols-[minmax(0,1fr)_112px_auto]',
-        isPending && 'pointer-events-none opacity-50',
-      )}
-      data-kind={item.kind}
-      data-testid="upcoming-row"
-    >
-      {showVehicle ? (
+    <SwipeRow disabled={isPending} left={swipeLeft} right={swipeRight}>
+      <div
+        className={cn(
+          // Phone: plate, then "when" across the rest of the first line; the title
+          // across the plate's column and the middle, the verb at the end. A wide
+          // "when" never squeezes the title that way.
+          'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3',
+          showVehicle
+            ? 'sm:grid-cols-[132px_minmax(0,1fr)_112px_auto]'
+            : 'sm:grid-cols-[minmax(0,1fr)_112px_auto]',
+          isPending && 'pointer-events-none opacity-50',
+        )}
+        data-kind={item.kind}
+        data-testid="upcoming-row"
+      >
+        {showVehicle ? (
+          <AttentionItemLink
+            className={cn(linkClassName, 'col-start-1 row-start-1 sm:row-start-1')}
+            item={item}
+          >
+            <VehicleIdentity
+              layout="row"
+              name={item.vehicleName}
+              registration={item.registrationNumber}
+            />
+          </AttentionItemLink>
+        ) : null}
+
+        <div
+          className={cn(
+            'col-span-2 col-start-2 row-start-1 flex justify-end sm:col-span-1 sm:row-start-1',
+            showVehicle ? 'sm:col-start-3' : 'sm:col-start-2',
+          )}
+        >
+          {whenNode}
+        </div>
+
         <AttentionItemLink
-          className={cn(linkClassName, 'col-start-1 row-start-1 sm:row-start-1')}
+          className={cn(
+            linkClassName,
+            'col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:row-start-1',
+            showVehicle ? 'sm:col-start-2' : 'sm:col-start-1',
+          )}
           item={item}
         >
-          <VehicleIdentity
-            layout="row"
-            name={item.vehicleName}
-            registration={item.registrationNumber}
-          />
+          <p className="truncate text-body font-semibold text-fg">{item.title}</p>
+          {secondary !== null ? <p className="truncate text-small text-fg-2">{secondary}</p> : null}
         </AttentionItemLink>
-      ) : null}
 
-      <div
-        className={cn(
-          'col-span-2 col-start-2 row-start-1 flex justify-end sm:col-span-1 sm:row-start-1',
-          showVehicle ? 'sm:col-start-3' : 'sm:col-start-2',
-        )}
-      >
-        {whenNode}
+        <div
+          className={cn(
+            'col-start-3 row-start-2 flex items-center justify-end gap-1 sm:row-start-1',
+            showVehicle ? 'sm:col-start-4' : 'sm:col-start-3',
+          )}
+        >
+          {primary}
+          {overflow.length > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label={`More actions for ${item.title}`}
+                  disabled={isPending}
+                  size="icon-sm"
+                  variant="ghost"
+                >
+                  <MoreHorizontal aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {overflow.map((entry) => (
+                  <DropdownMenuItem key={entry.label} onClick={entry.onSelect}>
+                    {entry.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
       </div>
-
-      <AttentionItemLink
-        className={cn(
-          linkClassName,
-          'col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:row-start-1',
-          showVehicle ? 'sm:col-start-2' : 'sm:col-start-1',
-        )}
-        item={item}
-      >
-        <p className="truncate text-body font-semibold text-fg">{item.title}</p>
-        {secondary !== null ? <p className="truncate text-small text-fg-2">{secondary}</p> : null}
-      </AttentionItemLink>
-
-      <div
-        className={cn(
-          'col-start-3 row-start-2 flex items-center justify-end gap-1 sm:row-start-1',
-          showVehicle ? 'sm:col-start-4' : 'sm:col-start-3',
-        )}
-      >
-        {primary}
-        {overflow.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={`More actions for ${item.title}`}
-                disabled={isPending}
-                size="icon-sm"
-                variant="ghost"
-              >
-                <MoreHorizontal aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {overflow.map((entry) => (
-                <DropdownMenuItem key={entry.label} onClick={entry.onSelect}>
-                  {entry.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
-      </div>
-    </div>
+    </SwipeRow>
   );
 }

@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { UpcomingPage as UpcomingApiPage } from '../api/get-upcoming';
 
 vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => vi.fn(),
   Link: ({
     children,
     params: _params,
