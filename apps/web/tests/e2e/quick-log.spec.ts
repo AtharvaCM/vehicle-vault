@@ -24,11 +24,12 @@ async function signIn(page: Page, label: string) {
 async function logFuel(page: Page, vehicleId: string) {
   const dialog = page.getByRole('dialog', { name: 'Log fuel' });
   await expect(dialog).toBeVisible();
-  const odometer = dialog.getByLabel(/odometer/i);
-  const reading = Number(await odometer.inputValue()) + 250;
-  await odometer.fill(String(reading));
+  // The odometer field never prefills, only hints at the vehicle's last reading.
+  const vehicle = await prisma.vehicle.findUniqueOrThrow({ where: { id: vehicleId } });
+  const reading = vehicle.odometer + 250;
+  await dialog.getByLabel('Amount paid').fill('3150');
   await dialog.getByLabel(/litres|quantity/i).fill('30');
-  await dialog.getByLabel(/price/i).fill('105');
+  await dialog.getByLabel(/odometer/i).fill(String(reading));
   await dialog.getByRole('button', { name: /save|log fuel/i }).click();
   await expect(dialog).toBeHidden();
 

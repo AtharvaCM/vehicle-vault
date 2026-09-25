@@ -77,13 +77,13 @@ test('a service and a fuel fill are logged from the dashboard on a phone', async
     15200,
   );
 
-  // Fuel, one tap from the same place.
+  // Fuel, one tap from the same place: amount, quantity, odometer — nothing else.
   await page.getByRole('button', { name: 'Log fuel' }).click();
   const fuel = page.getByRole('dialog', { name: 'Log fuel' });
+  await fuel.getByLabel('Amount paid').fill('2100');
+  await fuel.getByLabel(/^Quantity/).fill('20');
   await fuel.getByLabel('Odometer (km)').fill('15260');
-  await fuel.getByLabel('Quantity (Litres)').fill('20');
-  await fuel.getByLabel('Price per Litre').fill('105');
-  await fuel.getByRole('button', { name: /save fuel log/i }).click();
+  await fuel.getByRole('button', { name: 'Save fuel' }).click();
   await expect(fuel).toBeHidden();
   expect(await prisma.fuelLog.count({ where: { vehicleId: vehicle.id } })).toBe(1);
 });
