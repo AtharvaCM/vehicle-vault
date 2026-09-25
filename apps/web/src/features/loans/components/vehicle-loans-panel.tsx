@@ -32,7 +32,6 @@ import { useDeleteLoan } from '../hooks/use-delete-loan';
 import { useVehicleLoans } from '../hooks/use-loans';
 import { useUpdateLoan } from '../hooks/use-update-loan';
 import { LoanCard } from './loan-card';
-import { LoanDetailDialog } from './loan-detail-dialog';
 import { LoanForm } from './loan-form';
 
 type Props = {
@@ -47,7 +46,6 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
   const deleteMutation = useDeleteLoan();
 
   const [isCreateOpen, setCreateOpen] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<VehicleLoan | null>(null);
   const [loanToEdit, setLoanToEdit] = useState<VehicleLoan | null>(null);
   const [loanToDelete, setLoanToDelete] = useState<VehicleLoan | null>(null);
 
@@ -144,13 +142,7 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
           {loans.map((loan) => (
-            <LoanCard
-              key={loan.id}
-              loan={loan}
-              onDelete={setLoanToDelete}
-              onManage={setSelectedLoan}
-              onEdit={setLoanToEdit}
-            />
+            <LoanCard key={loan.id} loan={loan} onDelete={setLoanToDelete} onEdit={setLoanToEdit} />
           ))}
         </div>
       )}
@@ -207,12 +199,6 @@ export function VehicleLoansPanel({ vehicleId, vehicleLabel }: Props) {
           ) : null}
         </DialogContent>
       </Dialog>
-
-      <LoanDetailDialog
-        loan={selectedLoan ? (loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan) : null}
-        vehicleLabel={vehicleLabel}
-        onOpenChange={(open) => !open && setSelectedLoan(null)}
-      />
 
       <AlertDialog
         open={loanToDelete !== null}

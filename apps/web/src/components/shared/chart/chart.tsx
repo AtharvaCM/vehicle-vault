@@ -5,6 +5,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -54,6 +55,11 @@ type ChartProps<Row extends Record<string, unknown>, Key extends string> = {
   label: string;
   height?: number;
   className?: string;
+  /**
+   * A vertical line at one period, labelled ("Today" on a loan's balance): the
+   * `xKey` value it sits on. Not drawn when no row has that value.
+   */
+  marker?: { at: string; label: string };
 };
 
 const colour = (slot: ChartSlot) => `var(--chart-${slot})`;
@@ -179,6 +185,7 @@ export function Chart<Row extends Record<string, unknown>, Key extends string>({
   label,
   height = 240,
   className,
+  marker,
 }: ChartProps<Row, Key>) {
   const tableId = useId();
   const read = formatter(valueFormat);
@@ -189,6 +196,21 @@ export function Chart<Row extends Record<string, unknown>, Key extends string>({
   const gap = data.length > 18 ? 1 : 2;
 
   const grid = <CartesianGrid stroke="var(--line-subtle)" vertical={false} />;
+  const markerLine =
+    marker && data.some((row) => row[xKey] === marker.at) ? (
+      <ReferenceLine
+        ifOverflow="extendDomain"
+        label={{
+          value: marker.label,
+          position: 'insideTopRight',
+          fill: 'var(--fg-2)',
+          fontSize: 12,
+        }}
+        stroke="var(--fg-3)"
+        strokeDasharray="4 3"
+        x={marker.at}
+      />
+    ) : null;
   const xAxis = (
     <XAxis
       axisLine={false}
@@ -224,6 +246,7 @@ export function Chart<Row extends Record<string, unknown>, Key extends string>({
     <figure
       aria-label={label}
       className={cn('flex min-w-0 flex-col gap-3', className)}
+      data-marker={markerLine ? marker!.at : undefined}
       data-slot="chart"
       data-form={form}
     >
@@ -241,6 +264,7 @@ export function Chart<Row extends Record<string, unknown>, Key extends string>({
               {xAxis}
               {yAxis}
               {tooltip}
+              {markerLine}
               {series.map((item, index) => (
                 <Bar
                   dataKey={item.key}
@@ -264,6 +288,7 @@ export function Chart<Row extends Record<string, unknown>, Key extends string>({
               {xAxis}
               {yAxis}
               {tooltip}
+              {markerLine}
               {series.map((item) => (
                 <Line
                   activeDot={{ r: 4, stroke: 'var(--surface-card)', strokeWidth: 2 }}

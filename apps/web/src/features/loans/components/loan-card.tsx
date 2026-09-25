@@ -1,7 +1,9 @@
 import type { VehicleLoan } from '@vehicle-vault/shared';
 
 import { Figure } from '@/components/shared/figure';
-import { Button } from '@/components/ui/button';
+import { Link } from '@tanstack/react-router';
+
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
 
@@ -9,11 +11,10 @@ type LoanCardProps = {
   loan: VehicleLoan;
   vehicleLabel?: string;
   onDelete?: (loan: VehicleLoan) => void;
-  onManage?: (loan: VehicleLoan) => void;
   onEdit?: (loan: VehicleLoan) => void;
 };
 
-export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: LoanCardProps) {
+export function LoanCard({ loan, vehicleLabel, onDelete, onEdit }: LoanCardProps) {
   const paidPct =
     loan.principal > 0
       ? Math.min(100, Math.round((loan.principalPaidToDate / loan.principal) * 100))
@@ -60,11 +61,13 @@ export function LoanCard({ loan, vehicleLabel, onDelete, onManage, onEdit }: Loa
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <div className="flex flex-wrap gap-2">
-            {onManage ? (
-              <Button size="sm" variant="outline" onClick={() => onManage(loan)}>
-                Manage
-              </Button>
-            ) : null}
+            <Link
+              className={buttonVariants({ size: 'sm', variant: 'outline' })}
+              params={{ loanId: loan.id }}
+              to="/costs/loans/$loanId"
+            >
+              Open
+            </Link>
             {onEdit ? (
               <Button size="sm" variant="ghost" onClick={() => onEdit(loan)}>
                 Edit

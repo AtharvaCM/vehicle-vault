@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import type { VehicleLoan } from '@vehicle-vault/shared';
 import { LoanStatus } from '@vehicle-vault/shared';
+import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 const useLoans = vi.hoisted(() => vi.fn());
@@ -14,6 +15,18 @@ const mutationStub = vi.hoisted(() => () => ({
   error: null,
 }));
 
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    children,
+    params: _params,
+    to,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { params?: unknown; to?: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
 vi.mock('@/features/vehicles/hooks/use-vehicles', () => ({
   useVehicles: () => useVehicles(),
 }));
@@ -81,6 +94,8 @@ describe('LoansSection', () => {
     const [line] = screen.getAllByTestId('loan-line');
     expect(line).toHaveTextContent('HDFC Bank');
     expect(line).toHaveTextContent('₹3,50,000 left · ends');
+    // The line opens the loan's own page.
+    expect(line!.querySelector('a')).toHaveAttribute('href', '/costs/loans/$loanId');
     const total = screen.getByTestId('loans-total');
     expect(total).toHaveTextContent('₹3,50,000 left');
     expect(total).toHaveTextContent('₹10,275 a month in EMIs');
