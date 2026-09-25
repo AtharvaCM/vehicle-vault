@@ -6,6 +6,7 @@ import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/shared/password-input';
 
 type LoginFormProps = {
   isSubmitting?: boolean;
@@ -66,13 +67,12 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
         label="Password"
         error={form.formState.errors.password?.message}
       >
-        <Input
+        <PasswordInput
           autoComplete="current-password"
           id="login-password"
           placeholder="Enter your password"
           {...form.register('password')}
           aria-invalid={Boolean(form.formState.errors.password)}
-          type="password"
         />
       </FormField>
 

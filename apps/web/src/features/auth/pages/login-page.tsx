@@ -10,6 +10,7 @@ import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
 import { LoginForm } from '../components/login-form';
 import { OAuthButtons } from '../components/oauth-buttons';
 import { useAuth } from '../hooks/use-auth';
+import { nextContext } from '../lib/next-context';
 import { afterAuthDestination, navigateAfterAuth } from '../lib/return-path';
 
 export function LoginPage() {
@@ -40,29 +41,26 @@ export function LoginPage() {
       // page before signing in, if any.
       await navigateAfterAuth(navigate, destination);
     } catch (error) {
-      const message = getApiErrorMessage(error, 'Unable to sign in with those credentials.');
-
-      setSubmitError(message);
-      appToast.error({
-        title: 'Sign-in failed',
-        description: message,
-      });
+      // One error per failure: under the form, not a toast saying it again.
+      setSubmitError(getApiErrorMessage(error, 'Unable to sign in with those credentials.'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const context = nextContext(next);
+
   return (
     <AuthPageShell
       alternateAction={
-        <AuthPageLink label="Create one" next={next} text="Need an account?" to="/register" />
+        <AuthPageLink label="Create a free account" next={next} text="New here?" to="/register" />
       }
-      description="Sign in to see your garage, service history, reminders, and receipts."
-      title="Welcome back"
+      description={context ? `Sign in ${context}.` : undefined}
+      title="Sign in"
     >
-      <div className="space-y-6">
-        <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
+      <div className="space-y-4">
         <OAuthButtons next={next} />
+        <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} submitError={submitError} />
       </div>
     </AuthPageShell>
   );

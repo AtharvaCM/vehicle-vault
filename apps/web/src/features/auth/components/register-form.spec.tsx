@@ -11,7 +11,7 @@ describe('RegisterForm', () => {
 
     render(<RegisterForm onSubmit={onSubmit} />);
 
-    await user.type(screen.getByLabelText(/^name$/i), '  Atharva  ');
+    await user.type(screen.getByLabelText(/^your name$/i), '  Atharva  ');
     await user.type(screen.getByLabelText(/email address/i), '  atharva@example.com  ');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.click(screen.getByRole('button', { name: /create account/i }));
@@ -21,6 +21,19 @@ describe('RegisterForm', () => {
       email: 'atharva@example.com',
       password: 'password123',
     });
+  });
+
+  it('shows the length rule as met once the password is long enough', async () => {
+    const user = userEvent.setup();
+    render(<RegisterForm onSubmit={vi.fn()} />);
+
+    const rule = screen.getByText('At least 8 characters');
+    const password = screen.getByLabelText(/^password$/i);
+    expect(password).toHaveAttribute('aria-describedby', expect.stringContaining(rule.id));
+    await user.type(password, 'short');
+    expect(rule).not.toHaveAttribute('data-met');
+    await user.type(password, '123');
+    expect(rule).toHaveAttribute('data-met');
   });
 
   it('renders submit errors from the server cleanly', () => {
