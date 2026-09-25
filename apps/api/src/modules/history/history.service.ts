@@ -125,7 +125,14 @@ export class HistoryService {
     }
     const vehicleIds = query.vehicleId ? [query.vehicleId] : accessible;
     if (vehicleIds.length === 0) {
-      return { entries: [], months: [], draftCount: 0, nextCursor: null };
+      return {
+        entries: [],
+        months: [],
+        draftCount: 0,
+        firstDraftId: null,
+        year: null,
+        nextCursor: null,
+      };
     }
 
     const take = limit + 1;
@@ -248,11 +255,48 @@ export class HistoryService {
     const nextCursor = candidates.length > limit && last ? encodeHistoryCursor(last.key) : null;
     const entries = page.flatMap((candidate) => (candidate.entry ? [candidate.entry] : []));
 
+    const [months, firstDraftId, year] = await Promise.all([
+      this.summarizeMonths(entries, vehicleIds, kinds),
+      draftCount > 0 ? this.firstDraftId(vehicleIds) : null,
+      kinds.includes('service') ? this.summarizeYear(vehicleIds, new Date()) : null,
+    ]);
+
+    return { entries, months, draftCount, firstDraftId, year, nextCursor };
+  }
+
+  /** The oldest draft on these vehicles: the one waiting longest to be confirmed. */
+  private async firstDraftId(vehicleIds: string[]): Promise<string | null> {
+    const draft = await this.prisma.maintenanceRecord.findFirst({
+      where: { vehicleId: { in: vehicleIds }, status: MaintenanceRecordStatus.Draft },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true },
+    });
+    return draft?.id ?? null;
+  }
+
+  /**
+   * This calendar year's confirmed services on these vehicles: how many, and
+   * what they cost. Drafts never count (the draft invariant).
+   */
+  private async summarizeYear(vehicleIds: string[], now: Date) {
+    const year = now.getUTCFullYear();
+    const result = await this.prisma.maintenanceRecord.aggregate({
+      where: {
+        vehicleId: { in: vehicleIds },
+        status: MaintenanceRecordStatus.Confirmed,
+        serviceDate: {
+          gte: new Date(Date.UTC(year, 0, 1)),
+          lt: new Date(Date.UTC(year + 1, 0, 1)),
+        },
+      },
+      _count: { _all: true },
+      _sum: { totalCost: true },
+    });
+
     return {
-      entries,
-      months: await this.summarizeMonths(entries, vehicleIds, kinds),
-      draftCount,
-      nextCursor,
+      year,
+      serviceCount: result._count._all,
+      serviceSpend: (result._sum.totalCost ?? new Prisma.Decimal(0)).toFixed(2),
     };
   }
 
