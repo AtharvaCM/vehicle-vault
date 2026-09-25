@@ -63,7 +63,8 @@ test('a new vehicle asks for the insurance and PUC expiry, once', async ({ page 
   await page.getByRole('button', { name: 'Save dates' }).click();
 
   // Answering puts the prompt away for good and lands on the vehicle.
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
+  // Not `/vehicles/new`, which the loose pattern also matches while the step is still up.
+  await expect(page).toHaveURL(/\/vehicles\/(?!new$)[^/]+$/);
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
   await page.reload();
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
@@ -90,7 +91,8 @@ test('the prompt can be skipped in one click and does not come back', async ({ p
   await page.getByRole('button', { name: 'Skip for now' }).click();
 
   // Skipping also lands on the vehicle, and the prompt stays away for good.
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
+  // Not `/vehicles/new`, which the loose pattern also matches while the step is still up.
+  await expect(page).toHaveURL(/\/vehicles\/(?!new$)[^/]+$/);
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
   await page.reload();
   await expect(page.getByText('Never miss a renewal')).toBeHidden();

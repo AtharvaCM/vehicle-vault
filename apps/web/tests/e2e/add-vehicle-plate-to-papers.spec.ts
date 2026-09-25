@@ -99,7 +99,8 @@ for (const viewport of viewports) {
     await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 
     const saved = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
-    expect(saved.registrationNumber.replace(/\s+/g, '')).toBe(registrationNumber);
+    // Stored compact, however the plate input grouped it.
+    expect(saved.registrationNumber).toBe(registrationNumber);
   });
 }
 
