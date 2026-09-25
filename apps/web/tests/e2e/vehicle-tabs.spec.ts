@@ -106,7 +106,8 @@ for (const viewport of viewports) {
     await tabs.filter({ hasText: 'More' }).click();
     await expect(page).toHaveURL(/\?tab=more$/);
     const sections = page.getByRole('navigation', { name: 'More about this vehicle' });
-    await expect(sections.getByRole('link')).toHaveCount(6);
+    // About, Tyres, Loans, Members, Activity: accessories moved to History (#336).
+    await expect(sections.getByRole('link')).toHaveCount(5);
     await sections.getByRole('link', { name: /^Tyres/ }).click();
     await expect(page).toHaveURL(/\?tab=more&section=tyres$/);
     await expect(page.getByRole('heading', { name: 'Tyres', exact: true })).toBeVisible();
@@ -130,6 +131,7 @@ test('links to the eleven old tabs open where each one went', async ({ page }) =
     ['fuel', '?tab=history&view=fuel', 'History'],
     ['protection', '?tab=papers', 'Papers'],
     ['tyres', '?tab=more&section=tyres', 'More'],
+    ['accessories', '?tab=history&view=accessory', 'History'],
     ['activity', '?tab=more&section=activity', 'More'],
   ] as const;
 

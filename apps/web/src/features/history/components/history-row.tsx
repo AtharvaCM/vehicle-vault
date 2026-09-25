@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Fuel, Gauge, Wrench, type LucideIcon } from 'lucide-react';
+import { Fuel, Gauge, Package, Paperclip, Wrench, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { FuelType, type HistoryEntry, type Vehicle } from '@vehicle-vault/shared';
 
@@ -9,7 +9,11 @@ import { MaintenanceDraftBadge } from '@/features/maintenance/components/mainten
 import { isDraftRecord } from '@/features/maintenance/utils/is-draft-record';
 import { accessFor } from '@/features/vehicles/context/vehicle-access';
 import { getVehicleDisplayName } from '@/features/vehicles/utils/get-vehicle-display-name';
+import { endpoints } from '@/lib/api/endpoints';
+import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { openApiFileInNewTab } from '@/lib/api/open-api-file';
 import { format } from '@/lib/format';
+import { appToast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 export type HistoryVehicle = Pick<
@@ -33,12 +37,18 @@ type HistoryRowProps = {
     selected: boolean;
     onSelectedChange: (checked: boolean) => void;
   };
+  /**
+   * An accessory has no page of its own: its row opens it for editing. Omitted
+   * for someone who cannot edit the vehicle, whose row only reads.
+   */
+  onOpenAccessory?: (accessoryId: string) => void;
 };
 
 const KIND_ICONS: Record<HistoryEntry['kind'], LucideIcon> = {
   service: Wrench,
   fuel: Fuel,
   odometer: Gauge,
+  accessory: Package,
 };
 
 type RowText = { title: string; details: string[]; amount: ReactNode };
@@ -84,6 +94,16 @@ function describe(entry: HistoryEntry): RowText {
         amount: null,
       };
     }
+    case 'accessory':
+      return {
+        title: entry.name,
+        details: [
+          date,
+          entry.brand,
+          entry.warrantyExpiresAt ? `warranty to ${format.date(entry.warrantyExpiresAt)}` : null,
+        ].filter((detail): detail is string => Boolean(detail)),
+        amount: <Money currency={entry.currencyCode} value={Number(entry.cost)} />,
+      };
   }
 }
 
@@ -91,11 +111,28 @@ function EntryLink({
   entry,
   className,
   children,
+  onOpenAccessory,
 }: {
   entry: HistoryEntry;
   className: string;
   children: ReactNode;
+  onOpenAccessory?: (accessoryId: string) => void;
 }) {
+  if (entry.kind === 'accessory') {
+    return onOpenAccessory ? (
+      <button
+        aria-label={`Edit ${entry.name}`}
+        className={cn(className, 'text-left')}
+        onClick={() => onOpenAccessory(entry.id)}
+        type="button"
+      >
+        {children}
+      </button>
+    ) : (
+      <div className={className}>{children}</div>
+    );
+  }
+
   if (entry.kind === 'service') {
     return (
       <Link
@@ -120,12 +157,26 @@ function EntryLink({
   );
 }
 
+async function openReceipt(attachmentId: string) {
+  try {
+    await openApiFileInNewTab(endpoints.attachments.file(attachmentId));
+  } catch (error) {
+    appToast.error({ title: getApiErrorMessage(error, 'Could not open the receipt') });
+  }
+}
+
 /**
  * One thing done to a vehicle: plate, what, when and where, and what it cost.
  * A draft service says so, and costs in grey: it counts in no total until it
  * is confirmed, which the strip under it offers to those who can.
  */
-export function HistoryRow({ entry, vehicle, showVehicle, selection }: HistoryRowProps) {
+export function HistoryRow({
+  entry,
+  vehicle,
+  showVehicle,
+  selection,
+  onOpenAccessory,
+}: HistoryRowProps) {
   const { title, details, amount } = describe(entry);
   const Icon = KIND_ICONS[entry.kind];
   const isDraft = entry.kind === 'service' && isDraftRecord(entry);
@@ -163,6 +214,7 @@ export function HistoryRow({ entry, vehicle, showVehicle, selection }: HistoryRo
             showVehicle && 'sm:grid-cols-[9rem_minmax(0,1fr)_auto]',
           )}
           entry={entry}
+          onOpenAccessory={onOpenAccessory}
         >
           {showVehicle ? (
             <VehicleIdentity
@@ -189,6 +241,18 @@ export function HistoryRow({ entry, vehicle, showVehicle, selection }: HistoryRo
             {amount}
           </div>
         </EntryLink>
+        {/* Outside the row's own control: one control cannot hold another. */}
+        {entry.kind === 'accessory' && entry.receiptId ? (
+          <button
+            aria-label={`Open the receipt for ${entry.name}`}
+            className="flex w-11 shrink-0 items-center justify-center text-fg-3 hover:bg-page hover:text-brand focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            onClick={() => void openReceipt(entry.receiptId!)}
+            title="Receipt"
+            type="button"
+          >
+            <Paperclip aria-hidden="true" className="size-4" />
+          </button>
+        ) : null}
       </div>
 
       {/* Outside the row's link: a link cannot hold another. */}

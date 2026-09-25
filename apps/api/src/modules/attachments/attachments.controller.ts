@@ -98,6 +98,34 @@ export class AttachmentsController {
     );
   }
 
+  @Get('accessories/:accessoryId/attachments')
+  async listAccessoryAttachments(
+    @Param('accessoryId', new UuidRouteParamPipe()) accessoryId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(await this.attachmentsService.listByAccessory(user.id, accessoryId));
+  }
+
+  /** An accessory's receipt (#336). */
+  @Post('accessories/:accessoryId/attachments')
+  @UseInterceptors(
+    FilesInterceptor('files', ATTACHMENTS_MAX_FILES, {
+      limits: {
+        fileSize: ATTACHMENTS_MAX_FILE_SIZE_BYTES,
+      },
+      fileFilter: attachmentFileFilter,
+    }),
+  )
+  async uploadAccessoryAttachments(
+    @Param('accessoryId', new UuidRouteParamPipe()) accessoryId: string,
+    @UploadedFiles() files: AttachmentUploadFile[],
+    @CurrentUser() user: AuthUser,
+  ) {
+    return successResponse(
+      await this.attachmentsService.uploadAccessoryAttachments(user.id, accessoryId, files ?? []),
+    );
+  }
+
   @Get('vehicle-documents/:kind/:documentId/attachments')
   async listDocumentAttachments(
     @Param() params: DocumentAttachmentsParamDto,

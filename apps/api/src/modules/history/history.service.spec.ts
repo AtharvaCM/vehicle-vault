@@ -69,6 +69,7 @@ function makePrisma() {
     },
     fuelLog: { findMany: vi.fn() },
     auditEvent: { findMany: vi.fn() },
+    accessory: { findMany: vi.fn().mockResolvedValue([]) },
   };
 }
 
@@ -316,6 +317,75 @@ describe('HistoryService.list', () => {
     );
     expect(page.draftCount).toBe(0);
     expect(page.months).toEqual([{ month: '2026-09', total: null, draftCount: 0 }]);
+  });
+
+  describe('accessories', () => {
+    function accessory(n: number, purchaseDate: string, receiptId: string | null = null) {
+      return {
+        id: uuid(n),
+        vehicleId: V1,
+        purchaseDate: new Date(purchaseDate),
+        name: 'Dashcam',
+        brand: 'Croma',
+        cost: new Prisma.Decimal('6499.00'),
+        currencyCode: 'INR',
+        warrantyExpiresAt: new Date('2027-03-12T00:00:00.000Z'),
+        attachments: receiptId ? [{ id: receiptId }] : [],
+      };
+    }
+
+    it('lists an accessory on the day it was bought, with its warranty and receipt', async () => {
+      stubSources({ fuels: [fuel(1, '2026-03-10T00:00:00.000Z')] });
+      prisma.accessory.findMany
+        .mockResolvedValueOnce([accessory(2, '2026-03-12T00:00:00.000Z', 'receipt-uuid')])
+        .mockResolvedValueOnce([
+          {
+            purchaseDate: new Date('2026-03-12T00:00:00.000Z'),
+            cost: new Prisma.Decimal('6499.00'),
+          },
+        ]);
+
+      const page = await history.list('user-1', {});
+
+      expect(page.entries.map((entry) => entry.kind)).toEqual(['accessory', 'fuel']);
+      expect(page.entries[0]).toMatchObject({
+        kind: 'accessory',
+        name: 'Dashcam',
+        brand: 'Croma',
+        cost: '6499.00',
+        warrantyExpiresAt: '2027-03-12T00:00:00.000Z',
+        receiptId: 'receipt-uuid',
+      });
+      // A month's spend counts what was bought for the vehicle too.
+      expect(page.months[0]).toMatchObject({ month: '2026-03', total: '6499.00' });
+    });
+
+    it('reads only accessories when asked, and finds them by name, brand or notes', async () => {
+      prisma.accessory.findMany.mockResolvedValueOnce([]);
+
+      await history.list('user-1', { kind: 'accessory', search: 'dash' });
+
+      expect(prisma.maintenanceRecord.findMany).not.toHaveBeenCalled();
+      expect(prisma.fuelLog.findMany).not.toHaveBeenCalled();
+      expect(prisma.accessory.findMany).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          where: {
+            vehicleId: { in: [V1, V2] },
+            AND: [
+              {
+                OR: [
+                  { name: { contains: 'dash', mode: 'insensitive' } },
+                  { brand: { contains: 'dash', mode: 'insensitive' } },
+                  { category: { contains: 'dash', mode: 'insensitive' } },
+                  { notes: { contains: 'dash', mode: 'insensitive' } },
+                ],
+              },
+            ],
+          },
+        }),
+      );
+    });
   });
 
   describe('search', () => {

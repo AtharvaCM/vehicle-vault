@@ -5,6 +5,7 @@ import type { ApiSuccessResponse } from '@/lib/api/api-client';
 import { apiClient } from '@/lib/api/api-client';
 import { endpoints } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/query/query-keys';
+import type { Attachment } from '@/features/attachments/types/attachment';
 
 export async function getVehicleAccessories(vehicleId: string) {
   const response = await apiClient.get<ApiSuccessResponse<Accessory[]>>(
@@ -35,6 +36,18 @@ export async function updateAccessory(accessoryId: string, body: UpdateAccessory
   const response = await apiClient.patch<ApiSuccessResponse<Accessory>, UpdateAccessoryInput>(
     endpoints.accessories.update(accessoryId),
     body,
+  );
+
+  return response.data;
+}
+
+/** Attaches a receipt to an accessory (#336). */
+export async function uploadAccessoryReceipt(accessoryId: string, file: File) {
+  const formData = new FormData();
+  formData.append('files', file);
+  const response = await apiClient.post<ApiSuccessResponse<Attachment[]>, FormData>(
+    endpoints.accessories.attachments(accessoryId),
+    formData,
   );
 
   return response.data;

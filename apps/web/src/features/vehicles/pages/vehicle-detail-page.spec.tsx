@@ -201,6 +201,7 @@ describe('VehicleDetailPage header', () => {
       'Fuel',
       'Odometer',
       'Paper',
+      'Accessory',
       'Reminder',
     ]);
   });
@@ -328,7 +329,6 @@ describe('VehicleDetailPage tabs', () => {
     expect(owned.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'About this vehicleVariant, key specs and when you bought it',
       'TyresTread, age and rotation',
-      "AccessoriesWhat's fitted, with its warranty",
       "LoansEMIs and what's left to pay",
       'MembersWho can see this vehicle or log for it',
       'ActivityEvery change, in words, newest first',

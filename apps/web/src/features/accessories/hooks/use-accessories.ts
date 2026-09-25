@@ -8,6 +8,7 @@ import {
   createAccessory,
   deleteAccessory,
   updateAccessory,
+  uploadAccessoryReceipt,
   vehicleAccessoriesQueryOptions,
 } from '../api/accessories';
 
@@ -43,6 +44,17 @@ export function useUpdateAccessory(vehicleId: string) {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateAccessoryInput }) =>
       updateAccessory(id, input),
+    onSuccess: () => invalidateAccessories(queryClient, vehicleId),
+  });
+}
+
+/** A receipt shows on the accessory's History row, which the audit invalidation refreshes. */
+export function useUploadAccessoryReceipt(vehicleId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ accessoryId, file }: { accessoryId: string; file: File }) =>
+      uploadAccessoryReceipt(accessoryId, file),
     onSuccess: () => invalidateAccessories(queryClient, vehicleId),
   });
 }

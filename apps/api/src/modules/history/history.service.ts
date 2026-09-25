@@ -108,8 +108,9 @@ export function categoriesMatching(search: string): MaintenanceCategory[] {
 function searchFilters(search: string | undefined): {
   service: Prisma.MaintenanceRecordWhereInput;
   fuel: Prisma.FuelLogWhereInput;
+  accessory: Prisma.AccessoryWhereInput;
 } {
-  if (!search) return { service: {}, fuel: {} };
+  if (!search) return { service: {}, fuel: {}, accessory: {} };
   const text = { contains: search, mode: 'insensitive' as const };
   const categories = categoriesMatching(search);
 
@@ -127,13 +128,17 @@ function searchFilters(search: string | undefined): {
       ],
     },
     fuel: { AND: [{ OR: [{ location: text }, { notes: text }] }] },
+    accessory: {
+      AND: [{ OR: [{ name: text }, { brand: text }, { category: text }, { notes: text }] }],
+    },
   };
 }
 
 /**
- * The garage's timeline: what was done to each vehicle, newest first. Three
+ * The garage's timeline: what was done to each vehicle, newest first. Four
  * sources are merged — maintenance records (drafts included, marked by their
- * status), fuel fills, and odometer readings. A reading has no table of its
+ * status), fuel fills, odometer readings, and accessories on the day they were
+ * bought (#336). A reading has no table of its
  * own: every change to `Vehicle.odometer` through the vehicle's own paths
  * (the odometer update and the edit form) writes a `vehicle.updated` audit
  * event whose changed fields name the odometer, and that event is the entry.
@@ -141,11 +146,11 @@ function searchFilters(search: string | undefined): {
  * twice.
  *
  * Pages are keyset-paginated over (time, id): each source is read for one row
- * more than the page, so the merged top of the three is exact and "more" is
+ * more than the page, so the merged top of the four is exact and "more" is
  * known without counting.
  *
  * Month totals follow the draft invariant (see AnalyticsService): confirmed
- * service and fuel only, summed over the whole month under the same filters,
+ * service, fuel and accessory spend only, summed over the whole month under the same filters,
  * so a month split across two pages carries the same total on both.
  */
 @Injectable()
@@ -180,7 +185,7 @@ export class HistoryService {
     }
 
     const take = limit + 1;
-    const [services, fuels, readings, draftCount] = await Promise.all([
+    const [services, fuels, readings, draftCount, accessories] = await Promise.all([
       kinds.includes('service')
         ? this.prisma.maintenanceRecord.findMany({
             where: {
@@ -238,6 +243,32 @@ export class HistoryService {
             where: { vehicleId: { in: vehicleIds }, status: MaintenanceRecordStatus.Draft },
           })
         : 0,
+      kinds.includes('accessory')
+        ? this.prisma.accessory.findMany({
+            where: {
+              vehicleId: { in: vehicleIds },
+              ...matching.accessory,
+              ...after('purchaseDate', cursor),
+            },
+            orderBy: [{ purchaseDate: 'desc' }, { id: 'desc' }],
+            take,
+            select: {
+              id: true,
+              vehicleId: true,
+              purchaseDate: true,
+              name: true,
+              brand: true,
+              cost: true,
+              currencyCode: true,
+              warrantyExpiresAt: true,
+              attachments: {
+                orderBy: { uploadedAt: 'desc' },
+                take: 1,
+                select: { id: true },
+              },
+            },
+          })
+        : [],
     ]);
 
     const candidates: Candidate[] = [
@@ -272,6 +303,24 @@ export class HistoryService {
             location: fill.location?.trim() || null,
             odometer: fill.odometer,
             totalCost: fill.totalCost.toFixed(2),
+          },
+        }),
+      ),
+      ...accessories.map(
+        (accessory): Candidate => ({
+          key: { at: accessory.purchaseDate, id: accessory.id },
+          entry: {
+            kind: 'accessory',
+            id: accessory.id,
+            vehicleId: accessory.vehicleId,
+            occurredAt: accessory.purchaseDate.toISOString(),
+            month: historyMonth(accessory.purchaseDate),
+            name: accessory.name,
+            brand: accessory.brand?.trim() || null,
+            cost: accessory.cost.toFixed(2),
+            currencyCode: accessory.currencyCode,
+            warrantyExpiresAt: accessory.warrantyExpiresAt?.toISOString() ?? null,
+            receiptId: accessory.attachments[0]?.id ?? null,
           },
         }),
       ),
@@ -363,7 +412,7 @@ export class HistoryService {
     const oldest = monthBounds(months.at(-1)!);
     const range = { gte: oldest.start, lt: newest.end };
 
-    const [services, fuels] = await Promise.all([
+    const [services, fuels, accessories] = await Promise.all([
       kinds.includes('service')
         ? this.prisma.maintenanceRecord.findMany({
             where: { vehicleId: { in: vehicleIds }, serviceDate: range, ...matching.service },
@@ -374,6 +423,12 @@ export class HistoryService {
         ? this.prisma.fuelLog.findMany({
             where: { vehicleId: { in: vehicleIds }, date: range, ...matching.fuel },
             select: { date: true, totalCost: true },
+          })
+        : [],
+      kinds.includes('accessory')
+        ? this.prisma.accessory.findMany({
+            where: { vehicleId: { in: vehicleIds }, purchaseDate: range, ...matching.accessory },
+            select: { purchaseDate: true, cost: true },
           })
         : [],
     ]);
@@ -395,6 +450,7 @@ export class HistoryService {
       }
     }
     for (const fill of fuels) add(fill.date, fill.totalCost);
+    for (const accessory of accessories) add(accessory.purchaseDate, accessory.cost);
 
     return months.map((month) => {
       const bucket = byMonth.get(month)!;

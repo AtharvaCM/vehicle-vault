@@ -3,6 +3,7 @@ import type { HistoryPage } from '@vehicle-vault/shared';
 
 import { Money } from '@/components/shared/money';
 import { Button } from '@/components/ui/button';
+import { AccessoryEditor } from '@/features/accessories/components/accessory-editor';
 import { BulkMaintenanceActions } from '@/features/maintenance/components/bulk-maintenance-actions';
 import { useBulkDeleteMaintenanceRecords } from '@/features/maintenance/hooks/use-bulk-delete-maintenance-records';
 import { accessFor } from '@/features/vehicles/context/vehicle-access';
@@ -65,6 +66,7 @@ export function HistoryTimeline({
     [pages, vehicleById],
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [editing, setEditing] = useState<{ vehicleId: string; accessoryId: string } | null>(null);
   const bulkDelete = useBulkDeleteMaintenanceRecords();
 
   // Leaving select mode clears it, and a row that is no longer listed (a new
@@ -112,6 +114,7 @@ export function HistoryTimeline({
 
   return (
     <div className="space-y-4">
+      {editing ? <AccessoryEditor onClose={() => setEditing(null)} target={editing} /> : null}
       {selecting ? (
         <BulkMaintenanceActions
           isDeleting={bulkDelete.isPending}
@@ -162,6 +165,12 @@ export function HistoryTimeline({
                             selected: selectedIds.includes(entry.id),
                             onSelectedChange: (checked) => toggle(entry.id, checked),
                           }
+                        : undefined
+                    }
+                    onOpenAccessory={
+                      entry.kind === 'accessory' &&
+                      accessFor(vehicleById.get(entry.vehicleId)?.currentUserRole ?? null).canEdit
+                        ? (accessoryId) => setEditing({ vehicleId: entry.vehicleId, accessoryId })
                         : undefined
                     }
                     showVehicle={showVehicle}

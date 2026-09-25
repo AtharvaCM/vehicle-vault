@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -6,6 +6,7 @@ import {
   MaintenanceCategory,
   MaintenanceRecordStatus,
   VehicleRole,
+  type HistoryAccessoryEntry,
   type HistoryFuelEntry,
   type HistoryOdometerEntry,
   type HistoryServiceEntry,
@@ -33,6 +34,9 @@ vi.mock('@tanstack/react-router', () => ({
     </a>
   ),
 }));
+
+const openFile = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/api/open-api-file', () => ({ openApiFileInNewTab: openFile }));
 
 import { HistoryRow, type HistoryVehicle } from './history-row';
 
@@ -182,5 +186,65 @@ describe('HistoryRow plate visibility', () => {
 
     rerender(<HistoryRow entry={confirmedService} showVehicle vehicle={vehicle} />);
     expect(container.querySelector('[data-slot="number-plate"]')).toBeInTheDocument();
+  });
+});
+
+describe('HistoryRow accessories', () => {
+  const dashcam: HistoryAccessoryEntry = {
+    id: '11111111-1111-4111-8111-111111111111',
+    vehicleId: 'vehicle-1',
+    occurredAt: '2026-03-12T00:00:00.000Z',
+    month: '2026-03',
+    kind: 'accessory',
+    name: 'Dashcam',
+    brand: 'Croma',
+    cost: '6499.00',
+    currencyCode: 'INR',
+    warrantyExpiresAt: '2027-03-12T00:00:00.000Z',
+    receiptId: '22222222-2222-4222-8222-222222222222',
+  };
+
+  it('reads name, date, brand, warranty and cost, and opens for an editor', () => {
+    const onOpenAccessory = vi.fn();
+    render(
+      <ul>
+        <HistoryRow
+          entry={dashcam}
+          onOpenAccessory={onOpenAccessory}
+          showVehicle={false}
+          vehicle={vehicle}
+        />
+      </ul>,
+    );
+
+    const row = screen.getByTestId('history-row');
+    expect(row).toHaveTextContent('Dashcam');
+    expect(row).toHaveTextContent('Thu 12 Mar · Croma · warranty to 12 Mar 2027');
+    expect(row).toHaveTextContent('₹6,499');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Dashcam' }));
+    expect(onOpenAccessory).toHaveBeenCalledWith(dashcam.id);
+  });
+
+  it('opens its receipt beside the row', () => {
+    openFile.mockResolvedValue(undefined);
+    render(
+      <ul>
+        <HistoryRow entry={dashcam} showVehicle={false} vehicle={vehicle} />
+      </ul>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open the receipt for Dashcam' }));
+    expect(openFile).toHaveBeenCalledWith(`/attachments/${dashcam.receiptId}/file`);
+  });
+
+  it('is not a control for someone who cannot edit, and has no receipt button without one', () => {
+    render(
+      <ul>
+        <HistoryRow entry={{ ...dashcam, receiptId: null }} showVehicle={false} vehicle={vehicle} />
+      </ul>,
+    );
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 });

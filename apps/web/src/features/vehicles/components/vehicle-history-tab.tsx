@@ -10,6 +10,7 @@ import type { HistoryVehicle } from '@/features/history/components/history-row';
 import { ServiceHistoryCard } from '@/features/service-baseline/components/service-history-card';
 
 import { OdometerHistoryCard } from './odometer-history-card';
+import { VehicleAccessoryHistory } from './vehicle-accessory-history';
 import { VehicleServiceHistory } from './vehicle-service-history';
 import type { VehicleHistoryView } from '../types/vehicle-detail-search';
 import type { VehicleServiceInsights } from '../utils/get-vehicle-service-insights';
@@ -22,7 +23,7 @@ type VehicleHistoryTabProps = {
   serviceInsights: VehicleServiceInsights;
   view: VehicleHistoryView;
   onViewChange: (view: VehicleHistoryView) => void;
-  /** The service log's search, kept in the URL. */
+  /** The service or accessory log's search, kept in the URL. */
   search: string | undefined;
   onSearchChange: (search: string | undefined) => void;
 };
@@ -51,6 +52,7 @@ export function VehicleHistoryTab({
       >
         <ToggleGroupItem value="service">Service</ToggleGroupItem>
         <ToggleGroupItem value="fuel">Fuel</ToggleGroupItem>
+        <ToggleGroupItem value="accessory">Accessories</ToggleGroupItem>
       </ToggleGroup>
 
       {view === 'service' ? (
@@ -65,6 +67,12 @@ export function VehicleHistoryTab({
           />
           <OdometerHistoryCard insights={serviceInsights} />
         </>
+      ) : view === 'accessory' ? (
+        <VehicleAccessoryHistory
+          onSearchChange={onSearchChange}
+          search={search}
+          vehicle={vehicle}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <FuelTab fuelType={fuelType} odometer={odometer} vehicleId={vehicleId} />
