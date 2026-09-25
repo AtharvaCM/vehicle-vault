@@ -1,3 +1,10 @@
+# [1.111.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.110.0...v1.111.0) (2026-09-25)
+
+
+### Features
+
+* make sign-in and register one card with Google first ([5f29936](https://github.com/AtharvaCM/vehicle-vault/commit/5f29936508b64630619bee74c68078fe9d0d7b29)), closes [#343](https://github.com/AtharvaCM/vehicle-vault/issues/343)
+
 # [1.110.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.109.0...v1.110.0) (2026-09-25)
 
 
