@@ -14,9 +14,10 @@ import { appToast } from '@/lib/toast';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
+import { getVehicleDisplayName } from '@/features/vehicles/utils/get-vehicle-display-name';
 
 import { MaintenanceDraftBadge } from '../components/maintenance-draft-badge';
-import { MaintenanceSummaryCard } from '../components/maintenance-summary-card';
+import { MaintenanceReceipt } from '../components/maintenance-receipt';
 import { useDeleteMaintenanceRecord } from '../hooks/use-delete-maintenance-record';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
 import { isDraftRecord } from '../utils/is-draft-record';
@@ -34,6 +35,9 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
   // it; until the record has loaded there is no vehicle to ask about.
   const vehicleQuery = useVehicle(recordQuery.data?.vehicleId ?? '');
   const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
+  const vehicleName = vehicleQuery.data
+    ? `${getVehicleDisplayName(vehicleQuery.data)} · ${format.registration(vehicleQuery.data.registrationNumber)}`
+    : undefined;
   const { canEdit } = accessFor(currentUserRole);
 
   async function handleDeleteRecord(vehicleId: string) {
@@ -95,15 +99,8 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
       <PageContainer>
         <PageTitle
           actions={
+            // The breadcrumb is the way back to the vehicle's History.
             <div className="flex flex-wrap gap-3">
-              <Link
-                className={buttonVariants({ variant: 'secondary' })}
-                params={{ vehicleId: record.vehicleId }}
-                search={{ tab: 'history' }}
-                to="/vehicles/$vehicleId"
-              >
-                Back to History
-              </Link>
               {canEdit ? (
                 <>
                   <Link
@@ -120,13 +117,13 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
                     onConfirm={() => handleDeleteRecord(record.vehicleId)}
                     title="Delete this service record?"
                     triggerLabel="Delete record"
-                    triggerVariant="secondary"
+                    triggerVariant="ghost"
                   />
                 </>
               ) : null}
             </div>
           }
-          description="Review what was done, when it happened, and what it cost."
+          description={vehicleName ?? 'What was done, when, and what it cost.'}
           title={format.enumLabel('maintenanceCategory', record.category)}
         />
 
@@ -162,8 +159,9 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
           </section>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <MaintenanceSummaryCard record={record} />
+        {/* One column, as a receipt reads; from xl the bill and photos take a rail beside it. */}
+        <div className="grid max-w-3xl gap-6 xl:max-w-none xl:grid-cols-[minmax(0,720px)_minmax(0,1fr)] xl:items-start">
+          <MaintenanceReceipt record={record} />
           <AttachmentsSection recordId={record.id} recordToFill={record} />
         </div>
       </PageContainer>

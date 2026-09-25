@@ -39,7 +39,7 @@ vi.mock('@/features/vehicles/hooks/use-vehicle', () => ({
   useVehicle: () => vehicleQuery.current,
 }));
 // Read-only, and it carries no controls of its own.
-vi.mock('../components/maintenance-summary-card', () => ({ MaintenanceSummaryCard: () => null }));
+vi.mock('../components/maintenance-receipt', () => ({ MaintenanceReceipt: () => null }));
 // AttachmentsSection stays real: it reads the role from the page's provider.
 vi.mock('@/features/attachments/hooks/use-attachments', () => ({
   useAttachments: () => attachmentsQuery.current,
@@ -148,7 +148,6 @@ describe('MaintenanceRecordDetailPage roles', () => {
 
     expect(screen.queryByRole('link', { name: 'Edit record' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete record' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to History' })).toBeInTheDocument();
   });
 
   it('leaves a viewer the receipts to open but not to change', () => {
