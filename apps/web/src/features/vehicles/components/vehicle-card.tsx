@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, IdCard } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { FuelType } from '@vehicle-vault/shared';
 
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { VehicleIdentity } from '@/components/shared/vehicle-identity';
 import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -81,6 +82,19 @@ export function VehicleCard({ selected = false, selectionControl, vehicle }: Veh
             </div>
           </div>
         </Link>
+
+        {/* Beside the link to the vehicle, not inside it: one tap to the papers, for every role. */}
+        <div className="flex justify-end border-t border-line-subtle bg-page/30 px-5 py-3 sm:px-8">
+          <Link
+            aria-label={`Show papers for ${title}`}
+            className={buttonVariants({ size: 'sm', variant: 'outline' })}
+            params={{ vehicleId: vehicle.id }}
+            to="/vehicles/$vehicleId/papers"
+          >
+            <IdCard aria-hidden="true" />
+            Show papers
+          </Link>
+        </div>
       </Card>
     </div>
   );

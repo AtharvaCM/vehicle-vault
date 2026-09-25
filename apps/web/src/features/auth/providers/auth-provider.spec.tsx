@@ -17,6 +17,8 @@ vi.mock('../api/get-me', () => ({ getMe: api.getMe }));
 vi.mock('../api/refresh-session', () => ({ refreshSession: api.refreshSession }));
 vi.mock('../api/logout', () => ({ logout: api.logout }));
 vi.mock('@/lib/toast', () => ({ appToast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
+const clearSavedPapers = vi.hoisted(() => vi.fn());
+vi.mock('@/features/vehicle-documents/offline/saved-papers-store', () => ({ clearSavedPapers }));
 vi.mock('@/lib/env/env', () => ({
   getEnv: () => ({ apiBaseUrl: 'https://api.example.test/api' }),
 }));
@@ -88,6 +90,8 @@ describe('AuthProvider when the API cannot be reached', () => {
     expect(api.refreshSession).not.toHaveBeenCalled();
     expect(getStoredAuthSession()?.refreshToken).toBeTruthy();
     expect(replace).not.toHaveBeenCalled();
+    // Offline is exactly when the saved papers are needed.
+    expect(clearSavedPapers).not.toHaveBeenCalled();
   });
 
   it('keeps an expired session it could not refresh, rather than signing out', async () => {
@@ -129,6 +133,7 @@ describe('AuthProvider when the API cannot be reached', () => {
 
     expect(await screen.findByText('status: anonymous')).toBeInTheDocument();
     expect(getStoredAuthSession()).toBeNull();
+    expect(clearSavedPapers).toHaveBeenCalled();
   });
 
   it('keeps retrying the pre-expiry refresh while offline, then takes the new session', async () => {
@@ -216,6 +221,8 @@ describe('AuthProvider when a request comes back 401', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(screen.getByText('status: anonymous')).toBeInTheDocument();
+    // The papers kept for offline go with the session.
+    expect(clearSavedPapers).toHaveBeenCalled();
 
     // A query still mounted refetches with no token and is turned away.
     await expect(apiClient.get('/notifications')).rejects.toBeInstanceOf(ApiError);

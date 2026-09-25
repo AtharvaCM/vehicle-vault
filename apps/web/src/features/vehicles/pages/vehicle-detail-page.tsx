@@ -260,6 +260,8 @@ export function VehicleDetailPage({
 
           <TabsContent value="history" className="mt-0 animate-in fade-in duration-500">
             <VehicleHistoryTab
+              fuelType={vehicle.fuelType}
+              odometer={vehicle.odometer}
               onViewChange={(view) => onSearchStateChange({ tab: 'history', view })}
               serviceInsights={serviceInsights}
               vehicleId={vehicleId}

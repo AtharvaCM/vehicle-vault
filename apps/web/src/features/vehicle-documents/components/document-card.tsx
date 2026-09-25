@@ -78,8 +78,9 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
     <Link
       aria-label={`Show ${documentKindTitles[document.kind]} full screen`}
       className="inline-flex h-8 items-center gap-1 rounded-full border border-line px-3 text-caption font-bold text-fg-2 hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-      params={{ vehicleId, kind: document.kind, documentId: document.id }}
-      to="/vehicles/$vehicleId/documents/$kind/$documentId"
+      params={{ vehicleId }}
+      search={{ paper: document.kind, document: document.id }}
+      to="/vehicles/$vehicleId/papers"
     >
       <Maximize2 aria-hidden="true" className="h-3.5 w-3.5" />
       Show

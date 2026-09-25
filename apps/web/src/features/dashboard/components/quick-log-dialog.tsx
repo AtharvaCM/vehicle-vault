@@ -31,7 +31,7 @@ import type { DashboardVehicleHealth } from '../types/dashboard';
 
 export type QuickLogVehicle = Pick<
   DashboardVehicleHealth,
-  'id' | 'displayName' | 'registrationNumber' | 'odometer'
+  'id' | 'displayName' | 'registrationNumber' | 'odometer' | 'fuelType'
 >;
 
 type QuickLogDialogProps = {

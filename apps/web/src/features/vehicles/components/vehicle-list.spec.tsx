@@ -28,6 +28,16 @@ const vehicle = {
 };
 
 describe('VehicleList', () => {
+  it("offers each vehicle's papers in one tap, beside the link to the vehicle", () => {
+    render(<VehicleList vehicles={[vehicle]} />);
+
+    // The mocked Link renders no href, so it is found by its name rather than as a link.
+    const papers = screen.getByLabelText('Show papers for Daily driver');
+    expect(papers).toHaveAttribute('to', '/vehicles/$vehicleId/papers');
+    // Not a link inside a link, which a browser would take apart.
+    expect(papers.parentElement?.closest('a')).toBeNull();
+  });
+
   it('renders selection checkboxes and reports selection changes', async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
