@@ -55,6 +55,17 @@ export async function revokeInvite(vehicleId: string, inviteId: string): Promise
   await apiClient.delete<void>(endpoints.vehicleSharing.invite(vehicleId, inviteId));
 }
 
+/** A fresh link for a pending invite: the old one stops working the moment this one is issued. */
+export async function resendInvite(
+  vehicleId: string,
+  inviteId: string,
+): Promise<VehicleInviteCreated> {
+  const res = await apiClient.post<ApiSuccessResponse<VehicleInviteCreated>, undefined>(
+    endpoints.vehicleSharing.resendInvite(vehicleId, inviteId),
+  );
+  return res.data;
+}
+
 export async function updateMemberRole(
   vehicleId: string,
   memberId: string,

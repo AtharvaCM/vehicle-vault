@@ -167,6 +167,8 @@ export const endpoints = {
     member: (vehicleId: string, memberId: string) => `/vehicles/${vehicleId}/members/${memberId}`,
     invites: (vehicleId: string) => `/vehicles/${vehicleId}/invites`,
     invite: (vehicleId: string, inviteId: string) => `/vehicles/${vehicleId}/invites/${inviteId}`,
+    resendInvite: (vehicleId: string, inviteId: string) =>
+      `/vehicles/${vehicleId}/invites/${inviteId}/resend`,
     transferOwnership: (vehicleId: string) => `/vehicles/${vehicleId}/transfer-ownership`,
     accept: () => `/vehicle-invites/accept`,
     decline: () => `/vehicle-invites/decline`,

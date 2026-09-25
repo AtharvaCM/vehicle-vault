@@ -206,6 +206,91 @@ describe('VehicleInvitesService', () => {
     await expect(service.revoke('u', 'v1', 'inv-1')).rejects.toBeInstanceOf(ConflictException);
   });
 
+  describe('resend', () => {
+    function pendingInvite(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'inv-1',
+        vehicleId: 'v1',
+        email: 'new@x.test',
+        role: VehicleRole.editor,
+        tokenHash: 'old-hash',
+        expiresAt: new Date(Date.now() + 60_000),
+        acceptedAt: null,
+        revokedAt: null,
+        declinedAt: null,
+        invitedByUserId: 'u-owner',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+      };
+    }
+
+    it('rotates the token and returns a fresh link', async () => {
+      const invite = pendingInvite();
+      prisma.vehicleInvite.findFirst.mockResolvedValueOnce(invite);
+      prisma.vehicleInvite.update.mockImplementation(
+        ({ data }: { data: Record<string, unknown> }) => Promise.resolve({ ...invite, ...data }),
+      );
+
+      const result = await service.resend('u-owner', 'v1', 'inv-1');
+
+      expect(result.acceptUrl).toMatch(/^https:\/\/app\.test\/vehicle-invites\/[0-9a-f]{64}$/);
+      expect(prisma.vehicleInvite.update).toHaveBeenCalledWith({
+        where: { id: 'inv-1' },
+        data: { tokenHash: expect.any(String), expiresAt: expect.any(Date) },
+      });
+      const updatedHash = (
+        prisma.vehicleInvite.update.mock.calls[0][0] as { data: { tokenHash: string } }
+      ).data.tokenHash;
+      expect(updatedHash).not.toBe('old-hash');
+      expect(result.emailSent).toBe(false);
+      expect(audit.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'vehicle_invite.resent' }),
+      );
+    });
+
+    it('emails again when mail is configured', async () => {
+      mailService.isConfigured = true;
+      const invite = pendingInvite();
+      prisma.vehicleInvite.findFirst.mockResolvedValueOnce(invite);
+      prisma.vehicleInvite.update.mockImplementation(
+        ({ data }: { data: Record<string, unknown> }) => Promise.resolve({ ...invite, ...data }),
+      );
+
+      const result = await service.resend('u-owner', 'v1', 'inv-1');
+
+      expect(result.emailSent).toBe(true);
+      expect(mailService.sendVehicleInviteEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'new@x.test', acceptUrl: result.acceptUrl }),
+      );
+      mailService.isConfigured = false;
+    });
+
+    it('refuses to resend a revoked or accepted invitation', async () => {
+      prisma.vehicleInvite.findFirst.mockResolvedValueOnce(
+        pendingInvite({ revokedAt: new Date() }),
+      );
+      await expect(service.resend('u-owner', 'v1', 'inv-1')).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+
+      prisma.vehicleInvite.findFirst.mockResolvedValueOnce(
+        pendingInvite({ acceptedAt: new Date() }),
+      );
+      await expect(service.resend('u-owner', 'v1', 'inv-1')).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+    });
+
+    it('404s an unknown invite', async () => {
+      prisma.vehicleInvite.findFirst.mockResolvedValueOnce(null);
+      await expect(service.resend('u-owner', 'v1', 'nope')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('email delivery is reported, not assumed', () => {
     function stubCreate() {
       prisma.vehicleMember.findFirst.mockResolvedValueOnce(null);

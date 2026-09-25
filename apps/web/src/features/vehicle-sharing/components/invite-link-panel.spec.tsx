@@ -53,4 +53,17 @@ describe('InviteLinkPanel', () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Invite link')).toHaveValue(ACCEPT_URL);
   });
+
+  it('offers the share sheet first where it exists, then WhatsApp, then Copy link', () => {
+    // jsdom has no navigator.share, matching most desktop browsers: WhatsApp
+    // leads instead, but the order among the buttons that do render is fixed.
+    render(<InviteLinkPanel created={created(false)} onDone={vi.fn()} />);
+
+    const buttons = screen.getAllByRole('button').map((el) => el.textContent);
+    const links = screen.getAllByRole('link').map((el) => el.textContent);
+    expect(screen.queryByRole('button', { name: /^share$/i })).not.toBeInTheDocument();
+    expect(links[0]).toMatch(/whatsapp/i);
+    expect(buttons.find((text) => /copy link/i.test(text ?? ''))).toBeDefined();
+    expect(buttons.find((text) => /^done$/i.test(text ?? ''))).toBeDefined();
+  });
 });

@@ -86,6 +86,17 @@ export class VehicleSharingController {
     return this.invitesService.createInvite(user.id, vehicleId, body);
   }
 
+  @Post('vehicles/:vehicleId/invites/:inviteId/resend')
+  @ApiOperation({ summary: 'Reissue a pending invitation with a fresh link (owner only)' })
+  async resendInvite(
+    @CurrentUser() user: AuthUser,
+    @Param('vehicleId', new UuidRouteParamPipe()) vehicleId: string,
+    @Param('inviteId', new UuidRouteParamPipe()) inviteId: string,
+  ) {
+    const data = await this.invitesService.resend(user.id, vehicleId, inviteId);
+    return successResponse(data);
+  }
+
   @Delete('vehicles/:vehicleId/invites/:inviteId')
   @HttpCode(204)
   @ApiOperation({ summary: 'Revoke a pending invitation (owner only)' })
