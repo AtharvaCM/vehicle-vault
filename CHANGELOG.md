@@ -1,3 +1,10 @@
+# [1.106.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.105.0...v1.106.0) (2026-09-25)
+
+
+### Features
+
+* list signed-in devices in Settings, and sign the others out ([8bd4572](https://github.com/AtharvaCM/vehicle-vault/commit/8bd45720316e405fb6313ab3aaa9021aa2a4d0bd)), closes [#316](https://github.com/AtharvaCM/vehicle-vault/issues/316)
+
 # [1.105.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.104.0...v1.105.0) (2026-09-25)
 
 
