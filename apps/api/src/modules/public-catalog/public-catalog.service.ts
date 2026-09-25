@@ -101,7 +101,17 @@ type OfferingRow = {
 const VARIANT_PAGE_INCLUDE = {
   offerings: true,
   spec: true,
-  generation: { include: { model: { include: { make: true } } } },
+  generation: {
+    include: {
+      model: { include: { make: true } },
+      // The page links the generation's other publishable variants.
+      variants: {
+        where: { offerings: { some: {} } },
+        select: { name: true, slug: true },
+        orderBy: { name: 'asc' },
+      },
+    },
+  },
 } satisfies Prisma.VehicleCatalogVariantInclude;
 
 type VariantPageRow = Prisma.VehicleCatalogVariantGetPayload<{
@@ -589,6 +599,9 @@ export class PublicCatalogService {
         isCurrent: generation.isCurrent,
       },
       variant: { name: variant.name, slug: variant.slug },
+      siblings: generation.variants
+        .filter((sibling) => sibling.slug !== variant.slug)
+        .map((sibling) => ({ name: sibling.name, slug: sibling.slug })),
       offerings: offerings.map(toPublicOffering),
       specs,
       schedule,

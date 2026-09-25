@@ -124,6 +124,8 @@ export interface PublicCatalogVariantPage {
     isCurrent: boolean;
   };
   variant: PublicCatalogNamedSlug;
+  /** The generation's other variants with public pages, by name: the page links them. */
+  siblings: PublicCatalogNamedSlug[];
   /** Newest first. */
   offerings: PublicCatalogOffering[];
   specs: PublicCatalogSpec | null;
