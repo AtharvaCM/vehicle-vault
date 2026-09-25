@@ -1,3 +1,10 @@
+# [1.110.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.109.0...v1.110.0) (2026-09-25)
+
+
+### Features
+
+* give landing, auth and catalog one public frame ([330e3bb](https://github.com/AtharvaCM/vehicle-vault/commit/330e3bb5c31be5c53a95449ce32fa02422c5ef18)), closes [#340](https://github.com/AtharvaCM/vehicle-vault/issues/340)
+
 # [1.109.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.108.0...v1.109.0) (2026-09-25)
 
 
