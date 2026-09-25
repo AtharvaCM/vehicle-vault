@@ -1,10 +1,18 @@
-import { BHARAT_REGISTRATION, STANDARD_REGISTRATION } from '@vehicle-vault/shared';
+import {
+  BHARAT_REGISTRATION,
+  STANDARD_REGISTRATION,
+  TEMPORARY_REGISTRATION,
+} from '@vehicle-vault/shared';
 
 import { EMPTY } from './empty';
 
 export type RegistrationParts = {
-  /** `standard`: state · district · series · number. `bh`: year · BH · number · series. */
-  kind: 'standard' | 'bh' | 'unknown';
+  /**
+   * `standard`: state · district · series · number. `bh`: year · BH ·
+   * number · series. `temporary`: T · month+year · state · number · series,
+   * carried by a brand-new vehicle before its permanent plate.
+   */
+  kind: 'standard' | 'bh' | 'temporary' | 'unknown';
   /** The groups in the order the plate prints them. */
   groups: string[];
 };
@@ -12,9 +20,9 @@ export type RegistrationParts = {
 /**
  * An Indian registration split into the groups a plate prints, whatever
  * spacing or case it was typed in: "mh12dm0002" and "MH-12-DM-0002" both give
- * MH · 12 · DM · 0002. Anything that is not a recognisable plate (a temporary
- * number, a foreign one) keeps what was typed, upper-cased with its spaces
- * tidied, as a single group.
+ * MH · 12 · DM · 0002. Anything that is not one of the recognisable plate
+ * formats (standard, Bharat series, or the temporary slip) keeps what was
+ * typed, upper-cased with its spaces tidied, as a single group.
  */
 export function parseRegistration(value: string | null | undefined): RegistrationParts {
   const typed = (value ?? '').trim().toUpperCase();
@@ -25,6 +33,9 @@ export function parseRegistration(value: string | null | undefined): Registratio
 
   const standard = STANDARD_REGISTRATION.exec(compact);
   if (standard) return { kind: 'standard', groups: standard.slice(1).filter(Boolean) };
+
+  const temporary = TEMPORARY_REGISTRATION.exec(compact);
+  if (temporary) return { kind: 'temporary', groups: temporary.slice(1) };
 
   const tidied = typed.replace(/\s+/g, ' ');
   return { kind: 'unknown', groups: tidied ? [tidied] : [] };
@@ -37,8 +48,8 @@ export function registration(value: string | null | undefined) {
   return groups.length ? groups.join(' ') : EMPTY;
 }
 
-/** The longest recognised plate, `[A-Z]{2}\d{2}[A-Z]{3}\d{4}`: nothing typed past it is kept. */
-const MAX_COMPACT_LENGTH = 11;
+/** The longest recognised plate, the temporary slip `T\d{4}[A-Z]{2}\d{4}[A-Z]{2}`: nothing typed past it is kept. */
+const MAX_COMPACT_LENGTH = 13;
 
 /**
  * Live formatting for the plate input: upper-cased as it is typed, and

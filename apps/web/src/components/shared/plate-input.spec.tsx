@@ -30,6 +30,15 @@ describe('PlateInput', () => {
     expect(screen.getByRole('textbox')).toHaveValue('22 BH 1234 AA');
   });
 
+  it('groups a temporary registration as T · month+year · state · number · series', async () => {
+    const user = userEvent.setup();
+    render(<ControlledPlateInput />);
+
+    await user.type(screen.getByRole('textbox'), 't0724hr6123a');
+
+    expect(screen.getByRole('textbox')).toHaveValue('T 0724 HR 6123 A');
+  });
+
   it('leaves input that never forms a plate upper-cased and ungrouped', async () => {
     const user = userEvent.setup();
     render(<ControlledPlateInput />);

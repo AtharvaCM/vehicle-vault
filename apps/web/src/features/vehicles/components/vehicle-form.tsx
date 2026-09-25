@@ -1,6 +1,7 @@
 import {
   DEFAULT_VEHICLE_CATALOG_MARKET,
   FuelType,
+  INVALID_REGISTRATION_MESSAGE,
   isValidRegistrationNumber,
   type VehicleCatalogVariantOption,
   VehicleType,
@@ -374,7 +375,7 @@ export function VehicleForm({
                     field.onBlur();
                     if (field.value && !isValidRegistrationNumber(field.value)) {
                       form.setError('registrationNumber', {
-                        message: 'Enter a valid Indian registration number, e.g. MH12AB1234',
+                        message: INVALID_REGISTRATION_MESSAGE,
                       });
                     } else {
                       form.clearErrors('registrationNumber');

@@ -67,6 +67,31 @@ describe('VehicleForm registration number', () => {
     expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: '22 BH 1234 AA' });
   });
 
+  it('saves a temporary registration, carried before the permanent plate arrives', async () => {
+    const user = userEvent.setup();
+    render(<VehicleForm initialValues={initialValues} onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText('Registration number'), 't0724hr6123a');
+    fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: 'T 0724 HR 6123 A' });
+  });
+
+  it('rejects a malformed temporary registration', async () => {
+    const user = userEvent.setup();
+    render(<VehicleForm initialValues={initialValues} onSubmit={onSubmit} />);
+
+    // Three digits for month+year, not four.
+    await user.type(screen.getByLabelText('Registration number'), 't072hr6123a');
+    fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/valid Indian registration number/i)).toBeInTheDocument(),
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('rejects a registration that never becomes a recognised plate', async () => {
     const user = userEvent.setup();
     render(<VehicleForm initialValues={initialValues} onSubmit={onSubmit} />);

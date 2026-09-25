@@ -3,18 +3,23 @@ import { z } from 'zod';
 import { FuelType, VehicleRole, VehicleType } from '../enums';
 
 /**
- * The two Indian registration formats this app recognises, with capturing
+ * The three Indian registration formats this app recognises, with capturing
  * groups so a caller can both validate a plate and split it into the groups
- * it prints: state · district · series · number, or year · BH · number ·
- * series. The single source both the web's plate input/display and this
- * schema's validation match a registration against.
+ * it prints: state · district · series · number, year · BH · number ·
+ * series, or (a brand-new vehicle, before its permanent plate) T · MMYY ·
+ * state · number · series. The single source both the web's plate
+ * input/display and this schema's validation match a registration against.
  */
 // MH12DM0002, DL3CAB1234, KA01EV2024, and an older MH121234 with no series.
 export const STANDARD_REGISTRATION = /^([A-Z]{2})(\d{1,2})([A-Z]{0,3})(\d{1,4})$/;
 // Bharat series: 22BH1234AA (year of registration, BH, number, series).
 export const BHARAT_REGISTRATION = /^(\d{2})(BH)(\d{4})([A-Z]{1,2})$/;
+// Temporary registration (MoRTH, 2021): T0724HR6123A — T, month+year of issue,
+// state code, a 4-digit number, and a 1–2 letter series. Carried until the
+// permanent plate arrives, which is why a brand-new vehicle is added with one.
+export const TEMPORARY_REGISTRATION = /^(T)(\d{4})([A-Z]{2})(\d{4})([A-Z]{1,2})$/;
 
-/** Upper-cased, spaces and punctuation stripped: what the two formats are matched against. */
+/** Upper-cased, spaces and punctuation stripped: what the formats are matched against. */
 export function compactRegistrationNumber(value: string): string {
   return value
     .trim()
@@ -25,12 +30,20 @@ export function compactRegistrationNumber(value: string): string {
 /** Whether a registration, in any spacing or case, is a recognised Indian plate. */
 export function isValidRegistrationNumber(value: string): boolean {
   const compact = compactRegistrationNumber(value);
-  return STANDARD_REGISTRATION.test(compact) || BHARAT_REGISTRATION.test(compact);
+  return (
+    STANDARD_REGISTRATION.test(compact) ||
+    BHARAT_REGISTRATION.test(compact) ||
+    TEMPORARY_REGISTRATION.test(compact)
+  );
 }
+
+/** What both this schema's refine and the web's own blur-time check report for a bad plate. */
+export const INVALID_REGISTRATION_MESSAGE =
+  'Enter a valid Indian registration number, e.g. MH12AB1234, 22BH1234AA or a temporary T0724HR6123A';
 
 export const VehicleCreateSchema = z.object({
   registrationNumber: z.string().trim().min(1).max(20).refine(isValidRegistrationNumber, {
-    message: 'Enter a valid Indian registration number, e.g. MH12AB1234',
+    message: INVALID_REGISTRATION_MESSAGE,
   }),
   make: z.string().trim().min(1).max(80),
   model: z.string().trim().min(1).max(80),
