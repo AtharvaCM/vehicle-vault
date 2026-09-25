@@ -30,3 +30,20 @@ export function normalizeMaintenanceCreateSearch(
     ...(reminderId ? { reminderId } : {}),
   };
 }
+
+/**
+ * The draft confirm page's address, `/maintenance-records/:id/edit?reminderId=<id>`:
+ * a bill snapped from a reminder's "Log the service now" opens its draft here,
+ * and confirming it completes that reminder. Anything else is dropped.
+ */
+export type MaintenanceEditSearch = {
+  reminderId?: string;
+};
+
+export function normalizeMaintenanceEditSearch(
+  search: Record<string, unknown>,
+): MaintenanceEditSearch {
+  const { reminderId } = normalizeMaintenanceCreateSearch({ reminderId: search.reminderId });
+
+  return reminderId ? { reminderId } : {};
+}

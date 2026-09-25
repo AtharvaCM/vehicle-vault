@@ -243,6 +243,20 @@ describe('VehicleMaintenanceCreatePage upload-first', () => {
     );
   });
 
+  it('opens a bill snapped from a reminder on a draft that completes it', async () => {
+    attachmentsApi.extract.mockResolvedValue({ status: 'completed', odometer: 32_150 });
+    renderAs(VehicleRole.Owner, { reminderId });
+    fireEvent.change(screen.getByTestId('bill-file-input'), { target: { files: [photo] } });
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/maintenance-records/$recordId/edit',
+        params: { recordId: 'draft-1' },
+        search: { reminderId },
+      }),
+    );
+  });
+
   it('starts the same draft from the camera', async () => {
     attachmentsApi.extract.mockResolvedValue({ status: 'completed', odometer: 32_150 });
 

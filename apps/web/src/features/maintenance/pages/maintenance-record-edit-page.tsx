@@ -23,6 +23,7 @@ import { toDateInputValue } from '@/lib/utils/to-date-input-value';
 import { DraftBillSummary } from '../components/draft-bill-summary';
 import { MaintenanceDraftReviewCard } from '../components/maintenance-draft-review-card';
 import { MaintenanceForm } from '../components/maintenance-form';
+import { useLinkedReminder } from '../hooks/use-linked-reminder';
 import { useMaintenanceRecord } from '../hooks/use-maintenance-record';
 import type { MaintenanceFormValues } from '../schemas/maintenance-form.schema';
 import { useUpdateMaintenanceRecord } from '../hooks/use-update-maintenance-record';
@@ -30,9 +31,14 @@ import { getFieldsFromBill, pickBillExtraction } from '../utils/get-fields-from-
 
 type MaintenanceRecordEditPageProps = {
   recordId: string;
+  /** `?reminderId=`: the reminder a bill snapped from its "Log the service now" answers. */
+  reminderId?: string;
 };
 
-export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPageProps) {
+export function MaintenanceRecordEditPage({
+  recordId,
+  reminderId,
+}: MaintenanceRecordEditPageProps) {
   const navigate = useNavigate();
   const [isDirty, setIsDirty] = useState(false);
   const recordQuery = useMaintenanceRecord(recordId);
@@ -47,6 +53,12 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   // draft's "Review and confirm" leads, is where a human agrees to it. So saving
   // it here is the confirmation rather than another way to leave it uncounted.
   const isDraft = recordQuery.data?.status === MaintenanceRecordStatus.Draft;
+  // Only a draft being confirmed answers a reminder; an edit of a logged
+  // service never completes one.
+  const { reminder: linkedReminder, repeat: reminderRepeat } = useLinkedReminder(
+    isDraft ? reminderId : undefined,
+    recordQuery.data?.vehicleId,
+  );
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved service edits. Leave without saving?',
@@ -103,7 +115,13 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
   ) {
     try {
       const record = await updateRecordMutation.mutateAsync(
-        isDraft ? { ...values, status: MaintenanceRecordStatus.Confirmed } : values,
+        isDraft
+          ? {
+              ...values,
+              status: MaintenanceRecordStatus.Confirmed,
+              ...(linkedReminder ? { reminderId: linkedReminder.id } : {}),
+            }
+          : values,
       );
       const restoreNavigationGuard = allowNextNavigation();
       appToast.success({
@@ -215,7 +233,9 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           }
           description={
             isDraft
-              ? 'This draft does not count anywhere yet. Check the details, then confirm it.'
+              ? linkedReminder
+                ? `This draft does not count anywhere yet. Check the details, then confirm it to complete your reminder “${linkedReminder.title.trim()}”.`
+                : 'This draft does not count anywhere yet. Check the details, then confirm it.'
               : 'Correct service details without losing the linked receipts or history.'
           }
           title={isDraft ? 'Confirm service record' : 'Edit service record'}
@@ -258,6 +278,7 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
               submittingLabel={isDraft ? 'Confirming record...' : 'Saving changes...'}
               successMessage={isDraft ? 'Service record confirmed.' : 'Service record updated.'}
               recordId={recordId}
+              reminderRepeat={reminderRepeat}
               scheduleNextDue={isDraft}
               vehicleId={recordQuery.data?.vehicleId}
             />

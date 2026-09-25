@@ -16,6 +16,12 @@ const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> 
 const recordQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const updateRecord = vi.hoisted(() => vi.fn());
 const attachmentsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const linked = vi.hoisted(() => ({
+  current: { reminder: null, repeat: null } as {
+    reminder: { id: string; title: string } | null;
+    repeat: { km: number | null; months: number | null } | null;
+  },
+}));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -33,6 +39,11 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../hooks/use-maintenance-record', () => ({
   useMaintenanceRecord: () => recordQuery.current,
+}));
+// The reminder a snapped bill answers, looked up only for the id the page passes.
+vi.mock('../hooks/use-linked-reminder', () => ({
+  useLinkedReminder: (reminderId: string | undefined) =>
+    reminderId ? linked.current : { reminder: null, repeat: null },
 }));
 vi.mock('../hooks/use-update-maintenance-record', () => ({
   useUpdateMaintenanceRecord: () => ({ mutateAsync: updateRecord, isPending: false, error: null }),
@@ -60,13 +71,20 @@ vi.mock('../components/maintenance-form', () => ({
   MaintenanceForm: ({
     fieldsFromBill,
     onSubmit,
+    reminderRepeat,
     submitLabel,
   }: {
     fieldsFromBill?: ReadonlySet<string>;
     onSubmit: (values: Record<string, unknown>) => void;
+    reminderRepeat?: { km: number | null; months: number | null } | null;
     submitLabel: string;
   }) => (
     <>
+      {reminderRepeat ? (
+        <p>
+          repeats: {reminderRepeat.km} km, {reminderRepeat.months} months
+        </p>
+      ) : null}
       <button onClick={() => onSubmit({ ...formBody })} type="button">
         {submitLabel}
       </button>
@@ -123,12 +141,13 @@ function renderAs(
   role: VehicleRole,
   data: MaintenanceRecord = record,
   attachments: unknown[] = [],
+  reminderId?: string,
 ) {
   recordQuery.current = { data, isPending: false, isError: false };
   attachmentsQuery.current = { data: attachments };
   vehicleQuery.current = { data: { id: 'vehicle-1', currentUserRole: role } };
 
-  return render(<MaintenanceRecordEditPage recordId="record-1" />);
+  return render(<MaintenanceRecordEditPage recordId="record-1" reminderId={reminderId} />);
 }
 
 beforeEach(() => {
@@ -195,6 +214,46 @@ describe('MaintenanceRecordEditPage draft confirmation', () => {
     expect(appToast.success).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Service record updated' }),
     );
+  });
+});
+
+describe('MaintenanceRecordEditPage for a reminder', () => {
+  const reminderId = '6f1c2b8e-3d4a-4b5c-9d6e-7f8091a2b3c4';
+
+  beforeEach(() => {
+    linked.current = {
+      reminder: { id: reminderId, title: 'Engine oil change ' },
+      repeat: { km: 10_000, months: 12 },
+    };
+  });
+
+  it('confirms a draft snapped from a reminder, completing the reminder', async () => {
+    renderAs(VehicleRole.Editor, draft, [], reminderId);
+
+    expect(
+      screen.getByText(
+        'This draft does not count anywhere yet. Check the details, then confirm it to complete your reminder “Engine oil change”.',
+      ),
+    ).toBeInTheDocument();
+    // Its own rule sets the next one, as in the log-service form.
+    expect(screen.getByText('repeats: 10000 km, 12 months')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm record' }));
+
+    expect(updateRecord).toHaveBeenCalledWith({
+      ...formBody,
+      status: MaintenanceRecordStatus.Confirmed,
+      reminderId,
+    });
+  });
+
+  it('never completes a reminder from an edit of a logged service', async () => {
+    renderAs(VehicleRole.Editor, record, [], reminderId);
+
+    expect(screen.queryByText(/repeats:/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(updateRecord).toHaveBeenCalledWith(formBody);
   });
 });
 
