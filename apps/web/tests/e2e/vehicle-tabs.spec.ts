@@ -82,7 +82,9 @@ for (const viewport of viewports) {
     await expect(page.getByRole('link', { name: 'Show papers' })).toBeVisible();
     await expect(page.getByRole('main').getByRole('button', { name: 'Log' })).toBeVisible();
 
-    await expect(page.getByRole('heading', { name: 'Recent service' })).toBeVisible();
+    // Overview is a status page: what needs attention, then how the vehicle stands.
+    await expect(page.getByRole('heading', { name: 'Needs attention' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'This vehicle' })).toBeVisible();
 
     await tabs.filter({ hasText: 'History' }).click();
     await expect(page).toHaveURL(/\?tab=history$/);

@@ -40,7 +40,7 @@ export function TcoCard({ vehicleId }: Props) {
   );
 }
 
-function TcoBody({ data: tco }: { data: TcoResponse }) {
+export function TcoBody({ data: tco }: { data: TcoResponse }) {
   const purchaseSet = tco.purchaseDate || tco.purchasePrice || tco.purchaseOdometer != null;
 
   const loanInterestPaid = Number(tco.totals.loanInterest);
