@@ -50,14 +50,14 @@ describe('the index route', { timeout: 30_000 }, () => {
     expect(
       await screen.findByRole(
         'heading',
-        { level: 1, name: /one record of your vehicle/i },
+        { level: 1, name: /every service, document and renewal/i },
         LAZY_PAGE_TIMEOUT,
       ),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
 
-  it('points the primary action at registration and the secondary at sign-in', async () => {
+  it('points every Create free account at registration, with Sign in in the header only', async () => {
     const { router, queryClient } = routerAtRoot(false);
     render(
       <QueryClientProvider client={queryClient}>
@@ -71,8 +71,9 @@ describe('the index route', { timeout: 30_000 }, () => {
     for (const link of create) expect(link).toHaveAttribute('href', '/register');
 
     const signIn = screen.getAllByRole('link', { name: /^sign in$/i });
-    expect(signIn.length).toBeGreaterThan(0);
-    for (const link of signIn) expect(link).toHaveAttribute('href', '/login');
+    expect(signIn).toHaveLength(1);
+    expect(signIn[0]).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('navigation', { name: 'Site' })).toContainElement(signIn[0]!);
   });
 
   it('describes every screenshot for anyone who cannot see it', async () => {
@@ -84,7 +85,8 @@ describe('the index route', { timeout: 30_000 }, () => {
     );
     await screen.findByRole('heading', { level: 1 }, LAZY_PAGE_TIMEOUT);
 
-    const images = screen.getAllByRole('img');
+    // The feature captures; the hero's Needs attention preview is built, not a picture.
+    const images = screen.getAllByRole('img').filter((image) => image.tagName === 'IMG');
     expect(images).toHaveLength(3);
     for (const image of images) expect(image.getAttribute('alt')?.length).toBeGreaterThan(40);
   });
