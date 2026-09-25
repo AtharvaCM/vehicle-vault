@@ -41,7 +41,7 @@ export function Breadcrumbs({ fallback = null }: { fallback?: ReactNode }) {
       return <VehicleTrail vehicleId={params.vehicleId!} />;
     case '/vehicles/$vehicleId/edit':
       return <VehicleTrail tail={[{ label: 'Edit' }]} vehicleId={params.vehicleId!} />;
-    case '/vehicles/$vehicleId/documents/$kind/$documentId':
+    case '/vehicles/$vehicleId/papers':
       return (
         <VehicleTrail
           tail={[tabCrumb(params.vehicleId!, 'papers'), { label: 'Show papers' }]}

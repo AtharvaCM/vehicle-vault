@@ -359,6 +359,11 @@ describe('VehicleHealthCard', () => {
     expect(
       screen.getByRole('button', { name: 'More actions for Daily driver' }),
     ).toBeInTheDocument();
+    // Showing papers is reading them: a viewer may be the one at the checkpoint.
+    expect(screen.getByRole('link', { name: 'Show papers for Daily driver' })).toHaveAttribute(
+      'href',
+      '/vehicles/$vehicleId/papers',
+    );
   });
 
   it('shows the write actions for owners', () => {
