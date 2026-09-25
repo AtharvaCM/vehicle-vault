@@ -41,6 +41,8 @@ export async function selectDropdownOption(page: Page, fieldLabel: RegExp, optio
 export async function skipVehicleSetupPrompt(page: Page) {
   await expect(page.getByText('Never miss a renewal')).toBeVisible();
   await page.getByRole('button', { name: 'Skip for now' }).click();
+  // Then the suggested service schedule (#346): straight on to the vehicle.
+  await page.getByRole('button', { name: 'Open the vehicle' }).click();
 }
 
 type CatalogVehicle = {

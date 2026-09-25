@@ -1,10 +1,13 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { ArrowRight, Check } from 'lucide-react';
 import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ServiceSchedulePanel } from '@/features/reminders/components/service-schedule-panel';
 import { useCatalogIntentPrefill } from '@/features/catalog-intent/hooks/use-catalog-intent-prefill';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -13,6 +16,7 @@ import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { VehicleForm } from '../components/vehicle-form';
 import { VehicleSetupPrompt } from '../components/vehicle-setup-prompt';
 import { useCreateVehicle } from '../hooks/use-create-vehicle';
+import { useVehicles } from '../hooks/use-vehicles';
 import type { VehicleFormValues } from '../schemas/vehicle-form.schema';
 import type { Vehicle } from '../types/vehicle';
 
@@ -25,6 +29,12 @@ export function VehicleCreatePage() {
   // papers step for it instead of the form, and there is nothing left to lose
   // by leaving, so the unsaved-changes guard below drops out.
   const [createdVehicle, setCreatedVehicle] = useState<Vehicle | null>(null);
+  // After the papers, the suggested service schedule (#346).
+  const [step, setStep] = useState<'papers' | 'schedule'>('papers');
+  // The garage before this vehicle: an account's first vehicle ends its setup on
+  // Home, where the checklist picks up; any later one opens its own page.
+  const vehiclesQuery = useVehicles();
+  const [isFirstVehicle, setIsFirstVehicle] = useState(false);
   const createVehicleMutation = useCreateVehicle();
   useUnsavedChangesGuard({
     when: isDirty && !createdVehicle,
@@ -38,25 +48,20 @@ export function VehicleCreatePage() {
     const fromCatalogIntent =
       prefill !== null && values.make === prefill.make && values.model === prefill.model;
 
+    const firstVehicle = vehiclesQuery.data?.length === 0;
     try {
       const vehicle = await createVehicleMutation.mutateAsync({
         ...values,
         ...(fromCatalogIntent ? { fromCatalogIntent: true } : {}),
       });
 
-      appToast.success({
-        title: 'Vehicle created',
-        description: 'Add the insurance and PUC dates now, or skip for later.',
-      });
+      setIsFirstVehicle(firstVehicle);
 
       // `null` is a fresh vehicle, never answered or skipped. `undefined` is an
       // API that predates the prompt and cannot save an answer to it either,
-      // so there is nothing to show: go straight to the vehicle, as before.
-      if (vehicle.setupPromptDismissedAt === null) {
-        setCreatedVehicle(vehicle);
-      } else {
-        await goToVehicle(vehicle);
-      }
+      // so there is nothing to ask: on to the schedule.
+      setStep(vehicle.setupPromptDismissedAt === null ? 'papers' : 'schedule');
+      setCreatedVehicle(vehicle);
     } catch (error) {
       appToast.error({
         title: 'Unable to create vehicle',
@@ -86,20 +91,55 @@ export function VehicleCreatePage() {
     ? getApiErrorMessage(createVehicleMutation.error, 'Unable to create the vehicle.')
     : null;
 
-  if (createdVehicle) {
+  if (createdVehicle && step === 'papers') {
     return (
       <PageContainer>
         <PageTitle
-          description="One last thing: the two dates the reminders run on."
+          description="Saved. Next, the two dates the reminders run on."
           title="Add vehicle"
         />
+        <SetupSteps current="papers" />
         <div className="max-w-xl">
           <VehicleSetupPrompt
             dismissedAt={createdVehicle.setupPromptDismissedAt}
             fuelType={createdVehicle.fuelType}
-            onDismissed={() => void goToVehicle(createdVehicle)}
+            onDismissed={() => setStep('schedule')}
             vehicleId={createdVehicle.id}
           />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (createdVehicle) {
+    return (
+      <PageContainer>
+        <PageTitle
+          actions={
+            // An account's first vehicle ends on Home, where its setup checklist
+            // picks up; the vehicle's own page is always one tap away too.
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => void goToVehicle(createdVehicle)}
+                type="button"
+                variant={isFirstVehicle ? 'outline' : 'default'}
+              >
+                Open the vehicle
+              </Button>
+              {isFirstVehicle ? (
+                <Button onClick={() => void navigate({ to: '/home' })} type="button">
+                  Go to Home
+                  <ArrowRight aria-hidden="true" />
+                </Button>
+              ) : null}
+            </div>
+          }
+          description="Pick the services to be reminded about. You can change them any time."
+          title="Add vehicle"
+        />
+        <SetupSteps current="schedule" />
+        <div className="max-w-3xl">
+          <ServiceSchedulePanel vehicleId={createdVehicle.id} />
         </div>
       </PageContainer>
     );
@@ -148,5 +188,43 @@ export function VehicleCreatePage() {
         </Card>
       </div>
     </PageContainer>
+  );
+}
+
+const STEPS = [
+  { id: 'vehicle', label: 'Vehicle' },
+  { id: 'papers', label: 'Papers' },
+  { id: 'schedule', label: 'Service schedule' },
+] as const;
+
+/** Where the add-vehicle flow is: vehicle, then papers, then the schedule. */
+function SetupSteps({ current }: { current: 'papers' | 'schedule' }) {
+  const currentIndex = STEPS.findIndex((item) => item.id === current);
+  return (
+    <ol aria-label="Steps" className="flex flex-wrap items-center gap-x-4 gap-y-2 text-small">
+      {STEPS.map((item, index) => (
+        <li
+          aria-current={index === currentIndex ? 'step' : undefined}
+          className={
+            index === currentIndex
+              ? 'flex items-center gap-1.5 font-semibold text-fg'
+              : 'flex items-center gap-1.5 text-fg-3'
+          }
+          key={item.id}
+        >
+          <span
+            aria-hidden="true"
+            className={
+              index < currentIndex
+                ? 'flex size-5 items-center justify-center rounded-full bg-ok text-surface'
+                : 'flex size-5 items-center justify-center rounded-full border border-current text-caption'
+            }
+          >
+            {index < currentIndex ? <Check className="size-3" /> : index + 1}
+          </span>
+          {item.label}
+        </li>
+      ))}
+    </ol>
   );
 }

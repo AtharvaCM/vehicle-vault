@@ -36,6 +36,17 @@ vi.mock('@/features/vehicles/hooks/use-vehicles', () => ({
   useVehicles: () => ({ isPending: false, data: garage.current }),
 }));
 // Beside the point here, and each reaches for data of its own.
+vi.mock('@/features/auth/hooks/use-auth', () => ({
+  useAuth: () => ({
+    user: {
+      id: 'user-1',
+      name: 'Asha Rao',
+      email: 'asha@example.test',
+      emailVerified: true,
+      emailVerificationDueAt: null,
+    },
+  }),
+}));
 vi.mock('../components/costs-summary-line', () => ({ CostsSummaryLine: () => null }));
 vi.mock('@/features/pwa/components/install-app-card', () => ({ InstallAppCard: () => null }));
 
@@ -124,6 +135,43 @@ describe('DashboardPage status', () => {
     expect(screen.queryByTestId('all-clear')).not.toBeInTheDocument();
     expect(screen.getByText('Nothing is being tracked yet')).toBeInTheDocument();
     expect(screen.getByText('Nothing tracked yet')).toBeInTheDocument();
+  });
+});
+
+describe('DashboardPage setup', () => {
+  it('welcomes an account with no vehicle: the checklist and the empty garage, one title', () => {
+    showDashboard([], { reminderCounts: { overdue: 0, dueToday: 0, upcoming: 0, completed: 0 } });
+
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Welcome, Asha' })).toBeInTheDocument();
+    expect(screen.getByText('Let’s get your first reminder set up.')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Set up your first reminder' })).toHaveTextContent(
+      '2 of 5 done',
+    );
+    expect(screen.getByTestId('empty-garage')).toBeInTheDocument();
+  });
+
+  it('keeps Home’s title once there is a vehicle, with the checklist until it is done', () => {
+    showDashboard([makeVehicle()], late);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Home' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Finish setting up' })).toBeInTheDocument();
+  });
+
+  it('drops the checklist once every step is done', () => {
+    showDashboard(
+      [
+        makeVehicle({
+          documents: {
+            insurance: { state: 'active', endDate: '2027-01-01' },
+            puc: { state: 'active', endDate: '2027-01-01' },
+          },
+        }),
+      ],
+      { ...late, totalMaintenanceRecords: 3 },
+    );
+
+    expect(screen.queryByTestId('setup-checklist')).not.toBeInTheDocument();
   });
 });
 

@@ -95,7 +95,7 @@ test('Costs gathers spend, per-vehicle spend and loans; Home links to it; /loans
 
     // Home: one bordered line linking to Costs, not the old charts or loans card.
     await page.goto('/home');
-    await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
     const summaryLink = page.getByRole('link', { name: /Loan outstanding/ });
     await expect(summaryLink, label).toBeVisible();
     await expect(summaryLink, label).toHaveAttribute('href', '/costs');

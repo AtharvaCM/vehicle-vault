@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyGarage } from '@/features/onboarding/components/empty-garage';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
@@ -251,15 +252,7 @@ export function VehiclesListPage({ searchState, onSearchStateChange }: VehiclesL
           )}
         </div>
       ) : (
-        <EmptyState
-          action={
-            <Link className={buttonVariants()} to="/vehicles/new">
-              Add your first vehicle
-            </Link>
-          }
-          description="Add your first car or bike to start tracking service, reminders, and receipts."
-          title="No vehicles yet"
-        />
+        <EmptyGarage />
       )}
     </PageContainer>
   );

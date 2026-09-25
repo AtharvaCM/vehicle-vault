@@ -10,6 +10,8 @@ const createVehicleMutateAsync = vi.hoisted(() => vi.fn());
 const setupPromptProps = vi.hoisted(() => ({
   current: undefined as Record<string, unknown> | undefined,
 }));
+// The garage before the new vehicle: empty makes it the account's first.
+const garage = vi.hoisted(() => ({ vehicles: [] as unknown[] }));
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => navigateMock,
@@ -26,6 +28,16 @@ vi.mock('../hooks/use-create-vehicle', () => ({
     isPending: false,
     error: null,
   }),
+}));
+
+vi.mock('../hooks/use-vehicles', () => ({
+  useVehicles: () => ({ data: garage.vehicles }),
+}));
+
+vi.mock('@/features/reminders/components/service-schedule-panel', () => ({
+  ServiceSchedulePanel: ({ vehicleId }: { vehicleId: string }) => (
+    <p>Suggested service schedule for {vehicleId}</p>
+  ),
 }));
 
 vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
@@ -90,6 +102,7 @@ function createdVehicle(overrides: Partial<Vehicle> = {}): Vehicle {
 beforeEach(() => {
   vi.clearAllMocks();
   setupPromptProps.current = undefined;
+  garage.vehicles = [{ id: 'older' }];
 });
 
 describe('VehicleCreatePage papers step', () => {
@@ -108,20 +121,37 @@ describe('VehicleCreatePage papers step', () => {
     });
   });
 
-  it('navigates to the vehicle once the prompt is answered or skipped', async () => {
+  it('offers the service schedule once the prompt is answered or skipped, then opens the vehicle', async () => {
     createVehicleMutateAsync.mockResolvedValue(createdVehicle());
     render(<VehicleCreatePage />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Save vehicle' }));
     await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
 
+    expect(screen.getByText('Suggested service schedule for vehicle-1')).toBeInTheDocument();
+    expect(screen.getByRole('listitem', { current: 'step' })).toHaveTextContent('Service schedule');
+    expect(navigateMock).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open the vehicle' }));
     expect(navigateMock).toHaveBeenCalledWith({
       to: '/vehicles/$vehicleId',
       params: { vehicleId: 'vehicle-1' },
     });
   });
 
-  it('skips the prompt and navigates straight away against an API that predates it', async () => {
+  it('ends an account’s first vehicle on Home, where the setup checklist picks up', async () => {
+    garage.vehicles = [];
+    createVehicleMutateAsync.mockResolvedValue(createdVehicle());
+    render(<VehicleCreatePage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save vehicle' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Go to Home' }));
+
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/home' });
+  });
+
+  it('goes straight to the schedule against an API that predates the papers prompt', async () => {
     // `setupPromptDismissedAt` omitted, not null: an older API cannot save an
     // answer to a prompt it does not know about.
     createVehicleMutateAsync.mockResolvedValue(
@@ -131,10 +161,8 @@ describe('VehicleCreatePage papers step', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save vehicle' }));
 
-    expect(navigateMock).toHaveBeenCalledWith({
-      to: '/vehicles/$vehicleId',
-      params: { vehicleId: 'vehicle-1' },
-    });
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
+    expect(screen.getByText('Suggested service schedule for vehicle-1')).toBeInTheDocument();
   });
 
   it('shows an error toast and stays on the form when creation fails', async () => {

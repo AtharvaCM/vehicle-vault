@@ -5,13 +5,17 @@ import { ErrorState } from '@/components/shared/error-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { StatusDot } from '@/components/shared/status-pill';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { getVerificationStatus } from '@/features/auth/lib/verification-status';
+import { EmptyGarage } from '@/features/onboarding/components/empty-garage';
+import { SetupChecklist } from '@/features/onboarding/components/setup-checklist';
+import { isSetupDone, setupSteps } from '@/features/onboarding/lib/setup-steps';
 
 import { AllClearPanel } from '../components/all-clear-panel';
 import { AttentionFilters } from '../components/attention-filters';
 import { AttentionQueue } from '../components/attention-queue';
 import { ComingUpList } from '../components/coming-up-list';
 import { CostsSummaryLine } from '../components/costs-summary-line';
-import { DashboardOnboarding } from '../components/dashboard-onboarding';
 import { DashboardSkeleton } from '../components/dashboard-skeleton';
 import { HomeGarage } from '../components/home-garage';
 import { RecentServiceCard } from '../components/recent-service-card';
@@ -28,6 +32,7 @@ type DashboardPageProps = {
 
 export function DashboardPage({ searchState, onSearchStateChange }: DashboardPageProps) {
   const dashboardSummaryQuery = useDashboardSummary();
+  const { user } = useAuth();
 
   if (dashboardSummaryQuery.isPending) {
     return (
@@ -59,15 +64,35 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
   }
 
   const summary = dashboardSummaryQuery.data;
+  const verification = getVerificationStatus(user);
+  const steps = setupSteps(summary, verification.kind === 'none');
+  const inSetup = !isSetupDone(steps);
+  const firstName = user?.name.trim().split(/\s+/)[0];
+  // An account with no vehicle yet is welcomed in place of "Home"; once there
+  // is one, Home keeps its title and the checklist sits under it until done.
+  const setupTitle = {
+    title: firstName ? `Welcome, ${firstName}` : 'Welcome',
+    description: 'Let’s get your first reminder set up.',
+  };
+  const checklist = (
+    <SetupChecklist
+      heading={summary.totalVehicles === 0 ? 'Set up your first reminder' : 'Finish setting up'}
+      steps={steps}
+      vehicle={
+        summary.vehicles.find((vehicle) => vehicle.currentUserRole !== 'viewer') ??
+        summary.vehicles[0] ??
+        null
+      }
+      verifyDaysLeft={verification.kind === 'grace' ? verification.daysLeft : null}
+    />
+  );
 
   if (summary.totalVehicles === 0) {
     return (
       <PageContainer className="pb-10">
-        <PageTitle
-          description="Add your first vehicle and we'll keep track of what's due."
-          title="Home"
-        />
-        <DashboardOnboarding />
+        <PageTitle description={setupTitle.description} title={setupTitle.title} />
+        {checklist}
+        <EmptyGarage withAction={false} />
       </PageContainer>
     );
   }
@@ -97,6 +122,8 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
         }
         title="Home"
       />
+
+      {inSetup ? checklist : null}
 
       {urgent > 0 || focus ? (
         <AttentionFilters counts={summary.attentionCounts} focus={focus} />

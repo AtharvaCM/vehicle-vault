@@ -63,7 +63,7 @@ for (const viewport of VIEWPORTS) {
 
     // This device stays signed in.
     await page.goto('/home');
-    await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
 
     // The other device is signed out once its access token needs refreshing.
     await otherPage.evaluate(() => {

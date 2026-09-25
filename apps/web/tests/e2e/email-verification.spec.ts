@@ -33,8 +33,13 @@ test('a new account uses the app for a week before it has to verify', async ({ p
 
   await registerUnverified(page, account);
 
+  // On Home the setup checklist carries the countdown (#346); elsewhere, the banner.
+  await expect(page.getByTestId('setup-checklist')).toContainText(
+    'Verify your email · 7 days left',
+  );
+  await expect(verificationBanner(page)).toHaveCount(0);
+  await page.goto('/garage');
   await expect(verificationBanner(page)).toContainText('7 days left');
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
 
   await createCatalogVehicle(page, {
     nickname,
@@ -70,6 +75,7 @@ test('a new account uses the app for a week before it has to verify', async ({ p
 test('following the email link while signed in keeps the session', async ({ page }) => {
   const account = newAccount();
   await registerUnverified(page, account);
+  await page.goto('/garage');
   await expect(verificationBanner(page)).toBeVisible();
 
   // Stand in for the emailed link: the API stores only a hash of its token.
@@ -85,7 +91,7 @@ test('following the email link while signed in keeps the session', async ({ page
   await page.goto(`/verify-email?token=${token}`);
 
   await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
   await expect(verificationBanner(page)).toHaveCount(0);
 });
 

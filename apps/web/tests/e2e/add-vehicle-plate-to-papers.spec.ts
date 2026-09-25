@@ -95,6 +95,10 @@ for (const viewport of viewports) {
       await page.getByRole('button', { name: 'Save dates' }).click();
     }
 
+    // Then the suggested service schedule (#346), and on to the vehicle.
+    await expect(page.getByText('Suggested service schedule')).toBeVisible();
+    await page.getByRole('button', { name: 'Open the vehicle' }).click();
+
     await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
     await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 
