@@ -1,28 +1,25 @@
-import { BellRing, Fuel, Wrench } from 'lucide-react';
-import { useState } from 'react';
-
 import { PageContainer } from '@/components/layout/page-container';
+import { QuickLogMenuButton } from '@/components/layout/quick-log';
 import { InstallAppCard } from '@/features/pwa/components/install-app-card';
 import { ErrorState } from '@/components/shared/error-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { StatusDot } from '@/components/shared/status-pill';
 import { Button } from '@/components/ui/button';
 
+import { AllClearPanel } from '../components/all-clear-panel';
+import { AttentionFilters } from '../components/attention-filters';
 import { AttentionQueue } from '../components/attention-queue';
-import { AttentionSummary } from '../components/attention-summary';
 import { ComingUpList } from '../components/coming-up-list';
 import { CostsSummaryLine } from '../components/costs-summary-line';
 import { DashboardOnboarding } from '../components/dashboard-onboarding';
 import { DashboardSkeleton } from '../components/dashboard-skeleton';
-import { GarageGrid } from '../components/garage-grid';
+import { HomeGarage } from '../components/home-garage';
 import { RecentServiceCard } from '../components/recent-service-card';
-import { FuelLogDialog } from '../components/fuel-log-dialog';
-import { QuickLogDialog } from '../components/quick-log-dialog';
-import { SmartSuggestionsCard } from '../components/smart-suggestions-card';
-import { VehiclePickerMenu } from '../components/vehicle-picker-menu';
 import { useDashboardSummary } from '../hooks/use-dashboard-summary';
 import { isDashboardFocus, type DashboardSearch } from '../types/dashboard-search';
+import { attentionCount } from '../utils/attention-set';
 import { dashboardHeadline } from '../utils/dashboard-headline';
-import { splitAttention } from '../utils/select-attention';
+import { isNothingTracked, splitAttention } from '../utils/select-attention';
 
 type DashboardPageProps = {
   searchState: DashboardSearch;
@@ -31,7 +28,6 @@ type DashboardPageProps = {
 
 export function DashboardPage({ searchState, onSearchStateChange }: DashboardPageProps) {
   const dashboardSummaryQuery = useDashboardSummary();
-  const [openLog, setOpenLog] = useState<'service' | 'fuel' | null>(null);
 
   if (dashboardSummaryQuery.isPending) {
     return (
@@ -79,85 +75,54 @@ export function DashboardPage({ searchState, onSearchStateChange }: DashboardPag
   const focus = isDashboardFocus(searchState.focus) ? searchState.focus : undefined;
   const { queue, comingUp } = splitAttention(summary.attention, focus);
   const showVehicle = summary.vehicles.length > 1;
+  const headline = dashboardHeadline(summary);
+  const urgent = attentionCount(summary.attentionCounts);
   // Logging is for the vehicles the user can change; a viewer is offered none of it.
-  const loggableVehicles = summary.vehicles.filter(
-    (vehicle) => vehicle.currentUserRole !== 'viewer',
-  );
+  const canLog = summary.vehicles.some((vehicle) => vehicle.currentUserRole !== 'viewer');
+  const allClear = !focus && urgent === 0 && !isNothingTracked(summary, queue);
 
   return (
     <PageContainer className="pb-10">
       <PageTitle
-        actions={
-          loggableVehicles.length >= 1 ? (
-            <>
-              <Button onClick={() => setOpenLog('service')} type="button">
-                <Wrench aria-hidden="true" />
-                Log service
-              </Button>
-              <Button onClick={() => setOpenLog('fuel')} type="button" variant="outline">
-                <Fuel aria-hidden="true" />
-                Log fuel
-              </Button>
-              <VehiclePickerMenu
-                buildLink={(vehicleId) => ({
-                  to: '/vehicles/$vehicleId/reminders/new',
-                  params: { vehicleId },
-                })}
-                className="hidden sm:inline-flex"
-                icon={BellRing}
-                label="Add reminder"
-                variant="outline"
-                vehicles={loggableVehicles}
-              />
-            </>
-          ) : undefined
+        // From md up; below it the phone bar's ＋ is the same menu.
+        actions={canLog ? <QuickLogMenuButton className="hidden md:inline-flex" /> : undefined}
+        description={
+          <StatusDot className="text-ui" status={headline.status}>
+            {headline.text}
+          </StatusDot>
         }
-        description={dashboardHeadline(summary)}
         title="Home"
       />
 
-      <AttentionSummary focus={focus} summary={summary} />
+      {urgent > 0 || focus ? (
+        <AttentionFilters counts={summary.attentionCounts} focus={focus} />
+      ) : null}
 
       {/* Offered here, not on the empty onboarding dashboard: installing is worth
           it once there is a vehicle to come back to. */}
       <InstallAppCard />
 
-      <AttentionQueue
-        focus={focus}
-        onSearchStateChange={onSearchStateChange}
-        queue={queue}
-        summary={summary}
-      />
+      {allClear ? (
+        <AllClearPanel next={comingUp[0]} showVehicle={showVehicle} />
+      ) : (
+        <AttentionQueue
+          focus={focus}
+          onSearchStateChange={onSearchStateChange}
+          queue={queue}
+          summary={summary}
+        />
+      )}
 
       {!focus ? <ComingUpList items={comingUp} showVehicle={showVehicle} /> : null}
 
-      <GarageGrid vehicles={summary.vehicles} vehiclesTotal={summary.vehiclesTotal} />
+      <HomeGarage vehicles={summary.vehicles} vehiclesTotal={summary.vehiclesTotal} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SmartSuggestionsCard insights={summary.insights} />
-        <div className={summary.insights.length === 0 ? 'lg:col-span-2' : undefined}>
-          <RecentServiceCard
-            recentMaintenance={summary.recentMaintenance}
-            vehicles={summary.vehicles}
-          />
-        </div>
-      </div>
+      <RecentServiceCard
+        recentMaintenance={summary.recentMaintenance}
+        vehicles={summary.vehicles}
+      />
 
       {summary.hasSpend ? <CostsSummaryLine loans={summary.loans} /> : null}
-      {loggableVehicles.length > 0 ? (
-        <>
-          <QuickLogDialog
-            onOpenChange={(open) => setOpenLog(open ? 'service' : null)}
-            open={openLog === 'service'}
-            vehicles={loggableVehicles}
-          />
-          <FuelLogDialog
-            onOpenChange={(open) => setOpenLog(open ? 'fuel' : null)}
-            open={openLog === 'fuel'}
-            vehicles={loggableVehicles}
-          />
-        </>
-      ) : null}
     </PageContainer>
   );
 }

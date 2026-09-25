@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { makeVehicle } from '../test/fixtures';
 import type { DashboardVehicleHealth } from '../types/dashboard';
 import { renderWithProviders } from '../test/render';
-import { VehicleHealthCard } from './vehicle-health-card';
+import { DataRow, LastServiceRow, NextDueRow, OdometerRow, PapersRow } from './vehicle-health-rows';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -28,11 +28,24 @@ vi.mock('@tanstack/react-router', () => ({
 
 const today = new Date('2026-04-02T09:00:00.000Z');
 
-describe('VehicleHealthCard', () => {
-  it('shows the overdue pill linking to the reminders tab', () => {
+/** Every row, as the Overview's "This vehicle" and Home's summary row put them together. */
+function Rows({ vehicle }: { vehicle: DashboardVehicleHealth }) {
+  const canEdit = vehicle.currentUserRole !== 'viewer';
+  return (
+    <>
+      <NextDueRow vehicle={vehicle} />
+      <PapersRow today={today} vehicle={vehicle} />
+      <LastServiceRow vehicle={vehicle} />
+      <DataRow canEdit={canEdit} vehicle={vehicle} />
+      <OdometerRow canEdit={canEdit} today={today} vehicle={vehicle} />
+    </>
+  );
+}
+
+describe('vehicle health rows', () => {
+  it('names what is late next', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
+      <Rows
         vehicle={makeVehicle({
           status: 'overdue',
           overdueCount: 2,
@@ -47,18 +60,12 @@ describe('VehicleHealthCard', () => {
         })}
       />,
     );
-
-    const pill = screen.getByRole('link', { name: '2 late' });
-
-    expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'reminders' }));
-    expect(screen.getByText('2 late')).toHaveAttribute('data-status', 'late');
     expect(screen.getByText('Brake pads · 3 days late')).toBeInTheDocument();
   });
 
-  it('names the EMI behind a due soon pill, with its amount', () => {
+  it('names the EMI due next, with its amount', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
+      <Rows
         vehicle={makeVehicle({
           status: 'due_soon',
           dueSoonCount: 1,
@@ -73,18 +80,13 @@ describe('VehicleHealthCard', () => {
         })}
       />,
     );
-
-    const pill = screen.getByRole('link', { name: '1 due soon' });
-
-    expect(pill).toHaveAttribute('data-search', JSON.stringify({ tab: 'more', section: 'loans' }));
     expect(screen.getByText(/^EMI ₹4,800 · /)).toBeInTheDocument();
     expect(screen.queryByText('Nothing scheduled')).not.toBeInTheDocument();
   });
 
-  it('shows the due soon pill linking to protection when a document is next', () => {
+  it('names the paper running out next', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
+      <Rows
         vehicle={makeVehicle({
           status: 'due_soon',
           dueSoonCount: 1,
@@ -98,18 +100,12 @@ describe('VehicleHealthCard', () => {
         })}
       />,
     );
-
-    expect(screen.getByRole('link', { name: '1 due soon' })).toHaveAttribute(
-      'data-search',
-      JSON.stringify({ tab: 'papers' }),
-    );
     expect(screen.getByText('Insurance policy · 5 days left')).toBeInTheDocument();
   });
 
-  it('points the pill at the tyres tab when a worn tyre is what is overdue', () => {
+  it('names a worn tyre with no date', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
+      <Rows
         vehicle={makeVehicle({
           status: 'overdue',
           overdueCount: 1,
@@ -123,21 +119,13 @@ describe('VehicleHealthCard', () => {
         })}
       />,
     );
-
-    expect(screen.getByRole('link', { name: '1 late' })).toHaveAttribute(
-      'data-search',
-      JSON.stringify({ tab: 'more', section: 'tyres' }),
-    );
     expect(screen.getByText('Replace tyre')).toBeInTheDocument();
   });
 
   describe('data score', () => {
     it('reads as complete, with nothing to nag about, when everything is on file', () => {
       renderWithProviders(
-        <VehicleHealthCard
-          today={today}
-          vehicle={makeVehicle({ dataHealth: { score: 100, nextGap: null } })}
-        />,
+        <Rows vehicle={makeVehicle({ dataHealth: { score: 100, nextGap: null } })} />,
       );
 
       expect(screen.getByText('Data')).toBeInTheDocument();
@@ -146,10 +134,7 @@ describe('VehicleHealthCard', () => {
 
     it('names the gap worth filling, linked to where it is filled', () => {
       renderWithProviders(
-        <VehicleHealthCard
-          today={today}
-          vehicle={makeVehicle({ dataHealth: { score: 70, nextGap: 'insurance' } })}
-        />,
+        <Rows vehicle={makeVehicle({ dataHealth: { score: 70, nextGap: 'insurance' } })} />,
       );
 
       expect(screen.getByText('70%')).toBeInTheDocument();
@@ -161,10 +146,7 @@ describe('VehicleHealthCard', () => {
 
     it('sends a missing catalog link or purchase price to the edit form', () => {
       renderWithProviders(
-        <VehicleHealthCard
-          today={today}
-          vehicle={makeVehicle({ dataHealth: { score: 85, nextGap: 'catalog_link' } })}
-        />,
+        <Rows vehicle={makeVehicle({ dataHealth: { score: 85, nextGap: 'catalog_link' } })} />,
       );
 
       expect(screen.getByRole('link', { name: 'Not linked to a catalog model' })).toHaveAttribute(
@@ -173,12 +155,9 @@ describe('VehicleHealthCard', () => {
       );
     });
 
-    it('leaves a stale odometer to the Update control already on the card', () => {
+    it('leaves a stale odometer to the Update control beside it', () => {
       renderWithProviders(
-        <VehicleHealthCard
-          today={today}
-          vehicle={makeVehicle({ dataHealth: { score: 80, nextGap: 'odometer' } })}
-        />,
+        <Rows vehicle={makeVehicle({ dataHealth: { score: 80, nextGap: 'odometer' } })} />,
       );
 
       expect(screen.getByText('Odometer not updated lately')).toBeInTheDocument();
@@ -192,8 +171,7 @@ describe('VehicleHealthCard', () => {
 
     it('tells a viewer the gap without offering to fill it', () => {
       renderWithProviders(
-        <VehicleHealthCard
-          today={today}
+        <Rows
           vehicle={makeVehicle({
             currentUserRole: 'viewer',
             dataHealth: { score: 70, nextGap: 'insurance' },
@@ -206,29 +184,25 @@ describe('VehicleHealthCard', () => {
     });
 
     it('leaves the row out when the API does not send a score yet', () => {
-      renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
+      renderWithProviders(<Rows vehicle={makeVehicle()} />);
 
       expect(screen.queryByText('Data')).not.toBeInTheDocument();
     });
   });
 
-  it('shows All clear and Nothing scheduled for a healthy vehicle', () => {
-    renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
+  it('offers a viewer no odometer update', () => {
+    renderWithProviders(<Rows vehicle={makeVehicle({ currentUserRole: 'viewer' })} />);
 
-    expect(screen.getByRole('link', { name: 'All clear' })).toBeInTheDocument();
+    expect(screen.getByText(/Updated/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /update odometer/i })).not.toBeInTheDocument();
+  });
+
+  it('reads nothing scheduled, valid papers and no service for a healthy vehicle', () => {
+    renderWithProviders(<Rows vehicle={makeVehicle()} />);
+
     expect(screen.getByText('Nothing scheduled')).toBeInTheDocument();
     expect(screen.getByText('Insurance & PUC valid · to 15 Sep 2026')).toBeInTheDocument();
     expect(screen.getByText('No service logged')).toBeInTheDocument();
-  });
-
-  it('names the vehicle with an M plate and its spaced registration', () => {
-    renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
-
-    expect(screen.getByText('MH 12 AB 1234')).toBeInTheDocument();
-    expect(
-      document.querySelector('[data-slot="number-plate"][data-size="md"]'),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('MH12AB1234')).not.toBeInTheDocument();
   });
 
   it('applies the documents precedence: expired > missing insurance > missing PUC > expiring > valid', () => {
@@ -273,9 +247,7 @@ describe('VehicleHealthCard', () => {
     ];
 
     for (const [documents, expected] of cases) {
-      const { unmount } = renderWithProviders(
-        <VehicleHealthCard today={today} vehicle={makeVehicle({ documents })} />,
-      );
+      const { unmount } = renderWithProviders(<Rows vehicle={makeVehicle({ documents })} />);
 
       expect(screen.getByText(expected)).toBeInTheDocument();
       unmount();
@@ -284,8 +256,7 @@ describe('VehicleHealthCard', () => {
 
   it('does not ask an electric vehicle for a PUC, which it is exempt from', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
+      <Rows
         vehicle={makeVehicle({
           fuelType: FuelType.Electric,
           documents: { insurance: { state: 'active', endDate: '2026-12-01T00:00:00.000Z' } },
@@ -301,8 +272,7 @@ describe('VehicleHealthCard', () => {
 
   it('renders the last service with distance since', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
+      <Rows
         vehicle={makeVehicle({
           odometer: 46000,
           lastService: {
@@ -320,12 +290,9 @@ describe('VehicleHealthCard', () => {
     ).toHaveAttribute('href', '/maintenance-records/$recordId');
   });
 
-  it('nudges to update a stale odometer, right there on the card', () => {
+  it('nudges to update a stale odometer, right there', () => {
     renderWithProviders(
-      <VehicleHealthCard
-        today={today}
-        vehicle={makeVehicle({ odometerUpdatedAt: '2026-03-20T00:00:00.000Z' })}
-      />,
+      <Rows vehicle={makeVehicle({ odometerUpdatedAt: '2026-03-20T00:00:00.000Z' })} />,
     );
 
     expect(screen.getByText(/Updated 1 week ago/)).toBeInTheDocument();
@@ -335,48 +302,8 @@ describe('VehicleHealthCard', () => {
   });
 
   it('shows "today" right after the odometer is touched', () => {
-    renderWithProviders(
-      <VehicleHealthCard
-        today={today}
-        vehicle={makeVehicle({ odometerUpdatedAt: today.toISOString() })}
-      />,
-    );
+    renderWithProviders(<Rows vehicle={makeVehicle({ odometerUpdatedAt: today.toISOString() })} />);
 
     expect(screen.getByText(/Updated today/)).toBeInTheDocument();
-  });
-
-  it('hides the write actions for viewers but keeps the shared badge and menu', () => {
-    renderWithProviders(
-      <VehicleHealthCard today={today} vehicle={makeVehicle({ currentUserRole: 'viewer' })} />,
-    );
-
-    expect(screen.queryByRole('link', { name: /log service for/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /add reminder for/i })).not.toBeInTheDocument();
-    // A viewer still sees how fresh the reading is, but cannot change it.
-    expect(screen.getByText(/Updated/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /update odometer/i })).not.toBeInTheDocument();
-    expect(screen.getByText('Shared · viewer')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'More actions for Daily driver' }),
-    ).toBeInTheDocument();
-    // Showing papers is reading them: a viewer may be the one at the checkpoint.
-    expect(screen.getByRole('link', { name: 'Show papers for Daily driver' })).toHaveAttribute(
-      'href',
-      '/vehicles/$vehicleId/papers',
-    );
-  });
-
-  it('shows the write actions for owners', () => {
-    renderWithProviders(<VehicleHealthCard today={today} vehicle={makeVehicle()} />);
-
-    expect(screen.getByRole('link', { name: 'Log service for Daily driver' })).toHaveAttribute(
-      'href',
-      '/vehicles/$vehicleId/maintenance/new',
-    );
-    expect(screen.getByRole('link', { name: 'Add reminder for Daily driver' })).toHaveAttribute(
-      'href',
-      '/vehicles/$vehicleId/reminders/new',
-    );
-    expect(screen.queryByText(/shared/i)).not.toBeInTheDocument();
   });
 });

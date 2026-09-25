@@ -4,50 +4,43 @@ import { makeAttentionCounts, makeAttentionItem } from '../test/fixtures';
 import { dashboardHeadline } from './dashboard-headline';
 
 describe('dashboardHeadline', () => {
-  it('counts urgent items and mentions vehicles when more than one is involved', () => {
+  it('counts what is late and due this week, across the vehicles involved', () => {
     expect(
       dashboardHeadline({
-        attention: [
-          makeAttentionItem({ id: 'a', urgency: 'overdue', vehicleId: 'v1' }),
-          makeAttentionItem({ id: 'b', urgency: 'today', vehicleId: 'v2' }),
-          makeAttentionItem({ id: 'c', urgency: 'this_month', vehicleId: 'v3' }),
-        ],
+        attention: [],
         attentionCounts: makeAttentionCounts({
           overdue: 1,
           today: 1,
-          thisMonth: 1,
-          urgentVehicles: 2,
-          total: 3,
+          thisWeek: 3,
+          urgentVehicles: 3,
+          total: 5,
         }),
       }),
-    ).toBe('2 things need your attention. Across 2 vehicles.');
+    ).toEqual({ status: 'late', text: '1 late · 4 this week · across 3 vehicles' });
   });
 
-  it('trusts attentionCounts.urgentVehicles even when the capped list cannot cover every urgent item', () => {
+  it('trusts attentionCounts.urgentVehicles over the capped item list', () => {
     expect(
       dashboardHeadline({
-        // Only 2 of the 30 urgent items made the capped list, both on the same
-        // vehicle — a count derived from this list alone would say 1, or (the
-        // old behaviour) refuse to guess and omit the vehicle count entirely.
         attention: [
           makeAttentionItem({ id: 'a', urgency: 'overdue', vehicleId: 'v1' }),
           makeAttentionItem({ id: 'b', urgency: 'overdue', vehicleId: 'v1' }),
         ],
         attentionCounts: makeAttentionCounts({ overdue: 30, urgentVehicles: 15, total: 30 }),
-      }),
-    ).toBe('30 things need your attention. Across 15 vehicles.');
+      }).text,
+    ).toBe('30 late · across 15 vehicles');
   });
 
-  it('uses singular wording and omits the vehicle count for a single vehicle', () => {
+  it('leaves out the vehicle count for one vehicle, and reads "soon" with nothing late', () => {
     expect(
       dashboardHeadline({
         attention: [makeAttentionItem({ urgency: 'this_week' })],
-        attentionCounts: makeAttentionCounts({ thisWeek: 1, total: 1 }),
+        attentionCounts: makeAttentionCounts({ thisWeek: 1, urgentVehicles: 1, total: 1 }),
       }),
-    ).toBe('1 thing needs your attention.');
+    ).toEqual({ status: 'soon', text: '1 this week' });
   });
 
-  it('points at the next coming-up item when nothing is urgent', () => {
+  it('is "All clear", naming what comes next', () => {
     expect(
       dashboardHeadline({
         attention: [
@@ -60,12 +53,13 @@ describe('dashboardHeadline', () => {
         ],
         attentionCounts: makeAttentionCounts({ thisMonth: 1, total: 1 }),
       }),
-    ).toBe('Nothing due right now. Next up: Insurance policy · 12 days left.');
+    ).toEqual({ status: 'ok', text: 'All clear · Next: Insurance policy · 12 days left' });
   });
 
-  it('reports an empty month', () => {
-    expect(dashboardHeadline({ attention: [], attentionCounts: makeAttentionCounts() })).toBe(
-      'Nothing due in the next 30 days.',
-    );
+  it('is plain "All clear" when nothing is due in 30 days', () => {
+    expect(dashboardHeadline({ attention: [], attentionCounts: makeAttentionCounts() })).toEqual({
+      status: 'ok',
+      text: 'All clear',
+    });
   });
 });

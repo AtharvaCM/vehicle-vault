@@ -1,11 +1,17 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
 import { createCatalogVehicle } from './helpers/vehicle-form';
+
+/** On a phone, Home's writes are behind the bottom bar's ＋ (#306). */
+async function openLog(page: Page, action: 'Log service' | 'Log fuel') {
+  await page.getByTestId('quick-log-button').click();
+  await page.getByRole('dialog', { name: 'Log' }).getByRole('button', { name: action }).click();
+}
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -42,7 +48,7 @@ test('a service and a fuel fill are logged from the dashboard on a phone', async
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/home');
 
-  await page.getByRole('button', { name: 'Log service' }).first().click();
+  await openLog(page, 'Log service');
   const dialog = page.getByRole('dialog', { name: 'Log a service' });
   await expect(dialog.getByLabel('Odometer (km)')).toHaveValue('15000');
   await dialog.getByLabel('Odometer (km)').fill('15200');
@@ -67,7 +73,7 @@ test('a service and a fuel fill are logged from the dashboard on a phone', async
   );
 
   // A back-dated log from an older bill never winds the odometer back.
-  await page.getByRole('button', { name: 'Log service' }).first().click();
+  await openLog(page, 'Log service');
   await dialog.getByLabel('Odometer (km)').fill('14000');
   await dialog.getByLabel('Cost').fill('300');
   await dialog.getByRole('button', { name: 'Log service' }).click();
@@ -78,7 +84,7 @@ test('a service and a fuel fill are logged from the dashboard on a phone', async
   );
 
   // Fuel, one tap from the same place: amount, quantity, odometer — nothing else.
-  await page.getByRole('button', { name: 'Log fuel' }).click();
+  await openLog(page, 'Log fuel');
   const fuel = page.getByRole('dialog', { name: 'Log fuel' });
   await fuel.getByLabel('Amount paid').fill('2100');
   await fuel.getByLabel(/^Quantity/).fill('20');
