@@ -1,3 +1,10 @@
+# [1.104.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.103.0...v1.104.0) (2026-09-25)
+
+
+### Features
+
+* fold Tech specs into About this vehicle ([8c0eefa](https://github.com/AtharvaCM/vehicle-vault/commit/8c0eefa090ec20f7eeb2f932a4a3f8fd2794b068)), closes [#319](https://github.com/AtharvaCM/vehicle-vault/issues/319)
+
 # [1.103.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.102.0...v1.103.0) (2026-09-25)
 
 
