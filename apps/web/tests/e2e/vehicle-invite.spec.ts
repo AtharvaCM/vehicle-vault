@@ -59,7 +59,7 @@ test('a signed-out invitee previews the invite, registers and accepts it', async
 
   await invitee.getByRole('link', { name: 'Create account to accept' }).click();
   await expect(invitee).toHaveURL(/\/register\?next=/);
-  await invitee.getByLabel(/^name$/i).fill(`E2E Invitee ${suffix}`);
+  await invitee.getByLabel(/^your name$/i).fill(`E2E Invitee ${suffix}`);
   await invitee.getByLabel(/email address/i).fill(inviteeEmail);
   await invitee.getByLabel(/^password$/i).fill(PASSWORD);
   await invitee.getByRole('button', { name: /create account/i }).click();

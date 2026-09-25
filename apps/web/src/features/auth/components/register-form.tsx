@@ -5,6 +5,9 @@ import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/shared/password-input';
+import { cn } from '@/lib/utils';
+import { Check } from 'lucide-react';
 
 type RegisterFormProps = {
   isSubmitting?: boolean;
@@ -20,6 +23,9 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
       password: '',
     },
   });
+
+  // The one rule, shown as it is met rather than only after a failed submit.
+  const longEnough = (form.watch('password') ?? '').length >= 8;
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const result = RegisterSchema.safeParse({
@@ -47,7 +53,11 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <FormField htmlFor="register-name" label="Name" error={form.formState.errors.name?.message}>
+      <FormField
+        htmlFor="register-name"
+        label="Your name"
+        error={form.formState.errors.name?.message}
+      >
         <Input
           autoComplete="name"
           id="register-name"
@@ -77,14 +87,24 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
         label="Password"
         error={form.formState.errors.password?.message}
       >
-        <Input
+        <PasswordInput
+          aria-describedby="register-password-rule"
           autoComplete="new-password"
           id="register-password"
-          placeholder="Use at least 8 characters"
           {...form.register('password')}
           aria-invalid={Boolean(form.formState.errors.password)}
-          type="password"
         />
+        <p
+          className={cn(
+            'mt-1.5 flex items-center gap-1.5 text-small',
+            longEnough ? 'text-ok' : 'text-fg-3',
+          )}
+          data-met={longEnough || undefined}
+          id="register-password-rule"
+        >
+          <Check aria-hidden="true" className="size-3.5" />
+          At least 8 characters
+        </p>
       </FormField>
 
       {submitError ? <InlineError message={submitError} /> : null}

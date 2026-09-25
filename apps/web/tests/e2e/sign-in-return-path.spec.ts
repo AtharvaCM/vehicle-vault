@@ -47,10 +47,10 @@ test('a deep link survives switching to registration', async ({ page }) => {
   await page.goto(DEEP_LINK);
   await expect(page).toHaveURL(/\/login\?next=/);
 
-  await page.getByRole('link', { name: 'Create one' }).click();
+  await page.getByRole('link', { name: 'Create a free account' }).click();
   await expect(page).toHaveURL(/\/register\?next=%2Fsettings%2Fpreferences$/);
 
-  await page.getByLabel(/^name$/i).fill(`E2E Return ${suffix}`);
+  await page.getByLabel(/^your name$/i).fill(`E2E Return ${suffix}`);
   await page.getByLabel(/email address/i).fill(`e2e+return-reg-${suffix}@vehiclevault.dev`);
   await page.getByLabel(/^password$/i).fill(PASSWORD);
   await page.getByRole('button', { name: /create account/i }).click();

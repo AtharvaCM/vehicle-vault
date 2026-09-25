@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/shared/password-input';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -115,10 +115,9 @@ export function ChangePasswordDialog({
               htmlFor="current-password"
               label="Current password"
             >
-              <Input
+              <PasswordInput
                 autoComplete="current-password"
                 id="current-password"
-                type="password"
                 {...form.register('currentPassword')}
               />
             </FormField>
@@ -128,10 +127,9 @@ export function ChangePasswordDialog({
             htmlFor="new-password"
             label="New password"
           >
-            <Input
+            <PasswordInput
               autoComplete="new-password"
               id="new-password"
-              type="password"
               {...form.register('newPassword')}
             />
           </FormField>
@@ -140,10 +138,9 @@ export function ChangePasswordDialog({
             htmlFor="confirm-password"
             label="New password again"
           >
-            <Input
+            <PasswordInput
               autoComplete="new-password"
               id="confirm-password"
-              type="password"
               {...form.register('confirmPassword')}
             />
           </FormField>
