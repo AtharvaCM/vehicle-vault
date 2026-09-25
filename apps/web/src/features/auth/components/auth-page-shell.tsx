@@ -4,18 +4,26 @@ import type { ReactNode } from 'react';
 
 import { PublicFrame } from '@/components/public/public-frame';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 type AuthPageShellProps = {
   title: string;
-  description: string;
+  /** One line under the title; optional, since the title often says it all. */
+  description?: ReactNode;
+  /** Above the title: why this sign-in is happening (a catalog vehicle, an invite). */
+  context?: ReactNode;
   alternateAction: ReactNode;
   children: ReactNode;
 };
 
+/**
+ * Every auth page (#343): one centred card on all widths, the brand in the
+ * public header above it, and no marketing column, so the form sits above the
+ * fold on a phone with one title.
+ */
 export function AuthPageShell({
   title,
   description,
+  context,
   alternateAction,
   children,
 }: AuthPageShellProps) {
@@ -23,38 +31,24 @@ export function AuthPageShell({
 
   return (
     <PublicFrame>
-      <div className="mx-auto flex max-w-5xl items-center px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h1 className="text-title font-semibold tracking-tight text-fg sm:text-display">
-                {title}
-              </h1>
-              <p className="max-w-xl text-lead leading-7 text-fg-2">{description}</p>
-            </div>
-
-            <div className="rounded-3xl border border-line bg-surface p-6">
-              <h2 className="text-ui font-semibold text-fg">Why this matters</h2>
-              <ul className="mt-4 grid gap-3 text-ui leading-6 text-fg-2">
-                <li>Keep every vehicle, service entry, reminder, and receipt in one place.</li>
-                <li>See what is due and urgent for your own garage only.</li>
-                <li>Pick up where you left off whenever you come back.</li>
-              </ul>
-            </div>
+      <main className="mx-auto w-full max-w-md px-4 py-6 sm:py-12">
+        <div
+          className="space-y-5 rounded-card border border-line bg-surface p-5 shadow-xs sm:p-6"
+          data-testid="auth-card"
+        >
+          {context}
+          <div className="space-y-1">
+            <h1 className="font-display text-heading font-semibold tracking-tight text-fg">
+              {title}
+            </h1>
+            {description ? <p className="text-ui text-fg-2">{description}</p> : null}
           </div>
-
-          <Card className="border-line shadow-xs">
-            <CardHeader>
-              <CardTitle>{title}</CardTitle>
-              <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {children}
-              <div className="border-t border-line pt-4 text-ui text-fg-2">{alternateAction}</div>
-            </CardContent>
-          </Card>
+          {children}
+          <div className="border-t border-line-subtle pt-4 text-ui text-fg-2">
+            {alternateAction}
+          </div>
         </div>
-      </div>
+      </main>
     </PublicFrame>
   );
 }

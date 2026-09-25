@@ -4,7 +4,7 @@ import { useForm, type Path } from 'react-hook-form';
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/shared/password-input';
 
 type PasswordResetFormValues = {
   password: string;
@@ -69,11 +69,10 @@ export function PasswordResetForm({
         label="New password"
         error={form.formState.errors.password?.message}
       >
-        <Input
+        <PasswordInput
           autoComplete="new-password"
           id="password-reset-new-password"
           placeholder="Use at least 8 characters"
-          type="password"
           {...form.register('password')}
           aria-invalid={Boolean(form.formState.errors.password)}
         />
@@ -84,11 +83,10 @@ export function PasswordResetForm({
         label="Confirm new password"
         error={form.formState.errors.confirmPassword?.message}
       >
-        <Input
+        <PasswordInput
           autoComplete="new-password"
           id="password-reset-confirm-password"
           placeholder="Re-enter the new password"
-          type="password"
           {...form.register('confirmPassword')}
           aria-invalid={Boolean(form.formState.errors.confirmPassword)}
         />
