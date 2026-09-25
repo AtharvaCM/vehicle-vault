@@ -1,3 +1,10 @@
+# [1.107.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.106.0...v1.107.0) (2026-09-25)
+
+
+### Features
+
+* give tyres a verdict, a wheel diagram and one history ([3e6f4bf](https://github.com/AtharvaCM/vehicle-vault/commit/3e6f4bf1e1e4c1b95a552fc3d1236a0fd8f8cd9b)), closes [#320](https://github.com/AtharvaCM/vehicle-vault/issues/320)
+
 # [1.106.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.105.0...v1.106.0) (2026-09-25)
 
 
