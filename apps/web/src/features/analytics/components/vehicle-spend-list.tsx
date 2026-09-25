@@ -69,9 +69,15 @@ export function VehicleSpendList() {
                 </span>
               ) : tcoQuery?.data ? (
                 <>
+                  {/* With a purchase on file, what owning it has cost leads; else the spend. */}
                   <Figure
-                    label="Spent in all"
-                    value={<Money value={Number(tcoQuery.data.totals.netSpend)} />}
+                    hint={tcoQuery.data.totals.tco ? 'Purchase and running' : undefined}
+                    label={tcoQuery.data.totals.tco ? 'Cost of owning' : 'Spent in all'}
+                    value={
+                      <Money
+                        value={Number(tcoQuery.data.totals.tco ?? tcoQuery.data.totals.netSpend)}
+                      />
+                    }
                   />
                   <Figure
                     hint={costPerKmHint(tcoQuery.data)}

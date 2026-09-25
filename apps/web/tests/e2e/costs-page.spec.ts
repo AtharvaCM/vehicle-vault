@@ -116,8 +116,23 @@ test('Costs gathers spend, per-vehicle spend and loans; Home links to it; /loans
     await expect(page.getByRole('heading', { name: 'By vehicle' }), label).toBeVisible();
     await expect(page.getByRole('link', { name: new RegExp(nickname) }), label).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Loans' }), label).toBeVisible();
-    await expect(page.getByText(lender), label).toBeVisible();
+    // One line per loan (#311), with the total under them; the line opens the loan.
+    const line = page.getByTestId('loan-line').filter({ hasText: lender });
+    await expect(line, label).toContainText(`${nickname} · ${lender}`);
+    await expect(line, label).toContainText(/left · ends /);
+    await expect(page.getByTestId('loans-total'), label).toContainText('a month in EMIs');
     await expectNoSidewaysScroll(page, `Costs at ${label}`);
+    if (process.env.E2E_SCREENSHOT_DIR) {
+      await page.getByRole('heading', { name: 'Loans' }).scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: `${process.env.E2E_SCREENSHOT_DIR}/costs-${size.width}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      });
+    }
+    await line.getByRole('button').first().click();
+    await expect(page.getByRole('dialog'), label).toContainText(lender);
+    await page.keyboard.press('Escape');
 
     // The legacy address still lands here (kept by
     // routes/legacy-redirect-routes.tsx).

@@ -98,6 +98,22 @@ describe('VehicleSpendList', () => {
     expect(screen.getByText('₹28,236')).toBeInTheDocument();
   });
 
+  it('leads with the cost of owning once a purchase is on file, and with spend before', async () => {
+    useVehicles.mockReturnValue({ data: [vehicle()], isLoading: false, isError: false });
+    const owned = tco();
+    getTco.mockResolvedValue({
+      ...owned,
+      purchasePrice: '900000.00',
+      totals: { ...owned.totals, tco: '928236.00' },
+    });
+
+    renderList();
+
+    expect(await screen.findByText('Cost of owning')).toBeInTheDocument();
+    expect(screen.getByText('₹9,28,236')).toBeInTheDocument();
+    expect(screen.queryByText('Spent in all')).not.toBeInTheDocument();
+  });
+
   it('shows the #192 prompt instead of a ₹/km figure when the distance is too short', async () => {
     useVehicles.mockReturnValue({ data: [vehicle()], isLoading: false, isError: false });
     getTco.mockResolvedValue(tco({ purchaseOdometer: 0, kmSincePurchase: 400, costPerKm: null }));

@@ -1,11 +1,18 @@
+import { MoreHorizontal } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import type { CreateVehicleLoanInput, VehicleLoan } from '@vehicle-vault/shared';
 
 import { EmptyState } from '@/components/shared/empty-state';
-import { Figure } from '@/components/shared/figure';
 import { Money } from '@/components/shared/money';
 import { SectionHeader } from '@/components/shared/section-header';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { format } from '@/lib/format';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,10 +38,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
+import { getVehicleDisplayName } from '@/features/vehicles/utils/get-vehicle-display-name';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
-import { LoanCard } from './loan-card';
 import { LoanDetailDialog } from './loan-detail-dialog';
 import { LoanForm } from './loan-form';
 import { useCreateLoan } from '../hooks/use-create-loan';
@@ -70,13 +77,15 @@ export function LoansSection() {
   const vehicles = useMemo(() => vehiclesQuery.data ?? [], [vehiclesQuery.data]);
   const loans = useMemo(() => loansQuery.data ?? [], [loansQuery.data]);
 
+  const vehicleNameById = useMemo(
+    () => Object.fromEntries(vehicles.map((v) => [v.id, getVehicleDisplayName(v)])),
+    [vehicles],
+  );
+  // Name and plate, where a vehicle is picked or a dialog names it.
   const vehicleLabelById = useMemo(
     () =>
       Object.fromEntries(
-        vehicles.map((v) => [
-          v.id,
-          `${v.nickname?.trim() || `${v.make} ${v.model}`} • ${v.registrationNumber}`,
-        ]),
+        vehicles.map((v) => [v.id, `${getVehicleDisplayName(v)} • ${v.registrationNumber}`]),
       ),
     [vehicles],
   );
@@ -182,40 +191,43 @@ export function LoansSection() {
         </p>
       ) : (
         <>
-          {loans.length ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-card border border-line bg-surface p-4">
-                <Figure label="Monthly EMIs" value={<Money value={totals.emi} />} />
-              </div>
-              <div className="rounded-card border border-line bg-surface p-4">
-                <Figure label="Still owed" value={<Money value={totals.outstanding} />} />
-              </div>
-              <div className="rounded-card border border-line bg-surface p-4">
-                <Figure
-                  label="Interest paid so far"
-                  value={<Money value={totals.interestPaid} />}
-                />
-              </div>
-            </div>
-          ) : null}
-
           {!loans.length ? (
             <EmptyState
               description="Add a loan to include EMI and interest in your cost analysis."
               title="No loans yet"
             />
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {loans.map((loan) => (
-                <LoanCard
-                  key={loan.id}
-                  loan={loan}
-                  onDelete={setLoanToDelete}
-                  onEdit={setLoanToEdit}
-                  onManage={setSelectedLoan}
-                  vehicleLabel={vehicleLabelById[loan.vehicleId]}
-                />
-              ))}
+            <div className="overflow-hidden rounded-card border border-line bg-surface">
+              <ul aria-label="Loans" className="divide-y divide-line-subtle">
+                {loans.map((loan) => (
+                  <LoanLine
+                    key={loan.id}
+                    loan={loan}
+                    onDelete={setLoanToDelete}
+                    onEdit={setLoanToEdit}
+                    onOpen={setSelectedLoan}
+                    vehicleName={vehicleNameById[loan.vehicleId]}
+                  />
+                ))}
+              </ul>
+              {/* The garage's total, one line under the loans it adds up. */}
+              <p
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-t border-line bg-page/60 px-4 py-3 text-small text-fg-2 sm:px-5"
+                data-testid="loans-total"
+              >
+                <span className="font-semibold text-fg">Total</span>
+                <span>
+                  <Money className="font-semibold text-fg" value={totals.outstanding} /> left
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>
+                  <Money value={totals.emi} /> a month in EMIs
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>
+                  <Money value={totals.interestPaid} /> interest paid so far
+                </span>
+              </p>
             </div>
           )}
         </>
@@ -369,5 +381,62 @@ export function LoansSection() {
         </AlertDialogContent>
       </AlertDialog>
     </section>
+  );
+}
+
+type LoanLineProps = {
+  loan: VehicleLoan;
+  vehicleName: string | undefined;
+  onOpen: (loan: VehicleLoan) => void;
+  onEdit: (loan: VehicleLoan) => void;
+  onDelete: (loan: VehicleLoan) => void;
+};
+
+/** "Weekend Bike · HDFC · ₹1,31,624 left · ends Mar 2029": the line opens the loan. */
+function LoanLine({ loan, vehicleName, onOpen, onEdit, onDelete }: LoanLineProps) {
+  const active = loan.status === 'active';
+
+  return (
+    <li className="flex items-stretch" data-testid="loan-line">
+      <button
+        className="flex min-w-0 flex-1 flex-col gap-0.5 px-4 py-3 text-left transition-colors hover:bg-page/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+        onClick={() => onOpen(loan)}
+        type="button"
+      >
+        <span className="min-w-0 truncate text-body font-semibold text-fg">
+          {vehicleName ? `${vehicleName} · ` : null}
+          {loan.lender}
+        </span>
+        <span className="shrink-0 text-small text-fg-2">
+          {active ? (
+            <>
+              <Money className="font-semibold text-fg" value={loan.outstandingBalance} /> left ·
+              ends {format.date(loan.endDate, 'monthYear')}
+            </>
+          ) : (
+            `${format.enumLabel('loanStatus', loan.status)} · ${format.date(loan.closedAt ?? loan.endDate, 'monthYear')}`
+          )}
+        </span>
+      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            aria-label={`More actions for the ${loan.lender} loan`}
+            className="h-auto w-11 shrink-0 rounded-none"
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <MoreHorizontal aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEdit(loan)}>Edit</DropdownMenuItem>
+          <DropdownMenuItem className="text-late" onClick={() => onDelete(loan)}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
   );
 }

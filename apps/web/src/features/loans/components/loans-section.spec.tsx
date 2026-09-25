@@ -71,21 +71,20 @@ function renderSection() {
 }
 
 describe('LoansSection', () => {
-  it('renders the totals and a card per loan', () => {
+  it('lists one line per loan, and the total under them', () => {
     useVehicles.mockReturnValue({ data: [], isLoading: false, isError: false });
     useLoans.mockReturnValue({ data: [loan()], isLoading: false, isError: false });
 
     renderSection();
 
     expect(screen.getByRole('heading', { name: 'Loans' })).toBeInTheDocument();
-    expect(screen.getByText('Monthly EMIs')).toBeInTheDocument();
-    expect(screen.getByText('Still owed')).toBeInTheDocument();
-    expect(screen.getByText('Interest paid so far')).toBeInTheDocument();
-    // Each figure appears twice: once in the totals row, once on the loan's own card.
-    expect(screen.getAllByText('₹10,275')).toHaveLength(2);
-    expect(screen.getAllByText('₹3,50,000')).toHaveLength(2);
-    expect(screen.getAllByText('₹45,000')).toHaveLength(2);
-    expect(screen.getByText('HDFC Bank')).toBeInTheDocument();
+    const [line] = screen.getAllByTestId('loan-line');
+    expect(line).toHaveTextContent('HDFC Bank');
+    expect(line).toHaveTextContent('₹3,50,000 left · ends');
+    const total = screen.getByTestId('loans-total');
+    expect(total).toHaveTextContent('₹3,50,000 left');
+    expect(total).toHaveTextContent('₹10,275 a month in EMIs');
+    expect(total).toHaveTextContent('₹45,000 interest paid so far');
   });
 
   it('shows the empty state and no totals when there are no loans', () => {
@@ -95,6 +94,6 @@ describe('LoansSection', () => {
     renderSection();
 
     expect(screen.getByText('No loans yet')).toBeInTheDocument();
-    expect(screen.queryByText('Monthly EMIs')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('loans-total')).not.toBeInTheDocument();
   });
 });
