@@ -1,6 +1,7 @@
 import { AuditResourceType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { AUDIT_CATEGORIES, type AuditCategory } from '../audit-query.service';
 
 export class AuditQueryDto {
   @IsOptional()
@@ -14,6 +15,11 @@ export class AuditQueryDto {
   @IsOptional()
   @IsString()
   actionPrefix?: string;
+
+  /** Settings → Activity's two views: sign-ins and security, or everything else. */
+  @IsOptional()
+  @IsIn(AUDIT_CATEGORIES)
+  category?: AuditCategory;
 
   @IsOptional()
   @IsDateString()

@@ -1,0 +1,159 @@
+/**
+ * Canonical dotted-string vocabulary for AuditEvent.action. See ADR-0004.
+ *
+ * Convention: `{namespace}.{verb}` where namespace is the resource family
+ * (vehicle, maintenance, reminder, document, claim, fuel, auth) and verb
+ * is past tense (created, updated, deleted, restored). Auth events use
+ * the `auth.` prefix and don't carry a resource reference.
+ *
+ * Shared so the web can say every one of them in words (#318): its activity
+ * feed is tested against this whole list, so an action added here without a
+ * sentence fails that test rather than showing up raw.
+ */
+export const AUDIT_ACTIONS = {
+  vehicle: {
+    created: 'vehicle.created',
+    updated: 'vehicle.updated',
+    deleted: 'vehicle.deleted',
+  },
+  maintenance: {
+    created: 'maintenance.created',
+    updated: 'maintenance.updated',
+    deleted: 'maintenance.deleted',
+  },
+  reminder: {
+    created: 'reminder.created',
+    updated: 'reminder.updated',
+    completed: 'reminder.completed',
+    deleted: 'reminder.deleted',
+  },
+  insurance: {
+    created: 'insurance.created',
+    updated: 'insurance.updated',
+    deleted: 'insurance.deleted',
+  },
+  warranty: {
+    created: 'warranty.created',
+    updated: 'warranty.updated',
+    deleted: 'warranty.deleted',
+  },
+  registration: {
+    created: 'registration.created',
+    updated: 'registration.updated',
+    deleted: 'registration.deleted',
+  },
+  puc: {
+    created: 'puc.created',
+    updated: 'puc.updated',
+    deleted: 'puc.deleted',
+  },
+  roadTax: {
+    created: 'road_tax.created',
+    updated: 'road_tax.updated',
+    deleted: 'road_tax.deleted',
+  },
+  claim: {
+    created: 'claim.created',
+    updated: 'claim.updated',
+    deleted: 'claim.deleted',
+  },
+  accessory: {
+    created: 'accessory.created',
+    updated: 'accessory.updated',
+    deleted: 'accessory.deleted',
+  },
+  serviceBaseline: {
+    created: 'service_baseline.created',
+    updated: 'service_baseline.updated',
+  },
+  fuel: {
+    created: 'fuel.created',
+    updated: 'fuel.updated',
+    deleted: 'fuel.deleted',
+  },
+  tyre: {
+    created: 'tyre.created',
+    updated: 'tyre.updated',
+    deleted: 'tyre.deleted',
+    // A reading is recorded against the tyre it measures, not a type of its own.
+    inspected: 'tyre.inspected',
+  },
+  loan: {
+    created: 'loan.created',
+    updated: 'loan.updated',
+    deleted: 'loan.deleted',
+    closed: 'loan.closed',
+    foreclosed: 'loan.foreclosed',
+    prepaymentAdded: 'loan.prepayment_added',
+    prepaymentDeleted: 'loan.prepayment_deleted',
+  },
+  attachment: {
+    uploaded: 'attachment.uploaded',
+    deleted: 'attachment.deleted',
+  },
+  auth: {
+    accountCreated: 'auth.account_created',
+    loginSucceeded: 'auth.login_succeeded',
+    loginFailed: 'auth.login_failed',
+    loggedOut: 'auth.logged_out',
+    refreshRotated: 'auth.refresh_rotated',
+    passwordResetRequested: 'auth.password_reset_requested',
+    passwordResetCompleted: 'auth.password_reset_completed',
+    passwordChanged: 'auth.password_changed',
+    sessionRevoked: 'auth.session_revoked',
+    otherSessionsRevoked: 'auth.other_sessions_revoked',
+    emailVerified: 'auth.email_verified',
+    oauthLinked: 'auth.oauth_linked',
+    // Recorded with no actor and no owner: the account it describes is gone,
+    // and its id is all that is left to say which one it was.
+    accountDeleted: 'auth.account_deleted',
+  },
+  admin: {
+    forceLogout: 'admin.force_logout',
+  },
+  notification: {
+    // The mute is recorded against the user, not a notification: it changes
+    // what we are allowed to send them, and both directions are auditable
+    // because "I never asked for this" and "I never turned it off" are the two
+    // complaints this feature exists to answer.
+    alertEmailMuted: 'notification.alert_email_muted',
+    alertEmailUnmuted: 'notification.alert_email_unmuted',
+    // Per-kind channel choices, recorded with the before and after of only the
+    // kinds that changed.
+    preferencesUpdated: 'notification.preferences_updated',
+  },
+  vehicleMember: {
+    added: 'vehicle_member.added',
+    roleChanged: 'vehicle_member.role_changed',
+    removed: 'vehicle_member.removed',
+    ownershipTransferred: 'vehicle_member.ownership_transferred',
+  },
+  vehicleInvite: {
+    created: 'vehicle_invite.created',
+    accepted: 'vehicle_invite.accepted',
+    revoked: 'vehicle_invite.revoked',
+    declined: 'vehicle_invite.declined',
+    resent: 'vehicle_invite.resent',
+  },
+} as const;
+
+type ValuesOf<T> = T[keyof T];
+
+/** Every action the API records, as it is stored. */
+export type AuditActionName = ValuesOf<{
+  [Namespace in keyof typeof AUDIT_ACTIONS]: ValuesOf<(typeof AUDIT_ACTIONS)[Namespace]>;
+}>;
+
+export const AUDIT_ACTION_NAMES: AuditActionName[] = Object.values(AUDIT_ACTIONS).flatMap(
+  (namespace) => Object.values(namespace) as AuditActionName[],
+);
+
+/**
+ * Settings → Activity's "Sign-ins & security": sign-ins, failed attempts, and
+ * password, session and account changes. Everything else is a garage change.
+ */
+export const SECURITY_AUDIT_PREFIXES = ['auth.', 'admin.'] as const;
+
+export function isSecurityAuditAction(action: string): boolean {
+  return SECURITY_AUDIT_PREFIXES.some((prefix) => action.startsWith(prefix));
+}

@@ -42,6 +42,7 @@ export class AuditController {
       resourceType: query.resourceType,
       action: query.action,
       actionPrefix: query.actionPrefix,
+      category: query.category,
       from: query.from ? new Date(query.from) : undefined,
       to: query.to ? new Date(query.to) : undefined,
       cursor: query.cursor,

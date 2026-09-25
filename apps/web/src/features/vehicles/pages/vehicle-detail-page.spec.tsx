@@ -331,7 +331,7 @@ describe('VehicleDetailPage tabs', () => {
       "AccessoriesWhat's fitted, with its warranty",
       "LoansEMIs and what's left to pay",
       'MembersWho can see this vehicle or log for it',
-      'ActivityEvery change, newest first',
+      'ActivityEvery change, in words, newest first',
     ]);
     expect(owned.getByRole('link', { name: /^Tyres/ })).toHaveAttribute(
       'data-search',

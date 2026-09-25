@@ -95,6 +95,8 @@ export type DateStyle =
   | 'monthYearLong'
   /** "Wednesday, 23 September 2026" — tooltips and screen-reader labels. */
   | 'long'
+  /** "4:05 pm" — the time alone, under a day heading. */
+  | 'time'
   /** "23 Sep 2026, 4:05 pm" — when something happened, not when it is due. */
   | 'dateTime';
 
@@ -120,6 +122,8 @@ export function date(value: DateInput, style: DateStyle = 'medium') {
       return `${WEEKDAYS_LONG[weekday]}, ${day} ${MONTHS_LONG[month]} ${year}`;
     case 'dateTime':
       return `${day} ${MONTHS[month]} ${year}, ${clock(parts)}`;
+    case 'time':
+      return clock(parts);
     case 'medium':
       return `${day} ${MONTHS[month]} ${year}`;
   }

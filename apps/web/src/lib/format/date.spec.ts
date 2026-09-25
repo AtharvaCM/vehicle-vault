@@ -25,6 +25,7 @@ describe('date', () => {
     expect(date(value, 'monthYearLong')).toBe('September 2026');
     expect(date(value, 'long')).toBe('Wednesday, 23 September 2026');
     expect(date(value, 'dateTime')).toBe('23 Sep 2026, 4:05 pm');
+    expect(date(value, 'time')).toBe('4:05 pm');
   });
 
   it('keeps a date-only value on its own day', () => {
