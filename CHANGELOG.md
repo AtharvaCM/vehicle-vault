@@ -1,3 +1,12 @@
+# [1.99.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.98.0...v1.99.0) (2026-09-25)
+
+
+### Features
+
+* give History one summary line, and fit it to a phone ([642968e](https://github.com/AtharvaCM/vehicle-vault/commit/642968e1098dd8bb55a294869d533ef9b5acd672)), closes [#310](https://github.com/AtharvaCM/vehicle-vault/issues/310)
+* **web:** list loans one line each on Costs, and lead vehicles with TCO ([75e06ec](https://github.com/AtharvaCM/vehicle-vault/commit/75e06ece7f937d0838032038dfb73d7055bc69d1)), closes [#311](https://github.com/AtharvaCM/vehicle-vault/issues/311)
+* **web:** swipe Upcoming rows on a phone, and colour the status line ([dc1bf80](https://github.com/AtharvaCM/vehicle-vault/commit/dc1bf8005d7af517d0f23deb385d3fd6822f84e3)), closes [#309](https://github.com/AtharvaCM/vehicle-vault/issues/309)
+
 # [1.98.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.97.0...v1.98.0) (2026-09-25)
 
 
