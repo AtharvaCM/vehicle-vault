@@ -40,6 +40,8 @@ What a **Vehicle** actually returns, measured fill to fill from its fuel logs (`
 
 **FuelLog quantity unit**: `quantity` is litres, kg or kWh depending on the vehicle's fuel type (see `fuelEconomyUnit` above); `CreateFuelLogDto`/`UpdateFuelLogDto` also carry an optional `isFullTank` (defaults `true` on create) and `paymentMethod`, both free-form and neither validated against a fixed set.
 
+**Workshop names** (`GET /maintenance-records/workshops`, `MaintenanceService.getWorkshopNames`): the workshops named on the user's confirmed service records, across every vehicle they are a member of, most recently used first, each once (compared without case or surrounding space, the latest spelling kept), at most 12. The log-service form offers them.
+
 **History timeline** (`modules/history/history.service.ts`, `GET /history`):
 The garage's record of what was done, newest first, across every vehicle the user can see (or one, with `vehicleId`; `kind` narrows to `service`, `fuel` or `odometer`). It merges three sources: **MaintenanceRecords** (drafts included, marked by `status`), **FuelLogs**, and odometer readings. A reading has no table: each `vehicle.updated` **AuditEvent** whose `changedFields` include `odometer` (the odometer update and the edit form) is one, with the reading before and after; a fill moves the odometer without such an event, so it is never listed twice. Pages are keyset-paginated over (time, id) with an opaque cursor, reading each source for one row past the page. `months[]` gives each month on the page its confirmed service and fuel spend over the whole month under the same filters (drafts never count; null when nothing can), so a month split across pages keeps one total. Months are Indian calendar months, as the web shows dates.
 

@@ -33,6 +33,16 @@ export async function selectDropdownOption(page: Page, fieldLabel: RegExp, optio
   await expect(page.getByLabel(fieldLabel)).toContainText(optionLabel);
 }
 
+/**
+ * Saving the add-vehicle form does not go straight to the vehicle: it shows
+ * the insurance/PUC papers step first (`VehicleSetupPrompt`), still on
+ * `/vehicles/new`. Tests that do not care about it skip past with one click.
+ */
+export async function skipVehicleSetupPrompt(page: Page) {
+  await expect(page.getByText('Never miss a renewal')).toBeVisible();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
+}
+
 type CatalogVehicle = {
   nickname: string;
   odometer: string;
@@ -92,6 +102,7 @@ export async function createCatalogVehicle(
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 
+  await skipVehicleSetupPrompt(page);
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 

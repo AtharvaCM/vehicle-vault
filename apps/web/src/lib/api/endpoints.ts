@@ -88,6 +88,7 @@ export const endpoints = {
     detail: (recordId: string) => `/maintenance-records/${recordId}`,
     update: (recordId: string) => `/maintenance-records/${recordId}`,
     delete: (recordId: string) => `/maintenance-records/${recordId}`,
+    workshops: '/maintenance-records/workshops',
   },
   attachments: {
     extractionStatus: '/attachments/extraction/status',

@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
+import { skipVehicleSetupPrompt } from './helpers/vehicle-form';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,6 +114,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByLabel(/nickname/i).fill(initialNickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 
+  await skipVehicleSetupPrompt(page);
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: initialNickname })).toBeVisible();
 
@@ -136,12 +138,15 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
   await page.getByRole('menuitem', { name: 'Service' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
-  await page.getByLabel(/service date/i).fill('2026-03-20');
+  await page.getByLabel('Date', { exact: true }).fill('2026-03-20');
   await page.getByLabel(/^odometer$/i).fill('16250');
+  // Workshop is one of the collapsed extras.
+  await page.getByRole('button', { name: /^Workshop/ }).click();
   await page.getByLabel(/workshop or garage/i).fill(workshopName);
-  await page.getByLabel(/total cost/i).fill('4500');
-  await page.getByLabel(/notes/i).fill('Oil change and general inspection');
-  await page.getByRole('button', { name: /save record/i }).click();
+  await page.getByLabel('Total on the bill').fill('4500');
+  await page.getByRole('button', { name: /^Notes/ }).click();
+  await page.getByRole('textbox', { name: 'Notes' }).fill('Oil change and general inspection');
+  await page.getByRole('button', { name: 'Save service' }).click();
 
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\?tab=history$/);
   await page.getByRole('link', { name: new RegExp(workshopName) }).click();
@@ -151,8 +156,10 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await page.getByRole('link', { name: /edit record/i }).click();
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+\/edit$/);
+  await page.getByRole('button', { name: /^Workshop/ }).click();
   await page.getByLabel(/workshop or garage/i).fill(updatedWorkshopName);
-  await page.getByLabel(/notes/i).fill('Updated record after reviewing invoice');
+  await page.getByRole('button', { name: /^Notes/ }).click();
+  await page.getByRole('textbox', { name: 'Notes' }).fill('Updated record after reviewing invoice');
   await page.getByRole('button', { name: /save changes/i }).click();
 
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);

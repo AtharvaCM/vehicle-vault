@@ -11,17 +11,23 @@ import { appToast } from '@/lib/toast';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 import { VehicleForm } from '../components/vehicle-form';
+import { VehicleSetupPrompt } from '../components/vehicle-setup-prompt';
 import { useCreateVehicle } from '../hooks/use-create-vehicle';
 import type { VehicleFormValues } from '../schemas/vehicle-form.schema';
+import type { Vehicle } from '../types/vehicle';
 
 export function VehicleCreatePage() {
   const navigate = useNavigate();
   const { catalog } = useSearch({ from: '/app/vehicles/new' });
   const catalogIntent = useCatalogIntentPrefill(catalog);
   const [isDirty, setIsDirty] = useState(false);
+  // Set the moment the vehicle is saved: from then on the page shows the
+  // papers step for it instead of the form, and there is nothing left to lose
+  // by leaving, so the unsaved-changes guard below drops out.
+  const [createdVehicle, setCreatedVehicle] = useState<Vehicle | null>(null);
   const createVehicleMutation = useCreateVehicle();
-  const { allowNextNavigation } = useUnsavedChangesGuard({
-    when: isDirty,
+  useUnsavedChangesGuard({
+    when: isDirty && !createdVehicle,
     message: 'You have unsaved vehicle changes. Leave without saving?',
   });
 
@@ -37,23 +43,19 @@ export function VehicleCreatePage() {
         ...values,
         ...(fromCatalogIntent ? { fromCatalogIntent: true } : {}),
       });
-      const restoreNavigationGuard = allowNextNavigation();
 
       appToast.success({
         title: 'Vehicle created',
-        description: 'You can now add service history, reminders, and receipts.',
+        description: 'Add the insurance and PUC dates now, or skip for later.',
       });
 
-      try {
-        await navigate({
-          to: '/vehicles/$vehicleId',
-          params: {
-            vehicleId: vehicle.id,
-          },
-        });
-      } catch (error) {
-        restoreNavigationGuard();
-        throw error;
+      // `null` is a fresh vehicle, never answered or skipped. `undefined` is an
+      // API that predates the prompt and cannot save an answer to it either,
+      // so there is nothing to show: go straight to the vehicle, as before.
+      if (vehicle.setupPromptDismissedAt === null) {
+        setCreatedVehicle(vehicle);
+      } else {
+        await goToVehicle(vehicle);
       }
     } catch (error) {
       appToast.error({
@@ -64,9 +66,44 @@ export function VehicleCreatePage() {
     }
   }
 
+  async function goToVehicle(vehicle: Vehicle) {
+    try {
+      await navigate({
+        to: '/vehicles/$vehicleId',
+        params: {
+          vehicleId: vehicle.id,
+        },
+      });
+    } catch (error) {
+      appToast.error({
+        title: 'Could not open the vehicle',
+        description: getApiErrorMessage(error, 'Find it from Garage instead.'),
+      });
+    }
+  }
+
   const submitError = createVehicleMutation.error
     ? getApiErrorMessage(createVehicleMutation.error, 'Unable to create the vehicle.')
     : null;
+
+  if (createdVehicle) {
+    return (
+      <PageContainer>
+        <PageTitle
+          description="One last thing: the two dates the reminders run on."
+          title="Add vehicle"
+        />
+        <div className="max-w-xl">
+          <VehicleSetupPrompt
+            dismissedAt={createdVehicle.setupPromptDismissedAt}
+            fuelType={createdVehicle.fuelType}
+            onDismissed={() => void goToVehicle(createdVehicle)}
+            vehicleId={createdVehicle.id}
+          />
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -104,7 +141,9 @@ export function VehicleCreatePage() {
               Start with the current odometer so future due dates and due kilometres stay realistic.
             </p>
             <p>Use a nickname if you manage similar vehicles or a family garage.</p>
-            <p>Once saved, you can begin logging services, reminders, and receipts.</p>
+            <p>
+              Once saved, a short step asks for the insurance and PUC dates, then you&apos;re in.
+            </p>
           </CardContent>
         </Card>
       </div>

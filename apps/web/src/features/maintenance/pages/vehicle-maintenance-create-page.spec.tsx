@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { VehicleRole } from '@vehicle-vault/shared';
-import type { AnchorHTMLAttributes } from 'react';
+import { ReminderStatus, ReminderType, VehicleRole } from '@vehicle-vault/shared';
+import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { queryKeys } from '@/lib/query/query-keys';
 import { appToast } from '@/lib/toast';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
@@ -61,25 +62,76 @@ vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
   useUnsavedChangesGuard: () => ({ allowNextNavigation: () => () => undefined }),
 }));
 vi.mock('../components/maintenance-form', () => ({
-  MaintenanceForm: () => <div>maintenance form</div>,
-}));
-vi.mock('@/features/claims/components/maintenance-claim-link-card', () => ({
-  MaintenanceClaimLinkCard: () => null,
+  MaintenanceForm: ({
+    leading,
+    suggestedCategory,
+    scheduleNextDue,
+  }: {
+    leading?: ReactNode;
+    suggestedCategory?: { category: string; reason: string } | null;
+    scheduleNextDue?: boolean;
+  }) => (
+    <div>
+      {leading}
+      <div>maintenance form</div>
+      <p>
+        starts on: {suggestedCategory ? suggestedCategory.category : 'default'}
+        {suggestedCategory?.reason ? ` (${suggestedCategory.reason})` : ''}
+      </p>
+      {scheduleNextDue ? <p>next due from the schedule</p> : null}
+    </div>
+  ),
 }));
 
 import { VehicleMaintenanceCreatePage } from './vehicle-maintenance-create-page';
 
-function renderAs(role: VehicleRole) {
+const reminderId = '6f1c2b8e-3d4a-4b5c-9d6e-7f8091a2b3c4';
+const today = new Date().toISOString();
+
+const oilDueToday = {
+  id: 'reminder-due',
+  vehicleId: 'vehicle-1',
+  title: 'Engine oil due',
+  type: ReminderType.Service,
+  status: ReminderStatus.DueToday,
+  dueDate: today,
+  createdAt: today,
+  updatedAt: today,
+};
+
+type RenderOptions = { category?: 'engine_oil' | 'battery'; reminderId?: string };
+
+function renderAs(role: VehicleRole, options: RenderOptions = {}) {
   vehicleQuery.current = {
-    data: { id: 'vehicle-1', make: 'Bajaj', model: 'Pulsar NS 200', currentUserRole: role },
+    data: {
+      id: 'vehicle-1',
+      make: 'Bajaj',
+      model: 'Pulsar NS 200',
+      registrationNumber: 'MH12DM0002',
+      currentUserRole: role,
+    },
     isError: false,
   };
 
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  client.setQueryData(queryKeys.reminders.byVehicle('vehicle-1'), [oilDueToday]);
+  client.setQueryData(queryKeys.reminders.detail(reminderId), {
+    ...oilDueToday,
+    id: reminderId,
+    title: 'Chain clean & lube',
+    catalogSlug: 'chain_lube',
+    status: ReminderStatus.Upcoming,
+  });
 
   return render(
     <QueryClientProvider client={client}>
-      <VehicleMaintenanceCreatePage vehicleId="vehicle-1" />
+      <VehicleMaintenanceCreatePage
+        category={options.category as never}
+        reminderId={options.reminderId}
+        vehicleId="vehicle-1"
+      />
     </QueryClientProvider>,
   );
 }
@@ -88,8 +140,10 @@ describe('VehicleMaintenanceCreatePage roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])('gives an %s the form', (role) => {
     renderAs(role);
 
+    expect(screen.getByRole('heading', { level: 1, name: 'Log service' })).toBeInTheDocument();
     expect(screen.getByText('maintenance form')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /upload job card first/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Snap the bill' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Choose file' })).toBeInTheDocument();
     expect(screen.queryByText('You have view-only access')).not.toBeInTheDocument();
   });
 
@@ -97,22 +151,71 @@ describe('VehicleMaintenanceCreatePage roles', () => {
     renderAs(VehicleRole.Viewer);
 
     expect(screen.queryByText('maintenance form')).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /upload job card first/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Snap the bill' })).not.toBeInTheDocument();
     expect(screen.getByText('You have view-only access')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to History' })).toBeInTheDocument();
+  });
+});
+
+describe('VehicleMaintenanceCreatePage starting category', () => {
+  it('starts on the service that is due, saying why, and works the next due out', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(
+      screen.getByText('starts on: engine_oil (Picked because the oil change is due today.)'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('next due from the schedule')).toBeInTheDocument();
+  });
+
+  it('takes ?category= over what is due', () => {
+    renderAs(VehicleRole.Owner, { category: 'battery' });
+
+    expect(screen.getByText('starts on: battery')).toBeInTheDocument();
+  });
+
+  it('names the reminder from ?reminderId=, on its own work', () => {
+    renderAs(VehicleRole.Owner, { reminderId });
+
+    expect(
+      screen.getByText('starts on: chain_service (For your reminder “Chain clean & lube”.)'),
+    ).toBeInTheDocument();
+  });
+
+  it('lets ?category= choose the work for a reminder', () => {
+    renderAs(VehicleRole.Owner, { reminderId, category: 'engine_oil' });
+
+    expect(
+      screen.getByText('starts on: engine_oil (For your reminder “Chain clean & lube”.)'),
+    ).toBeInTheDocument();
   });
 });
 
 describe('VehicleMaintenanceCreatePage upload-first', () => {
   const photo = new File(['bill'], 'bill.png', { type: 'image/png' });
 
-  function uploadBill(files: File[] = [photo]) {
+  function uploadBill(files: File[] = [photo], input = 'bill-file-input') {
     renderAs(VehicleRole.Owner);
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(input, { target: { files } });
+    fireEvent.change(screen.getByTestId(input), { target: { files } });
   }
+
+  it('takes a photo from the camera or a file, image or PDF', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(screen.getByTestId('bill-camera-input')).toHaveAttribute('capture', 'environment');
+    expect(screen.getByTestId('bill-file-input')).toHaveAttribute(
+      'accept',
+      expect.stringContaining('application/pdf'),
+    );
+  });
+
+  it('starts the same draft from the camera', async () => {
+    attachmentsApi.extract.mockResolvedValue({ status: 'completed', odometer: 32_150 });
+
+    uploadBill([photo], 'bill-camera-input');
+    await opensDraft();
+
+    expect(attachmentsApi.upload).toHaveBeenCalledWith('draft-1', [photo]);
+  });
 
   const opensDraft = () =>
     waitFor(() =>

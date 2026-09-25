@@ -49,13 +49,15 @@ test('an electric vehicle is never asked for a PUC certificate', async ({ page }
   await page.getByLabel('Odometer', { exact: true }).fill('8200');
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
 
-  // The new-vehicle prompt asks for the insurance date alone.
+  // The new-vehicle prompt asks for the insurance date alone, before the
+  // page ever leaves /vehicles/new for the vehicle itself.
   await expect(page.getByText('Never miss a renewal')).toBeVisible();
   await expect(page.getByLabel('PUC expires on')).toHaveCount(0);
   await page.getByLabel('Insurance expires on').fill('2027-03-01');
   await page.getByRole('button', { name: 'Save dates' }).click();
+
+  await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
 
   // With its insurance on file, the dashboard reads its papers as in order.

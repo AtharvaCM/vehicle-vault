@@ -45,11 +45,13 @@ test('a new account uses the app for a week before it has to verify', async ({ p
   await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
   await page.getByRole('menuitem', { name: 'Service' }).click();
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\/maintenance\/new$/);
-  await page.getByLabel(/service date/i).fill('2026-03-20');
+  await page.getByLabel('Date', { exact: true }).fill('2026-03-20');
   await page.getByLabel(/^odometer$/i).fill('15200');
+  // Workshop is one of the collapsed extras.
+  await page.getByRole('button', { name: /^Workshop/ }).click();
   await page.getByLabel(/workshop or garage/i).fill(workshopName);
-  await page.getByLabel(/total cost/i).fill('4500');
-  await page.getByRole('button', { name: /save record/i }).click();
+  await page.getByLabel('Total on the bill').fill('4500');
+  await page.getByRole('button', { name: 'Save service' }).click();
 
   await expect(page).toHaveURL(/\/vehicles\/[^/]+\?tab=history$/);
   await expect(page.getByText(workshopName)).toBeVisible();

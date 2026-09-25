@@ -2,7 +2,11 @@ import { expect, test } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
-import { selectDropdownOption, selectSearchableOption } from './helpers/vehicle-form';
+import {
+  selectDropdownOption,
+  selectSearchableOption,
+  skipVehicleSetupPrompt,
+} from './helpers/vehicle-form';
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -52,6 +56,7 @@ test('a vehicle can be added without naming its variant', async ({ page }) => {
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 
+  await skipVehicleSetupPrompt(page);
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
   // Make and model, with no gap where the variant would have been.

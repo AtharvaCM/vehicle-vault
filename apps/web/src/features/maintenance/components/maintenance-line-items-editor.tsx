@@ -12,7 +12,6 @@ import { Plus, Trash2 } from 'lucide-react';
 
 import { FormField } from '@/components/shared/form-field';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -68,255 +67,247 @@ export function MaintenanceLineItemsEditor({
   });
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle>Detailed items</CardTitle>
-            <CardDescription>
-              Break the visit into jobs, fluids, parts, taxes, and discounts.
-            </CardDescription>
-          </div>
-          <Button onClick={() => append(emptyLineItem)} size="sm" type="button" variant="secondary">
-            <Plus className="h-4 w-4" />
-            Add item
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {fields.length ? (
-          fields.map((field, index) => {
-            const lineItem = lineItems?.[index];
-            const resolvedTotal = resolveMaintenanceLineItemTotal(lineItem ?? {});
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-small text-fg-2">
+          Jobs, parts, fluids, taxes and discounts. With items, the total is worked out from them,
+          and discounts take away.
+        </p>
+        <Button onClick={() => append(emptyLineItem)} size="sm" type="button" variant="secondary">
+          <Plus className="h-4 w-4" />
+          Add item
+        </Button>
+      </div>
+      <div className="space-y-4">
+        {fields.length
+          ? fields.map((field, index) => {
+              const lineItem = lineItems?.[index];
+              const resolvedTotal = resolveMaintenanceLineItemTotal(lineItem ?? {});
 
-            return (
-              <div key={field.id} className="rounded-2xl border border-border/70 bg-page/60 p-4">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-ui font-semibold text-fg">Item {index + 1}</p>
-                    <p className="text-caption text-fg-3">
-                      {resolvedTotal > 0
-                        ? `Resolved total ${format.money(resolvedTotal, { currency: currencyCode })}`
-                        : 'Set a line total directly or derive it from quantity × unit price.'}
-                    </p>
-                  </div>
-                  <Button
-                    aria-label={`Remove service line item ${index + 1}`}
-                    onClick={() => remove(index)}
-                    size="icon-xs"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <FormField
-                    error={errors.lineItems?.[index]?.kind?.message}
-                    htmlFor={`maintenance-line-item-kind-${index}`}
-                    label="Kind"
-                  >
-                    <Controller
-                      control={control}
-                      name={`lineItems.${index}.kind`}
-                      render={({ field: controlledField }) => (
-                        <Select
-                          onValueChange={controlledField.onChange}
-                          value={controlledField.value}
-                        >
-                          <SelectTrigger id={`maintenance-line-item-kind-${index}`}>
-                            <SelectValue placeholder="Select item kind" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {kindOptions.map((kind) => (
-                              <SelectItem key={kind} value={kind}>
-                                {format.enumLabel('maintenanceLineItemKind', kind)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={errors.lineItems?.[index]?.normalizedCategory?.message}
-                    htmlFor={`maintenance-line-item-category-${index}`}
-                    label="Mapped category"
-                  >
-                    <Controller
-                      control={control}
-                      name={`lineItems.${index}.normalizedCategory`}
-                      render={({ field: controlledField }) => (
-                        <Select
-                          onValueChange={(value) =>
-                            controlledField.onChange(value === '__none' ? undefined : value)
-                          }
-                          value={controlledField.value ?? '__none'}
-                        >
-                          <SelectTrigger id={`maintenance-line-item-category-${index}`}>
-                            <SelectValue placeholder="Optional category mapping" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none">No mapping</SelectItem>
-                            {categoryOptions.map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {format.enumLabel('maintenanceCategory', category)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </FormField>
-
-                  <FormField
-                    className="md:col-span-2 xl:col-span-2"
-                    error={errors.lineItems?.[index]?.name?.message}
-                    htmlFor={`maintenance-line-item-name-${index}`}
-                    label="Name"
-                  >
-                    <Input
-                      id={`maintenance-line-item-name-${index}`}
-                      placeholder="Engine oil, labour, GST, oil filter"
-                      {...register(`lineItems.${index}.name`)}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={errors.lineItems?.[index]?.brand?.message}
-                    htmlFor={`maintenance-line-item-brand-${index}`}
-                    label="Brand"
-                  >
-                    <Input
-                      id={`maintenance-line-item-brand-${index}`}
-                      placeholder="Shell, Bosch"
-                      {...register(`lineItems.${index}.brand`)}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={errors.lineItems?.[index]?.partNumber?.message}
-                    htmlFor={`maintenance-line-item-part-number-${index}`}
-                    label="Part number"
-                  >
-                    <Input
-                      id={`maintenance-line-item-part-number-${index}`}
-                      placeholder="Optional"
-                      {...register(`lineItems.${index}.partNumber`)}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={errors.lineItems?.[index]?.quantity?.message}
-                    htmlFor={`maintenance-line-item-quantity-${index}`}
-                    label="Quantity"
-                  >
-                    <Input
-                      id={`maintenance-line-item-quantity-${index}`}
-                      min={0}
-                      step="0.01"
-                      type="number"
-                      {...register(`lineItems.${index}.quantity`, {
-                        setValueAs: toOptionalNumber,
-                      })}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={errors.lineItems?.[index]?.unit?.message}
-                    htmlFor={`maintenance-line-item-unit-${index}`}
-                    label="Unit"
-                  >
-                    <Input
-                      id={`maintenance-line-item-unit-${index}`}
-                      placeholder="L, pcs, hrs"
-                      {...register(`lineItems.${index}.unit`)}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={errors.lineItems?.[index]?.unitPrice?.message}
-                    htmlFor={`maintenance-line-item-unit-price-${index}`}
-                    label="Unit price"
-                  >
-                    <Input
-                      id={`maintenance-line-item-unit-price-${index}`}
-                      min={0}
-                      step="0.01"
-                      type="number"
-                      {...register(`lineItems.${index}.unitPrice`, {
-                        setValueAs: toOptionalNumber,
-                      })}
-                    />
-                  </FormField>
-
-                  <FormField
-                    description={
-                      typeof lineItem?.quantity === 'number' &&
-                      typeof lineItem?.unitPrice === 'number' &&
-                      lineItem?.lineTotal === undefined
-                        ? `Will resolve to ${format.money(resolvedTotal, { currency: currencyCode })}`
-                        : undefined
-                    }
-                    error={errors.lineItems?.[index]?.lineTotal?.message}
-                    htmlFor={`maintenance-line-item-total-${index}`}
-                    label="Line total"
-                  >
-                    <Input
-                      id={`maintenance-line-item-total-${index}`}
-                      min={0}
-                      step="0.01"
-                      type="number"
-                      {...register(`lineItems.${index}.lineTotal`, {
-                        setValueAs: toOptionalNumber,
-                      })}
-                    />
-                  </FormField>
-                </div>
-
-                <FormField
-                  className="mt-4"
-                  error={errors.lineItems?.[index]?.notes?.message}
-                  htmlFor={`maintenance-line-item-notes-${index}`}
-                  label="Item notes"
-                >
-                  <Textarea
-                    id={`maintenance-line-item-notes-${index}`}
-                    placeholder="Part grade, job details, fitment notes, or warranty context"
-                    {...register(`lineItems.${index}.notes`)}
-                  />
-                </FormField>
-
-                {typeof lineItem?.quantity === 'number' &&
-                typeof lineItem?.unitPrice === 'number' &&
-                lineItem?.lineTotal === undefined ? (
-                  <div className="mt-3 flex justify-end">
+              return (
+                <div key={field.id} className="rounded-card border border-line bg-page p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-ui font-semibold text-fg">Item {index + 1}</p>
+                      <p className="text-caption text-fg-3">
+                        {resolvedTotal > 0
+                          ? `Resolved total ${format.money(resolvedTotal, { currency: currencyCode })}`
+                          : 'Set a line total directly or derive it from quantity × unit price.'}
+                      </p>
+                    </div>
                     <Button
-                      onClick={() =>
-                        setValue(`lineItems.${index}.lineTotal`, resolvedTotal, {
-                          shouldDirty: true,
-                        })
-                      }
-                      size="xs"
+                      aria-label={`Remove service line item ${index + 1}`}
+                      onClick={() => remove(index)}
+                      size="icon-xs"
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                     >
-                      Use derived total
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ) : null}
-              </div>
-            );
-          })
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border bg-page/60 px-4 py-6 text-ui text-fg-3">
-            Add the individual jobs, parts, or fluids if you want a structured service record.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      error={errors.lineItems?.[index]?.kind?.message}
+                      htmlFor={`maintenance-line-item-kind-${index}`}
+                      label="Kind"
+                    >
+                      <Controller
+                        control={control}
+                        name={`lineItems.${index}.kind`}
+                        render={({ field: controlledField }) => (
+                          <Select
+                            onValueChange={controlledField.onChange}
+                            value={controlledField.value}
+                          >
+                            <SelectTrigger id={`maintenance-line-item-kind-${index}`}>
+                              <SelectValue placeholder="Select item kind" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {kindOptions.map((kind) => (
+                                <SelectItem key={kind} value={kind}>
+                                  {format.enumLabel('maintenanceLineItemKind', kind)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField
+                      error={errors.lineItems?.[index]?.normalizedCategory?.message}
+                      htmlFor={`maintenance-line-item-category-${index}`}
+                      label="Mapped category"
+                    >
+                      <Controller
+                        control={control}
+                        name={`lineItems.${index}.normalizedCategory`}
+                        render={({ field: controlledField }) => (
+                          <Select
+                            onValueChange={(value) =>
+                              controlledField.onChange(value === '__none' ? undefined : value)
+                            }
+                            value={controlledField.value ?? '__none'}
+                          >
+                            <SelectTrigger id={`maintenance-line-item-category-${index}`}>
+                              <SelectValue placeholder="Optional category mapping" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none">No mapping</SelectItem>
+                              {categoryOptions.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {format.enumLabel('maintenanceCategory', category)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField
+                      className="sm:col-span-2"
+                      error={errors.lineItems?.[index]?.name?.message}
+                      htmlFor={`maintenance-line-item-name-${index}`}
+                      label="Name"
+                    >
+                      <Input
+                        id={`maintenance-line-item-name-${index}`}
+                        placeholder="Engine oil, labour, GST, oil filter"
+                        {...register(`lineItems.${index}.name`)}
+                      />
+                    </FormField>
+
+                    <FormField
+                      error={errors.lineItems?.[index]?.brand?.message}
+                      htmlFor={`maintenance-line-item-brand-${index}`}
+                      label="Brand"
+                    >
+                      <Input
+                        id={`maintenance-line-item-brand-${index}`}
+                        placeholder="Shell, Bosch"
+                        {...register(`lineItems.${index}.brand`)}
+                      />
+                    </FormField>
+
+                    <FormField
+                      error={errors.lineItems?.[index]?.partNumber?.message}
+                      htmlFor={`maintenance-line-item-part-number-${index}`}
+                      label="Part number"
+                    >
+                      <Input
+                        id={`maintenance-line-item-part-number-${index}`}
+                        placeholder="Optional"
+                        {...register(`lineItems.${index}.partNumber`)}
+                      />
+                    </FormField>
+
+                    <FormField
+                      error={errors.lineItems?.[index]?.quantity?.message}
+                      htmlFor={`maintenance-line-item-quantity-${index}`}
+                      label="Quantity"
+                    >
+                      <Input
+                        id={`maintenance-line-item-quantity-${index}`}
+                        min={0}
+                        step="0.01"
+                        type="number"
+                        {...register(`lineItems.${index}.quantity`, {
+                          setValueAs: toOptionalNumber,
+                        })}
+                      />
+                    </FormField>
+
+                    <FormField
+                      error={errors.lineItems?.[index]?.unit?.message}
+                      htmlFor={`maintenance-line-item-unit-${index}`}
+                      label="Unit"
+                    >
+                      <Input
+                        id={`maintenance-line-item-unit-${index}`}
+                        placeholder="L, pcs, hrs"
+                        {...register(`lineItems.${index}.unit`)}
+                      />
+                    </FormField>
+
+                    <FormField
+                      error={errors.lineItems?.[index]?.unitPrice?.message}
+                      htmlFor={`maintenance-line-item-unit-price-${index}`}
+                      label="Unit price"
+                    >
+                      <Input
+                        id={`maintenance-line-item-unit-price-${index}`}
+                        min={0}
+                        step="0.01"
+                        type="number"
+                        {...register(`lineItems.${index}.unitPrice`, {
+                          setValueAs: toOptionalNumber,
+                        })}
+                      />
+                    </FormField>
+
+                    <FormField
+                      description={
+                        typeof lineItem?.quantity === 'number' &&
+                        typeof lineItem?.unitPrice === 'number' &&
+                        lineItem?.lineTotal === undefined
+                          ? `Will resolve to ${format.money(resolvedTotal, { currency: currencyCode })}`
+                          : undefined
+                      }
+                      error={errors.lineItems?.[index]?.lineTotal?.message}
+                      htmlFor={`maintenance-line-item-total-${index}`}
+                      label="Line total"
+                    >
+                      <Input
+                        id={`maintenance-line-item-total-${index}`}
+                        min={0}
+                        step="0.01"
+                        type="number"
+                        {...register(`lineItems.${index}.lineTotal`, {
+                          setValueAs: toOptionalNumber,
+                        })}
+                      />
+                    </FormField>
+                  </div>
+
+                  <FormField
+                    className="mt-4"
+                    error={errors.lineItems?.[index]?.notes?.message}
+                    htmlFor={`maintenance-line-item-notes-${index}`}
+                    label="Item notes"
+                  >
+                    <Textarea
+                      id={`maintenance-line-item-notes-${index}`}
+                      placeholder="Part grade, job details, fitment notes, or warranty context"
+                      {...register(`lineItems.${index}.notes`)}
+                    />
+                  </FormField>
+
+                  {typeof lineItem?.quantity === 'number' &&
+                  typeof lineItem?.unitPrice === 'number' &&
+                  lineItem?.lineTotal === undefined ? (
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        onClick={() =>
+                          setValue(`lineItems.${index}.lineTotal`, resolvedTotal, {
+                            shouldDirty: true,
+                          })
+                        }
+                        size="xs"
+                        type="button"
+                        variant="outline"
+                      >
+                        Use derived total
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })
+          : null}
+      </div>
+    </div>
   );
 }
 

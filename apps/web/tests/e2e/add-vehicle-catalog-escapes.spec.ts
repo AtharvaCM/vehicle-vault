@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
-import { selectSearchableOption } from './helpers/vehicle-form';
+import { selectSearchableOption, skipVehicleSetupPrompt } from './helpers/vehicle-form';
 
 function uniqueSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -69,6 +69,8 @@ test('a model filed under SUV is found from Car and takes its type', async ({ pa
   await page.getByLabel('Odometer', { exact: true }).fill('1200');
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
+
+  await skipVehicleSetupPrompt(page);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 
   const saved = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
@@ -90,6 +92,8 @@ test('a make the catalog lacks is entered by hand and saved with the chosen type
   await page.getByLabel('Odometer', { exact: true }).fill('800');
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
+
+  await skipVehicleSetupPrompt(page);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 
   const saved = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });

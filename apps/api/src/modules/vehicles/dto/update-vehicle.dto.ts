@@ -1,5 +1,5 @@
-import { FuelType, VehicleType } from '@vehicle-vault/shared';
-import { Type } from 'class-transformer';
+import { compactRegistrationNumber, FuelType, VehicleType } from '@vehicle-vault/shared';
+import { Transform, Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
@@ -15,6 +15,10 @@ import {
 
 export class UpdateVehicleDto {
   @IsOptional()
+  // One spelling per plate (MH12DM0002), whatever spacing the client sent.
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? compactRegistrationNumber(value) : value,
+  )
   @IsString()
   @MinLength(1)
   @MaxLength(20)

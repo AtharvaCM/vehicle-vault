@@ -37,11 +37,22 @@ function insuranceDocument(): VehicleDocument {
 function renderPrompt({
   dismissedAt = null,
   fuelType = FuelType.Petrol,
+  onDismissed,
   role = VehicleRole.Owner,
-}: { dismissedAt?: string | null | undefined; fuelType?: FuelType; role?: VehicleRole } = {}) {
+}: {
+  dismissedAt?: string | null | undefined;
+  fuelType?: FuelType;
+  onDismissed?: () => void;
+  role?: VehicleRole;
+} = {}) {
   return render(
     <VehicleAccessProvider role={role}>
-      <VehicleSetupPrompt dismissedAt={dismissedAt} fuelType={fuelType} vehicleId="vehicle-1" />
+      <VehicleSetupPrompt
+        dismissedAt={dismissedAt}
+        fuelType={fuelType}
+        onDismissed={onDismissed}
+        vehicleId="vehicle-1"
+      />
     </VehicleAccessProvider>,
   );
 }
@@ -101,10 +112,33 @@ describe('VehicleSetupPrompt', () => {
     const user = userEvent.setup();
     renderPrompt();
 
-    await user.click(screen.getByRole('button', { name: 'Not now' }));
+    await user.click(screen.getByRole('button', { name: 'Skip for now' }));
 
     await waitFor(() => expect(dismissPrompt).toHaveBeenCalledTimes(1));
     expect(createDocument).not.toHaveBeenCalled();
+  });
+
+  it('calls onDismissed once put away, whether skipped or saved', async () => {
+    const user = userEvent.setup();
+    const onDismissed = vi.fn();
+    renderPrompt({ onDismissed });
+
+    await user.click(screen.getByRole('button', { name: 'Skip for now' }));
+
+    await waitFor(() => expect(onDismissed).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not call onDismissed when the save fails', async () => {
+    const user = userEvent.setup();
+    const onDismissed = vi.fn();
+    createDocument.mockRejectedValue(new Error('Internal server error'));
+    renderPrompt({ onDismissed });
+
+    await user.type(screen.getByLabelText('PUC expires on'), '2026-12-15');
+    await user.click(screen.getByRole('button', { name: 'Save dates' }));
+
+    await waitFor(() => expect(createDocument).toHaveBeenCalled());
+    expect(onDismissed).not.toHaveBeenCalled();
   });
 
   it('stays out of the way once the prompt has been answered or skipped', () => {
