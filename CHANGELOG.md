@@ -1,3 +1,10 @@
+# [1.95.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.94.0...v1.95.0) (2026-09-25)
+
+
+### Features
+
+* **web:** a bill snapped from a reminder completes it on confirm ([071b80f](https://github.com/AtharvaCM/vehicle-vault/commit/071b80f0d82a18a26d0750bfa4c78fdbd76e6ac9))
+
 # [1.94.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.93.0...v1.94.0) (2026-09-25)
 
 
