@@ -1,3 +1,12 @@
+# [1.94.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.93.0...v1.94.0) (2026-09-25)
+
+
+### Features
+
+* **api:** complete a reminder from the service logged for it ([80029c0](https://github.com/AtharvaCM/vehicle-vault/commit/80029c06977c884bd9dfeba093a379adc27cf3e5)), closes [#295](https://github.com/AtharvaCM/vehicle-vault/issues/295)
+* **web:** log a service from a reminder and complete it ([07fb93c](https://github.com/AtharvaCM/vehicle-vault/commit/07fb93c8c953e98e14e2276c2069a8b5bd139b4e))
+* **web:** reminder Done hands off to logging, one Snooze everywhere ([3b752dc](https://github.com/AtharvaCM/vehicle-vault/commit/3b752dce3d7b52a1c15053d9642c20682a3de234)), closes [#295](https://github.com/AtharvaCM/vehicle-vault/issues/295)
+
 # [1.93.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.92.0...v1.93.0) (2026-09-25)
 
 
