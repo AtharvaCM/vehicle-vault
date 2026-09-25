@@ -1,17 +1,18 @@
 import { Link } from '@tanstack/react-router';
 import { APP_NAME } from '@vehicle-vault/shared';
-import { ArrowRight, BellRing, ScanLine, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 
 import { PublicFrame } from '@/components/public/public-frame';
 import { Button } from '@/components/ui/button';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
-import protectionImage from '../assets/protection.webp';
+import papersImage from '../assets/papers.webp';
 import receiptImage from '../assets/receipt.webp';
 import triageImage from '../assets/triage.webp';
+import { AttentionPreview } from '../components/attention-preview';
+import { FindYourVehicle } from '../components/find-your-vehicle';
 
 type Feature = {
-  icon: LucideIcon;
   title: string;
   body: string;
   image: string;
@@ -21,72 +22,105 @@ type Feature = {
 };
 
 /**
- * Each image is a real capture of the app against the demo seed, encoded to
- * WebP at 1400 px wide. Width and height are the files' own, so the browser
+ * Each image is a phone-width crop of the app (390 px at 2×) against seeded
+ * data, encoded to WebP. Width and height are the files' own, so the browser
  * reserves the space before they load and nothing jumps.
  */
 const FEATURES: Feature[] = [
   {
-    icon: BellRing,
     title: 'Know what needs attention',
-    body: 'Overdue renewals, today’s service and this week’s EMIs across every vehicle, most urgent first — one list to clear instead of dates to remember.',
+    body: 'Overdue renewals, today’s service and this week’s EMIs across every vehicle, most urgent first: one list to clear instead of dates to remember.',
     image: triageImage,
-    width: 1400,
-    height: 686,
-    alt: 'The Needs attention list: an insurance renewal three days overdue, an oil change due today, a loan EMI due in two days, a wheel alignment check and an insurance policy expiring in five days.',
+    width: 780,
+    height: 1040,
+    alt: 'Home’s Needs attention list: an insurance policy three days late, an oil change due today and a loan EMI due in two days.',
   },
   {
-    icon: ScanLine,
     title: 'Scan a receipt, get a service record',
-    body: 'Photograph a workshop invoice and the workshop, odometer, parts and GST land in a draft for you to check — no typing a job card in line by line.',
+    body: 'Photograph a workshop bill and the workshop, date, odometer and total land in the form for you to check, with the photo kept as the receipt.',
     image: receiptImage,
-    width: 1400,
-    height: 1134,
-    alt: 'A scanned workshop invoice turned into a draft service record: workshop, invoice number, service date, 18,540 km, a ₹5,180 total at 94% confidence, and line items for labour, engine oil, two filters and GST.',
+    width: 780,
+    height: 1040,
+    alt: 'A service form filled in from a photographed bill: date, odometer and a ₹5,180 total, each marked from bill.',
   },
   {
-    icon: ShieldCheck,
-    title: 'Every renewal in one place',
-    body: 'Insurance, warranty, PUC and road tax with their dates, marked valid or expired at a glance, and a heads-up in the app before one runs out.',
-    image: protectionImage,
-    width: 1400,
-    height: 1304,
-    alt: 'The Protection tab: a manufacturer warranty marked expired, and a PUC certificate and road tax both marked valid, each with issue and expiry dates.',
+    title: 'Every paper, ready to show',
+    body: 'Insurance, PUC and road tax with their dates and a photo of each, marked valid or late, and kept on your phone to show at a checkpoint, even offline.',
+    image: papersImage,
+    width: 780,
+    height: 1040,
+    alt: 'Show papers for a Hyundai Creta: the insurance policy marked valid until May 2027, with tabs for PUC and road tax.',
   },
 ];
 
+const TRUST = ['Free', 'Private documents', 'Share with family'] as const;
+
+const PERSONAS = [
+  {
+    title: 'For the commuter',
+    body: 'A heads-up before the PUC or insurance lapses, and nothing to remember in between.',
+  },
+  {
+    title: 'For the enthusiast',
+    body: 'Every part, rupee and kilometre logged, with fuel economy and running cost worked out.',
+  },
+  {
+    title: 'For the family',
+    body: 'Every vehicle in one garage, shared with the people who drive them, view-only or with edit.',
+  },
+] as const;
+
 /**
- * The front door for anyone not signed in. Signed-in visitors never see it —
- * the index route sends them to the dashboard — so everything here is written
- * for a stranger deciding whether this is for them.
+ * The front door for anyone not signed in (#342). Signed-in visitors never see
+ * it (the index route sends them to Home), so everything here is written for a
+ * stranger deciding whether this is for them. Sign in lives in the header only.
  */
 export function LandingPage() {
-  useDocumentTitle(`${APP_NAME} — service history, documents and reminders for your vehicle`);
+  useDocumentTitle(`${APP_NAME}: service history, documents and reminders for your vehicle`);
 
   return (
     <PublicFrame width="wide">
       <main>
-        <section className="mx-auto max-w-6xl px-4 pb-14 pt-8 sm:px-6 sm:pb-20 sm:pt-14">
-          <p className="text-ui font-medium text-fg-2">For cars and two-wheelers in India</p>
-          <h1 className="mt-3 max-w-3xl text-title font-semibold tracking-tight text-fg sm:text-display">
-            One record of your vehicle — its service history, its documents, and what’s due next.
-          </h1>
-          <p className="mt-5 max-w-2xl text-lead leading-8 text-fg-2">
-            Vehicle Vault keeps the servicing, insurance, PUC and upcoming work for every vehicle
-            you own in one place, and tells you before something falls due.
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <Link to="/register">
-                Create free account
-                <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/login">Sign in</Link>
-            </Button>
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-12 pt-8 sm:px-6 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16 lg:pb-16">
+          <div>
+            <p className="text-ui font-medium text-fg-2">For cars and two-wheelers in India</p>
+            <h1 className="mt-3 font-display text-title font-semibold tracking-tight text-fg sm:text-display">
+              Every service, document and renewal for your vehicle, in one place.
+            </h1>
+            <p className="mt-4 max-w-xl text-lead text-fg-2">
+              A heads-up before the PUC, insurance or an EMI falls due, and the whole service
+              history when you need it.
+            </p>
+            <div className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <Button asChild className="w-full sm:w-auto" size="lg">
+                <Link to="/register">
+                  Create free account
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </Button>
+              <a
+                className="inline-flex items-center gap-1.5 text-ui font-semibold text-fg hover:text-fg-2"
+                href="#find-your-vehicle"
+              >
+                Browse cars & bikes
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </a>
+            </div>
+            <ul aria-label="Why Vehicle Vault" className="mt-7 flex flex-wrap gap-x-5 gap-y-2">
+              {TRUST.map((item) => (
+                <li className="inline-flex items-center gap-1.5 text-ui text-fg-2" key={item}>
+                  <Check aria-hidden="true" className="size-4 text-ok" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
+          <AttentionPreview />
         </section>
+
+        <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24">
+          <FindYourVehicle />
+        </div>
 
         <section
           aria-labelledby="features-heading"
@@ -97,23 +131,23 @@ export function LandingPage() {
           </h2>
           {FEATURES.map((feature, index) => (
             <article
-              className="grid items-center gap-6 lg:grid-cols-[2fr_3fr] lg:gap-12"
+              className="grid items-start gap-6 md:grid-cols-2 md:items-center md:gap-12"
+              data-testid="landing-feature"
               key={feature.title}
             >
-              <div className={index % 2 === 1 ? 'lg:order-2' : undefined}>
-                <feature.icon aria-hidden="true" className="h-6 w-6 text-fg-2" />
-                <h3 className="mt-3 text-heading font-semibold tracking-tight text-fg">
+              <div className={index % 2 === 1 ? 'md:order-2' : undefined}>
+                <h3 className="font-display text-heading font-semibold tracking-tight text-fg">
                   {feature.title}
                 </h3>
-                <p className="mt-3 text-lead leading-7 text-fg-2">{feature.body}</p>
+                <p className="mt-3 text-lead text-fg-2">{feature.body}</p>
               </div>
-              <figure className="overflow-hidden rounded-2xl border border-line bg-surface shadow-xs">
+              <figure className="mx-auto w-full max-w-sm overflow-hidden rounded-card border border-line bg-surface shadow-sm">
                 <img
                   alt={feature.alt}
                   className="h-auto w-full"
                   decoding="async"
                   height={feature.height}
-                  loading={index === 0 ? 'eager' : 'lazy'}
+                  loading="lazy"
                   src={feature.image}
                   width={feature.width}
                 />
@@ -123,49 +157,39 @@ export function LandingPage() {
         </section>
 
         <section
-          aria-labelledby="catalog-heading"
+          aria-labelledby="personas-heading"
           className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24"
         >
-          <h2 className="text-title font-semibold tracking-tight text-fg" id="catalog-heading">
-            Look up a car or bike
+          <h2
+            className="font-display text-title font-semibold tracking-tight text-fg"
+            id="personas-heading"
+          >
+            Built for how you use your vehicle
           </h2>
-          <p className="mt-2 max-w-2xl text-lead leading-7 text-fg-2">
-            Its service schedule, a running-cost estimate and its specs, by make and model. No
-            account needed.
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" variant="outline">
-              <Link to="/cars">Browse cars</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/bikes">Browse bikes</Link>
-            </Button>
-          </div>
+          <ul className="mt-6 grid gap-4 md:grid-cols-3">
+            {PERSONAS.map((persona) => (
+              <li className="rounded-card border border-line bg-surface p-5" key={persona.title}>
+                <h3 className="font-semibold text-fg">{persona.title}</h3>
+                <p className="mt-2 text-ui text-fg-2">{persona.body}</p>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="border-t border-line bg-surface">
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-            <p className="max-w-3xl text-lead leading-8 text-fg-2">
-              Built for the daily commuter who wants reminders that just work, the enthusiast who
-              tracks every part and rupee, and the family keeping several vehicles in order.
-            </p>
-            <h2 className="mt-10 text-title font-semibold tracking-tight text-fg">
+            <h2 className="font-display text-title font-semibold tracking-tight text-fg">
               Start with one vehicle.
             </h2>
-            <p className="mt-2 text-lead leading-7 text-fg-2">
-              Add your vehicle once, then log services and documents as they happen.
+            <p className="mt-2 text-lead text-fg-2">
+              Add it once, then log services and papers as they happen.
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg">
-                <Link to="/register">
-                  Create free account
-                  <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/login">Sign in</Link>
-              </Button>
-            </div>
+            <Button asChild className="mt-6 w-full sm:w-auto" size="lg">
+              <Link to="/register">
+                Create free account
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
           </div>
         </section>
       </main>
