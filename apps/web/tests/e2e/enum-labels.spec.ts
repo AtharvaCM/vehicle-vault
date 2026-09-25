@@ -84,9 +84,11 @@ test('vehicle header, service records and papers show labels, not raw enum value
     },
   });
 
-  // The header names the vehicle's type and fuel in words.
+  // The vehicle page shows no raw enum, and the garage names its type in words.
   await page.goto(vehicleUrl);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
+  expect(await rawEnumTexts(page)).toEqual([]);
+  await page.goto('/garage');
   await expect(page.getByText('SUV', { exact: true }).first()).toBeVisible();
   expect(await rawEnumTexts(page)).toEqual([]);
 

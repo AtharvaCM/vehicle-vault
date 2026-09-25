@@ -133,7 +133,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
 
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: updatedNickname })).toBeVisible();
-  await expect(page.getByText('Odometer: 16,250 km')).toBeVisible();
+  await expect(page.getByText(/16,250 km, updated today/)).toBeVisible();
 
   await page.getByRole('main').getByRole('button', { name: 'Log' }).click();
   await page.getByRole('menuitem', { name: 'Service' }).click();
