@@ -6,13 +6,14 @@ import {
   type UpcomingKindFilter,
 } from '@vehicle-vault/shared';
 import { CheckCircle2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { StatusDot, type Status } from '@/components/shared/status-pill';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -364,9 +365,13 @@ export function UpcomingPage({ searchState, onSearchStateChange }: UpcomingPageP
   );
 }
 
-/** "1 late · 4 this week · 1 this month", or what the page holds when none of those apply. */
-function statusLine(counts: Record<UpcomingGroupName, number> | undefined): string {
+/**
+ * "1 late · 4 this week · 1 this month", coloured like Home's status line (the
+ * same groups, so the two agree), or what the page holds when none apply.
+ */
+function statusLine(counts: Record<UpcomingGroupName, number> | undefined): ReactNode {
   if (!counts) return 'Everything with a date across your garage.';
+  const status: Status = counts.late > 0 ? 'late' : counts.this_week > 0 ? 'soon' : 'ok';
 
   const parts = [
     counts.late > 0 ? `${format.number(counts.late)} late` : null,
@@ -374,5 +379,9 @@ function statusLine(counts: Record<UpcomingGroupName, number> | undefined): stri
     counts.this_month > 0 ? `${format.number(counts.this_month)} this month` : null,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(' · ') : 'Nothing due in the next 30 days.';
+  return (
+    <StatusDot className="text-ui" status={status}>
+      {parts.length > 0 ? parts.join(' · ') : 'Nothing due in the next 30 days.'}
+    </StatusDot>
+  );
 }
