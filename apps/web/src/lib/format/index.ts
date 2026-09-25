@@ -8,7 +8,7 @@ import { date, daysUntil } from './date';
 import { EMPTY } from './empty';
 import { enumLabel, enumOptions } from './enum-label';
 import { compactMoney, distance, money, number, odometer } from './number';
-import { registration, spokenRegistration } from './registration';
+import { formatRegistrationInput, registration, spokenRegistration } from './registration';
 import { relativeDue } from './relative-due';
 
 export const format = {
@@ -21,6 +21,7 @@ export const format = {
   relativeDue,
   registration,
   spokenRegistration,
+  formatRegistrationInput,
   enumLabel,
   enumOptions,
   daysUntil,
@@ -31,5 +32,5 @@ export type { DateInput, DateStyle } from './date';
 export type { EnumKind, EnumValue } from './enum-label';
 export type { MoneyOptions, NumberOptions } from './number';
 export type { RelativeDueOptions } from './relative-due';
-export { parseRegistration } from './registration';
+export { formatRegistrationInput, parseRegistration } from './registration';
 export type { RegistrationParts } from './registration';

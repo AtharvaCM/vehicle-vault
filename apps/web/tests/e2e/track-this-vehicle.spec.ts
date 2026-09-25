@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { registerAndSignIn } from './helpers/auth';
 import { prisma } from './helpers/test-db';
+import { skipVehicleSetupPrompt } from './helpers/vehicle-form';
 
 const STORAGE_KEY = 'vehicle-vault.catalog-intent';
 
@@ -87,6 +88,7 @@ async function saveVehicle(page: Page, registrationNumber: string, nickname: str
   await page.getByLabel(/nickname/i).fill(nickname);
   await page.getByRole('button', { name: /save vehicle/i }).click();
 
+  await skipVehicleSetupPrompt(page);
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByRole('heading', { name: nickname })).toBeVisible();
 }

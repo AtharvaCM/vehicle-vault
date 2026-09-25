@@ -1,3 +1,16 @@
+# [1.92.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.91.0...v1.92.0) (2026-09-25)
+
+
+### Bug Fixes
+
+* **vehicles:** accept temporary registrations on the plate field ([b687ad8](https://github.com/AtharvaCM/vehicle-vault/commit/b687ad886442133579d7410d8efedbe373a6a6da))
+* **vehicles:** store registration numbers compact ([edbbc96](https://github.com/AtharvaCM/vehicle-vault/commit/edbbc967782d1a6919615cfe4cc86149f71b7075))
+
+
+### Features
+
+* **vehicles:** redesign add-vehicle to start with the plate ([bcf5e01](https://github.com/AtharvaCM/vehicle-vault/commit/bcf5e01afd12e8759b52546313a68d2303b97bd5))
+
 # [1.91.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.90.0...v1.91.0) (2026-09-25)
 
 
