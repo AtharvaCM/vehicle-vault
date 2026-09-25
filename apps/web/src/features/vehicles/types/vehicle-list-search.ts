@@ -1,4 +1,6 @@
 export const vehicleSortOptions = [
+  // Late first, then soonest due, all-clear last (#308): the default.
+  'urgency',
   'updated-desc',
   'registration-asc',
   'odometer-desc',
@@ -12,7 +14,7 @@ export type VehicleListSearch = {
   sort?: VehicleSortOption;
 };
 
-export const defaultVehicleSort: VehicleSortOption = 'updated-desc';
+export const defaultVehicleSort: VehicleSortOption = 'urgency';
 
 export function normalizeVehicleListSearch(search: Record<string, unknown>): VehicleListSearch {
   const normalizedSearch =
