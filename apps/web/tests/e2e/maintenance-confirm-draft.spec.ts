@@ -48,8 +48,8 @@ test('a scanned draft is confirmed from its edit page', async ({ page }) => {
   await page.goto(`/maintenance-records/${draft.id}/edit`);
 
   // The draft's own category, not the placeholder the form used to fall back to.
-  await expect(page.getByLabel('Category')).toHaveText(/Other/i);
-  await page.getByLabel('Total cost').fill('2400');
+  await expect(page.getByRole('button', { name: 'Other', pressed: true })).toBeVisible();
+  await page.getByLabel('Total on the bill').fill('2400');
   await page.getByRole('button', { name: 'Confirm Record' }).click();
 
   await expect(page).toHaveURL(new RegExp(`/maintenance-records/${draft.id}$`));

@@ -92,7 +92,7 @@ async function setUp(page: Page, label: string) {
 
 async function uploadFirst(page: Page, vehicleId: string) {
   await page.goto(`/vehicles/${vehicleId}/maintenance/new`);
-  await page.locator('input[type="file"]').setInputFiles({
+  await page.getByTestId('bill-file-input').setInputFiles({
     name: 'job-card.png',
     mimeType: 'image/png',
     buffer: jobCardPhoto,
@@ -141,14 +141,15 @@ test('upload-first opens the draft filled in from the bill, marked "from bill"',
   const draftId = await uploadFirst(page, vehicle.id);
 
   await expect(page.getByTestId('draft-bill-summary')).toContainText('Filled in from the bill');
-  await expect(page.getByLabel('Workshop or garage')).toHaveValue('Torque Garage');
+  // The workshop's collapsed row names it and carries its marker.
+  await expect(page.getByRole('button', { name: /^Workshop/ })).toContainText('Torque Garage');
   await expect(page.getByLabel('Odometer', { exact: true })).toHaveValue('15180');
-  await expect(page.getByLabel('Total cost')).toHaveValue('1520');
-  // Date, odometer, workshop, total and currency (only shown in detailed entry).
+  await expect(page.getByLabel('Total on the bill')).toHaveValue('1,520');
+  // Date, odometer, total and workshop.
   await expect(page.getByText('from bill', { exact: true })).toHaveCount(4);
 
   // Editing a value takes its marker away.
-  await page.getByLabel('Total cost').fill('1600');
+  await page.getByLabel('Total on the bill').fill('1600');
   await expect(page.getByText('from bill', { exact: true })).toHaveCount(3);
 
   await page.getByRole('button', { name: 'Confirm Record' }).click();
