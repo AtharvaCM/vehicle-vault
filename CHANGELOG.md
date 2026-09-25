@@ -1,3 +1,10 @@
+# [1.105.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.104.0...v1.105.0) (2026-09-25)
+
+
+### Features
+
+* give the vehicle's History tab the garage's History list ([0fab097](https://github.com/AtharvaCM/vehicle-vault/commit/0fab09733a682088b69591857556e0626183bb17)), closes [#325](https://github.com/AtharvaCM/vehicle-vault/issues/325)
+
 # [1.104.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.103.0...v1.104.0) (2026-09-25)
 
 
