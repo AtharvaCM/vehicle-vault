@@ -1,3 +1,10 @@
+# [1.90.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.89.0...v1.90.0) (2026-09-25)
+
+
+### Features
+
+* **fuel-logs:** log a fill in three fields, with the rest under More details ([bd60ee8](https://github.com/AtharvaCM/vehicle-vault/commit/bd60ee8141a4ebbb285c74538828902635597407))
+
 # [1.89.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.88.0...v1.89.0) (2026-09-25)
 
 
