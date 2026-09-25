@@ -238,6 +238,81 @@ export class VehicleInvitesService {
     return invites.map(serialiseInvite);
   }
 
+  /**
+   * A fresh link for a pending invite, since the token is only ever known at
+   * creation (the row keeps its hash, not the token itself). Rotating it
+   * invalidates whatever link was handed out before, and tries mail again
+   * exactly like `createInvite` does.
+   */
+  async resend(
+    actorUserId: string,
+    vehicleId: string,
+    inviteId: string,
+  ): Promise<InviteCreateResult> {
+    await this.access.assertOwner(actorUserId, vehicleId);
+    const invite = await this.prisma.vehicleInvite.findFirst({
+      where: { id: inviteId, vehicleId },
+    });
+    if (!invite) throw new NotFoundException('Invite not found');
+    if (computeInviteStatus(invite) !== 'pending') {
+      throw new ConflictException('Only a pending invitation can be resent.');
+    }
+
+    const token = randomBytes(INVITE_TOKEN_BYTES).toString('hex');
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
+
+    const vehicle = await this.prisma.vehicle.findUniqueOrThrow({
+      where: { id: vehicleId },
+      select: { make: true, model: true, nickname: true, registrationNumber: true },
+    });
+    const inviter = await this.prisma.user.findUniqueOrThrow({
+      where: { id: actorUserId },
+      select: { name: true },
+    });
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.vehicleInvite.update({
+        where: { id: inviteId },
+        data: { tokenHash, expiresAt },
+      });
+      await this.auditService.track(tx, {
+        actorUserId,
+        ownerUserId: actorUserId,
+        action: AUDIT_ACTIONS.vehicleInvite.resent,
+        resourceType: AuditResourceType.vehicle_invite,
+        resourceId: inviteId,
+        before: invite as unknown as Record<string, unknown>,
+        after: result as unknown as Record<string, unknown>,
+      });
+      return result;
+    });
+
+    const acceptUrl = this.buildAcceptUrl(token);
+    let emailSent = false;
+    if (this.mailService.isConfigured) {
+      try {
+        await this.mailService.sendVehicleInviteEmail({
+          email: updated.email,
+          inviterName: inviter.name,
+          vehicleLabel: labelForVehicle(vehicle),
+          role: updated.role,
+          acceptUrl,
+          expiresAt,
+        });
+        emailSent = true;
+      } catch (error) {
+        this.logger.warn(
+          `Resend invite email delivery failed for ${updated.email}: ${
+            error instanceof Error ? error.message : 'unknown error'
+          }`,
+        );
+      }
+    }
+
+    return { invite: serialiseInvite(updated), acceptUrl, emailSent };
+  }
+
   async revoke(actorUserId: string, vehicleId: string, inviteId: string): Promise<void> {
     await this.access.assertOwner(actorUserId, vehicleId);
     const invite = await this.prisma.vehicleInvite.findFirst({

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import type { VehicleInvitePreview, VehicleRole } from '@vehicle-vault/shared';
+import type { VehicleInvitePreview } from '@vehicle-vault/shared';
 import { Loader2 } from 'lucide-react';
 import { flushSync } from 'react-dom';
 
@@ -12,26 +12,9 @@ import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useAcceptInvite, useDeclineInvite, useInvitePreview } from '../hooks/use-sharing';
+import { ROLE_COPY } from '../lib/role-copy';
 
 type Props = { token: string };
-
-/** What each role can do, in the words the invitee decides on. */
-const ROLE_WORDS: Record<Exclude<VehicleRole, 'owner'>, { title: string; detail: string }> = {
-  editor: {
-    title: 'can edit',
-    detail: 'Log services, fuel and documents. You can’t delete the vehicle or see its loans.',
-  },
-  viewer: {
-    title: 'can view',
-    detail: 'See everything except loans, and show papers at a checkpoint.',
-  },
-};
-
-function roleWords(role: VehicleRole) {
-  return role === 'owner'
-    ? { title: 'owns', detail: 'Full control of the vehicle.' }
-    : ROLE_WORDS[role];
-}
 
 const ENDED: Record<Exclude<VehicleInvitePreview['status'], 'pending'>, string> = {
   accepted: 'This invite has already been accepted',
@@ -107,7 +90,7 @@ export function AcceptInvitePage({ token }: Props) {
   }
 
   const invite = preview.data;
-  const role = roleWords(invite.role);
+  const role = ROLE_COPY[invite.role];
   const summary = `${invite.inviterName} invited ${invite.emailMasked} to ${invite.vehicleLabel}. They ${role.title}.`;
 
   if (invite.status !== 'pending') {

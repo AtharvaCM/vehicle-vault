@@ -9,7 +9,12 @@ import {
   Trash2,
   UserPlus,
 } from 'lucide-react';
-import type { VehicleInviteCreated, VehicleMember, VehicleRole } from '@vehicle-vault/shared';
+import type {
+  VehicleInvite,
+  VehicleInviteCreated,
+  VehicleMember,
+  VehicleRole,
+} from '@vehicle-vault/shared';
 
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -34,17 +39,17 @@ import {
   useInvites,
   useMembers,
   useRemoveMember,
+  useResendInvite,
   useRevokeInvite,
   useTransferOwnership,
   useUpdateMemberRole,
 } from '../hooks/use-sharing';
+import { EDITABLE_ROLES, type EditableRole, ROLE_COPY } from '../lib/role-copy';
 
 type Props = {
   vehicleId: string;
   currentUserRole: VehicleRole | null;
 };
-
-type EditableRole = Exclude<VehicleRole, 'owner'>;
 
 export function MembersTab({ vehicleId, currentUserRole }: Props) {
   const isOwner = currentUserRole === 'owner';
@@ -149,6 +154,7 @@ function MemberRow({
             {isSelf ? <span className="ml-2 text-caption text-fg-3">(you)</span> : null}
           </p>
           <p className="break-all text-caption text-fg-3">{member.email}</p>
+          <p className="text-caption text-fg-3">{ROLE_COPY[member.role].detail}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -163,8 +169,11 @@ function MemberRow({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
+                {EDITABLE_ROLES.map((editableRole) => (
+                  <SelectItem key={editableRole} value={editableRole}>
+                    {ROLE_COPY[editableRole].label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <ConfirmActionDialog
@@ -282,6 +291,20 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {created ? <InviteLinkPanel created={created} onDone={() => setCreated(null)} /> : null}
+        <dl className="grid gap-1 text-caption text-fg-3">
+          {EDITABLE_ROLES.map((editableRole) => (
+            <div key={editableRole}>
+              <dt className="inline font-semibold text-fg-2">{ROLE_COPY[editableRole].label}</dt>{' '}
+              <dd className="inline">— {ROLE_COPY[editableRole].detail}</dd>
+            </div>
+          ))}
+          <div>
+            <dt className="inline font-semibold text-fg-2">Only you</dt>{' '}
+            <dd className="inline">
+              — can invite people, change roles, remove members or transfer ownership.
+            </dd>
+          </div>
+        </dl>
         <form className="grid gap-3 sm:grid-cols-[1fr_140px_auto]" onSubmit={handleSubmit}>
           <div className="grid gap-1">
             <Label htmlFor="invite-email" className="text-caption">
@@ -305,8 +328,11 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
+                {EDITABLE_ROLES.map((editableRole) => (
+                  <SelectItem key={editableRole} value={editableRole}>
+                    {ROLE_COPY[editableRole].label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -322,8 +348,10 @@ function InviteForm({ vehicleId }: { vehicleId: string }) {
 }
 
 /**
- * The invite link, right after creating it: copy, WhatsApp, or the device's
- * share sheet. Says an email went out only when the API says one did.
+ * The invite link, right after creating it. The primary way to hand it over
+ * is the device's share sheet where it exists, then WhatsApp, then copying it
+ * by hand — most families forward the link themselves. Says an email went
+ * out only when the API's `emailSent` says one did.
  */
 export function InviteLinkPanel({
   created,
@@ -362,18 +390,6 @@ export function InviteLinkPanel({
         onFocus={(e) => e.target.select()}
       />
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => void copyLink()} size="sm" type="button">
-          <Copy aria-hidden="true" className="h-4 w-4" /> Copy link
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(message)}`}
-            rel="noreferrer"
-            target="_blank"
-          >
-            <MessageCircle aria-hidden="true" className="h-4 w-4" /> WhatsApp
-          </a>
-        </Button>
         {canShare ? (
           <Button
             onClick={() =>
@@ -383,11 +399,22 @@ export function InviteLinkPanel({
             }
             size="sm"
             type="button"
-            variant="outline"
           >
             <Share2 aria-hidden="true" className="h-4 w-4" /> Share
           </Button>
         ) : null}
+        <Button asChild size="sm" variant={canShare ? 'outline' : 'default'}>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <MessageCircle aria-hidden="true" className="h-4 w-4" /> WhatsApp
+          </a>
+        </Button>
+        <Button onClick={() => void copyLink()} size="sm" type="button" variant="outline">
+          <Copy aria-hidden="true" className="h-4 w-4" /> Copy link
+        </Button>
         <Button onClick={onDone} size="sm" type="button" variant="ghost">
           Done
         </Button>
@@ -401,9 +428,28 @@ function PendingInvitesCard({
   invites,
 }: {
   vehicleId: string;
-  invites: Array<{ id: string; email: string; role: VehicleRole; expiresAt: string }>;
+  invites: VehicleInvite[];
 }) {
   const revokeMutation = useRevokeInvite(vehicleId);
+  const resendMutation = useResendInvite(vehicleId);
+
+  // The token is only ever known at creation, so getting the link again means
+  // asking the API to rotate it — the previous link stops working the moment
+  // this one is issued.
+  async function copyAgain(invite: VehicleInvite) {
+    try {
+      const result = await resendMutation.mutateAsync(invite.id);
+      await navigator.clipboard.writeText(result.acceptUrl);
+      appToast.success({
+        title: 'Invite link copied',
+        description: result.emailSent
+          ? `Also emailed to ${invite.email}. The previous link no longer works.`
+          : 'The previous link no longer works.',
+      });
+    } catch (error) {
+      appToast.error({ title: 'Couldn’t copy the link', description: getApiErrorMessage(error) });
+    }
+  }
 
   return (
     <Card className="border-line/60 bg-surface/70">
@@ -424,29 +470,40 @@ function PendingInvitesCard({
               <div>
                 <p className="break-all text-ui font-semibold">{invite.email}</p>
                 <p className="text-caption text-fg-3">
-                  Role: {format.enumLabel('vehicleRole', invite.role)} · expires{' '}
-                  {format.date(invite.expiresAt)}
+                  {format.enumLabel('vehicleRole', invite.role)} · invited{' '}
+                  {format.date(invite.createdAt)} · expires {format.date(invite.expiresAt)}
                 </p>
               </div>
             </div>
-            <ConfirmActionDialog
-              title="Revoke invitation?"
-              description={`Revoke the invitation sent to ${invite.email}? The link will stop working.`}
-              triggerLabel="Revoke"
-              triggerVariant="ghost"
-              confirmLabel="Revoke"
-              isPending={revokeMutation.isPending}
-              onConfirm={() =>
-                revokeMutation.mutateAsync(invite.id).then(
-                  () => appToast.success({ title: 'Invitation revoked' }),
-                  (error) =>
-                    appToast.error({
-                      title: 'Revoke failed',
-                      description: getApiErrorMessage(error),
-                    }),
-                )
-              }
-            />
+            <div className="flex items-center gap-2">
+              <Button
+                disabled={resendMutation.isPending}
+                onClick={() => void copyAgain(invite)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <Copy aria-hidden="true" className="mr-1 h-4 w-4" /> Copy link
+              </Button>
+              <ConfirmActionDialog
+                title="Revoke invitation?"
+                description={`Revoke the invitation sent to ${invite.email}? The link will stop working.`}
+                triggerLabel="Revoke"
+                triggerVariant="ghost"
+                confirmLabel="Revoke"
+                isPending={revokeMutation.isPending}
+                onConfirm={() =>
+                  revokeMutation.mutateAsync(invite.id).then(
+                    () => appToast.success({ title: 'Invitation revoked' }),
+                    (error) =>
+                      appToast.error({
+                        title: 'Revoke failed',
+                        description: getApiErrorMessage(error),
+                      }),
+                  )
+                }
+              />
+            </div>
           </div>
         ))}
       </CardContent>

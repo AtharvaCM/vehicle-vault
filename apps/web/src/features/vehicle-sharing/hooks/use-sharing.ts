@@ -11,6 +11,7 @@ import {
   membersQueryOptions,
   previewInvite,
   removeMember,
+  resendInvite,
   revokeInvite,
   transferOwnership,
   updateMemberRole,
@@ -51,6 +52,15 @@ export function useRevokeInvite(vehicleId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (inviteId: string) => revokeInvite(vehicleId, inviteId),
+    onSuccess: () => invalidate(qc, vehicleId),
+  });
+}
+
+/** Issues a fresh link for a pending invite and invalidates the one handed out before. */
+export function useResendInvite(vehicleId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (inviteId: string) => resendInvite(vehicleId, inviteId),
     onSuccess: () => invalidate(qc, vehicleId),
   });
 }

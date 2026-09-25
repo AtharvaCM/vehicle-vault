@@ -69,7 +69,7 @@ describe('AcceptInvitePage', () => {
     expect(screen.getAllByText('Family SUV (MH12AB1234)').length).toBeGreaterThan(0);
     expect(screen.getByText('Asha')).toBeInTheDocument();
     expect(screen.getAllByText(/r\*\*\*@gmail\.com/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/log services, fuel and documents/i)).toBeInTheDocument();
+    expect(screen.getByText(/can also log services, fuel and papers/i)).toBeInTheDocument();
 
     const next = encodeURIComponent(`/vehicle-invites/${TOKEN}`);
     expect(screen.getByRole('link', { name: 'Sign in to accept' })).toHaveAttribute(
