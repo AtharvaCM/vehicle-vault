@@ -1,3 +1,10 @@
+# [1.100.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.99.0...v1.100.0) (2026-09-25)
+
+
+### Features
+
+* **web:** give a loan its own page ([cea0835](https://github.com/AtharvaCM/vehicle-vault/commit/cea0835d37041f666633152c6ab166ab68122b57)), closes [#312](https://github.com/AtharvaCM/vehicle-vault/issues/312)
+
 # [1.99.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.98.0...v1.99.0) (2026-09-25)
 
 
