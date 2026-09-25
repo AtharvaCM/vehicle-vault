@@ -33,8 +33,9 @@ const IND = { font: 8, bottom: 6 };
  * goes and, the instant the characters typed so far spell out a complete
  * Indian registration, groups it the way the plate prints it — state ·
  * district · series · number, or year · BH · number · series — via
- * `formatRegistrationInput`. Validity (standard or Bharat series) is judged
- * on submit by `VehicleCreateSchema`, not here.
+ * `formatRegistrationInput`. A stored (compact) value is shown grouped the
+ * same way; `VehicleCreateSchema` compacts it again and judges its validity
+ * on submit.
  */
 export function PlateInput({
   id,
@@ -98,7 +99,7 @@ export function PlateInput({
         spellCheck={false}
         style={letteringStyle}
         type="text"
-        value={value}
+        value={formatRegistrationInput(value)}
       />
     </span>
   );

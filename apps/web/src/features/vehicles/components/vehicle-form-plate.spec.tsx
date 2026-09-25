@@ -45,15 +45,17 @@ describe('VehicleForm registration number', () => {
     expect(screen.getByLabelText('Odometer')).toHaveValue(null);
   });
 
-  it('formats the plate as it is typed and saves the grouped value', async () => {
+  it('groups the plate as it is typed and saves it compact', async () => {
     const user = userEvent.setup();
     render(<VehicleForm initialValues={initialValues} onSubmit={onSubmit} />);
 
-    await user.type(screen.getByLabelText('Registration number'), 'mh12dm0002');
+    const field = screen.getByLabelText('Registration number');
+    await user.type(field, 'mh12dm0002');
+    expect(field).toHaveValue('MH 12 DM 0002');
     fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
-    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: 'MH 12 DM 0002' });
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: 'MH12DM0002' });
   });
 
   it('saves a Bharat series plate', async () => {
@@ -64,7 +66,7 @@ describe('VehicleForm registration number', () => {
     fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
-    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: '22 BH 1234 AA' });
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: '22BH1234AA' });
   });
 
   it('saves a temporary registration, carried before the permanent plate arrives', async () => {
@@ -75,7 +77,7 @@ describe('VehicleForm registration number', () => {
     fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
-    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: 'T 0724 HR 6123 A' });
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: 'T0724HR6123A' });
   });
 
   it('rejects a malformed temporary registration', async () => {
@@ -128,5 +130,26 @@ describe('VehicleForm registration number', () => {
     await user.type(field, 'mh12dm0002');
 
     expect(screen.queryByText(/valid Indian registration number/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a stored plate grouped and saves an edit to it compact', async () => {
+    const user = userEvent.setup();
+    render(
+      <VehicleForm
+        initialValues={{ ...initialValues, registrationNumber: 'MH12DM0002' }}
+        mode="edit"
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const field = screen.getByLabelText('Registration number');
+    expect(field).toHaveValue('MH 12 DM 0002');
+
+    await user.clear(field);
+    await user.type(field, 'mh 14 ab 0003');
+    fireEvent.click(screen.getByRole('button', { name: /save vehicle/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({ registrationNumber: 'MH14AB0003' });
   });
 });

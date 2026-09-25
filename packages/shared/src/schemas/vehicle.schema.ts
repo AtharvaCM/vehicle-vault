@@ -42,9 +42,20 @@ export const INVALID_REGISTRATION_MESSAGE =
   'Enter a valid Indian registration number, e.g. MH12AB1234, 22BH1234AA or a temporary T0724HR6123A';
 
 export const VehicleCreateSchema = z.object({
-  registrationNumber: z.string().trim().min(1).max(20).refine(isValidRegistrationNumber, {
-    message: INVALID_REGISTRATION_MESSAGE,
-  }),
+  /**
+   * Stored compact (MH12DM0002), however it was typed or shown: the plate
+   * input groups it as it prints, and the per-owner unique index and every
+   * comparison only hold if one plate has one spelling.
+   */
+  registrationNumber: z
+    .string()
+    .trim()
+    .min(1)
+    .max(20)
+    .transform(compactRegistrationNumber)
+    .refine(isValidRegistrationNumber, {
+      message: INVALID_REGISTRATION_MESSAGE,
+    }),
   make: z.string().trim().min(1).max(80),
   model: z.string().trim().min(1).max(80),
   /**
