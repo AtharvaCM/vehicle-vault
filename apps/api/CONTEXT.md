@@ -174,6 +174,9 @@ _Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic
 **Token**:
 A credential issued to a **User** for a specific purpose: email verification, password reset, or refresh session. **TokenService** owns issue/consume/rotate/revoke lifecycle for all purposes, regardless of whether the bits are a JWT (refresh) or a SHA-256 hash of random bytes (verification, reset). Timing-safe comparisons. See ADR-0002.
 
+**Password change** (`POST /auth/password`, #315):
+`AuthService.changePassword` needs the current password when one is on file and none when the account only ever signed in through OAuth (that sets a first one). It returns a fresh `AuthResponse`; because a **User** holds a single refresh-token hash, rotating it is what signs every other device out. Audited as `auth.password_changed` with `firstPassword`. `GET /auth/security` answers `{ hasPassword, oauthProviders }` without exposing the hash.
+
 **Email verification deadline**:
 A new password account may use the app unverified for `EMAIL_VERIFICATION_GRACE_DAYS` (7) from `createdAt` (`modules/auth/email-verification-deadline.ts`). `AuthUser.emailVerificationDueAt` carries the moment, or null when there is nothing to wait for: the address is verified, or it is the `@oauth.local` placeholder an OAuth sign-in without an email gets. The API itself does not gate on verification — the web app turns the deadline into a banner and then a wall, and alert email waits for verification regardless.
 

@@ -1,22 +1,33 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BellRing, ChevronRight, Download, History, ScanSearch, ShieldCheck } from 'lucide-react';
+import { BellRing, ChevronRight, Download, History, ScanSearch } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { InlineError } from '@/components/shared/inline-error';
 import { PageTitle } from '@/components/shared/page-title';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatusPill } from '@/components/shared/status-pill';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
+import { accountSecurityQueryOptions } from '../api/account-security';
+import { ChangePasswordDialog } from '../components/change-password-dialog';
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
 import { useReconcileAttachments } from '../hooks/use-reconcile-attachments';
 
+/**
+ * Settings as a directory (#315): Profile, Security, Notifications, and Data &
+ * privacy, each row owning one decision.
+ */
 export function SettingsPage() {
   const auth = useAuth();
   const exportMutation = useDownloadAccountExport();
   const reconcileMutation = useReconcileAttachments();
+  const security = useQuery(accountSecurityQueryOptions()).data;
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
 
   async function handleExport() {
     try {
@@ -59,152 +70,182 @@ export function SettingsPage() {
     }
   }
 
+  const provider = (name: 'google' | 'github') => (name === 'google' ? 'Google' : 'GitHub');
+  const signInMethods = security
+    ? [
+        ...(security.hasPassword ? ['Email and password'] : []),
+        ...security.oauthProviders.map(provider),
+      ]
+    : [];
+
   return (
     <PageContainer>
-      <PageTitle
-        description="Your account, your notification preferences, and a backup of your garage data."
-        title="Settings"
-      />
+      <PageTitle description="Your account, how you sign in, and your data." title="Settings" />
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-            <CardDescription>The account currently signed in to Vehicle Vault.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-            <div>
-              <p className="font-semibold text-fg">{auth.user?.name}</p>
-              <p className="break-all">{auth.user?.email}</p>
-            </div>
-            <p>Everything in your garage is tied to this account.</p>
-          </CardContent>
-        </Card>
+      <div className="max-w-3xl space-y-6">
+        <SettingsSection title="Profile">
+          <SettingsRow label="Name" value={auth.user?.name ?? '—'} />
+          <SettingsRow
+            label="Email"
+            value={
+              <span className="flex flex-wrap items-center gap-2 break-all">
+                {auth.user?.email}
+                {auth.user?.emailVerified ? (
+                  <StatusPill status="ok">Verified</StatusPill>
+                ) : (
+                  <StatusPill status="soon">Not verified</StatusPill>
+                )}
+              </span>
+            }
+          />
+        </SettingsSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Data export</CardTitle>
-            <CardDescription>
-              Download a JSON backup of your vehicles, service history, reminders, receipts, and
-              account details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
-            <div className="space-y-2">
-              <p>Use this export as a backup of your ownership history outside the app.</p>
-              <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-page/80 px-3.5 py-3">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-fg-3" />
-                <p>
-                  Only data saved under{' '}
-                  <span className="break-all font-medium text-fg">{auth.user?.email}</span> is
-                  included in this export.
-                </p>
-              </div>
-            </div>
-            {exportMutation.isError ? (
+        <SettingsSection title="Security">
+          <SettingsRow
+            action={
+              security ? (
+                <Button
+                  onClick={() => setIsPasswordOpen(true)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {security.hasPassword ? 'Change' : 'Set a password'}
+                  <ChevronRight aria-hidden="true" />
+                </Button>
+              ) : null
+            }
+            label="Password"
+            value={security ? (security.hasPassword ? 'Set' : 'Not set yet') : 'Loading…'}
+          />
+          <SettingsRow
+            label="Sign-in methods"
+            value={signInMethods.length ? signInMethods.join(' · ') : security ? '—' : 'Loading…'}
+          />
+        </SettingsSection>
+
+        <SettingsSection title="Notifications">
+          <SettingsRow
+            action={
+              <Link
+                className={buttonVariants({ size: 'sm', variant: 'ghost' })}
+                to="/settings/preferences"
+              >
+                <BellRing aria-hidden="true" />
+                Preferences
+                <ChevronRight aria-hidden="true" />
+              </Link>
+            }
+            label="Alerts"
+            value="What we tell you about, and where"
+          />
+        </SettingsSection>
+
+        <SettingsSection title="Data & privacy">
+          <SettingsRow
+            action={
+              <Link
+                className={buttonVariants({ size: 'sm', variant: 'ghost' })}
+                to="/settings/activity"
+              >
+                <History aria-hidden="true" />
+                Activity log
+                <ChevronRight aria-hidden="true" />
+              </Link>
+            }
+            label="Activity"
+            value="Every change and sign-in"
+          />
+          <SettingsRow
+            action={
+              <Button
+                disabled={exportMutation.isPending}
+                onClick={() => void handleExport()}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <Download aria-hidden="true" />
+                {exportMutation.isPending ? 'Preparing…' : 'Download JSON backup'}
+              </Button>
+            }
+            label="Download your data"
+            value="Vehicles, records, reminders and papers as JSON"
+          />
+          <SettingsRow
+            action={
+              <Button
+                disabled={reconcileMutation.isPending}
+                onClick={() => void handleReconcileAttachments()}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <ScanSearch aria-hidden="true" />
+                {reconcileMutation.isPending ? 'Checking…' : 'Check files'}
+              </Button>
+            }
+            label="Stored files"
+            value="Remove entries for receipts no longer in storage"
+          />
+          {exportMutation.isError ? (
+            <div className="px-5 py-3">
               <InlineError
                 message={getApiErrorMessage(
                   exportMutation.error,
                   "We couldn't prepare your export. Try again in a moment.",
                 )}
               />
-            ) : null}
-            <Button
-              className="w-full justify-center sm:w-auto"
-              disabled={exportMutation.isPending}
-              onClick={() => {
-                void handleExport();
-              }}
-              type="button"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {exportMutation.isPending ? 'Preparing export...' : 'Download JSON backup'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>
-              Choose which alerts reach you by email and push, and turn push on for this device.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
-            <p>
-              Every alert stays in the bell either way. These settings only decide what else reaches
-              you.
-            </p>
-            <Link
-              to="/settings/preferences"
-              className="flex items-center justify-between rounded-xl border border-border/70 bg-page/80 px-3.5 py-3 font-medium text-fg transition-colors hover:bg-page"
-            >
-              <span className="flex items-center gap-2">
-                <BellRing className="h-4 w-4 text-fg-3" />
-                Notification preferences
-              </span>
-              <ChevronRight className="h-4 w-4 text-fg-3" />
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Attachment reconciliation</CardTitle>
-            <CardDescription>
-              Scan your attachment records and remove stale metadata if a stored file is no longer
-              available.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
-            {reconcileMutation.isError ? (
-              <InlineError
-                message={getApiErrorMessage(
-                  reconcileMutation.error,
-                  "We couldn't complete the attachment cleanup check right now.",
-                )}
-              />
-            ) : null}
-            <Button
-              className="w-full justify-center sm:w-auto"
-              disabled={reconcileMutation.isPending}
-              onClick={() => {
-                void handleReconcileAttachments();
-              }}
-              type="button"
-              variant="outline"
-            >
-              <ScanSearch className="mr-2 h-4 w-4" />
-              {reconcileMutation.isPending ? 'Checking attachments...' : 'Reconcile attachments'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Activity log</CardTitle>
-            <CardDescription>
-              Review every change made across your garage — what changed, and when.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
-            <p>
-              A complete, newest-first history of vehicle, service, reminder, fuel, and account
-              events tied to your account.
-            </p>
-            <Link
-              to="/settings/activity"
-              className="flex items-center justify-between rounded-xl border border-border/70 bg-page/80 px-3.5 py-3 font-medium text-fg transition-colors hover:bg-page"
-            >
-              <span className="flex items-center gap-2">
-                <History className="h-4 w-4 text-fg-3" />
-                View activity log
-              </span>
-              <ChevronRight className="h-4 w-4 text-fg-3" />
-            </Link>
-          </CardContent>
-        </Card>
+            </div>
+          ) : null}
+        </SettingsSection>
       </div>
+
+      {security ? (
+        <ChangePasswordDialog
+          hasPassword={security.hasPassword}
+          onOpenChange={setIsPasswordOpen}
+          open={isPasswordOpen}
+        />
+      ) : null}
     </PageContainer>
+  );
+}
+
+/** One group of Settings rows under its heading. */
+function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
+  const id = `settings-${title.toLowerCase().replace(/[^a-z]+/g, '-')}`;
+
+  return (
+    <section aria-labelledby={id} className="space-y-2">
+      <h2 className="px-1 text-body font-semibold text-fg-2" id={id}>
+        {title}
+      </h2>
+      <Card className="divide-y divide-line-subtle p-0">{children}</Card>
+    </section>
+  );
+}
+
+/** A Settings row owns one decision: what it is, how it stands, and the way to change it. */
+function SettingsRow({
+  label,
+  value,
+  action,
+}: {
+  label: string;
+  value: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div
+      className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:gap-4"
+      data-testid="settings-row"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-body font-medium text-fg">{label}</p>
+        <div className="text-small text-fg-2">{value}</div>
+      </div>
+      {action ? <div className="shrink-0 sm:-mr-2">{action}</div> : null}
+    </div>
   );
 }
