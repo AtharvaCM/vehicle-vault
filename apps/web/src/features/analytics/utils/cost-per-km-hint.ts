@@ -9,9 +9,16 @@ import { format } from '@/lib/format';
  * `VehicleSpendList` so the two never drift on the wording.
  */
 export function costPerKmHint(
-  tco: Pick<TcoResponse, 'derived' | 'purchaseOdometer' | 'kmSincePurchase'>,
+  tco: Pick<TcoResponse, 'derived' | 'purchaseOdometer' | 'kmSincePurchase'> & {
+    totals?: Pick<TcoResponse['totals'], 'accessories'>;
+  },
 ): string {
-  if (tco.derived.costPerKm) return format.distance(tco.kmSincePurchase);
+  if (tco.derived.costPerKm) {
+    // Running cost: accessories are one-off buys, left out by the API.
+    return Number(tco.totals?.accessories ?? 0) > 0
+      ? `${format.distance(tco.kmSincePurchase)} · accessories left out`
+      : format.distance(tco.kmSincePurchase);
+  }
   if (tco.purchaseOdometer == null) return 'Add the odometer at purchase to see cost per km';
   return `${format.distance(tco.kmSincePurchase)} so far; shown from ${format.distance(TCO_MIN_COST_PER_KM_DISTANCE_KM)}`;
 }

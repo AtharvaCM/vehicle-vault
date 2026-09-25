@@ -72,31 +72,34 @@ test('a tyre can be reviewed, corrected and deleted from the tracker', async ({ 
 
   await page.goto(`/vehicles/${vehicle.id}?tab=more&section=tyres`);
   const card = page.getByTestId('tyre-corner').filter({ hasText: 'Front left' });
-  await expect(card).toContainText('Healthy');
+  await expect(card).toContainText('Good');
+  await expect(card).toContainText('5.2 mm');
 
-  // The history, newest first, as recorded.
-  await card.getByText('Readings (2)').click();
-  const readings = card.getByRole('listitem');
-  await expect(readings.nth(0)).toContainText('5.2 mm tread');
-  await expect(readings.nth(1)).toContainText('6 mm tread · 32 psi');
+  // The history, newest first, as recorded: each reading, then the fitting.
+  const history = page.getByTestId('tyre-history-item');
+  await expect(history.nth(0)).toContainText('Inspection · front left 5.2 mm');
+  await expect(history.nth(1)).toContainText('Inspection · front left 6 mm · 32 psi');
+  await expect(history.nth(2)).toContainText('Fitted front left');
 
   // A DOT code typed wrong: the tyre is really from 2018, and age retires it.
-  await card.getByRole('button', { name: 'Edit' }).click();
+  await card.getByRole('button', { name: 'Edit the front left tyre' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByLabel('DOT code')).toHaveValue('3624');
   await dialog.getByLabel('DOT code').fill('0118');
   await dialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(dialog).toBeHidden();
   // The grading shown now is the resolver's, fetched again, not worked out in the page.
-  await expect(card).toContainText('Replace');
-  await expect(card).toContainText('rubber degrades with age');
+  await expect(card).toContainText('Replace soon');
+  await expect(page.getByTestId('tyre-verdict')).toContainText(
+    /Front left tyre: \d+ years old — replace soon/,
+  );
 
   // Fitted by mistake: gone, and its readings with it.
   await card.getByRole('button', { name: 'Delete' }).click();
   const confirm = page.getByRole('alertdialog');
   await expect(confirm).toContainText('Its 2 readings will be deleted with it.');
   await confirm.getByRole('button', { name: 'Delete tyre' }).click();
-  await expect(page.getByText('No tyres tracked yet')).toBeVisible();
+  await expect(page.getByTestId('tyres-empty')).toContainText('Add your tyres');
   expect(await prisma.tyre.count({ where: { vehicleId: vehicle.id } })).toBe(0);
   expect(await prisma.tyreInspection.count({ where: { vehicleId: vehicle.id } })).toBe(0);
 });
