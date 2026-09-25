@@ -48,6 +48,8 @@ for (const viewport of VIEWPORTS) {
     page,
     browser,
   }) => {
+    // Up to four browsers signing in: well past the default budget on CI.
+    test.slow();
     const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const email = `e2e+sessions${suffix}@vehiclevault.dev`;
     const password = 'VehicleVault!234';
