@@ -222,7 +222,9 @@ describe('HistoryPage month headers', () => {
 
     expect(screen.queryByTestId('history-summary')).not.toBeInTheDocument();
     expect(
-      screen.getByText('Every service, fuel fill and odometer reading across your garage.'),
+      screen.getByText(
+        'Every service, fuel fill, odometer reading and accessory across your garage.',
+      ),
     ).toBeInTheDocument();
   });
 });

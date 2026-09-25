@@ -446,7 +446,7 @@ describe('UpcomingRow', () => {
       expect(screen.getByText('Accessory warranty')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'View accessory' })).toHaveAttribute(
         'data-search',
-        JSON.stringify({ tab: 'more', section: 'accessories' }),
+        JSON.stringify({ tab: 'history', view: 'accessory' }),
       );
     });
   });

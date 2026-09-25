@@ -29,7 +29,7 @@ import { useHistory } from '../hooks/use-history';
 import type { HistorySearch } from '../types/history-search';
 
 const TITLE = 'History';
-const DESCRIPTION = 'Every service, fuel fill and odometer reading across your garage.';
+const DESCRIPTION = 'Every service, fuel fill, odometer reading and accessory across your garage.';
 const EMPTY_VEHICLES: HistoryVehicle[] = [];
 
 type HistoryPageProps = {

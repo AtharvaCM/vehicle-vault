@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { MaintenanceCategory, MaintenanceRecordStatus } from '../enums';
 
-/** What the garage-wide History timeline lists: logged work, fills and readings. */
-export const HISTORY_KINDS = ['service', 'fuel', 'odometer'] as const;
+/** What the garage-wide History timeline lists: logged work, fills, readings and accessories. */
+export const HISTORY_KINDS = ['service', 'fuel', 'odometer', 'accessory'] as const;
 export type HistoryKind = (typeof HISTORY_KINDS)[number];
 
 export const HISTORY_PAGE_DEFAULT_LIMIT = 30;
@@ -14,9 +14,9 @@ export const HistoryQuerySchema = z.object({
   vehicleId: z.string().uuid().optional(),
   kind: z.enum(HISTORY_KINDS).optional(),
   /**
-   * Words to find: a service's category, workshop, invoice number or notes, or a
-   * fill's station or notes. Odometer readings carry no words, so a search
-   * leaves them out.
+   * Words to find: a service's category, workshop, invoice number or notes, a
+   * fill's station or notes, or an accessory's name, brand, category or notes.
+   * Odometer readings carry no words, so a search leaves them out.
    */
   search: z.string().trim().min(1).max(HISTORY_SEARCH_MAX_LENGTH).optional(),
   /** Opaque: the `nextCursor` of the page before. */
@@ -61,16 +61,30 @@ export const HistoryOdometerEntrySchema = HistoryEntryBase.extend({
   previousOdometer: z.number().int().nonnegative().nullable(),
 });
 
+/** Something bought for the vehicle (#336), on the day it was bought. */
+export const HistoryAccessoryEntrySchema = HistoryEntryBase.extend({
+  kind: z.literal('accessory'),
+  name: z.string(),
+  brand: z.string().nullable(),
+  cost: decimalString,
+  currencyCode: z.string(),
+  /** Its own warranty, which feeds the expiry alerts. */
+  warrantyExpiresAt: z.string().datetime().nullable(),
+  /** The newest receipt on it, to open from the row. Null without one. */
+  receiptId: z.string().uuid().nullable(),
+});
+
 export const HistoryEntrySchema = z.discriminatedUnion('kind', [
   HistoryServiceEntrySchema,
   HistoryFuelEntrySchema,
   HistoryOdometerEntrySchema,
+  HistoryAccessoryEntrySchema,
 ]);
 
 export const HistoryMonthSchema = z.object({
   month: monthKey,
   /**
-   * Confirmed service and fuel spend in the whole month under the same filters,
+   * Confirmed service, fuel and accessory spend in the whole month under the same filters,
    * not just the rows on this page. Drafts are never in it. Null when the month
    * has no spend the filters can count (odometer readings only, or drafts only).
    */
@@ -111,6 +125,7 @@ export type HistoryQuery = z.infer<typeof HistoryQuerySchema>;
 export type HistoryServiceEntry = z.infer<typeof HistoryServiceEntrySchema>;
 export type HistoryFuelEntry = z.infer<typeof HistoryFuelEntrySchema>;
 export type HistoryOdometerEntry = z.infer<typeof HistoryOdometerEntrySchema>;
+export type HistoryAccessoryEntry = z.infer<typeof HistoryAccessoryEntrySchema>;
 export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
 export type HistoryMonth = z.infer<typeof HistoryMonthSchema>;
 export type HistoryPage = z.infer<typeof HistoryPageSchema>;

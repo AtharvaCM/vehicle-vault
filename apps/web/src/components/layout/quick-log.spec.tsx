@@ -61,7 +61,7 @@ describe('QuickLogButton', () => {
     vehicles.isPending = false;
   });
 
-  it('offers the six quick writes', async () => {
+  it('offers the seven quick writes', async () => {
     const { sheet } = await openSheet();
 
     expect(
@@ -75,6 +75,7 @@ describe('QuickLogButton', () => {
       'Update odometer',
       'Add paper',
       'Add reminder',
+      'Add accessory',
       'Add vehicle',
     ]);
   });

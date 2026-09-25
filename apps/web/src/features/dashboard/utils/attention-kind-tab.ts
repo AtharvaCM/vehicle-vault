@@ -14,5 +14,5 @@ export const ATTENTION_KIND_SEARCH: Record<
   loan_emi: { tab: 'more', section: 'loans' },
   tyre: { tab: 'more', section: 'tyres' },
   service_baseline: { tab: 'history' },
-  accessory: { tab: 'more', section: 'accessories' },
+  accessory: { tab: 'history', view: 'accessory' },
 };

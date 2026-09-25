@@ -7,6 +7,7 @@ import {
   FileText,
   Fuel,
   Gauge,
+  Package,
   Plus,
   Wrench,
   type LucideIcon,
@@ -37,12 +38,20 @@ import {
   QuickLogDialog,
   type QuickLogVehicle,
 } from '@/features/dashboard/components/quick-log-dialog';
+import { AccessoryFormDialog } from '@/features/accessories/components/accessory-form-dialog';
 import { DocumentFormDialog } from '@/features/vehicle-documents/components/document-form-dialog';
 import { accessFor } from '@/features/vehicles/context/vehicle-access';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { getVehicleDisplayName } from '@/features/vehicles/utils/get-vehicle-display-name';
 
-export type QuickLogAction = 'service' | 'fuel' | 'odometer' | 'paper' | 'reminder' | 'vehicle';
+export type QuickLogAction =
+  | 'service'
+  | 'fuel'
+  | 'odometer'
+  | 'paper'
+  | 'reminder'
+  | 'accessory'
+  | 'vehicle';
 
 type ActionSpec = { action: QuickLogAction; label: string; icon: LucideIcon };
 
@@ -53,6 +62,7 @@ export const QUICK_LOG_ACTIONS: readonly ActionSpec[] = [
   { action: 'odometer', label: 'Update odometer', icon: Gauge },
   { action: 'paper', label: 'Add paper', icon: FileText },
   { action: 'reminder', label: 'Add reminder', icon: CalendarPlus },
+  { action: 'accessory', label: 'Add accessory', icon: Package },
   { action: 'vehicle', label: 'Add vehicle', icon: CarFront },
 ];
 
@@ -234,6 +244,9 @@ function QuickLogForms({ chosen, closeChosen }: Pick<QuickLogState, 'chosen' | '
           open
           vehicles={[chosen.vehicle]}
         />
+      ) : null}
+      {chosen?.action === 'accessory' ? (
+        <AccessoryFormDialog isOpen onClose={closeChosen} vehicleId={chosen.vehicle.id} />
       ) : null}
       {chosen?.action === 'paper' ? (
         <DocumentFormDialog isOpen onClose={closeChosen} vehicleId={chosen.vehicle.id} />

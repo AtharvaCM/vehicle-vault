@@ -18,6 +18,7 @@ const KIND_OPTIONS: { value: HistoryKind | 'all'; label: string }[] = [
   { value: 'service', label: 'Service' },
   { value: 'fuel', label: 'Fuel' },
   { value: 'odometer', label: 'Odometer' },
+  { value: 'accessory', label: 'Accessory' },
 ];
 
 type HistoryFiltersProps = {

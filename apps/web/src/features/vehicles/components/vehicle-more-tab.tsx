@@ -5,7 +5,6 @@ import type { Vehicle, VehicleRole } from '@vehicle-vault/shared';
 
 import { SectionHeader } from '@/components/shared/section-header';
 import { cn } from '@/lib/utils';
-import { AccessoriesTab } from '@/features/accessories/components/accessories-tab';
 import { ActivityFeed } from '@/features/audit/components/activity-feed';
 import type { useVehicleAudit } from '@/features/audit/hooks/use-vehicle-audit';
 import { VehicleLoansPanel } from '@/features/loans/components/vehicle-loans-panel';
@@ -24,7 +23,6 @@ const sections: Record<
 > = {
   about: { title: 'About this vehicle', description: 'Variant, key specs and when you bought it' },
   tyres: { title: 'Tyres', description: 'Tread, age and rotation' },
-  accessories: { title: 'Accessories', description: "What's fitted, with its warranty" },
   loans: { title: 'Loans', description: "EMIs and what's left to pay", ownerOnly: true },
   members: { title: 'Members', description: 'Who can see this vehicle or log for it' },
   activity: { title: 'Activity', description: 'Every change, in words, newest first' },
@@ -183,8 +181,6 @@ function MoreSection({
       return <VehicleAbout vehicle={vehicle} />;
     case 'tyres':
       return <VehicleTyreTracker maintenanceQuery={maintenanceQuery} vehicle={vehicle} />;
-    case 'accessories':
-      return <AccessoriesTab vehicleId={vehicleId} />;
     case 'loans':
       return (
         <VehicleLoansPanel

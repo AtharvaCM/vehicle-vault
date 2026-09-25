@@ -76,7 +76,8 @@ type AttachmentOwnerColumn =
   | { vehicleLoanId: string }
   | { insurancePolicyId: string }
   | { warrantyId: string }
-  | { complianceDocumentId: string };
+  | { complianceDocumentId: string }
+  | { accessoryId: string };
 
 function documentOwnerColumn(
   kind: DocumentAttachmentKind,
@@ -189,6 +190,42 @@ export class AttachmentsService {
   async uploadLoanAttachments(userId: string, loanId: string, files: AttachmentUploadFile[]) {
     await this.vehicleLoansService.getById(userId, loanId);
     return this.storeAttachments(userId, { vehicleLoanId: loanId }, loanId, userId, files);
+  }
+
+  /**
+   * An accessory's receipt: any member of its vehicle may open it, only an
+   * editor may add one, and the audit event goes to the vehicle owner's trail.
+   */
+  private async resolveAccessoryVehicle(accessoryId: string) {
+    const accessory = await this.prisma.accessory.findUnique({
+      where: { id: accessoryId },
+      select: { vehicleId: true, vehicle: { select: { userId: true } } },
+    });
+    if (!accessory) {
+      throw new NotFoundException(`Accessory ${accessoryId} was not found`);
+    }
+    return { vehicleId: accessory.vehicleId, vehicleOwnerId: accessory.vehicle.userId };
+  }
+
+  async listByAccessory(userId: string, accessoryId: string) {
+    const { vehicleId } = await this.resolveAccessoryVehicle(accessoryId);
+    await this.access.assert(userId, vehicleId);
+    const attachments = await this.prisma.attachment.findMany({
+      where: { accessoryId },
+      include: attachmentInclude,
+      orderBy: { uploadedAt: 'desc' },
+    });
+    return attachments.map((attachment) => this.toAttachment(attachment));
+  }
+
+  async uploadAccessoryAttachments(
+    userId: string,
+    accessoryId: string,
+    files: AttachmentUploadFile[],
+  ) {
+    const { vehicleId, vehicleOwnerId } = await this.resolveAccessoryVehicle(accessoryId);
+    await this.access.assertEditor(userId, vehicleId);
+    return this.storeAttachments(userId, { accessoryId }, accessoryId, vehicleOwnerId, files);
   }
 
   async listByDocument(userId: string, kind: DocumentAttachmentKind, documentId: string) {
@@ -745,7 +782,9 @@ export class AttachmentsService {
         ? await this.resolveDocumentVehicle('warranty', attachment.warrantyId)
         : attachment.complianceDocumentId
           ? await this.resolveComplianceVehicle(attachment.complianceDocumentId)
-          : null;
+          : attachment.accessoryId
+            ? await this.resolveAccessoryVehicle(attachment.accessoryId)
+            : null;
     if (documentOwner) {
       // Opening is for any member; removing a file from a document is an edit.
       await this.access.assertEditor(userId, documentOwner.vehicleId);
@@ -833,6 +872,8 @@ export class AttachmentsService {
           { insurancePolicy: { vehicle: { members: { some: { userId } } } } },
           { warranty: { vehicle: { members: { some: { userId } } } } },
           { complianceDocument: { vehicle: { members: { some: { userId } } } } },
+          // An accessory's receipt is the vehicle's too.
+          { accessory: { vehicle: { members: { some: { userId } } } } },
         ],
       },
       include: attachmentInclude,
@@ -863,10 +904,11 @@ export class AttachmentsService {
       !attachment.vehicleLoanId &&
       !attachment.insurancePolicyId &&
       !attachment.warrantyId &&
-      !attachment.complianceDocumentId
+      !attachment.complianceDocumentId &&
+      !attachment.accessoryId
     ) {
       throw new Error(
-        `Cannot map attachment ${attachment.id}: no supported owner (expected a maintenance record, vehicle loan or vehicle document).`,
+        `Cannot map attachment ${attachment.id}: no supported owner (expected a maintenance record, vehicle loan, vehicle document or accessory).`,
       );
     }
     return {
@@ -876,6 +918,7 @@ export class AttachmentsService {
       insurancePolicyId: attachment.insurancePolicyId ?? undefined,
       warrantyId: attachment.warrantyId ?? undefined,
       complianceDocumentId: attachment.complianceDocumentId ?? undefined,
+      accessoryId: attachment.accessoryId ?? undefined,
       kind: attachment.kind as AttachmentKind,
       fileName: attachment.fileName,
       originalFileName: attachment.originalFileName,

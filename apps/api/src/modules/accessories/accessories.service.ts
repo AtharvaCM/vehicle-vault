@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AuditResourceType, Prisma } from '@prisma/client';
 import {
   AccessoryCreateSchema,
@@ -10,6 +10,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { SupabaseStorageService } from '../../common/storage/supabase-storage.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { AuditService } from '../audit/audit.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
@@ -23,11 +24,14 @@ const DEFAULT_CURRENCY_CODE = 'INR';
 
 @Injectable()
 export class AccessoriesService {
+  private readonly logger = new Logger(AccessoriesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
     private readonly access: VehicleAccessService,
     private readonly auditService: AuditService,
+    private readonly storageService: SupabaseStorageService,
   ) {}
 
   async listForVehicle(userId: string, vehicleId: string): Promise<Accessory[]> {
@@ -149,6 +153,11 @@ export class AccessoriesService {
 
   async deleteAccessory(userId: string, accessoryId: string): Promise<{ id: string }> {
     const existing = await this.getOwnedAccessory(userId, accessoryId);
+    // Its receipts' rows go with it (ON DELETE CASCADE); their files do not.
+    const receipts = await this.prisma.attachment.findMany({
+      where: { accessoryId: existing.id },
+      select: { fileName: true },
+    });
 
     await this.prisma.$transaction(async (tx) => {
       await tx.accessory.delete({ where: { id: existing.id } });
@@ -162,8 +171,25 @@ export class AccessoriesService {
         before: existing as unknown as Record<string, unknown>,
       });
     });
+    await this.removeStoredFiles(receipts.map((receipt) => receipt.fileName));
 
     return { id: existing.id };
+  }
+
+  /**
+   * Best effort, after the rows are gone: the accessory is deleted either way,
+   * and a file storage refuses to remove is logged rather than resurrecting an
+   * accessory the user asked to delete. Account deletion's sweep catches strays.
+   */
+  private async removeStoredFiles(paths: string[]) {
+    const results = await Promise.allSettled(
+      paths.map((path) => this.storageService.deleteObject(path)),
+    );
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        this.logger.warn(`Could not remove stored file ${paths[index]}: ${String(result.reason)}`);
+      }
+    });
   }
 
   /**

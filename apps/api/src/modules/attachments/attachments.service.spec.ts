@@ -953,6 +953,127 @@ describe('AttachmentsService', () => {
     });
   });
 
+  describe('receipts on accessories', () => {
+    const access = {
+      assert: vi.fn(),
+      assertEditor: vi.fn(),
+      assertOwner: vi.fn(),
+      resolve: vi.fn(),
+    };
+    const accessories = { accessory: { findUnique: vi.fn() } };
+    const receipt = {
+      originalname: 'dashcam-receipt.pdf',
+      mimetype: 'application/pdf',
+      size: 1024,
+      buffer: Buffer.from('%PDF-1.7 receipt'),
+    };
+    let accessoryService: AttachmentsService;
+
+    beforeEach(() => {
+      access.assert.mockResolvedValue('editor');
+      access.assertEditor.mockResolvedValue('editor');
+      // The dashcam is on someone else's vehicle, shared with this user as an editor.
+      accessories.accessory.findUnique.mockResolvedValue({
+        vehicleId: 'vehicle-1',
+        vehicle: { userId: 'owner-1' },
+      });
+      accessoryService = new AttachmentsService(
+        { ...prisma, ...accessories } as never,
+        maintenanceService as never,
+        storageService as never,
+        extractionService as never,
+        auditService as never,
+        { getById: vi.fn(), listForUser: vi.fn() } as never,
+        access as never,
+      );
+    });
+
+    it("lists an accessory's receipts for any member of its vehicle", async () => {
+      prisma.attachment.findMany.mockResolvedValue([]);
+
+      await accessoryService.listByAccessory('viewer-1', 'acc-1');
+
+      expect(access.assert).toHaveBeenCalledWith('viewer-1', 'vehicle-1');
+      expect(prisma.attachment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { accessoryId: 'acc-1' } }),
+      );
+    });
+
+    it("stores a receipt against the accessory, audited in the vehicle owner's trail", async () => {
+      const result = await accessoryService.uploadAccessoryAttachments('user-1', 'acc-1', [
+        receipt,
+      ]);
+
+      expect(access.assertEditor).toHaveBeenCalledWith('user-1', 'vehicle-1');
+      expect(prisma.attachment.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ accessoryId: 'acc-1' }) }),
+      );
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ actorUserId: 'user-1', ownerUserId: 'owner-1' }),
+      );
+      expect(result[0]).toMatchObject({ accessoryId: 'acc-1' });
+    });
+
+    it("refuses a viewer's receipt before anything is stored", async () => {
+      access.assertEditor.mockRejectedValue(new ForbiddenException());
+
+      await expect(
+        accessoryService.uploadAccessoryAttachments('viewer-1', 'acc-1', [receipt]),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageService.uploadObject).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 for an accessory that does not exist', async () => {
+      accessories.accessory.findUnique.mockResolvedValue(null);
+
+      await expect(accessoryService.listByAccessory('user-1', 'missing')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('opens a receipt for any member, and removes it only for an editor', async () => {
+      prisma.attachment.findFirst.mockResolvedValue({
+        id: 'attachment-1',
+        accessoryId: 'acc-1',
+        maintenanceRecordId: null,
+        vehicleLoanId: null,
+        insurancePolicyId: null,
+        warrantyId: null,
+        complianceDocumentId: null,
+        kind: AttachmentKind.Image,
+        fileName: 'attachments/owner-1/acc-1/r.jpg',
+        originalFileName: 'dashcam-receipt.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        url: '/api/attachments/attachment-1/file',
+        uploadedAt,
+        extraction: null,
+      });
+
+      await accessoryService.getAttachmentById('viewer-1', 'attachment-1');
+      const where = prisma.attachment.findFirst.mock.calls.at(-1)?.[0].where;
+      expect(where.OR).toEqual(
+        expect.arrayContaining([
+          { accessory: { vehicle: { members: { some: { userId: 'viewer-1' } } } } },
+        ]),
+      );
+
+      access.assertEditor.mockRejectedValueOnce(new ForbiddenException());
+      await expect(
+        accessoryService.deleteAttachment('viewer-1', 'attachment-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storageService.deleteObject).not.toHaveBeenCalled();
+
+      await accessoryService.deleteAttachment('user-1', 'attachment-1');
+      expect(storageService.deleteObject).toHaveBeenCalledWith('attachments/owner-1/acc-1/r.jpg');
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({ action: 'attachment.deleted', ownerUserId: 'owner-1' }),
+      );
+    });
+  });
+
   describe("extraction on a document's or loan's file", () => {
     // A file as getStoredAttachmentById hands it to a member of the vehicle.
     const storedFile = (owner: Record<string, string>) => ({

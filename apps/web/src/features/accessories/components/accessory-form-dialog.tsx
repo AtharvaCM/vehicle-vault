@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Accessory, CreateAccessoryInput } from '@vehicle-vault/shared';
@@ -15,10 +15,16 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { confirm } from '@/components/shared/confirm';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
-import { useCreateAccessory, useUpdateAccessory } from '../hooks/use-accessories';
+import {
+  useCreateAccessory,
+  useDeleteAccessory,
+  useUpdateAccessory,
+  useUploadAccessoryReceipt,
+} from '../hooks/use-accessories';
 import {
   accessoryFormSchema,
   toDateInputValue,
@@ -32,6 +38,8 @@ interface AccessoryFormDialogProps {
   vehicleId: string;
   /** Present when editing; absent when adding. */
   editingAccessory?: Accessory | null;
+  /** Offers Delete while editing; the caller decides who may. */
+  canDelete?: boolean;
 }
 
 function buildDefaults(editing?: Accessory | null): AccessoryFormValues {
@@ -88,10 +96,15 @@ export function AccessoryFormDialog({
   onClose,
   vehicleId,
   editingAccessory,
+  canDelete = false,
 }: AccessoryFormDialogProps) {
   const createMutation = useCreateAccessory(vehicleId);
   const updateMutation = useUpdateAccessory(vehicleId);
+  const deleteMutation = useDeleteAccessory(vehicleId);
+  const uploadReceipt = useUploadAccessoryReceipt(vehicleId);
   const isEditing = Boolean(editingAccessory);
+  // Optional, and sent after the accessory is saved: a receipt needs its id.
+  const [receipt, setReceipt] = useState<File | null>(null);
 
   const {
     formState: { errors, isSubmitting },
@@ -108,28 +121,68 @@ export function AccessoryFormDialog({
   useEffect(() => {
     if (isOpen) {
       reset(buildDefaults(editingAccessory));
+      setReceipt(null);
     }
   }, [isOpen, editingAccessory, reset]);
 
   async function onSubmit(values: AccessoryFormValues) {
     const payload = toPayload(values);
 
+    let saved: Accessory;
     try {
-      if (editingAccessory) {
-        await updateMutation.mutateAsync({ id: editingAccessory.id, input: payload });
-      } else {
-        await createMutation.mutateAsync(payload);
-      }
-
-      appToast.success({
-        title: isEditing ? 'Accessory updated' : 'Accessory added',
-        description: `${payload.name} saved against this vehicle.`,
-      });
-      onClose();
+      saved = editingAccessory
+        ? await updateMutation.mutateAsync({ id: editingAccessory.id, input: payload })
+        : await createMutation.mutateAsync(payload);
     } catch (error) {
       appToast.error({
         title: isEditing ? "Couldn't update the accessory" : "Couldn't add the accessory",
         description: getApiErrorMessage(error, 'Please check the details and try again.'),
+      });
+      return;
+    }
+
+    if (receipt) {
+      try {
+        await uploadReceipt.mutateAsync({ accessoryId: saved.id, file: receipt });
+      } catch (error) {
+        // The accessory is saved either way; say the receipt is what failed.
+        appToast.error({
+          title: `${payload.name} saved, but the receipt didn't upload`,
+          description: getApiErrorMessage(error, 'Open it from History and add it again.'),
+        });
+        onClose();
+        return;
+      }
+    }
+
+    appToast.success({
+      title: isEditing ? 'Accessory updated' : 'Accessory added',
+      description: `${payload.name} saved against this vehicle.`,
+    });
+    onClose();
+  }
+
+  async function onDelete() {
+    if (!editingAccessory) return;
+    const confirmed = await confirm({
+      title: `Delete ${editingAccessory.name}?`,
+      description: 'Its receipt goes with it. This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteMutation.mutateAsync(editingAccessory.id);
+      appToast.success({
+        title: 'Accessory deleted',
+        description: `${editingAccessory.name} removed.`,
+      });
+      onClose();
+    } catch (error) {
+      appToast.error({
+        title: "Couldn't delete the accessory",
+        description: getApiErrorMessage(error, 'Please try again.'),
       });
     }
   }
@@ -140,8 +193,8 @@ export function AccessoryFormDialog({
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit accessory' : 'Add an accessory'}</DialogTitle>
           <DialogDescription>
-            Something bought for this vehicle — mats, a dashcam, alloys. Kept apart from service
-            history so it does not distort your running cost.
+            Something bought for this vehicle — mats, a dashcam, alloys. It shows in History, and
+            stays out of your running cost per km.
           </DialogDescription>
         </DialogHeader>
 
@@ -250,7 +303,32 @@ export function AccessoryFormDialog({
             <Textarea id="accessory-notes" rows={3} {...register('notes')} />
           </FormField>
 
-          <DialogFooter>
+          <FormField
+            description="Optional: a photo or PDF of the bill."
+            htmlFor="accessory-receipt"
+            label={isEditing ? 'Add a receipt' : 'Receipt'}
+          >
+            <Input
+              accept="image/*,application/pdf"
+              capture="environment"
+              id="accessory-receipt"
+              onChange={(event) => setReceipt(event.currentTarget.files?.[0] ?? null)}
+              type="file"
+            />
+          </FormField>
+
+          <DialogFooter className="gap-2">
+            {isEditing && canDelete ? (
+              <Button
+                className="text-late sm:mr-auto"
+                disabled={deleteMutation.isPending}
+                onClick={() => void onDelete()}
+                type="button"
+                variant="ghost"
+              >
+                Delete
+              </Button>
+            ) : null}
             <Button onClick={onClose} type="button" variant="ghost">
               Cancel
             </Button>

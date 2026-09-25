@@ -35,6 +35,7 @@ function makePrismaMock() {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    attachment: { findMany: vi.fn().mockResolvedValue([]) },
     // The interactive form of $transaction is what the audit-coverage proxy
     // instruments, so the mock has to run the callback rather than skip it.
     $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(makeTx())),
@@ -52,6 +53,7 @@ describe('AccessoriesService', () => {
   let vehiclesService: { ensureVehicleExists: Mock };
   let access: { assertEditor: Mock };
   let auditService: { track: Mock };
+  let storageService: { deleteObject: Mock };
   let service: AccessoriesService;
 
   beforeEach(() => {
@@ -64,11 +66,13 @@ describe('AccessoriesService', () => {
     vehiclesService = { ensureVehicleExists: vi.fn().mockResolvedValue({ id: 'vehicle-1' }) };
     access = { assertEditor: vi.fn().mockResolvedValue(undefined) };
     auditService = { track: vi.fn().mockResolvedValue(undefined) };
+    storageService = { deleteObject: vi.fn().mockResolvedValue(undefined) };
     service = new AccessoriesService(
       prisma as never,
       vehiclesService as never,
       access as never,
       auditService as never,
+      storageService as never,
     );
   });
 
@@ -215,6 +219,33 @@ describe('AccessoriesService', () => {
       expect.anything(),
       expect.objectContaining({ action: 'accessory.deleted' }),
     );
+  });
+
+  it('removes its receipts from storage once the accessory is gone', async () => {
+    (prisma.accessory.findUnique as Mock).mockResolvedValue(row);
+    (prisma.attachment.findMany as Mock).mockResolvedValue([
+      { fileName: 'attachments/user-1/accessory-1/receipt.jpg' },
+    ]);
+
+    await service.deleteAccessory('user-1', 'accessory-1');
+
+    expect(prisma.attachment.findMany).toHaveBeenCalledWith({
+      where: { accessoryId: 'accessory-1' },
+      select: { fileName: true },
+    });
+    expect(storageService.deleteObject).toHaveBeenCalledWith(
+      'attachments/user-1/accessory-1/receipt.jpg',
+    );
+  });
+
+  it('still deletes the accessory when storage refuses a file', async () => {
+    (prisma.accessory.findUnique as Mock).mockResolvedValue(row);
+    (prisma.attachment.findMany as Mock).mockResolvedValue([{ fileName: 'a.jpg' }]);
+    storageService.deleteObject.mockRejectedValueOnce(new Error('storage down'));
+
+    await expect(service.deleteAccessory('user-1', 'accessory-1')).resolves.toEqual({
+      id: 'accessory-1',
+    });
   });
 
   it('throws NotFound for an accessory that does not exist', async () => {

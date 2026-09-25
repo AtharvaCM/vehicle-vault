@@ -4,20 +4,13 @@ export const vehicleDetailTabs = ['overview', 'history', 'reminders', 'papers', 
 
 export type VehicleDetailTab = (typeof vehicleDetailTabs)[number];
 
-/** History shows one log at a time: the service log or the fuel log. */
-export const vehicleHistoryViews = ['service', 'fuel'] as const;
+/** History shows one log at a time: services, fuel, or accessories (#336). */
+export const vehicleHistoryViews = ['service', 'fuel', 'accessory'] as const;
 
 export type VehicleHistoryView = (typeof vehicleHistoryViews)[number];
 
 /** The sections the More tab lists, each opened on its own. */
-export const vehicleMoreSections = [
-  'about',
-  'tyres',
-  'accessories',
-  'loans',
-  'members',
-  'activity',
-] as const;
+export const vehicleMoreSections = ['about', 'tyres', 'loans', 'members', 'activity'] as const;
 
 export type VehicleMoreSection = (typeof vehicleMoreSections)[number];
 
@@ -25,7 +18,7 @@ export type VehicleDetailSearch = {
   tab?: VehicleDetailTab;
   /** Only with `tab: 'history'`; the service log when absent. */
   view?: VehicleHistoryView;
-  /** Only on the service log: words to find, as on the History page. */
+  /** Only on the service and accessory logs: words to find, as on the History page. */
   search?: string;
   /** Only with `tab: 'more'`; the list of sections when absent. */
   section?: VehicleMoreSection;
@@ -47,7 +40,7 @@ export const legacyVehicleDetailTabs = {
   protection: { tab: 'papers' },
   specs: { tab: 'more', section: 'about' },
   tyres: { tab: 'more', section: 'tyres' },
-  accessories: { tab: 'more', section: 'accessories' },
+  accessories: { tab: 'history', view: 'accessory' },
   loans: { tab: 'more', section: 'loans' },
   members: { tab: 'more', section: 'members' },
   activity: { tab: 'more', section: 'activity' },
@@ -82,14 +75,19 @@ export function normalizeVehicleDetailSearch(search: Record<string, unknown>): V
   if (tab === 'history') {
     const view = isOneOf(vehicleHistoryViews, source.view) ? source.view : undefined;
     const search =
-      (view ?? defaultVehicleHistoryView) === 'service'
-        ? normalizeHistorySearchText(source.search)
-        : undefined;
+      (view ?? defaultVehicleHistoryView) === 'fuel'
+        ? undefined
+        : normalizeHistorySearchText(source.search);
     return {
       tab,
       ...(view && view !== defaultVehicleHistoryView ? { view } : {}),
       ...(search ? { search } : {}),
     };
+  }
+
+  if (tab === 'more' && source.section === 'accessories') {
+    // Accessories left More for History (#336); links to the old section follow.
+    return { tab: 'history', view: 'accessory' };
   }
 
   if (tab === 'more') {

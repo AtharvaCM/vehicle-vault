@@ -18,6 +18,7 @@ import { format } from '@/lib/format';
 import { formatRelativeAgo } from '@/features/dashboard/utils/format-due';
 import { FuelLogDialog } from '@/features/dashboard/components/fuel-log-dialog';
 import { OdometerUpdateForm } from '@/features/dashboard/components/odometer-update-form';
+import { AccessoryFormDialog } from '@/features/accessories/components/accessory-form-dialog';
 import { DocumentFormDialog } from '@/features/vehicle-documents/components/document-form-dialog';
 
 import { useVehicleAccess } from '../context/vehicle-access';
@@ -38,7 +39,7 @@ type VehicleDetailHeaderProps = {
   tabs: ReactNode;
 };
 
-type LogDialog = 'fuel' | 'odometer' | 'paper' | null;
+type LogDialog = 'fuel' | 'odometer' | 'paper' | 'accessory' | null;
 
 /**
  * The vehicle page's identity bar: the L plate, nickname, model and odometer,
@@ -128,6 +129,9 @@ export function VehicleDetailHeader({
                     Odometer
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setLogDialog('paper')}>Paper</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setLogDialog('accessory')}>
+                    Accessory
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link params={{ vehicleId }} to="/vehicles/$vehicleId/reminders/new">
                       Reminder
@@ -212,6 +216,9 @@ export function VehicleDetailHeader({
             onClose={() => setLogDialog(null)}
             vehicleId={vehicleId}
           />
+          {logDialog === 'accessory' ? (
+            <AccessoryFormDialog isOpen onClose={() => setLogDialog(null)} vehicleId={vehicleId} />
+          ) : null}
         </>
       ) : null}
     </header>

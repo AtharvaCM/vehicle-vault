@@ -43,10 +43,20 @@ describe('normalizeVehicleDetailSearch', () => {
   });
 
   it('keeps a More section so a deep link survives a reload', () => {
-    expect(normalizeVehicleDetailSearch({ tab: 'more', section: 'accessories' })).toEqual({
+    expect(normalizeVehicleDetailSearch({ tab: 'more', section: 'tyres' })).toEqual({
       tab: 'more',
-      section: 'accessories',
+      section: 'tyres',
     });
+  });
+
+  it('sends the old Accessories section to the accessory log, which keeps a search', () => {
+    expect(normalizeVehicleDetailSearch({ tab: 'more', section: 'accessories' })).toEqual({
+      tab: 'history',
+      view: 'accessory',
+    });
+    expect(
+      normalizeVehicleDetailSearch({ tab: 'history', view: 'accessory', search: 'dashcam' }),
+    ).toEqual({ tab: 'history', view: 'accessory', search: 'dashcam' });
   });
 
   it('opens About this vehicle for a link to the old Tech specs section', () => {
@@ -87,7 +97,7 @@ describe('the eleven old tab values', () => {
     ['protection', { tab: 'papers' }],
     ['specs', { tab: 'more', section: 'about' }],
     ['tyres', { tab: 'more', section: 'tyres' }],
-    ['accessories', { tab: 'more', section: 'accessories' }],
+    ['accessories', { tab: 'history', view: 'accessory' }],
     ['loans', { tab: 'more', section: 'loans' }],
     ['members', { tab: 'more', section: 'members' }],
     ['activity', { tab: 'more', section: 'activity' }],

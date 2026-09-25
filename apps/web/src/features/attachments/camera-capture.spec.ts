@@ -108,6 +108,8 @@ describe('camera capture on file inputs', () => {
         join('features', 'vehicles', 'components', 'protection-tab.tsx'),
         // Claim attachments.
         join('features', 'claims', 'components', 'claim-attachments-section.tsx'),
+        // An accessory's receipt (#336).
+        join('features', 'accessories', 'components', 'accessory-form-dialog.tsx'),
         // Loan documents.
         join('features', 'loans', 'components', 'loan-attachments-section.tsx'),
         join('features', 'loans', 'components', 'loans-section.tsx'),

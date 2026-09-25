@@ -56,6 +56,7 @@ export const endpoints = {
     create: (vehicleId: string) => `/vehicles/${vehicleId}/accessories`,
     update: (accessoryId: string) => `/accessories/${accessoryId}`,
     remove: (accessoryId: string) => `/accessories/${accessoryId}`,
+    attachments: (accessoryId: string) => `/accessories/${accessoryId}/attachments`,
   },
   serviceBaseline: {
     coverage: (vehicleId: string) => `/vehicles/${vehicleId}/service-baseline`,

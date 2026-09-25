@@ -236,16 +236,16 @@ enum TyrePosition {
 /// service. Folding accessory spend into maintenance also corrupts per-km running
 /// cost, which is the number the maintenance history exists to produce.
 model Accessory {
-  id                String    @id @default(uuid()) @db.Uuid
-  vehicleId         String    @db.Uuid
-  name              String    @db.VarChar(120)
-  brand             String?   @db.VarChar(80)
+  id                String       @id @default(uuid()) @db.Uuid
+  vehicleId         String       @db.Uuid
+  name              String       @db.VarChar(120)
+  brand             String?      @db.VarChar(80)
   /// Free text on purpose. A premature enum is what pushed accessories into
   /// MaintenanceCategory in the first place; distil one from real values later.
-  category          String?   @db.VarChar(60)
+  category          String?      @db.VarChar(60)
   purchaseDate      DateTime
-  cost              Decimal   @db.Decimal(12, 2)
-  currencyCode      String    @default("INR") @db.VarChar(3)
+  cost              Decimal      @db.Decimal(12, 2)
+  currencyCode      String       @default("INR") @db.VarChar(3)
   /// Null while the item is owned but not yet on the vehicle — an accessory can
   /// be bought months before it is fitted, or never fitted at all.
   fittedDate        DateTime?
@@ -258,9 +258,10 @@ model Accessory {
   /// so it is the accessory equivalent of a document expiry.
   warrantyExpiresAt DateTime?
   notes             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  vehicle           Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  vehicle           Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  attachments       Attachment[]
 
   @@index([vehicleId, purchaseDate(sort: Desc)])
   @@index([vehicleId, removedDate])
@@ -874,7 +875,8 @@ model Reminder {
 model Attachment {
   id                   String                @id @default(uuid()) @db.Uuid
   // Polymorphic owner: exactly one of maintenanceRecordId / insurancePolicyId /
-  // warrantyId / claimId / vehicleLoanId / complianceDocumentId is non-null.
+  // warrantyId / claimId / vehicleLoanId / complianceDocumentId / accessoryId
+  // is non-null.
   // Enforced by the `attachment_owner_exclusive` CHECK constraint.
   maintenanceRecordId  String?               @db.Uuid
   insurancePolicyId    String?               @db.Uuid
@@ -882,6 +884,8 @@ model Attachment {
   claimId              String?               @db.Uuid
   vehicleLoanId        String?               @db.Uuid
   complianceDocumentId String?               @db.Uuid
+  /// An accessory's receipt (#336).
+  accessoryId          String?               @db.Uuid
   kind                 AttachmentKind
   fileName             String
   originalFileName     String
@@ -895,6 +899,7 @@ model Attachment {
   claim                Claim?                @relation(fields: [claimId], references: [id], onDelete: Cascade)
   vehicleLoan          VehicleLoan?          @relation(fields: [vehicleLoanId], references: [id], onDelete: Cascade)
   complianceDocument   ComplianceDocument?   @relation(fields: [complianceDocumentId], references: [id], onDelete: Cascade)
+  accessory            Accessory?            @relation(fields: [accessoryId], references: [id], onDelete: Cascade)
   extraction           AttachmentExtraction?
 
   @@index([maintenanceRecordId, uploadedAt(sort: Desc)])
@@ -903,6 +908,7 @@ model Attachment {
   @@index([claimId, uploadedAt(sort: Desc)])
   @@index([vehicleLoanId, uploadedAt(sort: Desc)])
   @@index([complianceDocumentId, uploadedAt(sort: Desc)])
+  @@index([accessoryId, uploadedAt(sort: Desc)])
 }
 
 model AttachmentExtraction {
