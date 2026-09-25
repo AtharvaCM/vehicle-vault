@@ -38,7 +38,7 @@ test('one vehicle: Log service and Create reminder skip the picker and open the 
   await page.goto('/history');
   await page.getByRole('link', { name: 'Log service', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}/maintenance/new$`));
-  await expect(page.getByRole('heading', { name: 'Add service record' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Log service' })).toBeVisible();
   await expect(page.getByRole('dialog')).not.toBeVisible();
 
   await page.goto('/upcoming');
@@ -85,7 +85,7 @@ test('several vehicles: Log service opens a picker, then the chosen form', async
   await dialog.getByRole('link', { name: new RegExp(secondNickname) }).click();
 
   await expect(page).toHaveURL(new RegExp(`/vehicles/${secondVehicle.id}/maintenance/new$`));
-  await expect(page.getByRole('heading', { name: 'Add service record' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Log service' })).toBeVisible();
 });
 
 test.afterAll(async () => {

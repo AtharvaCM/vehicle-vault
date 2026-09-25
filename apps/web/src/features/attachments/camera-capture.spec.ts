@@ -45,6 +45,16 @@ function accepts(input: FileInput): string {
 }
 
 const takesAPicture = (input: FileInput) => accepts(input).includes('image');
+
+/**
+ * Log service puts the camera and the file picker side by side (#293): its
+ * "Choose file" is there to open the picker, for a photo already on the phone
+ * (a WhatsApp forward) or a PDF invoice, beside "Snap the bill", which opens
+ * the camera. It is the one image input meant to skip the camera.
+ */
+const choosesAFileBesideTheCamera = (input: FileInput) =>
+  input.file === join('features', 'maintenance', 'components', 'bill-capture.tsx') &&
+  input.attributes.includes('data-testid="bill-file-input"');
 const takesASpreadsheet = (input: FileInput) => accepts(input) === '.csv';
 
 /**
@@ -68,6 +78,7 @@ describe('camera capture on file inputs', () => {
   it('opens the camera for every input that takes an image', () => {
     const missing = inputs
       .filter(takesAPicture)
+      .filter((input) => !choosesAFileBesideTheCamera(input))
       .filter((input) => !input.attributes.includes('capture="environment"'))
       .map((input) => input.file);
 
@@ -92,7 +103,7 @@ describe('camera capture on file inputs', () => {
       expect.arrayContaining([
         // Job cards and receipts on a maintenance record.
         join('features', 'attachments', 'components', 'attachment-upload-form.tsx'),
-        join('features', 'maintenance', 'pages', 'vehicle-maintenance-create-page.tsx'),
+        join('features', 'maintenance', 'components', 'bill-capture.tsx'),
         // Vehicle documents.
         join('features', 'vehicles', 'components', 'protection-tab.tsx'),
         // Claim attachments.

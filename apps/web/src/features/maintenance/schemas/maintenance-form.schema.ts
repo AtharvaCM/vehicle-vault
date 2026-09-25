@@ -30,7 +30,6 @@ function isMeaningfulMaintenanceLineItem(lineItem: z.infer<typeof maintenanceLin
 
 export const maintenanceFormSchema = z
   .object({
-    entryMode: z.enum(['quick', 'detailed']),
     serviceDate: z.string().trim().min(1, 'Enter the service date'),
     // 0 km is never a service reading: it is a default nobody changed, and it
     // would reset "last done at", the next-due reminder and the forecast.
@@ -51,7 +50,7 @@ export const maintenanceFormSchema = z
       .optional(),
     currencyCode: z.string().trim().length(3, 'Currency code must be 3 characters long'),
     totalCost: z
-      .number({ error: 'Enter the total cost, or 0 if it was free' })
+      .number({ error: 'Enter the total on the bill, or 0 if it was free' })
       .nonnegative('Total cost cannot be negative'),
     notes: z.string().trim().max(1000, 'Notes can be at most 1000 characters').optional(),
     nextDueDate: z.string().trim().optional(),

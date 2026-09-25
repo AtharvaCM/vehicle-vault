@@ -5,56 +5,47 @@ import {
   type CreateMaintenanceLineItemInput,
   type CreateMaintenanceRecordInput,
 } from '@vehicle-vault/shared';
-import { Sparkles, Clock, Calendar, WalletCards, Wrench } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Controller, type DefaultValues, type Path, useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
 
-import { Figure } from '@/components/shared/figure';
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { vehicleForecastQueryOptions } from '@/features/vehicles/api/get-vehicle-forecast';
-import { ApiError } from '@/lib/api/api-error';
+import { vehicleIntervalsQueryOptions } from '@/features/vehicles/api/get-vehicle-intervals';
 import { format } from '@/lib/format';
 import { todayDateInputValue } from '@/lib/utils/to-date-input-value';
 
 import { maintenanceRecordsQueryOptions } from '../api/get-maintenance-records';
-
 import {
   maintenanceFormSchema,
   type MaintenanceFormValues,
 } from '../schemas/maintenance-form.schema';
 import type { CreateMaintenanceRecordBody } from '../types/maintenance-record';
+import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
 import {
   getMaintenanceLineItemBreakdown,
   isMeaningfulMaintenanceLineItem,
   resolveMaintenanceLineItemTotalOrUndefined,
   roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
-import { findPreviousConfirmedService } from '../utils/find-previous-confirmed-service';
 import type { BillField } from '../utils/get-fields-from-bill';
+import { scheduledNextDue, type NextDue } from '../utils/next-due-from-schedule';
+import type { CategoryPick } from '../utils/pick-due-category';
+import { workName } from '../utils/service-work';
+import { AmountInput } from './amount-input';
+import { CategoryChips } from './category-chips';
 import { MaintenanceLineItemsEditor } from './maintenance-line-items-editor';
-
-const categoryOptions = Object.values(MaintenanceCategory);
-
-// Sentence case, as the chip used to be upper-cased by CSS.
-const PRIORITY_LABEL = {
-  high: 'High priority',
-  medium: 'Medium priority',
-  low: 'Low priority',
-} as const;
+import { NextDueSummary, type NextDueState } from './next-due-summary';
+import { WorkshopSuggestions } from './workshop-suggestions';
 
 /**
  * A new record starts on today with the numbers empty, never 0: a service saved
@@ -63,7 +54,6 @@ const PRIORITY_LABEL = {
  */
 function emptyMaintenanceValues(): DefaultValues<MaintenanceFormValues> {
   return {
-    entryMode: 'quick',
     serviceDate: todayDateInputValue(),
     odometer: undefined,
     category: MaintenanceCategory.PeriodicService,
@@ -78,28 +68,15 @@ function emptyMaintenanceValues(): DefaultValues<MaintenanceFormValues> {
   };
 }
 
-const quickPresets = [
-  {
-    label: 'Oil change',
-    category: MaintenanceCategory.EngineOil,
-    note: 'Engine oil and filter replacement',
-  },
-  {
-    label: 'Periodic service',
-    category: MaintenanceCategory.PeriodicService,
-    note: 'Full vehicle inspection and service',
-  },
-  {
-    label: 'Brake service',
-    category: MaintenanceCategory.BrakePads,
-    note: 'Brake pad inspection/replacement',
-  },
-  {
-    label: 'Tyre rotation',
-    category: MaintenanceCategory.TyreRotation,
-    note: 'Wheel rotation and alignment check',
-  },
-] as const;
+type Extra = 'workshop' | 'items' | 'notes';
+
+/** Which collapsed extra holds a field, so a complaint about it is never hidden. */
+function extraFor(field: string): Extra | null {
+  if (field === 'workshopName' || field === 'invoiceNumber') return 'workshop';
+  if (field === 'lineItems') return 'items';
+  if (field === 'notes') return 'notes';
+  return null;
+}
 
 type MaintenanceFormProps = {
   vehicleId?: string;
@@ -114,6 +91,22 @@ type MaintenanceFormProps = {
   submitError?: string | null;
   initialValues?: Partial<MaintenanceFormValues>;
   onDirtyChange?: (isDirty: boolean) => void;
+  /**
+   * The category a new record starts on and why (a due service, or the
+   * reminder it was opened from). Ignored once the owner picks one, and for a
+   * record that already has one.
+   */
+  suggestedCategory?: CategoryPick | null;
+  /**
+   * Work the next due out from the vehicle's schedule when the record has
+   * none of its own: for a new record and a draft, not an edit of a service
+   * logged long ago.
+   */
+  scheduleNextDue?: boolean;
+  /** Content above the form: the bill buttons on a new record. */
+  leading?: ReactNode;
+  /** Beside the save button from `md` up: a way back without saving. */
+  cancel?: ReactNode;
   submitLabel?: string;
   submittingLabel?: string;
   submitHint?: string;
@@ -154,10 +147,11 @@ function toCreateMaintenanceLineItems(values: MaintenanceFormValues) {
 
 function toCreateMaintenanceRecordInput(
   values: MaintenanceFormValues,
+  nextDue: NextDue | null,
 ): CreateMaintenanceRecordInput {
   const lineItems = toCreateMaintenanceLineItems(values);
   const derivedBreakdown = getMaintenanceLineItemBreakdown(lineItems);
-  const hasStructuredLineItems = values.entryMode === 'detailed' && lineItems.length > 0;
+  const hasStructuredLineItems = lineItems.length > 0;
 
   return {
     vehicleId: 'vehicle-id-is-provided-by-route',
@@ -174,8 +168,8 @@ function toCreateMaintenanceRecordInput(
     taxCost: hasStructuredLineItems ? derivedBreakdown.taxCost : undefined,
     discountAmount: hasStructuredLineItems ? derivedBreakdown.discountAmount : undefined,
     notes: values.notes?.trim() ? values.notes.trim() : undefined,
-    nextDueDate: toIsoDateString(values.nextDueDate),
-    nextDueOdometer: values.nextDueOdometer,
+    nextDueDate: toIsoDateString(nextDue?.date),
+    nextDueOdometer: nextDue?.odometer,
     lineItems: hasStructuredLineItems ? lineItems : undefined,
   };
 }
@@ -195,6 +189,13 @@ function setFormIssueErrors(
   });
 }
 
+/**
+ * The log-service form, one short screen on a phone (the approved "Log
+ * service" board): what was done as one-tap chips, the date and reading
+ * defaulted and explained, the total on the bill, the extras collapsed, the
+ * next due worked out before saving, and Save pinned above the bottom bar.
+ * A new record, a draft being confirmed and an edit all use it.
+ */
 export function MaintenanceForm({
   vehicleId,
   recordId,
@@ -205,11 +206,16 @@ export function MaintenanceForm({
   submitError,
   initialValues,
   onDirtyChange,
-  submitLabel = 'Save record',
-  submittingLabel = 'Saving record...',
-  submitHint = 'Use this record for one completed service, repair, or inspection.',
+  suggestedCategory,
+  scheduleNextDue = false,
+  leading,
+  cancel,
+  submitLabel = 'Save service',
+  submittingLabel = 'Saving service…',
+  submitHint,
   successMessage = 'Service record saved.',
 }: MaintenanceFormProps) {
+  const idPrefix = useId();
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const [lowOdometerWarning, setLowOdometerWarning] = useState<{
     odometer: number;
@@ -217,28 +223,44 @@ export function MaintenanceForm({
   } | null>(null);
   // The reading the owner has already said to save although it is lower.
   const confirmedLowOdometer = useRef<number | null>(null);
+  const [openExtras, setOpenExtras] = useState<string[]>([]);
+  // Null until the owner chooses: then 'own' (typed) or 'schedule'.
+  const [nextDueChoice, setNextDueChoice] = useState<'schedule' | 'own' | null>(null);
+  const [isEditingNextDue, setIsEditingNextDue] = useState(false);
 
-  const forecastQuery = useQuery(vehicleForecastQueryOptions(vehicleId || ''));
   const recordsQuery = useQuery({
     ...maintenanceRecordsQueryOptions(vehicleId ?? ''),
     enabled: Boolean(vehicleId),
   });
+  const intervalsQuery = useQuery(vehicleIntervalsQueryOptions(vehicleId ?? ''));
 
   const form = useForm<MaintenanceFormValues>({
     defaultValues: emptyMaintenanceValues(),
   });
 
-  const entryMode = useWatch({
+  const [
+    lineItems,
+    currencyCode,
+    category,
+    serviceDate,
+    enteredOdometer,
+    workshopName,
+    notes,
+    nextDueDate,
+    nextDueOdometer,
+  ] = useWatch({
     control: form.control,
-    name: 'entryMode',
-  });
-  const lineItems = useWatch({
-    control: form.control,
-    name: 'lineItems',
-  });
-  const currencyCode = useWatch({
-    control: form.control,
-    name: 'currencyCode',
+    name: [
+      'lineItems',
+      'currencyCode',
+      'category',
+      'serviceDate',
+      'odometer',
+      'workshopName',
+      'notes',
+      'nextDueDate',
+      'nextDueOdometer',
+    ],
   });
   const lineItemBreakdown = useMemo(
     () => getMaintenanceLineItemBreakdown(lineItems ?? []),
@@ -248,7 +270,7 @@ export function MaintenanceForm({
     () => (lineItems ?? []).filter((lineItem) => isMeaningfulMaintenanceLineItem(lineItem)).length,
     [lineItems],
   );
-  const hasStructuredLineItems = entryMode === 'detailed' && structuredLineItemCount > 0;
+  const hasStructuredLineItems = structuredLineItemCount > 0;
 
   useEffect(() => {
     if (submitError) {
@@ -278,10 +300,21 @@ export function MaintenanceForm({
     form.setValue('odometer', currentOdometer, { shouldDirty: false });
   }, [currentOdometer, form, initialValues?.odometer]);
 
-  const enteredOdometer = useWatch({ control: form.control, name: 'odometer' });
-  const { dirtyFields } = form.formState;
-  const fromBill = (field: BillField) =>
-    fieldsFromBill?.has(field) && !dirtyFields[field] ? <FromBillMarker /> : undefined;
+  const suggested = initialValues?.category ? null : (suggestedCategory ?? null);
+
+  useEffect(() => {
+    if (!suggested || form.getFieldState('category').isDirty) {
+      return;
+    }
+
+    // Like the reading above: a default, not an edit.
+    form.setValue('category', suggested.category, { shouldDirty: false });
+  }, [form, suggested]);
+
+  const { dirtyFields, errors } = form.formState;
+  const isFromBill = (field: BillField) =>
+    Boolean(fieldsFromBill?.has(field) && !dirtyFields[field]);
+  const fromBill = (field: BillField) => (isFromBill(field) ? <FromBillMarker /> : undefined);
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
@@ -302,21 +335,90 @@ export function MaintenanceForm({
     });
   }, [form, hasStructuredLineItems, lineItemBreakdown.totalCost]);
 
+  // The next due: the schedule's, unless the record brings its own (a bill, an
+  // earlier save) or the owner changes it.
+  const hasOwnNextDue =
+    Boolean(initialValues?.nextDueDate) || initialValues?.nextDueOdometer !== undefined;
+  const nextDueSource = nextDueChoice ?? (scheduleNextDue && !hasOwnNextDue ? 'schedule' : 'own');
+  const scheduled = useMemo(
+    () =>
+      scheduledNextDue({
+        interval: intervalsQuery.data?.[category],
+        category,
+        serviceDate,
+        odometer: enteredOdometer,
+        records: recordsQuery.data ?? [],
+        excludeRecordId: recordId,
+        currentOdometer,
+        today: todayDateInputValue(),
+      }),
+    [
+      category,
+      currentOdometer,
+      enteredOdometer,
+      intervalsQuery.data,
+      recordId,
+      recordsQuery.data,
+      serviceDate,
+    ],
+  );
+  const ownNextDue: NextDue | null =
+    nextDueDate || typeof nextDueOdometer === 'number'
+      ? {
+          date: nextDueDate || undefined,
+          odometer: typeof nextDueOdometer === 'number' ? nextDueOdometer : undefined,
+        }
+      : null;
+  const scheduledDue = scheduled.kind === 'due' ? scheduled.due : null;
+  let nextDueState: NextDueState;
+  if (nextDueSource === 'own') {
+    nextDueState = ownNextDue
+      ? {
+          kind: 'due',
+          due: ownNextDue,
+          fromBill: isFromBill('nextDueDate') || isFromBill('nextDueOdometer'),
+        }
+      : { kind: 'unset' };
+  } else if (intervalsQuery.isPending && Boolean(vehicleId)) {
+    nextDueState = { kind: 'loading' };
+  } else {
+    nextDueState = scheduled;
+  }
+  const showNextDueFields =
+    isEditingNextDue || Boolean(errors.nextDueDate) || Boolean(errors.nextDueOdometer);
+
+  function openExtrasFor(fields: string[]) {
+    const extras = fields.map(extraFor).filter((extra): extra is Extra => extra !== null);
+
+    if (extras.length) {
+      setOpenExtras((current) => Array.from(new Set([...current, ...extras])));
+    }
+  }
+
   const handleSubmit = form.handleSubmit(async (values) => {
     const localResult = maintenanceFormSchema.safeParse(values);
 
     if (!localResult.success) {
       setFormIssueErrors(form, localResult.error.issues);
+      openExtrasFor(localResult.error.issues.map((issue) => String(issue.path[0] ?? '')));
       setSubmissionState(null);
       return;
     }
 
+    const nextDue: NextDue | null =
+      nextDueSource === 'schedule'
+        ? scheduledDue
+        : {
+            date: localResult.data.nextDueDate || undefined,
+            odometer: localResult.data.nextDueOdometer,
+          };
     const contractResult = MaintenanceRecordCreateSchema.omit({ vehicleId: true }).safeParse(
-      toCreateMaintenanceRecordInput(localResult.data),
+      toCreateMaintenanceRecordInput(localResult.data, nextDue),
     );
 
     if (!contractResult.success) {
       setFormIssueErrors(form, contractResult.error.issues);
+      openExtrasFor(contractResult.error.issues.map((issue) => String(issue.path[0] ?? '')));
       setSubmissionState(null);
       return;
     }
@@ -344,469 +446,387 @@ export function MaintenanceForm({
     try {
       await onSubmit(contractResult.data);
       setSubmissionState(successMessage);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        setSubmissionState(null);
-        return;
-      }
-
+    } catch {
+      // The page says what went wrong (`submitError` and its toast).
       setSubmissionState(null);
     }
   });
 
-  const suggestions = forecastQuery.data || [];
+  // "Today, and the last reading you saved": said while both are still the defaults.
+  // Compared by value: the reading is set without marking it dirty, and RHF
+  // counts it dirty against its empty default as soon as anything else changes.
+  const isDefaultDateAndReading =
+    !initialValues?.serviceDate &&
+    currentOdometer !== undefined &&
+    enteredOdometer === currentOdometer &&
+    serviceDate === todayDateInputValue();
+  const dateAndReadingHint = isDefaultDateAndReading
+    ? 'Today, and the last reading you saved. Change them if the visit was earlier.'
+    : currentOdometer !== undefined
+      ? `Last saved reading: ${format.odometer(currentOdometer)}.`
+      : undefined;
+  const categoryLabelId = `${idPrefix}-category-label`;
+  const categoryReasonId = `${idPrefix}-category-reason`;
+  const categoryReason =
+    suggested && category === suggested.category ? suggested.reason : undefined;
+  const work = workName(category);
 
   return (
-    <div className="space-y-6">
-      {suggestions.length > 0 ? (
-        <Card className="border-brand/30 bg-brand-tint">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-brand" />
-              <CardTitle className="text-ui font-semibold text-brand">Smart suggestions</CardTitle>
-            </div>
-            <CardDescription className="text-caption text-brand">
-              Based on your vehicle&apos;s usage trend, you might need these services soon.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {suggestions.map((suggestion) => (
-                <div
-                  key={suggestion.category}
-                  className="flex flex-col rounded-lg border border-brand/30 bg-surface p-3 shadow-xs"
-                >
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-caption font-bold text-brand">
-                      {format.enumLabel('maintenanceCategory', suggestion.category)}
-                    </span>
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-caption font-bold ${
-                        suggestion.priority === 'high'
-                          ? 'bg-late-tint text-late'
-                          : suggestion.priority === 'medium'
-                            ? 'bg-soon-tint text-soon'
-                            : 'bg-brand-tint text-brand'
-                      }`}
-                    >
-                      {PRIORITY_LABEL[suggestion.priority]}
-                    </span>
-                  </div>
-                  <p className="mb-3 text-caption leading-relaxed text-fg-2">{suggestion.reason}</p>
-                  <div className="mt-auto flex items-center justify-between gap-2">
-                    <div className="flex flex-col gap-0.5">
-                      {suggestion.estimatedOdometerDue ? (
-                        <div className="flex items-center gap-1 text-caption text-fg-3">
-                          <Clock className="h-2.5 w-2.5" />
-                          <span>~{suggestion.estimatedOdometerDue} km</span>
-                        </div>
-                      ) : null}
-                      {suggestion.estimatedDateDue ? (
-                        <div className="flex items-center gap-1 text-caption text-fg-3">
-                          <Calendar className="h-2.5 w-2.5" />
-                          <span>~{format.date(suggestion.estimatedDateDue)}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                    <Button
-                      className="h-7 px-2 text-caption font-semibold text-brand hover:bg-brand-tint hover:text-brand"
-                      onClick={() => {
-                        form.setValue('category', suggestion.category, { shouldDirty: true });
-                        form.setValue('notes', suggestion.reason, { shouldDirty: true });
-                        toast.info(
-                          `Applied ${format.enumLabel('maintenanceCategory', suggestion.category)} suggestion`,
-                        );
-                      }}
-                      size="sm"
-                      type="button"
-                      variant="ghost"
-                    >
-                      Quick apply
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+      {leading}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Service record</CardTitle>
-          <CardDescription>
-            Capture the details of one completed service visit, repair, or inspection.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6">
-            <p className="mb-2 text-caption font-medium text-fg-3">Common tasks</p>
-            <div className="flex flex-wrap gap-2">
-              {quickPresets.map((preset) => (
-                <Button
-                  key={preset.label}
-                  className="h-8 rounded-lg border-line bg-page text-caption hover:bg-line-subtle hover:text-fg"
-                  onClick={() => {
-                    form.setValue('category', preset.category, { shouldDirty: true });
-                    form.setValue('notes', preset.note, { shouldDirty: true });
-                    toast.info(`Applied ${preset.label} preset`);
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
-          </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Label id={categoryLabelId}>What was done</Label>
+          {fromBill('category')}
+        </div>
+        <Controller
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <CategoryChips
+              describedBy={categoryReason ? categoryReasonId : undefined}
+              labelledBy={categoryLabelId}
+              onChange={field.onChange}
+              value={field.value}
+            />
+          )}
+        />
+        {categoryReason ? (
+          <p className="text-small text-fg-3" id={categoryReasonId}>
+            {categoryReason}
+          </p>
+        ) : null}
+        {errors.category?.message ? (
+          <p className="text-small text-late" role="alert">
+            {errors.category.message}
+          </p>
+        ) : null}
+      </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <Tabs
-              onValueChange={(value) =>
-                form.setValue('entryMode', value as MaintenanceFormValues['entryMode'], {
-                  shouldDirty: true,
-                })
-              }
-              value={entryMode}
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="quick">Quick entry</TabsTrigger>
-                <TabsTrigger value="detailed">Detailed entry</TabsTrigger>
-              </TabsList>
+      <div className="flex flex-col gap-1.5">
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            error={errors.serviceDate?.message}
+            htmlFor="maintenance-service-date"
+            labelAddon={fromBill('serviceDate')}
+            label="Date"
+          >
+            <Input
+              aria-invalid={Boolean(errors.serviceDate)}
+              id="maintenance-service-date"
+              type="date"
+              {...form.register('serviceDate')}
+            />
+          </FormField>
 
-              <TabsContent className="space-y-5" value="quick">
-                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-ui text-fg-2">
-                  Best for fast logging when you mainly need the date, odometer, category, and
-                  total.
-                </div>
-              </TabsContent>
+          <FormField
+            error={errors.odometer?.message}
+            htmlFor="maintenance-odometer"
+            labelAddon={fromBill('odometer')}
+            label="Odometer"
+          >
+            <Input
+              aria-invalid={Boolean(errors.odometer)}
+              className="font-medium"
+              id="maintenance-odometer"
+              inputMode="numeric"
+              min={0}
+              type="number"
+              {...form.register('odometer', { valueAsNumber: true })}
+            />
+          </FormField>
+        </div>
+        {dateAndReadingHint ? <p className="text-small text-fg-3">{dateAndReadingHint}</p> : null}
+      </div>
 
-              <TabsContent className="space-y-5" value="detailed">
-                <div className="rounded-2xl border border-border/70 bg-page/70 px-4 py-3 text-ui text-fg-2">
-                  Use structured items when the invoice breaks work into jobs, parts, fluids, taxes,
-                  or discounts.
-                </div>
-              </TabsContent>
-            </Tabs>
+      <FormField
+        description={
+          hasStructuredLineItems
+            ? `Worked out from ${structuredLineItemCount} item${structuredLineItemCount === 1 ? '' : 's'} in parts and labour.`
+            : undefined
+        }
+        error={errors.totalCost?.message}
+        htmlFor="maintenance-total-cost"
+        labelAddon={fromBill('totalCost')}
+        label="Total on the bill"
+      >
+        <Controller
+          control={form.control}
+          name="totalCost"
+          render={({ field }) => (
+            <AmountInput
+              aria-invalid={Boolean(errors.totalCost)}
+              currencyCode={currencyCode}
+              id="maintenance-total-cost"
+              name={field.name}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              placeholder="Amount"
+              readOnly={hasStructuredLineItems}
+              ref={field.ref}
+              value={field.value}
+            />
+          )}
+        />
+      </FormField>
 
-            <div className="grid gap-3.5 md:grid-cols-2">
+      <div className="border-t border-line-subtle">
+        <Accordion onValueChange={setOpenExtras} type="multiple" value={openExtras}>
+          <AccordionItem value="workshop">
+            <AccordionTrigger>
+              <ExtraHeading
+                label="Workshop"
+                marker={fromBill('workshopName')}
+                summary={workshopName?.trim() || 'Add'}
+              />
+            </AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-3">
               <FormField
-                error={form.formState.errors.serviceDate?.message}
-                htmlFor="maintenance-service-date"
-                labelAddon={fromBill('serviceDate')}
-                label="Service date"
-              >
-                <Input
-                  aria-invalid={Boolean(form.formState.errors.serviceDate)}
-                  id="maintenance-service-date"
-                  type="date"
-                  {...form.register('serviceDate')}
-                />
-              </FormField>
-
-              <FormField
-                description={
-                  currentOdometer === undefined
-                    ? undefined
-                    : `Current: ${format.odometer(currentOdometer)}`
-                }
-                error={form.formState.errors.odometer?.message}
-                htmlFor="maintenance-odometer"
-                labelAddon={fromBill('odometer')}
-                label="Odometer"
-              >
-                <Input
-                  aria-invalid={Boolean(form.formState.errors.odometer)}
-                  id="maintenance-odometer"
-                  min={0}
-                  type="number"
-                  {...form.register('odometer', { valueAsNumber: true })}
-                />
-              </FormField>
-
-              <FormField
-                error={form.formState.errors.category?.message}
-                htmlFor="maintenance-category"
-                labelAddon={fromBill('category')}
-                label="Category"
-              >
-                <Controller
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger
-                        aria-invalid={Boolean(form.formState.errors.category)}
-                        id="maintenance-category"
-                      >
-                        <SelectValue placeholder="Select a service category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categoryOptions.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {format.enumLabel('maintenanceCategory', category)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-
-              <FormField
-                error={form.formState.errors.workshopName?.message}
+                error={errors.workshopName?.message}
                 htmlFor="maintenance-workshop-name"
                 labelAddon={fromBill('workshopName')}
                 label="Workshop or garage"
               >
                 <Input
-                  aria-invalid={Boolean(form.formState.errors.workshopName)}
+                  aria-invalid={Boolean(errors.workshopName)}
+                  autoComplete="off"
                   id="maintenance-workshop-name"
-                  placeholder="Authorized service centre"
+                  placeholder="Where it was done, or leave empty if you did it yourself"
                   {...form.register('workshopName')}
                 />
               </FormField>
-
-              {entryMode === 'detailed' ? (
-                <>
-                  <FormField
-                    error={form.formState.errors.invoiceNumber?.message}
-                    htmlFor="maintenance-invoice-number"
-                    labelAddon={fromBill('invoiceNumber')}
-                    label="Invoice or job card number"
-                  >
-                    <Input
-                      aria-invalid={Boolean(form.formState.errors.invoiceNumber)}
-                      id="maintenance-invoice-number"
-                      placeholder="Optional"
-                      {...form.register('invoiceNumber')}
-                    />
-                  </FormField>
-
-                  <FormField
-                    error={form.formState.errors.currencyCode?.message}
-                    htmlFor="maintenance-currency-code"
-                    labelAddon={fromBill('currencyCode')}
-                    label="Currency"
-                  >
-                    <Input
-                      aria-invalid={Boolean(form.formState.errors.currencyCode)}
-                      id="maintenance-currency-code"
-                      maxLength={3}
-                      placeholder="INR"
-                      {...form.register('currencyCode')}
-                    />
-                  </FormField>
-                </>
-              ) : null}
-
-              <FormField
-                description={
-                  hasStructuredLineItems
-                    ? `Derived from ${structuredLineItemCount} structured item${structuredLineItemCount === 1 ? '' : 's'}.`
-                    : undefined
+              <WorkshopSuggestions
+                onPick={(name) =>
+                  form.setValue('workshopName', name, { shouldDirty: true, shouldValidate: true })
                 }
-                error={form.formState.errors.totalCost?.message}
-                htmlFor="maintenance-total-cost"
-                labelAddon={fromBill('totalCost')}
-                label="Total cost"
-              >
-                <Input
-                  aria-invalid={Boolean(form.formState.errors.totalCost)}
-                  id="maintenance-total-cost"
-                  min={0}
-                  readOnly={hasStructuredLineItems}
-                  step="0.01"
-                  type="number"
-                  {...form.register('totalCost', { valueAsNumber: true })}
-                />
-              </FormField>
-
-              <FormField
-                error={form.formState.errors.nextDueDate?.message}
-                htmlFor="maintenance-next-due-date"
-                labelAddon={fromBill('nextDueDate')}
-                label="Next due date"
-              >
-                <Input
-                  aria-invalid={Boolean(form.formState.errors.nextDueDate)}
-                  id="maintenance-next-due-date"
-                  type="date"
-                  {...form.register('nextDueDate')}
-                />
-              </FormField>
-
-              <FormField
-                error={form.formState.errors.nextDueOdometer?.message}
-                htmlFor="maintenance-next-due-odometer"
-                labelAddon={fromBill('nextDueOdometer')}
-                label="Next due odometer"
-              >
-                <Input
-                  aria-invalid={Boolean(form.formState.errors.nextDueOdometer)}
-                  id="maintenance-next-due-odometer"
-                  min={0}
-                  type="number"
-                  {...form.register('nextDueOdometer', {
-                    setValueAs: (value) => (value === '' ? undefined : Number(value)),
-                  })}
-                />
-              </FormField>
-            </div>
-
-            <FormField
-              error={form.formState.errors.notes?.message}
-              htmlFor="maintenance-notes"
-              labelAddon={fromBill('notes')}
-              label="Notes"
-            >
-              <Textarea
-                aria-invalid={Boolean(form.formState.errors.notes)}
-                id="maintenance-notes"
-                placeholder="Service details, symptoms, follow-up actions, or anything not covered in the invoice"
-                {...form.register('notes')}
+                typed={workshopName ?? ''}
               />
-            </FormField>
-
-            {entryMode === 'detailed' ? (
-              <>
-                <div className="grid gap-4 lg:grid-cols-3">
-                  <Card className="border-border/70 bg-page/60 lg:col-span-2">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-fg-3" />
-                        <CardTitle className="text-ui">Structured summary</CardTitle>
-                      </div>
-                      <CardDescription>
-                        Keep the invoice mappable even when each workshop formats it differently.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      <BreakdownMetric
-                        label="Grand total"
-                        value={format.money(
-                          hasStructuredLineItems
-                            ? lineItemBreakdown.totalCost
-                            : form.getValues('totalCost') || 0,
-                          { currency: currencyCode },
-                        )}
-                      />
-                      <BreakdownMetric
-                        label="Parts"
-                        value={format.money(lineItemBreakdown.partsCost, {
-                          currency: currencyCode,
-                        })}
-                      />
-                      <BreakdownMetric
-                        label="Fluids"
-                        value={format.money(lineItemBreakdown.fluidsCost, {
-                          currency: currencyCode,
-                        })}
-                      />
-                      <BreakdownMetric
-                        label="Labour"
-                        value={format.money(lineItemBreakdown.laborCost, {
-                          currency: currencyCode,
-                        })}
-                      />
-                      <BreakdownMetric
-                        label="Tax"
-                        value={format.money(lineItemBreakdown.taxCost, { currency: currencyCode })}
-                      />
-                      <BreakdownMetric
-                        label="Discount"
-                        value={format.money(lineItemBreakdown.discountAmount, {
-                          currency: currencyCode,
-                        })}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-border/70 bg-page/60">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <WalletCards className="h-4 w-4 text-fg-3" />
-                        <CardTitle className="text-ui">How totals work</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-ui leading-6 text-fg-2">
-                      <p>Parts, fluids, labour, fees, jobs, and taxes add to the total.</p>
-                      <p>Discount items subtract from the total automatically.</p>
-                      <p>If you do not add structured items yet, the manual total still works.</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <MaintenanceLineItemsEditor
-                  control={form.control}
-                  currencyCode={currencyCode}
-                  errors={form.formState.errors}
-                  register={form.register}
-                  setValue={form.setValue}
-                />
-              </>
-            ) : null}
-
-            {submitError ? <InlineError message={submitError} /> : null}
-
-            {lowOdometerWarning && lowOdometerWarning.odometer === enteredOdometer ? (
-              <div
-                className="rounded-xl border border-soon/30 bg-soon-tint px-3.5 py-2.5 text-ui leading-5 text-soon"
-                role="alert"
+              <FormField
+                error={errors.invoiceNumber?.message}
+                htmlFor="maintenance-invoice-number"
+                labelAddon={fromBill('invoiceNumber')}
+                label="Invoice or job card number"
               >
-                <p>
-                  Lower than your last service at{' '}
-                  {format.odometer(lowOdometerWarning.previousOdometer)} — save anyway?
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <Input
+                  aria-invalid={Boolean(errors.invoiceNumber)}
+                  id="maintenance-invoice-number"
+                  placeholder="Optional"
+                  {...form.register('invoiceNumber')}
+                />
+              </FormField>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="items">
+            <AccordionTrigger>
+              <ExtraHeading
+                label="Parts and labour"
+                summary={
+                  hasStructuredLineItems
+                    ? `${structuredLineItemCount} item${structuredLineItemCount === 1 ? '' : 's'} · ${format.money(lineItemBreakdown.totalCost, { currency: currencyCode })}`
+                    : 'Add items'
+                }
+              />
+            </AccordionTrigger>
+            <AccordionContent>
+              <MaintenanceLineItemsEditor
+                control={form.control}
+                currencyCode={currencyCode}
+                errors={errors}
+                register={form.register}
+                setValue={form.setValue}
+              />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="notes">
+            <AccordionTrigger>
+              <ExtraHeading
+                label="Notes"
+                marker={fromBill('notes')}
+                summary={notes?.trim() || 'Add'}
+              />
+            </AccordionTrigger>
+            <AccordionContent>
+              <FormField error={errors.notes?.message} htmlFor="maintenance-notes" label="Notes">
+                <Textarea
+                  aria-invalid={Boolean(errors.notes)}
+                  id="maintenance-notes"
+                  placeholder="What was done, symptoms, anything the bill does not say"
+                  {...form.register('notes')}
+                />
+              </FormField>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        <div className="border-t border-line-subtle">
+          <NextDueSummary
+            action={
+              showNextDueFields ? (
+                scheduleNextDue && scheduled.kind === 'due' ? (
                   <Button
                     onClick={() => {
-                      confirmedLowOdometer.current = lowOdometerWarning.odometer;
-                      void handleSubmit();
+                      setNextDueChoice('schedule');
+                      setIsEditingNextDue(false);
+                      form.clearErrors(['nextDueDate', 'nextDueOdometer']);
                     }}
                     size="sm"
                     type="button"
+                    variant="ghost"
                   >
-                    Save anyway
+                    Use the schedule
                   </Button>
-                  <Button
-                    onClick={() => {
-                      setLowOdometerWarning(null);
-                      form.setFocus('odometer');
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Change odometer
-                  </Button>
-                </div>
+                ) : null
+              ) : (
+                <Button
+                  onClick={() => {
+                    if (nextDueSource === 'schedule' && scheduled.kind === 'due') {
+                      form.setValue('nextDueDate', scheduled.due.date ?? '', { shouldDirty: true });
+                      form.setValue('nextDueOdometer', scheduled.due.odometer, {
+                        shouldDirty: true,
+                      });
+                    }
+                    setNextDueChoice('own');
+                    setIsEditingNextDue(true);
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {nextDueState.kind === 'due' ? 'Change' : 'Add'}
+                </Button>
+              )
+            }
+            state={nextDueState}
+            work={work}
+          >
+            {showNextDueFields ? (
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  error={errors.nextDueDate?.message}
+                  htmlFor="maintenance-next-due-date"
+                  labelAddon={fromBill('nextDueDate')}
+                  label="Next due date"
+                >
+                  <Input
+                    aria-invalid={Boolean(errors.nextDueDate)}
+                    id="maintenance-next-due-date"
+                    type="date"
+                    {...form.register('nextDueDate')}
+                  />
+                </FormField>
+
+                <FormField
+                  error={errors.nextDueOdometer?.message}
+                  htmlFor="maintenance-next-due-odometer"
+                  labelAddon={fromBill('nextDueOdometer')}
+                  label="Next due odometer"
+                >
+                  <Input
+                    aria-invalid={Boolean(errors.nextDueOdometer)}
+                    id="maintenance-next-due-odometer"
+                    inputMode="numeric"
+                    min={0}
+                    type="number"
+                    {...form.register('nextDueOdometer', {
+                      setValueAs: (value) =>
+                        value === '' || value === undefined || value === null
+                          ? undefined
+                          : Number(value),
+                    })}
+                  />
+                </FormField>
               </div>
             ) : null}
+          </NextDueSummary>
+        </div>
+      </div>
 
-            {submissionState ? (
-              <p className="rounded-xl border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-ui leading-5 text-ok">
-                {submissionState}
-              </p>
-            ) : null}
+      {submitError ? <InlineError message={submitError} /> : null}
 
-            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-              <Button
-                disabled={form.formState.isSubmitting || isSubmitting}
-                size="sm"
-                type="submit"
-              >
-                {isSubmitting ? submittingLabel : submitLabel}
-              </Button>
-              <p className="text-ui leading-5 text-fg-3 sm:max-w-md">
-                {isSubmitting ? 'Saving service record...' : submitHint}
-              </p>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      {lowOdometerWarning && lowOdometerWarning.odometer === enteredOdometer ? (
+        <div
+          className="rounded-control border border-soon/30 bg-soon-tint px-3.5 py-2.5 text-ui leading-5 text-soon"
+          role="alert"
+        >
+          <p>
+            Lower than your last service at {format.odometer(lowOdometerWarning.previousOdometer)} —
+            save anyway?
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                confirmedLowOdometer.current = lowOdometerWarning.odometer;
+                void handleSubmit();
+              }}
+              size="sm"
+              type="button"
+            >
+              Save anyway
+            </Button>
+            <Button
+              onClick={() => {
+                setLowOdometerWarning(null);
+                form.setFocus('odometer');
+              }}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Change odometer
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {submissionState ? (
+        <p className="rounded-control border border-ok/30 bg-ok-tint px-3.5 py-2.5 text-ui leading-5 text-ok">
+          {submissionState}
+        </p>
+      ) : null}
+
+      {/* Pinned above the phone's bottom bar (64px and its border, plus the
+          home-indicator inset) so Save is always one tap away; in the flow from md. */}
+      <div
+        className="sticky bottom-[calc(4rem+1px+env(safe-area-inset-bottom))] z-20 -mx-4 flex flex-col gap-2 border-t border-line-subtle bg-surface px-4 py-3 md:static md:mx-0 md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0"
+        data-testid="maintenance-form-actions"
+      >
+        <Button
+          className="w-full md:w-auto"
+          disabled={form.formState.isSubmitting || isSubmitting}
+          size="lg"
+          type="submit"
+        >
+          {isSubmitting ? submittingLabel : submitLabel}
+        </Button>
+        {cancel ? <div className="hidden md:block">{cancel}</div> : null}
+        {submitHint ? (
+          <p className="text-small leading-5 text-fg-3 md:max-w-md">{submitHint}</p>
+        ) : null}
+      </div>
+    </form>
+  );
+}
+
+function ExtraHeading({
+  label,
+  summary,
+  marker,
+}: {
+  label: string;
+  summary: string;
+  marker?: ReactNode;
+}) {
+  return (
+    <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+      <span className="flex shrink-0 items-center gap-2">
+        {label}
+        {marker}
+      </span>
+      <span className="min-w-0 truncate text-ui font-normal text-fg-3">{summary}</span>
+    </span>
   );
 }
 
@@ -815,13 +835,5 @@ function FromBillMarker() {
     <span className="rounded-full bg-brand-tint px-1.5 py-0.5 text-caption font-semibold text-brand ring-1 ring-inset ring-brand/30">
       from bill
     </span>
-  );
-}
-
-function BreakdownMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border/70 bg-surface/80 p-4">
-      <Figure label={label} value={value} />
-    </div>
   );
 }
