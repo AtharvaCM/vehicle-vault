@@ -1,3 +1,10 @@
+# [1.93.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.92.0...v1.93.0) (2026-09-25)
+
+
+### Features
+
+* **sharing:** plain-word roles, share-first invite actions, resend pending invites ([2730eb8](https://github.com/AtharvaCM/vehicle-vault/commit/2730eb8ac79677f4827d18be0c4737dcaf031bdd))
+
 # [1.92.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.91.0...v1.92.0) (2026-09-25)
 
 
