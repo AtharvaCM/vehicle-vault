@@ -212,9 +212,11 @@ export function VehicleDetailPage({
             <VehicleHistoryTab
               fuelType={vehicle.fuelType}
               odometer={vehicle.odometer}
+              onSearchChange={(search) => onSearchStateChange({ tab: 'history', search })}
               onViewChange={(view) => onSearchStateChange({ tab: 'history', view })}
+              search={searchState.search}
               serviceInsights={serviceInsights}
-              vehicleId={vehicleId}
+              vehicle={vehicle}
               view={searchState.view ?? defaultVehicleHistoryView}
             />
           </TabsContent>

@@ -25,6 +25,23 @@ describe('normalizeVehicleDetailSearch', () => {
     });
   });
 
+  it('keeps a search on the service log only, and drops it on every other tab or view', () => {
+    expect(normalizeVehicleDetailSearch({ tab: 'history', search: ' oil ' })).toEqual({
+      tab: 'history',
+      search: 'oil',
+    });
+    expect(normalizeVehicleDetailSearch({ tab: 'history', view: 'fuel', search: 'oil' })).toEqual({
+      tab: 'history',
+      view: 'fuel',
+    });
+    expect(normalizeVehicleDetailSearch({ tab: 'reminders', search: 'oil' })).toEqual({
+      tab: 'reminders',
+    });
+    expect(normalizeVehicleDetailSearch({ tab: 'history', search: '  ' })).toEqual({
+      tab: 'history',
+    });
+  });
+
   it('keeps a More section so a deep link survives a reload', () => {
     expect(normalizeVehicleDetailSearch({ tab: 'more', section: 'accessories' })).toEqual({
       tab: 'more',

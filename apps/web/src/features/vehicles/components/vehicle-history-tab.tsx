@@ -6,31 +6,39 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { FuelEconomyCard } from '@/features/fuel-logs/components/fuel-economy-card';
 import { FuelTab } from '@/features/fuel-logs/components/fuel-tab';
-import { VehicleMaintenanceList } from '@/features/maintenance/components/vehicle-maintenance-list';
+import type { HistoryVehicle } from '@/features/history/components/history-row';
 import { ServiceHistoryCard } from '@/features/service-baseline/components/service-history-card';
 
 import { OdometerHistoryCard } from './odometer-history-card';
+import { VehicleServiceHistory } from './vehicle-service-history';
 import type { VehicleHistoryView } from '../types/vehicle-detail-search';
 import type { VehicleServiceInsights } from '../utils/get-vehicle-service-insights';
 
 type VehicleHistoryTabProps = {
-  vehicleId: string;
+  vehicle: HistoryVehicle;
   fuelType: FuelType;
   /** The vehicle's current reading, passed through to the fuel tab's Odometer hint. */
   odometer: number;
   serviceInsights: VehicleServiceInsights;
   view: VehicleHistoryView;
   onViewChange: (view: VehicleHistoryView) => void;
+  /** The service log's search, kept in the URL. */
+  search: string | undefined;
+  onSearchChange: (search: string | undefined) => void;
 };
 
 export function VehicleHistoryTab({
-  vehicleId,
+  vehicle,
   fuelType,
   odometer,
   serviceInsights,
   view,
   onViewChange,
+  search,
+  onSearchChange,
 }: VehicleHistoryTabProps) {
+  const vehicleId = vehicle.id;
+
   return (
     <div className="space-y-6">
       <ToggleGroup
@@ -50,9 +58,11 @@ export function VehicleHistoryTab({
           <div className="mb-6">
             <ServiceHistoryCard vehicleId={vehicleId} />
           </div>
-          {/* Full width, as on the list page it replaces: with the selection boxes, a
-              record card beside a second column leaves its title too narrow at 1280px. */}
-          <VehicleMaintenanceList vehicleId={vehicleId} />
+          <VehicleServiceHistory
+            onSearchChange={onSearchChange}
+            search={search}
+            vehicle={vehicle}
+          />
           <OdometerHistoryCard insights={serviceInsights} />
         </>
       ) : (

@@ -8,10 +8,17 @@ export type HistoryKind = (typeof HISTORY_KINDS)[number];
 
 export const HISTORY_PAGE_DEFAULT_LIMIT = 30;
 export const HISTORY_PAGE_MAX_LIMIT = 100;
+export const HISTORY_SEARCH_MAX_LENGTH = 100;
 
 export const HistoryQuerySchema = z.object({
   vehicleId: z.string().uuid().optional(),
   kind: z.enum(HISTORY_KINDS).optional(),
+  /**
+   * Words to find: a service's category, workshop, invoice number or notes, or a
+   * fill's station or notes. Odometer readings carry no words, so a search
+   * leaves them out.
+   */
+  search: z.string().trim().min(1).max(HISTORY_SEARCH_MAX_LENGTH).optional(),
   /** Opaque: the `nextCursor` of the page before. */
   cursor: z.string().min(1).max(200).optional(),
   limit: z.coerce.number().int().min(1).max(HISTORY_PAGE_MAX_LIMIT).optional(),
@@ -85,8 +92,9 @@ export const HistoryPageSchema = z.object({
   firstDraftId: z.string().nullable().optional(),
   /**
    * This calendar year's confirmed services on the filtered vehicles, for the
-   * page's summary line ("₹15,200 on 3 services in 2026"). Null when the kind
-   * filter leaves services out. Omitted by older API versions.
+   * page's summary line ("₹15,200 on 3 services in 2026"). A search does not
+   * narrow it. Null when the kind filter leaves services out. Omitted by older
+   * API versions.
    */
   year: z
     .object({
