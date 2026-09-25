@@ -1,5 +1,6 @@
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -9,9 +10,11 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { compare, hash } from 'bcryptjs';
 import {
+  AccountSecuritySchema,
   AuthResponseSchema,
   AuthUserSchema,
   LoginSchema,
+  PasswordChangeSchema,
   PasswordResetConfirmResponseSchema,
   PasswordResetConfirmSchema,
   PasswordResetRequestResponseSchema,
@@ -21,6 +24,7 @@ import {
   UserSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
+  type AccountSecurity,
   type AuthResponse,
   type AuthUser,
   type LoginInput,
@@ -49,6 +53,7 @@ import { AuditResourceType } from '@prisma/client';
 import { getEmailVerificationDueAt } from './email-verification-deadline';
 import { TokenService } from './token.service';
 import type { LoginDto } from './dto/login.dto';
+import type { PasswordChangeDto } from './dto/password-change.dto';
 import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import type { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import type { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -345,6 +350,55 @@ export class AuthService {
       action: AUDIT_ACTIONS.auth.loggedOut,
       resourceType: AuditResourceType.user,
       resourceId: user.id,
+    });
+  }
+
+  /**
+   * Changes the password of a signed-in account. With a password on file the
+   * current one must match; an account that only signs in with Google or
+   * GitHub sets its first one. The refresh token is rotated and returned, so
+   * this session carries on while every other one is signed out (there is one
+   * refresh token per account).
+   */
+  async changePassword(userId: string, payload: PasswordChangeDto): Promise<AuthResponse> {
+    const input = PasswordChangeSchema.parse(payload);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Invalid authentication token.');
+
+    if (user.passwordHash) {
+      // 400, not 401: a wrong current password must not read as a dead session.
+      if (!input.currentPassword || !(await compare(input.currentPassword, user.passwordHash))) {
+        throw new BadRequestException('Your current password is not right.');
+      }
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hash(input.newPassword, 12) },
+    });
+    await this.auditService.track(this.prisma, {
+      actorUserId: user.id,
+      ownerUserId: user.id,
+      action: AUDIT_ACTIONS.auth.passwordChanged,
+      resourceType: AuditResourceType.user,
+      resourceId: user.id,
+      after: { firstPassword: !user.passwordHash },
+    });
+
+    return this.buildAuthResponse(this.toUser(updated));
+  }
+
+  /** How the account can sign in: a password, and which providers are linked. */
+  async getSecurity(userId: string): Promise<AccountSecurity> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, oauthAccounts: { select: { provider: true } } },
+    });
+    if (!user) throw new UnauthorizedException('Invalid authentication token.');
+
+    return AccountSecuritySchema.parse({
+      hasPassword: Boolean(user.passwordHash),
+      oauthProviders: [...new Set(user.oauthAccounts.map((account) => account.provider))].sort(),
     });
   }
 

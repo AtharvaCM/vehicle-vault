@@ -95,6 +95,7 @@ export const AUDIT_ACTIONS = {
     refreshRotated: 'auth.refresh_rotated',
     passwordResetRequested: 'auth.password_reset_requested',
     passwordResetCompleted: 'auth.password_reset_completed',
+    passwordChanged: 'auth.password_changed',
     emailVerified: 'auth.email_verified',
     oauthLinked: 'auth.oauth_linked',
     // Recorded with no actor and no owner: the account it describes is gone,
