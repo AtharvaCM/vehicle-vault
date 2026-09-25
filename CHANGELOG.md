@@ -1,3 +1,10 @@
+# [1.108.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.107.0...v1.108.0) (2026-09-25)
+
+
+### Features
+
+* say activity in plain sentences ([771bec9](https://github.com/AtharvaCM/vehicle-vault/commit/771bec9e4bbf4dd27b58f40dcf057cac98ca80ac)), closes [#318](https://github.com/AtharvaCM/vehicle-vault/issues/318)
+
 # [1.107.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.106.0...v1.107.0) (2026-09-25)
 
 
