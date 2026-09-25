@@ -106,7 +106,7 @@ function DataHealthText({
 }
 
 /** The next-due row's status, from the same day count its words are built from. */
-function nextDueStatus(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>): Status | null {
+export function nextDueStatus(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>): Status | null {
   if (!nextDue.dueDate) return null;
 
   return dueStatus(nextDue.daysUntilDue, {
@@ -114,7 +114,7 @@ function nextDueStatus(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>):
   });
 }
 
-function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
+export function nextDueText(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>) {
   if (nextDue.kind === 'loan_emi' && nextDue.dueDate) {
     const relative = formatRelativeDue({
       kind: nextDue.kind,
