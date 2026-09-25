@@ -76,9 +76,9 @@ test.describe('touch targets on a phone', () => {
     await page.setViewportSize(PHONE);
   });
 
-  test('home: buttons and the vehicle row menu are at least 44 px', async ({ page }) => {
+  test('home: buttons and the vehicle summary row are at least 44 px', async ({ page }) => {
     await page.goto('/home');
-    await expect(page.getByTestId('vehicle-health-card').first()).toBeVisible();
+    await expect(page.getByTestId('vehicle-summary-row')).toBeVisible();
 
     await expectThumbSized(page);
   });

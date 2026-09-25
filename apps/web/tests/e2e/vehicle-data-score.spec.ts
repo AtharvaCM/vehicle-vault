@@ -46,8 +46,9 @@ test('the health card scores a vehicle’s data and moves on once a gap is fille
   const vehicle = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
 
   // Linked to the catalog and freshly read, but no history, papers, tyres or price.
-  await page.goto('/home');
-  const card = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
+  // The score lives on the vehicle's Overview, under "This vehicle" (#307).
+  await page.goto(`/vehicles/${vehicle.id}`);
+  const card = page.getByTestId('this-vehicle');
   await expect(card).toContainText('35% · Service history incomplete');
   await expect(card.getByRole('link', { name: 'Service history incomplete' })).toHaveAttribute(
     'href',

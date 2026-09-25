@@ -60,9 +60,9 @@ test('an electric vehicle is never asked for a PUC certificate', async ({ page }
   await expect(page).toHaveURL(/\/vehicles\/[^/]+$/);
   await expect(page.getByText('Never miss a renewal')).toBeHidden();
 
-  // With its insurance on file, the dashboard reads its papers as in order.
+  // With its insurance on file, Home's summary row reads its papers as in order.
   await page.goto('/home');
-  const card = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
+  const card = page.getByTestId('vehicle-summary-row').filter({ hasText: nickname });
   const documents = card.getByRole('link', { name: 'Insurance valid · to 1 Mar 2027' });
   await expect(documents).toBeVisible();
   await expect(card).not.toContainText('PUC');

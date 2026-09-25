@@ -29,7 +29,7 @@ test('the odometer is updated from the dashboard health card', async ({ page }) 
   });
 
   await page.goto('/home');
-  const card = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
+  const card = page.getByTestId('vehicle-summary-row').filter({ hasText: nickname });
   await expect(card).toContainText('15,200 km');
 
   // A lower reading is refused on the card, with the edit form as the way out.

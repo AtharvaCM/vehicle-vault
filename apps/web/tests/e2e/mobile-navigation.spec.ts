@@ -436,15 +436,14 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   await expect(page.getByRole('main').getByText('Edit reminder').first()).toBeVisible();
   await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
 
-  // The dashboard's garage cards are narrowest where the grid adds a column: two
-  // across from sm, three from xl. There a card must keep its
-  // footer's buttons inside it, without dropping their labels to make room.
-  const garageCard = page.getByTestId('vehicle-health-card').filter({ hasText: nickname });
+  // A one-vehicle garage is one summary row on Home (#306): its rows go three
+  // across from sm, and the odometer's Update must stay inside it.
+  const summaryRow = page.getByTestId('vehicle-summary-row').filter({ hasText: nickname });
   for (const width of [640, DESKTOP.width]) {
     await page.setViewportSize({ width, height: DESKTOP.height });
     await page.goto('/home');
-    await expect(garageCard.getByText('Log service', { exact: true })).toBeVisible();
-    await expectControlsInsideCard(garageCard, `The garage card at ${width}px`);
+    await expect(summaryRow).toBeVisible();
+    await expectControlsInsideCard(summaryRow, `The summary row at ${width}px`);
     await expectNoSidewaysScroll(page, `/home at ${width}px`);
   }
 });
