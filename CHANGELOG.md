@@ -1,3 +1,10 @@
+# [1.102.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.101.0...v1.102.0) (2026-09-25)
+
+
+### Features
+
+* **web:** make the reminder page one decision ([b96c272](https://github.com/AtharvaCM/vehicle-vault/commit/b96c2721f23d2cf0ba091eac34b8a10cf757a4d6)), closes [#314](https://github.com/AtharvaCM/vehicle-vault/issues/314)
+
 # [1.101.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.100.0...v1.101.0) (2026-09-25)
 
 
