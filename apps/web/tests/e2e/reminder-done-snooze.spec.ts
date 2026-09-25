@@ -31,6 +31,16 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${SHOTS}/${name}.png`, animations: 'disabled' });
 }
 
+// A 1×1 PNG: the e2e API has no bill reader, so the draft opens blank.
+const jobCardPhoto = {
+  name: 'job-card.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64',
+  ),
+};
+
 /** An account with one car and an oil change that is two days late and repeats. */
 async function seedGarage(page: Page) {
   const suffix = uniqueSuffix();
@@ -149,6 +159,46 @@ for (const viewport of VIEWPORTS) {
         'Repeats every 10,000 km or 12 months; the next one will be counted from the service you log.',
       );
       await shot(page, `reminder-page-${viewport.width}`);
+    });
+
+    test('Done → Log service → Snap the bill → confirmed draft → the reminder is completed', async ({
+      page,
+    }) => {
+      const { vehicle, reminder, title } = await seedGarage(page);
+
+      await page.goto(`/vehicles/${vehicle.id}/maintenance/new?reminderId=${reminder.id}`);
+      await expect(page.getByText(`For your reminder “${title}”.`)).toBeVisible();
+      await page.getByTestId('bill-file-input').setInputFiles(jobCardPhoto);
+
+      // The draft's confirm page carries the reminder on.
+      await expect(page).toHaveURL(
+        new RegExp(`/maintenance-records/[^/]+/edit\\?reminderId=${reminder.id}$`),
+      );
+      await expect(
+        page.getByText(`then confirm it to complete your reminder “${title}”.`),
+      ).toBeVisible();
+      await page.getByRole('button', { name: 'Oil change' }).click();
+      await page.getByLabel('Odometer', { exact: true }).fill('15300');
+      await page.getByLabel('Total on the bill').fill('2500');
+      await expect(page.getByTestId('next-due')).toContainText('25,300 km');
+      await shot(page, `snap-bill-confirm-${viewport.width}`);
+      await page.getByRole('button', { name: 'Confirm record' }).click();
+      await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
+
+      // Closed, and the next one counted from the record by the reminder's rule.
+      await expect
+        .poll(async () =>
+          (
+            await prisma.reminder.findMany({
+              where: { vehicleId: vehicle.id, title },
+              orderBy: { createdAt: 'asc' },
+            })
+          ).map((row) => ({ status: row.status, dueOdometer: row.dueOdometer })),
+        )
+        .toEqual([
+          { status: 'completed', dueOdometer: 15000 },
+          { status: 'upcoming', dueOdometer: 25300 },
+        ]);
     });
 
     test('one Snooze on Home, Upcoming, the Reminders tab and the reminder page', async ({

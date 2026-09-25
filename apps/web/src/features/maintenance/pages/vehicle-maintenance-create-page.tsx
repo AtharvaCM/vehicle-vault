@@ -14,7 +14,6 @@ import { uploadAttachments } from '@/features/attachments/api/upload-attachments
 import { extractAttachment } from '@/features/attachments/api/extract-attachment';
 import { extractAttachments } from '@/features/attachments/api/extract-attachments';
 import { useAttachmentExtractionStatus } from '@/features/attachments/hooks/use-attachment-extraction-status';
-import { reminderDetailQueryOptions } from '@/features/reminders/api/get-reminder-by-id';
 import { vehicleRemindersQueryOptions } from '@/features/reminders/api/get-vehicle-reminders';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
@@ -30,6 +29,7 @@ import { BillCapture } from '../components/bill-capture';
 import { MaintenanceForm } from '../components/maintenance-form';
 import { useCreateMaintenanceDraft } from '../hooks/use-create-maintenance-draft';
 import { useCreateMaintenanceRecord } from '../hooks/use-create-maintenance-record';
+import { useLinkedReminder } from '../hooks/use-linked-reminder';
 import { hasBillValues } from '../utils/get-fields-from-bill';
 import { pickDueCategory, pickFromReminder } from '../utils/pick-due-category';
 
@@ -60,34 +60,19 @@ export function VehicleMaintenanceCreatePage({
   // What the form starts on: the reminder it was opened from, else the
   // category the address names, else whatever service the vehicle's
   // reminders say is due, with the reason shown under the chips.
-  const reminderQuery = useQuery({
-    ...reminderDetailQueryOptions(reminderId ?? ''),
-    enabled: Boolean(reminderId),
-  });
+  const { reminder: linkedReminder, repeat: reminderRepeat } = useLinkedReminder(
+    reminderId,
+    vehicleId,
+  );
   const remindersQuery = useQuery({
     ...vehicleRemindersQueryOptions(vehicleId),
     enabled: !reminderId && !category,
   });
-  const linkedReminder =
-    reminderQuery.data && reminderQuery.data.vehicleId === vehicleId ? reminderQuery.data : null;
   const suggestedCategory = useMemo(() => {
     if (linkedReminder) return pickFromReminder(linkedReminder, category);
     if (category) return { category, reason: '' };
     return remindersQuery.data ? pickDueCategory(remindersQuery.data) : null;
   }, [category, linkedReminder, remindersQuery.data]);
-  // A reminder that repeats sets the next one by its own rule (#295: "the next
-  // one will be counted from the service you log"), not the schedule.
-  const reminderRepeat = useMemo(
-    () =>
-      linkedReminder &&
-      (linkedReminder.repeatEveryKm != null || linkedReminder.repeatEveryMonths != null)
-        ? {
-            km: linkedReminder.repeatEveryKm ?? null,
-            months: linkedReminder.repeatEveryMonths ?? null,
-          }
-        : null,
-    [linkedReminder],
-  );
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved service details. Leave without saving?',
@@ -146,6 +131,8 @@ export function VehicleMaintenanceCreatePage({
     }
 
     let draftRecordId: string | null = null;
+    // Logged from a reminder: confirming the draft completes it, as saving the form does.
+    const toDraft = linkedReminder ? { search: { reminderId: linkedReminder.id } } : {};
     setIsUploadFirstPending(true);
 
     try {
@@ -213,6 +200,7 @@ export function VehicleMaintenanceCreatePage({
         params: {
           recordId: draftRecord.id,
         },
+        ...toDraft,
       });
     } catch (error) {
       appToast.error({
@@ -231,6 +219,7 @@ export function VehicleMaintenanceCreatePage({
           params: {
             recordId: draftRecordId,
           },
+          ...toDraft,
         });
       }
     } finally {
