@@ -176,6 +176,8 @@ _Caution_: `reminders/service-schedule-catalog.ts` still carries its own generic
 **Token**:
 A credential issued to a **User** for a specific purpose: email verification, password reset, or refresh session. **TokenService** owns issue/consume/rotate/revoke lifecycle for all purposes, regardless of whether the bits are a JWT (refresh) or a SHA-256 hash of random bytes (verification, reset). Timing-safe comparisons. See ADR-0002.
 
+**Running cost per km** (`AnalyticsService.getTco`, #320): `derived.costPerKm` is running cost, so it leaves accessories out (a one-off buy, not a cost of driving); `totals.accessories` keeps them as their own slice of lifetime spend, and `netSpend`, `tco` and `costPerMonth` still include them.
+
 **Password change** (`POST /auth/password`, #315):
 `AuthService.changePassword` needs the current password when one is on file and none when the account only ever signed in through OAuth (that sets a first one). It returns a fresh `AuthResponse`; because a **User** holds a single refresh-token hash, rotating it is what signs every other device out. Audited as `auth.password_changed` with `firstPassword`. `GET /auth/security` answers `{ hasPassword, oauthProviders }` without exposing the hash.
 

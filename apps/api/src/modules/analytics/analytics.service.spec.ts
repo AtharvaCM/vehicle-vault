@@ -323,6 +323,40 @@ describe('AnalyticsService.getTco', () => {
     vi.useRealTimers();
   });
 
+  it('leaves accessories out of running cost per km, but in lifetime spend', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-27T00:00:00.000Z'));
+
+    (prisma.vehicle.findFirst as Mock).mockResolvedValue({
+      id: 'v1',
+      odometer: 20000,
+      purchaseDate: new Date('2024-05-27T00:00:00.000Z'),
+      purchasePrice: null,
+      purchaseOdometer: 0,
+    });
+    (prisma.maintenanceRecord.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('40000.00') },
+    });
+    (prisma.fuelLog.aggregate as Mock).mockResolvedValue({
+      _sum: { totalCost: new Prisma.Decimal('60000.00') },
+    });
+    (prisma.accessory.aggregate as Mock).mockResolvedValue({
+      _sum: { cost: new Prisma.Decimal('20000.00') },
+    });
+    (prisma.claim.aggregate as Mock).mockResolvedValue({ _sum: { insurerPaidAmount: null } });
+    (prisma.insurancePolicy.findMany as Mock).mockResolvedValue([]);
+    (prisma.fuelLog.findFirst as Mock).mockResolvedValue(null);
+
+    const result = await service.getTco('user-1', 'v1');
+
+    expect(result.totals.accessories).toBe('20000.00');
+    expect(result.totals.netSpend).toBe('120000.00');
+    // (40000 + 60000) / 20000 km, the dashcam left out.
+    expect(result.derived.costPerKm).toBe('5.00');
+
+    vi.useRealTimers();
+  });
+
   it('measures from the earliest fill to the current odometer when purchaseOdometer is missing', async () => {
     (prisma.vehicle.findFirst as Mock).mockResolvedValue({
       id: 'v1',

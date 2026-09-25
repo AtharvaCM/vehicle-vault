@@ -9,6 +9,7 @@ import {
   type Tyre,
   type TyreInspection,
 } from '@vehicle-vault/shared';
+import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const intervalsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
@@ -33,6 +34,18 @@ vi.mock('../../tyres/hooks/use-tyres', () => ({
   useUpdateTyre: () => ({ mutateAsync: updateTyre, isPending: false }),
   useDeleteTyre: () => ({ mutateAsync: deleteTyre, isPending: false, variables: undefined }),
   useCreateTyreInspections: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    children,
+    params: _params,
+    to,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { params?: unknown; to?: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
 }));
 vi.mock('@/lib/toast', () => ({
   appToast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
@@ -78,6 +91,20 @@ const royalEnfield: Vehicle = {
 };
 
 type QueryStub = Record<string, unknown>;
+
+/** A tyre on file that nobody has measured yet. */
+const unmeasured = {
+  tyreId: 't-unmeasured',
+  position: TyrePosition.FrontLeft,
+  level: 'unknown',
+  reason: 'none',
+  summary: 'Not measured yet.',
+  treadDepthMm: null,
+  ageYears: null,
+  kmOnTyre: null,
+  estimatedKmRemaining: null,
+  lastInspectedAt: null,
+};
 
 function settled(data: MaintenanceRecord[]): QueryStub {
   return { isPending: false, isError: false, data, refetch: vi.fn() };
@@ -162,15 +189,17 @@ describe('VehicleTyreTracker', () => {
     expect(screen.queryByText('No tyre records found.')).not.toBeInTheDocument();
   });
 
-  it('gives the wheel diagram an accessible description of both services', () => {
+  it('starts with one card and no diagram when no tyres are tracked', () => {
     renderTracker(settled([]));
 
-    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
-
-    expect(diagram).toHaveAccessibleName(/tyre rotation: healthy/i);
-    expect(diagram).toHaveAccessibleName(/wheel alignment: healthy/i);
-    // The four glyphs no longer claim per-corner condition the app cannot measure.
-    expect(diagram).toHaveAccessibleName(/individual tyre condition is not tracked/i);
+    const empty = screen.getByTestId('tyres-empty');
+    expect(empty).toHaveTextContent('Add your tyres');
+    expect(empty).toHaveTextContent('Tread depth and age decide if a tyre is safe');
+    // No diagram of four "not measured" wheels, and no verdict about nothing.
+    expect(screen.queryByTestId('wheel-diagram')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tyre-verdict')).not.toBeInTheDocument();
+    // The service clocks still show: they come from the service history.
+    expect(screen.getAllByTestId('tyre-service')).toHaveLength(2);
   });
 
   it('lists punctures in tyre history and ignores unconfirmed drafts', () => {
@@ -201,9 +230,12 @@ describe('VehicleTyreTracker', () => {
 
     renderTracker(settled(records));
 
-    expect(screen.getByText('Puncture')).toBeInTheDocument();
+    const items = screen.getAllByTestId('tyre-history-item');
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent('Puncture');
+    expect(items[0]).toHaveTextContent('6,000 km');
     // An unconfirmed scan must not appear as completed work.
-    expect(screen.queryByText('tyre rotation')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tyre rotation', { selector: 'li *' })).not.toBeInTheDocument();
   });
 
   it('shows measured per-corner condition once tyres are tracked', () => {
@@ -242,16 +274,25 @@ describe('VehicleTyreTracker', () => {
 
     renderTracker(settled([]));
 
-    // The four glyphs finally mean something: corners differ because the
-    // measurements differ, not because of a made-up front/rear split.
-    expect(screen.getByText('Front left')).toBeInTheDocument();
-    expect(screen.getByText('1.4 mm')).toBeInTheDocument();
-    expect(screen.getByText('6.2 mm')).toBeInTheDocument();
-    expect(screen.getByText('~28,000 km left at current wear')).toBeInTheDocument();
+    // The verdict leads with the tyre that needs the most attention.
+    expect(screen.getByTestId('tyre-verdict')).toHaveTextContent(
+      'Front left tyre: 1.4 mm — below the legal limit, replace it now',
+    );
+    // Each wheel says its tread and age in words.
+    const corners = screen.getAllByTestId('tyre-corner');
+    expect(corners[0]).toHaveTextContent('Front left');
+    expect(corners[0]).toHaveTextContent('1.4 mm · 2 yrs');
+    expect(corners[0]).toHaveTextContent('Not roadworthy');
+    expect(corners[2]).toHaveTextContent('Rear left');
+    expect(corners[2]).toHaveTextContent('6.2 mm · 2 yrs');
+    expect(corners[2]).toHaveTextContent('Good');
+    expect(screen.getByText('~28,000 km left at this wear')).toBeInTheDocument();
+    // A corner with no tyre on file says so rather than showing a figure.
+    expect(corners[1]).toHaveTextContent('No tyre on file');
 
-    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
-    expect(diagram).toHaveAccessibleName(/front left: 1.4 mm tread/i);
-    expect(diagram).toHaveAccessibleName(/rear left: 6.2 mm remaining/i);
+    const diagram = screen.getByRole('figure', { name: /wheel diagram/i });
+    expect(diagram).toHaveAccessibleName(/front left: 1.4 mm · 2 yrs, not roadworthy/i);
+    expect(diagram).toHaveAccessibleName(/rear left: 6.2 mm · 2 yrs, good/i);
   });
 
   it('says not roadworthy rather than overdue when tread is below the legal limit', () => {
@@ -283,9 +324,12 @@ describe('VehicleTyreTracker', () => {
   });
 
   it('opens and closes the add-tyre dialog from the header action', () => {
+    conditionQuery.current = {
+      data: { vehicleId: 'vehicle-1', overall: 'unknown', tyres: [unmeasured] },
+    };
     renderTracker(settled([]));
 
-    fireEvent.click(screen.getByRole('button', { name: /add tyre/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^add tyre$/i }));
     const dialog = screen.getByRole('dialog');
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByRole('heading', { name: 'Add a tyre' })).toBeInTheDocument();
@@ -295,6 +339,10 @@ describe('VehicleTyreTracker', () => {
   });
 
   it('opens the inspection dialog and explains that tyres come first', () => {
+    // A tracked grading with no tyre record behind it yet (the list lags).
+    conditionQuery.current = {
+      data: { vehicleId: 'vehicle-1', overall: 'unknown', tyres: [unmeasured] },
+    };
     renderTracker(settled([]));
 
     fireEvent.click(screen.getByRole('button', { name: /log inspection/i }));
@@ -375,29 +423,26 @@ describe('VehicleTyreTracker', () => {
       };
     });
 
-    it('lists its readings newest first, as they were recorded', () => {
+    it('puts its readings and its fitting in one history, newest first', () => {
       renderTracker(settled([]));
 
       expect(screen.getByText('Michelin Primacy 4 · 205/55 R16 · DOT 3624')).toBeInTheDocument();
-      const list = screen.getByRole('list', { name: 'Front left tyre readings, newest first' });
-      expect(list).not.toBeVisible();
-
-      fireEvent.click(screen.getByText('Readings (2)'));
-
-      expect(list).toBeVisible();
+      const list = screen.getByRole('list', { name: 'Tyre history, newest first' });
       const rows = within(list).getAllByRole('listitem');
-      expect(rows[0]).toHaveTextContent('5.25 mm tread · 32 psi');
+      expect(rows).toHaveLength(3);
+      expect(rows[0]).toHaveTextContent('Inspection · front left 5.3 mm · 32 psi');
       expect(rows[0]).toHaveTextContent('6,800 km');
       // A reading that measured only tread says only that.
-      expect(rows[1]).toHaveTextContent('7 mm tread');
+      expect(rows[1]).toHaveTextContent('Inspection · front left 7 mm');
       expect(rows[1]).not.toHaveTextContent('psi');
-      expect(rows[1]).toHaveTextContent('After the rotation');
+      expect(rows[2]).toHaveTextContent('Fitted front left · Michelin Primacy 4');
+      expect(rows[2]).toHaveTextContent('2,000 km');
     });
 
     it('edits the tyre in place, leaving position and readings where they are', async () => {
       renderTracker(settled([]));
 
-      fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Edit the front left tyre' }));
       const dialog = screen.getByRole('dialog');
       expect(within(dialog).getByRole('heading', { name: 'Edit tyre' })).toBeInTheDocument();
       expect(within(dialog).getByLabelText('Position')).toBeDisabled();
@@ -449,17 +494,27 @@ describe('VehicleTyreTracker', () => {
         </VehicleAccessProvider>,
       );
 
-      expect(screen.getByText('Readings (2)')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('tyre-history-item')).toHaveLength(3);
+      expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /log inspection/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 
-  it('offers adding a tyre from the empty state as well as the header', () => {
+  it('runs the three-step setup from the empty card', () => {
     renderTracker(settled([]));
 
-    fireEvent.click(screen.getByRole('button', { name: /add a tyre/i }));
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Add tyres' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add your tyres' });
+    expect(dialog).toHaveTextContent('Step 1 of 3: Size and brand');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(dialog).toHaveTextContent('Step 2 of 3: Age');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Skip' }));
+    expect(dialog).toHaveTextContent('Step 3 of 3: Tread');
+    // A car's four rolling tyres; the spare is added on its own.
+    expect(within(dialog).getByLabelText('Front left')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Rear right')).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Spare')).not.toBeInTheDocument();
   });
 });
 
@@ -483,7 +538,7 @@ describe('VehicleTyreTracker two-wheeler layout', () => {
     expect(screen.getByText('Wheel alignment / balancing')).toBeInTheDocument();
   });
 
-  it('keeps both cards, unrelabelled, for a car', () => {
+  it('keeps both rows, unrelabelled, for a car', () => {
     renderTracker(settled([]));
 
     expect(screen.getByText('Tyre rotation')).toBeInTheDocument();
@@ -491,13 +546,16 @@ describe('VehicleTyreTracker two-wheeler layout', () => {
     expect(screen.queryByText('Wheel alignment / balancing')).not.toBeInTheDocument();
   });
 
-  it('gives the wheel diagram a front/rear description, not a four-corner one', () => {
+  it('asks a two-wheeler for its front and rear tread only', () => {
     render(<VehicleTyreTracker maintenanceQuery={settled([]) as never} vehicle={royalEnfield} />);
 
-    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
-    expect(diagram).toHaveAccessibleName(/wheel alignment \/ balancing: healthy/i);
-    // No rotation claim of any kind for a vehicle that has no rotation service.
-    expect(diagram).not.toHaveAccessibleName(/tyre rotation/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Add tyres' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add your tyres' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Skip' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Skip' }));
+    expect(within(dialog).getByLabelText('Front')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Rear')).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Front left')).not.toBeInTheDocument();
   });
 
   it('shows Front and Rear corners with their measured condition, not FL/FR/RL/RR', () => {
@@ -536,13 +594,17 @@ describe('VehicleTyreTracker two-wheeler layout', () => {
 
     render(<VehicleTyreTracker maintenanceQuery={settled([]) as never} vehicle={royalEnfield} />);
 
-    expect(screen.getByText('Front')).toBeInTheDocument();
-    expect(screen.getByText('Rear')).toBeInTheDocument();
+    const corners = screen.getAllByTestId('tyre-corner');
+    expect(corners).toHaveLength(2);
+    expect(corners[0]).toHaveTextContent('Front');
+    expect(corners[1]).toHaveTextContent('Rear');
     expect(screen.queryByText('Front left')).not.toBeInTheDocument();
-    expect(screen.queryByText('Rear right')).not.toBeInTheDocument();
+    expect(screen.getByTestId('tyre-verdict')).toHaveTextContent(
+      'Rear tyre: 3.2 mm — wearing, plan a set',
+    );
 
-    const diagram = screen.getByRole('img', { name: /wheel diagram/i });
-    expect(diagram).toHaveAccessibleName(/front: 5.5 mm remaining/i);
-    expect(diagram).toHaveAccessibleName(/rear: 3.2 mm tread/i);
+    const diagram = screen.getByRole('figure', { name: /wheel diagram/i });
+    expect(diagram).toHaveAccessibleName(/front: 5.5 mm · 1 yr, good/i);
+    expect(diagram).toHaveAccessibleName(/rear: 3.2 mm · 1 yr, wearing/i);
   });
 });
