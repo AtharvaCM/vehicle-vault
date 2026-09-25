@@ -25,6 +25,7 @@ import type {
 } from '@/features/dashboard/types/dashboard';
 import { ATTENTION_KIND_SEARCH } from '@/features/dashboard/utils/attention-kind-tab';
 import { formatOdometerMeta, formatRelativeDue } from '@/features/dashboard/utils/format-due';
+import { logServiceSearchFor, reminderDoneAction } from '@/features/reminders/utils/reminder-done';
 import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -98,6 +99,7 @@ type UpcomingRowProps = {
   showVehicle: boolean;
   isPending: boolean;
   onComplete: (item: UpcomingItem) => void;
+  /** Opens the shared Snooze dialog for a reminder. */
   onSnoozeReminder: (item: UpcomingItem) => void;
   onSnoozePaper: (item: UpcomingItem) => void;
 };
@@ -135,19 +137,22 @@ export function UpcomingRow({
           View
         </Link>
       );
-    } else if (item.reminderType === 'service') {
+    } else if (reminderDoneAction(item) === 'log') {
+      // Its Done is logging the service: the form opens on its category, and
+      // saving the record completes the reminder.
       primary = (
         <Link
           className={buttonVariants({ variant: emphasise ? 'default' : 'outline' })}
           params={{ vehicleId: item.vehicleId }}
+          search={logServiceSearchFor(item)}
           to="/vehicles/$vehicleId/maintenance/new"
         >
           Log service
         </Link>
       );
       overflow.push(
-        { label: 'Mark done', onSelect: () => onComplete(item) },
-        { label: 'Snooze a week', onSelect: () => onSnoozeReminder(item) },
+        { label: 'Mark done without logging', onSelect: () => onComplete(item) },
+        { label: 'Snooze', onSelect: () => onSnoozeReminder(item) },
       );
     } else {
       primary = (
@@ -161,7 +166,7 @@ export function UpcomingRow({
           Done
         </Button>
       );
-      overflow.push({ label: 'Snooze a week', onSelect: () => onSnoozeReminder(item) });
+      overflow.push({ label: 'Snooze', onSelect: () => onSnoozeReminder(item) });
     }
   } else if (item.kind === 'document') {
     primary = (

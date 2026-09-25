@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes } from 'react';
-import { ReminderType, type UpcomingItem } from '@vehicle-vault/shared';
+import { MaintenanceCategory, ReminderType, type UpcomingItem } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { UpcomingRow } from './upcoming-row';
@@ -40,6 +40,7 @@ function makeItem(overrides: Partial<UpcomingItem> = {}): UpcomingItem {
     currentUserRole: 'owner',
     title: 'Engine oil change',
     reminderType: ReminderType.Service,
+    logCategory: MaintenanceCategory.EngineOil,
     dueDate: '2026-09-28T00:00:00.000Z',
     daysUntilDue: 3,
     ...overrides,
@@ -81,7 +82,7 @@ describe('UpcomingRow', () => {
     render(
       <UpcomingRow
         isPending
-        item={makeItem({ reminderType: ReminderType.Insurance })}
+        item={makeItem({ reminderType: ReminderType.Insurance, logCategory: undefined })}
         onComplete={noop}
         onSnoozePaper={noop}
         onSnoozeReminder={noop}
@@ -115,14 +116,19 @@ describe('UpcomingRow', () => {
 
       const logService = screen.getByRole('link', { name: 'Log service' });
       expect(logService).toHaveAttribute('href', '/vehicles/$vehicleId/maintenance/new');
+      // The form opens on the reminder's category, and saving it completes the reminder.
+      expect(logService).toHaveAttribute(
+        'data-search',
+        JSON.stringify({ category: 'engine_oil', reminderId: 'reminder-1' }),
+      );
       expect(logService.className).toContain('bg-brand');
 
       await user.click(screen.getByRole('button', { name: 'More actions for Engine oil change' }));
-      await user.click(await screen.findByRole('menuitem', { name: 'Mark done' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Mark done without logging' }));
       expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ id: 'reminder-1' }));
 
       await user.click(screen.getByRole('button', { name: 'More actions for Engine oil change' }));
-      await user.click(await screen.findByRole('menuitem', { name: 'Snooze a week' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Snooze' }));
       expect(onSnoozeReminder).toHaveBeenCalledWith(expect.objectContaining({ id: 'reminder-1' }));
     });
 
@@ -142,14 +148,18 @@ describe('UpcomingRow', () => {
       expect(logService.className).not.toContain('bg-brand');
     });
 
-    it('offers a Done button for a non-service reminder, with Snooze a week in the overflow', async () => {
+    it('offers a Done button for a non-service reminder, with Snooze in the overflow', async () => {
       const user = userEvent.setup();
       const onComplete = vi.fn();
 
       render(
         <UpcomingRow
           isPending={false}
-          item={makeItem({ reminderType: ReminderType.Insurance, title: 'Renew cover' })}
+          item={makeItem({
+            reminderType: ReminderType.Insurance,
+            logCategory: undefined,
+            title: 'Renew cover',
+          })}
           onComplete={onComplete}
           onSnoozePaper={noop}
           onSnoozeReminder={noop}
@@ -162,8 +172,8 @@ describe('UpcomingRow', () => {
       expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ id: 'reminder-1' }));
 
       await user.click(screen.getByRole('button', { name: 'More actions for Renew cover' }));
-      expect(await screen.findByRole('menuitem', { name: 'Snooze a week' })).toBeInTheDocument();
-      expect(screen.queryByRole('menuitem', { name: 'Mark done' })).not.toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Snooze' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /mark done/i })).not.toBeInTheDocument();
     });
 
     it('offers only View for a viewer, with no overflow', () => {

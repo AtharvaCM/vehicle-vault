@@ -30,6 +30,12 @@ export const MaintenanceRecordCreateSchema = z.object({
   nextDueDate: isoDateTimeString.optional(),
   nextDueOdometer: z.number().int().nonnegative().optional(),
   lineItems: z.array(MaintenanceLineItemCreateSchema).optional(),
+  /**
+   * The reminder this service answers (the log-service form's `?reminderId=`).
+   * Saving a confirmed record with it completes that reminder, and the next
+   * occurrence is counted from this record. Not stored on the record.
+   */
+  reminderId: z.string().uuid().optional(),
 });
 
 export const MaintenanceRecordUpdateSchema = MaintenanceRecordCreateSchema.omit({
@@ -40,7 +46,9 @@ export const MaintenanceRecordUpdateSchema = MaintenanceRecordCreateSchema.omit(
     message: 'At least one maintenance field must be provided for update',
   });
 
-export const MaintenanceRecordSchema = MaintenanceRecordCreateSchema.extend({
+export const MaintenanceRecordSchema = MaintenanceRecordCreateSchema.omit({
+  reminderId: true,
+}).extend({
   id: z.string().trim().min(1),
   createdAt: isoDateTimeString,
   updatedAt: isoDateTimeString,

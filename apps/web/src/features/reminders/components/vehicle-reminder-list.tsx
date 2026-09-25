@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
+import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
 import { BulkReminderActions } from './bulk-reminder-actions';
 import { ReminderListControls } from './reminder-list-controls';
@@ -31,6 +32,8 @@ type VehicleReminderListProps = {
 export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
   const { canEdit } = useVehicleAccess();
   const remindersQuery = useVehicleReminders(vehicleId);
+  // Already loaded by the vehicle page around this tab; only the snooze preview reads it.
+  const currentOdometer = useVehicle(vehicleId).data?.odometer;
   const bulkCompleteMutation = useBulkCompleteReminders();
   const bulkDeleteMutation = useBulkDeleteReminders();
   const [selectedReminderIds, setSelectedReminderIds] = useState<string[]>([]);
@@ -236,6 +239,8 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
             onSelectionChange={canEdit ? handleSelectionChange : undefined}
             reminders={groupedReminders[ReminderStatus.Overdue]}
             selectedReminderIds={selectedReminderIds}
+            currentOdometer={currentOdometer}
+            showActions={canEdit}
             title="Overdue"
           />
           <ReminderList
@@ -244,6 +249,8 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
             onSelectionChange={canEdit ? handleSelectionChange : undefined}
             reminders={groupedReminders[ReminderStatus.DueToday]}
             selectedReminderIds={selectedReminderIds}
+            currentOdometer={currentOdometer}
+            showActions={canEdit}
             title="Due today"
           />
           <ReminderList
@@ -252,6 +259,8 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
             onSelectionChange={canEdit ? handleSelectionChange : undefined}
             reminders={groupedReminders[ReminderStatus.Upcoming]}
             selectedReminderIds={selectedReminderIds}
+            currentOdometer={currentOdometer}
+            showActions={canEdit}
             title="Upcoming"
           />
           <ReminderList

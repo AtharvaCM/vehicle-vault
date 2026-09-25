@@ -95,7 +95,10 @@ type AttentionRowProps = {
   showVehicle: boolean;
   isPending: boolean;
   onComplete: (item: DashboardAttentionItem) => void;
+  /** A paper's snooze (off Home until it is due). */
   onSnooze: (item: DashboardAttentionItem) => void;
+  /** A reminder's snooze: opens the shared Snooze dialog. */
+  onSnoozeReminder: (item: DashboardAttentionItem) => void;
 };
 
 export function AttentionRow({
@@ -104,6 +107,7 @@ export function AttentionRow({
   isPending,
   onComplete,
   onSnooze,
+  onSnoozeReminder,
 }: AttentionRowProps) {
   // `sm` and up: the due line moves to the row's end, on a line of its own. Narrower, it
   // has to share the meta line with everything else, so it reads inline instead.
@@ -200,6 +204,21 @@ export function AttentionRow({
       ) : null}
 
       <div className="flex shrink-0 items-start gap-2">
+        {item.kind === 'reminder' && item.currentUserRole !== 'viewer' ? (
+          <Button
+            aria-label={`Snooze ${item.title}`}
+            className="h-10 sm:h-8"
+            disabled={isPending}
+            onClick={() => onSnoozeReminder(item)}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            <BellOff aria-hidden="true" />
+            {/* On a phone the icon alone: the title needs the room more. */}
+            <span className="max-sm:sr-only">Snooze</span>
+          </Button>
+        ) : null}
         {item.kind === 'reminder' && item.currentUserRole !== 'viewer' ? (
           <Button
             aria-label={`Mark ${item.title} done`}

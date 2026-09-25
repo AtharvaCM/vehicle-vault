@@ -1,5 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ReminderStatus, ReminderType, VehicleRole, type Reminder } from '@vehicle-vault/shared';
+import {
+  MaintenanceCategory,
+  ReminderStatus,
+  ReminderType,
+  VehicleRole,
+  type Reminder,
+} from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,10 +19,15 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
     params: _params,
+    search,
     to,
     ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { params?: Record<string, string>; to: string }) => (
-    <a href={to} {...props}>
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    params?: Record<string, string>;
+    search?: Record<string, string>;
+    to: string;
+  }) => (
+    <a data-search={search ? JSON.stringify(search) : undefined} href={to} {...props}>
       {children}
     </a>
   ),
@@ -25,6 +36,7 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../hooks/use-reminder', () => ({ useReminder: () => reminderQuery.current }));
 vi.mock('../hooks/use-complete-reminder', () => ({ useCompleteReminder: mutation }));
+vi.mock('../hooks/use-snooze-reminder', () => ({ useSnoozeReminder: mutation }));
 vi.mock('../hooks/use-delete-reminder', () => ({ useDeleteReminder: mutation }));
 vi.mock('@/features/vehicles/hooks/use-vehicle', () => ({
   useVehicle: () => vehicleQuery.current,
@@ -65,7 +77,10 @@ describe('ReminderDetailPage roles', () => {
       renderAs(role);
 
       expect(screen.getByRole('link', { name: 'Edit reminder' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Mark complete' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Mark Insurance renewal done' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Snooze Insurance renewal' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Delete reminder' })).toBeInTheDocument();
     },
   );
@@ -81,7 +96,7 @@ describe('ReminderDetailPage roles', () => {
     expect(screen.getByRole('link', { name: 'Back to Reminders' })).toBeInTheDocument();
 
     expect(screen.queryByRole('link', { name: 'Edit reminder' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Mark complete' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /done|snooze/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete reminder' })).not.toBeInTheDocument();
   });
 });
@@ -119,6 +134,63 @@ describe('ReminderDetailPage repeat rule', () => {
     render(<ReminderDetailPage reminderId="reminder-1" />);
 
     expect(screen.getByText('Doesn’t repeat')).toBeInTheDocument();
+  });
+});
+
+describe('ReminderDetailPage Done and what happens next', () => {
+  const oilChange: Reminder = {
+    ...reminder,
+    id: '3f6b1a52-8f4e-4c1f-9d55-3f2c7b9e1a20',
+    title: 'Engine oil change',
+    type: ReminderType.Service,
+    catalogSlug: 'engine_oil_change',
+    repeatEveryKm: 10000,
+    repeatEveryMonths: 12,
+    logCategory: MaintenanceCategory.EngineOil,
+  };
+
+  function renderReminder(data: Reminder) {
+    reminderQuery.current = { data, isPending: false, isError: false };
+    vehicleQuery.current = {
+      data: { id: 'vehicle-1', odometer: 12000, currentUserRole: VehicleRole.Owner },
+    };
+    render(<ReminderDetailPage reminderId={data.id} />);
+  }
+
+  it('says what completing a service counts the next one from', () => {
+    renderReminder(oilChange);
+
+    expect(screen.getByTestId('reminder-next-step')).toHaveTextContent(
+      'Repeats every 10,000 km or 12 months; the next one will be counted from the service you log.',
+    );
+  });
+
+  it('asks a service reminder’s Done whether to log the service, naming the reminder', () => {
+    renderReminder(oilChange);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark Engine oil change done' }));
+
+    const log = screen.getByRole('link', { name: 'Log the service now' });
+    expect(log).toHaveAttribute('href', '/vehicles/$vehicleId/maintenance/new');
+    expect(JSON.parse(log.getAttribute('data-search') ?? '{}')).toEqual({
+      category: 'engine_oil',
+      reminderId: oilChange.id,
+    });
+    expect(screen.getByRole('button', { name: 'Mark done without logging' })).toBeInTheDocument();
+  });
+
+  it('sends a renewal that follows a paper to Renew, with no snooze of its own', () => {
+    renderReminder({
+      ...reminder,
+      renewsDocument: { kind: 'insurance', id: '9b2f4c1e-2d3a-4b5c-8d6e-7f8091a2b3c4' },
+    });
+
+    expect(screen.getByRole('link', { name: 'Renew' })).toHaveAttribute(
+      'data-search',
+      JSON.stringify({ tab: 'papers' }),
+    );
+    expect(screen.queryByRole('button', { name: /done|snooze/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('reminder-next-step')).not.toBeInTheDocument();
   });
 });
 

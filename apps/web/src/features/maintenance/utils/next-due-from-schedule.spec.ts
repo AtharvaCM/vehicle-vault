@@ -28,7 +28,7 @@ describe('nextDueFromSchedule', () => {
   it('gives what it can, and nothing without an interval', () => {
     expect(
       nextDueFromSchedule(
-        { km: 9_000, months: null, source: 'default' },
+        { km: 9_000, months: null },
         { serviceDate: '2026-09-23', odometer: 32_000 },
       ),
     ).toEqual({ date: undefined, odometer: 41_000 });

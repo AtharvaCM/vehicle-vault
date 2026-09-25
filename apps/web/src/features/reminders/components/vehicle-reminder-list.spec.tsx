@@ -28,6 +28,11 @@ vi.mock('../hooks/use-vehicle-reminders', () => ({
 }));
 vi.mock('../hooks/use-bulk-complete-reminders', () => ({ useBulkCompleteReminders: mutation }));
 vi.mock('../hooks/use-bulk-delete-reminders', () => ({ useBulkDeleteReminders: mutation }));
+vi.mock('../hooks/use-complete-reminder', () => ({ useCompleteReminder: mutation }));
+vi.mock('../hooks/use-snooze-reminder', () => ({ useSnoozeReminder: mutation }));
+vi.mock('@/features/vehicles/hooks/use-vehicle', () => ({
+  useVehicle: () => ({ data: { odometer: 12000 } }),
+}));
 
 import { VehicleReminderList } from './vehicle-reminder-list';
 
@@ -59,6 +64,23 @@ describe('VehicleReminderList roles', () => {
     ).toBeInTheDocument();
   });
 
+  it.each([VehicleRole.Owner, VehicleRole.Editor])(
+    'offers an %s Done and Snooze on an open reminder',
+    (role) => {
+      renderAs(role, [
+        reminder,
+        { ...reminder, id: 'reminder-2', title: 'Old PUC', status: ReminderStatus.Completed },
+      ]);
+
+      expect(
+        screen.getByRole('button', { name: 'Mark Insurance renewal done' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Snooze Insurance renewal' })).toBeInTheDocument();
+      // A completed reminder has nothing left to do.
+      expect(screen.queryByRole('button', { name: 'Mark Old PUC done' })).not.toBeInTheDocument();
+    },
+  );
+
   it('shows a viewer the reminders without any way to change them', () => {
     renderAs(VehicleRole.Viewer, [reminder]);
 
@@ -67,6 +89,7 @@ describe('VehicleReminderList roles', () => {
 
     expect(screen.queryByRole('button', { name: 'Select all visible' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /done|snooze/i })).not.toBeInTheDocument();
   });
 
   it('gives a viewer an empty list without an add prompt', () => {

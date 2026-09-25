@@ -8,7 +8,12 @@ import { queryKeys } from '@/lib/query/query-keys';
 import { appToast } from '@/lib/toast';
 
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
-const mutation = vi.hoisted(() => () => ({ mutateAsync: vi.fn(), isPending: false, error: null }));
+const createRecord = vi.hoisted(() => vi.fn());
+const mutation = vi.hoisted(() => () => ({
+  mutateAsync: createRecord,
+  isPending: false,
+  error: null,
+}));
 const navigate = vi.hoisted(() => vi.fn());
 const createDraft = vi.hoisted(() => vi.fn());
 const attachmentsApi = vi.hoisted(() => ({
@@ -64,10 +69,12 @@ vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
 vi.mock('../components/maintenance-form', () => ({
   MaintenanceForm: ({
     leading,
+    onSubmit,
     suggestedCategory,
     scheduleNextDue,
   }: {
     leading?: ReactNode;
+    onSubmit: (values: Record<string, unknown>) => Promise<void>;
     suggestedCategory?: { category: string; reason: string } | null;
     scheduleNextDue?: boolean;
   }) => (
@@ -79,6 +86,12 @@ vi.mock('../components/maintenance-form', () => ({
         {suggestedCategory?.reason ? ` (${suggestedCategory.reason})` : ''}
       </p>
       {scheduleNextDue ? <p>next due from the schedule</p> : null}
+      <button
+        onClick={() => void onSubmit({ category: 'chain_service' }).catch(() => undefined)}
+        type="button"
+      >
+        save
+      </button>
     </div>
   ),
 }));
@@ -187,6 +200,28 @@ describe('VehicleMaintenanceCreatePage starting category', () => {
     expect(
       screen.getByText('starts on: engine_oil (For your reminder “Chain clean & lube”.)'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('VehicleMaintenanceCreatePage saving', () => {
+  beforeEach(() => {
+    createRecord.mockReset().mockResolvedValue({ id: 'record-1' });
+  });
+
+  it('sends the reminder it was logged for, so the API completes it', async () => {
+    renderAs(VehicleRole.Owner, { reminderId });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() =>
+      expect(createRecord).toHaveBeenCalledWith({ category: 'chain_service', reminderId }),
+    );
+  });
+
+  it('sends no reminder for a service logged on its own', async () => {
+    renderAs(VehicleRole.Owner);
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(createRecord).toHaveBeenCalledWith({ category: 'chain_service' }));
   });
 });
 

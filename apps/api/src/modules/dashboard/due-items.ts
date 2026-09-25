@@ -187,6 +187,7 @@ export function buildDueItems(input: DueItemsInput): UpcomingItem[] {
       title: reminder.title,
       reminderType: reminder.type,
       reminderStatus: reminder.status,
+      ...(reminder.logCategory ? { logCategory: reminder.logCategory } : {}),
       dueDate,
       daysUntilDue,
       dueOdometer: reminder.dueOdometer,

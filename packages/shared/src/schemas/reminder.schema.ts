@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ReminderStatus, ReminderType } from '../enums';
+import { MaintenanceCategory, ReminderStatus, ReminderType } from '../enums';
 import { VehicleDocumentKindSchema, type VehicleDocumentKind } from '../types/vehicle-document';
 
 const isoDateTimeString = z.string().datetime({ offset: true });
@@ -94,6 +94,14 @@ export const ReminderSchema = z.object({
    * the paper's end date and cannot be set on the reminder itself.
    */
   renewsDocument: z.object({ kind: VehicleDocumentKindSchema, id: z.string().uuid() }).optional(),
+  /**
+   * The service category a record logged for this reminder takes. Present on
+   * a reminder that asks for work done to the vehicle (a service, a tyre
+   * rotation, a battery); its Done offers to log that service, and saving the
+   * record with `reminderId` completes the reminder. Absent on a renewal, a
+   * check and a custom reminder, which are simply marked done.
+   */
+  logCategory: z.nativeEnum(MaintenanceCategory).optional(),
   /**
    * Server-derived projection of when `dueOdometer` will be reached based on
    * recent fuel-log usage cadence. Present only when reminder has a

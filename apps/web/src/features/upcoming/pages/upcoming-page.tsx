@@ -25,7 +25,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useSnoozeDocument } from '@/features/dashboard/hooks/use-snooze-document';
 import { useCompleteReminder } from '@/features/reminders/hooks/use-complete-reminder';
-import { useSnoozeReminder } from '@/features/reminders/hooks/use-snooze-reminder';
+import { SnoozeReminderDialog } from '@/features/reminders/components/snooze-reminder-dialog';
 import { VehiclePickerDialog } from '@/features/vehicles/components/vehicle-picker-dialog';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
@@ -68,13 +68,13 @@ export function UpcomingPage({ searchState, onSearchStateChange }: UpcomingPageP
   const vehiclesQuery = useVehicles();
   const upcomingQuery = useUpcoming({ vehicleId: searchState.vehicle, kind: searchState.kind });
   const completeReminder = useCompleteReminder();
-  const snoozeReminder = useSnoozeReminder();
   const snoozeDocument = useSnoozeDocument();
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(() => new Set());
   // A finished row stays on screen until the refetch drops or moves it, so it
   // stays dimmed until the data changes: keyed to the data it was settled on.
   const [settledOn, setSettledOn] = useState<ReadonlyMap<string, number>>(() => new Map());
   const [announcement, setAnnouncement] = useState('');
+  const [snoozing, setSnoozing] = useState<UpcomingItem | null>(null);
 
   const vehicles = useMemo(() => vehiclesQuery.data ?? [], [vehiclesQuery.data]);
   const pages = upcomingQuery.data?.pages;
@@ -144,13 +144,15 @@ export function UpcomingPage({ searchState, onSearchStateChange }: UpcomingPageP
     );
   }
 
+  /** Snooze opens the shared dialog; it saves, and toasts, on its own. */
   function handleSnoozeReminder(item: UpcomingItem) {
-    track(
-      item,
-      (callbacks) =>
-        snoozeReminder.mutate(item.id, { ...callbacks, onSettled: () => settle(item.id) }),
-      { success: 'Snoozed a week', announce: 'snoozed', failure: 'Unable to snooze' },
-    );
+    setSnoozing(item);
+  }
+
+  function handleReminderSnoozed(item: UpcomingItem) {
+    // Dimmed until the refetch re-dates or moves it, as a finished row is.
+    setSettledOn((previous) => new Map(previous).set(item.id, upcomingQuery.dataUpdatedAt));
+    setAnnouncement(`${item.title} · ${item.vehicleName} snoozed.`);
   }
 
   function handleSnoozePaper(item: UpcomingItem) {
@@ -343,6 +345,21 @@ export function UpcomingPage({ searchState, onSearchStateChange }: UpcomingPageP
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>
+
+      <SnoozeReminderDialog
+        currentOdometer={
+          snoozing?.dueOdometer !== undefined && snoozing.kmUntilDue !== undefined
+            ? snoozing.dueOdometer - snoozing.kmUntilDue
+            : undefined
+        }
+        onOpenChange={(open) => {
+          if (!open) setSnoozing(null);
+        }}
+        onSnoozed={() => {
+          if (snoozing) handleReminderSnoozed(snoozing);
+        }}
+        reminder={snoozing}
+      />
     </PageContainer>
   );
 }

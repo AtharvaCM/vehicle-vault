@@ -43,6 +43,7 @@ type ShowOptions = {
   workshops?: string[];
   suggestedCategory?: CategoryPick | null;
   scheduleNextDue?: boolean;
+  reminderRepeat?: { months: number | null; km: number | null } | null;
 };
 
 function show(initialValues?: Partial<MaintenanceFormValues>, options: ShowOptions = {}) {
@@ -68,6 +69,7 @@ function show(initialValues?: Partial<MaintenanceFormValues>, options: ShowOptio
       onDirtyChange={options.onDirtyChange}
       onSubmit={onSubmit}
       recordId={options.recordId}
+      reminderRepeat={options.reminderRepeat}
       scheduleNextDue={options.scheduleNextDue}
       submitLabel="Confirm Record"
       suggestedCategory={options.suggestedCategory}
@@ -416,6 +418,42 @@ describe('MaintenanceForm', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Battery' }));
       expect(screen.getByTestId('next-due')).toHaveTextContent('No schedule for this work.');
+    });
+
+    // #295: the reminder page promises "the next one will be counted from the
+    // service you log", by the reminder's own rule.
+    it("follows a repeating reminder's own rule, and leaves scheduling it to the API", async () => {
+      const onSubmit = show(undefined, { ...oilChange, reminderRepeat: { km: 7_500, months: 6 } });
+
+      fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-09-23' } });
+      fireEvent.change(screen.getByLabelText('Total on the bill'), { target: { value: '1800' } });
+
+      expect(screen.getByTestId('next-due')).toHaveTextContent('39,500 km or 23 Mar 2027');
+      save();
+
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+      const sent = onSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(sent.nextDueOdometer).toBeUndefined();
+      expect(sent.nextDueDate).toBeUndefined();
+    });
+
+    it("sends the owner's own next due over a repeating reminder's", async () => {
+      const onSubmit = show(undefined, { ...oilChange, reminderRepeat: { km: 7_500, months: 6 } });
+
+      fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-09-23' } });
+      fireEvent.change(screen.getByLabelText('Total on the bill'), { target: { value: '1800' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Change' }));
+      expect(screen.getByLabelText('Next due odometer')).toHaveValue(39_500);
+      fireEvent.change(screen.getByLabelText('Next due odometer'), { target: { value: '38000' } });
+      save();
+
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nextDueOdometer: 38_000,
+          nextDueDate: '2027-03-23T00:00:00.000Z',
+        }),
+      );
     });
 
     it('can be changed to what the workshop said', async () => {

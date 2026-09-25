@@ -36,9 +36,10 @@ test('a yearly insurance reminder schedules next year’s when it is marked done
   await page.getByRole('button', { name: /save reminder/i }).click();
 
   await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
-  await expect(page.getByText('Repeats every year')).toBeVisible();
+  await expect(page.getByText('Repeats every year', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Mark Complete' }).click();
+  // Not a service, so Done ticks it off without asking to log anything.
+  await page.getByRole('button', { name: 'Mark Insurance renewal done' }).click();
 
   // Renewed early, the next one keeps the policy's cycle: 1 March next year.
   await expect

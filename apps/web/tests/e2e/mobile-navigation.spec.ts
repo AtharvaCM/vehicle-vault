@@ -371,7 +371,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['/costs', lender],
     ['/settings', 'Download JSON backup'],
     ['/settings/activity', 'Reminder created'],
-    [`/reminders/${reminder.id}`, 'Mark Complete'],
+    [`/reminders/${reminder.id}`, 'Edit reminder'],
   ];
   for (const [path, loaded] of pages) {
     await page.goto(path);
@@ -433,7 +433,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   // long title and four actions do not fit on one row.
   await page.setViewportSize(PORTRAIT_TABLET);
   await page.goto(`/reminders/${reminder.id}`);
-  await expect(page.getByRole('main').getByText('Mark Complete').first()).toBeVisible();
+  await expect(page.getByRole('main').getByText('Edit reminder').first()).toBeVisible();
   await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
 
   // The dashboard's garage cards are narrowest where the grid adds a column: two

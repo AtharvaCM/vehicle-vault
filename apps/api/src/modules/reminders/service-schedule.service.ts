@@ -224,17 +224,21 @@ export class ServiceScheduleService {
    * one is the owner saying it was done now, so the next is counted from now,
    * except for the tyre walk-around: ticking it off is not a measurement, so it
    * keeps counting from the last tyre reading.
+   *
+   * `from` replaces "now" when the completion is a logged service: the next
+   * one is counted from that record's date and odometer.
    */
   async buildNextOccurrence(
     userId: string,
     completed: CompletedReminder,
     now: Date,
+    from?: RepeatAnchor,
   ): Promise<Prisma.ReminderUncheckedCreateInput | null> {
     const rule = { everyMonths: completed.repeatEveryMonths, everyKm: completed.repeatEveryKm };
     if (rule.everyMonths == null && rule.everyKm == null) return null;
 
     const vehicle = await this.vehiclesService.ensureVehicleExists(userId, completed.vehicleId);
-    let anchor: RepeatAnchor = { odometer: vehicle.odometer, at: now };
+    let anchor: RepeatAnchor = from ?? { odometer: vehicle.odometer, at: now };
 
     if (completed.catalogSlug) {
       const slug = completed.catalogSlug;

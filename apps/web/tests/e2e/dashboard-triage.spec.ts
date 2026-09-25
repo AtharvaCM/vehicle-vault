@@ -42,6 +42,11 @@ test('the triage dashboard surfaces a due reminder and clears it on Done', async
   await expect(page.getByTestId('vehicle-health-card').filter({ hasText: nickname })).toBeVisible();
 
   await row.getByRole('button', { name: new RegExp(`mark ${reminderTitle} done`, 'i') }).click();
+  // A service reminder asks whether to log the service first (#295).
+  await page
+    .getByRole('dialog', { name: `Done with ${reminderTitle}?` })
+    .getByRole('button', { name: 'Mark done without logging' })
+    .click();
 
   await expect(row).not.toBeVisible();
 });

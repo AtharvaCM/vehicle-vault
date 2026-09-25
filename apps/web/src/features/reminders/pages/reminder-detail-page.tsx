@@ -8,17 +8,18 @@ import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { ResourceLoadError } from '@/components/errors/resource-load-error';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { documentKindTitles } from '@/features/vehicle-documents/utils/document-kind-labels';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
-import { useCompleteReminder } from '../hooks/use-complete-reminder';
 import { useDeleteReminder } from '../hooks/use-delete-reminder';
 import { useReminder } from '../hooks/use-reminder';
+import { ReminderActions } from '../components/reminder-actions';
 import { ReminderSummaryCard } from '../components/reminder-summary-card';
+import { describeWhatDoneDoes } from '../utils/what-done-does';
 
 type ReminderDetailPageProps = {
   reminderId: string;
@@ -34,25 +35,7 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
   const vehicleQuery = useVehicle(reminderQuery.data?.vehicleId ?? '');
   const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
   const { canEdit } = accessFor(currentUserRole);
-  const completeReminderMutation = useCompleteReminder();
   const deleteReminderMutation = useDeleteReminder();
-
-  async function handleCompleteReminder() {
-    try {
-      setActionError(null);
-      await completeReminderMutation.mutateAsync(reminderId);
-      appToast.success({
-        title: 'Reminder completed',
-        description: 'This reminder is now marked complete.',
-      });
-    } catch (error) {
-      appToast.error({
-        title: 'Unable to complete reminder',
-        description: getApiErrorMessage(error, 'Unable to complete the reminder.'),
-      });
-      setActionError(getApiErrorMessage(error, 'Unable to complete the reminder.'));
-    }
-  }
 
   async function handleDeleteReminder(vehicleId: string) {
     try {
@@ -107,6 +90,26 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
 
   const reminder = reminderQuery.data;
   const linkedVehicle = vehicleQuery.data;
+  const whatDoneDoes = describeWhatDoneDoes(reminder);
+  const showActions = canEdit && reminder.status !== ReminderStatus.Completed;
+  const nextStep = reminder.renewsDocument ? (
+    <p className="text-ui text-fg-2" data-testid="reminder-follows-paper">
+      Follows the {documentKindTitles[reminder.renewsDocument.kind].toLowerCase()}: due when it
+      ends, and renewing it closes this reminder and starts the next.{' '}
+      <Link
+        className="font-semibold text-brand hover:underline"
+        params={{ vehicleId: reminder.vehicleId }}
+        search={{ tab: 'papers' }}
+        to="/vehicles/$vehicleId"
+      >
+        See papers
+      </Link>
+    </p>
+  ) : whatDoneDoes && !reminder.completedAt ? (
+    <p className="text-ui text-fg-2" data-testid="reminder-next-step">
+      {whatDoneDoes}
+    </p>
+  ) : null;
   const vehicleLabel = linkedVehicle
     ? `${linkedVehicle.nickname?.trim() || `${linkedVehicle.make} ${linkedVehicle.model}`} • ${linkedVehicle.registrationNumber}`
     : 'Vehicle details unavailable';
@@ -134,16 +137,6 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
                   >
                     Edit reminder
                   </Link>
-                  {reminder.status !== ReminderStatus.Completed ? (
-                    <Button
-                      disabled={completeReminderMutation.isPending}
-                      onClick={handleCompleteReminder}
-                      size="sm"
-                      type="button"
-                    >
-                      {completeReminderMutation.isPending ? 'Completing...' : 'Mark complete'}
-                    </Button>
-                  ) : null}
                   <ConfirmActionDialog
                     confirmLabel="Delete reminder"
                     description="This removes the reminder from this vehicle. This can't be undone."
@@ -163,19 +156,23 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
 
         {actionError ? <InlineError message={actionError} /> : null}
 
-        {reminder.renewsDocument ? (
-          <p className="text-ui text-fg-2" data-testid="reminder-follows-paper">
-            Follows the {documentKindTitles[reminder.renewsDocument.kind].toLowerCase()}: due when
-            it ends, and renewing it closes this reminder and starts the next.{' '}
-            <Link
-              className="font-semibold text-brand hover:underline"
-              params={{ vehicleId: reminder.vehicleId }}
-              search={{ tab: 'papers' }}
-              to="/vehicles/$vehicleId"
-            >
-              See papers
-            </Link>
-          </p>
+        {/* What happens next, beside the verbs that make it happen. */}
+        {nextStep || showActions ? (
+          <section
+            aria-label="What happens next"
+            className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            {nextStep}
+            {showActions ? (
+              <ReminderActions
+                className="shrink-0 max-sm:[&>*]:flex-1"
+                currentOdometer={linkedVehicle?.odometer}
+                primary
+                reminder={reminder}
+                size="default"
+              />
+            ) : null}
+          </section>
         ) : null}
 
         <ReminderSummaryCard reminder={reminder} vehicleLabel={vehicleLabel} />
