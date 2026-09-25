@@ -38,6 +38,10 @@ type MaintenanceRecordWithLineItems = Prisma.MaintenanceRecordGetPayload<{
   include: typeof maintenanceRecordInclude;
 }>;
 
+/** How many recent records are read for workshop names, and how many names come back. */
+const WORKSHOP_SCAN_LIMIT = 500;
+const WORKSHOP_NAME_LIMIT = 12;
+
 @Injectable()
 export class MaintenanceService {
   constructor(
@@ -61,6 +65,39 @@ export class MaintenanceService {
     });
 
     return records.map((record) => this.toMaintenanceRecord(record));
+  }
+
+  /**
+   * The workshops named on the user's confirmed service records, across every
+   * vehicle they can see, most recently used first, each once (compared without
+   * case or surrounding space, keeping the latest spelling). The log-service
+   * form offers them so the same garage is not typed out again.
+   */
+  async getWorkshopNames(userId: string): Promise<string[]> {
+    const rows = await this.prisma.maintenanceRecord.findMany({
+      where: {
+        vehicle: { members: { some: { userId } } },
+        status: MaintenanceRecordStatus.Confirmed,
+        workshopName: { not: null },
+      },
+      select: { workshopName: true },
+      orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
+      take: WORKSHOP_SCAN_LIMIT,
+    });
+
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const { workshopName } of rows) {
+      const name = workshopName?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      names.push(name);
+      if (names.length === WORKSHOP_NAME_LIMIT) break;
+    }
+
+    return names;
   }
 
   async listForVehicle(userId: string, vehicleId: string, query: PaginationQueryDto) {

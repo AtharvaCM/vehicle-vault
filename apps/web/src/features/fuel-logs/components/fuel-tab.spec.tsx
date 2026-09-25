@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { VehicleRole, type FuelLog } from '@vehicle-vault/shared';
+import { FuelType, VehicleRole, type FuelLog } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
@@ -37,12 +37,12 @@ const log: FuelLog = {
   updatedAt: '2026-09-01T00:00:00.000Z',
 };
 
-function renderAs(role: VehicleRole, logs: FuelLog[]) {
+function renderAs(role: VehicleRole, logs: FuelLog[], fuelType: FuelType = FuelType.Petrol) {
   logsQuery.current = { data: logs, isLoading: false, isError: false };
 
   return render(
     <VehicleAccessProvider role={role}>
-      <FuelTab vehicleId="vehicle-1" />
+      <FuelTab fuelType={fuelType} odometer={40_000} vehicleId="vehicle-1" />
     </VehicleAccessProvider>,
   );
 }
@@ -85,5 +85,22 @@ describe('FuelTab roles', () => {
 
     expect(screen.getByText('No fuel logs found')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /add fuel log/i })).not.toBeInTheDocument();
+  });
+
+  it('calls it a charge, not fuel, for an electric vehicle', () => {
+    renderAs(VehicleRole.Owner, [], FuelType.Electric);
+
+    expect(screen.getByRole('button', { name: 'Log charge' })).toBeInTheDocument();
+  });
+
+  it('suggests the last station used when opening the log-fuel dialog', async () => {
+    const user = userEvent.setup();
+    renderAs(VehicleRole.Owner, [{ ...log, location: 'HP Andheri' }]);
+
+    await user.click(screen.getByRole('button', { name: 'Log fuel' }));
+
+    expect(await screen.findByLabelText('Amount paid')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'More details' }));
+    expect(await screen.findByLabelText('Station')).toHaveValue('HP Andheri');
   });
 });

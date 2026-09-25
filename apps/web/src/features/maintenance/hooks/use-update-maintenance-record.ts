@@ -19,6 +19,10 @@ export function useUpdateMaintenanceRecord(recordId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.all(),
       });
+      // A confirmed service with a next due makes or refreshes its reminder.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reminders.all(),
+      });
       queryClient.setQueryData(queryKeys.maintenance.detail(record.id), record);
     },
   });

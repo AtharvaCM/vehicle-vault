@@ -80,6 +80,7 @@ export function QuickLogButton() {
           displayName: getVehicleDisplayName(vehicle),
           registrationNumber: vehicle.registrationNumber,
           odometer: vehicle.odometer,
+          fuelType: vehicle.fuelType,
           electric: vehicle.fuelType === FuelType.Electric,
         }))
         .sort((a, b) => a.displayName.localeCompare(b.displayName)),

@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { maintenanceFormSchema } from './maintenance-form.schema';
 
 const baseValues = {
-  entryMode: 'detailed' as const,
   serviceDate: '2026-03-30',
   odometer: 12345,
   category: MaintenanceCategory.PeriodicService,

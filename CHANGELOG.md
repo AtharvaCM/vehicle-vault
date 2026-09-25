@@ -1,3 +1,25 @@
+# [1.91.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.90.0...v1.91.0) (2026-09-25)
+
+
+### Features
+
+* **api:** list the workshops an owner used before ([6ab8308](https://github.com/AtharvaCM/vehicle-vault/commit/6ab83081bd9864590bad34bc35d2e00651a2a05f))
+* **web:** log service as one short form, bill first ([e7d2493](https://github.com/AtharvaCM/vehicle-vault/commit/e7d2493551bead043f184400b2c3988023d65b72)), closes [#293](https://github.com/AtharvaCM/vehicle-vault/issues/293)
+
+# [1.90.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.89.0...v1.90.0) (2026-09-25)
+
+
+### Features
+
+* **fuel-logs:** log a fill in three fields, with the rest under More details ([bd60ee8](https://github.com/AtharvaCM/vehicle-vault/commit/bd60ee8141a4ebbb285c74538828902635597407))
+
+# [1.89.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.88.0...v1.89.0) (2026-09-25)
+
+
+### Features
+
+* **web:** show every paper in one view, offline too ([6ac6983](https://github.com/AtharvaCM/vehicle-vault/commit/6ac6983a1b95efd8e2cf3da9f5a47a0425868d0d)), closes [#296](https://github.com/AtharvaCM/vehicle-vault/issues/296)
+
 # [1.88.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.87.0...v1.88.0) (2026-09-24)
 
 

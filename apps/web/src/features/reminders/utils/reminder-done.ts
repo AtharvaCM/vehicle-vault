@@ -1,6 +1,6 @@
 import type { MaintenanceCategory, Reminder } from '@vehicle-vault/shared';
 
-import type { LogServiceSearch } from '@/features/maintenance/types/log-service-search';
+import type { MaintenanceCreateSearch } from '@/features/maintenance/types/maintenance-create-search';
 
 /** The fields of a reminder (or a Home / Upcoming reminder row) that decide what its Done does. */
 export type DoneSubject = {
@@ -27,7 +27,7 @@ export function reminderDoneAction(subject: DoneSubject): DoneAction {
 }
 
 /** The new-record route's search for "Log the service now". */
-export function logServiceSearchFor(subject: DoneSubject): LogServiceSearch {
+export function logServiceSearchFor(subject: DoneSubject): MaintenanceCreateSearch {
   return {
     ...(subject.logCategory ? { category: subject.logCategory } : {}),
     reminderId: subject.id,

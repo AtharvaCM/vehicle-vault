@@ -548,6 +548,34 @@ describe('MaintenanceService', () => {
     );
   });
 
+  it('names the workshops used before, newest first, each once whatever its case', async () => {
+    prisma.maintenanceRecord.findMany = vi
+      .fn()
+      .mockResolvedValue([
+        { workshopName: ' Sai Motors ' },
+        { workshopName: 'Torque Garage' },
+        { workshopName: 'sai motors' },
+        { workshopName: '   ' },
+        { workshopName: 'Speedy Auto' },
+      ]);
+
+    await expect(service.getWorkshopNames('user-1')).resolves.toEqual([
+      'Sai Motors',
+      'Torque Garage',
+      'Speedy Auto',
+    ]);
+    expect(prisma.maintenanceRecord.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          vehicle: { members: { some: { userId: 'user-1' } } },
+          status: MaintenanceRecordStatus.Confirmed,
+          workshopName: { not: null },
+        },
+        orderBy: [{ serviceDate: 'desc' }, { createdAt: 'desc' }],
+      }),
+    );
+  });
+
   it('deletes linked attachment objects when a maintenance record is removed', async () => {
     prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue({
       ...record,

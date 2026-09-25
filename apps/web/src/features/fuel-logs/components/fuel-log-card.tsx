@@ -1,5 +1,5 @@
 import { Fuel, MapPin, MoreVertical } from 'lucide-react';
-import type { FuelLog } from '@vehicle-vault/shared';
+import type { FuelLog, FuelType } from '@vehicle-vault/shared';
 
 import { Figure } from '@/components/shared/figure';
 import { Card } from '@/components/ui/card';
@@ -12,13 +12,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { fuelQuantityUnit, fuelNoun } from '../utils/fuel-unit';
+
 type FuelLogCardProps = {
   log: FuelLog;
+  fuelType: FuelType;
   onEdit?: (log: FuelLog) => void;
   onDelete?: (logId: string) => void;
 };
 
-export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
+/** "8 L fuel fill", "8 kg fuel fill", or "8 kWh charge" for an EV. */
+function fillHeadline(quantity: number, fuelType: FuelType): string {
+  const unit = fuelQuantityUnit(fuelType);
+  const noun = fuelNoun(fuelType);
+  const suffix = noun === 'Charge' ? 'charge' : 'fuel fill';
+
+  return `${format.number(quantity)} ${unit} ${suffix}`;
+}
+
+export function FuelLogCard({ log, fuelType, onEdit, onDelete }: FuelLogCardProps) {
+  const unit = fuelQuantityUnit(fuelType);
   // The card fills anything from a phone to half a desktop panel, so its figures move
   // beside the text by the card's own width, not the screen's. There they take about
   // 380px with the menu, so they wait for @2xl (42rem), which leaves the text about
@@ -37,7 +50,7 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
 
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <p className="font-bold text-fg">{format.number(log.quantity)} L fuel fill</p>
+              <p className="font-bold text-fg">{fillHeadline(log.quantity, fuelType)}</p>
             </div>
             <div className="flex flex-col gap-y-1 text-small font-medium text-fg-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
               <span>{format.date(log.date)}</span>
@@ -62,7 +75,11 @@ export function FuelLogCard({ log, onEdit, onDelete }: FuelLogCardProps) {
               label="Odometer"
               value={format.odometer(log.odometer)}
             />
-            <Figure className="whitespace-nowrap" label="Price/L" value={format.money(log.price)} />
+            <Figure
+              className="whitespace-nowrap"
+              label={`Price/${unit}`}
+              value={format.money(log.price)}
+            />
             <Figure
               className="whitespace-nowrap"
               label="Total cost"

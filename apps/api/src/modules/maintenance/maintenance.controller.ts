@@ -20,6 +20,13 @@ export class MaintenanceController {
     return successResponse(await this.maintenanceService.getAllRecords(user.id));
   }
 
+  // Declared before `maintenance-records/:recordId`, which would otherwise take
+  // "workshops" as a record id.
+  @Get('maintenance-records/workshops')
+  async listWorkshops(@CurrentUser() user: AuthUser) {
+    return successResponse(await this.maintenanceService.getWorkshopNames(user.id));
+  }
+
   @Get('vehicles/:vehicleId/maintenance-records')
   async listVehicleMaintenance(
     @Param() params: VehicleIdParamDto,

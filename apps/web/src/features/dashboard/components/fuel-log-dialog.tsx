@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CreateFuelLogInput } from '@vehicle-vault/shared';
+import { useEffect, useRef, useState } from 'react';
+import { FuelType, type CreateFuelLogInput } from '@vehicle-vault/shared';
 
 import { FormField } from '@/components/shared/form-field';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { FuelLogForm } from '@/features/fuel-logs/components/fuel-log-form';
 import { useCreateFuelLog } from '@/features/fuel-logs/hooks/use-create-fuel-log';
+import { fuelNoun } from '@/features/fuel-logs/utils/fuel-unit';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
@@ -32,16 +33,14 @@ export function FuelLogDialog({ open, onOpenChange, vehicles }: FuelLogDialogPro
   const [vehicleId, setVehicleId] = useState(vehicles[0]?.id ?? '');
   const createFuelLog = useCreateFuelLog(vehicleId);
   const vehicle = vehicles.find((candidate) => candidate.id === vehicleId);
+  const fuelType = vehicle?.fuelType ?? FuelType.Petrol;
+  const noun = fuelNoun(fuelType);
 
   const wasOpen = useRef(false);
   useEffect(() => {
     if (open && !wasOpen.current) setVehicleId(vehicles[0]?.id ?? '');
     wasOpen.current = open;
   }, [open, vehicles]);
-
-  // A stable object, or the form resets on every render.
-  const odometer = vehicle?.odometer ?? 0;
-  const initialValues = useMemo(() => ({ odometer }), [odometer]);
 
   async function handleSubmit(values: CreateFuelLogInput) {
     try {
@@ -62,7 +61,9 @@ export function FuelLogDialog({ open, onOpenChange, vehicles }: FuelLogDialogPro
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[600px]">
-        <DialogTitle className="sr-only">Log fuel</DialogTitle>
+        <DialogHeader>
+          <DialogTitle>Log {noun.toLowerCase()}</DialogTitle>
+        </DialogHeader>
         {vehicles.length > 1 ? (
           <FormField htmlFor="fuel-log-vehicle" label="Vehicle">
             <Select onValueChange={setVehicleId} value={vehicleId}>
@@ -80,9 +81,10 @@ export function FuelLogDialog({ open, onOpenChange, vehicles }: FuelLogDialogPro
           </FormField>
         ) : null}
         <FuelLogForm
-          initialValues={initialValues}
+          fuelType={fuelType}
           isSubmitting={createFuelLog.isPending}
           key={vehicleId}
+          lastOdometer={vehicle?.odometer}
           onSubmit={handleSubmit}
         />
       </DialogContent>

@@ -307,7 +307,9 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByRole('radio', { name: 'Papers' })).toHaveAttribute('data-state', 'on');
 
       await page.getByRole('radio', { name: 'All' }).click();
-      await page.getByLabel('Vehicle').click();
+      // The filter itself: a seeded reminder's title ("Second vehicle service …")
+      // also names a row menu, and a label match is a substring match.
+      await page.getByRole('combobox', { name: 'Vehicle', exact: true }).click();
       await page.getByRole('option', { name: new RegExp(vehicleA.nickname) }).click();
       await expect(page).toHaveURL(new RegExp(`[?&]vehicle=${vehicleA.id}`));
     });

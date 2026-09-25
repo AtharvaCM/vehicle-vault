@@ -1,51 +1,80 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Loader2, ScanText } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { FuelType, type MaintenanceCategory } from '@vehicle-vault/shared';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
+import { NumberPlate } from '@/components/shared/number-plate';
 import { PageTitle } from '@/components/shared/page-title';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { applyAttachmentExtraction } from '@/features/attachments/api/apply-attachment-extraction';
 import { uploadAttachments } from '@/features/attachments/api/upload-attachments';
 import { extractAttachment } from '@/features/attachments/api/extract-attachment';
 import { extractAttachments } from '@/features/attachments/api/extract-attachments';
 import { useAttachmentExtractionStatus } from '@/features/attachments/hooks/use-attachment-extraction-status';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { reminderDetailQueryOptions } from '@/features/reminders/api/get-reminder-by-id';
+import { vehicleRemindersQueryOptions } from '@/features/reminders/api/get-vehicle-reminders';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { queryKeys } from '@/lib/query/query-keys';
 import { appToast } from '@/lib/toast';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
 
-import { MaintenanceClaimLinkCard } from '@/features/claims/components/maintenance-claim-link-card';
-
+import { BillCapture } from '../components/bill-capture';
 import { MaintenanceForm } from '../components/maintenance-form';
 import { useCreateMaintenanceDraft } from '../hooks/use-create-maintenance-draft';
 import { useCreateMaintenanceRecord } from '../hooks/use-create-maintenance-record';
 import { hasBillValues } from '../utils/get-fields-from-bill';
+import { pickDueCategory, pickFromReminder } from '../utils/pick-due-category';
 
 type VehicleMaintenanceCreatePageProps = {
   vehicleId: string;
+  /** `?category=`: the work to start on (see `MaintenanceCreateSearch`). */
+  category?: MaintenanceCategory;
+  /** `?reminderId=`: the reminder this service is logged for. */
+  reminderId?: string;
 };
 
-export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCreatePageProps) {
+export function VehicleMaintenanceCreatePage({
+  vehicleId,
+  category,
+  reminderId,
+}: VehicleMaintenanceCreatePageProps) {
+  useDocumentTitle('Log service | Vehicle Vault');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDirty, setIsDirty] = useState(false);
   const [isUploadFirstPending, setIsUploadFirstPending] = useState(false);
-  const uploadFirstInputRef = useRef<HTMLInputElement | null>(null);
   const vehicleQuery = useVehicle(vehicleId);
   const currentUserRole = vehicleQuery.data?.currentUserRole ?? null;
   const { canEdit } = accessFor(currentUserRole);
   const createMaintenanceMutation = useCreateMaintenanceRecord(vehicleId);
   const createDraftMutation = useCreateMaintenanceDraft(vehicleId);
   const extractionStatusQuery = useAttachmentExtractionStatus();
+  // What the form starts on: the reminder it was opened from, else the
+  // category the address names, else whatever service the vehicle's
+  // reminders say is due, with the reason shown under the chips.
+  const reminderQuery = useQuery({
+    ...reminderDetailQueryOptions(reminderId ?? ''),
+    enabled: Boolean(reminderId),
+  });
+  const remindersQuery = useQuery({
+    ...vehicleRemindersQueryOptions(vehicleId),
+    enabled: !reminderId && !category,
+  });
+  const linkedReminder =
+    reminderQuery.data && reminderQuery.data.vehicleId === vehicleId ? reminderQuery.data : null;
+  const suggestedCategory = useMemo(() => {
+    if (linkedReminder) return pickFromReminder(linkedReminder, category);
+    if (category) return { category, reason: '' };
+    return remindersQuery.data ? pickDueCategory(remindersQuery.data) : null;
+  }, [category, linkedReminder, remindersQuery.data]);
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved service details. Leave without saving?',
@@ -92,7 +121,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
   }
 
   async function handleUploadFirst(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
+    const input = event.target;
+    const files = Array.from(input.files ?? []);
 
     if (!files.length) {
       return;
@@ -188,10 +218,8 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       }
     } finally {
       setIsUploadFirstPending(false);
-
-      if (uploadFirstInputRef.current) {
-        uploadFirstInputRef.current.value = '';
-      }
+      // The same photo chosen again must still start a draft.
+      input.value = '';
     }
   }
 
@@ -232,7 +260,7 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
       <PageContainer>
         <PageTitle
           description={`${vehicleTitle} is shared with you for reading.`}
-          title="Add service record"
+          title="Log service"
         />
         <ViewOnlyNotice
           action={
@@ -251,94 +279,52 @@ export function VehicleMaintenanceCreatePage({ vehicleId }: VehicleMaintenanceCr
     );
   }
 
+  const canRead = extractionStatusQuery.data?.available !== false;
+
   return (
     <VehicleAccessProvider role={currentUserRole}>
-      <PageContainer>
-        <PageTitle
-          description={`Log a service, repair, or inspection for ${vehicleTitle}.`}
-          title="Add service record"
-        />
+      <PageContainer className="max-w-2xl gap-4">
+        <header className="flex items-center justify-between gap-3">
+          <h1 className="font-display text-title font-semibold text-fg">Log service</h1>
+          {vehicleQuery.data ? (
+            <NumberPlate
+              className="shrink-0"
+              electric={vehicleQuery.data.fuelType === FuelType.Electric}
+              emptyLabel={vehicleTitle}
+              registration={vehicleQuery.data.registrationNumber}
+              size="md"
+            />
+          ) : null}
+        </header>
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-card border border-line bg-surface p-6 max-md:-mx-4 max-md:rounded-none max-md:border-x-0 max-md:px-4 max-md:pt-4 max-md:pb-0">
           <MaintenanceForm
+            cancel={
+              <Link
+                className={buttonVariants({ variant: 'ghost', size: 'lg' })}
+                params={{ vehicleId }}
+                search={{ tab: 'history' }}
+                to="/vehicles/$vehicleId"
+              >
+                Cancel
+              </Link>
+            }
             currentOdometer={vehicleQuery.data?.odometer}
             isSubmitting={createMaintenanceMutation.isPending || isUploadFirstPending}
+            leading={
+              <BillCapture
+                canRead={canRead}
+                isPending={isUploadFirstPending}
+                onFiles={(event) => void handleUploadFirst(event)}
+              />
+            }
             onDirtyChange={setIsDirty}
             onSubmit={handleCreateMaintenanceRecord}
+            scheduleNextDue
             submitError={submitError}
+            suggestedCategory={suggestedCategory}
             vehicleId={vehicleId}
           />
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upload first</CardTitle>
-                <CardDescription>
-                  Start with the invoice or job card and turn it into a draft before you type
-                  anything.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-ui leading-6 text-fg-2">
-                <p>
-                  This creates a draft, uploads the files and reads them, then opens the draft
-                  filled in from the bill for you to check and confirm.
-                </p>
-                <Button
-                  className="w-full justify-center gap-2"
-                  disabled={isUploadFirstPending}
-                  onClick={() => uploadFirstInputRef.current?.click()}
-                  type="button"
-                >
-                  {isUploadFirstPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ScanText className="h-4 w-4" />
-                  )}
-                  {isUploadFirstPending ? 'Creating draft...' : 'Upload job card first'}
-                </Button>
-                <input
-                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
-                  className="sr-only"
-                  multiple
-                  onChange={handleUploadFirst}
-                  ref={uploadFirstInputRef}
-                  type="file"
-                  capture="environment"
-                />
-                <p className="text-caption text-fg-3">
-                  {extractionStatusQuery.data?.available === false
-                    ? 'OCR is not configured right now, but draft upload still works.'
-                    : 'OCR will run automatically after upload when available.'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <MaintenanceClaimLinkCard vehicleId={vehicleId} />
-
-            <Card>
-              <CardHeader>
-                <CardTitle>What to capture</CardTitle>
-                <CardDescription>
-                  One entry should represent one completed visit, repair, or service job.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-                <p>
-                  Quick entry is best when you only need the date, category, odometer, and total.
-                </p>
-                <p>
-                  Detailed entry lets you break the invoice into jobs, parts, fluids, taxes, and
-                  discounts.
-                </p>
-                <p>
-                  Workshop is optional, so self-done work and roadside fixes can still be logged.
-                </p>
-                <p>
-                  After saving, you can still attach invoices, job cards, or photos to this entry.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </PageContainer>
     </VehicleAccessProvider>
