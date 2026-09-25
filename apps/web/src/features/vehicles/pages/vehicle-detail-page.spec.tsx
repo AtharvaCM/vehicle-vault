@@ -229,16 +229,13 @@ describe('VehicleDetailPage header', () => {
     expect(screen.getByRole('menuitem', { name: 'Delete vehicle' })).toBeVisible();
   });
 
-  it('opens the first paper on file full screen from Show papers', () => {
+  it('opens every paper in one view from Show papers', () => {
     documents.current = [paper('puc', '2027-01-01T00:00:00.000Z')];
     renderAs(VehicleRole.Viewer);
 
     const link = screen.getByRole('link', { name: 'Show papers' });
-    expect(link).toHaveAttribute('href', '/vehicles/$vehicleId/documents/$kind/$documentId');
-    expect(link).toHaveAttribute(
-      'data-params',
-      JSON.stringify({ vehicleId: 'vehicle-1', kind: 'puc', documentId: 'puc-1' }),
-    );
+    expect(link).toHaveAttribute('href', '/vehicles/$vehicleId/papers');
+    expect(link).toHaveAttribute('data-params', JSON.stringify({ vehicleId: 'vehicle-1' }));
   });
 
   it('opens the Papers tab from Show papers when none is on file', () => {

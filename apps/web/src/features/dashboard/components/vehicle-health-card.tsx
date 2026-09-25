@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BellRing, MoreHorizontal, Wrench } from 'lucide-react';
+import { BellRing, IdCard, MoreHorizontal, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { FuelType } from '@vehicle-vault/shared';
 
@@ -287,6 +287,16 @@ export function VehicleHealthCard({ vehicle, today }: VehicleHealthCardProps) {
           {format.odometer(vehicle.odometer)}
         </span>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          {/* For every role: a viewer may be the one stopped at a checkpoint. */}
+          <Link
+            aria-label={`Show papers for ${vehicle.displayName}`}
+            className={buttonVariants({ size: 'xs', variant: 'outline' })}
+            params={{ vehicleId: vehicle.id }}
+            to="/vehicles/$vehicleId/papers"
+          >
+            <IdCard aria-hidden="true" />
+            Show papers
+          </Link>
           {canEdit ? (
             <>
               <Link

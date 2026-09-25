@@ -6,6 +6,7 @@ import { configureApiClient } from '@/lib/api/api-client';
 import { ApiError } from '@/lib/api/api-error';
 import { queryClient } from '@/lib/query/query-client';
 import { appToast } from '@/lib/toast';
+import { clearSavedPapers } from '@/features/vehicle-documents/offline/saved-papers-store';
 
 import { getMe } from '../api/get-me';
 import { logout as revokeSession } from '../api/logout';
@@ -80,6 +81,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSessionState(null);
       setStatus('anonymous');
       queryClient.clear();
+      // The papers Show papers keeps for offline belong to this session only.
+      void clearSavedPapers();
 
       if (reason === 'expired' || reason === 'unauthorized') {
         appToast.info({
