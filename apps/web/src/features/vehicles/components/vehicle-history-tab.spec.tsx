@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes } from 'react';
-import { FuelType } from '@vehicle-vault/shared';
+import { FuelType, VehicleRole } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -26,8 +26,10 @@ vi.mock('@/features/fuel-logs/components/fuel-tab', () => ({
 vi.mock('@/features/fuel-logs/components/fuel-economy-card', () => ({
   FuelEconomyCard: () => <div data-testid="fuel-economy-card" />,
 }));
-vi.mock('@/features/maintenance/components/vehicle-maintenance-list', () => ({
-  VehicleMaintenanceList: () => <div data-testid="vehicle-maintenance-list" />,
+vi.mock('./vehicle-service-history', () => ({
+  VehicleServiceHistory: ({ search }: { search?: string }) => (
+    <div data-search={search} data-testid="vehicle-service-history" />
+  ),
 }));
 vi.mock('./odometer-history-card', () => ({
   OdometerHistoryCard: () => <div data-testid="odometer-history-card" />,
@@ -46,6 +48,16 @@ const serviceInsights = {
   nextDueOdometerDelta: null,
 };
 
+const vehicle = {
+  id: 'vehicle-1',
+  nickname: 'Daily',
+  make: 'Hyundai',
+  model: 'Creta',
+  registrationNumber: 'MH12AB1234',
+  fuelType: FuelType.Petrol,
+  currentUserRole: VehicleRole.Owner,
+};
+
 describe('VehicleHistoryTab', () => {
   it('shows the service content and not the fuel tab in the service view', () => {
     render(
@@ -53,13 +65,16 @@ describe('VehicleHistoryTab', () => {
         fuelType={FuelType.Petrol}
         odometer={40_000}
         onViewChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        search={undefined}
         serviceInsights={serviceInsights}
-        vehicleId="vehicle-1"
+        vehicle={vehicle}
         view="service"
       />,
     );
 
     expect(screen.getByTestId('service-history-card')).toBeInTheDocument();
+    expect(screen.getByTestId('vehicle-service-history')).toBeInTheDocument();
     expect(screen.getByTestId('odometer-history-card')).toBeInTheDocument();
     expect(screen.queryByTestId('fuel-tab')).not.toBeInTheDocument();
   });
@@ -70,8 +85,10 @@ describe('VehicleHistoryTab', () => {
         fuelType={FuelType.Petrol}
         odometer={40_000}
         onViewChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        search={undefined}
         serviceInsights={serviceInsights}
-        vehicleId="vehicle-1"
+        vehicle={vehicle}
         view="fuel"
       />,
     );
@@ -88,8 +105,10 @@ describe('VehicleHistoryTab', () => {
         fuelType={FuelType.Petrol}
         odometer={40_000}
         onViewChange={onViewChange}
+        onSearchChange={vi.fn()}
+        search={undefined}
         serviceInsights={serviceInsights}
-        vehicleId="vehicle-1"
+        vehicle={vehicle}
         view="service"
       />,
     );

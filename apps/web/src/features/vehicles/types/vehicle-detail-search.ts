@@ -1,3 +1,5 @@
+import { normalizeHistorySearchText } from '@/features/history/types/history-search';
+
 export const vehicleDetailTabs = ['overview', 'history', 'reminders', 'papers', 'more'] as const;
 
 export type VehicleDetailTab = (typeof vehicleDetailTabs)[number];
@@ -23,6 +25,8 @@ export type VehicleDetailSearch = {
   tab?: VehicleDetailTab;
   /** Only with `tab: 'history'`; the service log when absent. */
   view?: VehicleHistoryView;
+  /** Only on the service log: words to find, as on the History page. */
+  search?: string;
   /** Only with `tab: 'more'`; the list of sections when absent. */
   section?: VehicleMoreSection;
 };
@@ -77,9 +81,14 @@ export function normalizeVehicleDetailSearch(search: Record<string, unknown>): V
 
   if (tab === 'history') {
     const view = isOneOf(vehicleHistoryViews, source.view) ? source.view : undefined;
+    const search =
+      (view ?? defaultVehicleHistoryView) === 'service'
+        ? normalizeHistorySearchText(source.search)
+        : undefined;
     return {
       tab,
       ...(view && view !== defaultVehicleHistoryView ? { view } : {}),
+      ...(search ? { search } : {}),
     };
   }
 

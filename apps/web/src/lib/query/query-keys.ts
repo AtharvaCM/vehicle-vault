@@ -168,8 +168,13 @@ export const queryKeys = {
    */
   history: {
     all: () => [...queryKeys.audit.all(), 'history'] as const,
-    list: (params: { vehicleId?: string; kind?: string }) =>
-      [...queryKeys.history.all(), params.vehicleId ?? 'all', params.kind ?? 'all'] as const,
+    list: (params: { vehicleId?: string; kind?: string; search?: string }) =>
+      [
+        ...queryKeys.history.all(),
+        params.vehicleId ?? 'all',
+        params.kind ?? 'all',
+        params.search ?? '',
+      ] as const,
   },
   audit: {
     all: () => ['audit'] as const,

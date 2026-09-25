@@ -125,12 +125,17 @@ vi.mock('@tanstack/react-router', () => ({
 
 const vehiclesQueryRef = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const historyQueryRef = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
+const bulkDelete = vi.hoisted(() => vi.fn());
 const useHistoryMock = vi.hoisted(() => vi.fn((..._args: unknown[]) => historyQueryRef.current));
 
 vi.mock('@/features/vehicles/hooks/use-vehicles', () => ({
   useVehicles: () => vehiclesQueryRef.current,
 }));
 vi.mock('../hooks/use-history', () => ({ useHistory: useHistoryMock }));
+vi.mock('@/features/maintenance/hooks/use-bulk-delete-maintenance-records', () => ({
+  useBulkDeleteMaintenanceRecords: () => ({ mutateAsync: bulkDelete, isPending: false }),
+}));
+vi.mock('@/lib/toast', () => ({ appToast: { success: vi.fn(), error: vi.fn() } }));
 
 import { HistoryPage } from './history-page';
 
@@ -284,7 +289,7 @@ describe('HistoryPage filters', () => {
     );
 
     const [filters] = useHistoryMock.mock.calls.at(-1)!;
-    expect(filters).toEqual({ vehicleId: undefined, kind: undefined });
+    expect(filters).toEqual({ vehicleId: undefined, kind: undefined, search: undefined });
   });
 
   it('sends a vehicle filter that does match a vehicle in the garage', () => {
@@ -293,7 +298,7 @@ describe('HistoryPage filters', () => {
     render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{ vehicle: vehicleB.id }} />);
 
     const [filters] = useHistoryMock.mock.calls.at(-1)!;
-    expect(filters).toEqual({ vehicleId: vehicleB.id, kind: undefined });
+    expect(filters).toEqual({ vehicleId: vehicleB.id, kind: undefined, search: undefined });
   });
 });
 
@@ -325,6 +330,70 @@ describe('HistoryPage empty states', () => {
 
     await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
-    expect(onSearchStateChange).toHaveBeenCalledWith({ vehicle: undefined, kind: undefined });
+    expect(onSearchStateChange).toHaveBeenCalledWith({
+      vehicle: undefined,
+      kind: undefined,
+      search: undefined,
+    });
+  });
+});
+
+describe('HistoryPage search', () => {
+  it('sends the search to the API and keeps it in the URL once typing pauses', async () => {
+    const user = userEvent.setup();
+    const onSearchStateChange = vi.fn();
+    setQueries({ vehicles: ONE_VEHICLE, page: TWO_MONTH_PAGE });
+
+    render(<HistoryPage onSearchStateChange={onSearchStateChange} searchState={{}} />);
+    await user.type(screen.getByRole('searchbox', { name: 'Search history' }), 'torque ');
+
+    await vi.waitFor(() => expect(onSearchStateChange).toHaveBeenCalledWith({ search: 'torque' }));
+    // One call for the pause, not one per key.
+    expect(onSearchStateChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks the API for what the URL searches, and says so when nothing matches', () => {
+    setQueries({ vehicles: ONE_VEHICLE, page: EMPTY_PAGE });
+
+    render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{ search: 'dashcam' }} />);
+
+    const [filters] = useHistoryMock.mock.calls.at(-1)!;
+    expect(filters).toEqual({ vehicleId: undefined, kind: undefined, search: 'dashcam' });
+    expect(screen.getByText(/Nothing logged matches “dashcam”/)).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search history' })).toHaveValue('dashcam');
+  });
+});
+
+describe('HistoryPage select mode', () => {
+  it('selects services only, and deletes the selected ones together', async () => {
+    const user = userEvent.setup();
+    bulkDelete.mockResolvedValueOnce(['record-confirmed']);
+    setQueries({ vehicles: ONE_VEHICLE, page: TWO_MONTH_PAGE });
+
+    render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{}} />);
+    await user.click(screen.getByRole('button', { name: 'Select' }));
+
+    // Two services on screen; the fill and the reading take no checkbox.
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+    await user.click(screen.getAllByRole('checkbox')[0]!);
+    expect(screen.getByText('1 record selected')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Delete selected (1)' }));
+    await user.click(screen.getByRole('button', { name: 'Delete 1 record' }));
+
+    expect(bulkDelete).toHaveBeenCalledWith(['record-confirmed']);
+    await vi.waitFor(() => expect(screen.queryAllByRole('checkbox')).toHaveLength(0));
+    expect(screen.getByRole('button', { name: 'Select' })).toBeInTheDocument();
+  });
+
+  it('offers no Select to someone who only views the vehicles', () => {
+    setQueries({
+      vehicles: [{ ...vehicleA, currentUserRole: VehicleRole.Viewer }],
+      page: TWO_MONTH_PAGE,
+    });
+
+    render(<HistoryPage onSearchStateChange={vi.fn()} searchState={{}} />);
+
+    expect(screen.queryByRole('button', { name: 'Select' })).not.toBeInTheDocument();
   });
 });

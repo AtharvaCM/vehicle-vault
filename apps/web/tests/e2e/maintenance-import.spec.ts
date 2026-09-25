@@ -136,10 +136,11 @@ test('user can import grouped service CSV rows into a structured record', async 
   await bulkImportResponse;
 
   await expect(page.getByRole('dialog', { name: /import service csv/i })).toBeHidden();
-  const importedRecord = page.getByRole('link', { name: /torque garage/i }).first();
+  // The service log is the History list: what, when, where and what it cost.
+  const importedRecord = page.getByTestId('history-row').filter({ hasText: 'Torque Garage' });
   await expect(importedRecord).toBeVisible();
-  await expect(page.getByText('Invoice INV-IMPORT-001')).toBeVisible();
-  await expect(importedRecord).toContainText('2 items');
+  await expect(importedRecord).toContainText('Engine oil');
+  await expect(importedRecord).toContainText('₹1,850');
 
   await importedRecord.click();
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);

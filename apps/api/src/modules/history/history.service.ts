@@ -90,6 +90,47 @@ function readingFrom(payload: Prisma.JsonValue | null): number | null {
 type Candidate = { key: CursorKey; entry: HistoryEntry | null };
 
 /**
+ * The categories a search names. The web's labels are the enum values in
+ * words ("engine_oil" is "Engine oil", "puc" is "PUC"), so matching the
+ * words finds them without the API keeping a second copy of the labels.
+ */
+export function categoriesMatching(search: string): MaintenanceCategory[] {
+  const words = search.toLowerCase().replace(/\s+/g, ' ');
+  return Object.values(MaintenanceCategory).filter((category) =>
+    category.replace(/_/g, ' ').includes(words),
+  );
+}
+
+/**
+ * A search's filters per table, each under its own `AND` so it spreads beside
+ * the cursor's `OR`. Empty objects when there is no search.
+ */
+function searchFilters(search: string | undefined): {
+  service: Prisma.MaintenanceRecordWhereInput;
+  fuel: Prisma.FuelLogWhereInput;
+} {
+  if (!search) return { service: {}, fuel: {} };
+  const text = { contains: search, mode: 'insensitive' as const };
+  const categories = categoriesMatching(search);
+
+  return {
+    service: {
+      AND: [
+        {
+          OR: [
+            { workshopName: text },
+            { invoiceNumber: text },
+            { notes: text },
+            ...(categories.length > 0 ? [{ category: { in: categories } }] : []),
+          ],
+        },
+      ],
+    },
+    fuel: { AND: [{ OR: [{ location: text }, { notes: text }] }] },
+  };
+}
+
+/**
  * The garage's timeline: what was done to each vehicle, newest first. Three
  * sources are merged — maintenance records (drafts included, marked by their
  * status), fuel fills, and odometer readings. A reading has no table of its
@@ -117,7 +158,10 @@ export class HistoryService {
   async list(userId: string, query: HistoryQueryDto): Promise<HistoryPage> {
     const limit = query.limit ?? HISTORY_PAGE_DEFAULT_LIMIT;
     const cursor = query.cursor ? decodeHistoryCursor(query.cursor) : null;
-    const kinds: readonly HistoryKind[] = query.kind ? [query.kind] : HISTORY_KINDS;
+    const requested: readonly HistoryKind[] = query.kind ? [query.kind] : HISTORY_KINDS;
+    // A reading has no words to find, so a search leaves readings out.
+    const kinds = query.search ? requested.filter((kind) => kind !== 'odometer') : requested;
+    const matching = searchFilters(query.search);
 
     const accessible = await this.access.listAccessibleVehicleIds(userId);
     if (query.vehicleId && !accessible.includes(query.vehicleId)) {
@@ -139,7 +183,11 @@ export class HistoryService {
     const [services, fuels, readings, draftCount] = await Promise.all([
       kinds.includes('service')
         ? this.prisma.maintenanceRecord.findMany({
-            where: { vehicleId: { in: vehicleIds }, ...after('serviceDate', cursor) },
+            where: {
+              vehicleId: { in: vehicleIds },
+              ...matching.service,
+              ...after('serviceDate', cursor),
+            },
             orderBy: [{ serviceDate: 'desc' }, { id: 'desc' }],
             take,
             select: {
@@ -157,7 +205,7 @@ export class HistoryService {
         : [],
       kinds.includes('fuel')
         ? this.prisma.fuelLog.findMany({
-            where: { vehicleId: { in: vehicleIds }, ...after('date', cursor) },
+            where: { vehicleId: { in: vehicleIds }, ...matching.fuel, ...after('date', cursor) },
             orderBy: [{ date: 'desc' }, { id: 'desc' }],
             take,
             select: {
@@ -256,9 +304,11 @@ export class HistoryService {
     const entries = page.flatMap((candidate) => (candidate.entry ? [candidate.entry] : []));
 
     const [months, firstDraftId, year] = await Promise.all([
-      this.summarizeMonths(entries, vehicleIds, kinds),
+      this.summarizeMonths(entries, vehicleIds, kinds, matching),
       draftCount > 0 ? this.firstDraftId(vehicleIds) : null,
-      kinds.includes('service') ? this.summarizeYear(vehicleIds, new Date()) : null,
+      // The year line sums up the garage, not the search: a search for a
+      // station would otherwise read "No services logged this year".
+      requested.includes('service') ? this.summarizeYear(vehicleIds, new Date()) : null,
     ]);
 
     return { entries, months, draftCount, firstDraftId, year, nextCursor };
@@ -304,6 +354,7 @@ export class HistoryService {
     entries: HistoryEntry[],
     vehicleIds: string[],
     kinds: readonly HistoryKind[],
+    matching: ReturnType<typeof searchFilters>,
   ): Promise<HistoryMonth[]> {
     const months = [...new Set(entries.map((entry) => entry.month))];
     if (months.length === 0) return [];
@@ -315,13 +366,13 @@ export class HistoryService {
     const [services, fuels] = await Promise.all([
       kinds.includes('service')
         ? this.prisma.maintenanceRecord.findMany({
-            where: { vehicleId: { in: vehicleIds }, serviceDate: range },
+            where: { vehicleId: { in: vehicleIds }, serviceDate: range, ...matching.service },
             select: { serviceDate: true, totalCost: true, status: true },
           })
         : [],
       kinds.includes('fuel')
         ? this.prisma.fuelLog.findMany({
-            where: { vehicleId: { in: vehicleIds }, date: range },
+            where: { vehicleId: { in: vehicleIds }, date: range, ...matching.fuel },
             select: { date: true, totalCost: true },
           })
         : [],

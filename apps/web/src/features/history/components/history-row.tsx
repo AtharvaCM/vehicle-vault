@@ -23,6 +23,16 @@ type HistoryRowProps = {
   vehicle: HistoryVehicle | undefined;
   /** Off for a one-vehicle garage, where the plate would only repeat itself. */
   showVehicle: boolean;
+  /**
+   * Select mode. `selectable` leads the row with a checkbox; a row that cannot
+   * be selected (a fill, a reading, a vehicle shared for viewing) keeps the
+   * checkbox's space so the list stays in line.
+   */
+  selection?: {
+    selectable: boolean;
+    selected: boolean;
+    onSelectedChange: (checked: boolean) => void;
+  };
 };
 
 const KIND_ICONS: Record<HistoryEntry['kind'], LucideIcon> = {
@@ -115,46 +125,71 @@ function EntryLink({
  * A draft service says so, and costs in grey: it counts in no total until it
  * is confirmed, which the strip under it offers to those who can.
  */
-export function HistoryRow({ entry, vehicle, showVehicle }: HistoryRowProps) {
+export function HistoryRow({ entry, vehicle, showVehicle, selection }: HistoryRowProps) {
   const { title, details, amount } = describe(entry);
   const Icon = KIND_ICONS[entry.kind];
   const isDraft = entry.kind === 'service' && isDraftRecord(entry);
   const canEdit = accessFor(vehicle?.currentUserRole ?? null).canEdit;
 
+  const selected = Boolean(selection?.selectable && selection.selected);
+
   return (
-    <li data-kind={entry.kind} data-testid="history-row">
-      <EntryLink
-        className={cn(
-          'group grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-4 py-3 transition-colors hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:px-5',
-          showVehicle && 'sm:grid-cols-[9rem_minmax(0,1fr)_auto]',
-        )}
-        entry={entry}
-      >
-        {showVehicle ? (
-          <VehicleIdentity
-            className="col-span-2 sm:col-span-1"
-            electric={vehicle?.fuelType === FuelType.Electric}
-            layout="row"
-            name={vehicle ? getVehicleDisplayName(vehicle) : 'Vehicle'}
-            registration={vehicle?.registrationNumber}
-          />
+    <li
+      className={cn(selected && 'bg-brand-tint')}
+      data-kind={entry.kind}
+      data-selected={selected ? 'true' : undefined}
+      data-testid="history-row"
+    >
+      <div className="flex items-stretch">
+        {selection ? (
+          selection.selectable ? (
+            <label className="flex w-12 shrink-0 cursor-pointer items-center justify-center">
+              <input
+                aria-label={`Select ${title}, ${format.date(entry.occurredAt, 'short')}`}
+                checked={selection.selected}
+                className="size-4 rounded border-line text-fg focus:ring-ring"
+                onChange={(event) => selection.onSelectedChange(event.currentTarget.checked)}
+                type="checkbox"
+              />
+            </label>
+          ) : (
+            <span aria-hidden="true" className="w-12 shrink-0" />
+          )
         ) : null}
-        <div className="min-w-0">
-          <p className="flex min-w-0 items-center gap-2">
-            <Icon aria-hidden="true" className="size-4 shrink-0 text-fg-3" />
-            <span className="truncate font-semibold text-fg transition-colors group-hover:text-primary">
-              {title}
-            </span>
-            {isDraft ? <MaintenanceDraftBadge /> : null}
-          </p>
-          <p className="mt-0.5 text-small text-fg-2 [overflow-wrap:anywhere]">
-            {details.join(' · ')}
-          </p>
-        </div>
-        <div className="self-start text-right text-ui font-semibold text-fg sm:self-center">
-          {amount}
-        </div>
-      </EntryLink>
+        <EntryLink
+          className={cn(
+            'group grid min-h-14 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 py-3 pr-4 transition-colors hover:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:pr-5',
+            selection ? 'pl-0' : 'pl-4 sm:pl-5',
+            showVehicle && 'sm:grid-cols-[9rem_minmax(0,1fr)_auto]',
+          )}
+          entry={entry}
+        >
+          {showVehicle ? (
+            <VehicleIdentity
+              className="col-span-2 sm:col-span-1"
+              electric={vehicle?.fuelType === FuelType.Electric}
+              layout="row"
+              name={vehicle ? getVehicleDisplayName(vehicle) : 'Vehicle'}
+              registration={vehicle?.registrationNumber}
+            />
+          ) : null}
+          <div className="min-w-0">
+            <p className="flex min-w-0 items-center gap-2">
+              <Icon aria-hidden="true" className="size-4 shrink-0 text-fg-3" />
+              <span className="truncate font-semibold text-fg transition-colors group-hover:text-primary">
+                {title}
+              </span>
+              {isDraft ? <MaintenanceDraftBadge /> : null}
+            </p>
+            <p className="mt-0.5 text-small text-fg-2 [overflow-wrap:anywhere]">
+              {details.join(' · ')}
+            </p>
+          </div>
+          <div className="self-start text-right text-ui font-semibold text-fg sm:self-center">
+            {amount}
+          </div>
+        </EntryLink>
+      </div>
 
       {/* Outside the row's link: a link cannot hold another. */}
       {isDraft ? (
