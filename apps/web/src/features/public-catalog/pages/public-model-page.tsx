@@ -89,6 +89,13 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
           {modelName}
         </h1>
         <p className="mt-2 text-ui text-fg-2">{summary.join(' · ')}</p>
+        <a
+          className="mt-2 inline-flex items-center gap-1 text-ui font-semibold text-brand hover:underline"
+          href="#track-this-vehicle"
+        >
+          Own one? Track it free
+          <ChevronRight aria-hidden="true" className="size-4" />
+        </a>
       </header>
 
       <section aria-labelledby="variants-heading" className="space-y-3">
@@ -126,7 +133,7 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
                   ) : null}
                 </p>
               </div>
-              <ul className="divide-y divide-line-subtle">
+              <ul className="grid gap-2 p-3 sm:grid-cols-2 sm:p-4">
                 {generation.variants.map((variant) => (
                   <li key={variant.slug}>
                     <PublicCatalogLink
@@ -137,17 +144,20 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
                         generation: generation.slug,
                         variant: variant.slug,
                       }}
-                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-page focus-visible:bg-page focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:px-5"
+                      className="group flex h-full items-center justify-between gap-3 rounded-control border border-line-subtle bg-page/60 px-4 py-3 hover:border-fg-3 hover:bg-surface focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
                     >
                       <span className="min-w-0">
-                        <span className="block text-ui font-medium text-fg wrap-anywhere">
+                        <span className="block text-ui font-semibold text-fg wrap-anywhere">
                           {modelName} {variant.name}
-                        </span>
-                        <span className="mt-0.5 block text-ui text-fg-2">
+                        </span>{' '}
+                        <span className="mt-0.5 block text-small text-fg-2">
                           {describeModelVariant(variant)}
                         </span>
                       </span>
-                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-fg-3" />
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-fg-3 group-hover:text-fg"
+                      />
                     </PublicCatalogLink>
                   </li>
                 ))}

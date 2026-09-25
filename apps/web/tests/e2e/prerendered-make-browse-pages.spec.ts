@@ -157,7 +157,7 @@ test.describe('prerendered make and browse pages', () => {
   test('the raw HTML of /cars already lists the makes, with its head tags', async ({ request }) => {
     const html = await fetchHtml(request, '/cars');
 
-    expect(html).toMatch(/<h1[^>]*>Cars by make<\/h1>/);
+    expect(html).toMatch(/<h1[^>]*>Cars in India<\/h1>/);
     expect(html.match(new RegExp(`<a[^>]*href="${make.path}"`, 'g'))).toHaveLength(1);
     expect(html).toContain(
       '<title>Cars by make — models, service schedules and specs | Vehicle Vault</title>',
@@ -167,7 +167,7 @@ test.describe('prerendered make and browse pages', () => {
     expect(jsonLdOf(html).data).toMatchObject({ '@type': 'ItemList', name: 'Cars by make' });
 
     const bikes = await fetchHtml(request, '/bikes');
-    expect(bikes).toMatch(/<h1[^>]*>Bikes by make<\/h1>/);
+    expect(bikes).toMatch(/<h1[^>]*>Bikes in India<\/h1>/);
     expect(bikes).toMatch(/<a[^>]*href="\/bikes\/[^"/]+"/);
   });
 
@@ -235,7 +235,7 @@ test.describe('prerendered make and browse pages', () => {
       .getByRole('navigation', { name: 'Breadcrumb' })
       .getByRole('link', { name: 'Cars', exact: true })
       .click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Cars by make' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Cars in India' })).toBeVisible();
     expect(
       await page.evaluate(() => (window as unknown as { __samePage?: boolean }).__samePage),
     ).toBe(true);
