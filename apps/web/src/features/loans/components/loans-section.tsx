@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { MoreHorizontal } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import type { CreateVehicleLoanInput, VehicleLoan } from '@vehicle-vault/shared';
@@ -42,7 +43,6 @@ import { getVehicleDisplayName } from '@/features/vehicles/utils/get-vehicle-dis
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
-import { LoanDetailDialog } from './loan-detail-dialog';
 import { LoanForm } from './loan-form';
 import { useCreateLoan } from '../hooks/use-create-loan';
 import { useDeleteLoan } from '../hooks/use-delete-loan';
@@ -65,7 +65,6 @@ export function LoansSection() {
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [loanToDelete, setLoanToDelete] = useState<VehicleLoan | null>(null);
-  const [selectedLoan, setSelectedLoan] = useState<VehicleLoan | null>(null);
   const [loanToEdit, setLoanToEdit] = useState<VehicleLoan | null>(null);
   const [scannedDraft, setScannedDraft] = useState<Partial<LoanFormValues> | null>(null);
   const [scanFormKey, setScanFormKey] = useState(0);
@@ -205,7 +204,6 @@ export function LoansSection() {
                     loan={loan}
                     onDelete={setLoanToDelete}
                     onEdit={setLoanToEdit}
-                    onOpen={setSelectedLoan}
                     vehicleName={vehicleNameById[loan.vehicleId]}
                   />
                 ))}
@@ -314,12 +312,6 @@ export function LoansSection() {
         </DialogContent>
       </Dialog>
 
-      <LoanDetailDialog
-        loan={selectedLoan ? (loans.find((l) => l.id === selectedLoan.id) ?? selectedLoan) : null}
-        onOpenChange={(open) => !open && setSelectedLoan(null)}
-        vehicleLabel={selectedLoan ? vehicleLabelById[selectedLoan.vehicleId] : undefined}
-      />
-
       <Dialog onOpenChange={(open) => !open && setLoanToEdit(null)} open={loanToEdit !== null}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
@@ -387,21 +379,20 @@ export function LoansSection() {
 type LoanLineProps = {
   loan: VehicleLoan;
   vehicleName: string | undefined;
-  onOpen: (loan: VehicleLoan) => void;
   onEdit: (loan: VehicleLoan) => void;
   onDelete: (loan: VehicleLoan) => void;
 };
 
 /** "Weekend Bike · HDFC · ₹1,31,624 left · ends Mar 2029": the line opens the loan. */
-function LoanLine({ loan, vehicleName, onOpen, onEdit, onDelete }: LoanLineProps) {
+function LoanLine({ loan, vehicleName, onEdit, onDelete }: LoanLineProps) {
   const active = loan.status === 'active';
 
   return (
     <li className="flex items-stretch" data-testid="loan-line">
-      <button
+      <Link
         className="flex min-w-0 flex-1 flex-col gap-0.5 px-4 py-3 text-left transition-colors hover:bg-page/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
-        onClick={() => onOpen(loan)}
-        type="button"
+        params={{ loanId: loan.id }}
+        to="/costs/loans/$loanId"
       >
         <span className="min-w-0 truncate text-body font-semibold text-fg">
           {vehicleName ? `${vehicleName} · ` : null}
@@ -417,7 +408,7 @@ function LoanLine({ loan, vehicleName, onOpen, onEdit, onDelete }: LoanLineProps
             `${format.enumLabel('loanStatus', loan.status)} · ${format.date(loan.closedAt ?? loan.endDate, 'monthYear')}`
           )}
         </span>
-      </button>
+      </Link>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

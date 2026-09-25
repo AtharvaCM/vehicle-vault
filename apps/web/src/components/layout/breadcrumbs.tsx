@@ -70,6 +70,8 @@ export function Breadcrumbs({ fallback = null }: { fallback?: ReactNode }) {
       return <ReminderTrail reminderId={params.reminderId!} />;
     case '/reminders/$reminderId/edit':
       return <ReminderTrail editing reminderId={params.reminderId!} />;
+    case '/costs/loans/$loanId':
+      return <Trail crumbs={[{ label: 'Costs', link: { to: '/costs' } }, { label: 'Loan' }]} />;
     case '/settings/activity':
       return <Trail crumbs={[SETTINGS, { label: 'Activity' }]} />;
     case '/settings/preferences':

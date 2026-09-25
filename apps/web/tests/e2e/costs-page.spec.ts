@@ -114,7 +114,10 @@ test('Costs gathers spend, per-vehicle spend and loans; Home links to it; /loans
       label,
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'By vehicle' }), label).toBeVisible();
-    await expect(page.getByRole('link', { name: new RegExp(nickname) }), label).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: new RegExp(nickname) }).first(),
+      label,
+    ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Loans' }), label).toBeVisible();
     // One line per loan (#311), with the total under them; the line opens the loan.
     const line = page.getByTestId('loan-line').filter({ hasText: lender });
@@ -130,9 +133,10 @@ test('Costs gathers spend, per-vehicle spend and loans; Home links to it; /loans
         animations: 'disabled',
       });
     }
-    await line.getByRole('button').first().click();
-    await expect(page.getByRole('dialog'), label).toContainText(lender);
-    await page.keyboard.press('Escape');
+    // The line opens the loan's own page (#312).
+    await line.getByRole('link').click();
+    await expect(page, label).toHaveURL(/\/costs\/loans\/[^/]+$/);
+    await expect(page.getByRole('heading', { level: 1, name: lender }), label).toBeVisible();
 
     // The legacy address still lands here (kept by
     // routes/legacy-redirect-routes.tsx).

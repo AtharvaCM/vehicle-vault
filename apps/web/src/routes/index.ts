@@ -1,6 +1,7 @@
 export * from './admin-route';
 export * from './app-route';
 export * from './costs-route';
+export * from './loan-route';
 export * from './forgot-password-route';
 export * from './garage-route';
 export * from './history-route';

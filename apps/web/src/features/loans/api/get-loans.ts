@@ -33,3 +33,17 @@ export function vehicleLoansQueryOptions(vehicleId: string) {
     queryFn: () => getLoansByVehicle(vehicleId),
   });
 }
+
+export async function getLoan(loanId: string) {
+  const response = await apiClient.get<ApiSuccessResponse<VehicleLoan>>(
+    endpoints.vehicleLoans.detail(loanId),
+  );
+  return response.data;
+}
+
+export function loanQueryOptions(loanId: string) {
+  return queryOptions({
+    queryKey: queryKeys.vehicleLoans.detail(loanId),
+    queryFn: () => getLoan(loanId),
+  });
+}
