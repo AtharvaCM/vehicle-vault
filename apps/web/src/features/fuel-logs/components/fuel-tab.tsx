@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { Plus, Scan, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -17,14 +17,18 @@ import { useCreateFuelLog } from '../hooks/use-create-fuel-log';
 import { useDeleteFuelLog } from '../hooks/use-delete-fuel-log';
 import { useUpdateFuelLog } from '../hooks/use-update-fuel-log';
 import { useScanReceipt, useScanStatus, type ScannedFuelLog } from '../hooks/use-scan-receipt';
-import type { FuelLog } from '@vehicle-vault/shared';
+import { fuelNoun } from '../utils/fuel-unit';
+import type { FuelLog, FuelType } from '@vehicle-vault/shared';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
 type FuelTabProps = {
   vehicleId: string;
+  fuelType: FuelType;
+  /** The vehicle's current reading, shown as a hint on a new fill's Odometer field. */
+  odometer: number;
 };
 
-export function FuelTab({ vehicleId }: FuelTabProps) {
+export function FuelTab({ vehicleId, fuelType, odometer }: FuelTabProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { canEdit } = useVehicleAccess();
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -39,6 +43,16 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
   const updateMutation = useUpdateFuelLog(vehicleId, editingLog?.id ?? '');
   const scanMutation = useScanReceipt();
   const scanStatus = useQuery(useScanStatus());
+  const noun = fuelNoun(fuelType);
+  // The most recently logged station, so a new fill starts with it already filled in.
+  const lastLocation = logsQuery.data?.find((log) => log.location)?.location;
+  // Stable across unrelated re-renders (a background refetch, a delete elsewhere):
+  // FuelLogForm resets on a new `initialValues` identity, which must not happen
+  // while someone is mid-fill.
+  const createInitialValues = useMemo(
+    () => ({ location: lastLocation, ...scannedData }),
+    [lastLocation, scannedData],
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreate = async (values: any) => {
@@ -196,7 +210,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
               className="gap-2"
             >
               <Plus className="h-4 w-4" />
-              Log fuel
+              Log {noun.toLowerCase()}
             </Button>
           </div>
         ) : null}
@@ -218,6 +232,7 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
       ) : (
         <FuelLogList
           logs={logsQuery.data || []}
+          fuelType={fuelType}
           isLoading={logsQuery.isLoading}
           onAdd={canEdit ? () => setIsFormOpen(true) : undefined}
           onEdit={canEdit ? handleEdit : undefined}
@@ -236,10 +251,11 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
       >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Edit fuel log</DialogTitle>
+            <DialogTitle>Edit {noun.toLowerCase()}</DialogTitle>
           </DialogHeader>
           {editingLog && (
             <FuelLogForm
+              fuelType={fuelType}
               onSubmit={handleUpdate}
               isSubmitting={updateMutation.isPending}
               submitLabel="Save changes"
@@ -249,6 +265,8 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
                 quantity: editingLog.quantity,
                 price: editingLog.price,
                 totalCost: editingLog.totalCost,
+                isFullTank: editingLog.isFullTank ?? true,
+                paymentMethod: editingLog.paymentMethod ?? '',
                 location: editingLog.location ?? '',
                 notes: editingLog.notes ?? '',
               }}
@@ -265,10 +283,15 @@ export function FuelTab({ vehicleId }: FuelTabProps) {
         }}
       >
         <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Log {noun.toLowerCase()}</DialogTitle>
+          </DialogHeader>
           <FuelLogForm
+            fuelType={fuelType}
+            lastOdometer={odometer}
             onSubmit={handleCreate}
             isSubmitting={createMutation.isPending}
-            initialValues={scannedData || undefined}
+            initialValues={createInitialValues}
           />
         </DialogContent>
       </Dialog>

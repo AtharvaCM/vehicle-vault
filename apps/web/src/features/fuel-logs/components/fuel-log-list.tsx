@@ -1,4 +1,4 @@
-import { FuelLog } from '@vehicle-vault/shared';
+import { FuelLog, FuelType } from '@vehicle-vault/shared';
 import { FuelLogCard } from './fuel-log-card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Fuel } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 
 type FuelLogListProps = {
   logs: FuelLog[];
+  fuelType: FuelType;
   onEdit?: (log: FuelLog) => void;
   onDelete?: (logId: string) => void;
   /** Omitted for someone who cannot add, which also drops the empty state's action. */
@@ -13,7 +14,14 @@ type FuelLogListProps = {
   isLoading?: boolean;
 };
 
-export function FuelLogList({ logs, onEdit, onDelete, onAdd, isLoading }: FuelLogListProps) {
+export function FuelLogList({
+  logs,
+  fuelType,
+  onEdit,
+  onDelete,
+  onAdd,
+  isLoading,
+}: FuelLogListProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -44,7 +52,13 @@ export function FuelLogList({ logs, onEdit, onDelete, onAdd, isLoading }: FuelLo
   return (
     <div className="space-y-4">
       {logs.map((log) => (
-        <FuelLogCard key={log.id} log={log} onEdit={onEdit} onDelete={onDelete} />
+        <FuelLogCard
+          key={log.id}
+          fuelType={fuelType}
+          log={log}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );
