@@ -182,7 +182,9 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
   await expect(page.getByRole('heading', { level: 1, name: reminderTitle })).toBeVisible();
 
-  await page.getByRole('link', { name: /edit reminder/i }).click();
+  // Edit and Delete sit in the reminder page's menu (#314).
+  await page.getByRole('button', { name: 'More reminder actions' }).click();
+  await page.getByRole('menuitem', { name: /edit reminder/i }).click();
   await expect(page).toHaveURL(/\/reminders\/[^/]+\/edit$/);
   await page.getByLabel(/^title$/i).fill(updatedReminderTitle);
   await page.getByLabel(/notes/i).fill('Updated after confirming the policy renewal timeline');

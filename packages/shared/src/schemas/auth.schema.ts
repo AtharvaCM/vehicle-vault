@@ -32,6 +32,24 @@ export const PasswordResetConfirmSchema = z.object({
   password: z.string().min(8).max(72),
 });
 
+/**
+ * Changing the password while signed in (Settings → Security). The current
+ * one is required when the account has a password; an account that only ever
+ * signed in with Google or GitHub sets its first one without it.
+ */
+export const PasswordChangeSchema = z.object({
+  currentPassword: z.string().min(1).max(72).optional(),
+  newPassword: z.string().min(8).max(72),
+});
+
+export const OAuthProviderNameSchema = z.enum(['google', 'github']);
+
+/** How an account can sign in, for Settings → Security. */
+export const AccountSecuritySchema = z.object({
+  hasPassword: z.boolean(),
+  oauthProviders: z.array(OAuthProviderNameSchema),
+});
+
 export const UserRoleSchema = z.enum(['user', 'admin']);
 
 export const UserSchema = z.object({

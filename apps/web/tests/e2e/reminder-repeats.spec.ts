@@ -36,7 +36,8 @@ test('a yearly insurance reminder schedules next year’s when it is marked done
   await page.getByRole('button', { name: /save reminder/i }).click();
 
   await expect(page).toHaveURL(/\/reminders\/[^/]+$/);
-  await expect(page.getByText('Repeats every year', { exact: true })).toBeVisible();
+  // The rule reads in the page's "what happens next" line (#314).
+  await expect(page.getByTestId('reminder-next-step')).toContainText('Repeats every year');
 
   // Not a service, so Done ticks it off without asking to log anything.
   await page.getByRole('button', { name: 'Mark Insurance renewal done' }).click();

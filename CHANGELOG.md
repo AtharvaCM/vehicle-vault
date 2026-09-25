@@ -1,3 +1,17 @@
+# [1.103.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.102.0...v1.103.0) (2026-09-25)
+
+
+### Features
+
+* make Settings a directory, and let you change your password ([7c6be63](https://github.com/AtharvaCM/vehicle-vault/commit/7c6be63829fec84b1a592fc3c44dc67d32e1c6ba)), closes [#315](https://github.com/AtharvaCM/vehicle-vault/issues/315)
+
+# [1.102.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.101.0...v1.102.0) (2026-09-25)
+
+
+### Features
+
+* **web:** make the reminder page one decision ([b96c272](https://github.com/AtharvaCM/vehicle-vault/commit/b96c2721f23d2cf0ba091eac34b8a10cf757a4d6)), closes [#314](https://github.com/AtharvaCM/vehicle-vault/issues/314)
+
 # [1.101.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.100.0...v1.101.0) (2026-09-25)
 
 

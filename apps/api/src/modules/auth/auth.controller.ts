@@ -8,6 +8,7 @@ import { successResponse } from '../../common/utils/api-response.util';
 import type { AuthUser } from '@vehicle-vault/shared';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { PasswordChangeDto } from './dto/password-change.dto';
 import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -79,6 +80,22 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend verification email' })
   async resendVerification(@Body() body: ResendVerificationDto) {
     return successResponse(await this.authService.resendVerification(body));
+  }
+
+  /** Settings → Security: a new password, keeping this session and ending the rest. */
+  @RateLimit('token')
+  @Post('password')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change (or first set) the password of the signed-in account' })
+  async changePassword(@CurrentUser() user: AuthUser, @Body() body: PasswordChangeDto) {
+    return successResponse(await this.authService.changePassword(user.id, body));
+  }
+
+  @Get('security')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'How the signed-in account can sign in' })
+  async getSecurity(@CurrentUser() user: AuthUser) {
+    return successResponse(await this.authService.getSecurity(user.id));
   }
 
   @Public()
