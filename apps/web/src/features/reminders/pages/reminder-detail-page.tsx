@@ -1,24 +1,37 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ReminderStatus } from '@vehicle-vault/shared';
+import { BellOff, Check, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
-import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
+import { confirm } from '@/components/shared/confirm';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { StatusDot } from '@/components/shared/status-pill';
 import { ResourceLoadError } from '@/components/errors/resource-load-error';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { documentKindTitles } from '@/features/vehicle-documents/utils/document-kind-labels';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
+import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
+import { getVehicleDisplayName } from '@/features/vehicles/utils/get-vehicle-display-name';
 
+import { SnoozeReminderDialog } from '../components/snooze-reminder-dialog';
+import { useCompleteReminder } from '../hooks/use-complete-reminder';
 import { useDeleteReminder } from '../hooks/use-delete-reminder';
 import { useReminder } from '../hooks/use-reminder';
-import { ReminderActions } from '../components/reminder-actions';
-import { ReminderSummaryCard } from '../components/reminder-summary-card';
+import type { Reminder } from '../types/reminder';
+import { describeDue } from '../utils/describe-due';
+import { logServiceSearchFor, reminderDoneAction } from '../utils/reminder-done';
 import { describeWhatDoneDoes } from '../utils/what-done-does';
 
 type ReminderDetailPageProps = {
@@ -111,72 +124,195 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
     </p>
   ) : null;
   const vehicleLabel = linkedVehicle
-    ? `${linkedVehicle.nickname?.trim() || `${linkedVehicle.make} ${linkedVehicle.model}`} • ${linkedVehicle.registrationNumber}`
-    : 'Vehicle details unavailable';
+    ? `${getVehicleDisplayName(linkedVehicle)} · ${format.registration(linkedVehicle.registrationNumber)}`
+    : undefined;
+  const due = describeDue(reminder, { odometer: linkedVehicle?.odometer });
+
+  async function askToDelete() {
+    const confirmed = await confirm({
+      title: 'Delete this reminder?',
+      description: "This removes the reminder from this vehicle. This can't be undone.",
+      confirmLabel: 'Delete reminder',
+      destructive: true,
+    });
+    if (confirmed) await handleDeleteReminder(reminder.vehicleId);
+  }
 
   return (
     <VehicleAccessProvider role={currentUserRole}>
       <PageContainer>
         <PageTitle
           actions={
-            <>
-              <Link
-                className={buttonVariants({ variant: 'secondary' })}
-                params={{ vehicleId: reminder.vehicleId }}
-                search={{ tab: 'reminders' }}
-                to="/vehicles/$vehicleId"
-              >
-                Back to Reminders
-              </Link>
-              {canEdit ? (
-                <>
-                  <Link
-                    className={buttonVariants({ variant: 'secondary' })}
-                    params={{ reminderId: reminder.id }}
-                    to="/reminders/$reminderId/edit"
-                  >
-                    Edit reminder
-                  </Link>
-                  <ConfirmActionDialog
-                    confirmLabel="Delete reminder"
-                    description="This removes the reminder from this vehicle. This can't be undone."
-                    isPending={deleteReminderMutation.isPending}
-                    onConfirm={() => handleDeleteReminder(reminder.vehicleId)}
-                    title="Delete this reminder?"
-                    triggerLabel="Delete reminder"
-                    triggerVariant="secondary"
-                  />
-                </>
-              ) : null}
-            </>
+            canEdit ? (
+              // Its own size, even where the header stacks its actions full width.
+              <div className="flex justify-end">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      aria-label="More reminder actions"
+                      size="icon"
+                      type="button"
+                      variant="outline"
+                    >
+                      <MoreHorizontal aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link params={{ reminderId: reminder.id }} to="/reminders/$reminderId/edit">
+                        Edit reminder
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-late"
+                      disabled={deleteReminderMutation.isPending}
+                      onSelect={() => void askToDelete()}
+                    >
+                      Delete reminder
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : undefined
           }
-          description="Review when this item is due and what it is for."
+          description={[vehicleLabel, format.enumLabel('reminderType', reminder.type)]
+            .filter(Boolean)
+            .join(' · ')}
           title={reminder.title}
         />
 
         {actionError ? <InlineError message={actionError} /> : null}
 
-        {/* What happens next, beside the verbs that make it happen. */}
-        {nextStep || showActions ? (
-          <section
-            aria-label="What happens next"
-            className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
-          >
+        {/* The one decision: where it stands, and the verb that settles it. */}
+        <section
+          aria-label="Where this reminder stands"
+          className="space-y-4"
+          data-testid="reminder-decision"
+        >
+          <div className="space-y-1.5">
+            <p className="text-heading font-semibold tracking-tight" data-testid="reminder-due">
+              <StatusDot className="text-heading" status={due.status}>
+                {due.text}
+              </StatusDot>
+            </p>
             {nextStep}
-            {showActions ? (
-              <ReminderActions
-                className="shrink-0 max-sm:[&>*]:flex-1"
-                currentOdometer={linkedVehicle?.odometer}
-                primary
-                reminder={reminder}
-                size="default"
-              />
-            ) : null}
+          </div>
+          {showActions ? (
+            <ReminderDecision currentOdometer={linkedVehicle?.odometer} reminder={reminder} />
+          ) : null}
+        </section>
+
+        {reminder.notes?.trim() ? (
+          <section aria-labelledby="reminder-notes" className="max-w-3xl space-y-1">
+            <h2 className="text-small font-semibold text-fg-2" id="reminder-notes">
+              Notes
+            </h2>
+            <p className="whitespace-pre-line text-body text-fg">{reminder.notes.trim()}</p>
           </section>
         ) : null}
 
-        <ReminderSummaryCard reminder={reminder} vehicleLabel={vehicleLabel} />
+        <p className="text-caption text-fg-3">
+          Added {format.date(reminder.createdAt)}
+          {reminder.updatedAt !== reminder.createdAt
+            ? ` · last edited ${format.date(reminder.updatedAt)}`
+            : null}
+        </p>
       </PageContainer>
     </VehicleAccessProvider>
+  );
+}
+
+/**
+ * The reminder's one primary verb, by `reminderDoneAction`: Renew for a
+ * renewal that follows a paper, Log service for a service (with "Mark done
+ * without logging" beside it), Done otherwise; and Snooze, except on a
+ * renewal, which is snoozed through its paper.
+ */
+function ReminderDecision({
+  reminder,
+  currentOdometer,
+}: {
+  reminder: Reminder;
+  currentOdometer: number | undefined;
+}) {
+  const completeReminder = useCompleteReminder();
+  const [snoozing, setSnoozing] = useState(false);
+  const action = reminderDoneAction(reminder);
+
+  function markDone() {
+    completeReminder.mutate(reminder.id, {
+      onSuccess: () =>
+        appToast.success({ title: 'Reminder completed', description: reminder.title }),
+      onError: (error) =>
+        appToast.error({
+          title: 'Unable to complete reminder',
+          description: getApiErrorMessage(error, 'Unable to complete the reminder.'),
+        }),
+    });
+  }
+
+  if (action === 'renew') {
+    return (
+      <Link
+        className={buttonVariants({ className: 'w-full sm:w-auto' })}
+        params={{ vehicleId: reminder.vehicleId }}
+        search={{ tab: 'papers' }}
+        to="/vehicles/$vehicleId"
+      >
+        Renew
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex gap-2">
+        {action === 'log' ? (
+          <Link
+            className={buttonVariants({ className: 'flex-1 sm:flex-none' })}
+            params={{ vehicleId: reminder.vehicleId }}
+            search={logServiceSearchFor(reminder)}
+            to="/vehicles/$vehicleId/maintenance/new"
+          >
+            Log service
+          </Link>
+        ) : (
+          <Button
+            aria-label={`Mark ${reminder.title} done`}
+            className="flex-1 sm:flex-none"
+            disabled={completeReminder.isPending}
+            onClick={markDone}
+            type="button"
+          >
+            <Check aria-hidden="true" />
+            Done
+          </Button>
+        )}
+        <Button
+          aria-label={`Snooze ${reminder.title}`}
+          onClick={() => setSnoozing(true)}
+          type="button"
+          variant="outline"
+        >
+          <BellOff aria-hidden="true" />
+          Snooze
+        </Button>
+      </div>
+      {action === 'log' ? (
+        <button
+          className="self-start text-ui font-medium text-fg-2 underline-offset-2 hover:text-fg hover:underline disabled:opacity-50"
+          disabled={completeReminder.isPending}
+          onClick={markDone}
+          type="button"
+        >
+          Mark done without logging
+        </button>
+      ) : null}
+      <SnoozeReminderDialog
+        currentOdometer={currentOdometer}
+        onOpenChange={setSnoozing}
+        reminder={snoozing ? reminder : null}
+      />
+    </div>
   );
 }

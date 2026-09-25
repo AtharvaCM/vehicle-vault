@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   MaintenanceCategory,
   ReminderStatus,
@@ -72,16 +73,18 @@ function renderAs(role: VehicleRole) {
 
 describe('ReminderDetailPage roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])(
-    'lets an %s edit, complete and delete',
-    (role) => {
+    'lets an %s complete and snooze, with edit and delete in the menu',
+    async (role) => {
       renderAs(role);
 
-      expect(screen.getByRole('link', { name: 'Edit reminder' })).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: 'Mark Insurance renewal done' }),
       ).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Snooze Insurance renewal' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Delete reminder' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'More reminder actions' }));
+      expect(screen.getByRole('menuitem', { name: 'Edit reminder' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Delete reminder' })).toBeInTheDocument();
     },
   );
 
@@ -92,12 +95,20 @@ describe('ReminderDetailPage roles', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Insurance renewal' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Bajaj Pulsar NS 200 • MH12AB1234')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Reminders' })).toBeInTheDocument();
+    expect(screen.getByText('Bajaj Pulsar NS 200 · MH 12 AB 1234 · Insurance')).toBeInTheDocument();
 
-    expect(screen.queryByRole('link', { name: 'Edit reminder' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More reminder actions' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /done|snooze/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete reminder' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ReminderDetailPage due state', () => {
+  it('says where it stands in words, first', () => {
+    renderAs(VehicleRole.Owner);
+
+    expect(screen.getByTestId('reminder-due')).toHaveTextContent(
+      /Due in \d+ days — 10 Oct 2026|Overdue by/,
+    );
   });
 });
 
@@ -118,9 +129,9 @@ describe('ReminderDetailPage repeat rule', () => {
 
     render(<ReminderDetailPage reminderId="reminder-1" />);
 
-    expect(
-      screen.getByText('Repeats every 10,000 km or 12 months, whichever comes first'),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('reminder-next-step')).toHaveTextContent(
+      'Repeats every 10,000 km or 12 months;',
+    );
     expect(
       screen.getByText('Recommended every 10 000 km or 12 months, whichever comes first.'),
     ).toBeInTheDocument();
@@ -133,7 +144,9 @@ describe('ReminderDetailPage repeat rule', () => {
 
     render(<ReminderDetailPage reminderId="reminder-1" />);
 
-    expect(screen.getByText('Doesn’t repeat')).toBeInTheDocument();
+    expect(screen.getByTestId('reminder-next-step')).toHaveTextContent(
+      'Doesn’t repeat: marking it done closes it.',
+    );
   });
 });
 
@@ -165,12 +178,13 @@ describe('ReminderDetailPage Done and what happens next', () => {
     );
   });
 
-  it('asks a service reminder’s Done whether to log the service, naming the reminder', () => {
+  it('makes Log service a service reminder’s one primary verb, with mark done beside it', () => {
     renderReminder(oilChange);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mark Engine oil change done' }));
-
-    const log = screen.getByRole('link', { name: 'Log the service now' });
+    expect(
+      screen.queryByRole('button', { name: 'Mark Engine oil change done' }),
+    ).not.toBeInTheDocument();
+    const log = screen.getByRole('link', { name: 'Log service' });
     expect(log).toHaveAttribute('href', '/vehicles/$vehicleId/maintenance/new');
     expect(JSON.parse(log.getAttribute('data-search') ?? '{}')).toEqual({
       category: 'engine_oil',
