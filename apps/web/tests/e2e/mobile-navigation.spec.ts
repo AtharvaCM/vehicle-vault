@@ -371,7 +371,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['/costs', lender],
     ['/settings', 'Download JSON backup'],
     ['/settings/activity', 'Reminder created'],
-    [`/reminders/${reminder.id}`, 'Edit reminder'],
+    [`/reminders/${reminder.id}`, reminderTitle],
   ];
   for (const [path, loaded] of pages) {
     await page.goto(path);
@@ -429,11 +429,11 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await expectNoSidewaysScroll(page, `The fuel view at ${screen.width}px`);
   }
 
-  // From sm the page header puts its actions beside the title, and at 768px a
-  // long title and four actions do not fit on one row.
+  // From sm the page header puts its actions beside the title; at 768px a long
+  // title and its actions must still fit without scrolling sideways.
   await page.setViewportSize(PORTRAIT_TABLET);
   await page.goto(`/reminders/${reminder.id}`);
-  await expect(page.getByRole('main').getByText('Edit reminder').first()).toBeVisible();
+  await expect(page.getByRole('main').getByText(reminderTitle).first()).toBeVisible();
   await expectNoSidewaysScroll(page, `/reminders/${reminder.id}`);
 
   // A one-vehicle garage is one summary row on Home (#306): its rows go three
