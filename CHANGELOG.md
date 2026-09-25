@@ -1,3 +1,10 @@
+# [1.98.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.97.0...v1.98.0) (2026-09-25)
+
+
+### Features
+
+* **web:** turn the garage into a status list led by the plate ([07a58e5](https://github.com/AtharvaCM/vehicle-vault/commit/07a58e596e9dbe829001e18ea67575aef2bff7e2)), closes [#308](https://github.com/AtharvaCM/vehicle-vault/issues/308)
+
 # [1.97.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.96.0...v1.97.0) (2026-09-25)
 
 
