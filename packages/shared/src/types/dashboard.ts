@@ -98,6 +98,8 @@ export type DashboardAttentionItem = {
   title: string;
   reminderType?: ReminderType;
   reminderStatus?: ReminderStatus;
+  /** Reminders only: the service category its Done offers to log (see `Reminder.logCategory`). */
+  logCategory?: MaintenanceCategory;
   documentKind?: VehicleDocumentKind;
   /** Documents only: insurer / issuing authority. */
   provider?: string;

@@ -2,10 +2,13 @@ import { AuditResourceType, Prisma, ReminderType as PrismaReminderType } from '@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ReminderCreateSchema,
+  ReminderSnoozeSchema,
   ReminderStatus,
   ReminderType,
   ReminderUpdateSchema,
+  reminderSnoozeTarget,
   type Reminder,
+  type ReminderSnoozeInput,
   type UpdateReminderInput,
   type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
@@ -24,12 +27,10 @@ import { ServiceScheduleService } from './service-schedule.service';
 import { computeUsageCadence, projectDueDate, type UsageCadence } from './usage-projection';
 import { computeReminderStatus, reminderStatusPriority } from './reminder-status';
 import { linkRenewalReminder, linkedPaperId, renewalKindOf } from './renewal-link';
+import { reminderLogCategory } from './log-category';
+import type { RepeatAnchor } from './repeat-rule';
 
 const USAGE_PROJECTION_FUEL_LOG_WINDOW_DAYS = 180;
-/** How far "Snooze" moves a reminder: a week on its date, 500 km on its odometer. */
-export const REMINDER_SNOOZE_DAYS = 7;
-export const REMINDER_SNOOZE_KM = 500;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function utcDayOf(date: Date): number {
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
@@ -40,9 +41,20 @@ const REMINDER_INCLUDE = {
   vehicle: { select: { odometer: true } },
   insurancePolicy: { select: { id: true, endDate: true } },
   complianceDocument: { select: { id: true, kind: true, endDate: true } },
+  sourceMaintenanceRecord: { select: { category: true } },
 } satisfies Prisma.ReminderInclude;
 
 type ReminderWithVehicle = Prisma.ReminderGetPayload<{ include: typeof REMINDER_INCLUDE }>;
+
+/**
+ * A reminder a service record is about to complete, read and its successor
+ * worked out before the record's transaction opens (see `completeByRecord`).
+ */
+export type ReminderHandoff = {
+  before: ReminderWithVehicle;
+  next: Prisma.ReminderUncheckedCreateInput | null;
+  now: Date;
+};
 
 @Injectable()
 export class RemindersService {
@@ -238,31 +250,7 @@ export class RemindersService {
     const next = await this.serviceScheduleService.buildNextOccurrence(userId, before, now);
 
     await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.reminder.update({
-        where: { id: reminderId },
-        data: { completedAt: now, status: ReminderStatus.Completed },
-      });
-      await this.auditService.track(tx, {
-        actorUserId: userId,
-        ownerUserId: userId,
-        action: AUDIT_ACTIONS.reminder.completed,
-        resourceType: AuditResourceType.reminder,
-        resourceId: reminderId,
-        before: before as unknown as Record<string, unknown>,
-        after: updated as unknown as Record<string, unknown>,
-      });
-
-      if (next) {
-        const scheduled = await tx.reminder.create({ data: next });
-        await this.auditService.track(tx, {
-          actorUserId: userId,
-          ownerUserId: userId,
-          action: AUDIT_ACTIONS.reminder.created,
-          resourceType: AuditResourceType.reminder,
-          resourceId: scheduled.id,
-          after: scheduled as unknown as Record<string, unknown>,
-        });
-      }
+      await this.writeCompletion(tx, userId, before, next, now);
     });
     // Keeps the bell in step with the attention queue for this action — the
     // reminder just left the queue, so any due/overdue alert for it is moot.
@@ -272,13 +260,139 @@ export class RemindersService {
   }
 
   /**
-   * "Not now": moves the reminder a week on (from today, or from its date if
-   * that is later) and, where it counts kilometres, 500 km on from the
-   * odometer or its target, whichever is further. It is an edit to the
-   * reminder, so it takes an editor, and it clears the bell for it as
-   * completing does.
+   * The first half of "saving the record completes the reminder": checks the
+   * reminder a service record names (`reminderId`) and works out its next
+   * occurrence, counted from the record's date and odometer rather than from
+   * now. Runs before the record's transaction, for the same reason
+   * `completeReminder` resolves its successor first. Null when the reminder
+   * is already complete: saving the record again, or after someone ticked it
+   * off, changes nothing. The caller has already asserted editor on the
+   * vehicle.
    */
-  async snoozeReminder(userId: string, reminderId: string) {
+  async prepareCompletionByRecord(
+    userId: string,
+    vehicleId: string,
+    reminderId: string,
+    record: { serviceDate: Date; odometer: number },
+  ): Promise<ReminderHandoff | null> {
+    const before = await this.getStoredReminderById(userId, reminderId);
+    if (before.vehicleId !== vehicleId) {
+      throw new BadRequestException('That reminder belongs to another vehicle.');
+    }
+    if (before.completedAt) return null;
+
+    const now = new Date();
+    // A service logged for a future day is counted from today: an anchor never runs ahead.
+    const from: RepeatAnchor = {
+      odometer: record.odometer,
+      at: record.serviceDate.getTime() < now.getTime() ? record.serviceDate : now,
+    };
+    const next = await this.serviceScheduleService.buildNextOccurrence(userId, before, now, from);
+    return { before, next, now };
+  }
+
+  /**
+   * The second half, inside the record's transaction and after its next-due
+   * sync: completes the reminder and schedules its next occurrence. When the
+   * record carries its own next-due (what the workshop wrote down), the
+   * reminder that sync made is the next one, so no second is scheduled from
+   * the rule; that reminder takes the rule on instead, so it keeps repeating.
+   */
+  async completeByRecord(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    handoff: ReminderHandoff,
+    record: { id: string; nextDueDate: Date | null; nextDueOdometer: number | null },
+  ): Promise<void> {
+    const { before, next, now } = handoff;
+    const recordSetsNext = record.nextDueDate !== null || record.nextDueOdometer !== null;
+    // The sync may have closed it already: a record-made reminder of the same
+    // kind is fulfilled by any newer service of that kind.
+    const current = await tx.reminder.findUnique({
+      where: { id: before.id },
+      select: { completedAt: true },
+    });
+    if (current && !current.completedAt) {
+      await this.writeCompletion(tx, userId, before, recordSetsNext ? null : next, now);
+    }
+    if (!recordSetsNext || !next) return;
+
+    const made = await tx.reminder.findUnique({ where: { sourceMaintenanceRecordId: record.id } });
+    if (
+      !made ||
+      made.completedAt ||
+      made.repeatEveryMonths !== null ||
+      made.repeatEveryKm !== null
+    ) {
+      return;
+    }
+    const updated = await tx.reminder.update({
+      where: { id: made.id },
+      data: {
+        repeatEveryMonths: before.repeatEveryMonths,
+        repeatEveryKm: before.repeatEveryKm,
+        catalogSlug: made.catalogSlug ?? before.catalogSlug,
+      },
+    });
+    await this.auditService.track(tx, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: AUDIT_ACTIONS.reminder.updated,
+      resourceType: AuditResourceType.reminder,
+      resourceId: made.id,
+      before: made as unknown as Record<string, unknown>,
+      after: updated as unknown as Record<string, unknown>,
+    });
+  }
+
+  /** After `completeByRecord` commits: clears the bell for it, as `completeReminder` does. */
+  async clearAlertsFor(userId: string, reminderId: string): Promise<void> {
+    await this.notificationsService.markReadForReminder(userId, reminderId);
+  }
+
+  private async writeCompletion(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    before: ReminderWithVehicle,
+    next: Prisma.ReminderUncheckedCreateInput | null,
+    now: Date,
+  ) {
+    const updated = await tx.reminder.update({
+      where: { id: before.id },
+      data: { completedAt: now, status: ReminderStatus.Completed },
+    });
+    await this.auditService.track(tx, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: AUDIT_ACTIONS.reminder.completed,
+      resourceType: AuditResourceType.reminder,
+      resourceId: before.id,
+      before: before as unknown as Record<string, unknown>,
+      after: updated as unknown as Record<string, unknown>,
+    });
+
+    if (next) {
+      const scheduled = await tx.reminder.create({ data: next });
+      await this.auditService.track(tx, {
+        actorUserId: userId,
+        ownerUserId: userId,
+        action: AUDIT_ACTIONS.reminder.created,
+        resourceType: AuditResourceType.reminder,
+        resourceId: scheduled.id,
+        after: scheduled as unknown as Record<string, unknown>,
+      });
+    }
+  }
+
+  /**
+   * "Not now": moves the reminder a week on (the default), a month on, or to
+   * a day the owner picks, counted from today or from its date if that is
+   * later; where it counts kilometres, the target moves on by 500 km a week
+   * (`reminderSnoozeTarget` in `@vehicle-vault/shared`, which the web's
+   * preview runs too). It is an edit to the reminder, so it takes an editor,
+   * and it clears the bell for it as completing does.
+   */
+  async snoozeReminder(userId: string, reminderId: string, payload: ReminderSnoozeInput = {}) {
     const before = await this.getStoredReminderById(userId, reminderId);
     await this.access.assertEditor(userId, before.vehicleId);
     if (before.completedAt) {
@@ -290,15 +404,21 @@ export class RemindersService {
       );
     }
 
+    const parsed = ReminderSnoozeSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Snooze payload failed schema validation',
+        details: parsed.error.flatten(),
+      });
+    }
     const now = new Date();
-    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    const dueDate = before.dueDate
-      ? new Date(Math.max(before.dueDate.getTime(), today) + REMINDER_SNOOZE_DAYS * MS_PER_DAY)
-      : null;
-    const dueOdometer =
-      before.dueOdometer === null
-        ? null
-        : Math.max(before.dueOdometer, before.vehicle.odometer) + REMINDER_SNOOZE_KM;
+    const target = reminderSnoozeTarget(before, before.vehicle.odometer, parsed.data, now);
+    if (!target) {
+      throw new BadRequestException(
+        'Pick a day after the reminder is due: a snooze moves it later, never sooner.',
+      );
+    }
+    const { dueDate, dueOdometer } = target;
     const status = this.computeReminderStatus(
       { dueDate: dueDate?.toISOString(), dueOdometer: dueOdometer ?? undefined },
       before.vehicle.odometer,
@@ -442,6 +562,12 @@ export class RemindersService {
       completedAt: reminder.completedAt?.toISOString(),
       notes: reminder.notes ?? undefined,
       catalogSlug: reminder.catalogSlug ?? undefined,
+      logCategory: reminderLogCategory({
+        type: reminder.type,
+        catalogSlug: reminder.catalogSlug,
+        sourceCategory: reminder.sourceMaintenanceRecord?.category ?? null,
+        followsPaper: paper !== null,
+      }),
       repeatEveryMonths: reminder.repeatEveryMonths ?? undefined,
       repeatEveryKm: reminder.repeatEveryKm ?? undefined,
       createdAt: reminder.createdAt.toISOString(),

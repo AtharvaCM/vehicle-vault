@@ -6,6 +6,7 @@ export * from './export.schema';
 export * from './maintenance-line-item.schema';
 export * from './maintenance-record.schema';
 export * from './reminder.schema';
+export * from './reminder-snooze.schema';
 export * from './vehicle-catalog.schema';
 export * from './vehicle.schema';
 export * from './fuel-log.schema';

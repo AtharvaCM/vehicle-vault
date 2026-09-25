@@ -14,6 +14,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   MaxLength,
   Min,
@@ -177,4 +178,12 @@ export class CreateMaintenanceRecordDto {
   @ValidateNested({ each: true })
   @Type(() => CreateMaintenanceLineItemDto)
   lineItems?: CreateMaintenanceLineItemDto[];
+
+  /**
+   * The reminder this service answers. A confirmed save completes it and
+   * schedules its next occurrence from this record; it is not stored.
+   */
+  @IsOptional()
+  @IsUUID()
+  reminderId?: string;
 }

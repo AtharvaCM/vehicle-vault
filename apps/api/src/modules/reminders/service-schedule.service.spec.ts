@@ -475,6 +475,20 @@ describe('ServiceScheduleService', () => {
         });
       });
 
+      it('counts from the logged service, not from now, when a record completes it', async () => {
+        const next = await service.buildNextOccurrence('u1', completed(), now, {
+          odometer: 38_500,
+          at: new Date('2026-09-01T00:00:00.000Z'),
+        });
+
+        expect(next).toMatchObject({
+          dueOdometer: 48_500,
+          dueDate: new Date('2027-09-01T00:00:00.000Z'),
+          repeatEveryKm: 10_000,
+          repeatEveryMonths: 12,
+        });
+      });
+
       it('stops when the item no longer applies to the vehicle', async () => {
         vehiclesService.ensureVehicleExists.mockResolvedValue({
           ...vehicle,

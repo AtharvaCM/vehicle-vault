@@ -21,6 +21,7 @@ import { AuditService } from '../audit/audit.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 import { AUDIT_ACTIONS } from '../audit/audit.actions';
 import { MaintenancePartsService } from '../maintenance-parts/maintenance-parts.service';
+import { RemindersService } from '../reminders/reminders.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import type { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
@@ -47,6 +48,7 @@ export class MaintenanceService {
     private readonly access: VehicleAccessService,
     private readonly parts: MaintenancePartsService,
     private readonly productEvents: ProductEventsService,
+    private readonly reminders: RemindersService,
   ) {}
 
   async getAllRecords(userId: string) {
@@ -108,6 +110,15 @@ export class MaintenanceService {
       vehicleId,
     });
     await this.enrichLineItemsFromCatalog(input.lineItems);
+    // Saving a confirmed record from a reminder's "Log the service now" completes that reminder.
+    const handoff =
+      input.reminderId &&
+      (input.status ?? MaintenanceRecordStatus.Confirmed) === MaintenanceRecordStatus.Confirmed
+        ? await this.reminders.prepareCompletionByRecord(userId, vehicleId, input.reminderId, {
+            serviceDate: new Date(input.serviceDate),
+            odometer: input.odometer,
+          })
+        : null;
     const record = await this.prisma.$transaction(async (tx) => {
       const created = await tx.maintenanceRecord.create({
         data: this.toCreateMaintenanceData(input),
@@ -130,8 +141,14 @@ export class MaintenanceService {
         });
       }
       await syncNextDueReminder(tx, this.auditService, userId, created);
+      if (handoff) {
+        await this.reminders.completeByRecord(tx, userId, handoff, created);
+      }
       return created;
     });
+    if (handoff) {
+      await this.reminders.clearAlertsFor(userId, handoff.before.id);
+    }
 
     await this.recordPartObservations(record.lineItems);
     return this.toMaintenanceRecord(record);
@@ -246,6 +263,19 @@ export class MaintenanceService {
     await this.access.assertEditor(userId, before.vehicleId);
     const input = this.validateUpdateMaintenanceInput(payload);
     await this.enrichLineItemsFromCatalog(input.lineItems);
+    // Confirming a draft (or saving a confirmed record) the reminder handed off to completes it.
+    const handoff =
+      input.reminderId && (input.status ?? before.status) === MaintenanceRecordStatus.Confirmed
+        ? await this.reminders.prepareCompletionByRecord(
+            userId,
+            before.vehicleId,
+            input.reminderId,
+            {
+              serviceDate: input.serviceDate ? new Date(input.serviceDate) : before.serviceDate,
+              odometer: input.odometer ?? before.odometer,
+            },
+          )
+        : null;
     const record = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.maintenanceRecord.update({
         where: { id: recordId },
@@ -274,8 +304,14 @@ export class MaintenanceService {
       }
       // Confirming, or editing a confirmed record, refreshes its next-due reminder.
       await syncNextDueReminder(tx, this.auditService, userId, updated);
+      if (handoff) {
+        await this.reminders.completeByRecord(tx, userId, handoff, updated);
+      }
       return updated;
     });
+    if (handoff) {
+      await this.reminders.clearAlertsFor(userId, handoff.before.id);
+    }
 
     await this.recordPartObservations(record.lineItems);
     return this.toMaintenanceRecord(record);

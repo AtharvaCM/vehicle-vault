@@ -8,6 +8,7 @@ import { ApplyServiceScheduleDto } from './dto/apply-service-schedule.dto';
 import { CreateReminderDto } from './dto/create-reminder.dto';
 import { ListRemindersQueryDto } from './dto/list-reminders-query.dto';
 import { ReminderIdParamDto } from './dto/reminder-id-param.dto';
+import { SnoozeReminderDto } from './dto/snooze-reminder.dto';
 import { UpdateReminderDto } from './dto/update-reminder.dto';
 import { RemindersService } from './reminders.service';
 import { ServiceScheduleService } from './service-schedule.service';
@@ -91,8 +92,15 @@ export class RemindersController {
   }
 
   @Patch('reminders/:reminderId/snooze')
-  async snoozeReminder(@Param() params: ReminderIdParamDto, @CurrentUser() user: AuthUser) {
-    return this.remindersService.snoozeReminder(user.id, params.reminderId);
+  async snoozeReminder(
+    @Param() params: ReminderIdParamDto,
+    @Body() body: SnoozeReminderDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.remindersService.snoozeReminder(user.id, params.reminderId, {
+      period: body?.period,
+      until: body?.until,
+    });
   }
 
   @Patch('reminders/:reminderId/complete')

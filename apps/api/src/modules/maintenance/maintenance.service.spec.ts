@@ -110,10 +110,18 @@ describe('MaintenanceService', () => {
     track: vi.fn().mockResolvedValue(undefined),
   };
 
+  const reminders = {
+    prepareCompletionByRecord: vi.fn(),
+    completeByRecord: vi.fn().mockResolvedValue(undefined),
+    clearAlertsFor: vi.fn().mockResolvedValue(undefined),
+  };
+
   let service: MaintenanceService;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    reminders.completeByRecord.mockResolvedValue(undefined);
+    reminders.clearAlertsFor.mockResolvedValue(undefined);
     vehiclesService.ensureVehicleExists.mockResolvedValue({
       id: 'vehicle-1',
       odometer: 12345,
@@ -147,6 +155,7 @@ describe('MaintenanceService', () => {
         recordObservation: vi.fn().mockResolvedValue(undefined),
       } as never,
       productEvents as never,
+      reminders as never,
     );
   });
 
@@ -554,6 +563,86 @@ describe('MaintenanceService', () => {
       deleted: true,
     });
   });
+  describe('the reminder a logged service answers (`reminderId`)', () => {
+    const handoff = { before: { id: 'reminder-due' }, next: null, now: new Date() };
+    const input = {
+      category: MaintenanceCategory.EngineOil,
+      serviceDate: '2026-03-18T00:00:00.000Z',
+      odometer: 12345,
+      totalCost: 2499,
+      reminderId: '0d3f9a52-8f4e-4c1f-9d55-3f2c7b9e1a20',
+    };
+
+    it('completes it in the record’s transaction, counted from the record', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
+      reminders.prepareCompletionByRecord.mockResolvedValue(handoff);
+
+      await service.createForVehicle('user-1', 'vehicle-1', input);
+
+      expect(reminders.prepareCompletionByRecord).toHaveBeenCalledWith(
+        'user-1',
+        'vehicle-1',
+        input.reminderId,
+        { serviceDate: new Date('2026-03-18T00:00:00.000Z'), odometer: 12345 },
+      );
+      expect(reminders.completeByRecord).toHaveBeenCalledWith(prisma, 'user-1', handoff, record);
+      expect(reminders.clearAlertsFor).toHaveBeenCalledWith('user-1', 'reminder-due');
+      // The link is not a column on the record.
+      expect(prisma.maintenanceRecord.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({ reminderId: expect.anything() }),
+        }),
+      );
+    });
+
+    it('leaves the reminder open while the record is only a draft', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue({
+        ...record,
+        status: MaintenanceRecordStatus.Draft,
+      });
+
+      await service.createForVehicle('user-1', 'vehicle-1', {
+        ...input,
+        status: MaintenanceRecordStatus.Draft,
+      });
+
+      expect(reminders.prepareCompletionByRecord).not.toHaveBeenCalled();
+      expect(reminders.completeByRecord).not.toHaveBeenCalled();
+    });
+
+    it('completes it when the draft is confirmed from the edit form', async () => {
+      prisma.maintenanceRecord.findFirst = vi.fn().mockResolvedValue({
+        ...record,
+        status: MaintenanceRecordStatus.Draft,
+      });
+      prisma.maintenanceRecord.update = vi.fn().mockResolvedValue(record);
+      reminders.prepareCompletionByRecord.mockResolvedValue(handoff);
+
+      await service.updateRecord('user-1', 'record-1', {
+        status: MaintenanceRecordStatus.Confirmed,
+        reminderId: input.reminderId,
+      });
+
+      expect(reminders.prepareCompletionByRecord).toHaveBeenCalledWith(
+        'user-1',
+        'vehicle-1',
+        input.reminderId,
+        { serviceDate: record.serviceDate, odometer: record.odometer },
+      );
+      expect(reminders.completeByRecord).toHaveBeenCalledWith(prisma, 'user-1', handoff, record);
+    });
+
+    it('does nothing more when the reminder was already complete', async () => {
+      prisma.maintenanceRecord.create = vi.fn().mockResolvedValue(record);
+      reminders.prepareCompletionByRecord.mockResolvedValue(null);
+
+      await service.createForVehicle('user-1', 'vehicle-1', input);
+
+      expect(reminders.completeByRecord).not.toHaveBeenCalled();
+      expect(reminders.clearAlertsFor).not.toHaveBeenCalled();
+    });
+  });
+
   describe('the reminder a confirmed service leaves behind', () => {
     const createInput = {
       category: MaintenanceCategory.EngineOil,
