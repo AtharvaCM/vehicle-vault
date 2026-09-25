@@ -7,7 +7,6 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AttachmentsSection } from '@/features/attachments/components/attachments-section';
 import { useAttachmentExtractionStatus } from '@/features/attachments/hooks/use-attachment-extraction-status';
 import { useAttachments } from '@/features/attachments/hooks/use-attachments';
@@ -56,10 +55,6 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
     () =>
       recordQuery.data
         ? {
-            entryMode:
-              recordQuery.data.lineItems?.length || recordQuery.data.invoiceNumber
-                ? 'detailed'
-                : 'quick',
             serviceDate: toDateInputValue(recordQuery.data.serviceDate),
             odometer: recordQuery.data.odometer,
             category: recordQuery.data.category,
@@ -235,59 +230,43 @@ export function MaintenanceRecordEditPage({ recordId }: MaintenanceRecordEditPag
           />
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <MaintenanceForm
-            currentOdometer={vehicleQuery.data?.odometer}
-            fieldsFromBill={fieldsFromBill}
-            initialValues={initialValues}
-            isSubmitting={updateRecordMutation.isPending}
-            onDirtyChange={setIsDirty}
-            onSubmit={handleUpdateRecord}
-            submitError={
-              updateRecordMutation.error
-                ? getApiErrorMessage(
-                    updateRecordMutation.error,
-                    isDraft
-                      ? 'Unable to confirm the service record.'
-                      : 'Unable to update the service record.',
-                  )
-                : null
-            }
-            submitHint={
-              isDraft
-                ? 'Confirming logs this service: it starts counting in costs and reports, and any next-due the workshop wrote down becomes a reminder.'
-                : 'Edits keep the same receipts linked to this service record.'
-            }
-            submitLabel={isDraft ? 'Confirm record' : 'Save changes'}
-            submittingLabel={isDraft ? 'Confirming record...' : 'Saving changes...'}
-            successMessage={isDraft ? 'Service record confirmed.' : 'Service record updated.'}
-            recordId={recordId}
-            vehicleId={recordQuery.data?.vehicleId}
-          />
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div className="rounded-card border border-line bg-surface p-6 max-md:-mx-4 max-md:rounded-none max-md:border-x-0 max-md:px-4 max-md:pt-4 max-md:pb-0">
+            <MaintenanceForm
+              currentOdometer={vehicleQuery.data?.odometer}
+              fieldsFromBill={fieldsFromBill}
+              initialValues={initialValues}
+              isSubmitting={updateRecordMutation.isPending}
+              onDirtyChange={setIsDirty}
+              onSubmit={handleUpdateRecord}
+              submitError={
+                updateRecordMutation.error
+                  ? getApiErrorMessage(
+                      updateRecordMutation.error,
+                      isDraft
+                        ? 'Unable to confirm the service record.'
+                        : 'Unable to update the service record.',
+                    )
+                  : null
+              }
+              submitHint={
+                isDraft
+                  ? 'Confirming logs this service: it starts counting in costs and reports, and its next due becomes a reminder.'
+                  : 'Edits keep the same receipts linked to this service record.'
+              }
+              submitLabel={isDraft ? 'Confirm record' : 'Save changes'}
+              submittingLabel={isDraft ? 'Confirming record...' : 'Saving changes...'}
+              successMessage={isDraft ? 'Service record confirmed.' : 'Service record updated.'}
+              recordId={recordId}
+              scheduleNextDue={isDraft}
+              vehicleId={recordQuery.data?.vehicleId}
+            />
+          </div>
 
           <div className="space-y-6">
             {isDraft || recordQuery.data?.source === 'ocr' ? (
               <MaintenanceDraftReviewCard isDraft={isDraft} recordId={recordId} />
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Keep the record clear</CardTitle>
-                  <CardDescription>
-                    Small corrections now make the history easier to trust later.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-                  <p>
-                    Update the date, odometer, and cost whenever the original entry needs
-                    correction.
-                  </p>
-                  <p>
-                    Receipts and documents stay attached to the same service record after edits.
-                  </p>
-                  <p>Use next due fields to keep follow-up service planning clear and accurate.</p>
-                </CardContent>
-              </Card>
-            )}
+            ) : null}
 
             {recordQuery.data?.vehicleId ? (
               <MaintenanceClaimLinkCard
