@@ -37,8 +37,8 @@ function renderButtons(next?: string) {
 }
 
 async function hrefOf(label: string) {
-  const button = await screen.findByRole('button', { name: label });
-  return button.closest('a')?.getAttribute('href');
+  const link = await screen.findByRole('link', { name: label });
+  return link.getAttribute('href');
 }
 
 describe('OAuthButtons', () => {
@@ -50,7 +50,14 @@ describe('OAuthButtons', () => {
     renderButtons();
 
     expect(await hrefOf('Continue with Google')).toBe('/api/auth/oauth/google');
-    expect(await hrefOf('Continue with GitHub')).toBe('/api/auth/oauth/github');
+  });
+
+  it('offers Google only: GitHub is hidden from the consumer UI', async () => {
+    renderButtons();
+
+    await screen.findByRole('link', { name: 'Continue with Google' });
+    expect(screen.queryByRole('link', { name: /GitHub/ })).not.toBeInTheDocument();
+    expect(screen.getByText('or use email')).toBeInTheDocument();
   });
 
   it('sends the waiting intent’s model slug with the sign-in, and nothing else', async () => {
@@ -59,7 +66,6 @@ describe('OAuthButtons', () => {
     renderButtons();
 
     expect(await hrefOf('Continue with Google')).toBe('/api/auth/oauth/google?catalogModel=city');
-    expect(await hrefOf('Continue with GitHub')).toBe('/api/auth/oauth/github?catalogModel=city');
     // The intent stays here for the callback page and the form.
     expect(readCatalogIntent()).toEqual(intent);
   });

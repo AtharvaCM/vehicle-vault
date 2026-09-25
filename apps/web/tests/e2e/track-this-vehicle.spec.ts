@@ -115,7 +115,7 @@ test.describe('Track this vehicle', () => {
 
     // Kept for later, and gone from the address.
     await expect(page).toHaveURL(/\/register$/);
-    await page.getByLabel(/^name$/i).fill(account.name);
+    await page.getByLabel(/^your name$/i).fill(account.name);
     await page.getByLabel(/email address/i).fill(account.email);
     await page.getByLabel(/^password$/i).fill(account.password);
     await page.getByRole('button', { name: /create account/i }).click();

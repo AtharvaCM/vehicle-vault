@@ -68,13 +68,8 @@ export function ForgotPasswordPage() {
         return;
       }
 
-      const message = getApiErrorMessage(error, 'We couldn’t start the password reset. Try again.');
-
-      setSubmitError(message);
-      appToast.error({
-        title: 'Reset request failed',
-        description: message,
-      });
+      // One error per failure: under the form, not a toast saying it again.
+      setSubmitError(getApiErrorMessage(error, 'We couldn’t start the password reset. Try again.'));
     } finally {
       setIsSubmitting(false);
     }

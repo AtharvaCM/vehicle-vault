@@ -12,9 +12,11 @@ import { appToast } from '@/lib/toast';
 
 import { register } from '../api/register';
 import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
+import { CatalogIntentCard } from '../components/catalog-intent-card';
 import { OAuthButtons } from '../components/oauth-buttons';
 import { RegisterForm } from '../components/register-form';
 import { useAuth } from '../hooks/use-auth';
+import { nextContext } from '../lib/next-context';
 import { afterAuthDestination, navigateAfterAuth } from '../lib/return-path';
 
 export function RegisterPage() {
@@ -58,33 +60,33 @@ export function RegisterPage() {
       });
       await navigateAfterAuth(navigate, destination);
     } catch (error) {
-      const message = getApiErrorMessage(error, 'Unable to create the account right now.');
-
-      setSubmitError(message);
-      appToast.error({
-        title: 'Registration failed',
-        description: message,
-      });
+      // One error per failure: under the form, not a toast saying it again.
+      setSubmitError(getApiErrorMessage(error, 'Unable to create the account right now.'));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Read on every render: the intent is saved from the address in an effect.
+  const intent = readCatalogIntent();
+  const context = nextContext(next);
 
   return (
     <AuthPageShell
       alternateAction={
         <AuthPageLink label="Sign in" next={next} text="Already have an account?" to="/login" />
       }
-      description="Create an account to keep your vehicles, service history, reminders, and receipts in one place."
-      title="Create your account"
+      context={intent ? <CatalogIntentCard intent={intent} /> : null}
+      description={context ? `Create your account ${context}.` : undefined}
+      title="Create your free account"
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <OAuthButtons next={next} />
         <RegisterForm
           isSubmitting={isSubmitting}
           onSubmit={handleSubmit}
           submitError={submitError}
         />
-        <OAuthButtons next={next} />
       </div>
     </AuthPageShell>
   );

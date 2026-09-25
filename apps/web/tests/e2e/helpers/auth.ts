@@ -14,7 +14,7 @@ type Credentials = {
  */
 export async function registerUnverified(page: Page, { email, name, password }: Credentials) {
   await page.goto('/register');
-  await page.getByLabel(/^name$/i).fill(name);
+  await page.getByLabel(/^your name$/i).fill(name);
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole('button', { name: /create account/i }).click();
