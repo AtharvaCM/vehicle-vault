@@ -243,7 +243,7 @@ describe('ProtectionTab roles', () => {
     // Showing a document is reading it: the viewer may be the one at the checkpoint.
     expect(screen.getByRole('link', { name: 'Show Insurance policy full screen' })).toHaveAttribute(
       'href',
-      '/vehicles/$vehicleId/documents/$kind/$documentId',
+      '/vehicles/$vehicleId/papers',
     );
     for (const name of [
       ...sectionActions,

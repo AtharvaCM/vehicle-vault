@@ -19,13 +19,9 @@ import { formatRelativeAgo } from '@/features/dashboard/utils/format-due';
 import { FuelLogDialog } from '@/features/dashboard/components/fuel-log-dialog';
 import { OdometerUpdateForm } from '@/features/dashboard/components/odometer-update-form';
 import { DocumentFormDialog } from '@/features/vehicle-documents/components/document-form-dialog';
-import { documentOfRecord } from '@/features/vehicle-documents/utils/document-of-record';
 
 import { useVehicleAccess } from '../context/vehicle-access';
 import { describeVehicleModel } from '../utils/describe-vehicle-model';
-
-/** The papers "Show papers" opens, in the order someone asking for them wants them. */
-const SHOW_PAPERS_ORDER = ['insurance', 'puc', 'registration', 'road_tax'] as const;
 
 export type VehicleActions = {
   onDownloadServiceHistory: () => void;
@@ -35,7 +31,7 @@ export type VehicleActions = {
 
 type VehicleDetailHeaderProps = {
   vehicle: Vehicle;
-  /** The vehicle's papers, once loaded: "Show papers" opens the first one on file. */
+  /** The vehicle's papers, once loaded: with none, "Show papers" opens the Papers tab to add one. */
   documents: readonly VehicleDocument[] | undefined;
   actions: VehicleActions;
   /** The tab strip, drawn along the header's bottom edge. */
@@ -59,7 +55,8 @@ export function VehicleDetailHeader({
   const [logDialog, setLogDialog] = useState<LogDialog>(null);
   const vehicleId = vehicle.id;
   const name = vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`;
-  const paperToShow = firstPaperOnFile(documents ?? []);
+  // With none on file, the Papers tab is where one gets added.
+  const hasNoPapers = documents?.length === 0;
 
   return (
     <header className="border-b border-line bg-surface">
@@ -91,11 +88,12 @@ export function VehicleDetailHeader({
           />
 
           <div className="flex shrink-0 items-center gap-2">
-            {paperToShow ? (
+            {hasNoPapers ? (
               <Link
                 className={buttonVariants({ variant: 'outline', className: 'max-lg:flex-1' })}
-                params={{ vehicleId, kind: paperToShow.kind, documentId: paperToShow.id }}
-                to="/vehicles/$vehicleId/documents/$kind/$documentId"
+                params={{ vehicleId }}
+                search={{ tab: 'papers' }}
+                to="/vehicles/$vehicleId"
               >
                 <IdCard aria-hidden="true" />
                 Show papers
@@ -104,8 +102,7 @@ export function VehicleDetailHeader({
               <Link
                 className={buttonVariants({ variant: 'outline', className: 'max-lg:flex-1' })}
                 params={{ vehicleId }}
-                search={{ tab: 'papers' }}
-                to="/vehicles/$vehicleId"
+                to="/vehicles/$vehicleId/papers"
               >
                 <IdCard aria-hidden="true" />
                 Show papers
@@ -219,12 +216,4 @@ export function VehicleDetailHeader({
       ) : null}
     </header>
   );
-}
-
-function firstPaperOnFile(documents: readonly VehicleDocument[]) {
-  for (const kind of SHOW_PAPERS_ORDER) {
-    const current = documentOfRecord(documents.filter((document) => document.kind === kind));
-    if (current) return current;
-  }
-  return undefined;
 }
