@@ -15,15 +15,15 @@ import { MembersTab } from '@/features/vehicle-sharing/components/members-tab';
 
 import { useVehicleAccess } from '../context/vehicle-access';
 import type { VehicleMoreSection } from '../types/vehicle-detail-search';
+import { VehicleAbout } from './vehicle-about';
 import type { VehicleActions } from './vehicle-detail-header';
-import { VehicleSpecsCard } from './vehicle-specs-card';
 import { VehicleTyreTracker } from './vehicle-tyre-tracker';
 
 const sections: Record<
   VehicleMoreSection,
   { title: string; description: string; ownerOnly?: boolean }
 > = {
-  specs: { title: 'Tech specs', description: 'Engine, size and features from the catalogue' },
+  about: { title: 'About this vehicle', description: 'Variant, key specs and when you bought it' },
   tyres: { title: 'Tyres', description: 'Tread, age and rotation' },
   accessories: { title: 'Accessories', description: "What's fitted, with its warranty" },
   loans: { title: 'Loans', description: "EMIs and what's left to pay", ownerOnly: true },
@@ -179,10 +179,8 @@ function MoreSection({
   const vehicleId = vehicle.id;
 
   switch (section) {
-    case 'specs':
-      return (
-        <VehicleSpecsCard make={vehicle.make} model={vehicle.model} variant={vehicle.variant} />
-      );
+    case 'about':
+      return <VehicleAbout vehicle={vehicle} />;
     case 'tyres':
       return <VehicleTyreTracker maintenanceQuery={maintenanceQuery} vehicle={vehicle} />;
     case 'accessories':
