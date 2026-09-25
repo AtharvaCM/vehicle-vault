@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes } from 'react';
+import { FuelType } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -49,6 +50,8 @@ describe('VehicleHistoryTab', () => {
   it('shows the service content and not the fuel tab in the service view', () => {
     render(
       <VehicleHistoryTab
+        fuelType={FuelType.Petrol}
+        odometer={40_000}
         onViewChange={vi.fn()}
         serviceInsights={serviceInsights}
         vehicleId="vehicle-1"
@@ -64,6 +67,8 @@ describe('VehicleHistoryTab', () => {
   it('shows the fuel tab in the fuel view', () => {
     render(
       <VehicleHistoryTab
+        fuelType={FuelType.Petrol}
+        odometer={40_000}
         onViewChange={vi.fn()}
         serviceInsights={serviceInsights}
         vehicleId="vehicle-1"
@@ -80,6 +85,8 @@ describe('VehicleHistoryTab', () => {
     const onViewChange = vi.fn();
     render(
       <VehicleHistoryTab
+        fuelType={FuelType.Petrol}
+        odometer={40_000}
         onViewChange={onViewChange}
         serviceInsights={serviceInsights}
         vehicleId="vehicle-1"

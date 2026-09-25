@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDateString,
   IsInt,
   IsNumber,
@@ -39,6 +40,15 @@ export class UpdateFuelLogDto implements Partial<CreateFuelLogDto> {
   @IsNumber()
   @IsPositive()
   totalCost?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isFullTank?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  paymentMethod?: string;
 
   @IsOptional()
   @IsString()

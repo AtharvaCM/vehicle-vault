@@ -916,18 +916,23 @@ model AttachmentExtraction {
 }
 
 model FuelLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  vehicleId String   @db.Uuid
-  date      DateTime
-  odometer  Int
-  quantity  Float // Litres/Gallons
-  price     Decimal  @db.Decimal(10, 2)
-  totalCost Decimal  @db.Decimal(12, 2)
-  location  String?  @db.VarChar(120)
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid()) @db.Uuid
+  vehicleId     String   @db.Uuid
+  date          DateTime
+  odometer      Int
+  quantity      Float // Litres/kg/kWh, per the vehicle's fuel type
+  price         Decimal  @db.Decimal(10, 2)
+  totalCost     Decimal  @db.Decimal(12, 2)
+  /// Whether this fill topped the tank off; economy is best measured between full fills.
+  /// Not read by the economy calculation itself (see fuel-economy.ts) — carried for the
+  /// owner's own record and any future maths.
+  isFullTank    Boolean  @default(true)
+  paymentMethod String?  @db.VarChar(40)
+  location      String?  @db.VarChar(120)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId, date(sort: Desc)])
 }

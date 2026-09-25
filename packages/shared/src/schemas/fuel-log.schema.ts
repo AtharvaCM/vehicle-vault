@@ -6,6 +6,9 @@ export const FuelLogCreateSchema = z.object({
   quantity: z.number().positive(),
   price: z.number().positive(),
   totalCost: z.number().positive(),
+  /** Whether this fill topped the tank off. Not used by the economy calculation. */
+  isFullTank: z.boolean().optional(),
+  paymentMethod: z.string().trim().min(1).max(40).optional(),
   location: z.string().trim().min(1).max(120).optional(),
   notes: z.string().trim().min(1).optional(),
 });
