@@ -1,4 +1,5 @@
 import { Fuel, Gauge } from 'lucide-react';
+import type { FuelType } from '@vehicle-vault/shared';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -14,6 +15,9 @@ import type { VehicleServiceInsights } from '../utils/get-vehicle-service-insigh
 
 type VehicleHistoryTabProps = {
   vehicleId: string;
+  fuelType: FuelType;
+  /** The vehicle's current reading, passed through to the fuel tab's Odometer hint. */
+  odometer: number;
   serviceInsights: VehicleServiceInsights;
   view: VehicleHistoryView;
   onViewChange: (view: VehicleHistoryView) => void;
@@ -21,6 +25,8 @@ type VehicleHistoryTabProps = {
 
 export function VehicleHistoryTab({
   vehicleId,
+  fuelType,
+  odometer,
   serviceInsights,
   view,
   onViewChange,
@@ -51,7 +57,7 @@ export function VehicleHistoryTab({
         </>
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <FuelTab vehicleId={vehicleId} />
+          <FuelTab fuelType={fuelType} odometer={odometer} vehicleId={vehicleId} />
           <div className="h-fit space-y-6">
             <FuelEconomyCard vehicleId={vehicleId} />
             <Card className="h-fit border-line/60 bg-surface/70">
