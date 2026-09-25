@@ -106,7 +106,9 @@ function DataHealthText({
 }
 
 /** The next-due row's status, from the same day count its words are built from. */
-export function nextDueStatus(nextDue: NonNullable<DashboardVehicleHealth['nextDue']>): Status | null {
+export function nextDueStatus(
+  nextDue: NonNullable<DashboardVehicleHealth['nextDue']>,
+): Status | null {
   if (!nextDue.dueDate) return null;
 
   return dueStatus(nextDue.daysUntilDue, {
