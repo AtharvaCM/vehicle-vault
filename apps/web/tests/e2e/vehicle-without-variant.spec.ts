@@ -65,8 +65,8 @@ test('a vehicle can be added without naming its variant', async ({ page }) => {
   ).toBeVisible();
 
   await page.getByRole('tab', { name: 'More' }).click();
-  await page.getByRole('link', { name: 'Tech specs' }).click();
-  await expect(page.getByText('No variant on file')).toBeVisible();
+  await page.getByRole('link', { name: /^About this vehicle/ }).click();
+  await expect(page.getByText('Pick the variant to see its specs')).toBeVisible();
 
   // The trim can be filled in later, from the same form.
   await page.getByRole('button', { name: 'More vehicle actions' }).click();

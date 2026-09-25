@@ -45,6 +45,7 @@ import {
   useVehicleTyreInspections,
   useVehicleTyres,
 } from '../../tyres/hooks/use-tyres';
+import { useVariantSpecs } from '../hooks/use-variant-specs';
 import { useVehicleIntervals } from '../hooks/use-vehicle-intervals';
 import { getTyreInsights, type TyreMetric, type TyreStatus } from '../utils/get-tyre-status';
 import { useVehicleAccess } from '../context/vehicle-access';
@@ -73,6 +74,16 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
   const tyresQuery = useVehicleTyres(vehicle?.id ?? '');
   const inspectionsQuery = useVehicleTyreInspections(vehicle?.id ?? '');
   const deleteTyre = useDeleteTyre(vehicle?.id ?? '');
+  // The size printed on the sidewall, from the catalogue, so buying a tyre
+  // does not start with a trip to the car.
+  const specsQuery = useVariantSpecs(
+    vehicle?.make ?? '',
+    vehicle?.model ?? '',
+    vehicle?.variant?.trim() ?? '',
+  );
+  const catalogTyreSize = vehicle?.variant?.trim()
+    ? specsQuery.data?.tyreSize?.trim() || null
+    : null;
 
   const [openDialog, setOpenDialog] = useState<'tyre' | 'inspection' | null>(null);
   // Kept after the dialog closes, so it does not turn into "Add a tyre" while
@@ -179,6 +190,12 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
                     ? 'Per-corner condition from recorded tread depth and tyre age.'
                     : 'Derived from logged service history. Add tyres to track tread and age.'}
                 </CardDescription>
+                {catalogTyreSize ? (
+                  <p className="mt-1 text-small text-fg-2" data-testid="catalog-tyre-size">
+                    Size for this variant:{' '}
+                    <span className="font-semibold text-fg">{catalogTyreSize}</span>
+                  </p>
+                ) : null}
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge variant="outline" className="bg-surface font-bold text-caption">
@@ -346,6 +363,7 @@ export function VehicleTyreTracker({ vehicle, maintenanceQuery }: VehicleTyreTra
       {vehicle ? (
         <>
           <TyreFormDialog
+            defaultSize={catalogTyreSize}
             isOpen={openDialog === 'tyre'}
             onClose={() => setOpenDialog(null)}
             vehicleId={vehicle.id}

@@ -318,7 +318,7 @@ describe('VehicleDetailPage tabs', () => {
     renderAs(VehicleRole.Owner, { tab: 'more' });
     const owned = within(screen.getByRole('navigation', { name: 'More about this vehicle' }));
     expect(owned.getAllByRole('link').map((link) => link.textContent)).toEqual([
-      'Tech specsEngine, size and features from the catalogue',
+      'About this vehicleVariant, key specs and when you bought it',
       'TyresTread, age and rotation',
       "AccessoriesWhat's fitted, with its warranty",
       "LoansEMIs and what's left to pay",
