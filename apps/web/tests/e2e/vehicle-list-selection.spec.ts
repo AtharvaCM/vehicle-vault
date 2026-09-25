@@ -44,6 +44,9 @@ test('selecting a vehicle shows it as checked and names it in the delete confirm
 
   await page.goto('/garage');
   await expect(page.getByRole('heading', { level: 1, name: 'Garage' })).toBeVisible();
+  // Bulk actions wait behind Select (#308).
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
 
   const checkboxToDelete = page.getByRole('checkbox', {
     name: new RegExp(`select vehicle ${nicknameToDelete}`, 'i'),
@@ -59,12 +62,12 @@ test('selecting a vehicle shows it as checked and names it in the delete confirm
   await expect(checkboxToKeep).not.toBeChecked();
   await expect(page.getByText('1 vehicle selected')).toBeVisible();
 
-  // The selected card gets a visible selected style; the untouched one does not.
-  const cardToDelete = page.locator('[data-slot="card"]').filter({ hasText: nicknameToDelete });
-  const cardToKeep = page.locator('[data-slot="card"]').filter({ hasText: nicknameToKeep });
-  await expect(cardToDelete).toHaveClass(/ring-2/);
-  await expect(cardToDelete).toHaveClass(/ring-primary/);
-  await expect(cardToKeep).not.toHaveClass(/ring-2/);
+  // The selected row is marked, and tinted; the untouched one is not.
+  const rowToDelete = page.getByTestId('garage-row').filter({ hasText: nicknameToDelete });
+  const rowToKeep = page.getByTestId('garage-row').filter({ hasText: nicknameToKeep });
+  await expect(rowToDelete).toHaveAttribute('data-selected', 'true');
+  await expect(rowToDelete).toHaveClass(/bg-brand-tint/);
+  await expect(rowToKeep).not.toHaveAttribute('data-selected', 'true');
 
   await page.getByRole('button', { name: 'Delete selected (1)' }).click();
 
