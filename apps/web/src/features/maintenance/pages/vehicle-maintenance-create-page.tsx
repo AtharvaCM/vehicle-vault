@@ -75,6 +75,19 @@ export function VehicleMaintenanceCreatePage({
     if (category) return { category, reason: '' };
     return remindersQuery.data ? pickDueCategory(remindersQuery.data) : null;
   }, [category, linkedReminder, remindersQuery.data]);
+  // A reminder that repeats sets the next one by its own rule (#295: "the next
+  // one will be counted from the service you log"), not the schedule.
+  const reminderRepeat = useMemo(
+    () =>
+      linkedReminder &&
+      (linkedReminder.repeatEveryKm != null || linkedReminder.repeatEveryMonths != null)
+        ? {
+            km: linkedReminder.repeatEveryKm ?? null,
+            months: linkedReminder.repeatEveryMonths ?? null,
+          }
+        : null,
+    [linkedReminder],
+  );
   const { allowNextNavigation } = useUnsavedChangesGuard({
     when: isDirty,
     message: 'You have unsaved service details. Leave without saving?',
@@ -84,7 +97,11 @@ export function VehicleMaintenanceCreatePage({
     values: Parameters<typeof createMaintenanceMutation.mutateAsync>[0],
   ) {
     try {
-      const created = await createMaintenanceMutation.mutateAsync(values);
+      // Logged from a reminder: the API completes it with this record and
+      // counts the next occurrence from it.
+      const created = await createMaintenanceMutation.mutateAsync(
+        linkedReminder ? { ...values, reminderId: linkedReminder.id } : values,
+      );
       const restoreNavigationGuard = allowNextNavigation();
       toast.success('Service record created', {
         description: 'The service record was added to this vehicle.',
@@ -320,6 +337,7 @@ export function VehicleMaintenanceCreatePage({
             }
             onDirtyChange={setIsDirty}
             onSubmit={handleCreateMaintenanceRecord}
+            reminderRepeat={reminderRepeat}
             scheduleNextDue
             submitError={submitError}
             suggestedCategory={suggestedCategory}

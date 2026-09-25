@@ -38,7 +38,11 @@ import {
   roundMoney,
 } from '../utils/get-maintenance-line-item-breakdown';
 import type { BillField } from '../utils/get-fields-from-bill';
-import { scheduledNextDue, type NextDue } from '../utils/next-due-from-schedule';
+import {
+  nextDueFromSchedule,
+  scheduledNextDue,
+  type NextDue,
+} from '../utils/next-due-from-schedule';
 import type { CategoryPick } from '../utils/pick-due-category';
 import { workName } from '../utils/service-work';
 import { AmountInput } from './amount-input';
@@ -103,6 +107,13 @@ type MaintenanceFormProps = {
    * logged long ago.
    */
   scheduleNextDue?: boolean;
+  /**
+   * Logged from a reminder that repeats: its own rule, not the schedule, sets
+   * the next one. The form shows it and sends no next due of its own, so the
+   * API schedules the reminder's next occurrence (same title, same rule),
+   * unless the owner changes it.
+   */
+  reminderRepeat?: { months: number | null; km: number | null } | null;
   /** Content above the form: the bill buttons on a new record. */
   leading?: ReactNode;
   /** Beside the save button from `md` up: a way back without saving. */
@@ -208,6 +219,7 @@ export function MaintenanceForm({
   onDirtyChange,
   suggestedCategory,
   scheduleNextDue = false,
+  reminderRepeat = null,
   leading,
   cancel,
   submitLabel = 'Save service',
@@ -225,7 +237,7 @@ export function MaintenanceForm({
   const confirmedLowOdometer = useRef<number | null>(null);
   const [openExtras, setOpenExtras] = useState<string[]>([]);
   // Null until the owner chooses: then 'own' (typed) or 'schedule'.
-  const [nextDueChoice, setNextDueChoice] = useState<'schedule' | 'own' | null>(null);
+  const [nextDueChoice, setNextDueChoice] = useState<'reminder' | 'schedule' | 'own' | null>(null);
   const [isEditingNextDue, setIsEditingNextDue] = useState(false);
 
   const recordsQuery = useQuery({
@@ -335,11 +347,23 @@ export function MaintenanceForm({
     });
   }, [form, hasStructuredLineItems, lineItemBreakdown.totalCost]);
 
-  // The next due: the schedule's, unless the record brings its own (a bill, an
-  // earlier save) or the owner changes it.
+  // The next due: the reminder's repeat or else the schedule's, unless the
+  // record brings its own (a bill, an earlier save) or the owner changes it.
   const hasOwnNextDue =
     Boolean(initialValues?.nextDueDate) || initialValues?.nextDueOdometer !== undefined;
-  const nextDueSource = nextDueChoice ?? (scheduleNextDue && !hasOwnNextDue ? 'schedule' : 'own');
+  const nextDueSource =
+    nextDueChoice ??
+    (hasOwnNextDue ? 'own' : reminderRepeat ? 'reminder' : scheduleNextDue ? 'schedule' : 'own');
+  const reminderDue = useMemo(
+    () =>
+      reminderRepeat
+        ? nextDueFromSchedule(reminderRepeat, {
+            serviceDate,
+            odometer: enteredOdometer,
+          })
+        : null,
+    [enteredOdometer, reminderRepeat, serviceDate],
+  );
   const scheduled = useMemo(
     () =>
       scheduledNextDue({
@@ -379,6 +403,8 @@ export function MaintenanceForm({
           fromBill: isFromBill('nextDueDate') || isFromBill('nextDueOdometer'),
         }
       : { kind: 'unset' };
+  } else if (nextDueSource === 'reminder') {
+    nextDueState = reminderDue ? { kind: 'due', due: reminderDue } : { kind: 'unset' };
   } else if (intervalsQuery.isPending && Boolean(vehicleId)) {
     nextDueState = { kind: 'loading' };
   } else {
@@ -405,13 +431,16 @@ export function MaintenanceForm({
       return;
     }
 
+    // The reminder's own: left to the API, which counts it from this record.
     const nextDue: NextDue | null =
-      nextDueSource === 'schedule'
-        ? scheduledDue
-        : {
-            date: localResult.data.nextDueDate || undefined,
-            odometer: localResult.data.nextDueOdometer,
-          };
+      nextDueSource === 'reminder'
+        ? null
+        : nextDueSource === 'schedule'
+          ? scheduledDue
+          : {
+              date: localResult.data.nextDueDate || undefined,
+              odometer: localResult.data.nextDueOdometer,
+            };
     const contractResult = MaintenanceRecordCreateSchema.omit({ vehicleId: true }).safeParse(
       toCreateMaintenanceRecordInput(localResult.data, nextDue),
     );
@@ -665,7 +694,20 @@ export function MaintenanceForm({
           <NextDueSummary
             action={
               showNextDueFields ? (
-                scheduleNextDue && scheduled.kind === 'due' ? (
+                reminderDue ? (
+                  <Button
+                    onClick={() => {
+                      setNextDueChoice('reminder');
+                      setIsEditingNextDue(false);
+                      form.clearErrors(['nextDueDate', 'nextDueOdometer']);
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Use the reminder&apos;s repeat
+                  </Button>
+                ) : scheduleNextDue && scheduled.kind === 'due' ? (
                   <Button
                     onClick={() => {
                       setNextDueChoice('schedule');
@@ -682,11 +724,15 @@ export function MaintenanceForm({
               ) : (
                 <Button
                   onClick={() => {
-                    if (nextDueSource === 'schedule' && scheduled.kind === 'due') {
-                      form.setValue('nextDueDate', scheduled.due.date ?? '', { shouldDirty: true });
-                      form.setValue('nextDueOdometer', scheduled.due.odometer, {
-                        shouldDirty: true,
-                      });
+                    const shown =
+                      nextDueSource === 'reminder'
+                        ? reminderDue
+                        : nextDueSource === 'schedule' && scheduled.kind === 'due'
+                          ? scheduled.due
+                          : null;
+                    if (shown) {
+                      form.setValue('nextDueDate', shown.date ?? '', { shouldDirty: true });
+                      form.setValue('nextDueOdometer', shown.odometer, { shouldDirty: true });
                     }
                     setNextDueChoice('own');
                     setIsEditingNextDue(true);

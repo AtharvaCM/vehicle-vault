@@ -76,31 +76,6 @@ async function seedGarage(page: Page) {
   return { vehicle, reminder, title, short };
 }
 
-/**
- * Saves a service record through the API with the page's own session, as the
- * log-service form does once it sends the `reminderId` it was opened with.
- */
-async function saveServiceRecord(page: Page, vehicleId: string, body: Record<string, unknown>) {
-  const status = await page.evaluate(
-    async ({ vehicleId, body }) => {
-      const session = JSON.parse(localStorage.getItem('vehicle-vault.auth-session') ?? '{}') as {
-        accessToken?: string;
-      };
-      const response = await fetch(`/api/vehicles/${vehicleId}/maintenance-records`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: JSON.stringify(body),
-      });
-      return response.status;
-    },
-    { vehicleId, body },
-  );
-  expect(status).toBe(201);
-}
-
 for (const viewport of VIEWPORTS) {
   test.describe(`reminder Done and Snooze at ${viewport.width}px`, () => {
     test.use({ viewport });
@@ -126,16 +101,18 @@ for (const viewport of VIEWPORTS) {
         ),
       );
 
-      // The form reading `?category=&reminderId=` is #293's; the record it
+      // The form starts on the reminder's work, dated today; the record it
       // saves carries the reminder id, which is what completes the reminder.
+      await expect(page.getByRole('button', { name: 'Oil change', pressed: true })).toBeVisible();
+      await expect(page.getByText(`For your reminder “${title}”.`)).toBeVisible();
       const serviceDate = daysFromNow(0);
-      await saveServiceRecord(page, vehicle.id, {
-        category: 'engine_oil',
-        serviceDate: serviceDate.toISOString(),
-        odometer: 15300,
-        totalCost: 2500,
-        reminderId: reminder.id,
-      });
+      await page.getByLabel('Odometer', { exact: true }).fill('15300');
+      await page.getByLabel('Total on the bill').fill('2500');
+      // The reminder's own rule, as its page promised, not the schedule's.
+      await expect(page.getByTestId('next-due')).toContainText('25,300 km');
+      await shot(page, `log-service-${viewport.width}`);
+      await page.getByRole('button', { name: 'Save service' }).click();
+      await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=history`));
 
       await page.goto('/home');
       await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();

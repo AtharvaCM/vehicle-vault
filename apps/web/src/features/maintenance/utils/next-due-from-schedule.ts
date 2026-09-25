@@ -31,7 +31,7 @@ export function addMonthsToDateInput(value: string, months: number): string | un
  * schedule has no interval for the work or the service has nothing to count from.
  */
 export function nextDueFromSchedule(
-  interval: VehicleServiceInterval | undefined,
+  interval: Pick<VehicleServiceInterval, 'km' | 'months'> | undefined,
   service: { serviceDate: string | undefined; odometer: number | undefined },
 ): NextDue | null {
   if (!interval) return null;
