@@ -394,12 +394,12 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     await expectFillFitsPhone(card, title, figures);
   }
 
-  // From xl the sidebar opens and these panels split into two columns, which
-  // leaves a record or reminder card narrower at 1280px than on a tablet.
+  // From xl the sidebar opens and the history list sits beside it, which
+  // leaves a record card narrower at 1280px than on a tablet.
   const recordCard: [string, string[]] = [workshop, ['14,800 km', '₹8,450']];
-  const reminderCard: [string, string[]] = [reminderTitle, ['24,800 km']];
   const desktopPages: Array<[string, string, Array<[string, string[]]>]> = [
-    ['The overview tab', `${vehicleUrl}?tab=overview`, [recordCard, reminderCard]],
+    // The Overview lists rows, not cards, since #307: only the sideways check applies.
+    ['The overview tab', `${vehicleUrl}?tab=overview`, []],
     ['The history tab', `${vehicleUrl}?tab=history`, [recordCard]],
   ];
   await page.setViewportSize(DESKTOP);

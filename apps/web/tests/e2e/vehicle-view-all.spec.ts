@@ -29,8 +29,8 @@ const viewports = [
 
 /**
  * The vehicle page's Overview tab no longer links to a per-vehicle list page
- * (#278): "View all" under Recent service and under Upcoming reminders opens
- * the History and Reminders tabs instead.
+ * (#278): "View all" under Recent activity and "All reminders" under Needs
+ * attention open the History and Reminders tabs instead.
  */
 for (const viewport of viewports) {
   test(`Overview's "View all" links open the History and Reminders tabs, on ${viewport.name}`, async ({
@@ -77,10 +77,7 @@ for (const viewport of viewports) {
 
     const strip = page.getByRole('tablist', { name: 'Vehicle sections' });
 
-    const servicePanel = page.locator('[data-slot="section-header"]', {
-      hasText: 'Recent service',
-    });
-    await servicePanel.getByRole('link', { name: 'View all' }).click();
+    await page.getByTestId('recent-activity').getByRole('link', { name: 'View all' }).click();
 
     await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}\\?tab=history$`));
     await expect(strip.getByRole('tab', { name: 'History' })).toHaveAttribute(
@@ -94,10 +91,10 @@ for (const viewport of viewports) {
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}$`));
 
-    const remindersPanel = page.locator('[data-slot="section-header"]', {
-      hasText: 'Upcoming reminders',
-    });
-    await remindersPanel.getByRole('link', { name: 'View all' }).click();
+    await page
+      .locator('[data-slot="section-header"]', { hasText: 'Needs attention' })
+      .getByRole('link', { name: 'All reminders' })
+      .click();
 
     await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}\\?tab=reminders$`));
     await expect(strip.getByRole('tab', { name: 'Reminders' })).toHaveAttribute(

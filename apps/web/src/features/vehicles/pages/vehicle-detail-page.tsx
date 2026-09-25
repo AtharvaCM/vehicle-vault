@@ -1,10 +1,8 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ReminderStatus } from '@vehicle-vault/shared';
 
 import { PageContainer } from '@/components/layout/page-container';
 import { confirm } from '@/components/shared/confirm';
-import { Figure } from '@/components/shared/figure';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
@@ -12,30 +10,21 @@ import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { buttonVariants } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
-import { format } from '@/lib/format';
 import { appToast } from '@/lib/toast';
 
 import { useMaintenanceRecords } from '@/features/maintenance/hooks/use-maintenance-records';
-import { useVehicleReminders } from '@/features/reminders/hooks/use-vehicle-reminders';
-import { FuelEconomyCard } from '@/features/fuel-logs/components/fuel-economy-card';
 import { useCurrentUserRole } from '@/features/vehicle-sharing/hooks/use-sharing';
 import { useVehicleAudit } from '@/features/audit/hooks/use-vehicle-audit';
 import { useVehicleDocuments } from '@/features/vehicle-documents/hooks/use-documents';
 import { papersAttention } from '@/features/vehicle-documents/utils/papers-attention';
-import { TcoCard } from '@/features/analytics/components/tco-card';
-import { OdometerForecastCard } from '../components/odometer-forecast-card';
-import { OdometerHistoryCard } from '../components/odometer-history-card';
-import { ServiceTrendCard } from '../components/service-trend-card';
-import { VehicleSummaryCard } from '../components/vehicle-summary-card';
 import { ProtectionTab } from '../components/protection-tab';
 import { accessFor, VehicleAccessProvider } from '../context/vehicle-access';
 import { VehicleSetupPrompt } from '../components/vehicle-setup-prompt';
 import { ResaleReportDialog } from '../components/resale-report-dialog';
-import { MaintenancePanel } from '../components/maintenance-panel';
-import { ReminderPanel } from '../components/reminder-panel';
 import { VehicleDetailHeader, type VehicleActions } from '../components/vehicle-detail-header';
 import { VehicleHistoryTab } from '../components/vehicle-history-tab';
 import { VehicleMoreTab } from '../components/vehicle-more-tab';
+import { VehicleOverview } from '../components/vehicle-overview';
 import { VehicleRemindersTab } from '../components/vehicle-reminders-tab';
 import { VehicleTabList } from '../components/vehicle-tab-list';
 
@@ -66,7 +55,6 @@ export function VehicleDetailPage({
   const [isResaleDialogOpen, setIsResaleDialogOpen] = useState(false);
   const vehicleQuery = useVehicle(vehicleId);
   const maintenanceQuery = useMaintenanceRecords(vehicleId);
-  const remindersQuery = useVehicleReminders(vehicleId);
   const documentsQuery = useVehicleDocuments(vehicleId);
   const auditQuery = useVehicleAudit(vehicleId);
   // The vehicle payload carries the caller's role, so it is known as soon as the
@@ -161,9 +149,6 @@ export function VehicleDetailPage({
     return null;
   }
 
-  const activeReminders = (remindersQuery.data ?? []).filter(
-    (reminder) => reminder.status !== ReminderStatus.Completed,
-  );
   const actions: VehicleActions = {
     onDownloadServiceHistory: () => {
       void (async () => {
@@ -214,48 +199,13 @@ export function VehicleDetailPage({
             </div>
           ) : null}
 
-          <TabsContent value="overview" className="mt-0 space-y-8 animate-in fade-in duration-500">
+          <TabsContent value="overview" className="mt-0 space-y-6 animate-in fade-in duration-500">
             <VehicleSetupPrompt
               dismissedAt={vehicle.setupPromptDismissedAt}
               fuelType={vehicle.fuelType}
               vehicleId={vehicleId}
             />
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-              <VehicleSummaryCard vehicle={vehicle} />
-              <OdometerForecastCard vehicleId={vehicleId} />
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <SnapshotMetric
-                label="Service records"
-                value={maintenanceQuery.isSuccess ? String(maintenanceQuery.data.length) : '...'}
-              />
-              <SnapshotMetric
-                label="Active reminders"
-                value={remindersQuery.isSuccess ? String(activeReminders.length) : '...'}
-              />
-              <SnapshotMetric label="Odometer" value={format.odometer(vehicle.odometer)} />
-              <SnapshotMetric label="Fuel" value={format.enumLabel('fuelType', vehicle.fuelType)} />
-            </div>
-
-            <FuelEconomyCard vehicleId={vehicleId} />
-
-            <TcoCard vehicleId={vehicleId} />
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-              <OdometerHistoryCard insights={serviceInsights} />
-              <ServiceTrendCard insights={serviceInsights} />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-              <MaintenancePanel maintenanceQuery={maintenanceQuery} vehicleId={vehicleId} />
-              <ReminderPanel
-                remindersQuery={remindersQuery}
-                vehicleId={vehicleId}
-                visibleReminders={activeReminders}
-              />
-            </div>
+            <VehicleOverview canEdit={accessFor(currentUserRole).canEdit} vehicle={vehicle} />
           </TabsContent>
 
           <TabsContent value="history" className="mt-0 animate-in fade-in duration-500">
@@ -290,13 +240,5 @@ export function VehicleDetailPage({
         </PageContainer>
       </Tabs>
     </VehicleAccessProvider>
-  );
-}
-
-function SnapshotMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-card border border-line bg-surface p-4">
-      <Figure label={label} value={value} />
-    </div>
   );
 }

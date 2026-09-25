@@ -63,12 +63,13 @@ vi.mock('@/features/vehicle-sharing/hooks/use-sharing', () => ({
 }));
 
 // Cards that fetch their own data; they hold no write controls of their own.
-vi.mock('../components/odometer-forecast-card', () => ({ OdometerForecastCard: () => null }));
 vi.mock('../components/odometer-history-card', () => ({ OdometerHistoryCard: () => null }));
-vi.mock('../components/service-trend-card', () => ({ ServiceTrendCard: () => null }));
-vi.mock('../components/vehicle-summary-card', () => ({ VehicleSummaryCard: () => null }));
 // Covered by its own spec, viewer case included.
 vi.mock('../components/vehicle-setup-prompt', () => ({ VehicleSetupPrompt: () => null }));
+// Its own spec covers it; here only which tab is showing matters.
+vi.mock('../components/vehicle-overview', () => ({
+  VehicleOverview: () => <p>vehicle overview</p>,
+}));
 vi.mock('@/features/fuel-logs/components/fuel-economy-card', () => ({
   FuelEconomyCard: () => null,
 }));
@@ -205,8 +206,6 @@ describe('VehicleDetailPage header', () => {
     }
     // Reading stays open to them.
     expect(screen.getByRole('link', { name: 'Show papers' })).toBeVisible();
-    expect(screen.getAllByRole('link', { name: 'View all' })).toHaveLength(2);
-    expect(screen.getByText('No records')).toBeInTheDocument();
 
     await openMenu('More vehicle actions');
     expect(screen.getByRole('menuitem', { name: /download service history/i })).toBeVisible();

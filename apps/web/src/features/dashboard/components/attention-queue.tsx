@@ -51,6 +51,12 @@ type AttentionQueueProps = {
   queue: DashboardAttentionItem[];
   focus?: DashboardFocus;
   onSearchStateChange: (next: Partial<DashboardSearch>) => void;
+  /**
+   * One vehicle's queue (its Overview): `queue` holds only that vehicle's
+   * items, at most `limit` rows show, the link goes to its Reminders tab and an
+   * empty queue simply reads "All clear".
+   */
+  scope?: { vehicleId: string; limit: number };
 };
 
 export function AttentionQueue({
@@ -58,6 +64,7 @@ export function AttentionQueue({
   queue,
   focus,
   onSearchStateChange,
+  scope,
 }: AttentionQueueProps) {
   const completeReminder = useCompleteReminder();
   const snoozeDocument = useSnoozeDocument();
@@ -68,14 +75,20 @@ export function AttentionQueue({
   const [snoozing, setSnoozing] = useState<DashboardAttentionItem | null>(null);
 
   const counts = summary.attentionCounts;
-  const urgentCount = counts.overdue + counts.today + counts.thisWeek;
-  const showVehicle = summary.vehicles.length > 1;
+  const urgentCount = scope
+    ? queue.filter((item) => item.urgency !== 'this_month').length
+    : counts.overdue + counts.today + counts.thisWeek;
+  const showVehicle = !scope && summary.vehicles.length > 1;
   // Each mutation hook only exposes its latest call, and a completed/snoozed row stays rendered
   // until the summary refetch drops it — so track in-flight and just-settled ids locally, shared
   // across both actions since row ids never collide across kinds.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(() => new Set());
   const [completedIds, setCompletedIds] = useState<ReadonlySet<string>>(() => new Set());
-  const visibleRows = expanded ? queue : queue.slice(0, INITIAL_ROW_LIMIT);
+  const visibleRows = scope
+    ? queue.slice(0, scope.limit)
+    : expanded
+      ? queue
+      : queue.slice(0, INITIAL_ROW_LIMIT);
   const groups = URGENCY_ORDER.map((urgency) => ({
     urgency,
     items: visibleRows.filter((item) => item.urgency === urgency),
@@ -189,7 +202,8 @@ export function AttentionQueue({
               </section>
             ))}
           </div>
-          {queue.length > INITIAL_ROW_LIMIT || summary.attentionTotal > ATTENTION_CAP ? (
+          {!scope &&
+          (queue.length > INITIAL_ROW_LIMIT || summary.attentionTotal > ATTENTION_CAP) ? (
             <div className="flex flex-wrap items-center gap-2 border-t border-line-subtle px-5 py-3">
               {queue.length > INITIAL_ROW_LIMIT ? (
                 <Button
@@ -209,6 +223,20 @@ export function AttentionQueue({
             </div>
           ) : null}
         </>
+      );
+    }
+
+    if (scope) {
+      return (
+        <div className="flex items-center gap-3 px-5 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ok-tint text-ok">
+            <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-semibold text-fg">All clear</p>
+            <p className="text-small text-fg-3">Nothing due in the next 30 days.</p>
+          </div>
+        </div>
       );
     }
 
@@ -287,12 +315,25 @@ export function AttentionQueue({
               {urgentCount > 0 ? (
                 <StatusPill status={counts.overdue > 0 ? 'late' : 'soon'}>{urgentCount}</StatusPill>
               ) : null}
-              <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/upcoming">
-                Everything upcoming
-              </Link>
+              {scope ? (
+                <Link
+                  className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+                  params={{ vehicleId: scope.vehicleId }}
+                  search={{ tab: 'reminders' }}
+                  to="/vehicles/$vehicleId"
+                >
+                  All reminders
+                </Link>
+              ) : (
+                <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/upcoming">
+                  Everything upcoming
+                </Link>
+              )}
             </>
           }
-          description="Everything due or wrong across every vehicle, most urgent first."
+          description={
+            scope ? undefined : 'Everything due or wrong across every vehicle, most urgent first.'
+          }
           title="Needs attention"
         />
       </CardHeader>

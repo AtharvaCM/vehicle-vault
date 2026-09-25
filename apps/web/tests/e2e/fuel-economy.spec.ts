@@ -75,10 +75,6 @@ test('real km/L appears once there are two fills, beside the claim', async ({ pa
   await expect(page.getByText('Real, over 450 km and 30 L')).toBeVisible();
   await expect(page.getByText('14% below the claim')).toBeVisible();
   await expect(page.getByText(/Soon: We/)).toHaveCount(0);
-
-  // The overview carries the same figure.
-  await page.goto(vehicleUrl);
-  await expect(page.getByText('Real, over 450 km and 30 L')).toBeVisible();
 });
 
 test.afterAll(async () => {
