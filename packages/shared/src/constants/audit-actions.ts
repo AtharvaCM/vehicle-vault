@@ -100,6 +100,7 @@ export const AUDIT_ACTIONS = {
     passwordResetRequested: 'auth.password_reset_requested',
     passwordResetCompleted: 'auth.password_reset_completed',
     passwordChanged: 'auth.password_changed',
+    profileUpdated: 'auth.profile_updated',
     sessionRevoked: 'auth.session_revoked',
     otherSessionsRevoked: 'auth.other_sessions_revoked',
     emailVerified: 'auth.email_verified',

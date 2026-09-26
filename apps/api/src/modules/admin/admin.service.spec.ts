@@ -12,6 +12,7 @@ describe('AdminService', () => {
       update: vi.fn(),
     },
     authSession: { deleteMany: vi.fn() },
+    auditEvent: { groupBy: vi.fn() },
     $transaction: vi.fn(),
   };
   const auditService = { track: vi.fn().mockResolvedValue(undefined) };
@@ -30,6 +31,7 @@ describe('AdminService', () => {
         Promise.all(queries),
       );
       prisma.user.count.mockResolvedValue(3);
+      prisma.auditEvent.groupBy.mockResolvedValue([]);
       prisma.user.findMany.mockResolvedValue([
         {
           id: 'u1',
@@ -51,6 +53,31 @@ describe('AdminService', () => {
       expect(prisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ skip: 0, take: 25, where: undefined }),
       );
+    });
+
+    it('gives each user their last sign-in from the activity log, or none', async () => {
+      prisma.auditEvent.groupBy.mockResolvedValue([
+        { actorUserId: 'u1', _max: { occurredAt: new Date('2026-09-20T08:00:00.000Z') } },
+      ]);
+
+      const result = await service.listUsers();
+
+      expect(result.users[0]).toMatchObject({
+        emailVerified: true,
+        lastSignInAt: '2026-09-20T08:00:00.000Z',
+      });
+      expect(prisma.auditEvent.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          by: ['actorUserId'],
+          where: {
+            actorUserId: { in: ['u1'] },
+            action: { in: ['auth.login_succeeded', 'auth.account_created'] },
+          },
+        }),
+      );
+
+      prisma.auditEvent.groupBy.mockResolvedValue([]);
+      expect((await service.listUsers()).users[0]?.lastSignInAt).toBeNull();
     });
 
     it('applies search as case-insensitive OR on email + name', async () => {
