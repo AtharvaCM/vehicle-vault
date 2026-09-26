@@ -396,6 +396,10 @@ const DESCRIBERS: Record<AuditActionName, Describer> = {
     text: row.firstPassword ? `${actor} set a password` : `${actor} changed the password`,
     detail: 'other devices were signed out',
   }),
+  'auth.profile_updated': (context) => ({
+    text: `${context.actor} changed the account name`,
+    detail: change(context, 'name', text),
+  }),
   'auth.session_revoked': ({ actor, row }) => ({
     text: row.current ? `${actor} signed this device out` : `${actor} signed out a device`,
     detail: join(text(row.device), text(row.location)),

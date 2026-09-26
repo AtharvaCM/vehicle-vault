@@ -99,7 +99,20 @@ export function NotificationPreferencesPage() {
         title={title}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      {/* The device first: the Push switches below depend on it. */}
+      <div className="max-w-3xl space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>This device</CardTitle>
+            <CardDescription>
+              Push goes to each browser you turn it on in. Turn it on here first; the Push switches
+              below then decide which alerts it gets.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushDeviceSetting />
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div className="space-y-1.5">
@@ -227,19 +240,6 @@ export function NotificationPreferencesPage() {
                 ))}
               </tbody>
             </table>
-          </CardContent>
-        </Card>
-
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>This device</CardTitle>
-            <CardDescription>
-              Push goes to each browser you turn it on in. The per-alert Push switches decide which
-              alerts are pushed.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PushDeviceSetting />
           </CardContent>
         </Card>
       </div>

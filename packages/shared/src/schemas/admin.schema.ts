@@ -11,6 +11,8 @@ export const AdminUserSummarySchema = z.object({
   allowedCatalogSources: z.array(z.string()),
   vehicleCount: z.number().int().nonnegative(),
   createdAt: z.string().datetime(),
+  /** The newest sign-in the activity log holds (sign-up counts as the first); null for none. */
+  lastSignInAt: z.string().datetime().nullable(),
 });
 
 export const AdminUserListResponseSchema = z.object({

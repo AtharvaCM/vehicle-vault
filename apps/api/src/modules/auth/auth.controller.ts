@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Ip, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Ip,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentSessionId } from '../../common/auth/decorators/current-session-id.decorator';
@@ -11,6 +21,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { PasswordChangeDto } from './dto/password-change.dto';
 import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
+import { ProfileUpdateDto } from './dto/profile-update.dto';
 import { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -159,5 +170,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   async getMe(@CurrentUser() user: AuthUser) {
     return successResponse(await this.authService.getMe(user.id));
+  }
+
+  /** Settings → Account: rename the account. */
+  @ApiBearerAuth()
+  @Patch('me')
+  @ApiOperation({ summary: "Change the signed-in account's name" })
+  async updateMe(@CurrentUser() user: AuthUser, @Body() body: ProfileUpdateDto) {
+    return successResponse(await this.authService.updateProfile(user.id, body));
   }
 }

@@ -14,6 +14,7 @@ import { appToast } from '@/lib/toast';
 
 import { accountSecurityQueryOptions } from '../api/account-security';
 import { ChangePasswordDialog } from '../components/change-password-dialog';
+import { NameRow } from '../components/name-row';
 import { SessionRows } from '../components/session-rows';
 import { SettingsRow, SettingsSection } from '../components/settings-layout';
 import { useDownloadAccountExport } from '../hooks/use-download-account-export';
@@ -85,7 +86,7 @@ export function SettingsPage() {
 
       <div className="max-w-3xl space-y-6">
         <SettingsSection title="Profile">
-          <SettingsRow label="Name" value={auth.user?.name ?? '—'} />
+          <NameRow />
           <SettingsRow
             label="Email"
             value={
@@ -174,22 +175,25 @@ export function SettingsPage() {
             label="Download your data"
             value="Vehicles, records, reminders and papers as JSON"
           />
-          <SettingsRow
-            action={
-              <Button
-                disabled={reconcileMutation.isPending}
-                onClick={() => void handleReconcileAttachments()}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <ScanSearch aria-hidden="true" />
-                {reconcileMutation.isPending ? 'Checking…' : 'Check files'}
-              </Button>
-            }
-            label="Stored files"
-            value="Remove entries for receipts no longer in storage"
-          />
+          {/* An operations tool: reconciles stored-file entries with storage. */}
+          {auth.user?.role === 'admin' ? (
+            <SettingsRow
+              action={
+                <Button
+                  disabled={reconcileMutation.isPending}
+                  onClick={() => void handleReconcileAttachments()}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <ScanSearch aria-hidden="true" />
+                  {reconcileMutation.isPending ? 'Checking…' : 'Check files'}
+                </Button>
+              }
+              label="Stored files"
+              value="Remove entries for receipts no longer in storage"
+            />
+          ) : null}
           {exportMutation.isError ? (
             <div className="px-5 py-3">
               <InlineError

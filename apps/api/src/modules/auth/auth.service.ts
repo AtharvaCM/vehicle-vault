@@ -17,6 +17,7 @@ import {
   AuthUserSchema,
   LoginSchema,
   PasswordChangeSchema,
+  ProfileUpdateSchema,
   PasswordResetConfirmResponseSchema,
   PasswordResetConfirmSchema,
   PasswordResetRequestResponseSchema,
@@ -57,6 +58,7 @@ import { getEmailVerificationDueAt } from './email-verification-deadline';
 import { TokenService } from './token.service';
 import type { LoginDto } from './dto/login.dto';
 import type { PasswordChangeDto } from './dto/password-change.dto';
+import type { ProfileUpdateDto } from './dto/profile-update.dto';
 import type { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
 import type { PasswordResetRequestDto } from './dto/password-reset-request.dto';
 import type { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -500,6 +502,29 @@ export class AuthService {
     const user = await this.getUserById(userId);
 
     return this.toAuthUser(user);
+  }
+
+  /** Settings → Account: a new name, recorded with the old one in the activity log. */
+  async updateProfile(userId: string, payload: ProfileUpdateDto): Promise<AuthUser> {
+    const input = ProfileUpdateSchema.parse(payload);
+    const user = await this.getUserById(userId);
+    if (input.name === user.name) return this.toAuthUser(user);
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: input.name },
+    });
+    await this.auditService.track(this.prisma, {
+      actorUserId: userId,
+      ownerUserId: userId,
+      action: AUDIT_ACTIONS.auth.profileUpdated,
+      resourceType: AuditResourceType.user,
+      resourceId: userId,
+      before: { name: user.name },
+      after: { name: input.name },
+    });
+
+    return this.toAuthUser(this.toUser(updated));
   }
 
   async getAuthUserById(userId: string): Promise<AuthUser | null> {

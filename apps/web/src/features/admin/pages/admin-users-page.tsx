@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { format } from '@/lib/format';
 import { queryKeys } from '@/lib/query/query-keys';
@@ -22,6 +23,7 @@ import { useAdminUsers } from '../hooks/use-admin-users';
 const PAGE_SIZE = 25;
 
 export function AdminUsersPage() {
+  const currentUserId = useAuth().user?.id;
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -69,10 +71,10 @@ export function AdminUsersPage() {
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-lead font-bold">All users</CardTitle>
           <div className="flex items-center gap-2">
-            <div className="relative">
+            <div className="relative min-w-0 flex-1 sm:flex-none">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-3" />
               <Input
-                className="pl-8 w-64"
+                className="w-full pl-8 sm:w-64"
                 placeholder="Search by email or name"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
@@ -116,28 +118,41 @@ export function AdminUsersPage() {
                           Admin
                         </Badge>
                       ) : null}
-                      {user.emailVerified ? null : <Badge variant="warning">Unverified</Badge>}
+                      {user.id === currentUserId ? <Badge variant="neutral">You</Badge> : null}
+                      {user.emailVerified ? (
+                        <Badge variant="success">Verified</Badge>
+                      ) : (
+                        <Badge variant="warning">Not verified</Badge>
+                      )}
                     </div>
                     <p className="truncate text-caption text-fg-3">{user.email}</p>
                   </div>
-                  <div className="flex items-center gap-4 text-caption text-fg-3">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-fg-3">
                     <span className="inline-flex items-center gap-1">
-                      <CarFront className="h-3.5 w-3.5" />
-                      {user.vehicleCount}
+                      <CarFront aria-hidden="true" className="h-3.5 w-3.5" />
+                      {user.vehicleCount} {user.vehicleCount === 1 ? 'vehicle' : 'vehicles'}
                     </span>
-                    <span>{format.date(user.createdAt)}</span>
-                    <ConfirmActionDialog
-                      confirmLabel="Force sign-out"
-                      description={`Clears ${user.email}'s refresh token. They will need to sign in again on their next session refresh.`}
-                      isPending={
-                        forceLogoutMutation.isPending && forceLogoutMutation.variables === user.id
-                      }
-                      onConfirm={() => forceLogoutMutation.mutate(user.id)}
-                      title="Force this user to sign out?"
-                      triggerLabel="Force sign-out"
-                      triggerIcon={<LogOut className="h-3.5 w-3.5" />}
-                      triggerVariant="ghost"
-                    />
+                    <span>Joined {format.date(user.createdAt)}</span>
+                    <span data-testid="admin-user-last-sign-in">
+                      {user.lastSignInAt
+                        ? `Last signed in ${format.date(user.lastSignInAt)}`
+                        : 'No sign-in on record'}
+                    </span>
+                    {/* Your own row: signing yourself out is Settings' job, not an admin action. */}
+                    {user.id === currentUserId ? null : (
+                      <ConfirmActionDialog
+                        confirmLabel="Force sign-out"
+                        description={`Clears ${user.email}'s refresh token. They will need to sign in again on their next session refresh.`}
+                        isPending={
+                          forceLogoutMutation.isPending && forceLogoutMutation.variables === user.id
+                        }
+                        onConfirm={() => forceLogoutMutation.mutate(user.id)}
+                        title="Force this user to sign out?"
+                        triggerLabel="Force sign-out"
+                        triggerIcon={<LogOut className="h-3.5 w-3.5" />}
+                        triggerVariant="ghost"
+                      />
+                    )}
                   </div>
                 </li>
               ))}
