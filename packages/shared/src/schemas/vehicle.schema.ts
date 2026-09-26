@@ -72,6 +72,10 @@ export const VehicleCreateSchema = z.object({
   purchaseDate: z.string().datetime().optional().nullable(),
   purchasePrice: z.number().nonnegative().optional().nullable(),
   purchaseOdometer: z.number().int().nonnegative().optional().nullable(),
+  /** What the engine takes, as the owner records it ("5W-30"); the catalog has no oil data. */
+  engineOilGrade: z.string().trim().min(1).max(20).optional().nullable(),
+  /** How much the engine takes, in litres. */
+  engineOilLitres: z.number().positive().max(50).optional().nullable(),
 });
 
 /**

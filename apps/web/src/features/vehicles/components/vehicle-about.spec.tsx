@@ -129,6 +129,19 @@ describe('VehicleAbout', () => {
     expect(row.getByRole('link', { name: 'Add purchase date & price' })).toBeInTheDocument();
   });
 
+  it('shows the engine oil the owner recorded, or offers to add it (#332)', () => {
+    const { unmount } = renderAbout({ ...virtus, engineOilGrade: '5W-30', engineOilLitres: 3.8 });
+    const recorded = within(screen.getByTestId('about-engine-oil'));
+    expect(recorded.getByText('5W-30 · 3.8 L')).toBeInTheDocument();
+    expect(recorded.getByRole('link', { name: 'Change' })).toBeInTheDocument();
+    unmount();
+
+    renderAbout(virtus);
+    expect(
+      within(screen.getByTestId('about-engine-oil')).getByRole('link', { name: 'Add engine oil' }),
+    ).toBeInTheDocument();
+  });
+
   it('gives a viewer no edits', () => {
     specsQuery.current = { isPending: false, isError: false, data: null };
     renderAbout({ ...virtus, purchaseDate: null, purchasePrice: null }, VehicleRole.Viewer);
