@@ -1,3 +1,14 @@
+## [1.117.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.4...v1.117.5) (2026-09-26)
+
+
+### Bug Fixes
+
+* settings and admin gaps: name, stored files, device first, users list ([081f3a3](https://github.com/AtharvaCM/vehicle-vault/commit/081f3a305d890a669355f1c3ee7247aa6b6080c4)), closes [#372](https://github.com/AtharvaCM/vehicle-vault/issues/372)
+* **web:** a Reminders tab that scales to a small list ([9f67262](https://github.com/AtharvaCM/vehicle-vault/commit/9f672624de359410cf8122f80e99d1f2cf55f024)), closes [#367](https://github.com/AtharvaCM/vehicle-vault/issues/367)
+* **web:** catalog leftovers: segment switch, names, freshness ([1e070e8](https://github.com/AtharvaCM/vehicle-vault/commit/1e070e88314df6d0e30abbe02bbf1201e56bd01e)), closes [#371](https://github.com/AtharvaCM/vehicle-vault/issues/371)
+* **web:** fuel history as compact rows with per-fill economy ([f0fde58](https://github.com/AtharvaCM/vehicle-vault/commit/f0fde5841cc7276ed64579dc3a9bad6a925ff9c5)), closes [#369](https://github.com/AtharvaCM/vehicle-vault/issues/369)
+* **web:** polish Edit vehicle, Add vehicle, reminder and auth forms ([4d21549](https://github.com/AtharvaCM/vehicle-vault/commit/4d215493d988bd4a626e4196538bdd3a7700963c)), closes [#370](https://github.com/AtharvaCM/vehicle-vault/issues/370)
+
 ## [1.117.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.3...v1.117.4) (2026-09-26)
 
 
