@@ -1,3 +1,10 @@
+## [1.117.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.2...v1.117.3) (2026-09-26)
+
+
+### Bug Fixes
+
+* **web:** error and not-found pages say it once and lead somewhere ([8e85384](https://github.com/AtharvaCM/vehicle-vault/commit/8e85384ee5c1a18b39795bb3b230a1abb71cfa15)), closes [#365](https://github.com/AtharvaCM/vehicle-vault/issues/365)
+
 ## [1.117.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.1...v1.117.2) (2026-09-26)
 
 
