@@ -51,15 +51,22 @@ export function EmptyGarage({ withAction = true, className }: EmptyGarageProps) 
       <p className="mt-3 text-small text-fg-3">Have an invite? Open the link from your email.</p>
 
       <div className="mx-auto mt-6 max-w-sm border-t border-line-subtle pt-4 text-left">
-        <p className="text-small font-medium text-fg-3">What you’ll see</p>
-        <ul aria-label="An example of your reminders" className="mt-2 space-y-2 opacity-60">
+        <p className="flex items-center gap-2 text-small font-medium text-fg-2">
+          What you’ll see
+          <span className="rounded-full border border-dashed border-line px-2 text-caption text-fg-3">
+            Example
+          </span>
+        </p>
+        {/* A preview, not data: dashed and plain rather than faded, so its text
+            stays readable (faded text fails contrast; #353). */}
+        <ul aria-label="An example of your reminders" className="mt-2 space-y-2">
           {PREVIEW.map((row) => (
             <li
-              className="flex items-center justify-between gap-3 rounded-control border-l-4 border-line bg-page px-3 py-2 text-ui"
+              className="flex items-center justify-between gap-3 rounded-control border border-dashed border-line px-3 py-2 text-ui"
               key={row.title}
             >
               <span className="font-medium text-fg-2">{row.title}</span>
-              <span className="text-small text-fg-3">{row.when}</span>
+              <span className="text-small text-fg-2">{row.when}</span>
             </li>
           ))}
         </ul>
