@@ -374,6 +374,14 @@ describe('Upcoming timeline', () => {
     expect(emis.timeline.items.map((item) => item.id)).toEqual(['emi:bike-loan']);
   });
 
+  it('names each row’s vehicle with its fuel, so an EV plate can be green (#355)', async () => {
+    arrange(DEMO);
+
+    const { timeline } = await service.getUpcoming('demo', {});
+    expect(timeline.items.length).toBeGreaterThan(0);
+    for (const item of timeline.items) expect(item.vehicleFuelType).toBe(FuelType.Petrol);
+  });
+
   it('pages only the later group; the near groups come whole on every page', async () => {
     arrange(DEMO);
 

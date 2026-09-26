@@ -1,7 +1,12 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MoreHorizontal } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { upcomingGroupOf, type UpcomingGroup, type UpcomingItem } from '@vehicle-vault/shared';
+import {
+  FuelType,
+  upcomingGroupOf,
+  type UpcomingGroup,
+  type UpcomingItem,
+} from '@vehicle-vault/shared';
 
 import { DueLine } from '@/components/shared/due-line';
 import { Money } from '@/components/shared/money';
@@ -281,6 +286,7 @@ export function UpcomingRow({
           >
             <VehicleIdentity
               layout="row"
+              electric={item.vehicleFuelType === FuelType.Electric}
               name={item.vehicleName}
               registration={item.registrationNumber}
             />

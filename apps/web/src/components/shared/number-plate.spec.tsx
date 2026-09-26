@@ -10,19 +10,19 @@ function plate() {
 
 describe('NumberPlate', () => {
   it('prints an unformatted registration spaced as a plate', () => {
-    render(<NumberPlate registration="mh12dm0002" />);
+    render(<NumberPlate electric={false} registration="mh12dm0002" />);
 
     expect(screen.getByText('MH 12 DM 0002')).toBeInTheDocument();
   });
 
   it('spaces a Bharat series plate', () => {
-    render(<NumberPlate registration="22bh1234aa" />);
+    render(<NumberPlate electric={false} registration="22bh1234aa" />);
 
     expect(screen.getByText('22 BH 1234 AA')).toBeInTheDocument();
   });
 
   it('is announced spelled out, not as the printed words', () => {
-    render(<NumberPlate registration="MH12DM0002" />);
+    render(<NumberPlate electric={false} registration="MH12DM0002" />);
 
     // The printed number is hidden from assistive technology; the spelled one is read instead.
     expect(screen.getByText('MH 12 DM 0002')).toHaveAttribute('aria-hidden', 'true');
@@ -37,7 +37,11 @@ describe('NumberPlate', () => {
 
     for (const [size, height] of Object.entries(heights)) {
       const { unmount } = render(
-        <NumberPlate registration="MH12DM0002" size={size as keyof typeof heights} />,
+        <NumberPlate
+          electric={false}
+          registration="MH12DM0002"
+          size={size as keyof typeof heights}
+        />,
       );
       expect(plate()).toHaveStyle({ height });
       unmount();
@@ -45,10 +49,12 @@ describe('NumberPlate', () => {
   });
 
   it('carries "IND" on the strip from L up only', () => {
-    const { rerender } = render(<NumberPlate registration="MH12DM0002" size="md" />);
+    const { rerender } = render(
+      <NumberPlate electric={false} registration="MH12DM0002" size="md" />,
+    );
     expect(screen.queryByText('IND')).not.toBeInTheDocument();
 
-    rerender(<NumberPlate registration="MH12DM0002" size="lg" />);
+    rerender(<NumberPlate electric={false} registration="MH12DM0002" size="lg" />);
     expect(screen.getByText('IND')).toHaveAttribute('aria-hidden', 'true');
   });
 
@@ -61,13 +67,13 @@ describe('NumberPlate', () => {
   });
 
   it('stays a white plate whatever the theme (plate tokens, not surface ones)', () => {
-    render(<NumberPlate registration="MH12DM0002" />);
+    render(<NumberPlate electric={false} registration="MH12DM0002" />);
 
     expect(plate()).toHaveClass('bg-plate', 'text-plate-ink', 'border-plate-ink');
   });
 
   it('draws a dashed empty plate when there is no number', () => {
-    render(<NumberPlate emptyLabel="Add a vehicle" registration="" />);
+    render(<NumberPlate electric={false} emptyLabel="Add a vehicle" registration="" />);
 
     expect(plate()).toHaveAttribute('data-variant', 'empty');
     expect(plate()).toHaveClass('border-dashed');
@@ -79,6 +85,7 @@ describe('VehicleIdentity', () => {
   it('puts an L plate beside the page heading in the header layout', () => {
     render(
       <VehicleIdentity
+        electric={false}
         details="Hyundai Creta SX · 18,500 km"
         layout="header"
         name="Family SUV"
@@ -93,19 +100,30 @@ describe('VehicleIdentity', () => {
 
   it('uses an M plate on a card and an S plate in a row', () => {
     const { unmount } = render(
-      <VehicleIdentity layout="card" name="Daily Hatch" registration="MH12DM0002" />,
+      <VehicleIdentity
+        electric={false}
+        layout="card"
+        name="Daily Hatch"
+        registration="MH12DM0002"
+      />,
     );
     expect(plate()).toHaveAttribute('data-size', 'md');
     unmount();
 
-    render(<VehicleIdentity name="Weekend Bike" registration="MH12DM0003" />);
+    render(<VehicleIdentity electric={false} name="Weekend Bike" registration="MH12DM0003" />);
     expect(plate()).toHaveAttribute('data-size', 'sm');
     expect(screen.getByText('Weekend Bike')).toBeInTheDocument();
   });
 
   it('lets the caller choose the heading level', () => {
     render(
-      <VehicleIdentity layout="card" name="Second Car" nameAs="h3" registration="MH12DM0004" />,
+      <VehicleIdentity
+        electric={false}
+        layout="card"
+        name="Second Car"
+        nameAs="h3"
+        registration="MH12DM0004"
+      />,
     );
 
     expect(screen.getByRole('heading', { level: 3, name: 'Second Car' })).toBeInTheDocument();

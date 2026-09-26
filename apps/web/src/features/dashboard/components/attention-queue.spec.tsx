@@ -1,7 +1,7 @@
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AnchorHTMLAttributes } from 'react';
-import { MaintenanceCategory, ReminderStatus } from '@vehicle-vault/shared';
+import { FuelType, MaintenanceCategory, ReminderStatus } from '@vehicle-vault/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { appToast } from '@/lib/toast';
@@ -180,6 +180,35 @@ describe('AttentionQueue', () => {
     expect(
       document.querySelector('[data-slot="number-plate"][data-size="sm"]'),
     ).toBeInTheDocument();
+  });
+
+  it('draws an electric vehicle’s plate green (#355)', () => {
+    const evReminder = makeAttentionItem({
+      id: 'ev-reminder',
+      title: 'Brake fluid',
+      vehicleId: 'vehicle-2',
+      vehicleName: 'Weekend bike',
+      registrationNumber: 'MH12ZZ0001',
+      vehicleFuelType: FuelType.Electric,
+    });
+    renderWithProviders(
+      <AttentionQueue
+        onSearchStateChange={vi.fn()}
+        queue={[overdueReminder, evReminder]}
+        summary={makeSummary({
+          vehicles: twoVehicles,
+          attention: [overdueReminder, evReminder],
+          attentionTotal: 2,
+          attentionCounts: makeAttentionCounts({ overdue: 2, total: 2 }),
+        })}
+      />,
+    );
+
+    const variants = Array.from(document.querySelectorAll('[data-slot="number-plate"]')).map(
+      (plate) => plate.getAttribute('data-variant'),
+    );
+    expect(variants).toContain('electric');
+    expect(variants).toContain('private');
   });
 
   it('hides Snooze once a document is actually overdue', () => {
