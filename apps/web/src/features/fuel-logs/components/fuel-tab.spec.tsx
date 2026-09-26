@@ -8,6 +8,7 @@ import { VehicleAccessProvider } from '@/features/vehicles/context/vehicle-acces
 const logsQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const mutation = vi.hoisted(() => () => ({ mutateAsync: vi.fn(), isPending: false }));
 
+const scanStatus = vi.hoisted(() => ({ current: { available: true } as { available: boolean } }));
 vi.mock('../hooks/use-fuel-logs', () => ({ useFuelLogs: () => logsQuery.current }));
 vi.mock('../hooks/use-create-fuel-log', () => ({ useCreateFuelLog: mutation }));
 vi.mock('../hooks/use-delete-fuel-log', () => ({ useDeleteFuelLog: mutation }));
@@ -18,9 +19,10 @@ vi.mock('../hooks/use-scan-receipt', () => ({
 }));
 vi.mock('./fuel-import-dialog', () => ({ FuelImportDialog: () => null }));
 // Partial mock: the component tree still imports queryOptions and friends.
+// Its only queries here are the scan-status checks.
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
-  useQuery: () => ({ data: undefined, isPending: false }),
+  useQuery: () => ({ data: scanStatus.current, isPending: false }),
 }));
 
 import { FuelTab } from './fuel-tab';
@@ -46,6 +48,17 @@ function renderAs(role: VehicleRole, logs: FuelLog[], fuelType: FuelType = FuelT
     </VehicleAccessProvider>,
   );
 }
+
+describe('FuelTab scanning', () => {
+  it('offers no receipt scan when scanning is unavailable', () => {
+    scanStatus.current = { available: false };
+    renderAs(VehicleRole.Owner, []);
+
+    expect(screen.queryByRole('button', { name: /scan receipt/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/GEMINI|\.env/i)).not.toBeInTheDocument();
+    scanStatus.current = { available: true };
+  });
+});
 
 describe('FuelTab roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])('lets an %s log, scan and import', (role) => {
