@@ -127,10 +127,10 @@ test.describe('Catalog intent through OAuth sign-in', () => {
     await pressTrackThisVehicle(page, variant);
     await page.goto('/auth/oauth-callback#error=oauth_cancelled');
 
-    await expect(page.getByText('Sign-in was cancelled before it finished.')).toBeVisible();
+    await expect(page.getByText('You cancelled signing in with Google.')).toBeVisible();
     expect(await storedIntent(page)).not.toBeNull();
 
-    await page.getByRole('button', { name: 'Back to sign in' }).click();
+    await page.getByRole('link', { name: 'Sign in with email' }).click();
     await expect(page).toHaveURL(/\/login$/);
     await page.getByLabel(/email address/i).fill(tokens.user.email);
     await page.getByLabel(/^password$/i).fill(tokens.password);
@@ -202,7 +202,7 @@ test.describe('Catalog intent through OAuth sign-in', () => {
       );
 
       await expect(page).toHaveURL(/\/auth\/oauth-callback$/);
-      await expect(page.getByText('Sign-in was cancelled before it finished.')).toBeVisible();
+      await expect(page.getByText('You cancelled signing in with Google.')).toBeVisible();
       expect(await storedIntent(page)).not.toBeNull();
     });
 

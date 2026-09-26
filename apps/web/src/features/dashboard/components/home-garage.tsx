@@ -42,8 +42,11 @@ export function HomeGarage({ vehicles, vehiclesTotal }: HomeGarageProps) {
         </Link>
       </div>
 
+      {/* `relative`: each plate's screen-reader spelling is absolutely placed,
+          and without a positioned ancestor here it escaped this row's
+          scrolling and widened the whole page on a phone (#364). */}
       <ul
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+        className="relative -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
         data-testid="garage-strip"
       >
         {vehicles.map((vehicle) => {

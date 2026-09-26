@@ -80,12 +80,11 @@ export function MaintenanceRecordDetailPage({ recordId }: MaintenanceRecordDetai
         error={recordQuery.error}
         isRetrying={recordQuery.isRefetching}
         listAction={
-          <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+          <Link className={buttonVariants({ variant: 'outline' })} to="/garage">
             Your garage
           </Link>
         }
         onRetry={() => void recordQuery.refetch()}
-        pageDescription="Review the full details for one logged service record."
         resourceLabel="Service record"
         subject="record"
       />
