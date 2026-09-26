@@ -1,15 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import {
-  Calendar,
-  Gauge,
-  Maximize2,
-  Pencil,
-  Trash2,
-  Shield,
-  FileBadge,
-  RefreshCw,
-} from 'lucide-react';
-import { isBefore, addDays } from 'date-fns';
+import { Maximize2, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { type VehicleDocument } from '@vehicle-vault/shared';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,12 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/shared/confirm';
 import { format } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { useDeleteVehicleDocument } from '../hooks/use-documents';
+import { documentKindNouns, documentKindTitles } from '../utils/document-kind-labels';
 import {
-  documentKindNouns,
-  documentKindTitles,
-  isComplianceKind,
-} from '../utils/document-kind-labels';
+  paperStatus,
+  paperStatusLabels,
+  warrantyTypeLabel,
+  type PaperStatus,
+} from '../utils/paper-status';
 import { appToast } from '@/lib/toast';
 import { useVehicleAccess } from '@/features/vehicles/context/vehicle-access';
 
@@ -52,12 +46,6 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
   // Delete is always offered here, unlike edit, so it needs the role itself.
   const { canEdit } = useVehicleAccess();
   const deleteMutation = useDeleteVehicleDocument(vehicleId);
-
-  const isExpired = document.endDate ? isBefore(new Date(document.endDate), new Date()) : false;
-  const isExpiringSoon =
-    document.endDate && !isExpired
-      ? isBefore(new Date(document.endDate), addDays(new Date(), 30))
-      : false;
 
   const renewButton =
     onRenew && isRenewable(document) ? (
@@ -111,332 +99,126 @@ export function DocumentCard({ document, vehicleId, onEdit, onRenew }: DocumentC
     }
   }
 
-  if (document.kind === 'insurance') {
-    return (
-      <Card className="border-line/60 bg-surface overflow-hidden hover:border-primary/20 transition-colors">
-        <CardContent className="p-0">
-          <div className="flex flex-col sm:flex-row">
-            <div className="flex-[1.5] p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-caption font-black text-fg-3">Provider & policy</p>
-                  <h4 className="font-black text-fg leading-tight">
-                    {document.provider ?? <NotRecorded />}
-                  </h4>
-                  {document.number && (
-                    <p className="font-mono text-caption font-medium text-fg-2">
-                      #{document.number}
-                    </p>
-                  )}
-                </div>
-                <Badge
-                  variant={isExpired ? 'destructive' : isExpiringSoon ? 'secondary' : 'outline'}
-                  className={
-                    isExpired
-                      ? 'bg-late-tint text-late border-late/30 hover:bg-late-tint'
-                      : isExpiringSoon
-                        ? 'bg-soon-tint text-soon border-soon/30 hover:bg-soon-tint'
-                        : 'bg-ok-tint text-ok border-ok/30 hover:bg-ok-tint'
-                  }
-                >
-                  {isExpired ? 'Expired' : isExpiringSoon ? 'Expiring soon' : 'Active'}
-                </Badge>
-              </div>
+  const status = paperStatus(document.endDate);
+  const facts = documentFacts(document);
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-caption font-bold text-fg-3">
-                    <Calendar className="h-3 w-3" />
-                    Valid from
-                  </div>
-                  <p className="text-ui font-bold text-fg-2">
-                    {document.startDate ? format.date(document.startDate) : <NotRecorded />}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-caption font-bold text-fg-3">
-                    <Calendar className="h-3 w-3" />
-                    Valid till
-                  </div>
-                  <p className="text-ui font-bold text-fg-2">
-                    {document.endDate ? format.date(document.endDate) : 'No date limit'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 bg-page border-l border-line-subtle p-5 flex flex-col justify-between">
-              <div className="space-y-3">
-                {typeof document.details?.premiumAmount === 'number' && (
-                  <div className="space-y-0.5">
-                    <p className="text-caption font-black text-fg-3">Premium paid</p>
-                    <p className="text-lead font-black tracking-tight text-fg">
-                      {format.money(document.details.premiumAmount)}
-                    </p>
-                  </div>
-                )}
-                {typeof document.details?.insuredValue === 'number' && (
-                  <div className="space-y-0.5">
-                    <p className="text-caption font-black text-fg-3">
-                      Insured declared value (IDV)
-                    </p>
-                    <p className="text-ui font-bold text-fg-2">
-                      {format.money(document.details.insuredValue)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-4">
-                {showLink}
-                {renewButton}
-                {onEdit && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-fg-3 hover:text-primary rounded-full md:h-8 md:w-8"
-                    onClick={() => onEdit(document)}
-                    aria-label="Edit document"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                )}
-                {canEdit ? (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-fg-3 hover:text-late rounded-full md:h-8 md:w-8"
-                    onClick={handleDelete}
-                    aria-label="Delete document"
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-line-subtle px-5 py-4">
-            <DocumentAttachmentsSection documentId={document.id} kind="insurance" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isComplianceKind(document.kind)) {
-    const amount = document.details?.amount;
-    return (
-      <Card className="border-line/60 bg-surface overflow-hidden hover:border-primary/20 transition-colors">
-        <CardContent className="p-0">
-          <div className="flex flex-col sm:flex-row">
-            <div className="flex-[1.5] p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-caption font-black text-fg-3">
-                    {documentKindTitles[document.kind]}
-                  </p>
-                  <h4 className="font-black text-fg leading-tight">
-                    {document.provider ?? <NotRecorded />}
-                  </h4>
-                  {document.number && (
-                    <p className="font-mono text-caption font-medium text-fg-2">
-                      #{document.number}
-                    </p>
-                  )}
-                </div>
-                <Badge
-                  variant={isExpired ? 'destructive' : 'outline'}
-                  className={
-                    isExpired
-                      ? 'bg-late-tint text-late border-late/30 hover:bg-late-tint'
-                      : isExpiringSoon
-                        ? 'bg-soon-tint text-soon border-soon/30 hover:bg-soon-tint'
-                        : 'bg-ok-tint text-ok border-ok/30 hover:bg-ok-tint'
-                  }
-                >
-                  {isExpired
-                    ? 'Expired'
-                    : isExpiringSoon
-                      ? 'Expiring soon'
-                      : document.endDate
-                        ? 'Valid'
-                        : 'No expiry'}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-caption font-bold text-fg-3">
-                    <Calendar className="h-3 w-3" />
-                    Issued on
-                  </div>
-                  <p className="text-ui font-bold text-fg-2">
-                    {document.startDate ? format.date(document.startDate) : <NotRecorded />}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-caption font-bold text-fg-3">
-                    <FileBadge className="h-3 w-3" />
-                    Valid till
-                  </div>
-                  <p className="text-ui font-bold text-fg-2">
-                    {document.endDate ? format.date(document.endDate) : 'No date limit'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 bg-page border-l border-line-subtle p-5 flex flex-col justify-between">
-              <div className="space-y-3">
-                {typeof amount === 'number' && (
-                  <div className="space-y-0.5">
-                    <p className="text-caption font-black text-fg-3">Amount paid</p>
-                    <p className="text-lead font-black tracking-tight text-fg">
-                      {format.money(amount)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-4">
-                {showLink}
-                {renewButton}
-                {onEdit && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-fg-3 hover:text-primary rounded-full md:h-8 md:w-8"
-                    onClick={() => onEdit(document)}
-                    aria-label="Edit document"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                )}
-                {canEdit ? (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-fg-3 hover:text-late rounded-full md:h-8 md:w-8"
-                    onClick={handleDelete}
-                    aria-label="Delete document"
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-line-subtle px-5 py-4">
-            <DocumentAttachmentsSection documentId={document.id} kind={document.kind} />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Warranty kind
   return (
-    <Card className="border-line/60 bg-surface overflow-hidden hover:border-primary/20 transition-colors">
-      <CardContent className="p-0">
-        <div className="flex flex-col sm:flex-row">
-          <div className="flex-[1.5] p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-caption font-black text-fg-3">
-                  {(document.details?.type as string) || 'Warranty'}
-                </p>
-                <h4 className="font-black text-fg leading-tight">
-                  {document.provider ?? <NotRecorded />}
-                </h4>
-                {document.number && (
-                  <p className="font-mono text-caption font-medium text-fg-2">#{document.number}</p>
-                )}
-              </div>
-              <Badge
-                variant={isExpired ? 'destructive' : 'outline'}
-                className={
-                  isExpired
-                    ? 'bg-late-tint text-late border-late/30 hover:bg-late-tint'
-                    : 'bg-brand-tint text-brand border-brand/30 hover:bg-brand-tint'
-                }
-              >
-                {isExpired ? 'Expired' : 'In force'}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-caption font-bold text-fg-3">
-                  <Calendar className="h-3 w-3" />
-                  Coverage start
-                </div>
-                <p className="text-ui font-bold text-fg-2">
-                  {document.startDate ? format.date(document.startDate) : <NotRecorded />}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-caption font-bold text-fg-3">
-                  <Shield className="h-3 w-3" />
-                  Coverage end
-                </div>
-                <p className="text-ui font-bold text-fg-2">
-                  {document.endDate ? format.date(document.endDate) : 'No date limit'}
-                </p>
-              </div>
-            </div>
+    <Card
+      className="overflow-hidden border-line/60 bg-surface p-0 transition-colors hover:border-primary/20"
+      data-testid="document-card"
+    >
+      <CardContent className="space-y-4 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <p className="text-caption font-black text-fg-3">{cardLabel(document)}</p>
+            <h4 className="font-black leading-tight text-fg">
+              {document.provider ?? <NotRecorded />}
+            </h4>
+            {document.number ? (
+              <p className="font-mono text-caption font-medium text-fg-2">#{document.number}</p>
+            ) : null}
           </div>
-
-          <div className="flex-1 bg-page border-l border-line-subtle p-5 flex flex-col justify-between">
-            <div className="space-y-3">
-              {typeof document.details?.endOdometer === 'number' && (
-                <div className="space-y-0.5">
-                  <p className="text-caption font-black text-fg-3">Odometer limit</p>
-                  <div className="flex items-center gap-2">
-                    <Gauge className="h-4 w-4 text-fg-3" />
-                    <p className="text-lead font-black tracking-tight text-fg">
-                      {format.number(document.details.endOdometer)}
-                    </p>
-                    <span className="text-caption font-bold text-fg-3">km</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-4">
-              {showLink}
-              {renewButton}
-              {onEdit && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-fg-3 hover:text-primary rounded-full md:h-8 md:w-8"
-                  onClick={() => onEdit(document)}
-                  aria-label="Edit document"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-              {canEdit ? (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-fg-3 hover:text-late rounded-full md:h-8 md:w-8"
-                  onClick={handleDelete}
-                  aria-label="Delete document"
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              ) : null}
-            </div>
-          </div>
+          <Badge className={cn('shrink-0', STATUS_TONES[status])} variant="outline">
+            {paperStatusLabels[status]}
+          </Badge>
         </div>
-        <div className="border-t border-line-subtle px-5 py-4">
-          <DocumentAttachmentsSection documentId={document.id} kind="warranty" />
+
+        {/* Every value under its own label, across the card's width. */}
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {facts.map((fact) => (
+            <div className="min-w-0 space-y-1" key={fact.label}>
+              <dt className="text-caption font-bold text-fg-3">{fact.label}</dt>
+              <dd className="text-ui font-bold text-fg-2">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {showLink}
+          {renewButton}
+          {onEdit ? (
+            <Button
+              aria-label="Edit document"
+              className="rounded-full text-fg-3 hover:text-primary md:h-8 md:w-8"
+              onClick={() => onEdit(document)}
+              size="icon"
+              variant="ghost"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canEdit ? (
+            <Button
+              aria-label="Delete document"
+              className="rounded-full text-fg-3 hover:text-late md:h-8 md:w-8"
+              disabled={deleteMutation.isPending}
+              onClick={handleDelete}
+              size="icon"
+              variant="ghost"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       </CardContent>
+      <div className="border-t border-line-subtle px-5 py-4">
+        <DocumentAttachmentsSection documentId={document.id} kind={document.kind} />
+      </div>
     </Card>
   );
+}
+
+const STATUS_TONES: Record<PaperStatus, string> = {
+  valid: 'border-ok/30 bg-ok-tint text-ok hover:bg-ok-tint',
+  'ends-soon': 'border-soon/30 bg-soon-tint text-soon hover:bg-soon-tint',
+  expired: 'border-late/30 bg-late-tint text-late hover:bg-late-tint',
+};
+
+/** The line above the provider: the kind of paper, or a warranty's own type. */
+function cardLabel(document: VehicleDocument): string {
+  if (document.kind === 'warranty') {
+    const type = warrantyTypeLabel(document.details?.type);
+    return type ? `${type} warranty` : documentKindTitles.warranty;
+  }
+  return documentKindTitles[document.kind];
+}
+
+type Fact = { label: string; value: ReactNode };
+
+/** The dates, then whatever the kind carries: money, a distance limit. */
+function documentFacts(document: VehicleDocument): Fact[] {
+  const from = document.startDate ? format.date(document.startDate) : <NotRecorded />;
+  const till = document.endDate ? format.date(document.endDate) : 'No end date';
+  const details = document.details ?? {};
+
+  if (document.kind === 'insurance') {
+    return [
+      { label: 'Valid from', value: from },
+      { label: 'Valid till', value: till },
+      ...(typeof details.premiumAmount === 'number'
+        ? [{ label: 'Premium paid', value: format.money(details.premiumAmount) }]
+        : []),
+      ...(typeof details.insuredValue === 'number'
+        ? [{ label: 'Insured value (IDV)', value: format.money(details.insuredValue) }]
+        : []),
+    ];
+  }
+
+  if (document.kind === 'warranty') {
+    return [
+      { label: 'Covered from', value: from },
+      { label: 'Covered till', value: till },
+      ...(typeof details.endOdometer === 'number'
+        ? [{ label: 'Covered up to', value: format.odometer(details.endOdometer) }]
+        : []),
+    ];
+  }
+
+  return [
+    { label: 'Issued on', value: from },
+    { label: 'Valid till', value: till },
+    ...(typeof details.amount === 'number'
+      ? [{ label: 'Amount paid', value: format.money(details.amount) }]
+      : []),
+  ];
 }
