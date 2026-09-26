@@ -1,3 +1,10 @@
+# [1.118.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.5...v1.118.0) (2026-09-26)
+
+
+### Features
+
+* delete your account from Settings ([7180fb0](https://github.com/AtharvaCM/vehicle-vault/commit/7180fb0d174ff999a17874e1f0b1cecb1fee5eb5)), closes [#317](https://github.com/AtharvaCM/vehicle-vault/issues/317)
+
 ## [1.117.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.4...v1.117.5) (2026-09-26)
 
 
