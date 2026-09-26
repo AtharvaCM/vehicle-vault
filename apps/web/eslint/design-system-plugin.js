@@ -32,7 +32,8 @@ const OFF_BEAT_DURATION = /^duration-(?!150$)\d+$/;
 /** Entrances that move or grow: overlays fade instead. */
 const MOVING_ENTRANCE = /^(?:zoom|slide)-(?:in|out)(?:-|$)/;
 /** Hover and focus effects that move or scale an element. */
-const MOVING_HOVER = /(?:^|:)(?:group-)?(?:hover|focus|focus-visible):-?(?:scale|translate|rotate)-/;
+const MOVING_HOVER =
+  /(?:^|:)(?:group-)?(?:hover|focus|focus-visible):-?(?:scale|translate|rotate)-/;
 
 /** Tailwind's own sizes (14px `text-sm`, 18px `text-lg`…) sit off the design scale. */
 const DEFAULT_FONT_SIZE = /^text-(?:xs|sm|base|lg|xl|[2-9]xl)(?:\/\S+)?$/;
