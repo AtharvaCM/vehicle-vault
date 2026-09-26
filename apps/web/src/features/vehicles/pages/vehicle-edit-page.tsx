@@ -7,7 +7,6 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -164,58 +163,36 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
 
   return (
     <VehicleAccessProvider role={currentUserRole}>
-      <PageContainer>
+      <PageContainer className="max-w-3xl">
         <PageTitle
-          actions={
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ vehicleId }}
-              to="/vehicles/$vehicleId"
-            >
-              Back to vehicle
-            </Link>
-          }
-          description="Update the details that identify this vehicle across your garage."
+          description="Changes apply everywhere this vehicle appears."
           title="Edit vehicle"
         />
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <VehicleForm
-            initialValues={initialValues}
-            isSubmitting={updateVehicleMutation.isPending}
-            mode="edit"
-            onDirtyChange={setIsDirty}
-            onSubmit={handleUpdateVehicle}
-            submitError={
-              updateVehicleMutation.error
-                ? getApiErrorMessage(updateVehicleMutation.error, 'Unable to update the vehicle.')
-                : null
-            }
-            submitHint="Keep the odometer and key details current so reminders stay accurate."
-            submitLabel="Save changes"
-            submittingLabel="Saving changes..."
-            successMessage="Vehicle details updated."
-          />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Keep details accurate</CardTitle>
-              <CardDescription>
-                Small changes here keep the rest of your records clear.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-              <p>
-                Update the odometer when you want kilometre-based reminders to stay trustworthy.
-              </p>
-              <p>
-                Registration, make, model, and nickname help you recognise the right vehicle
-                everywhere in the app.
-              </p>
-              <p>Use this page whenever ownership details or naming need cleanup.</p>
-            </CardContent>
-          </Card>
-        </div>
+        <VehicleForm
+          cancel={
+            <Link
+              className={buttonVariants({ variant: 'ghost', size: 'lg' })}
+              params={{ vehicleId }}
+              to="/vehicles/$vehicleId"
+            >
+              Cancel
+            </Link>
+          }
+          initialValues={initialValues}
+          isSubmitting={updateVehicleMutation.isPending}
+          mode="edit"
+          onDirtyChange={setIsDirty}
+          onSubmit={handleUpdateVehicle}
+          submitError={
+            updateVehicleMutation.error
+              ? getApiErrorMessage(updateVehicleMutation.error, 'Unable to update the vehicle.')
+              : null
+          }
+          submitLabel="Save changes"
+          submittingLabel="Saving changes..."
+          successMessage="Vehicle details updated."
+        />
       </PageContainer>
     </VehicleAccessProvider>
   );

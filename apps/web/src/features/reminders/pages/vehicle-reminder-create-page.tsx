@@ -5,7 +5,6 @@ import { PageContainer } from '@/components/layout/page-container';
 import { EmptyState } from '@/components/shared/empty-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApiError } from '@/lib/api/api-error';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
@@ -122,34 +121,40 @@ export function VehicleReminderCreatePage({ vehicleId }: VehicleReminderCreatePa
 
   return (
     <VehicleAccessProvider role={currentUserRole}>
-      <PageContainer>
+      <PageContainer className="max-w-3xl">
         <PageTitle
-          description={`Create a reminder for ${vehicleTitle} so important due dates and kilometre targets stay visible.`}
+          description={`For ${vehicleTitle}: due by a date, a reading, or whichever comes first.`}
           title="Add reminder"
         />
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <ReminderForm
-            isSubmitting={createReminderMutation.isPending}
-            onDirtyChange={setIsDirty}
-            onSubmit={handleCreateReminder}
-            submitError={submitError}
-          />
+        <p className="text-ui text-fg-3">
+          Not sure what it needs?{' '}
+          <Link
+            className="font-semibold text-brand underline-offset-4 hover:underline"
+            params={{ vehicleId }}
+            search={{ tab: 'reminders' }}
+            to="/vehicles/$vehicleId"
+          >
+            Pick from the suggested service schedule
+          </Link>
+        </p>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Good reminder habits</CardTitle>
-              <CardDescription>Clear reminders are easier to act on later.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-              <p>Use a due date for calendar items like insurance, PUC, or time-based servicing.</p>
-              <p>Use a due odometer when the work depends on kilometres travelled.</p>
-              <p>
-                Add notes if you want the reminder to include parts, documents, or other context.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <ReminderForm
+          cancel={
+            <Link
+              className={buttonVariants({ variant: 'ghost', size: 'lg' })}
+              params={{ vehicleId }}
+              search={{ tab: 'reminders' }}
+              to="/vehicles/$vehicleId"
+            >
+              Cancel
+            </Link>
+          }
+          isSubmitting={createReminderMutation.isPending}
+          onDirtyChange={setIsDirty}
+          onSubmit={handleCreateReminder}
+          submitError={submitError}
+        />
       </PageContainer>
     </VehicleAccessProvider>
   );

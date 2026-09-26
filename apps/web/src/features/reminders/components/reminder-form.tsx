@@ -4,7 +4,7 @@ import {
   ReminderType,
   type VehicleDocumentKind,
 } from '@vehicle-vault/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -38,7 +38,10 @@ type ReminderFormProps = {
   onDirtyChange?: (isDirty: boolean) => void;
   submitLabel?: string;
   submittingLabel?: string;
+  /** Under Save; none by default. */
   submitHint?: string;
+  /** A way out beside Save, from md; a phone has the page's back link. */
+  cancel?: ReactNode;
   successMessage?: string;
   /**
    * The paper this renewal follows, when editing one that does: its due date
@@ -134,7 +137,8 @@ export function ReminderForm({
   onDirtyChange,
   submitLabel = 'Save reminder',
   submittingLabel = 'Saving reminder...',
-  submitHint = 'Use a due date, a due odometer, or both to track this reminder.',
+  submitHint,
+  cancel,
   successMessage = 'Reminder saved.',
   followsPaper,
 }: ReminderFormProps) {
@@ -425,13 +429,24 @@ export function ReminderForm({
             </p>
           ) : null}
 
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-            <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
+          {/* Pinned above the phone's bottom bar (64px and its border, plus the
+              home-indicator inset) so Save is always one tap away; in the flow from md. */}
+          <div
+            className="sticky bottom-[calc(4rem+1px+env(safe-area-inset-bottom))] z-20 -mx-4 flex flex-col gap-2 border-t border-line-subtle bg-surface px-4 py-3 md:static md:mx-0 md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0"
+            data-testid="reminder-form-actions"
+          >
+            <Button
+              className="w-full md:w-auto"
+              disabled={form.formState.isSubmitting || isSubmitting}
+              size="lg"
+              type="submit"
+            >
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-ui leading-5 text-fg-3 sm:max-w-md">
-              {isSubmitting ? 'Saving reminder...' : submitHint}
-            </p>
+            {cancel ? <div className="hidden md:block">{cancel}</div> : null}
+            {submitHint ? (
+              <p className="text-small leading-5 text-fg-3 md:max-w-md">{submitHint}</p>
+            ) : null}
           </div>
         </form>
       </CardContent>

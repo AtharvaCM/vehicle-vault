@@ -6,11 +6,12 @@ import {
   type VehicleCatalogVariantOption,
   VehicleType,
 } from '@vehicle-vault/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 
 import { FormField } from '@/components/shared/form-field';
 import { InlineError } from '@/components/shared/inline-error';
+import { OdometerInput } from '@/components/shared/odometer-input';
 import { PlateInput } from '@/components/shared/plate-input';
 import {
   SearchableSelect,
@@ -65,7 +66,10 @@ type VehicleFormProps = {
   onDirtyChange?: (isDirty: boolean) => void;
   submitLabel?: string;
   submittingLabel?: string;
+  /** Under Save; a new vehicle gets one by default, an edit none. */
   submitHint?: string;
+  /** A way out beside Save, from md; a phone has the page's back link. */
+  cancel?: ReactNode;
   successMessage?: string;
   /**
    * `'create'` (the default) sends the full validated object, since there is
@@ -97,9 +101,10 @@ export function VehicleForm({
   onDirtyChange,
   submitLabel = 'Save vehicle',
   submittingLabel = 'Saving vehicle...',
-  submitHint = 'You can add service history and reminders as soon as this vehicle is saved.',
+  submitHint: submitHintProp,
   successMessage = 'Vehicle details saved.',
   mode = 'create',
+  cancel,
 }: VehicleFormProps) {
   const [submissionState, setSubmissionState] = useState<string | null>(null);
   const resolvedInitialValues = useMemo(
@@ -351,12 +356,20 @@ export function VehicleForm({
     }
   });
 
+  const submitHint =
+    submitHintProp ??
+    (mode === 'create'
+      ? 'You can add service history and reminders as soon as this vehicle is saved.'
+      : undefined);
+
   return (
     <Card size="sm">
       <CardHeader className="pb-3">
         <CardTitle>Vehicle details</CardTitle>
         <CardDescription>
-          Add the basics so this vehicle is easy to recognise everywhere in the app.
+          {mode === 'edit'
+            ? 'Correct anything that is wrong, or bring the odometer up to date.'
+            : 'Add the basics so this vehicle is easy to recognise everywhere in the app.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -659,13 +672,21 @@ export function VehicleForm({
               label="Odometer"
               error={form.formState.errors.odometer?.message}
             >
-              <Input
-                id="vehicle-odometer"
-                {...form.register('odometer', { valueAsNumber: true })}
-                aria-invalid={Boolean(form.formState.errors.odometer)}
-                min={0}
-                placeholder="e.g. 15000"
-                type="number"
+              <Controller
+                control={form.control}
+                name="odometer"
+                render={({ field }) => (
+                  <OdometerInput
+                    aria-invalid={Boolean(form.formState.errors.odometer)}
+                    id="vehicle-odometer"
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onChange={field.onChange}
+                    placeholder="e.g. 15,000"
+                    ref={field.ref}
+                    value={field.value}
+                  />
+                )}
               />
             </FormField>
 
@@ -754,8 +775,9 @@ export function VehicleForm({
             </p>
           ) : canUseCatalogSelectors ? (
             <p className="text-ui leading-5 text-fg-3">
-              Start with vehicle type and year, then search the India catalog for the correct make,
-              model, and variant.
+              {mode === 'edit'
+                ? 'Change the type or year to search the catalog again for the make, model and variant.'
+                : 'Start with vehicle type and year, then search the India catalog for the correct make, model, and variant.'}
             </p>
           ) : catalogError ? (
             <div className="space-y-2">
@@ -780,13 +802,24 @@ export function VehicleForm({
             </p>
           ) : null}
 
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-            <Button disabled={form.formState.isSubmitting || isSubmitting} size="sm" type="submit">
+          {/* Pinned above the phone's bottom bar (64px and its border, plus the
+              home-indicator inset) so Save is always one tap away; in the flow from md. */}
+          <div
+            className="sticky bottom-[calc(4rem+1px+env(safe-area-inset-bottom))] z-20 -mx-4 flex flex-col gap-2 border-t border-line-subtle bg-surface px-4 py-3 md:static md:mx-0 md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0"
+            data-testid="vehicle-form-actions"
+          >
+            <Button
+              className="w-full md:w-auto"
+              disabled={form.formState.isSubmitting || isSubmitting}
+              size="lg"
+              type="submit"
+            >
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-            <p className="text-ui leading-5 text-fg-3 sm:max-w-md">
-              {isSubmitting ? 'Saving vehicle details...' : submitHint}
-            </p>
+            {cancel ? <div className="hidden md:block">{cancel}</div> : null}
+            {submitHint ? (
+              <p className="text-small leading-5 text-fg-3 md:max-w-md">{submitHint}</p>
+            ) : null}
           </div>
         </form>
       </CardContent>

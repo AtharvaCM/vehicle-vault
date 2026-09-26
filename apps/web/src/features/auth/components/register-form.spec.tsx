@@ -44,3 +44,11 @@ describe('RegisterForm', () => {
     expect(screen.getByText('An account with this email already exists.')).toBeInTheDocument();
   });
 });
+
+describe('RegisterForm validation', () => {
+  it('leaves checking to its own inline messages, not the browser’s bubble', () => {
+    const { container } = render(<RegisterForm onSubmit={vi.fn()} />);
+
+    expect(container.querySelector('form')).toHaveAttribute('novalidate');
+  });
+});

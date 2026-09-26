@@ -622,7 +622,9 @@ describe('prerenderPublicCatalog', () => {
       const root = html.slice(html.indexOf('<div id="root">'));
 
       expect(root).toMatch(/<h1[^>]*>Hyundai i20<\/h1>/);
-      expect(root).toMatch(/<h3[^>]*>i20 lineup<\/h3>/);
+      // The made-up generation name gives way to its years.
+      expect(root).not.toMatch(/<h3[^>]*>i20 lineup<\/h3>/);
+      expect(root).toContain('Details last updated');
       expect(root).toContain('href="/cars/hyundai/i20/i20-lineup/asta"');
       expect(root).toContain('Typical schedule for a petrol car');
       expect(root).toContain('Shown for the Hyundai i20 Asta');

@@ -57,6 +57,22 @@ export class AdminService {
       }),
     ]);
 
+    // Sign-ins are in the activity log: each password or OAuth sign-in, and the
+    // sign-up that started the first session.
+    const signIns = users.length
+      ? await this.prisma.auditEvent.groupBy({
+          by: ['actorUserId'],
+          where: {
+            actorUserId: { in: users.map((user) => user.id) },
+            action: { in: [AUDIT_ACTIONS.auth.loginSucceeded, AUDIT_ACTIONS.auth.accountCreated] },
+          },
+          _max: { occurredAt: true },
+        })
+      : [];
+    const lastSignIn = new Map(
+      signIns.map((row) => [row.actorUserId, row._max.occurredAt?.toISOString() ?? null]),
+    );
+
     return {
       users: users.map((user) => ({
         id: user.id,
@@ -67,6 +83,7 @@ export class AdminService {
         allowedCatalogSources: user.allowedCatalogSources,
         vehicleCount: user._count.vehicles,
         createdAt: user.createdAt.toISOString(),
+        lastSignInAt: lastSignIn.get(user.id) ?? null,
       })),
       meta: { page, limit, total, search },
     };

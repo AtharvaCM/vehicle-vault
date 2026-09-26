@@ -6,7 +6,6 @@ import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
@@ -147,23 +146,20 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
 
   return (
     <VehicleAccessProvider role={currentUserRole}>
-      <PageContainer>
-        <PageTitle
-          actions={
-            <Link
-              className={buttonVariants({ variant: 'secondary' })}
-              params={{ reminderId }}
-              to="/reminders/$reminderId"
-            >
-              Back to reminder
-            </Link>
-          }
-          description="Update timing, kilometre targets, or notes for this reminder."
-          title="Edit reminder"
-        />
+      <PageContainer className="max-w-3xl">
+        <PageTitle description="Change what it says, or when it is due." title="Edit reminder" />
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div>
           <ReminderForm
+            cancel={
+              <Link
+                className={buttonVariants({ variant: 'ghost', size: 'lg' })}
+                params={{ reminderId }}
+                to="/reminders/$reminderId"
+              >
+                Cancel
+              </Link>
+            }
             followsPaper={
               reminderQuery.data.renewsDocument
                 ? {
@@ -181,29 +177,10 @@ export function ReminderEditPage({ reminderId }: ReminderEditPageProps) {
                 ? getApiErrorMessage(updateReminderMutation.error, 'Unable to update the reminder.')
                 : null
             }
-            submitHint="Use edits when the title, due date, or due kilometre changes."
             submitLabel="Save changes"
             submittingLabel="Saving changes..."
             successMessage="Reminder updated."
           />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Keep reminders actionable</CardTitle>
-              <CardDescription>Clear reminder details are easier to trust later.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-              <p>
-                Use edits when a reminder&apos;s title, timing, or kilometre target was logged
-                incorrectly.
-              </p>
-              <p>
-                Completed reminders can still be cleaned up if their reference details need
-                correction.
-              </p>
-              <p>Keep notes clear so the reminder still makes sense when it resurfaces later.</p>
-            </CardContent>
-          </Card>
         </div>
       </PageContainer>
     </VehicleAccessProvider>

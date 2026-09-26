@@ -818,6 +818,49 @@ describe('AuthService', () => {
     });
   });
 
+  describe('updateProfile', () => {
+    const record = {
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      role: 'user',
+      emailVerified: true,
+      allowedCatalogSources: [],
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    it('stores the trimmed name and records the change with the old one', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ ...record });
+      prisma.user.update.mockResolvedValueOnce({ ...record, name: 'Atharva M' });
+
+      const user = await service.updateProfile('user-1', { name: '  Atharva M ' });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { name: 'Atharva M' },
+      });
+      expect(user.name).toBe('Atharva M');
+      expect(auditService.track).toHaveBeenCalledWith(
+        prisma,
+        expect.objectContaining({
+          action: 'auth.profile_updated',
+          before: { name: 'Atharva' },
+          after: { name: 'Atharva M' },
+        }),
+      );
+    });
+
+    it('writes nothing when the name did not change', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ ...record });
+
+      await service.updateProfile('user-1', { name: 'Atharva' });
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(auditService.track).not.toHaveBeenCalled();
+    });
+  });
+
   describe('changePassword', () => {
     const record = {
       id: 'user-1',

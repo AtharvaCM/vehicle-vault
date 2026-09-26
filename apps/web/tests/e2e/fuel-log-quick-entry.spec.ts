@@ -55,7 +55,7 @@ test('logs a fill on a phone with only the three fields', async ({ page }) => {
   await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
   await logFillWithThreeFields(page, { amount: '900', quantity: '9', odometer: '15300' });
 
-  await expect(page.getByText('9 L fuel fill')).toBeVisible();
+  await expect(page.getByTestId('fuel-row').getByText('9 L', { exact: true })).toBeVisible();
 
   const vehicle = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
   const log = await prisma.fuelLog.findFirstOrThrow({ where: { vehicleId: vehicle.id } });
@@ -86,7 +86,7 @@ test('logs a fill with only the three fields at desktop width too', async ({ pag
   await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
   await logFillWithThreeFields(page, { amount: '1050', quantity: '10', odometer: '20450' });
 
-  await expect(page.getByText('10 L fuel fill')).toBeVisible();
+  await expect(page.getByTestId('fuel-row').getByText('10 L', { exact: true })).toBeVisible();
 
   const vehicle = await prisma.vehicle.findFirstOrThrow({ where: { nickname } });
   const log = await prisma.fuelLog.findFirstOrThrow({ where: { vehicleId: vehicle.id } });

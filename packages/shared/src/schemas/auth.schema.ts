@@ -42,6 +42,11 @@ export const PasswordChangeSchema = z.object({
   newPassword: z.string().min(8).max(72),
 });
 
+/** Settings → Account: the account's name, the only profile field it can change. */
+export const ProfileUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+});
+
 export const OAuthProviderNameSchema = z.enum(['google', 'github']);
 
 /** How an account can sign in, for Settings → Security. */

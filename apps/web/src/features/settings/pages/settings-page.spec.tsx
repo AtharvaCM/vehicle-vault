@@ -11,6 +11,11 @@ const api = vi.hoisted(() => ({
   changePassword: vi.fn(),
 }));
 const setSession = vi.hoisted(() => vi.fn());
+const refreshUser = vi.hoisted(() => vi.fn());
+const updateProfile = vi.hoisted(() => vi.fn());
+const authUser = vi.hoisted(() => ({
+  current: { name: 'Asha', email: 'asha@example.com', emailVerified: true, role: 'user' },
+}));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { to?: string }) => (
@@ -20,11 +25,9 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }));
 vi.mock('@/features/auth/hooks/use-auth', () => ({
-  useAuth: () => ({
-    user: { name: 'Asha', email: 'asha@example.com', emailVerified: true },
-    setSession,
-  }),
+  useAuth: () => ({ user: authUser.current, setSession, refreshUser }),
 }));
+vi.mock('../api/profile', () => ({ updateProfile }));
 vi.mock('../api/account-security', () => ({
   accountSecurityQueryOptions: () => ({
     queryKey: ['account', 'security'],
@@ -60,7 +63,48 @@ const row = (label: string) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  authUser.current = { ...authUser.current, role: 'user' };
+  updateProfile.mockResolvedValue({ ...authUser.current, name: 'Asha K' });
   api.getAccountSecurity.mockResolvedValue({ hasPassword: true, oauthProviders: ['google'] });
+});
+
+describe('SettingsPage profile', () => {
+  it('renames the account in place, and reads it again for the shell', async () => {
+    const user = userEvent.setup();
+    show();
+
+    await user.click(within(row('Name')).getByRole('button', { name: 'Edit' }));
+    const field = screen.getByLabelText('Name');
+    await user.clear(field);
+    await user.type(field, '  Asha K ');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(updateProfile.mock.calls[0]?.[0]).toEqual({ name: 'Asha K' }));
+    expect(refreshUser).toHaveBeenCalled();
+  });
+
+  it('asks for a name rather than sending an empty one', async () => {
+    const user = userEvent.setup();
+    show();
+
+    await user.click(within(row('Name')).getByRole('button', { name: 'Edit' }));
+    await user.clear(screen.getByLabelText('Name'));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByText('Enter a name, up to 120 characters.')).toBeInTheDocument();
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it('keeps the stored-file check, an operations tool, to admins', () => {
+    show();
+    expect(screen.queryByRole('button', { name: /check files/i })).not.toBeInTheDocument();
+  });
+
+  it('offers an admin the stored-file check', () => {
+    authUser.current = { ...authUser.current, role: 'admin' };
+    show();
+    expect(screen.getByRole('button', { name: /check files/i })).toBeInTheDocument();
+  });
 });
 
 describe('SettingsPage', () => {

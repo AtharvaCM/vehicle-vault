@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ReminderStatus, ReminderType, VehicleRole, type Reminder } from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -58,6 +58,8 @@ describe('VehicleReminderList roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])('lets an %s select and bulk act', (role) => {
     renderAs(role, [reminder]);
 
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
     expect(screen.getByRole('button', { name: 'Select all visible' })).toBeInTheDocument();
     expect(
       screen.getByRole('checkbox', { name: /select reminder insurance renewal/i }),
@@ -87,6 +89,7 @@ describe('VehicleReminderList roles', () => {
     // Reading stays open to them.
     expect(screen.getByText('Insurance renewal')).toBeInTheDocument();
 
+    expect(screen.queryByRole('button', { name: 'Select' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Select all visible' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /done|snooze/i })).not.toBeInTheDocument();
@@ -103,5 +106,47 @@ describe('VehicleReminderList roles', () => {
     renderAs(VehicleRole.Editor, []);
 
     expect(screen.getByRole('link', { name: 'Add the first reminder' })).toBeInTheDocument();
+  });
+});
+
+describe('VehicleReminderList scales to the list', () => {
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      ...reminder,
+      id: `reminder-${index}`,
+      title: `Reminder ${index}`,
+    }));
+
+  it('draws one reminder with no filters, no selection bar and no empty groups', () => {
+    renderAs(VehicleRole.Owner, [reminder]);
+
+    expect(screen.getByText('1 reminder')).toBeInTheDocument();
+    expect(screen.getByText('Upcoming reminders for this vehicle.')).toBeInTheDocument();
+    expect(screen.queryByText('Overdue')).not.toBeInTheDocument();
+    expect(screen.queryByText('Completed')).not.toBeInTheDocument();
+    expect(screen.queryByText(/no overdue reminders/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/search by title/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Select reminders to take action')).not.toBeInTheDocument();
+  });
+
+  it('leaves five reminders without search and filters', () => {
+    renderAs(VehicleRole.Owner, many(5));
+    expect(screen.queryByPlaceholderText(/search by title/i)).not.toBeInTheDocument();
+  });
+
+  it('gives six reminders their search and filters', () => {
+    renderAs(VehicleRole.Owner, many(6));
+    expect(screen.getByPlaceholderText(/search by title/i)).toBeInTheDocument();
+  });
+
+  it('drops the selection when Select is done', () => {
+    renderAs(VehicleRole.Owner, [reminder]);
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /select reminder insurance renewal/i }));
+    expect(screen.getByText('1 reminder selected')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    expect(screen.getByText('Select reminders to take action')).toBeInTheDocument();
   });
 });

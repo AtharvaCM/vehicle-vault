@@ -79,39 +79,6 @@ async function expectNoSidewaysScroll(page: Page, where: string) {
 }
 
 /**
- * A page can stop scrolling sideways by squeezing a card instead: a title
- * crushed to one letter, or figures pushed out of view. The card has to leave
- * its title a readable width, even if an ellipsis cuts it short, and keep each
- * figure inside the card.
- */
-async function expectReadableCard(card: Locator, title: string, figures: string[]) {
-  await expect(card).toBeVisible();
-  const cardBox = (await card.boundingBox())!;
-
-  // Measured on the title's row, which spans the card's text: a long title fills
-  // it, but a short one, like a fill's, is only as wide as its words, and wraps
-  // them one to a line when the row is too narrow.
-  const titleWidth = Math.round(
-    await card
-      .getByText(title, { exact: true })
-      .evaluate((node) => node.parentElement!.getBoundingClientRect().width),
-  );
-  expect
-    .soft(titleWidth, `The card for "${title}" leaves its title ${titleWidth}px wide.`)
-    .toBeGreaterThanOrEqual(160);
-
-  for (const figure of figures) {
-    const box = (await card.getByText(figure, { exact: true }).boundingBox())!;
-    expect
-      .soft(
-        box.x >= cardBox.x && box.x + box.width <= cardBox.x + cardBox.width,
-        `The card for "${title}" pushes ${figure} out of view.`,
-      )
-      .toBe(true);
-  }
-}
-
-/**
  * A card can spill a button past its own edge without widening the page, as the
  * dashboard's garage card did three across at 1280px. Every link and button in
  * `card` has to sit inside it.
@@ -152,26 +119,46 @@ async function expectNoSqueezedIcons(page: Page, where: string) {
 }
 
 /**
- * A fill's three figures and its menu share one strip, which a phone leaves
- * narrow. No label or figure may break over two lines, as "15,180 km" and
- * "Total cost" did at 375px: when the three do not fit, a whole figure moves to
- * a second row. And a long location wraps beside its pin without squeezing it.
+ * A fill is one compact row. On a phone its values share two short lines, and
+ * none may break over two lines, as "15,180 km" and "Total cost" once did at
+ * 375px; a long station is cut short beside its pin without squeezing it.
  */
-async function expectFillFitsPhone(card: Locator, title: string, figures: string[]) {
-  for (const text of ['Odometer', 'Price/L', 'Total cost', ...figures]) {
-    const lines = await card
+async function expectFillFitsPhone(row: Locator, title: string, figures: string[]) {
+  for (const text of [title, ...figures]) {
+    const lines = await row
       .getByText(text, { exact: true })
+      .locator('visible=true')
+      .first()
       .evaluate((node) =>
         Math.round(
           node.getBoundingClientRect().height / parseFloat(getComputedStyle(node).lineHeight),
         ),
       );
-    expect.soft(lines, `The card for "${title}" breaks "${text}" over ${lines} lines.`).toBe(1);
+    expect.soft(lines, `The row for "${title}" breaks "${text}" over ${lines} lines.`).toBe(1);
   }
-  const pin = card.locator('svg.lucide-map-pin');
+  const pin = row.locator('svg.lucide-map-pin');
   if (await pin.count()) {
     const width = Math.round((await pin.boundingBox())!.width);
-    expect.soft(width, `The card for "${title}" squeezes its location pin to ${width}px.`).toBe(12);
+    expect.soft(width, `The row for "${title}" squeezes its location pin to ${width}px.`).toBe(12);
+  }
+}
+
+/** Every value of a fill's row sits inside it, at any width. */
+async function expectFillInsideRow(row: Locator, title: string, figures: string[]) {
+  await expect(row).toBeVisible();
+  const rowBox = (await row.boundingBox())!;
+  for (const figure of [title, ...figures]) {
+    const box = (await row
+      .getByText(figure, { exact: true })
+      .locator('visible=true')
+      .first()
+      .boundingBox())!;
+    expect
+      .soft(
+        box.x >= rowBox.x && box.x + box.width <= rowBox.x + rowBox.width,
+        `The row for "${title}" pushes ${figure} out of view.`,
+      )
+      .toBe(true);
   }
 }
 
@@ -324,9 +311,9 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     location: 'Hindustan Petroleum COCO outlet, Mumbai–Pune Expressway, Lonavala',
   });
   const fills: Array<[string, string[]]> = [
-    ['30 L fuel fill', ['14,950 km', '₹105', '₹3,150']],
-    ['42.5 L fuel fill', ['15,180 km', '₹106', '₹4,505']],
-    ['25 L fuel fill', ['15,410 km', '₹104', '₹2,600']],
+    ['30 L', ['14,950 km', '₹3,150']],
+    ['42.5 L', ['15,180 km', '₹4,505', '5.4 km/L']],
+    ['25 L', ['15,410 km', '₹2,600', '9.2 km/L']],
   ];
 
   await page.setViewportSize(PHONE);
@@ -337,7 +324,7 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     ['tab=history', [workshop]],
     ['tab=more&section=about', [/We don't have specs for this variant yet|Tyres /]],
     ['tab=reminders', [reminderTitle]],
-    ['tab=history&view=fuel', ['42.5 L fuel fill']],
+    ['tab=history&view=fuel', ['42.5 L']],
     ['tab=more&section=tyres', ['Add your tyres']],
     ['tab=more&section=accessories', ['No accessories yet']],
     ['tab=papers', ['Add Policy']],
@@ -381,14 +368,14 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
   await page.goto(`/vehicles/${vehicleId}/maintenance`);
   await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicleId}\\?tab=history$`));
 
-  // On a phone a fill's three figures and menu share one narrow strip.
+  // On a phone a fill's values share two short lines.
   await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
   for (const [title, figures] of fills) {
-    const card = page
-      .getByRole('main')
-      .locator('[data-slot="card"]', { has: page.getByText(title, { exact: true }) });
-    await expect(card).toBeVisible();
-    await expectFillFitsPhone(card, title, figures);
+    const row = page
+      .getByTestId('fuel-row')
+      .filter({ has: page.getByText(title, { exact: true }) });
+    await expect(row).toBeVisible();
+    await expectFillFitsPhone(row, title, figures);
   }
 
   // The Overview lists rows, not cards, since #307, and the History tab lists
@@ -413,19 +400,16 @@ test('no tab or page scrolls sideways, on a phone or wider', async ({ page }) =>
     'The service row pushes its cost out of view.',
   ).toBeLessThanOrEqual(rowBox.x + rowBox.width);
 
-  // The fuel tab splits the same way, and a fill's three figures and menu need
-  // more room beside its text than a record's two figures. So it is measured at
-  // 1440px too, where its cards are wide enough for a record's figures to sit
-  // beside the text, but not for a fill's.
+  // The fuel tab splits the same way, beside its economy card: a fill's row
+  // keeps every value inside it at 1280px and at 1440px.
   for (const screen of [DESKTOP, WIDE_DESKTOP]) {
     await page.setViewportSize(screen);
     await page.goto(`${vehicleUrl}?tab=history&view=fuel`);
     for (const [title, figures] of fills) {
-      // A fill's card is not a link.
-      const card = page
-        .getByRole('main')
-        .locator('[data-slot="card"]', { has: page.getByText(title, { exact: true }) });
-      await expectReadableCard(card, title, figures);
+      const row = page
+        .getByTestId('fuel-row')
+        .filter({ has: page.getByText(title, { exact: true }) });
+      await expectFillInsideRow(row, title, figures);
     }
     await expectNoSidewaysScroll(page, `The fuel view at ${screen.width}px`);
   }

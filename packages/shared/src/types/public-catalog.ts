@@ -307,6 +307,11 @@ export interface PublicCatalogMakePage {
   /** On sale first, then by name. Never empty. */
   models: PublicCatalogMakeModel[];
   /**
+   * The other segment when the same make slug has public pages there too
+   * (Honda makes cars and bikes), for a link between the two; null otherwise.
+   */
+  otherSegment: PublicCatalogSegment | null;
+  /**
    * The page-quality gate's verdict: indexable when any of its models is, which
    * is when any variant under it is. The web build's indexing flag still has
    * the last word.

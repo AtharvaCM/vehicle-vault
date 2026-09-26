@@ -154,11 +154,15 @@ test.describe('public model page', () => {
 
     // Current generation first, then the older one this spec added.
     const variants = page.getByRole('region', { name: 'Variants' });
+    // A made-up "{Model} lineup" name gives way to the years (#371).
+    const madeUp =
+      model.currentGenerationName.toLowerCase() === `${model.modelName} lineup`.toLowerCase();
     await expect(variants.getByRole('heading', { level: 3 })).toHaveText([
-      model.currentGenerationName,
+      madeUp ? /^(?!.*lineup$).+/i : model.currentGenerationName,
       OLDER_GENERATION.name,
     ]);
-    const current = page.getByRole('region', { name: model.currentGenerationName });
+    // Current first, whatever its heading reads.
+    const current = variants.getByRole('region').first();
     await expect(current.getByText('Current', { exact: true })).toBeVisible();
     await expect(current.getByRole('link')).toHaveCount(model.currentVariants.length);
     const older = page.getByRole('region', { name: OLDER_GENERATION.name });

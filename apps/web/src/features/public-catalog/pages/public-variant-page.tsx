@@ -14,7 +14,8 @@ import { PublicSpecSections } from '../components/public-spec-sections';
 import { RunningCostCalculator } from '../components/running-cost-calculator';
 import { variantPageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
-import { describeOffering } from '../utils/format-public-catalog';
+import { describeOffering, realGenerationName } from '../utils/format-public-catalog';
+import { CatalogFreshness } from '../components/catalog-freshness';
 import { TrackThisVehicle, TrackThisVehicleBar } from '../components/track-this-vehicle';
 import { VariantKeyFacts } from '../components/variant-key-facts';
 
@@ -64,12 +65,8 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
   usePublicPageHead(variantPageHead(page));
 
   const heading = `${page.make.name} ${page.model.name} ${page.variant.name}`;
-  // "Amaze lineup" is a name the import makes up when a model has no named
-  // generation; a real one ("4th Gen") helps tell the variant apart.
-  const generationName =
-    page.generation.name.toLowerCase() === `${page.model.name} lineup`.toLowerCase()
-      ? null
-      : page.generation.name;
+  // A real generation name ("4th Gen") helps tell the variant apart; a made-up one does not.
+  const generationName = realGenerationName(page.generation.name, page.model.name);
   const meta = [generationName, ...page.offerings.map(describeOffering)]
     .filter(Boolean)
     .join(' · ');
@@ -124,10 +121,12 @@ export function PublicVariantPageView({ page }: PublicVariantPageViewProps) {
         )}
       </section>
 
-      <PublicServiceSchedule schedule={page.schedule} />
+      <PublicServiceSchedule bodyType={page.specs?.bodyType} schedule={page.schedule} />
 
       <TrackThisVehicle page={page} />
       <TrackThisVehicleBar page={page} />
+
+      <CatalogFreshness updatedAt={page.updatedAt} />
     </article>
   );
 }

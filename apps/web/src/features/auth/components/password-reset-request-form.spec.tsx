@@ -32,3 +32,11 @@ describe('PasswordResetRequestForm', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('PasswordResetRequestForm validation', () => {
+  it('leaves checking to its own inline messages, not the browser’s bubble', () => {
+    const { container } = render(<PasswordResetRequestForm onSubmit={vi.fn()} />);
+
+    expect(container.querySelector('form')).toHaveAttribute('novalidate');
+  });
+});

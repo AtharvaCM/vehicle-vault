@@ -1,7 +1,5 @@
-import { Fuel, Gauge } from 'lucide-react';
 import type { FuelType } from '@vehicle-vault/shared';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { FuelEconomyCard } from '@/features/fuel-logs/components/fuel-economy-card';
@@ -75,28 +73,8 @@ export function VehicleHistoryTab({
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <FuelTab fuelType={fuelType} odometer={odometer} vehicleId={vehicleId} />
-          <div className="h-fit space-y-6">
+          <div className="h-fit">
             <FuelEconomyCard vehicleId={vehicleId} />
-            <Card className="h-fit border-line/60 bg-surface/70">
-              <CardHeader>
-                <CardTitle className="text-lead font-bold">Getting an accurate figure</CardTitle>
-                <CardDescription>Economy is measured between fill-ups.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-small leading-relaxed text-fg-3">
-                <div className="flex gap-3">
-                  <div className="mt-1 shrink-0 text-primary">
-                    <Fuel className="h-4 w-4" />
-                  </div>
-                  <p>Log every fill-up to see how your driving habits affect your fuel economy.</p>
-                </div>
-                <div className="flex gap-3">
-                  <div className="mt-1 shrink-0 text-primary">
-                    <Gauge className="h-4 w-4" />
-                  </div>
-                  <p>Capture the precise odometer reading for accurate consumption calculation.</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       )}

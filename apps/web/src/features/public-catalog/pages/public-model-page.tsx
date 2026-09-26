@@ -12,6 +12,7 @@ import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
 import { PublicServiceSchedule } from '../components/public-service-schedule';
 import { PublicSpecSections } from '../components/public-spec-sections';
+import { CatalogFreshness } from '../components/catalog-freshness';
 import { TrackThisVehicle } from '../components/track-this-vehicle';
 import { modelPageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
@@ -23,6 +24,7 @@ import {
   modelFuelTypes,
   modelVariants,
   modelYearSpan,
+  realGenerationName,
 } from '../utils/format-public-catalog';
 
 export { modelPageTitle } from '../head/public-page-head';
@@ -113,6 +115,10 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
           // With no years, "On sale now" would only repeat the Current badge.
           const years =
             generation.yearStart || generation.yearEnd ? formatYearSpan(generation) : null;
+          // A made-up name ("Amaze lineup") says nothing: the years, or plain
+          // "Variants", head the list instead.
+          const name = realGenerationName(generation.name, page.model.name);
+          const heading = name ?? years ?? (generation.isCurrent ? 'On sale now' : 'Variants');
 
           return (
             <section
@@ -122,10 +128,10 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line-subtle px-4 py-3 sm:px-5">
                 <h3 className="text-lead font-semibold text-fg wrap-anywhere" id={headingId}>
-                  {generation.name}
+                  {heading}
                 </h3>
                 <p className="flex items-center gap-2 text-ui text-fg-2">
-                  {years}
+                  {name ? years : null}
                   {generation.isCurrent ? (
                     <span className="rounded-full bg-ok-tint px-2 py-0.5 text-caption font-medium text-ok">
                       Current
@@ -188,6 +194,8 @@ export function PublicModelPageView({ page }: PublicModelPageViewProps) {
       ) : null}
 
       <TrackThisVehicle page={page} />
+
+      <CatalogFreshness updatedAt={page.updatedAt} />
     </article>
   );
 }

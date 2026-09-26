@@ -12,6 +12,7 @@ import { usePublicBrowsePage } from '../api/use-public-browse-page';
 import { CatalogSearch } from '../components/catalog-search';
 import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
+import { SegmentSwitch } from '../components/segment-switch';
 import { TrackYourVehicleOffer } from '../components/track-your-vehicle-offer';
 import { browsePageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
@@ -46,12 +47,9 @@ export function PublicBrowseRoutePage({ segment }: PublicBrowseRouteProps) {
   );
 }
 
-const COPY: Record<
-  PublicCatalogSegment,
-  { heading: string; other: PublicCatalogSegment; otherLabel: string }
-> = {
-  cars: { heading: 'Cars in India', other: 'bikes', otherLabel: 'Browse bikes' },
-  bikes: { heading: 'Bikes in India', other: 'cars', otherLabel: 'Browse cars' },
+const COPY: Record<PublicCatalogSegment, { heading: string }> = {
+  cars: { heading: 'Cars in India' },
+  bikes: { heading: 'Bikes in India' },
 };
 
 /**
@@ -107,6 +105,7 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
   return (
     <article className="space-y-8 pt-4 sm:pt-8" data-testid="public-browse-page">
       <header className="space-y-4">
+        <SegmentSwitch current={page.segment} />
         <div>
           <h1 className="font-display text-title font-semibold tracking-tight text-fg sm:text-display">
             {copy.heading}
@@ -116,12 +115,6 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
               {`Service intervals and running costs for ${modelCount} ${modelCount === 1 ? 'model' : 'models'} from ${makeCount} ${makeCount === 1 ? 'maker' : 'makers'}.`}
             </p>
           ) : null}
-          <PublicCatalogLink
-            address={{ segment: copy.other }}
-            className="-ml-1 mt-1 inline-flex rounded-lg px-1 py-1 text-ui font-medium text-fg-2 underline underline-offset-4 hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
-          >
-            {copy.otherLabel}
-          </PublicCatalogLink>
         </div>
         {makeCount > 0 ? <CatalogSearch page={page} /> : null}
       </header>
