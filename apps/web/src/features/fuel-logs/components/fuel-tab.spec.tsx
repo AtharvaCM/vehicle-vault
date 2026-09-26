@@ -54,21 +54,30 @@ describe('FuelTab scanning', () => {
     scanStatus.current = { available: false };
     renderAs(VehicleRole.Owner, []);
 
-    expect(screen.queryByRole('button', { name: /scan receipt/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /import csv/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /scan/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/GEMINI|\.env/i)).not.toBeInTheDocument();
     scanStatus.current = { available: true };
   });
 });
 
 describe('FuelTab roles', () => {
-  it.each([VehicleRole.Owner, VehicleRole.Editor])('lets an %s log, scan and import', (role) => {
-    renderAs(role, []);
+  it.each([VehicleRole.Owner, VehicleRole.Editor])(
+    'lets an %s log, and scan or import from the menu beside it',
+    async (role) => {
+      const user = userEvent.setup();
+      renderAs(role, []);
 
-    expect(screen.getByRole('button', { name: /log fuel/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /scan receipt/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /import csv/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add fuel log/i })).toBeInTheDocument();
-  });
+      expect(screen.getByRole('button', { name: /log fuel/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add fuel log/i })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /scan receipt|import csv/i }),
+      ).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Scan or import' }));
+      expect(await screen.findByRole('menuitem', { name: /scan receipt/i })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: /import csv/i })).toBeVisible();
+    },
+  );
 
   it.each([VehicleRole.Owner, VehicleRole.Editor])(
     'lets an %s edit and delete a fill',
@@ -86,9 +95,9 @@ describe('FuelTab roles', () => {
   it('shows a viewer the fills without any way to change them', () => {
     renderAs(VehicleRole.Viewer, [log]);
 
-    expect(screen.getByText('8 L fuel fill')).toBeInTheDocument();
+    expect(screen.getByText('8 L')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Fuel log actions' })).not.toBeInTheDocument();
-    for (const name of [/log fuel/i, /scan receipt/i, /import csv/i]) {
+    for (const name of [/log fuel/i, /scan or import/i, /scan receipt/i, /import csv/i]) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
   });
