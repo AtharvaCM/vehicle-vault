@@ -1,3 +1,10 @@
+# [1.116.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.115.0...v1.116.0) (2026-09-26)
+
+
+### Features
+
+* an electric vehicle's plate is green everywhere it is named ([96a2342](https://github.com/AtharvaCM/vehicle-vault/commit/96a2342715a1a22ab644414d3311236db7bbdcc8)), closes [#355](https://github.com/AtharvaCM/vehicle-vault/issues/355)
+
 # [1.115.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.114.0...v1.115.0) (2026-09-26)
 
 
