@@ -327,32 +327,36 @@ function ChartTable<Row extends Record<string, unknown>, Key extends string>({
   label: string;
   id: string;
 }): ReactNode {
+  // The wrapper is what hides it: a table ignores `sr-only`'s 1 px width and
+  // lays its columns out in full, widening the page on a phone (#364).
   return (
-    <table className="sr-only" id={id}>
-      <caption>{label}</caption>
-      <thead>
-        <tr>
-          <th scope="col">Month</th>
-          {series.map((item) => (
-            <th key={item.key} scope="col">
-              {item.label}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((row) => (
-          <tr key={String(row[xKey])}>
-            <th scope="row">{monthLabel(row[xKey], 'monthYearLong')}</th>
-            {series.map((item) => {
-              const value = row[item.key];
-              return (
-                <td key={item.key}>{typeof value === 'number' ? read(value) : format.EMPTY}</td>
-              );
-            })}
+    <div className="sr-only">
+      <table id={id}>
+        <caption>{label}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Month</th>
+            {series.map((item) => (
+              <th key={item.key} scope="col">
+                {item.label}
+              </th>
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr key={String(row[xKey])}>
+              <th scope="row">{monthLabel(row[xKey], 'monthYearLong')}</th>
+              {series.map((item) => {
+                const value = row[item.key];
+                return (
+                  <td key={item.key}>{typeof value === 'number' ? read(value) : format.EMPTY}</td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

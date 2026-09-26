@@ -17,7 +17,30 @@ const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn(
 vi.mock('../hooks/use-auth', () => ({ useAuth: () => auth.current }));
 vi.mock('../api/get-me', () => ({ getMe }));
 vi.mock('@/lib/toast', () => ({ appToast: toast }));
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => navigate,
+  useRouter: () => undefined,
+  Link: ({
+    to,
+    search,
+    children,
+    className,
+  }: {
+    to: string;
+    search?: Record<string, string>;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <a className={className} href={search?.next ? `${to}?next=${search.next}` : to}>
+      {children}
+    </a>
+  ),
+}));
+vi.mock('../components/oauth-buttons', () => ({
+  OAuthButtons: ({ next }: { next?: string }) => (
+    <a href={`/api/auth/oauth/google${next ? `?next=${next}` : ''}`}>Continue with Google</a>
+  ),
+}));
 
 import { OAuthCallbackPage } from './oauth-callback-page';
 
@@ -116,9 +139,15 @@ describe('OAuthCallbackPage', () => {
 
     render(<OAuthCallbackPage />);
 
-    (await screen.findByRole('button', { name: 'Back to sign in' })).click();
-
-    expect(navigate).toHaveBeenCalledWith({ to: '/login', search: { next: '/reminders' } });
+    // Both ways back in keep where the sign-in began.
+    expect(await screen.findByRole('link', { name: 'Sign in with email' })).toHaveAttribute(
+      'href',
+      '/login?next=/reminders',
+    );
+    expect(screen.getByRole('link', { name: 'Continue with Google' })).toHaveAttribute(
+      'href',
+      '/api/auth/oauth/google?next=/reminders',
+    );
   });
 
   it('opens the dashboard when the intent has expired', async () => {
@@ -136,10 +165,11 @@ describe('OAuthCallbackPage', () => {
 
     render(<OAuthCallbackPage />);
 
+    expect(await screen.findByText('You cancelled signing in with Google.')).toBeInTheDocument();
     expect(
-      await screen.findByText('Sign-in was cancelled before it finished.'),
+      screen.getByRole('heading', { level: 1, name: 'Sign-in didn’t finish' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in with email' })).toBeInTheDocument();
     expect(auth.current.setSession).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
     expect(readCatalogIntent()).toEqual(intent);
@@ -163,17 +193,26 @@ describe('OAuthCallbackPage', () => {
 
     render(<OAuthCallbackPage />);
 
-    expect(await screen.findByText('Session expired')).toBeInTheDocument();
+    // Plain words, not the error's own message.
+    expect(await screen.findByText(/Signing in with Google didn’t finish/)).toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
     expect(readCatalogIntent()).toEqual(intent);
   });
 
-  it('describes an unknown error code in words', async () => {
+  it("describes an unknown error code in plain words, and Google's cancel as a cancel", async () => {
     arriveWith('error=oauth_failed');
+    const { unmount } = render(<OAuthCallbackPage />);
+    expect(
+      await screen.findByText(
+        'Signing in with Google didn’t finish. Try again, or use your email.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/OAuth/)).not.toBeInTheDocument();
+    unmount();
 
+    arriveWith('error=access_denied');
     render(<OAuthCallbackPage />);
-
-    expect(await screen.findByText('OAuth sign-in failed: oauth failed')).toBeInTheDocument();
+    expect(await screen.findByText('You cancelled signing in with Google.')).toBeInTheDocument();
   });
 
   it('signs in once even when StrictMode runs the effect twice', async () => {
