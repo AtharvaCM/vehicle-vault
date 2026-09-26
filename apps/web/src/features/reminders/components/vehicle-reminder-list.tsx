@@ -29,6 +29,28 @@ type VehicleReminderListProps = {
   vehicleId: string;
 };
 
+/** From this many reminders, the list gets its search and filters. */
+export const REMINDER_FILTERS_FROM = 6;
+
+const GROUPS = [
+  {
+    status: ReminderStatus.Overdue,
+    title: 'Overdue',
+    description: 'Items that need attention immediately.',
+  },
+  { status: ReminderStatus.DueToday, title: 'Due today', description: 'Items due today.' },
+  {
+    status: ReminderStatus.Upcoming,
+    title: 'Upcoming',
+    description: 'Upcoming reminders for this vehicle.',
+  },
+  {
+    status: ReminderStatus.Completed,
+    title: 'Completed',
+    description: 'Completed reminders retained for history.',
+  },
+] as const;
+
 export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
   const { canEdit } = useVehicleAccess();
   const remindersQuery = useVehicleReminders(vehicleId);
@@ -37,7 +59,12 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
   const bulkCompleteMutation = useBulkCompleteReminders();
   const bulkDeleteMutation = useBulkDeleteReminders();
   const [selectedReminderIds, setSelectedReminderIds] = useState<string[]>([]);
-  const [searchState, setSearchState] = useState<ReminderListSearch>({});
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [filterState, setSearchState] = useState<ReminderListSearch>({});
+  const reminderCount = remindersQuery.data?.length ?? 0;
+  const hasFilters = reminderCount >= REMINDER_FILTERS_FROM;
+  // A short list has no filters, so none may be left hiding part of it.
+  const searchState = hasFilters ? filterState : {};
   const searchValue = searchState.search ?? '';
   const status = searchState.status ?? 'all';
   const type = searchState.type ?? 'all';
@@ -195,7 +222,7 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
         }
         description={
           canEdit
-            ? 'No reminders have been created for this vehicle yet.'
+            ? 'Pick from the suggested schedule below, or add your own.'
             : 'No reminders have been created for this vehicle yet. Whoever owns it can add them.'
         }
         title="No reminders yet"
@@ -203,9 +230,32 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
     );
   }
 
+  function stopSelecting() {
+    setIsSelecting(false);
+    setSelectedReminderIds([]);
+  }
+
+  const onSelectionChange = canEdit && isSelecting ? handleSelectionChange : undefined;
+
   return (
     <div className="space-y-4">
-      {canEdit ? (
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-ui text-fg-3">
+          {reminderCount} {reminderCount === 1 ? 'reminder' : 'reminders'}
+        </p>
+        {canEdit ? (
+          <Button
+            aria-pressed={isSelecting}
+            onClick={() => (isSelecting ? stopSelecting() : setIsSelecting(true))}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {isSelecting ? 'Done' : 'Select'}
+          </Button>
+        ) : null}
+      </div>
+      {canEdit && isSelecting ? (
         <BulkReminderActions
           isCompleting={bulkCompleteMutation.isPending}
           isDeleting={bulkDeleteMutation.isPending}
@@ -218,59 +268,39 @@ export function VehicleReminderList({ vehicleId }: VehicleReminderListProps) {
           visibleCount={visibleReminderIds.length}
         />
       ) : null}
-      <ReminderListControls
-        onReset={resetControls}
-        onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
-        onSortChange={(value) => onSearchStateChange({ sort: value })}
-        onStatusChange={(value) => onSearchStateChange({ status: value })}
-        onTypeChange={(value) => onSearchStateChange({ type: value })}
-        resultCount={filteredReminders.length}
-        searchValue={searchValue}
-        sortBy={sortBy}
-        status={status}
-        totalCount={remindersQuery.data.length}
-        type={type}
-      />
+      {hasFilters ? (
+        <ReminderListControls
+          onReset={resetControls}
+          onSearchChange={(value) => onSearchStateChange({ search: value || undefined })}
+          onSortChange={(value) => onSearchStateChange({ sort: value })}
+          onStatusChange={(value) => onSearchStateChange({ status: value })}
+          onTypeChange={(value) => onSearchStateChange({ type: value })}
+          resultCount={filteredReminders.length}
+          searchValue={searchValue}
+          sortBy={sortBy}
+          status={status}
+          totalCount={reminderCount}
+          type={type}
+        />
+      ) : null}
       {filteredReminders.length ? (
         <div className="grid grid-cols-1 gap-6">
-          <ReminderList
-            description="Items that need attention immediately."
-            emptyMessage="No overdue reminders."
-            onSelectionChange={canEdit ? handleSelectionChange : undefined}
-            reminders={groupedReminders[ReminderStatus.Overdue]}
-            selectedReminderIds={selectedReminderIds}
-            currentOdometer={currentOdometer}
-            showActions={canEdit}
-            title="Overdue"
-          />
-          <ReminderList
-            description="Items due today."
-            emptyMessage="No reminders are due today."
-            onSelectionChange={canEdit ? handleSelectionChange : undefined}
-            reminders={groupedReminders[ReminderStatus.DueToday]}
-            selectedReminderIds={selectedReminderIds}
-            currentOdometer={currentOdometer}
-            showActions={canEdit}
-            title="Due today"
-          />
-          <ReminderList
-            description="Upcoming reminders for this vehicle."
-            emptyMessage="No upcoming reminders."
-            onSelectionChange={canEdit ? handleSelectionChange : undefined}
-            reminders={groupedReminders[ReminderStatus.Upcoming]}
-            selectedReminderIds={selectedReminderIds}
-            currentOdometer={currentOdometer}
-            showActions={canEdit}
-            title="Upcoming"
-          />
-          <ReminderList
-            description="Completed reminders retained for history."
-            emptyMessage="No completed reminders yet."
-            onSelectionChange={canEdit ? handleSelectionChange : undefined}
-            reminders={groupedReminders[ReminderStatus.Completed]}
-            selectedReminderIds={selectedReminderIds}
-            title="Completed"
-          />
+          {/* Only the groups that hold something. */}
+          {GROUPS.filter((group) => groupedReminders[group.status].length > 0).map((group) => (
+            <ReminderList
+              currentOdometer={
+                group.status === ReminderStatus.Completed ? undefined : currentOdometer
+              }
+              description={group.description}
+              emptyMessage=""
+              key={group.status}
+              onSelectionChange={onSelectionChange}
+              reminders={groupedReminders[group.status]}
+              selectedReminderIds={selectedReminderIds}
+              showActions={canEdit && group.status !== ReminderStatus.Completed}
+              title={group.title}
+            />
+          ))}
         </div>
       ) : (
         <EmptyState

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ListChecks, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, ListChecks, Sparkles } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,10 +20,16 @@ import type { ServiceScheduleSuggestion } from '../types/service-schedule';
 
 type Props = {
   vehicleId: string;
+  /**
+   * Starts as one "Suggested schedule" row that opens the panel: for a vehicle
+   * whose reminders are already on file and should come first.
+   */
+  collapsed?: boolean;
 };
 
-export function ServiceSchedulePanel({ vehicleId }: Props) {
+export function ServiceSchedulePanel({ vehicleId, collapsed = false }: Props) {
   const { canEdit } = useVehicleAccess();
+  const [isOpen, setIsOpen] = useState(!collapsed);
   const queryClient = useQueryClient();
   const suggestionsQuery = useQuery(serviceScheduleSuggestionsQueryOptions(vehicleId));
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -62,6 +68,24 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
     });
   }
 
+  if (!isOpen) {
+    const toAdd = suggestionsQuery.data?.filter((item) => !item.alreadyScheduled).length ?? 0;
+
+    return (
+      <button
+        aria-expanded={false}
+        className="flex w-full items-center gap-3 rounded-card border border-line/60 bg-surface px-4 py-3 text-left transition-colors hover:bg-page"
+        onClick={() => setIsOpen(true)}
+        type="button"
+      >
+        <Sparkles aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />
+        <span className="flex-1 text-ui font-semibold text-fg">Suggested schedule</span>
+        {toAdd > 0 ? <span className="text-caption text-fg-3">{toAdd} not added yet</span> : null}
+        <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-fg-3" />
+      </button>
+    );
+  }
+
   if (suggestionsQuery.isLoading) {
     return (
       <Card className="border-line/60 bg-surface">
@@ -96,7 +120,20 @@ export function ServiceSchedulePanel({ vehicleId }: Props) {
             <Sparkles className="h-5 w-5 shrink-0 text-primary" />
             <CardTitle className="text-lead font-bold">Suggested service schedule</CardTitle>
           </div>
-          <Badge variant="outline">Typical intervals</Badge>
+          {collapsed ? (
+            <Button
+              aria-expanded
+              onClick={() => setIsOpen(false)}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <ChevronUp aria-hidden="true" />
+              Hide
+            </Button>
+          ) : (
+            <Badge variant="outline">Typical intervals</Badge>
+          )}
         </div>
         <CardDescription>
           {canEdit
