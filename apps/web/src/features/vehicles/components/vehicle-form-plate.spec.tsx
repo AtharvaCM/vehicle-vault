@@ -42,7 +42,8 @@ describe('VehicleForm registration number', () => {
     render(<VehicleForm onSubmit={onSubmit} />);
 
     expect(screen.getByLabelText('Year')).toHaveValue(null);
-    expect(screen.getByLabelText('Odometer')).toHaveValue(null);
+    // A text field, grouped as it is read: empty, not zero.
+    expect(screen.getByLabelText('Odometer')).toHaveValue('');
   });
 
   it('groups the plate as it is typed and saves it compact', async () => {

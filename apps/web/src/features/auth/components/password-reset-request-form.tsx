@@ -46,7 +46,7 @@ export function PasswordResetRequestForm({
   });
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
       <FormField
         htmlFor="password-reset-email"
         label="Email address"

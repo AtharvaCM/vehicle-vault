@@ -42,3 +42,11 @@ describe('PasswordResetForm', () => {
     expect(screen.queryByDisplayValue('preview-token')).not.toBeInTheDocument();
   });
 });
+
+describe('PasswordResetForm validation', () => {
+  it('leaves checking to its own inline messages, not the browser’s bubble', () => {
+    const { container } = render(<PasswordResetForm token="preview-token" onSubmit={vi.fn()} />);
+
+    expect(container.querySelector('form')).toHaveAttribute('novalidate');
+  });
+});

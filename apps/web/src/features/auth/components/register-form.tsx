@@ -52,7 +52,7 @@ export function RegisterForm({ isSubmitting = false, onSubmit, submitError }: Re
   });
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
       <FormField
         htmlFor="register-name"
         label="Your name"

@@ -6,7 +6,6 @@ import { PageContainer } from '@/components/layout/page-container';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceSchedulePanel } from '@/features/reminders/components/service-schedule-panel';
 import { useCatalogIntentPrefill } from '@/features/catalog-intent/hooks/use-catalog-intent-prefill';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
@@ -148,11 +147,11 @@ export function VehicleCreatePage() {
   return (
     <PageContainer>
       <PageTitle
-        description="Add a car or bike so you can track its service, reminders, and documents."
+        description="Start with the odometer reading on the dashboard now: every due date and due kilometre counts from it."
         title="Add vehicle"
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="max-w-3xl">
         {catalogIntent.status === 'resolving' ? (
           <LoadingState
             description="Filling in the vehicle you picked from the catalog."
@@ -168,24 +167,6 @@ export function VehicleCreatePage() {
             submitError={submitError}
           />
         )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>What to add first</CardTitle>
-            <CardDescription>
-              A few accurate basics make every later record easier to trust.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-ui leading-6 text-fg-2">
-            <p>
-              Start with the current odometer so future due dates and due kilometres stay realistic.
-            </p>
-            <p>Use a nickname if you manage similar vehicles or a family garage.</p>
-            <p>
-              Once saved, a short step asks for the insurance and PUC dates, then you&apos;re in.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </PageContainer>
   );
