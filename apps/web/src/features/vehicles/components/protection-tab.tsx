@@ -34,6 +34,7 @@ import {
 import {
   complianceDocumentKinds,
   requiresPuc,
+  type ComplianceDocumentKind,
   type Claim,
   type FuelType,
   type VehicleDocument,
@@ -43,19 +44,18 @@ import {
 import { useVehicleAccess } from '../context/vehicle-access';
 
 type ScanButtonProps = {
-  available: boolean | undefined;
   isScanning: boolean;
   label: string;
   onClick?: () => void;
 };
 
 /**
- * The dot on the icon reports whether extraction is configured server-side, so
- * a user who clicks and gets nothing knows it is the backend, not their file.
- * Forwards its ref so it can be a DropdownMenu trigger.
+ * Offered only when document scanning is available (see `canScan`), so it
+ * never has to explain a server's configuration. Forwards its ref so it can
+ * be a DropdownMenu trigger.
  */
 const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanButton(
-  { available, isScanning, label, onClick, ...triggerProps },
+  { isScanning, label, onClick, ...triggerProps },
   ref,
 ) {
   return (
@@ -65,23 +65,29 @@ const ScanButton = forwardRef<HTMLButtonElement, ScanButtonProps>(function ScanB
       variant="outline"
       onClick={onClick}
       disabled={isScanning}
-      title={available ? 'AI ready' : 'AI plugin missing'}
       {...triggerProps}
     >
       {isScanning ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
-        <span className="relative mr-2 inline-flex">
-          <Scan className="h-4 w-4" />
-          <span
-            className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-surface ${available ? 'bg-ok shadow-[0_0_8px_var(--ok)]' : 'bg-soon-dot'}`}
-          />
-        </span>
+        <Scan aria-hidden="true" className="mr-2 h-4 w-4" />
       )}
-      {isScanning ? 'Analyzing…' : label}
+      {isScanning ? 'Reading…' : label}
     </Button>
   );
 });
+
+const MISSING_PAPER_LINES: Record<ComplianceDocumentKind, string> = {
+  registration: 'Not on file yet. Keep the RC here to show it at a checkpoint.',
+  puc: 'Not on file yet. Add it to be told before it runs out.',
+  road_tax: 'Not on file yet. Leave the end date blank if it was paid for life.',
+};
+
+const ADD_PAPER_LABELS: Record<ComplianceDocumentKind, string> = {
+  registration: 'Add RC',
+  puc: 'Add PUC',
+  road_tax: 'Add road tax',
+};
 
 interface ProtectionTabProps {
   vehicleId: string;
@@ -149,6 +155,10 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
     (d) => d.kind === 'registration' || d.kind === 'puc' || d.kind === 'road_tax',
   );
   const pucRequired = requiresPuc(fuelType);
+  const missingComplianceKinds = complianceDocumentKinds.filter(
+    (kind) =>
+      (kind !== 'puc' || pucRequired) && !complianceDocuments.some((doc) => doc.kind === kind),
+  );
   const claims = claimsQuery.data || [];
 
   function openDialog(kind: VehicleDocumentKind) {
@@ -192,14 +202,7 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
     setIsDialogOpen(false);
   }
 
-  function triggerScan(kind: VehicleDocumentKind, available: boolean | undefined) {
-    if (available === false) {
-      appToast.error({
-        title: 'AI scan unavailable',
-        description: 'Set GEMINI_API_KEY in the backend .env to enable document scanning.',
-      });
-      return;
-    }
+  function triggerScan(kind: VehicleDocumentKind) {
     setScanKind(kind);
     scanInputRef.current?.click();
   }
@@ -260,12 +263,13 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
                   onChange={handleScanFile}
                   className="hidden"
                 />
-                <ScanButton
-                  available={insuranceScanStatus.data?.available}
-                  isScanning={scanMutation.isPending && scanKind === 'insurance'}
-                  label="Scan policy"
-                  onClick={() => triggerScan('insurance', insuranceScanStatus.data?.available)}
-                />
+                {insuranceScanStatus.data?.available ? (
+                  <ScanButton
+                    isScanning={scanMutation.isPending && scanKind === 'insurance'}
+                    label="Scan policy"
+                    onClick={() => triggerScan('insurance')}
+                  />
+                ) : null}
                 <Button size="sm" variant="outline" onClick={() => openDialog('insurance')}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add policy
@@ -376,12 +380,13 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
             </div>
             {canEdit ? (
               <div className="flex items-center gap-2">
-                <ScanButton
-                  available={warrantyScanStatus.data?.available}
-                  isScanning={scanMutation.isPending && scanKind === 'warranty'}
-                  label="Scan warranty"
-                  onClick={() => triggerScan('warranty', warrantyScanStatus.data?.available)}
-                />
+                {warrantyScanStatus.data?.available ? (
+                  <ScanButton
+                    isScanning={scanMutation.isPending && scanKind === 'warranty'}
+                    label="Scan warranty"
+                    onClick={() => triggerScan('warranty')}
+                  />
+                ) : null}
                 <Button size="sm" variant="outline" onClick={() => openDialog('warranty')}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add warranty
@@ -429,25 +434,23 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
                 {/* Three document types share this section, and the prompt is
                   narrowed per type — so the user picks which one they are
                   scanning rather than the model guessing from the page. */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <ScanButton
-                      available={complianceScanStatus.data?.available}
-                      isScanning={scanMutation.isPending && isComplianceKind(scanKind)}
-                      label="Scan"
-                    />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {complianceDocumentKinds.map((kind) => (
-                      <DropdownMenuItem
-                        key={kind}
-                        onClick={() => triggerScan(kind, complianceScanStatus.data?.available)}
-                      >
-                        {documentKindTitles[kind]}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {complianceScanStatus.data?.available ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <ScanButton
+                        isScanning={scanMutation.isPending && isComplianceKind(scanKind)}
+                        label="Scan"
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {complianceDocumentKinds.map((kind) => (
+                        <DropdownMenuItem key={kind} onClick={() => triggerScan(kind)}>
+                          {documentKindTitles[kind]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
                 <Button size="sm" variant="outline" onClick={() => openDialog('registration')}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add document
@@ -457,36 +460,35 @@ export function ProtectionTab({ vehicleId, fuelType }: ProtectionTabProps) {
           </div>
 
           <div className="grid gap-4">
-            {complianceDocuments.length > 0 ? (
-              complianceDocuments.map((doc) => (
-                <DocumentCard
-                  key={doc.id}
-                  document={doc}
-                  vehicleId={vehicleId}
-                  onEdit={canEdit ? handleEdit : undefined}
-                  onRenew={renewHandlerFor(doc)}
-                />
-              ))
-            ) : (
-              <EmptyState
-                title="No papers on file"
-                description={
-                  pucRequired
-                    ? 'Track your RC, PUC certificate, and road tax to get expiry alerts before renewals are due.'
-                    : 'Track your RC and road tax to get expiry alerts before renewals are due.'
-                }
-                action={
-                  canEdit ? (
-                    <Button
-                      variant="secondary"
-                      onClick={() => openDialog(pucRequired ? 'puc' : 'registration')}
-                    >
-                      {pucRequired ? 'Add PUC certificate' : 'Add registration certificate'}
-                    </Button>
-                  ) : undefined
-                }
+            {complianceDocuments.map((doc) => (
+              <DocumentCard
+                key={doc.id}
+                document={doc}
+                vehicleId={vehicleId}
+                onEdit={canEdit ? handleEdit : undefined}
+                onRenew={renewHandlerFor(doc)}
               />
-            )}
+            ))}
+            {/* Each paper the vehicle should carry and has none on file for:
+                the RC, the PUC (unless electric) and the road tax. */}
+            {missingComplianceKinds.map((kind) => (
+              <div
+                className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-line px-4 py-3"
+                data-testid={`missing-${kind}`}
+                key={kind}
+              >
+                <div className="space-y-0.5">
+                  <p className="text-ui font-semibold text-fg">{documentKindTitles[kind]}</p>
+                  <p className="text-caption text-fg-3">{MISSING_PAPER_LINES[kind]}</p>
+                </div>
+                {canEdit ? (
+                  <Button onClick={() => openDialog(kind)} size="sm" variant="outline">
+                    <Plus className="mr-1 h-4 w-4" />
+                    {ADD_PAPER_LABELS[kind]}
+                  </Button>
+                ) : null}
+              </div>
+            ))}
           </div>
         </section>
       </div>
