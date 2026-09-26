@@ -1,3 +1,11 @@
+# [1.119.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.118.0...v1.119.0) (2026-09-26)
+
+
+### Features
+
+* record the engine oil once, show it on About and in Log service ([7182052](https://github.com/AtharvaCM/vehicle-vault/commit/7182052096f613d7ca7253d6553eecd1dced3c12)), closes [#332](https://github.com/AtharvaCM/vehicle-vault/issues/332)
+* record two-wheeler final drive and cooling, scraper plus curated table ([8273da6](https://github.com/AtharvaCM/vehicle-vault/commit/8273da6c380463134f9339950eb891e3166df80d)), closes [#235](https://github.com/AtharvaCM/vehicle-vault/issues/235)
+
 # [1.118.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.5...v1.118.0) (2026-09-26)
 
 
