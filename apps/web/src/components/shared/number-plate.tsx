@@ -58,8 +58,11 @@ type NumberPlateProps = {
   /** The registration as stored, in any case or spacing. Empty draws the dashed "no plate yet" plate. */
   registration: string | null | undefined;
   size?: NumberPlateSize;
-  /** A green plate, as electric vehicles carry on the road. */
-  electric?: boolean;
+  /**
+   * A green plate, as electric vehicles carry on the road. Required, so no
+   * screen can draw an EV on a white plate by leaving it out (#355).
+   */
+  electric: boolean;
   /** What a screen reader hears for an empty plate. */
   emptyLabel?: string;
   className?: string;
@@ -78,7 +81,7 @@ type NumberPlateProps = {
 export function NumberPlate({
   registration,
   size = 'md',
-  electric = false,
+  electric,
   emptyLabel = 'No number plate yet',
   className,
 }: NumberPlateProps) {

@@ -64,6 +64,7 @@ export function AttentionPreview() {
           <li className="px-5 py-3" key={row.title}>
             <VehicleIdentity
               className="mb-1"
+              electric={false}
               layout="row"
               name={row.vehicle.name}
               registration={row.vehicle.registration}

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { BellRing, CheckCircle2, FileBadge } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { EmptyState } from '@/components/shared/empty-state';
 import { SectionHeader } from '@/components/shared/section-header';
@@ -59,6 +59,17 @@ type AttentionQueueProps = {
   scope?: { vehicleId: string; limit: number };
 };
 
+/**
+ * Whether Home's entrance has played in this page load: it plays once, the
+ * first time the queue mounts, and never on a refetch, a filter change or a
+ * return to Home (#354).
+ */
+let entrancePlayed = false;
+
+/** Rows past this one share its delay, so the whole entrance stays under 500 ms. */
+const ENTRANCE_STAGGER_ROWS = 6;
+const ENTRANCE_STAGGER_MS = 35;
+
 export function AttentionQueue({
   summary,
   queue,
@@ -68,6 +79,10 @@ export function AttentionQueue({
 }: AttentionQueueProps) {
   const completeReminder = useCompleteReminder();
   const snoozeDocument = useSnoozeDocument();
+  const [entrance] = useState(() => !entrancePlayed);
+  useEffect(() => {
+    entrancePlayed = true;
+  }, []);
   const [expanded, setExpanded] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   // The service reminder whose Done asks "log it now?", and the reminder being snoozed.
@@ -183,17 +198,32 @@ export function AttentionQueue({
                   </StatusDot>
                 </div>
                 <div className="divide-y divide-line-subtle">
-                  {group.items.map((item) => (
-                    <AttentionRow
-                      isPending={pendingIds.has(item.id) || completedIds.has(item.id)}
-                      item={item}
-                      key={item.id}
-                      onComplete={handleDone}
-                      onSnooze={handleSnooze}
-                      onSnoozeReminder={setSnoozing}
-                      showVehicle={showVehicle}
-                    />
-                  ))}
+                  {group.items.map((item) => {
+                    const row = (
+                      <AttentionRow
+                        isPending={pendingIds.has(item.id) || completedIds.has(item.id)}
+                        item={item}
+                        onComplete={handleDone}
+                        onSnooze={handleSnooze}
+                        onSnoozeReminder={setSnoozing}
+                        showVehicle={showVehicle}
+                      />
+                    );
+                    if (!entrance) return <div key={item.id}>{row}</div>;
+                    // `motion-safe:` so reduced motion gets no entrance at all,
+                    // not rows held invisible through their delay.
+                    const order = Math.min(queue.indexOf(item), ENTRANCE_STAGGER_ROWS);
+                    return (
+                      <div
+                        className="motion-safe:animate-attention-enter"
+                        data-entrance
+                        key={item.id}
+                        style={{ animationDelay: `${order * ENTRANCE_STAGGER_MS}ms` }}
+                      >
+                        {row}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ))}

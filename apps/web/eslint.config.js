@@ -26,6 +26,7 @@ function designSystemRules(severity) {
     'vv/no-arbitrary-font-size': severity,
     'vv/no-default-font-size': severity,
     'vv/no-transition-all': severity,
+    'vv/quiet-motion': severity,
     'vv/no-micro-labels': severity,
     'no-restricted-properties': [
       severity,

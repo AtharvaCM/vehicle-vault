@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { FuelType } from '@vehicle-vault/shared';
 import { BellOff, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -172,6 +173,7 @@ export function AttentionRow({
           <VehicleIdentity
             className="mb-1"
             layout="row"
+            electric={item.vehicleFuelType === FuelType.Electric}
             name={item.vehicleName}
             registration={item.registrationNumber}
           />
