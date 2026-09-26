@@ -61,9 +61,13 @@ export function AttachmentUploadForm({
             {isUploading ? 'Uploading...' : 'Upload files'}
           </Button>
         </div>
+        {/* Opened by Upload files above; out of the tab order so a keyboard
+            user meets one control, named, not two (#357). */}
         <input
           accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
+          aria-label="Upload files"
           ref={inputRef}
+          tabIndex={-1}
           className="sr-only"
           disabled={isUploading}
           multiple

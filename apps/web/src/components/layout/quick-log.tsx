@@ -23,6 +23,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Sheet,
@@ -332,16 +333,14 @@ export function QuickLogMenuButton({ className }: { className?: string }) {
 
   return (
     <>
-      <Button
-        className={className}
-        data-testid="home-log-button"
-        onClick={() => state.onOpenChange(true)}
-        type="button"
-      >
-        <Plus aria-hidden="true" />
-        Log
-      </Button>
+      {/* A real trigger, so closing hands focus back to the button (#357). */}
       <Dialog onOpenChange={state.onOpenChange} open={state.isOpen}>
+        <DialogTrigger asChild>
+          <Button className={className} data-testid="home-log-button" type="button">
+            <Plus aria-hidden="true" />
+            Log
+          </Button>
+        </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <QuickLogPanel
             Description={DialogDescription}

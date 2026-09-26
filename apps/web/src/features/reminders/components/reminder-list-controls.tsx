@@ -68,12 +68,14 @@ export function ReminderListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-caption font-medium text-fg-3">Status</p>
+          <label className="text-caption font-medium text-fg-3" htmlFor="reminder-status-filter">
+            Status
+          </label>
           <Select
             onValueChange={(value) => onStatusChange(value as ReminderStatus | 'all')}
             value={status}
           >
-            <SelectTrigger>
+            <SelectTrigger id="reminder-status-filter">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -88,12 +90,14 @@ export function ReminderListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-caption font-medium text-fg-3">Type</p>
+          <label className="text-caption font-medium text-fg-3" htmlFor="reminder-type-filter">
+            Type
+          </label>
           <Select
             onValueChange={(value) => onTypeChange(value as ReminderType | 'all')}
             value={type}
           >
-            <SelectTrigger>
+            <SelectTrigger id="reminder-type-filter">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
@@ -108,12 +112,14 @@ export function ReminderListControls({
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-caption font-medium text-fg-3">Sort</p>
+          <label className="text-caption font-medium text-fg-3" htmlFor="reminder-sort">
+            Sort
+          </label>
           <Select
             onValueChange={(value) => onSortChange(value as ReminderSortOption)}
             value={sortBy}
           >
-            <SelectTrigger>
+            <SelectTrigger id="reminder-sort">
               <SelectValue placeholder="Sort reminders" />
             </SelectTrigger>
             <SelectContent>

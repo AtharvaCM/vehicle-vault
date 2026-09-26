@@ -286,7 +286,7 @@ export function DocumentFormDialog({
                 name="kind"
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
+                    <SelectTrigger id="kind">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -312,7 +312,7 @@ export function DocumentFormDialog({
                     onValueChange={field.onChange}
                     defaultValue={field.value || 'Manufacturer'}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="type">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
