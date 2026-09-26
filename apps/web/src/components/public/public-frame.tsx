@@ -17,13 +17,16 @@ const WIDTH: Record<Width, string> = {
 const NAV_LINK =
   'rounded-control px-2.5 py-2 text-ui font-medium text-fg-2 hover:bg-surface hover:text-fg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand';
 
-/**
- * The footer's links, in order. Privacy, Terms and Contact join them when
- * their pages exist (#341).
- */
-export const PUBLIC_FOOTER_LINKS: { to: '/cars' | '/bikes'; label: string }[] = [
+/** The footer's links, in order. */
+export const PUBLIC_FOOTER_LINKS: {
+  to: '/cars' | '/bikes' | '/privacy' | '/terms' | '/contact';
+  label: string;
+}[] = [
   { to: '/cars', label: 'Cars' },
   { to: '/bikes', label: 'Bikes' },
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 /**

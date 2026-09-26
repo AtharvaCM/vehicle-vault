@@ -1255,3 +1255,15 @@ model ProductEvent {
   @@index([occurredAt(sort: Desc)])
   @@index([userId])
 }
+
+/// A message sent from the public Contact page (#341). Listed in the admin
+/// area, and mailed to the admins once production mail is configured.
+model ContactMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(120)
+  email     String   @db.VarChar(255)
+  message   String   @db.VarChar(4000)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+}

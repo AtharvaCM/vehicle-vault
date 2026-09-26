@@ -15,6 +15,7 @@ export function AdminSectionNav() {
   const { user } = useAuth();
   const sections = [
     canSeeUsers(user) ? ({ to: '/admin/users', label: 'Users' } as const) : null,
+    canSeeUsers(user) ? ({ to: '/admin/messages', label: 'Messages' } as const) : null,
     canSeeCatalogReview(user)
       ? ({ to: '/admin/catalog', label: 'Catalog curation' } as const)
       : null,

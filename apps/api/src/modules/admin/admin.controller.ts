@@ -12,6 +12,7 @@ import { AdminService } from './admin.service';
 import { ListAdminUsersQueryDto } from './dto/list-users-query.dto';
 import { ProductEventSummaryQueryDto } from './dto/product-event-summary-query.dto';
 import { ProductEventsService } from '../product-events/product-events.service';
+import { ContactService } from '../contact/contact.service';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -22,7 +23,14 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly productEvents: ProductEventsService,
+    private readonly contact: ContactService,
   ) {}
+
+  @Get('contact-messages')
+  @ApiOperation({ summary: 'Messages from the Contact page, newest first (admin only)' })
+  async contactMessages() {
+    return successResponse(await this.contact.list());
+  }
 
   @Get('product-events/summary')
   @ApiOperation({

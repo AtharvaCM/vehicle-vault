@@ -164,8 +164,10 @@ export const endpoints = {
     me: '/audit/me',
     byVehicle: (vehicleId: string) => `/vehicles/${vehicleId}/audit`,
   },
+  contact: '/contact',
   admin: {
     users: '/admin/users',
+    contactMessages: '/admin/contact-messages',
     forceLogout: (userId: string) => `/admin/users/${userId}/force-logout`,
   },
   vehicleSharing: {
