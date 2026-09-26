@@ -205,7 +205,27 @@ export class MailService {
     });
   }
 
+  /** A Contact page message, to one admin, with Reply-To set to the sender. */
+  async sendContactMessage(input: { to: string; name: string; email: string; message: string }) {
+    const subject = `Vehicle Vault contact: ${input.name}`;
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <p style="color: #475569; font-size: 14px;">From <strong>${escapeHtml(input.name)}</strong> (${escapeHtml(input.email)}):</p>
+        <p style="color: #0f172a; font-size: 16px; line-height: 24px; white-space: pre-wrap;">${escapeHtml(input.message)}</p>
+      </div>
+    `;
+
+    return this.sendMail({
+      to: input.to,
+      subject,
+      text: `From ${input.name} (${input.email}):\n\n${input.message}`,
+      html,
+      replyTo: input.email,
+    });
+  }
+
   private async sendMail(input: {
+    replyTo?: string;
     headers?: Record<string, string>;
     html: string;
     subject: string;
@@ -219,7 +239,7 @@ export class MailService {
     try {
       await this.transporter.sendMail({
         from: this.appConfigService.mailFrom,
-        replyTo: this.appConfigService.mailReplyTo ?? undefined,
+        replyTo: input.replyTo ?? this.appConfigService.mailReplyTo ?? undefined,
         to: input.to,
         subject: input.subject,
         text: input.text,

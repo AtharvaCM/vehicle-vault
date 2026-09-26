@@ -1,4 +1,5 @@
 export * from './admin';
+export * from './contact';
 export * from './attachment';
 export * from './auth';
 export * from './dashboard';

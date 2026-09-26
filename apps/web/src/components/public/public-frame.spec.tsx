@@ -34,7 +34,13 @@ describe('PublicFrame', () => {
       '/bikes',
       '/login',
     ]);
-    expect(hrefs(screen.getByRole('navigation', { name: 'Footer' }))).toEqual(['/cars', '/bikes']);
+    expect(hrefs(screen.getByRole('navigation', { name: 'Footer' }))).toEqual([
+      '/cars',
+      '/bikes',
+      '/privacy',
+      '/terms',
+      '/contact',
+    ]);
     expect(screen.getByText('Page')).toBeInTheDocument();
   });
 
