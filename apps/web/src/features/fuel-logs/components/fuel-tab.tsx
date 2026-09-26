@@ -1,7 +1,13 @@
 import { useMemo, useState, useRef } from 'react';
-import { Plus, Scan, Loader2 } from 'lucide-react';
+import { ChevronDown, FileUp, Loader2, Plus, Scan } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { confirm } from '@/components/shared/confirm';
 import { ErrorState } from '@/components/shared/error-state';
 import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
@@ -144,14 +150,15 @@ export function FuelTab({ vehicleId, fuelType, odometer }: FuelTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-48 flex-1">
           <h3 className="text-lead font-bold text-fg">Fuel history</h3>
           <p className="text-ui text-fg-3">Track your fuel consumption and efficiency over time.</p>
         </div>
         {canEdit ? (
-          <div className="flex flex-wrap gap-2">
-            {/* Hidden File Input for Scan */}
+          // Log is the one primary action; scanning and importing sit beside
+          // it as one secondary control, so the row never wraps it under them.
+          <div className="flex shrink-0 flex-nowrap gap-2">
             <input
               type="file"
               accept="image/*"
@@ -160,35 +167,47 @@ export function FuelTab({ vehicleId, fuelType, odometer }: FuelTabProps) {
               ref={fileInputRef}
               onChange={handleScan}
             />
-
-            {/* Offered only when receipt scanning is available: never a word
-                about how the server is configured. */}
+            {/* Scanning is offered only when it is available: never a word
+                about how the server is configured. Without it, Import is
+                the one other way in, and needs no menu. */}
             {scanStatus.data?.available ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    disabled={scanMutation.isPending}
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    {scanMutation.isPending ? (
+                      <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                    ) : null}
+                    {scanMutation.isPending ? 'Reading…' : 'Scan or import'}
+                    <ChevronDown aria-hidden="true" className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
+                    <Scan aria-hidden="true" className="h-4 w-4" />
+                    Scan receipt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setIsImportOpen(true)}>
+                    <FileUp aria-hidden="true" className="h-4 w-4" />
+                    Import CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
               <Button
-                disabled={scanMutation.isPending}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setIsImportOpen(true)}
                 size="sm"
                 variant="outline"
-                className="gap-2 border-primary/20 bg-primary/5 text-primary hover:border-primary/50"
+                className="gap-2"
               >
-                {scanMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Scan aria-hidden="true" className="h-4 w-4" />
-                )}
-                {scanMutation.isPending ? 'Reading…' : 'Scan receipt'}
+                <FileUp aria-hidden="true" className="h-4 w-4" />
+                Import CSV
               </Button>
-            ) : null}
-
-            <Button
-              onClick={() => setIsImportOpen(true)}
-              size="sm"
-              variant="outline"
-              className="gap-2"
-            >
-              Import CSV
-            </Button>
-
+            )}
             <Button
               onClick={() => {
                 setScannedData(null);
