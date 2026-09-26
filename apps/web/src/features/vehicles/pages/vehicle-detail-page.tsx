@@ -133,12 +133,11 @@ export function VehicleDetailPage({
         error={vehicleQuery.error}
         isRetrying={vehicleQuery.isRefetching}
         listAction={
-          <Link className={buttonVariants({ variant: 'secondary' })} to="/garage">
+          <Link className={buttonVariants({ variant: 'outline' })} to="/garage">
             Your garage
           </Link>
         }
         onRetry={() => void vehicleQuery.refetch()}
-        pageDescription="Review one vehicle's details, service history, reminders, and receipts in one place."
         resourceLabel="Vehicle"
         subject="vehicle"
       />
