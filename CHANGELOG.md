@@ -1,3 +1,10 @@
+## [1.117.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.0...v1.117.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* gate the signed-in app on axe, and fix what it found ([f569079](https://github.com/AtharvaCM/vehicle-vault/commit/f569079e15ef2e161f7687b97adc1788a7de9d03)), closes [#357](https://github.com/AtharvaCM/vehicle-vault/issues/357)
+
 # [1.117.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.116.0...v1.117.0) (2026-09-26)
 
 
