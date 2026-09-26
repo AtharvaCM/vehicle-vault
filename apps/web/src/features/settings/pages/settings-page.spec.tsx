@@ -23,7 +23,9 @@ vi.mock('@tanstack/react-router', () => ({
       {children}
     </a>
   ),
+  useNavigate: () => vi.fn(),
 }));
+vi.mock('@/features/auth/components/oauth-buttons', () => ({ OAuthButtons: () => null }));
 vi.mock('@/features/auth/hooks/use-auth', () => ({
   useAuth: () => ({ user: authUser.current, setSession, refreshUser }),
 }));

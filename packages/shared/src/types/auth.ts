@@ -8,6 +8,8 @@ import {
   PasswordResetConfirmSchema,
   PasswordChangeSchema,
   ProfileUpdateSchema,
+  AccountDeletionCheckSchema,
+  AccountDeletionSchema,
   AccountSecuritySchema,
   AuthSessionSchema,
   PasswordResetRequestResponseSchema,
@@ -29,6 +31,8 @@ export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>;
 export type PasswordResetRequestInput = z.infer<typeof PasswordResetRequestSchema>;
 export type PasswordChangeInput = z.infer<typeof PasswordChangeSchema>;
 export type ProfileUpdateInput = z.infer<typeof ProfileUpdateSchema>;
+export type AccountDeletionCheck = z.infer<typeof AccountDeletionCheckSchema>;
+export type AccountDeletionInput = z.infer<typeof AccountDeletionSchema>;
 export type AccountSecurity = z.infer<typeof AccountSecuritySchema>;
 export type AuthSession = z.infer<typeof AuthSessionSchema>;
 export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchema>;
