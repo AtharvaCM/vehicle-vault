@@ -100,9 +100,11 @@ describe('PublicBrowsePageView', () => {
     );
   });
 
-  it('points a visitor on the wrong segment at the other one', () => {
+  it('switches segment with one Cars / Bikes control', () => {
     render(<PublicBrowsePageView page={carsPage} />);
-    expect(screen.getByRole('link', { name: 'Browse bikes' })).toHaveAttribute('href', '/bikes');
+    const segments = within(screen.getByRole('navigation', { name: 'Cars or bikes' }));
+    expect(segments.getByRole('link', { name: 'Cars' })).toHaveAttribute('href', '/cars');
+    expect(segments.getByRole('link', { name: 'Bikes' })).toHaveAttribute('href', '/bikes');
   });
 
   it('lists bike makes under /bikes, and has no breadcrumbs above the top', () => {
@@ -122,7 +124,7 @@ describe('PublicBrowsePageView', () => {
         name: /Royal Enfield/,
       }),
     ).toHaveAttribute('href', '/bikes/royal-enfield');
-    expect(screen.getByRole('link', { name: 'Browse cars' })).toHaveAttribute('href', '/cars');
+    expect(screen.getByRole('link', { name: 'Cars' })).toHaveAttribute('href', '/cars');
     expect(screen.queryByRole('navigation', { name: 'Breadcrumb' })).toBeNull();
   });
 

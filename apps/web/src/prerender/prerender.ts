@@ -453,7 +453,8 @@ function listingJobs(
     const browse = buildPublicCatalogBrowsePage(inSegment, segment);
 
     for (const { slug } of browse.makes) {
-      const make = buildPublicCatalogMakePage(inSegment, segment, slug);
+      // Every segment's entries, so the page knows the make's other segment.
+      const make = buildPublicCatalogMakePage(unique, segment, slug);
       if (!make) continue;
       makePageJobs.push({
         path: publicCatalogPath({ segment, make: slug }),

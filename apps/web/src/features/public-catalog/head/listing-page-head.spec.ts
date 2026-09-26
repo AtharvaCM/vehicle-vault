@@ -35,6 +35,7 @@ function makePage(overrides: Partial<PublicCatalogMakePage> = {}): PublicCatalog
     segment: 'cars',
     make: { name: 'Hyundai', slug: 'hyundai' },
     models: [model('Creta'), model('i20'), model('Venue')],
+    otherSegment: null,
     indexable: false,
     updatedAt: '2026-07-10T00:00:00.000Z',
     ...overrides,

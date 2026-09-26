@@ -10,6 +10,7 @@ import { usePublicMakePage, type PublicMakeSlugs } from '../api/use-public-make-
 import { PublicCatalogBreadcrumbs } from '../components/public-catalog-breadcrumbs';
 import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
+import { CatalogFreshness } from '../components/catalog-freshness';
 import { TrackYourVehicleOffer } from '../components/track-your-vehicle-offer';
 import { makePageHead } from '../head/public-page-head';
 import { usePublicPageHead } from '../head/use-public-page-head';
@@ -77,6 +78,17 @@ export function PublicMakePageView({ page }: PublicMakePageViewProps) {
         <p className="mt-2 text-ui leading-6 text-fg-2">
           {`${count} ${count === 1 ? 'model' : 'models'}. Pick yours for its variants, service schedule and specs.`}
         </p>
+        {page.otherSegment ? (
+          <p className="mt-2 text-ui text-fg-2">
+            {page.make.name} makes {SEGMENT_NOUNS[page.otherSegment]} too:{' '}
+            <PublicCatalogLink
+              address={{ segment: page.otherSegment, make: page.make.slug }}
+              className="font-semibold text-brand underline-offset-4 hover:underline"
+            >
+              {`${page.make.name} ${SEGMENT_NOUNS[page.otherSegment]}`}
+            </PublicCatalogLink>
+          </p>
+        ) : null}
       </header>
 
       {onSale.length > 0 ? (
@@ -95,6 +107,8 @@ export function PublicMakePageView({ page }: PublicMakePageViewProps) {
         action={`Track your ${page.make.name}`}
         heading={`Own a ${page.make.name}?`}
       />
+
+      <CatalogFreshness updatedAt={page.updatedAt} />
     </article>
   );
 }
