@@ -45,44 +45,68 @@ function setCoverage(data: VehicleServiceBaselineCoverage) {
   coverageQuery.current = { data, isPending: false, isError: false };
 }
 
+/** The card as an editor meets it, opened from its prompt. */
+function renderOpen() {
+  const view = render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fill it in' }));
+  return view;
+}
+
 describe('ServiceHistoryCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     upsert.isPending = false;
     upsert.mutateAsync.mockResolvedValue([]);
     setCoverage(coverage);
+    window.localStorage.clear();
   });
 
-  it('says how much of the history is still missing', () => {
+  it('offers the unanswered history as a prompt, not the whole form', () => {
     render(<ServiceHistoryCard vehicleId="vehicle-1" />);
 
-    expect(screen.getByText('1 unanswered')).toBeInTheDocument();
+    expect(screen.getByText('1 to answer')).toBeInTheDocument();
+    expect(screen.getByText(/so its reminder counts from there/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/last done at odometer/i)).not.toBeInTheDocument();
   });
 
-  it('admits what the app assumes when a category has nothing on file', () => {
-    // The sentence that makes the silence correctable: a user cannot fix a
-    // guess that is never shown to them.
+  it('puts the prompt away for good, behind one button that brings the form back', () => {
+    const { unmount } = render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+
+    expect(screen.queryByTestId('service-baseline-prompt')).not.toBeInTheDocument();
+    unmount();
+    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    expect(screen.queryByTestId('service-baseline-prompt')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Add what was done before you added it' }));
+    expect(screen.getByLabelText(/Brake Pads last done at odometer/i)).toBeInTheDocument();
+  });
+
+  it('keeps a fully answered history behind the button', () => {
+    setCoverage({ ...coverage, entries: [coverage.entries[0]!], unansweredCount: 0 });
     render(<ServiceHistoryCard vehicleId="vehicle-1" />);
 
-    expect(screen.getByText(/assumes it had just been done/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('service-baseline-prompt')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Add what was done before you added it' }),
+    ).toBeInTheDocument();
   });
 
   it('shows a logged service as settled rather than as a question', () => {
-    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    renderOpen();
 
     expect(screen.getByText(/Logged service at 38,000 km/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Engine Oil last done/i)).not.toBeInTheDocument();
   });
 
   it('has nothing to save until something is answered', () => {
-    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    renderOpen();
 
     expect(screen.getByText('No changes to save')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save history/i })).toBeDisabled();
   });
 
   it('sends a typed reading for the unanswered category', async () => {
-    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    renderOpen();
 
     fireEvent.change(screen.getByLabelText(/Brake Pads last done at odometer/i), {
       target: { value: '5000' },
@@ -101,7 +125,7 @@ describe('ServiceHistoryCard', () => {
   });
 
   it('treats "don’t know" as an answer, not as leaving it blank', () => {
-    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    renderOpen();
 
     fireEvent.click(screen.getByRole('button', { name: /don’t know/i }));
     fireEvent.click(screen.getByRole('button', { name: /save history/i }));
@@ -112,7 +136,7 @@ describe('ServiceHistoryCard', () => {
   });
 
   it('clears the reading when the category is marked unknown', () => {
-    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    renderOpen();
 
     const input = screen.getByLabelText(/Brake Pads last done at odometer/i);
     fireEvent.change(input, { target: { value: '5000' } });
@@ -123,7 +147,7 @@ describe('ServiceHistoryCard', () => {
   });
 
   it('lets an unknown be taken back without inventing a figure', () => {
-    render(<ServiceHistoryCard vehicleId="vehicle-1" />);
+    renderOpen();
 
     const unknownButton = screen.getByRole('button', { name: /don’t know/i });
     fireEvent.click(unknownButton);
@@ -165,10 +189,13 @@ describe('ServiceHistoryCard for someone who cannot edit the vehicle', () => {
 
   beforeEach(() => {
     setCoverage(answered);
+    window.localStorage.clear();
   });
 
   it('shows a viewer the answers instead of the form', () => {
     renderAs(VehicleRole.Viewer);
+    expect(screen.queryByTestId('service-baseline-prompt')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'What was done before it was added' }));
 
     expect(screen.getByText(/Logged service at 38,000 km/)).toBeInTheDocument();
     expect(screen.getByText('Not answered yet')).toBeInTheDocument();
@@ -181,6 +208,7 @@ describe('ServiceHistoryCard for someone who cannot edit the vehicle', () => {
 
   it('keeps the form for an editor', () => {
     renderAs(VehicleRole.Editor);
+    fireEvent.click(screen.getByRole('button', { name: 'Fill it in' }));
 
     expect(screen.getByLabelText(/Brake Pads last done at odometer/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save history/i })).toBeInTheDocument();

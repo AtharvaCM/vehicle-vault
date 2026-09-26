@@ -69,10 +69,10 @@ test('an electric vehicle is never asked for a PUC certificate', async ({ page }
 
   // The row opens the Papers tab, which points it at its RC instead.
   await documents.click();
-  await expect(page.getByText('Track your RC and road tax')).toBeVisible();
   await expect(page.getByText('Electric vehicles are exempt from PUC')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add registration certificate' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add PUC certificate' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add RC' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add road tax' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add PUC' })).toHaveCount(0);
 });
 
 test.afterAll(async () => {

@@ -13,6 +13,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const historyQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const useHistoryMock = vi.hoisted(() => vi.fn((..._args: unknown[]) => historyQuery.current));
 
+vi.mock('@/features/maintenance/hooks/use-upload-first-draft', () => ({
+  useUploadFirstDraft: () => ({ canRead: true, isPending: false, onFiles: vi.fn() }),
+}));
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
@@ -128,11 +131,14 @@ describe('VehicleServiceHistory', () => {
     expect(screen.queryByRole('button', { name: 'Import CSV' })).not.toBeInTheDocument();
   });
 
-  it('offers import and the first service on an empty log, with no search box', () => {
+  it('offers the bill first, then import and the first service, on an empty log', () => {
     settle(emptyPage);
     renderAs(VehicleRole.Owner);
 
     expect(screen.getByText('No service records yet')).toBeInTheDocument();
+    const snap = screen.getByRole('button', { name: 'Snap the bill' });
+    const byHand = screen.getByRole('link', { name: 'Log your first service' });
+    expect(snap.compareDocumentPosition(byHand) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Import CSV' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Log your first service' })).toBeInTheDocument();
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
