@@ -161,36 +161,24 @@ export function FuelTab({ vehicleId, fuelType, odometer }: FuelTabProps) {
               onChange={handleScan}
             />
 
-            <Button
-              disabled={scanMutation.isPending}
-              onClick={() => {
-                if (scanStatus.data?.available === false) {
-                  appToast.info({
-                    title: 'AI not configured',
-                    description:
-                      'Please set your GEMINI_API_KEY in the backend .env to enable receipt scanning.',
-                  });
-                  return;
-                }
-                fileInputRef.current?.click();
-              }}
-              size="sm"
-              variant="outline"
-              className="gap-2 border-primary/20 hover:border-primary/50 text-primary bg-primary/5 relative"
-              title={scanStatus.data?.available ? 'AI ready' : 'AI plugin missing'}
-            >
-              {scanMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <div className="relative">
-                  <Scan className="h-4 w-4" />
-                  <span
-                    className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border border-surface ${scanStatus.data?.available ? 'bg-ok shadow-[0_0_8px_var(--ok)]' : 'bg-soon-dot'}`}
-                  />
-                </div>
-              )}
-              {scanMutation.isPending ? 'Analyzing...' : 'Scan receipt'}
-            </Button>
+            {/* Offered only when receipt scanning is available: never a word
+                about how the server is configured. */}
+            {scanStatus.data?.available ? (
+              <Button
+                disabled={scanMutation.isPending}
+                onClick={() => fileInputRef.current?.click()}
+                size="sm"
+                variant="outline"
+                className="gap-2 border-primary/20 bg-primary/5 text-primary hover:border-primary/50"
+              >
+                {scanMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Scan aria-hidden="true" className="h-4 w-4" />
+                )}
+                {scanMutation.isPending ? 'Reading…' : 'Scan receipt'}
+              </Button>
+            ) : null}
 
             <Button
               onClick={() => setIsImportOpen(true)}

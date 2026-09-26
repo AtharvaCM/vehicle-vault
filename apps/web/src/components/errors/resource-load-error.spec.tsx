@@ -32,14 +32,17 @@ describe('ResourceLoadError', () => {
         error={new ApiError('Vehicle not found', 404)}
         listAction={listAction}
         onRetry={vi.fn()}
-        pageDescription="Review one vehicle."
         resourceLabel="Vehicle"
         subject="vehicle"
       />,
     );
 
     expect(screen.getByText("This vehicle isn't in your garage.")).toBeInTheDocument();
-    expect(screen.getAllByText('Vehicle not found').length).toBeGreaterThan(0);
+    // Said once: the page's own title, no second card repeating it (#365).
+    expect(screen.getAllByText('Vehicle not found')).toHaveLength(1);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Vehicle not found' }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Your garage' })).toBeInTheDocument();
   });
@@ -50,7 +53,6 @@ describe('ResourceLoadError', () => {
         error={new ApiError('Forbidden', 403)}
         listAction={listAction}
         onRetry={vi.fn()}
-        pageDescription="Review one vehicle."
         resourceLabel="Vehicle"
         subject="vehicle"
       />,
@@ -70,13 +72,14 @@ describe('ResourceLoadError', () => {
         error={new ApiError('Internal error', 500)}
         listAction={listAction}
         onRetry={onRetry}
-        pageDescription="Review one vehicle."
         resourceLabel="Vehicle"
         subject="vehicle"
       />,
     );
 
-    expect(screen.getByText("We couldn't load this vehicle.")).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: "Couldn't load this vehicle" }),
+    ).toBeInTheDocument();
     const retryButton = screen.getByRole('button', { name: 'Try again' });
     fireEvent.click(retryButton);
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -89,7 +92,6 @@ describe('ResourceLoadError', () => {
         isRetrying
         listAction={listAction}
         onRetry={vi.fn()}
-        pageDescription="Review one vehicle."
         resourceLabel="Vehicle"
         subject="vehicle"
       />,
@@ -105,7 +107,6 @@ describe('ResourceLoadError', () => {
           error={error}
           listAction={listAction}
           onRetry={vi.fn()}
-          pageDescription="Review one vehicle."
           resourceLabel="Vehicle"
           subject="vehicle"
         />,

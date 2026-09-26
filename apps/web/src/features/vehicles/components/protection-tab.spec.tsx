@@ -23,6 +23,7 @@ const createDocument = vi.hoisted(() => vi.fn());
 const updateDocument = vi.hoisted(() => vi.fn());
 
 // A document card links to its full-screen view.
+const scanStatus = vi.hoisted(() => ({ current: { available: true } as { available: boolean } }));
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
@@ -70,9 +71,10 @@ vi.mock('../../vehicle-documents/hooks/use-scan-document', () => ({
   useScanVehicleDocument: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 // Partial mock: the component tree still imports queryOptions and friends.
+// Its only queries here are the scan-status checks.
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
-  useQuery: () => ({ data: undefined, isPending: false }),
+  useQuery: () => ({ data: scanStatus.current, isPending: false }),
 }));
 
 describe('ProtectionTab', () => {
@@ -103,6 +105,29 @@ describe('ProtectionTab', () => {
     expect(screen.getByRole('button', { name: /scan warranty/i })).toBeInTheDocument();
     // Compliance covers three kinds, so its scan is a menu rather than one button.
     expect(screen.getByRole('button', { name: 'Scan' })).toBeInTheDocument();
+  });
+
+  it('offers no scan, and says nothing of configuration, when scanning is unavailable', () => {
+    scanStatus.current = { available: false };
+    documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
+    claimsQuery.current = { isPending: false, isError: false, data: [] };
+
+    render(<ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />);
+
+    expect(screen.queryByRole('button', { name: /scan/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/GEMINI|\.env|plugin/i)).not.toBeInTheDocument();
+    scanStatus.current = { available: true };
+  });
+
+  it('asks for each paper not on file, the RC included', () => {
+    documentsQuery.current = { isPending: false, isError: false, data: [], refetch: vi.fn() };
+    claimsQuery.current = { isPending: false, isError: false, data: [] };
+
+    render(<ProtectionTab fuelType={FuelType.Petrol} vehicleId="vehicle-1" />);
+
+    for (const name of ['Add RC', 'Add PUC', 'Add road tax']) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
   });
 
   it('sends the document scan to the camera on a phone', () => {
@@ -143,11 +168,11 @@ describe('ProtectionTab', () => {
 
     render(<ProtectionTab fuelType={FuelType.Electric} vehicleId="vehicle-1" />);
 
-    expect(screen.queryByRole('button', { name: 'Add PUC certificate' })).not.toBeInTheDocument();
-    expect(screen.getByText(/Track your RC and road tax/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add PUC' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add road tax' })).toBeInTheDocument();
     expect(screen.getByText(/Electric vehicles are exempt from PUC/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Add registration certificate' }));
+    await user.click(screen.getByRole('button', { name: 'Add RC' }));
 
     const dialog = await screen.findByRole('dialog');
     expect(
@@ -217,7 +242,7 @@ const sectionActions = [
   'Add document',
 ];
 // Empty-state prompts, shown here because this vehicle has no warranty or compliance papers.
-const emptyStateActions = ['Add warranty details', 'Add PUC certificate'];
+const emptyStateActions = ['Add warranty details', 'Add PUC'];
 
 describe('ProtectionTab roles', () => {
   it.each([VehicleRole.Owner, VehicleRole.Editor])('lets an %s add and change cover', (role) => {
