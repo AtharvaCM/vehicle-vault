@@ -27,6 +27,13 @@ const PALETTE_CLASS = new RegExp(
   `^-?(?:${COLOR_UTILITIES})-(?:(?:${PALETTE_FAMILIES})-(?:50|[1-9]00|950)|white|black)(?:/\\S+)?$`,
 );
 const ARBITRARY_FONT_SIZE = /^text-\[(?:length:)?[\d.]+(?:px|rem|em)\]$/;
+/** A transition or animation length other than the 150 ms the design language allows. */
+const OFF_BEAT_DURATION = /^duration-(?!150$)\d+$/;
+/** Entrances that move or grow: overlays fade instead. */
+const MOVING_ENTRANCE = /^(?:zoom|slide)-(?:in|out)(?:-|$)/;
+/** Hover and focus effects that move or scale an element. */
+const MOVING_HOVER = /(?:^|:)(?:group-)?(?:hover|focus|focus-visible):-?(?:scale|translate|rotate)-/;
+
 /** Tailwind's own sizes (14px `text-sm`, 18px `text-lg`…) sit off the design scale. */
 const DEFAULT_FONT_SIZE = /^text-(?:xs|sm|base|lg|xl|[2-9]xl)(?:\/\S+)?$/;
 
@@ -51,7 +58,7 @@ function tokenRule({ description, message, matches }) {
     meta: { type: 'suggestion', docs: { description }, schema: [], messages: { found: message } },
     create(context) {
       return forEachClassString(context, (tokens, node) => {
-        const found = tokens.find((token) => matches(utilityOf(token)));
+        const found = tokens.find((token) => matches(utilityOf(token), token));
         if (found) context.report({ node, messageId: 'found', data: { className: found } });
       });
     },
@@ -82,6 +89,14 @@ export const rules = {
     message:
       '`{{className}}` animates every property, layout included. Use transition-colors or transition-opacity.',
     matches: (utility) => utility === 'transition-all',
+  }),
+  'quiet-motion': tokenRule({
+    description:
+      'One orchestrated moment; everything else is a 150 ms colour or opacity change (#354).',
+    message:
+      '`{{className}}` moves or times motion off the design language. Use transition-colors or transition-opacity at the default 150 ms, and fade overlays in (fade-in-0) rather than zoom or slide.',
+    matches: (utility, token) =>
+      OFF_BEAT_DURATION.test(utility) || MOVING_ENTRANCE.test(utility) || MOVING_HOVER.test(token),
   }),
   'no-micro-labels': tokenRule({
     description: 'No uppercase labels: sentence case everywhere.',

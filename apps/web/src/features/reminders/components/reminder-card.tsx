@@ -70,7 +70,7 @@ export function ReminderCard({
           move beside the text by the card's own width (@xl, 36rem), not the screen's. */}
       <Card
         className={cn(
-          '@container relative flex-1 overflow-hidden border-line/60 bg-surface/70 p-0 transition-colors duration-300 hover:border-primary/20 hover:bg-surface sm:p-5',
+          '@container relative flex-1 overflow-hidden border-line/60 bg-surface/70 p-0 transition-colors hover:border-primary/20 hover:bg-surface sm:p-5',
           reminder.status === ReminderStatus.Overdue && 'border-late/30',
           reminder.status === ReminderStatus.DueToday && 'border-soon/30',
         )}

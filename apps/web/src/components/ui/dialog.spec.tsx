@@ -45,8 +45,10 @@ describe('DialogContent', () => {
       'max-md:bottom-(--keyboard-inset,0px)',
       'max-md:w-full',
       'max-md:rounded-b-none',
-      'max-md:data-[state=open]:slide-in-from-bottom',
     );
+    // It fades in like every overlay; nothing slides or zooms (#354).
+    expect(screen.getByRole('dialog').className).not.toMatch(/slide-|zoom-/);
+    expect(screen.getByRole('dialog')).toHaveClass('data-[state=open]:fade-in-0');
   });
 
   it('keeps the centred modal from md up, exactly as it was', () => {

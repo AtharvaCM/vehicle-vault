@@ -26,16 +26,15 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  'fixed z-50 gap-4 overflow-y-auto bg-surface p-6 shadow-overlay transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
+  // Fades in and out like every other overlay (#354): no slide.
+  'fixed z-50 gap-4 overflow-y-auto bg-surface p-6 shadow-overlay data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
   {
     variants: {
       side: {
-        top: 'inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
-        bottom:
-          'inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
-        left: 'inset-y-0 left-0 h-full w-[88vw] border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm',
-        right:
-          'inset-y-0 right-0 h-full w-[88vw] border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm',
+        top: 'inset-x-0 top-0 border-b',
+        bottom: 'inset-x-0 bottom-0 border-t',
+        left: 'inset-y-0 left-0 h-full w-[88vw] border-r sm:max-w-sm',
+        right: 'inset-y-0 right-0 h-full w-[88vw] border-l sm:max-w-sm',
       },
     },
     defaultVariants: {

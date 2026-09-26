@@ -102,7 +102,7 @@ export function SwipeRow({ right, left, disabled = false, className, children }:
       <div
         className={cn(
           'relative bg-surface',
-          offset === 0 && 'transition-transform duration-200',
+          offset === 0 && 'transition-transform',
           enabled && 'touch-pan-y',
         )}
         onClickCapture={(event) => {

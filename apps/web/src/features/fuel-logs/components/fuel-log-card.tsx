@@ -40,7 +40,7 @@ export function FuelLogCard({ log, fuelType, onEdit, onDelete }: FuelLogCardProp
   // all three fit beside the menu down to about 350px. None of them breaks mid-value;
   // on a narrower card, a whole figure moves to a second row.
   return (
-    <Card className="@container overflow-hidden border-line/60 bg-surface/70 p-0 transition-colors duration-300 hover:border-primary/20 hover:bg-surface sm:p-5">
+    <Card className="@container overflow-hidden border-line/60 bg-surface/70 p-0 transition-colors hover:border-primary/20 hover:bg-surface sm:p-5">
       <div className="flex flex-col @2xl:flex-row @2xl:items-center">
         {/* Main Info */}
         <div className="flex flex-1 items-center gap-4 p-3 sm:p-5">

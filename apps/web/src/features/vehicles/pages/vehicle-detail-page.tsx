@@ -199,7 +199,7 @@ export function VehicleDetailPage({
             </div>
           ) : null}
 
-          <TabsContent value="overview" className="mt-0 space-y-6 animate-in fade-in duration-500">
+          <TabsContent value="overview" className="mt-0 space-y-6">
             <VehicleSetupPrompt
               dismissedAt={vehicle.setupPromptDismissedAt}
               fuelType={vehicle.fuelType}
@@ -208,7 +208,7 @@ export function VehicleDetailPage({
             <VehicleOverview canEdit={accessFor(currentUserRole).canEdit} vehicle={vehicle} />
           </TabsContent>
 
-          <TabsContent value="history" className="mt-0 animate-in fade-in duration-500">
+          <TabsContent value="history" className="mt-0">
             <VehicleHistoryTab
               fuelType={vehicle.fuelType}
               odometer={vehicle.odometer}
@@ -221,15 +221,15 @@ export function VehicleDetailPage({
             />
           </TabsContent>
 
-          <TabsContent value="reminders" className="mt-0 animate-in fade-in duration-500">
+          <TabsContent value="reminders" className="mt-0">
             <VehicleRemindersTab vehicleId={vehicleId} />
           </TabsContent>
 
-          <TabsContent value="papers" className="mt-0 animate-in fade-in duration-500">
+          <TabsContent value="papers" className="mt-0">
             <ProtectionTab fuelType={vehicle.fuelType} vehicleId={vehicleId} />
           </TabsContent>
 
-          <TabsContent value="more" className="mt-0 animate-in fade-in duration-500">
+          <TabsContent value="more" className="mt-0">
             <VehicleMoreTab
               actions={actions}
               auditQuery={auditQuery}
