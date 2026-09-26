@@ -557,7 +557,7 @@ describe('PublicCatalogService', () => {
       rowAt({ id: 'v6', makeType: 'suv', model: 'Alcazar', variant: 'Base', current: false }),
     ];
 
-    it('looks a make page up by slug across the segment’s vehicle types, publishable rows only', async () => {
+    it('looks a make page up by slug across every public segment’s vehicle types, publishable rows only', async () => {
       prisma.vehicleCatalogVariant.findMany.mockResolvedValue(hyundaiRows());
 
       await service.getMakePage({ segment: 'cars', make: 'hyundai' });
@@ -571,7 +571,7 @@ describe('PublicCatalogService', () => {
                 make: {
                   slug: 'hyundai',
                   marketCode: 'IN',
-                  vehicleType: { in: ['car', 'suv', 'van'] },
+                  vehicleType: { in: ['car', 'suv', 'van', 'motorcycle'] },
                 },
               },
             },
@@ -579,6 +579,28 @@ describe('PublicCatalogService', () => {
           orderBy: { id: 'asc' },
         }),
       );
+    });
+
+    it('links a make that sells cars and bikes to its other segment, and only then', async () => {
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([
+        rowAt({ id: 'h1', makeName: 'Honda', makeSlug: 'honda', model: 'City', variant: 'V' }),
+        rowAt({
+          id: 'h2',
+          makeType: 'motorcycle',
+          makeName: 'Honda',
+          makeSlug: 'honda',
+          model: 'Shine',
+          variant: 'Drum',
+        }),
+      ]);
+
+      const cars = await service.getMakePage({ segment: 'cars', make: 'honda' });
+      expect(cars.otherSegment).toBe('bikes');
+      expect(cars.models.map((model) => model.slug)).toEqual(['city']);
+
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue(hyundaiRows());
+      const hyundai = await service.getMakePage({ segment: 'cars', make: 'hyundai' });
+      expect(hyundai.otherSegment).toBeNull();
     });
 
     it('lists the models of every make row at the address, merged by model, on sale first', async () => {

@@ -50,11 +50,33 @@ export function describeOffering(offering: PublicCatalogOffering) {
 }
 
 /** The schedule's heading: whose schedule it is, so nobody mistakes a typical one for the maker's. */
-export function describeScheduleBasis(schedule: PublicCatalogSchedule) {
+export function describeScheduleBasis(schedule: PublicCatalogSchedule, bodyType?: string | null) {
   if (schedule.basis === 'variant') return 'This variant’s schedule';
   return `Typical schedule for ${withArticle(
-    `${fuelAdjective(schedule.fuelType)}${VEHICLE_TYPE_NOUNS[schedule.vehicleType]}`,
+    `${fuelAdjective(schedule.fuelType)}${vehicleNoun(schedule.vehicleType, bodyType)}`,
   )}`;
+}
+
+/**
+ * The vehicle, by what it is: a two-wheeler the catalog calls a scooter is a
+ * scooter, not a "motorcycle". Any other body type keeps the type's own noun.
+ */
+function vehicleNoun(vehicleType: VehicleType, bodyType?: string | null) {
+  if (vehicleType === VehicleType.Motorcycle && bodyType && /scooter/i.test(bodyType)) {
+    return 'scooter';
+  }
+  return VEHICLE_TYPE_NOUNS[vehicleType];
+}
+
+/**
+ * A generation's name, or null when the import made it up: a model with no
+ * named generation gets "{Model} lineup", which tells nobody anything. A real
+ * one ("4th Gen") helps tell variants apart.
+ */
+export function realGenerationName(generationName: string, modelName: string): string | null {
+  return generationName.trim().toLowerCase() === `${modelName} lineup`.toLowerCase()
+    ? null
+    : generationName;
 }
 
 /**
@@ -140,5 +162,5 @@ export function describeModelScheduleBasis(
 ) {
   return page.schedule.basis === 'variant'
     ? `Schedule for the ${page.model.name} ${page.representative.variant.name}`
-    : describeScheduleBasis(page.schedule);
+    : describeScheduleBasis(page.schedule, page.representative.specs?.bodyType);
 }

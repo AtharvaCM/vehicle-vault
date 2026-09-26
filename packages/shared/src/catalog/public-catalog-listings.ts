@@ -42,8 +42,10 @@ export function uniquePublicCatalogVariants(
 
 /**
  * The make page at `/{segment}/{makeSlug}`, from index entries (any subset
- * that holds every entry at that address), or null when nothing is published
- * there. Models from every make row with that slug are merged by model slug.
+ * that holds every entry with that make slug, in either segment), or null when
+ * nothing is published there. Models from every make row with that slug are
+ * merged by model slug; an entry with the slug in the other segment sets
+ * `otherSegment`.
  */
 export function buildPublicCatalogMakePage(
   entries: ReadonlyArray<PublicCatalogIndexEntry>,
@@ -65,6 +67,9 @@ export function buildPublicCatalogMakePage(
     segment,
     make: { name: first.make.name, slug: first.make.slug },
     models: [...byModel.values()].map(toMakeModel).sort(compareMakeModels),
+    otherSegment:
+      entries.find((entry) => entry.segment !== segment && entry.make.slug === makeSlug)?.segment ??
+      null,
     indexable: atMake.some((entry) => entry.indexable),
     updatedAt: newestTimestamp(atMake.map((entry) => entry.updatedAt)),
   };

@@ -8,6 +8,7 @@ function makePage(overrides: Partial<PublicCatalogMakePage> = {}): PublicCatalog
   return {
     segment: 'cars',
     make: { name: 'Hyundai', slug: 'hyundai' },
+    otherSegment: null,
     models: [
       {
         name: 'Creta',
@@ -105,5 +106,20 @@ describe('PublicMakePageView', () => {
       'href',
       '/bikes/hyundai/creta',
     );
+  });
+
+  it('links the same make’s other segment when it has pages there, and says when it was updated', () => {
+    render(<PublicMakePageView page={makePage({ otherSegment: 'bikes' })} />);
+
+    expect(screen.getByRole('link', { name: 'Hyundai bikes' })).toHaveAttribute(
+      'href',
+      '/bikes/hyundai',
+    );
+    expect(screen.getByTestId('catalog-freshness')).toHaveTextContent('Details last updated');
+  });
+
+  it('offers no other segment when there is none', () => {
+    render(<PublicMakePageView page={makePage()} />);
+    expect(screen.queryByText(/makes bikes too/)).toBeNull();
   });
 });

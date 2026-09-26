@@ -242,9 +242,12 @@ export class PublicCatalogService {
 
   /**
    * The make page at `/{segment}/{make}`: its models, from every make row with
-   * that slug in the segment (Hyundai is a car and an SUV make with one slug).
+   * that slug in the segment (Hyundai is a car and an SUV make with one slug),
+   * and whether the slug has pages in the other segment too.
    */
   async getMakePage(slugs: PublicMakeSlugs): Promise<PublicCatalogMakePage> {
+    // Every public segment, not just this one: the page links the same make's
+    // other segment when it has pages there.
     const entries = await this.indexEntries({
       ...PUBLISHABLE_VARIANT_WHERE,
       generation: {
@@ -252,7 +255,7 @@ export class PublicCatalogService {
           make: {
             slug: slugs.make,
             marketCode: DEFAULT_VEHICLE_CATALOG_MARKET,
-            vehicleType: { in: PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES[slugs.segment] },
+            vehicleType: { in: Object.values(PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES).flat() },
           },
         },
       },

@@ -10,6 +10,8 @@ type PublicServiceScheduleProps = {
   heading?: string;
   /** A line after the usual one, saying whose schedule this is. */
   note?: string;
+  /** The catalog's body type, so a typical two-wheeler schedule can say scooter or motorcycle. */
+  bodyType?: string | null;
 };
 
 /**
@@ -18,14 +20,19 @@ type PublicServiceScheduleProps = {
  * typical one for its type and fuel — most pages are the second kind, and
  * nobody should read it as the maker's.
  */
-export function PublicServiceSchedule({ schedule, heading, note }: PublicServiceScheduleProps) {
+export function PublicServiceSchedule({
+  schedule,
+  heading,
+  note,
+  bodyType,
+}: PublicServiceScheduleProps) {
   return (
     <section
       aria-labelledby="service-schedule-heading"
       className="rounded-xl border border-line bg-surface p-4 shadow-xs sm:p-5"
     >
       <h2 className="text-lead font-semibold tracking-tight text-fg" id="service-schedule-heading">
-        {heading ?? describeScheduleBasis(schedule)}
+        {heading ?? describeScheduleBasis(schedule, bodyType)}
       </h2>
       <p className="mt-1 text-ui leading-6 text-fg-2">
         {schedule.basis === 'variant'

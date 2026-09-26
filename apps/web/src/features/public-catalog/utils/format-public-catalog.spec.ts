@@ -6,6 +6,7 @@ import {
   describeOffering,
   describeScheduleBasis,
   formatYearSpan,
+  realGenerationName,
 } from './format-public-catalog';
 
 describe('describeScheduleBasis', () => {
@@ -32,6 +33,32 @@ describe('describeScheduleBasis', () => {
     expect(describeScheduleBasis({ basis: 'typical', fuelType, vehicleType, items: [] })).toBe(
       expected,
     );
+  });
+
+  it.each([
+    ['Scooter', 'Typical schedule for an electric scooter'],
+    ['Maxi-Scooter', 'Typical schedule for an electric scooter'],
+    ['Sports Naked', 'Typical schedule for an electric motorcycle'],
+    [null, 'Typical schedule for an electric motorcycle'],
+  ])('names a two-wheeler by its body type %s', (bodyType, expected) => {
+    expect(
+      describeScheduleBasis(
+        {
+          basis: 'typical',
+          fuelType: FuelType.Electric,
+          vehicleType: VehicleType.Motorcycle,
+          items: [],
+        },
+        bodyType,
+      ),
+    ).toBe(expected);
+  });
+});
+
+describe('realGenerationName', () => {
+  it('drops the name the import makes up, and keeps a real one', () => {
+    expect(realGenerationName('Amaze lineup', 'Amaze')).toBeNull();
+    expect(realGenerationName('3rd Gen', 'Amaze')).toBe('3rd Gen');
   });
 });
 
