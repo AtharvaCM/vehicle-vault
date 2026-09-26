@@ -459,6 +459,26 @@ describe('VehiclesService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('names the linked catalog variant’s body type, and null without one (#356)', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.owner);
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValueOnce({
+      ...vehicleRecord,
+      catalogVariant: { spec: { bodyType: ' Scooter ' } },
+    });
+    await expect(service.getVehicleById('user-1', vehicleRecord.id)).resolves.toMatchObject({
+      catalogBodyType: 'Scooter',
+    });
+
+    accessService.assert.mockResolvedValueOnce(VehicleRole.owner);
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValueOnce({
+      ...vehicleRecord,
+      catalogVariant: null,
+    });
+    await expect(service.getVehicleById('user-1', vehicleRecord.id)).resolves.toMatchObject({
+      catalogBodyType: null,
+    });
+  });
+
   it('returns not found when the user has no membership on the vehicle', async () => {
     accessService.assert.mockRejectedValueOnce(
       new NotFoundException('Vehicle vehicle-404 was not found'),

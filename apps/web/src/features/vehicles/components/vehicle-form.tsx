@@ -16,6 +16,7 @@ import {
   SearchableSelect,
   type SearchableSelectOption,
 } from '@/components/shared/searchable-select';
+import { VehicleTypeGlyph, vehicleGlyphKind } from '@/components/shared/vehicle-type-glyph';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -437,7 +438,18 @@ export function VehicleForm({
                     <SelectContent>
                       {vehicleTypeOptions.map((vehicleType) => (
                         <SelectItem key={vehicleType} value={vehicleType}>
-                          {format.enumLabel('vehicleType', vehicleType)}
+                          <span className="flex items-center gap-2">
+                            {vehicleType === VehicleType.Other ? (
+                              <span aria-hidden="true" className="size-5" />
+                            ) : (
+                              <VehicleTypeGlyph
+                                className="text-fg-3"
+                                decorative
+                                kind={vehicleGlyphKind(vehicleType)}
+                              />
+                            )}
+                            {format.enumLabel('vehicleType', vehicleType)}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>

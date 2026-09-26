@@ -3,6 +3,7 @@ import { FuelType, VehicleRole } from '@vehicle-vault/shared';
 import { IdCard } from 'lucide-react';
 
 import { NumberPlate } from '@/components/shared/number-plate';
+import { VehicleTypeGlyph, vehicleGlyphKind } from '@/components/shared/vehicle-type-glyph';
 import { StatusDot } from '@/components/shared/status-pill';
 import { nextDueText } from '@/features/dashboard/components/vehicle-health-rows';
 import { ROLE_COPY } from '@/features/vehicle-sharing/lib/role-copy';
@@ -74,6 +75,11 @@ export function GarageRow({
             electric={vehicle.fuelType === FuelType.Electric}
             registration={vehicle.registrationNumber}
             size="sm"
+          />
+          <VehicleTypeGlyph
+            className="text-fg-3"
+            decorative
+            kind={vehicleGlyphKind(vehicle.vehicleType, vehicle.catalogBodyType)}
           />
           <div className="min-w-0">
             <h3 className="truncate text-body font-semibold text-fg">{name}</h3>

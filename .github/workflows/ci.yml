@@ -57,7 +57,9 @@ jobs:
   # and a half months, hiding a production bug the smoke flow would have caught.
   e2e-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The suite reached 22 minutes on main by Phase 6, and the accessibility
+    # scans (#353, #357) add several more; 25 cut runs off mid-suite.
+    timeout-minutes: 45
 
     services:
       postgres:
