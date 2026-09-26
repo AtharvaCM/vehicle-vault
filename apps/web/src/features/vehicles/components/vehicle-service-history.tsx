@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ClipboardList } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
@@ -10,7 +10,9 @@ import type { HistoryVehicle } from '@/features/history/components/history-row';
 import { HistorySearchBox } from '@/features/history/components/history-search-box';
 import { HistoryTimeline } from '@/features/history/components/history-timeline';
 import { useHistory } from '@/features/history/hooks/use-history';
+import { BillCapture } from '@/features/maintenance/components/bill-capture';
 import { MaintenanceImportDialog } from '@/features/maintenance/components/maintenance-import-dialog';
+import { useUploadFirstDraft } from '@/features/maintenance/hooks/use-upload-first-draft';
 
 import { useVehicleAccess } from '../context/vehicle-access';
 
@@ -90,21 +92,12 @@ export function VehicleServiceHistory({
         <EmptyState
           action={
             canEdit ? (
-              <div className="flex flex-wrap gap-2">
-                {importButton}
-                <Link
-                  className={buttonVariants()}
-                  params={{ vehicleId: vehicle.id }}
-                  to="/vehicles/$vehicleId/maintenance/new"
-                >
-                  Log your first service
-                </Link>
-              </div>
+              <FirstServiceActions importButton={importButton} vehicleId={vehicle.id} />
             ) : undefined
           }
           description={
             canEdit
-              ? 'No service records have been logged for this vehicle yet.'
+              ? 'Start from the bill of the last service, or log one by hand.'
               : 'No service records have been logged for this vehicle yet. Whoever owns it can add them.'
           }
           icon={ClipboardList}
@@ -156,6 +149,36 @@ export function VehicleServiceHistory({
         </div>
       ) : null}
       {body()}
+    </div>
+  );
+}
+
+type FirstServiceActionsProps = {
+  vehicleId: string;
+  importButton: ReactNode;
+};
+
+/** An empty log starts from the bill: Snap the bill first, then logging by hand. */
+function FirstServiceActions({ vehicleId, importButton }: FirstServiceActionsProps) {
+  const uploadFirst = useUploadFirstDraft(vehicleId);
+
+  return (
+    <div className="flex w-full max-w-md flex-col gap-3">
+      <BillCapture
+        canRead={uploadFirst.canRead}
+        isPending={uploadFirst.isPending}
+        onFiles={(event) => void uploadFirst.onFiles(event)}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Link
+          className={buttonVariants({ variant: 'outline' })}
+          params={{ vehicleId }}
+          to="/vehicles/$vehicleId/maintenance/new"
+        >
+          Log your first service
+        </Link>
+        {importButton}
+      </div>
     </div>
   );
 }

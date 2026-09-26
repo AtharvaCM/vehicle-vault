@@ -223,6 +223,18 @@ describe('VehicleMaintenanceCreatePage saving', () => {
 
     await waitFor(() => expect(createRecord).toHaveBeenCalledWith({ category: 'chain_service' }));
   });
+
+  it('opens the record it just saved', async () => {
+    renderAs(VehicleRole.Owner);
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/maintenance-records/$recordId',
+        params: { recordId: 'record-1' },
+      }),
+    );
+  });
 });
 
 describe('VehicleMaintenanceCreatePage upload-first', () => {

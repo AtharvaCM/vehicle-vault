@@ -122,7 +122,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByTestId('next-due')).toContainText('25,300 km');
       await shot(page, `log-service-${viewport.width}`);
       await page.getByRole('button', { name: 'Save service' }).click();
-      await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=history`));
+      await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
 
       await page.goto('/home');
       await expect(page.getByRole('heading', { level: 1, name: /^(Home|Welcome)/ })).toBeVisible();
