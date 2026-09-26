@@ -1,3 +1,10 @@
+# [1.117.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.116.0...v1.117.0) (2026-09-26)
+
+
+### Features
+
+* a vehicle-type glyph set, with scooters told apart ([78b3d81](https://github.com/AtharvaCM/vehicle-vault/commit/78b3d81dacbe9e34cdbd913d9d04bb896ad46500)), closes [#356](https://github.com/AtharvaCM/vehicle-vault/issues/356)
+
 # [1.116.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.115.0...v1.116.0) (2026-09-26)
 
 
