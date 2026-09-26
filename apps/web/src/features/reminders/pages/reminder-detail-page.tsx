@@ -89,12 +89,11 @@ export function ReminderDetailPage({ reminderId }: ReminderDetailPageProps) {
         error={reminderQuery.error}
         isRetrying={reminderQuery.isRefetching}
         listAction={
-          <Link className={buttonVariants({ variant: 'secondary' })} to="/upcoming">
+          <Link className={buttonVariants({ variant: 'outline' })} to="/upcoming">
             Upcoming
           </Link>
         }
         onRetry={() => void reminderQuery.refetch()}
-        pageDescription="Review when this item is due and what it is for."
         resourceLabel="Reminder"
         subject="reminder"
       />

@@ -1,14 +1,14 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
-import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
-import { PageContainer } from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import { appToast } from '@/lib/toast';
 
 import { getMe } from '../api/get-me';
+import { AuthPageLink, AuthPageShell } from '../components/auth-page-shell';
+import { OAuthButtons } from '../components/oauth-buttons';
 import { useAuth } from '../hooks/use-auth';
 import {
   afterAuthDestination,
@@ -16,15 +16,22 @@ import {
   validateReturnPathSearch,
 } from '../lib/return-path';
 
-/** What the API's callback reports when it has no tokens to hand over. */
+/**
+ * What the API's callback, or Google itself, reports when there are no tokens
+ * to hand over, in the words a person would use (#365). `access_denied` is
+ * Google's word for "you pressed Cancel".
+ */
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
-  oauth_cancelled: 'Sign-in was cancelled before it finished.',
+  access_denied: 'You cancelled signing in with Google.',
+  oauth_cancelled: 'You cancelled signing in with Google.',
   oauth_state_invalid:
-    'This sign-in expired or was started in another browser. Please start it again.',
+    'This sign-in expired, or it was started in another browser. Start it again here.',
 };
 
-function describeOAuthError(code: string) {
-  return OAUTH_ERROR_MESSAGES[code] ?? `OAuth sign-in failed: ${code.replace(/_/g, ' ')}`;
+const GENERIC_OAUTH_ERROR = 'Signing in with Google didn’t finish. Try again, or use your email.';
+
+export function describeOAuthError(code: string) {
+  return OAUTH_ERROR_MESSAGES[code] ?? GENERIC_OAUTH_ERROR;
 }
 
 /**
@@ -73,7 +80,7 @@ export function OAuthCallbackPage() {
       return;
     }
     if (!accessToken || !refreshToken) {
-      setError('Missing OAuth tokens in callback URL.');
+      setError(GENERIC_OAUTH_ERROR);
       return;
     }
 
@@ -112,37 +119,38 @@ export function OAuthCallbackPage() {
             : {}),
         });
         await navigateAfterAuth(navigate, destination, { replace: true });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'OAuth login failed.');
+      } catch {
+        setError(GENERIC_OAUTH_ERROR);
       }
     })();
   }, [auth, navigate]);
 
   if (error) {
+    // In the auth card, with the same two ways in as the sign-in page: Google
+    // again, or email (#365).
     return (
-      <PageContainer>
-        <ErrorState
-          title="Sign-in failed"
-          description={error}
-          action={
-            <Button
-              onClick={() => navigate({ to: '/login', search: next ? { next } : {} })}
-              variant="secondary"
-            >
-              Back to sign in
-            </Button>
-          }
-        />
-      </PageContainer>
+      <AuthPageShell
+        alternateAction={
+          <AuthPageLink label="Create a free account" next={next} text="New here?" to="/register" />
+        }
+        description={error}
+        title="Sign-in didn’t finish"
+      >
+        <div className="space-y-4" data-testid="oauth-callback-error">
+          <OAuthButtons dividerLabel="or" next={next} />
+          <Button asChild className="w-full" variant="outline">
+            <Link search={next ? { next } : {}} to="/login">
+              Sign in with email
+            </Link>
+          </Button>
+        </div>
+      </AuthPageShell>
     );
   }
 
   return (
-    <PageContainer>
-      <LoadingState
-        title="Finishing sign in"
-        description="Hold tight while we set up your session."
-      />
-    </PageContainer>
+    <AuthPageShell alternateAction={null} title="Finishing sign in">
+      <LoadingState description="Setting up your session." title="Signing you in" />
+    </AuthPageShell>
   );
 }
