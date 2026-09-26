@@ -277,14 +277,17 @@ export function LoansSection() {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-small font-medium text-foreground/90">
+              <label
+                className="mb-1.5 block text-small font-medium text-foreground/90"
+                htmlFor="loan-vehicle"
+              >
                 Vehicle
               </label>
               <Select
                 onValueChange={(v) => setSelectedVehicleId(v)}
                 value={selectedVehicleId ?? undefined}
               >
-                <SelectTrigger>
+                <SelectTrigger id="loan-vehicle">
                   <SelectValue placeholder="Pick a vehicle" />
                 </SelectTrigger>
                 <SelectContent>

@@ -186,7 +186,7 @@ export function ClaimFormDialog({
               name="insurancePolicyId"
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
+                  <SelectTrigger id="insurancePolicyId">
                     <SelectValue placeholder="Select policy" />
                   </SelectTrigger>
                   <SelectContent>
@@ -220,7 +220,7 @@ export function ClaimFormDialog({
                   onValueChange={(v) => field.onChange(v === '__none' ? null : v)}
                   value={field.value ?? '__none'}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="maintenanceRecordId">
                     <SelectValue placeholder="No service record linked" />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,7 +278,7 @@ export function ClaimFormDialog({
               name="status"
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
+                  <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>

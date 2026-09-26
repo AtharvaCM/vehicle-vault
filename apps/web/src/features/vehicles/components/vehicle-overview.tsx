@@ -122,15 +122,18 @@ export function VehicleOverview({ vehicle, canEdit }: VehicleOverviewProps) {
               title="Recent activity"
             />
           </CardHeader>
-          <CardContent className="divide-y divide-line-subtle p-0">
-            {recent.map((entry) => (
-              <HistoryRow
-                entry={entry}
-                key={`${entry.kind}:${entry.id}`}
-                showVehicle={false}
-                vehicle={vehicle}
-              />
-            ))}
+          <CardContent className="p-0">
+            {/* A HistoryRow is a list item: it needs its list (#357). */}
+            <ul className="divide-y divide-line-subtle">
+              {recent.map((entry) => (
+                <HistoryRow
+                  entry={entry}
+                  key={`${entry.kind}:${entry.id}`}
+                  showVehicle={false}
+                  vehicle={vehicle}
+                />
+              ))}
+            </ul>
           </CardContent>
         </Card>
       ) : null}
