@@ -55,14 +55,13 @@ export function VehicleHistoryTab({
 
       {view === 'service' ? (
         <>
-          <div className="mb-6">
-            <ServiceHistoryCard vehicleId={vehicleId} />
-          </div>
           <VehicleServiceHistory
             onSearchChange={onSearchChange}
             search={search}
             vehicle={vehicle}
           />
+          {/* Below the log: what was done before the vehicle was added. */}
+          <ServiceHistoryCard vehicleId={vehicleId} />
           <OdometerHistoryCard insights={serviceInsights} />
         </>
       ) : view === 'accessory' ? (

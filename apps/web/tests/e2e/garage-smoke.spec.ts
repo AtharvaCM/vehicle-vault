@@ -148,9 +148,7 @@ test('user can register, sign in, and manage the core garage flow', async ({ pag
   await page.getByRole('textbox', { name: 'Notes' }).fill('Oil change and general inspection');
   await page.getByRole('button', { name: 'Save service' }).click();
 
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+\?tab=history$/);
-  await page.getByRole('link', { name: new RegExp(workshopName) }).click();
-
+  // Saving opens the record just saved.
   await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
   await expect(page.getByText(workshopName)).toBeVisible();
 

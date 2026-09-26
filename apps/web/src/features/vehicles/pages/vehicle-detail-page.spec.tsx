@@ -11,6 +11,9 @@ import type { VehicleDetailSearch } from '../types/vehicle-detail-search';
 const vehicleQuery = vi.hoisted(() => ({ current: {} as Record<string, unknown> }));
 const documents = vi.hoisted(() => ({ current: [] as unknown[] }));
 
+vi.mock('@/features/maintenance/hooks/use-upload-first-draft', () => ({
+  useUploadFirstDraft: () => ({ canRead: true, isPending: false, onFiles: vi.fn() }),
+}));
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,

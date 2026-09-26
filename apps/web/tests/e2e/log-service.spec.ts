@@ -113,7 +113,7 @@ test('logs the oil change that is due on a phone, in one screen', async ({ page 
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await save.click();
 
-  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=history`));
+  await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
   const record = await prisma.maintenanceRecord.findFirstOrThrow({
     where: { vehicleId: vehicle.id },
   });
@@ -172,7 +172,7 @@ test('logs a service for a reminder, at the workshop used before, on a desktop',
   });
 
   await page.getByRole('button', { name: 'Save service' }).click();
-  await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}\\?tab=history`));
+  await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
 
   const saved = await prisma.maintenanceRecord.findFirstOrThrow({
     where: { vehicleId: vehicle.id, category: 'brake_pads' },

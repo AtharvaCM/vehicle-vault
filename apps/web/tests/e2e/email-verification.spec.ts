@@ -58,7 +58,7 @@ test('a new account uses the app for a week before it has to verify', async ({ p
   await page.getByLabel('Total on the bill').fill('4500');
   await page.getByRole('button', { name: 'Save service' }).click();
 
-  await expect(page).toHaveURL(/\/vehicles\/[^/]+\?tab=history$/);
+  await expect(page).toHaveURL(/\/maintenance-records\/[^/]+$/);
   await expect(page.getByText(workshopName)).toBeVisible();
 
   // Day eight: the account is a week and a day old and still unverified.

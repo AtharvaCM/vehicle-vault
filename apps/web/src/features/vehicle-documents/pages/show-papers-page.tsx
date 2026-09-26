@@ -291,7 +291,7 @@ export function ShowPapersPage({
         onValueChange={(value) => onPaperChange(value as VehicleDocumentKind)}
         value={active}
       >
-        <TabsList aria-label="Papers" className="flex w-full overflow-x-auto">
+        <TabsList aria-label="Papers" className="relative flex w-full overflow-x-auto">
           {view.papers.map((item) => (
             <TabsTrigger
               className="min-w-fit flex-1 px-2 text-ui"

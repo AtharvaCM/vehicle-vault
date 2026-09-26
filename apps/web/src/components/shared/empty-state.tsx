@@ -36,7 +36,7 @@ export function EmptyState({
         <p className="max-w-2xl text-ui leading-5 text-muted-foreground">{description}</p>
       </div>
 
-      {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
+      {action ? <div className="flex flex-wrap gap-2 self-stretch">{action}</div> : null}
     </div>
   );
 }

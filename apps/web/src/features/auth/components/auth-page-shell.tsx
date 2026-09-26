@@ -11,6 +11,7 @@ type AuthPageShellProps = {
   description?: ReactNode;
   /** Above the title: why this sign-in is happening (a catalog vehicle, an invite). */
   context?: ReactNode;
+  /** The link to the other way in; null where there is none (a loading step). */
   alternateAction: ReactNode;
   children: ReactNode;
 };
@@ -44,9 +45,11 @@ export function AuthPageShell({
             {description ? <p className="text-ui text-fg-2">{description}</p> : null}
           </div>
           {children}
-          <div className="border-t border-line-subtle pt-4 text-ui text-fg-2">
-            {alternateAction}
-          </div>
+          {alternateAction ? (
+            <div className="border-t border-line-subtle pt-4 text-ui text-fg-2">
+              {alternateAction}
+            </div>
+          ) : null}
         </div>
       </main>
     </PublicFrame>

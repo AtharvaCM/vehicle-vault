@@ -31,7 +31,7 @@ export function AttentionFilters({ counts, focus }: AttentionFiltersProps) {
   return (
     <nav
       aria-label="Filter what needs attention"
-      className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+      className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0"
     >
       <ul className="flex gap-2">
         {chips.map((chip) => {
