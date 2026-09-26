@@ -156,6 +156,8 @@ Below `md` every `Dialog` and `AlertDialog` is a bottom sheet, with no per-dialo
 **Confirm** (`components/shared/confirm.tsx`):
 `await confirm({ title, description, confirmLabel, destructive })` asks in the app's own alert dialog and resolves true or false; the browser's `confirm`/`prompt` are not used anywhere. `ConfirmHost`, mounted once in `AppProviders`, renders the pending question; questions asked while one is open wait their turn. Cancel takes the initial focus and Escape cancels, so a stray Enter never deletes. The unsaved-changes guard asks through it too (Leave / Stay), which works because the router awaits an async blocker.
 
+**EV plates** (#355): `electric` is required on `NumberPlate` and `VehicleIdentity`, so no screen can draw a plate without saying whether the vehicle is electric. Attention and Upcoming rows get it from `vehicleFuelType` on the item (the API sets it beside `registrationNumber`; absent from an older API, which draws a white plate); garage rows, Home's garage, History, Costs, Quick log and Show papers from the vehicle's own fuel type.
+
 **Touch targets** (`components/ui/button.tsx`, `tests/e2e/touch-targets.spec.ts`):
 Below `md` every control is at least 44px: each Button size is `h-11` there and takes its desktop height from `md`, `lg` is the 52px primary phone action, and fields are 48px with 16px text (less and iOS zooms on focus). A control drawn smaller (the switch, a checkbox, an inline "Update" link) grows its hit area with an invisible `::before`. An icon-size Button will not type-check without `aria-label` or `aria-labelledby`. The Playwright spec measures every button, switch, tab and menu trigger on Home, a vehicle page and Preferences at 390px, counting a `::before` hit area.
 

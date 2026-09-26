@@ -11,7 +11,8 @@ type VehicleIdentityProps = {
   name: string;
   /** The model line under the name: "Hyundai Creta SX · 18,500 km". */
   details?: ReactNode;
-  electric?: boolean;
+  /** A green plate for an electric vehicle; required, as on `NumberPlate`. */
+  electric: boolean;
   /**
    * `row`: an S plate over the name, for lists and the attention queue.
    * `card`: an M plate over the name and details, for garage cards.
