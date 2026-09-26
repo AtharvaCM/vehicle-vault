@@ -184,7 +184,7 @@ export function FuelImportDialog({ vehicleId, open, onOpenChange }: FuelImportDi
         <div className="flex-1 overflow-hidden py-4">
           {step === 'upload' && (
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-line rounded-xl p-12 transition-colors hover:border-primary/50 group bg-page/50">
-              <div className="rounded-full bg-primary/10 p-4 mb-4 group-hover:scale-110 transition-transform">
+              <div className="rounded-full bg-primary/10 p-4 mb-4">
                 <Upload className="h-8 w-8 text-primary" />
               </div>
               <h4 className="text-lead font-bold text-fg mb-2">Select CSV file</h4>

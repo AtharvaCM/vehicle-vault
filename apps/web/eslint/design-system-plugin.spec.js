@@ -63,6 +63,23 @@ tester.run('no-transition-all', rules['no-transition-all'], {
   ],
 });
 
+tester.run('quiet-motion', rules['quiet-motion'], {
+  valid: [
+    '<a className="transition-colors duration-150" />',
+    "cn('data-[state=open]:animate-in data-[state=open]:fade-in-0')",
+    // Placement, not motion.
+    '<div className="translate-x-[-50%] scale-100" />',
+    '<span className="transition-transform" />',
+  ],
+  invalid: [
+    { code: '<a className="transition-colors duration-300" />', errors: found },
+    { code: "cn('data-[state=open]:zoom-in-95')", errors: found },
+    { code: "cn('max-md:data-[state=open]:slide-in-from-bottom')", errors: found },
+    { code: '<div className="group-hover:scale-110" />', errors: found },
+    { code: '<svg className="group-hover:translate-x-0.5" />', errors: found },
+  ],
+});
+
 tester.run('no-micro-labels', rules['no-micro-labels'], {
   valid: [
     '<span className="text-small text-fg-3" />',

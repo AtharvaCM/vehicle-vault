@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Below `md` every dialog presents as a bottom sheet: full width, rising from
+ * Below `md` every dialog presents as a bottom sheet: full width, resting on
  * the bottom, scrolling within itself. Shared by `Dialog` and `AlertDialog`, so
  * no dialog has to opt in.
  *
@@ -21,8 +21,6 @@ export const sheetBelowMdContentClass = [
   'max-md:max-h-[calc(var(--visible-height,100dvh)-1.5rem)] max-md:overscroll-contain',
   'max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0',
   'max-md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]',
-  'max-md:data-[state=open]:zoom-in-100 max-md:data-[state=closed]:zoom-out-100',
-  'max-md:data-[state=open]:slide-in-from-bottom max-md:data-[state=closed]:slide-out-to-bottom',
 ].join(' ');
 
 /**

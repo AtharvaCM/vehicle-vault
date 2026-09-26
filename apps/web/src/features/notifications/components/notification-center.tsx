@@ -141,7 +141,7 @@ export function NotificationCenter() {
                         {notif.link && (
                           <div className="flex items-center gap-1 text-caption font-bold text-primary group">
                             Details
-                            <ExternalLink className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
+                            <ExternalLink className="h-2.5 w-2.5" />
                           </div>
                         )}
                       </div>
