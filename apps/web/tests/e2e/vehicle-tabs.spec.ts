@@ -89,8 +89,8 @@ for (const viewport of viewports) {
     await tabs.filter({ hasText: 'History' }).click();
     await expect(page).toHaveURL(/\?tab=history$/);
     await expect(page.getByRole('radio', { name: 'Service' })).toBeChecked();
-    await expect(page.getByText('Service history baseline')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'No service records yet' })).toBeVisible();
+    await expect(page.getByText('Services done before you added it')).toBeVisible();
     await page.getByRole('radio', { name: 'Fuel' }).click();
     await expect(page).toHaveURL(/\?tab=history&view=fuel$/);
     await expect(page.getByRole('heading', { name: 'Fuel history' })).toBeVisible();

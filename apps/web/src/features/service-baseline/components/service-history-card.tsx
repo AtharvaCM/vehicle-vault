@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, History } from 'lucide-react';
 import { ServiceBaselineStatus, type VehicleServiceBaselineEntry } from '@vehicle-vault/shared';
 
 import { ErrorState } from '@/components/shared/error-state';
-import { LoadingState } from '@/components/shared/loading-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +27,41 @@ interface ServiceHistoryCardProps {
   vehicleId: string;
 }
 
+const BASELINE_TITLE = 'Services done before you added it';
+const BASELINE_EXPLAINER =
+  'Tell us when each was last done, so its reminder counts from there — “Don’t know” is an answer too.';
+
+/** "Not now" is remembered per vehicle, in this browser only. */
+const putAwayKey = (vehicleId: string) => `vehicle-vault.service-baseline-put-away.${vehicleId}`;
+
+function readPutAway(vehicleId: string) {
+  try {
+    return window.localStorage.getItem(putAwayKey(vehicleId)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writePutAway(vehicleId: string) {
+  try {
+    window.localStorage.setItem(putAwayKey(vehicleId), '1');
+  } catch {
+    // Storage blocked: put away for this visit only.
+  }
+}
+
+/**
+ * What was done before the vehicle joined the vault, which reminders are
+ * timed from. Sits below the service log: offered once while anything is
+ * unanswered, then kept behind one button.
+ */
 export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
   const { canEdit } = useVehicleAccess();
   const coverageQuery = useServiceBaselineCoverage(vehicleId);
   const upsertMutation = useUpsertServiceBaseline(vehicleId);
   const [drafts, setDrafts] = useState<BaselineDrafts>({});
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPutAway, setIsPutAway] = useState(() => readPutAway(vehicleId));
 
   const entries = useMemo(() => coverageQuery.data?.entries ?? [], [coverageQuery.data]);
 
@@ -66,6 +95,11 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
     });
   }
 
+  function putAway() {
+    setIsPutAway(true);
+    writePutAway(vehicleId);
+  }
+
   async function handleSave() {
     try {
       await upsertMutation.mutateAsync({ entries: pending });
@@ -73,6 +107,7 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
         title: 'Service history updated',
         description: `Saved ${pending.length} ${pending.length === 1 ? 'category' : 'categories'}.`,
       });
+      setIsOpen(false);
     } catch (error) {
       appToast.error({
         title: 'Could not save service history',
@@ -81,14 +116,8 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
     }
   }
 
-  if (coverageQuery.isPending) {
-    return (
-      <LoadingState
-        description="Checking what is already known about this vehicle."
-        title="Service history baseline"
-      />
-    );
-  }
+  // Below the log, a loading block would only be noise.
+  if (coverageQuery.isPending) return null;
 
   if (coverageQuery.isError) {
     return (
@@ -99,29 +128,65 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
           </Button>
         }
         description={getApiErrorMessage(coverageQuery.error)}
-        title="Could not load service history"
+        title="Couldn’t load the services done before you added it"
       />
     );
   }
 
   const unanswered = coverageQuery.data?.unansweredCount ?? 0;
+  const badge =
+    canEdit && unanswered > 0 ? <Badge variant="secondary">{unanswered} to answer</Badge> : null;
+
+  if (!isOpen) {
+    // Offered once, below the log, until it is answered or put away; after
+    // that, one button brings it back.
+    if (!canEdit || unanswered === 0 || isPutAway) {
+      return (
+        <div>
+          <Button onClick={() => setIsOpen(true)} type="button" variant="outline">
+            <History aria-hidden="true" />
+            {canEdit
+              ? 'Add what was done before you added it'
+              : 'What was done before it was added'}
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <Card className="border-line/60 bg-surface/70" data-testid="service-baseline-prompt">
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-lead font-bold">{BASELINE_TITLE}</CardTitle>
+            {badge}
+          </div>
+          <CardDescription>{BASELINE_EXPLAINER}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <Button onClick={() => setIsOpen(true)} type="button">
+            Fill it in
+          </Button>
+          <Button onClick={putAway} type="button" variant="ghost">
+            Not now
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="border-line/60 bg-surface/70">
+    <Card className="border-line/60 bg-surface/70" data-testid="service-baseline">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lead font-bold">Service history baseline</CardTitle>
-          {unanswered > 0 ? <Badge variant="secondary">{unanswered} unanswered</Badge> : null}
+          <CardTitle className="text-lead font-bold">{BASELINE_TITLE}</CardTitle>
+          {badge}
         </div>
         <CardDescription>
-          What was already done when this vehicle joined the vault. Reminders are timed from these
-          figures — a category with nothing on file is measured from the day you added the vehicle,
-          which quietly assumes it had just been done. Saying “I don’t know” is a real answer here,
-          and a more useful one than leaving it blank.
+          {canEdit ? BASELINE_EXPLAINER : 'When each was last done, as the owner has told it.'}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="max-w-2xl space-y-3">
         {entries.map((entry) => (
           <BaselineRow
             key={entry.category}
@@ -133,21 +198,31 @@ export function ServiceHistoryCard({ vehicleId }: ServiceHistoryCardProps) {
           />
         ))}
 
-        {canEdit ? (
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <p className="text-caption text-fg-3">
-              {pending.length === 0
-                ? 'No changes to save'
-                : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
-            </p>
-            <Button
-              disabled={pending.length === 0 || upsertMutation.isPending}
-              onClick={() => void handleSave()}
-            >
-              {upsertMutation.isPending ? 'Saving…' : 'Save history'}
-            </Button>
-          </div>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          {canEdit ? (
+            <>
+              <Button
+                disabled={pending.length === 0 || upsertMutation.isPending}
+                onClick={() => void handleSave()}
+              >
+                {upsertMutation.isPending ? 'Saving…' : 'Save history'}
+              </Button>
+              <p className="text-caption text-fg-3">
+                {pending.length === 0
+                  ? 'No changes to save'
+                  : `${pending.length} ${pending.length === 1 ? 'change' : 'changes'} ready`}
+              </p>
+            </>
+          ) : null}
+          <Button
+            className="ml-auto"
+            onClick={() => setIsOpen(false)}
+            type="button"
+            variant="ghost"
+          >
+            Close
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -200,7 +275,7 @@ function BaselineRow({
       <div className="flex items-center gap-2">
         <Input
           aria-label={`${label} last done at odometer`}
-          className="w-32"
+          className="w-40"
           disabled={isUnknown}
           inputMode="numeric"
           onChange={(event) => onOdometerChange(event.target.value)}
