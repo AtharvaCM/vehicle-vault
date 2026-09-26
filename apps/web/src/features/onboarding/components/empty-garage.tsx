@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { CarFront, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+
+import { VehicleTypeGlyph } from '@/components/shared/vehicle-type-glyph';
 
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -30,8 +32,9 @@ export function EmptyGarage({ withAction = true, className }: EmptyGarageProps) 
       className={cn('rounded-card border border-line bg-surface p-5 text-center sm:p-8', className)}
       data-testid="empty-garage"
     >
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-tint text-brand">
-        <CarFront aria-hidden="true" className="size-6" />
+      <div className="mx-auto flex h-12 w-20 items-center justify-center gap-1 rounded-full bg-brand-tint text-brand">
+        <VehicleTypeGlyph className="size-6" decorative kind="car" />
+        <VehicleTypeGlyph className="size-6" decorative kind="scooter" />
       </div>
       <h2
         className="mt-3 font-display text-heading font-semibold tracking-tight text-fg"
