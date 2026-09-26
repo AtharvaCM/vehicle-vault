@@ -1,3 +1,10 @@
+# [1.115.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.114.0...v1.115.0) (2026-09-26)
+
+
+### Features
+
+* one orchestrated moment, and quiet motion everywhere else ([01f7531](https://github.com/AtharvaCM/vehicle-vault/commit/01f75314156faf1fa13239bb906cfe4e9a43af3f)), closes [#354](https://github.com/AtharvaCM/vehicle-vault/issues/354)
+
 # [1.114.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.113.0...v1.114.0) (2026-09-25)
 
 
