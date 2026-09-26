@@ -52,6 +52,8 @@ export function VehicleEditPage({ vehicleId }: VehicleEditPageProps) {
             purchaseDate: toDateInputValue(vehicleQuery.data.purchaseDate ?? undefined),
             purchasePrice: vehicleQuery.data.purchasePrice ?? null,
             purchaseOdometer: vehicleQuery.data.purchaseOdometer ?? null,
+            engineOilGrade: vehicleQuery.data.engineOilGrade ?? null,
+            engineOilLitres: vehicleQuery.data.engineOilLitres ?? null,
           }
         : undefined,
     [vehicleQuery.data],

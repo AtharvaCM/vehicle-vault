@@ -7,6 +7,7 @@ import { format } from '@/lib/format';
 
 import { useVehicleAccess } from '../context/vehicle-access';
 import { useVariantSpecs } from '../hooks/use-variant-specs';
+import { engineOilLine } from '../utils/engine-oil';
 import { keySpecsLine } from '../utils/key-specs';
 import { VehicleSpecSheet } from './vehicle-spec-sheet';
 
@@ -16,7 +17,8 @@ type VehicleAboutProps = {
 
 /**
  * More → About this vehicle: which variant it is, the specs that matter as one
- * line (the full sheet a tap away), and when and for how much it was bought.
+ * line (the full sheet a tap away), when and for how much it was bought, and
+ * the engine oil it takes, as the owner records it.
  * Each row has at most one action, and a viewer gets none.
  */
 export function VehicleAbout({ vehicle }: VehicleAboutProps) {
@@ -87,6 +89,12 @@ export function VehicleAbout({ vehicle }: VehicleAboutProps) {
           label="Bought"
           testId="about-bought"
           value={boughtValue(vehicle)}
+        />
+        <AboutRow
+          action={editLink(engineOilLine(vehicle) ? 'Change' : 'Add engine oil')}
+          label="Engine oil"
+          testId="about-engine-oil"
+          value={engineOilLine(vehicle) ?? 'The grade and quantity it takes, from your manual'}
         />
       </ul>
 
