@@ -1,3 +1,11 @@
+## [1.117.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.3...v1.117.4) (2026-09-26)
+
+
+### Bug Fixes
+
+* **web:** papers ask for the RC, speak one status vocabulary, drop empty panels ([20fcda7](https://github.com/AtharvaCM/vehicle-vault/commit/20fcda742a9c9ac2bd738028f19ff09edef0a618)), closes [#368](https://github.com/AtharvaCM/vehicle-vault/issues/368)
+* **web:** service history leads with the log, not the baseline ([8f2772b](https://github.com/AtharvaCM/vehicle-vault/commit/8f2772b00b33cb204e64325eef9877a3ecc13c8c)), closes [#366](https://github.com/AtharvaCM/vehicle-vault/issues/366)
+
 ## [1.117.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.2...v1.117.3) (2026-09-26)
 
 
