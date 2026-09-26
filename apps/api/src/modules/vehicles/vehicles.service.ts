@@ -30,6 +30,15 @@ import { MaintenanceIntervalResolver } from './maintenance-interval.resolver';
 import { VehicleAccessService } from './vehicle-access.service';
 import { VehicleCatalogLinkerService } from './vehicle-catalog-linker.service';
 
+/** The linked variant's body type, and nothing else from the catalog. */
+const CATALOG_BODY_TYPE = {
+  select: { spec: { select: { bodyType: true } } },
+} satisfies Prisma.VehicleCatalogVariantDefaultArgs;
+
+function bodyTypeOf(variant: { spec: { bodyType: string | null } | null } | null): string | null {
+  return variant?.spec?.bodyType?.trim() || null;
+}
+
 @Injectable()
 export class VehiclesService {
   constructor(
@@ -45,11 +54,14 @@ export class VehiclesService {
   async getAllVehicles(userId: string) {
     const vehicles = await this.prisma.vehicle.findMany({
       where: { members: { some: { userId } } },
-      include: { members: { where: { userId }, select: { role: true }, take: 1 } },
+      include: {
+        members: { where: { userId }, select: { role: true }, take: 1 },
+        catalogVariant: CATALOG_BODY_TYPE,
+      },
       orderBy: { createdAt: 'desc' },
     });
-    return vehicles.map(({ members, ...vehicle }) =>
-      this.toVehicle(vehicle, members?.[0]?.role ?? null),
+    return vehicles.map(({ members, catalogVariant, ...vehicle }) =>
+      this.toVehicle(vehicle, members?.[0]?.role ?? null, bodyTypeOf(catalogVariant)),
     );
   }
 
@@ -61,7 +73,10 @@ export class VehiclesService {
     const [vehicles, total] = await this.prisma.$transaction([
       this.prisma.vehicle.findMany({
         where,
-        include: { members: { where: { userId }, select: { role: true }, take: 1 } },
+        include: {
+          members: { where: { userId }, select: { role: true }, take: 1 },
+          catalogVariant: CATALOG_BODY_TYPE,
+        },
         skip: start,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -70,8 +85,8 @@ export class VehiclesService {
     ]);
 
     return {
-      data: vehicles.map(({ members, ...vehicle }) =>
-        this.toVehicle(vehicle, members?.[0]?.role ?? null),
+      data: vehicles.map(({ members, catalogVariant, ...vehicle }) =>
+        this.toVehicle(vehicle, members?.[0]?.role ?? null, bodyTypeOf(catalogVariant)),
       ),
       meta: { page, limit, total },
     };
@@ -79,11 +94,15 @@ export class VehiclesService {
 
   async getVehicleById(userId: string, vehicleId: string) {
     const role = await this.access.assert(userId, vehicleId, VehicleRole.viewer);
-    const vehicle = await this.prisma.vehicle.findUnique({ where: { id: vehicleId } });
-    if (!vehicle) {
+    const found = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+      include: { catalogVariant: CATALOG_BODY_TYPE },
+    });
+    if (!found) {
       throw new NotFoundException(`Vehicle ${vehicleId} was not found`);
     }
-    return this.toVehicle(vehicle, role);
+    const { catalogVariant, ...vehicle } = found;
+    return this.toVehicle(vehicle, role, bodyTypeOf(catalogVariant));
   }
 
   /**
@@ -401,6 +420,7 @@ export class VehiclesService {
         purchaseOdometer?: number | null;
       },
     currentUserRole: VehicleRole | null = null,
+    catalogBodyType?: string | null,
   ) {
     return {
       id: vehicle.id,
@@ -424,6 +444,8 @@ export class VehiclesService {
       createdAt: vehicle.createdAt.toISOString(),
       updatedAt: vehicle.updatedAt.toISOString(),
       ...(currentUserRole ? { currentUserRole } : {}),
+      // Only the reads that join the catalog know it; the others leave it out.
+      ...(catalogBodyType !== undefined ? { catalogBodyType } : {}),
     } satisfies Vehicle;
   }
 }

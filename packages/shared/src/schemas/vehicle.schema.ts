@@ -111,4 +111,10 @@ export const VehicleSchema = VehicleCreateSchema.extend({
    * makes the prompt show. Omitted by older API versions.
    */
   setupPromptDismissedAt: z.string().datetime().nullable().optional(),
+  /**
+   * The linked catalog variant's body type ("Scooter", "SUV"…), read-only,
+   * for the vehicle-type glyph (#356): no vehicle type says "scooter". Null
+   * with no link or no body type on file; absent from an older API.
+   */
+  catalogBodyType: z.string().nullable().optional(),
 });

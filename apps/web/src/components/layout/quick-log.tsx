@@ -16,6 +16,11 @@ import { useMemo, useState } from 'react';
 import { FuelType } from '@vehicle-vault/shared';
 
 import { NumberPlate } from '@/components/shared/number-plate';
+import {
+  VehicleTypeGlyph,
+  vehicleGlyphKind,
+  type VehicleGlyphKind,
+} from '@/components/shared/vehicle-type-glyph';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -66,7 +71,7 @@ export const QUICK_LOG_ACTIONS: readonly ActionSpec[] = [
   { action: 'vehicle', label: 'Add vehicle', icon: CarFront },
 ];
 
-type PickableVehicle = QuickLogVehicle & { electric: boolean };
+type PickableVehicle = QuickLogVehicle & { electric: boolean; glyph: VehicleGlyphKind };
 
 /** What the sheet hands over once it knows the action and, where needed, the vehicle. */
 type Chosen = { action: Exclude<QuickLogAction, 'vehicle' | 'reminder'>; vehicle: PickableVehicle };
@@ -98,6 +103,7 @@ function useQuickLog() {
           odometer: vehicle.odometer,
           fuelType: vehicle.fuelType,
           electric: vehicle.fuelType === FuelType.Electric,
+          glyph: vehicleGlyphKind(vehicle.vehicleType, vehicle.catalogBodyType),
         }))
         .sort((a, b) => a.displayName.localeCompare(b.displayName)),
     [vehiclesQuery.data],
@@ -187,6 +193,7 @@ function QuickLogPanel({ state, actions, Header, Title, Description }: PanelProp
                   registration={vehicle.registrationNumber}
                   size="sm"
                 />
+                <VehicleTypeGlyph className="text-fg-3" decorative kind={vehicle.glyph} />
                 <span className="min-w-0 flex-1 truncate text-body font-medium text-fg">
                   {vehicle.displayName}
                 </span>
