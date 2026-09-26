@@ -63,7 +63,7 @@ export function PasswordResetForm({
   });
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
       <FormField
         htmlFor="password-reset-new-password"
         label="New password"

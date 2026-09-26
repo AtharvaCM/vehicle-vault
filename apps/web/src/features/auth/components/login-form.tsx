@@ -46,7 +46,7 @@ export function LoginForm({ isSubmitting = false, onSubmit, submitError }: Login
   });
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
       <FormField
         htmlFor="login-email"
         label="Email address"

@@ -34,3 +34,11 @@ describe('LoginForm', () => {
     expect(screen.getByText('Invalid email or password.')).toBeInTheDocument();
   });
 });
+
+describe('LoginForm validation', () => {
+  it('leaves checking to its own inline messages, not the browser’s bubble', () => {
+    const { container } = render(<LoginForm onSubmit={vi.fn()} />);
+
+    expect(container.querySelector('form')).toHaveAttribute('novalidate');
+  });
+});
