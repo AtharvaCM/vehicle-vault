@@ -1,3 +1,10 @@
+## [1.117.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.1...v1.117.2) (2026-09-26)
+
+
+### Bug Fixes
+
+* stop Home and Costs scrolling sideways on a phone ([daf5702](https://github.com/AtharvaCM/vehicle-vault/commit/daf57029136d442bee8ecc52b3c90b28c84efeaf)), closes [#364](https://github.com/AtharvaCM/vehicle-vault/issues/364)
+
 ## [1.117.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.117.0...v1.117.1) (2026-09-26)
 
 
