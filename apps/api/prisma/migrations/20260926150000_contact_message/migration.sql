@@ -11,3 +11,7 @@ CREATE TABLE "ContactMessage" (
 
 -- CreateIndex
 CREATE INDEX "ContactMessage_createdAt_idx" ON "ContactMessage"("createdAt" DESC);
+
+-- Deny-by-default RLS, matching 20260401120000_enable_public_schema_rls: Prisma
+-- connects as the `postgres` role, which bypasses it, so no policies are defined.
+ALTER TABLE "ContactMessage" ENABLE ROW LEVEL SECURITY;
