@@ -68,7 +68,7 @@ export type QueueVerdict = AlertVerdict<
 /** The vehicle fields a row names its vehicle by. */
 export type DueItemVehicle = Pick<
   Vehicle,
-  'id' | 'nickname' | 'make' | 'model' | 'registrationNumber' | 'odometer'
+  'id' | 'nickname' | 'make' | 'model' | 'registrationNumber' | 'odometer' | 'fuelType'
 > & { currentUserRole?: VehicleRole };
 
 export type ExpiringAccessoryRow = {
@@ -96,7 +96,7 @@ export type DueItemsInput = {
 
 type RowVehicleFields = Pick<
   DashboardAttentionItem,
-  'vehicleId' | 'vehicleName' | 'registrationNumber' | 'currentUserRole'
+  'vehicleId' | 'vehicleName' | 'registrationNumber' | 'vehicleFuelType' | 'currentUserRole'
 >;
 
 /** Home's rows: everything classified, minus what it leaves for later. */
@@ -503,6 +503,7 @@ function rowVehicleFields(vehicle: DueItemVehicle): RowVehicleFields {
     vehicleId: vehicle.id,
     vehicleName: displayNameFor(vehicle),
     registrationNumber: vehicle.registrationNumber,
+    vehicleFuelType: vehicle.fuelType,
     currentUserRole: vehicle.currentUserRole ?? VehicleRole.Owner,
   };
 }

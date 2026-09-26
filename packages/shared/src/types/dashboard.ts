@@ -89,6 +89,11 @@ export type DashboardAttentionItem = {
   /** `nickname?.trim() || `${make} ${model}``. */
   vehicleName: string;
   registrationNumber: string;
+  /**
+   * What the vehicle runs on, so its plate is green for an EV (#355). Absent
+   * only from an API that predates it; the row then draws a white plate.
+   */
+  vehicleFuelType?: FuelType;
   /** The current user's role on the vehicle; viewers cannot complete reminders. */
   currentUserRole: VehicleRole;
   /**
