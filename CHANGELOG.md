@@ -1,3 +1,10 @@
+## [1.120.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.120.0...v1.120.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **catalog:** treat the Ather 450 Apex as a belt-driven scooter ([c008f39](https://github.com/AtharvaCM/vehicle-vault/commit/c008f390e7f9fd47382b3959bfc37c788272b1fb))
+
 # [1.120.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.119.0...v1.120.0) (2026-09-27)
 
 
