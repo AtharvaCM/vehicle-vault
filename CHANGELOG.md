@@ -1,3 +1,15 @@
+# [1.120.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.119.0...v1.120.0) (2026-09-27)
+
+
+### Bug Fixes
+
+* **api:** enable row level security on ContactMessage ([b775d15](https://github.com/AtharvaCM/vehicle-vault/commit/b775d15a3f737b2cfc47d7c1c4c0010202c1594e))
+
+
+### Features
+
+* privacy, terms and contact pages, and a contact form ([0843c70](https://github.com/AtharvaCM/vehicle-vault/commit/0843c702e1661e1ce97fd5b5f327a40b9d45f709)), closes [#341](https://github.com/AtharvaCM/vehicle-vault/issues/341)
+
 # [1.119.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.118.0...v1.119.0) (2026-09-26)
 
 
