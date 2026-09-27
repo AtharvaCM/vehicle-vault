@@ -478,9 +478,16 @@ describe('AttachmentsService', () => {
         id: {
           in: ['attachment-1'],
         },
-        maintenanceRecord: {
-          vehicle: { members: { some: { userId: 'user-1' } } },
-        },
+        OR: [
+          { maintenanceRecord: { vehicle: { members: { some: { userId: 'user-1' } } } } },
+          {
+            claim: {
+              insurancePolicy: {
+                vehicle: { members: { some: { userId: 'user-1', role: 'owner' } } },
+              },
+            },
+          },
+        ],
       },
     });
     expect(result).toEqual({
@@ -489,6 +496,35 @@ describe('AttachmentsService', () => {
       removedMissingMetadataCount: 1,
       removedAttachmentIds: ['attachment-1'],
     });
+  });
+
+  it('checks claim files as well as service-record files, owner-only for claims', async () => {
+    prisma.attachment.findMany = vi
+      .fn()
+      .mockResolvedValue([
+        { id: 'claim-attachment-1', fileName: 'claim-attachments/user-1/claim-1/a.png' },
+      ]);
+    prisma.attachment.deleteMany = vi.fn().mockResolvedValue({ count: 1 });
+    storageService.objectExists.mockResolvedValueOnce(false);
+
+    const result = await service.reconcileAttachments('user-1');
+
+    expect(prisma.attachment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: expect.arrayContaining([
+            {
+              claim: {
+                insurancePolicy: {
+                  vehicle: { members: { some: { userId: 'user-1', role: 'owner' } } },
+                },
+              },
+            },
+          ]),
+        },
+      }),
+    );
+    expect(result.removedAttachmentIds).toEqual(['claim-attachment-1']);
   });
 
   it('reports whether OCR extraction is available', () => {
