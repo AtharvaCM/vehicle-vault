@@ -12,6 +12,9 @@
  *   pnpm catalog:scrape-bike-specs -- --brand=bajaj
  *   pnpm catalog:scrape-bike-specs -- --dry-run
  *   pnpm catalog:scrape-bike-specs -- --force         # overwrite existing
+ *   pnpm catalog:scrape-bike-specs -- --fill-drive-cooling
+ *       # on rows that already have specs, fill only an empty driveType or
+ *       # coolingType; nothing else is touched (#235)
  */
 import puppeteer, { type Page } from 'puppeteer';
 import { PrismaClient } from '@prisma/client';
@@ -29,6 +32,8 @@ const SPEC_LABELS: Record<string, { key: keyof ParsedSpec | string; label: strin
   '406': { key: '_mileageArai', label: 'Mileage - ARAI' },
   '671': { key: '_mileageOwner', label: 'Mileage - Owner Reported' },
   '650': { key: '_transmission', label: 'Transmission' },
+  // "Chain Drive", "Belt Drive", "Shaft Drive": the final drive, despite the label (#235).
+  '389': { key: '_transmissionType', label: 'Transmission Type' },
   '407': { key: '_ridingRange', label: 'Riding Range' },
   '1805': { key: '_engineType', label: 'Engine Type' },
   // Frame / chassis / suspension
@@ -60,6 +65,7 @@ type ParsedSpec = {
   engineCyl?: number;
   engineType?: string;
   coolingType?: string;
+  driveType?: string;
   powerPs?: number;
   powerRpm?: number;
   torqueNm?: number;
@@ -179,6 +185,9 @@ function parse(raw: RawSpecData): ParsedSpec {
   else if (raw._mileageOwner) s.mileageCombined = num(/([\d.]+)\s*km/i, raw._mileageOwner);
   if (raw._ridingRange) s.rangeKm = num(/([\d.]+)\s*km/i, raw._ridingRange);
 
+  const drive = raw._transmissionType?.match(/\b(chain|belt|shaft)\b/i);
+  if (drive) s.driveType = drive[1].toLowerCase();
+
   if (raw._transmission) {
     s.transmission = raw._transmission.trim();
     const g = raw._transmission.match(/(\d)\s*Speed/i);
@@ -222,6 +231,7 @@ function parseArgs() {
     brand: brandArg?.split('=')[1],
     dryRun: process.argv.includes('--dry-run'),
     force: process.argv.includes('--force'),
+    fillDriveCooling: process.argv.includes('--fill-drive-cooling'),
   };
 }
 
@@ -290,6 +300,20 @@ async function main() {
       }
 
       for (const v of variants) {
+        if (v.spec && args.fillDriveCooling && !args.force) {
+          const fill: { driveType?: string; coolingType?: string } = {};
+          if (!v.spec.driveType && parsed.driveType) fill.driveType = parsed.driveType;
+          if (!v.spec.coolingType && parsed.coolingType) fill.coolingType = parsed.coolingType;
+          if (Object.keys(fill).length === 0) continue;
+          if (args.dryRun) {
+            console.log(`      📋 [DRY] ${v.name}: fill ${JSON.stringify(fill)}`);
+          } else {
+            await prisma.vehicleCatalogVariantSpec.update({ where: { id: v.spec.id }, data: fill });
+            console.log(`      ✅ Filled ${v.name}: ${JSON.stringify(fill)}`);
+          }
+          totalUpserted++;
+          continue;
+        }
         if (v.spec && !args.force) continue;
         if (args.dryRun) {
           console.log(`      📋 [DRY] ${v.name}: ${JSON.stringify(parsed).slice(0, 100)}…`);

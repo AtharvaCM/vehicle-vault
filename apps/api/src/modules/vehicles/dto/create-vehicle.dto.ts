@@ -94,4 +94,16 @@ export class CreateVehicleDto {
   @Transform(({ obj }: { obj: Record<string, unknown> }) => obj.fromCatalogIntent)
   @Equals(true)
   fromCatalogIntent?: true;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  engineOilGrade?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.1)
+  @Max(50)
+  engineOilLitres?: number | null;
 }

@@ -18,6 +18,7 @@ import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { ViewOnlyNotice } from '@/features/vehicles/components/view-only-notice';
 import { accessFor, VehicleAccessProvider } from '@/features/vehicles/context/vehicle-access';
 import { useVehicle } from '@/features/vehicles/hooks/use-vehicle';
+import { engineOilLine } from '@/features/vehicles/utils/engine-oil';
 
 import { BillCapture } from '../components/bill-capture';
 import { MaintenanceForm } from '../components/maintenance-form';
@@ -195,6 +196,7 @@ export function VehicleMaintenanceCreatePage({
               </Link>
             }
             currentOdometer={vehicleQuery.data?.odometer}
+            engineOil={vehicleQuery.data ? engineOilLine(vehicleQuery.data) : null}
             isSubmitting={createMaintenanceMutation.isPending || uploadFirst.isPending}
             leading={
               <BillCapture

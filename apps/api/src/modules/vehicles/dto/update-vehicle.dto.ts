@@ -88,4 +88,16 @@ export class UpdateVehicleDto {
   @IsInt()
   @Min(0)
   purchaseOdometer?: number | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  engineOilGrade?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.1)
+  @Max(50)
+  engineOilLitres?: number | null;
 }

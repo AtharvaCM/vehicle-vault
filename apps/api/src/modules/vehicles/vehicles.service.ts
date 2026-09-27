@@ -178,6 +178,8 @@ export class VehiclesService {
             purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : null,
             purchasePrice: input.purchasePrice ?? null,
             purchaseOdometer: input.purchaseOdometer ?? null,
+            engineOilGrade: input.engineOilGrade ?? null,
+            engineOilLitres: input.engineOilLitres ?? null,
             members: {
               create: { userId, role: VehicleRole.owner },
             },
@@ -418,6 +420,8 @@ export class VehiclesService {
         purchaseDate?: Date | null;
         purchasePrice?: Prisma.Decimal | null;
         purchaseOdometer?: number | null;
+        engineOilGrade?: string | null;
+        engineOilLitres?: Prisma.Decimal | null;
       },
     currentUserRole: VehicleRole | null = null,
     catalogBodyType?: string | null,
@@ -438,6 +442,9 @@ export class VehiclesService {
       purchasePrice:
         vehicle.purchasePrice != null ? Number(vehicle.purchasePrice.toString()) : null,
       purchaseOdometer: vehicle.purchaseOdometer ?? null,
+      engineOilGrade: vehicle.engineOilGrade ?? null,
+      engineOilLitres:
+        vehicle.engineOilLitres != null ? Number(vehicle.engineOilLitres.toString()) : null,
       setupPromptDismissedAt: vehicle.setupPromptDismissedAt
         ? new Date(vehicle.setupPromptDismissedAt).toISOString()
         : null,

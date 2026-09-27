@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BellRing, ChevronRight, Download, History, ScanSearch } from 'lucide-react';
+import { BellRing, ChevronRight, Download, History, ScanSearch, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { PageContainer } from '@/components/layout/page-container';
@@ -14,6 +14,7 @@ import { appToast } from '@/lib/toast';
 
 import { accountSecurityQueryOptions } from '../api/account-security';
 import { ChangePasswordDialog } from '../components/change-password-dialog';
+import { DeleteAccountDialog } from '../components/delete-account-dialog';
 import { NameRow } from '../components/name-row';
 import { SessionRows } from '../components/session-rows';
 import { SettingsRow, SettingsSection } from '../components/settings-layout';
@@ -30,6 +31,7 @@ export function SettingsPage() {
   const reconcileMutation = useReconcileAttachments();
   const security = useQuery(accountSecurityQueryOptions()).data;
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   async function handleExport() {
     try {
@@ -194,6 +196,21 @@ export function SettingsPage() {
               value="Remove entries for receipts no longer in storage"
             />
           ) : null}
+          <SettingsRow
+            action={
+              <Button
+                onClick={() => setIsDeleteOpen(true)}
+                size="sm"
+                type="button"
+                variant="destructive-outline"
+              >
+                <Trash2 aria-hidden="true" />
+                Delete account
+              </Button>
+            }
+            label="Delete your account"
+            value="Everything you’ve added, gone at once"
+          />
           {exportMutation.isError ? (
             <div className="px-5 py-3">
               <InlineError
@@ -206,6 +223,13 @@ export function SettingsPage() {
           ) : null}
         </SettingsSection>
       </div>
+
+      <DeleteAccountDialog
+        isExporting={exportMutation.isPending}
+        onExport={() => void handleExport()}
+        onOpenChange={setIsDeleteOpen}
+        open={isDeleteOpen}
+      />
 
       {security ? (
         <ChangePasswordDialog

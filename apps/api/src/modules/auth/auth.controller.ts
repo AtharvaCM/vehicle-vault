@@ -17,7 +17,9 @@ import { Public } from '../../common/auth/decorators/public.decorator';
 import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
 import { successResponse } from '../../common/utils/api-response.util';
 import type { AuthUser } from '@vehicle-vault/shared';
+import { AccountSelfDeletionService } from './account-self-deletion.service';
 import { AuthService } from './auth.service';
+import { AccountDeletionDto } from './dto/account-deletion.dto';
 import { LoginDto } from './dto/login.dto';
 import { PasswordChangeDto } from './dto/password-change.dto';
 import { PasswordResetConfirmDto } from './dto/password-reset-confirm.dto';
@@ -32,7 +34,10 @@ import { CurrentSessionContext, type SessionContext } from './session-context';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly accountSelfDeletion: AccountSelfDeletionService,
+  ) {}
 
   @Public()
   @RateLimit('register')
@@ -170,6 +175,30 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   async getMe(@CurrentUser() user: AuthUser) {
     return successResponse(await this.authService.getMe(user.id));
+  }
+
+  /** Settings → Delete account: what it would take, and what stands in the way. */
+  @ApiBearerAuth()
+  @Get('me/deletion')
+  @ApiOperation({ summary: 'What deleting the signed-in account would remove' })
+  async getDeletionCheck(
+    @CurrentUser() user: AuthUser,
+    @CurrentSessionId() sessionId: string | null,
+  ) {
+    return successResponse(await this.accountSelfDeletion.check(user.id, sessionId));
+  }
+
+  /** Settings → Delete account: gone at once, every session with it. */
+  @RateLimit('token')
+  @ApiBearerAuth()
+  @Delete('me')
+  @ApiOperation({ summary: 'Delete the signed-in account and everything it owns' })
+  async deleteMe(
+    @CurrentUser() user: AuthUser,
+    @CurrentSessionId() sessionId: string | null,
+    @Body() body: AccountDeletionDto,
+  ) {
+    return successResponse(await this.accountSelfDeletion.delete(user.id, sessionId, body));
   }
 
   /** Settings → Account: rename the account. */

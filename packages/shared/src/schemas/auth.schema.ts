@@ -47,6 +47,26 @@ export const ProfileUpdateSchema = z.object({
   name: z.string().trim().min(1).max(120),
 });
 
+/**
+ * Settings → Delete account: what deleting would take, and what stands in the
+ * way. A vehicle shared with other members blocks it until handed over.
+ */
+export const AccountDeletionCheckSchema = z.object({
+  hasPassword: z.boolean(),
+  /** An account with no password confirms by signing in again, within the last few minutes. */
+  needsFreshSignIn: z.boolean(),
+  vehicleCount: z.number().int().nonnegative(),
+  fileCount: z.number().int().nonnegative(),
+  sharedVehicles: z.array(
+    z.object({ id: z.string(), label: z.string(), otherMembers: z.number().int().positive() }),
+  ),
+});
+
+/** The confirmation: the password, for an account that has one. */
+export const AccountDeletionSchema = z.object({
+  password: z.string().min(1).max(72).optional(),
+});
+
 export const OAuthProviderNameSchema = z.enum(['google', 'github']);
 
 /** How an account can sign in, for Settings → Security. */

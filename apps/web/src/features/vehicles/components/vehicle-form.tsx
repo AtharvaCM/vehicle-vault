@@ -91,6 +91,9 @@ const defaultVehicleValues: Partial<VehicleFormValues> = {
   vehicleType: VehicleType.Car,
   fuelType: FuelType.Petrol,
   nickname: '',
+  // What a blank oil field reads as, so an untouched one is never dirty.
+  engineOilGrade: null,
+  engineOilLitres: null,
 };
 
 export function VehicleForm({
@@ -752,6 +755,40 @@ export function VehicleForm({
                 })}
                 aria-invalid={Boolean(form.formState.errors.purchaseOdometer)}
                 placeholder="0 for brand new"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="vehicle-engine-oil-grade"
+              label="Engine oil grade (optional)"
+              error={form.formState.errors.engineOilGrade?.message}
+            >
+              <Input
+                id="vehicle-engine-oil-grade"
+                {...form.register('engineOilGrade', {
+                  setValueAs: (v) => (typeof v === 'string' && v.trim() ? v.trim() : null),
+                })}
+                aria-invalid={Boolean(form.formState.errors.engineOilGrade)}
+                placeholder="e.g. 5W-30"
+              />
+            </FormField>
+
+            <FormField
+              htmlFor="vehicle-engine-oil-litres"
+              label="Engine oil quantity (L, optional)"
+              error={form.formState.errors.engineOilLitres?.message}
+            >
+              <Input
+                id="vehicle-engine-oil-litres"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.1"
+                {...form.register('engineOilLitres', {
+                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+                })}
+                aria-invalid={Boolean(form.formState.errors.engineOilLitres)}
+                placeholder="e.g. 3.8"
               />
             </FormField>
           </div>

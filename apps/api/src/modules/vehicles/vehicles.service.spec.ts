@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { VehicleRole } from '@prisma/client';
+import { Prisma, VehicleRole } from '@prisma/client';
 import { FuelType, VehicleType } from '@vehicle-vault/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -408,6 +408,27 @@ describe('VehiclesService', () => {
       where: { id: 'vehicle-1' },
       data: { nickname: 'Highway cruiser' },
     });
+  });
+
+  it('stores the engine oil the owner records, and reads the litres back as a number (#332)', async () => {
+    accessService.assert.mockResolvedValueOnce(VehicleRole.owner);
+    prisma.vehicle.findUnique = vi.fn().mockResolvedValue(vehicleRecord);
+    prisma.vehicle.update = vi.fn().mockResolvedValue({
+      ...vehicleRecord,
+      engineOilGrade: '5W-30',
+      engineOilLitres: new Prisma.Decimal('3.8'),
+    });
+
+    const vehicle = await service.updateVehicle('user-1', 'vehicle-1', {
+      engineOilGrade: '5W-30',
+      engineOilLitres: 3.8,
+    });
+
+    expect(prisma.vehicle.update).toHaveBeenCalledWith({
+      where: { id: 'vehicle-1' },
+      data: { engineOilGrade: '5W-30', engineOilLitres: 3.8 },
+    });
+    expect(vehicle).toMatchObject({ engineOilGrade: '5W-30', engineOilLitres: 3.8 });
   });
 
   it('clears the nickname and variant when the edit sends an explicit null', async () => {

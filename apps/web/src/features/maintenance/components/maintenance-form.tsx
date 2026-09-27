@@ -82,12 +82,20 @@ function extraFor(field: string): Extra | null {
   return null;
 }
 
+/** The work that changes the engine oil, where the recorded grade is worth a glance. */
+const OIL_WORK = new Set<string>([
+  MaintenanceCategory.EngineOil,
+  MaintenanceCategory.PeriodicService,
+]);
+
 type MaintenanceFormProps = {
   vehicleId?: string;
   /** The record being edited, so it is not compared with itself. */
   recordId?: string;
   /** The vehicle's odometer on file: a new record's default and the field's hint. */
   currentOdometer?: number;
+  /** The engine oil the owner recorded ("5W-30 · 3.8 L"), shown beside oil work. */
+  engineOil?: string | null;
   /** Fields a draft took from its bill; each is marked "from bill" until edited. */
   fieldsFromBill?: ReadonlySet<BillField>;
   isSubmitting?: boolean;
@@ -211,6 +219,7 @@ export function MaintenanceForm({
   vehicleId,
   recordId,
   currentOdometer,
+  engineOil,
   fieldsFromBill,
   isSubmitting = false,
   onSubmit,
@@ -524,6 +533,11 @@ export function MaintenanceForm({
         {categoryReason ? (
           <p className="text-small text-fg-3" id={categoryReasonId}>
             {categoryReason}
+          </p>
+        ) : null}
+        {engineOil && OIL_WORK.has(category) ? (
+          <p className="text-small text-fg-2" data-testid="engine-oil-hint">
+            This engine takes {engineOil}.
           </p>
         ) : null}
         {errors.category?.message ? (
