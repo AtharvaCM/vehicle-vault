@@ -26,6 +26,9 @@ describe('curatedDriveCooling', () => {
     expect(curatedDriveCooling(bike('Honda', 'Activa 6G')).driveType).toBe('belt');
     expect(curatedDriveCooling(bike('Suzuki', 'Burgman Street', 'Scooter')).driveType).toBe('belt');
     expect(curatedDriveCooling(bike('Yamaha', 'Fascino 125', null, 'CVT')).driveType).toBe('belt');
+    expect(curatedDriveCooling(bike('Ather', '450 Apex', null, 'Automatic')).driveType).toBe(
+      'belt',
+    );
   });
 
   it('marks the common liquid-cooled motorcycles, and only those', () => {
