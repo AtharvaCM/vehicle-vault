@@ -812,12 +812,20 @@ export class AttachmentsService {
   }
 
   async reconcileAttachments(userId: string): Promise<AttachmentReconciliationSummary> {
-    const attachments = await this.prisma.attachment.findMany({
-      where: {
-        maintenanceRecord: {
-          vehicle: { members: { some: { userId } } },
+    // Service-record files for any member; claim files only for the owner,
+    // who is the only one allowed to delete them.
+    const reconcilableBy: Prisma.AttachmentWhereInput = {
+      OR: [
+        { maintenanceRecord: { vehicle: { members: { some: { userId } } } } },
+        {
+          claim: {
+            insurancePolicy: { vehicle: { members: { some: { userId, role: 'owner' } } } },
+          },
         },
-      },
+      ],
+    };
+    const attachments = await this.prisma.attachment.findMany({
+      where: reconcilableBy,
       select: {
         id: true,
         fileName: true,
@@ -840,9 +848,7 @@ export class AttachmentsService {
           id: {
             in: missingAttachmentIds,
           },
-          maintenanceRecord: {
-            vehicle: { members: { some: { userId } } },
-          },
+          ...reconcilableBy,
         },
       });
     }

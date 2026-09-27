@@ -193,7 +193,7 @@ export function SettingsPage() {
                 </Button>
               }
               label="Stored files"
-              value="Remove entries for receipts no longer in storage"
+              value="Remove service and claim files no longer in storage"
             />
           ) : null}
           <SettingsRow
