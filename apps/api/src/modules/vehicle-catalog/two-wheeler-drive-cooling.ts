@@ -19,7 +19,7 @@ export type DriveCooling = {
 
 /** Scooters sold in India, by name, for rows with no body type on file. */
 const SCOOTER_MODELS =
-  /\b(activa|dio|jupiter|ntorq|scooty|zest|access|burgman|avenis|fascino|ray ?zr|aerox|pleasure|destini|maestro|xoom|chetak|iqube|rizta|vida|s1|450 ?[xs]|ntorq)\b/i;
+  /\b(activa|dio|jupiter|ntorq|scooty|zest|access|burgman|avenis|fascino|ray ?zr|aerox|pleasure|destini|maestro|xoom|chetak|iqube|rizta|vida|s1|450 ?(?:[xs]|apex)|ntorq)\b/i;
 
 /** Motorcycles that are not chain-driven: shaft (BMW's boxers and K bikes) or belt. */
 const NOT_CHAIN: Array<{ make: RegExp; model: RegExp; driveType: 'belt' | 'shaft' }> = [
