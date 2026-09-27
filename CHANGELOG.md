@@ -1,3 +1,10 @@
+## [1.120.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.120.1...v1.120.2) (2026-09-27)
+
+
+### Bug Fixes
+
+* **attachments:** check claim files in the attachment check ([790a0ce](https://github.com/AtharvaCM/vehicle-vault/commit/790a0ceaeb22a02f7a739fa147e77edff1bd8609))
+
 ## [1.120.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.120.0...v1.120.1) (2026-09-27)
 
 
