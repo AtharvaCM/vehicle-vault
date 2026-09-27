@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 
@@ -81,6 +81,17 @@ export function RegisterPage() {
           onSubmit={handleSubmit}
           submitError={submitError}
         />
+        <p className="text-small text-fg-3" data-testid="register-terms">
+          By creating an account you agree to the{' '}
+          <Link className="font-medium text-fg-2 underline underline-offset-2" to="/terms">
+            Terms
+          </Link>
+          . How we handle your data is on the{' '}
+          <Link className="font-medium text-fg-2 underline underline-offset-2" to="/privacy">
+            Privacy
+          </Link>{' '}
+          page.
+        </p>
       </div>
     </AuthPageShell>
   );

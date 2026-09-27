@@ -8,6 +8,7 @@ import {
   adminIndexRoute,
   adminRoute,
   adminUsersRoute,
+  adminMessagesRoute,
   appRoute,
   forgotPasswordRoute,
   homeRoute,
@@ -41,6 +42,9 @@ import {
   vehiclesNewRoute,
   verifyEmailRoute,
   acceptInviteRoute,
+  contactRoute,
+  privacyRoute,
+  termsRoute,
   bikesVariantRoute,
   carsVariantRoute,
   bikesModelRoute,
@@ -74,7 +78,7 @@ const protectedRouteTree = appRoute.addChildren([
   settingsRoute,
   settingsActivityRoute,
   settingsPreferencesRoute,
-  adminRoute.addChildren([adminIndexRoute, adminUsersRoute, adminCatalogRoute]),
+  adminRoute.addChildren([adminIndexRoute, adminUsersRoute, adminMessagesRoute, adminCatalogRoute]),
 ]);
 
 /** Exported so tests can build a router over the real tree with their own history. */
@@ -86,6 +90,10 @@ export const routeTree = rootRoute.addChildren([
   registerRoute,
   resetPasswordRoute,
   verifyEmailRoute,
+  // Public for everyone: the footer's Privacy, Terms and Contact (#341).
+  privacyRoute,
+  termsRoute,
+  contactRoute,
   // Public: an invite link is previewed before anyone signs in.
   acceptInviteRoute,
   carsVariantRoute,

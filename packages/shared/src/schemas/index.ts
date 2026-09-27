@@ -1,4 +1,5 @@
 export * from './admin.schema';
+export * from './contact.schema';
 export * from './auth.schema';
 export * from './attachment-extraction.schema';
 export * from './attachment.schema';

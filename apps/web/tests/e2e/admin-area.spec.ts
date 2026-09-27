@@ -31,7 +31,7 @@ test('an admin reaches Users and Catalog curation from the account menu', async 
   await expect(page).toHaveURL(/\/admin\/users$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Users' })).toBeVisible();
   const sections = page.getByRole('navigation', { name: 'Admin sections' });
-  await expect(sections.getByRole('link')).toHaveText(['Users', 'Catalog curation']);
+  await expect(sections.getByRole('link')).toHaveText(['Users', 'Messages', 'Catalog curation']);
   // The directory lists this admin's own account.
   await expect(page.getByRole('main').getByText(email)).toBeVisible();
 

@@ -21,6 +21,14 @@ const AdminUsersPage = createLazyPage(
   },
 );
 
+const AdminMessagesPage = createLazyPage(
+  () =>
+    import('@/features/admin/pages/admin-messages-page').then((module) => ({
+      default: module.AdminMessagesPage,
+    })),
+  { title: 'Loading messages', description: 'Loading messages from the Contact page.' },
+);
+
 const CatalogCurationPage = createLazyPage(
   () =>
     import('@/features/admin/pages/catalog-curation-page').then((module) => ({
@@ -77,4 +85,16 @@ export const adminCatalogRoute = createRoute({
     }
   },
   component: CatalogCurationPage,
+});
+
+/** Messages from the public Contact page, for whoever manages users. */
+export const adminMessagesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'messages',
+  beforeLoad: ({ context }) => {
+    if (!canSeeUsers(context.auth.user)) {
+      throw redirect({ to: adminLanding(context.auth.user) });
+    }
+  },
+  component: AdminMessagesPage,
 });
