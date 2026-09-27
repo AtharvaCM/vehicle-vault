@@ -414,18 +414,35 @@ describe('PublicCatalogService', () => {
           yearEnd: null,
           isCurrent: true,
           indexable: false,
+          bodyType: null,
           updatedAt: '2026-07-10T00:00:00.000Z',
         },
         expect.objectContaining({
           segment: 'bikes',
           vehicleType: 'motorcycle',
           variant: { name: 'Classic 350', slug: 'classic-350' },
+          bodyType: null,
         }),
       ]);
       const serialized = JSON.stringify(index);
       for (const forbidden of ['sourceName', 'sourceUrl', 'carwale', 'variant-1', 'make-1']) {
         expect(serialized).not.toContain(forbidden);
       }
+    });
+
+    it("gives a car the catalog's label for its body type, and a bike none (#389)", async () => {
+      const car = variantRow({ spec: specRow({ bodyType: 'MuvsMpvs' }) });
+      const bike = variantRow({
+        id: 'variant-2',
+        slug: 'classic-350',
+        spec: specRow({ bodyType: 'Cruiser' }),
+      });
+      bike.generation.model.make.vehicleType = 'motorcycle';
+      prisma.vehicleCatalogVariant.findMany.mockResolvedValue([car, bike]);
+
+      const index = await service.getIndex();
+
+      expect(index.variants.map((entry) => entry.bodyType)).toEqual(['MUV', null]);
     });
 
     it("reports the page-quality gate's verdict, the same one the variant's page carries", async () => {

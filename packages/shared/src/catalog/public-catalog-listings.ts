@@ -102,6 +102,8 @@ export function buildPublicCatalogBrowsePage(
       make: make.make,
       variantCount: (model?.variantCount ?? 0) + 1,
       isCurrent: Boolean(model?.isCurrent) || entry.isCurrent,
+      // The first variant that has one; a model's variants share a shape.
+      bodyType: model?.bodyType ?? entry.bodyType ?? null,
     });
   }
 

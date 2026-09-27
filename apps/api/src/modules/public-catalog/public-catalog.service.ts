@@ -5,6 +5,7 @@ import {
   buildPublicCatalogMakePage,
   DEFAULT_VEHICLE_CATALOG_MARKET,
   FuelType,
+  normaliseCarBodyType,
   PUBLIC_CATALOG_SEGMENT_VEHICLE_TYPES,
   publicCatalogSegmentFor,
   type MaintenanceCategory,
@@ -328,6 +329,7 @@ export class PublicCatalogService {
         variant: { name: variant.name, slug: variant.slug },
         ...offeringSpan(offerings),
         indexable: evaluateVariantPageQuality({ fuelType, specs }).indexable,
+        bodyType: segment === 'cars' ? normaliseCarBodyType(specs?.bodyType) : null,
         updatedAt: newest([
           variant.updatedAt,
           ...variant.offerings.map((offering) => offering.updatedAt),

@@ -1,4 +1,5 @@
 import { createRoute } from '@tanstack/react-router';
+import { z } from 'zod';
 
 import { createLazyPage } from './lazy-page';
 import { rootRoute } from './root-route';
@@ -108,12 +109,28 @@ const PublicBrowseRoutePage = createLazyPage(
   },
 );
 
-/** A browse page: every make with public pages in the segment. */
+/**
+ * A browse page: every make with public pages in the segment. `/cars` takes
+ * `?body=suv`, the selected body-type chip (#389).
+ */
 export const carsBrowseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'cars',
+  validateSearch: z.object({
+    body: z.string().optional().catch(undefined),
+  }),
   component: function CarsBrowseRoute() {
-    return <PublicBrowseRoutePage segment="cars" />;
+    const { body } = carsBrowseRoute.useSearch();
+    const navigate = carsBrowseRoute.useNavigate();
+    return (
+      <PublicBrowseRoutePage
+        bodyType={body ?? null}
+        onBodyTypeChange={(next) =>
+          void navigate({ search: next ? { body: next } : {}, replace: true, resetScroll: false })
+        }
+        segment="cars"
+      />
+    );
   },
 });
 
