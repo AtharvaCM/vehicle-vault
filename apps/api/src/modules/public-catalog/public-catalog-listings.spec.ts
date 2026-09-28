@@ -245,6 +245,7 @@ describe('buildPublicCatalogBrowsePage', () => {
           make: { name: 'Honda', slug: 'honda' },
           variantCount: 1,
           isCurrent: true,
+          bodyType: null,
         },
         {
           name: 'Creta',
@@ -252,6 +253,7 @@ describe('buildPublicCatalogBrowsePage', () => {
           make: { name: 'Hyundai', slug: 'hyundai' },
           variantCount: 1,
           isCurrent: true,
+          bodyType: null,
         },
         // On sale while any of its variants is.
         {
@@ -260,6 +262,7 @@ describe('buildPublicCatalogBrowsePage', () => {
           make: { name: 'Hyundai', slug: 'hyundai' },
           variantCount: 2,
           isCurrent: true,
+          bodyType: null,
         },
         {
           name: 'Santro',
@@ -267,9 +270,27 @@ describe('buildPublicCatalogBrowsePage', () => {
           make: { name: 'Hyundai', slug: 'hyundai' },
           variantCount: 1,
           isCurrent: false,
+          bodyType: null,
         },
       ],
     });
+  });
+
+  it("gives a model its first variant's body type (#389)", () => {
+    const page = buildPublicCatalogBrowsePage(
+      [
+        entry({ model: 'Creta', variant: 'E' }),
+        entry({ model: 'Creta', variant: 'SX', bodyType: 'SUV' }),
+        entry({ model: 'Creta', variant: 'SX(O)', bodyType: 'MUV' }),
+        entry({ model: 'Verna', variant: 'S', bodyType: 'Sedan' }),
+      ],
+      'cars',
+    );
+
+    expect(page.models.map((model) => [model.slug, model.bodyType])).toEqual([
+      ['creta', 'SUV'],
+      ['verna', 'Sedan'],
+    ]);
   });
 
   it('is empty for a segment with nothing in it', () => {

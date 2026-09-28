@@ -17,6 +17,8 @@
 import puppeteer, { type Page } from 'puppeteer';
 import { PrismaClient } from '@prisma/client';
 
+import { normaliseCarBodyType } from '@vehicle-vault/shared';
+
 import { isPseudoCatalogVariant } from '../pseudo-variants';
 
 const prisma = new PrismaClient();
@@ -296,7 +298,12 @@ async function scrapeModelJsonLdSpecs(page: Page, modelUrl: string): Promise<Par
       try {
         const parsed = JSON.parse(script.textContent || '{}');
         const nodes = Array.isArray(parsed?.['@graph']) ? parsed['@graph'] : [parsed];
-        const carNode = nodes.find((node) => node?.['@type'] === 'Car');
+        // Newer pages type the node ["Car", "ProductGroup"] rather than "Car".
+        const carNode = nodes.find((node) =>
+          Array.isArray(node?.['@type'])
+            ? node['@type'].includes('Car')
+            : node?.['@type'] === 'Car',
+        );
         if (carNode) return carNode;
       } catch {
         // Ignore malformed structured-data blocks.
@@ -320,7 +327,7 @@ async function scrapeModelJsonLdSpecs(page: Page, modelUrl: string): Promise<Par
   const spec: ParsedSpec = {};
   const description = String(carData.description ?? '');
   const bodyType = Array.isArray(carData.bodyType) ? carData.bodyType[0] : carData.bodyType;
-  if (bodyType) spec.bodyType = String(bodyType);
+  if (bodyType) spec.bodyType = normaliseCarBodyType(String(bodyType)) ?? String(bodyType);
 
   const seating = description.match(/(\d+)\s*seater/i);
   if (seating) spec.seatingCapacity = Number(seating[1]);

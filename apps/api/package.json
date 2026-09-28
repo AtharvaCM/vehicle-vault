@@ -67,7 +67,8 @@
     "catalog:audit": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/audit-coverage.ts",
     "catalog:link-vehicles": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/backfill-vehicle-links.ts",
     "catalog:scrape-bike-specs": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/scraper/scrape-bike-specs.ts",
-    "catalog:backfill-two-wheeler-drive-cooling": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/backfill-two-wheeler-drive-cooling.ts"
+    "catalog:backfill-two-wheeler-drive-cooling": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/backfill-two-wheeler-drive-cooling.ts",
+    "catalog:backfill-car-body-type": "ts-node --project tsconfig.json --transpile-only prisma/catalog-import/backfill-car-body-type.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

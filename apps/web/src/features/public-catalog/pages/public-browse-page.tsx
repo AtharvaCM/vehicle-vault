@@ -4,11 +4,13 @@ import type {
   PublicCatalogSegment,
 } from '@vehicle-vault/shared';
 import { ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 
 import { usePublicBrowsePage } from '../api/use-public-browse-page';
+import { BodyTypeFilter } from '../components/body-type-filter';
 import { CatalogSearch } from '../components/catalog-search';
 import { PublicCatalogLink } from '../components/public-catalog-link';
 import { PublicCatalogShell } from '../components/public-catalog-shell';
@@ -19,12 +21,22 @@ import { usePublicPageHead } from '../head/use-public-page-head';
 
 export { browsePageTitle } from '../head/public-page-head';
 
-type PublicBrowseRouteProps = {
+type BodyTypeSelection = {
+  /** The selected body-type chip's URL value (`suv`), or null. */
+  bodyType?: string | null;
+  onBodyTypeChange?: (slug: string | null) => void;
+};
+
+type PublicBrowseRouteProps = BodyTypeSelection & {
   segment: PublicCatalogSegment;
 };
 
 /** Fetches the segment's makes and renders them. */
-export function PublicBrowseRoutePage({ segment }: PublicBrowseRouteProps) {
+export function PublicBrowseRoutePage({
+  segment,
+  bodyType,
+  onBodyTypeChange,
+}: PublicBrowseRouteProps) {
   const query = usePublicBrowsePage(segment);
 
   return (
@@ -41,7 +53,11 @@ export function PublicBrowseRoutePage({ segment }: PublicBrowseRouteProps) {
           />
         </div>
       ) : (
-        <PublicBrowsePageView page={query.data} />
+        <PublicBrowsePageView
+          bodyType={bodyType}
+          onBodyTypeChange={onBodyTypeChange}
+          page={query.data}
+        />
       )}
     </PublicCatalogShell>
   );
@@ -80,7 +96,7 @@ const POPULAR_MODELS: Record<PublicCatalogSegment, ReadonlyArray<readonly [strin
 const chipClass =
   'inline-flex h-11 items-center gap-1 rounded-full border border-line bg-surface px-4 text-ui font-medium text-fg hover:border-fg-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring sm:h-9';
 
-type PublicBrowsePageViewProps = {
+type PublicBrowsePageViewProps = BodyTypeSelection & {
   page: PublicCatalogBrowsePage;
 };
 
@@ -90,8 +106,13 @@ type PublicBrowsePageViewProps = {
  * to track your own. Renders from the payload alone, so the same tree can be
  * rendered ahead of time and hydrated over.
  */
-export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
+export function PublicBrowsePageView({
+  page,
+  bodyType,
+  onBodyTypeChange,
+}: PublicBrowsePageViewProps) {
   usePublicPageHead(browsePageHead(page));
+  const hydrated = useHydrated();
 
   const copy = COPY[page.segment];
   const modelCount = page.models.length;
@@ -118,6 +139,13 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
         </div>
         {makeCount > 0 ? <CatalogSearch page={page} /> : null}
       </header>
+
+      {/* The prerendered page has no selection, so the URL's applies once hydrated. */}
+      <BodyTypeFilter
+        onChange={onBodyTypeChange}
+        page={page}
+        selected={hydrated ? (bodyType ?? null) : null}
+      />
 
       {makeCount === 0 ? (
         <p className="rounded-card border border-line bg-surface px-4 py-6 text-ui text-fg-2 shadow-xs">
@@ -172,4 +200,11 @@ export function PublicBrowsePageView({ page }: PublicBrowsePageViewProps) {
       )}
     </article>
   );
+}
+
+/** False on the render that hydrates a prerendered page, true after it. */
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  return hydrated;
 }

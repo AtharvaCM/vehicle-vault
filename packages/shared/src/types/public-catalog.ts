@@ -1,3 +1,4 @@
+import type { CarBodyType } from '../catalog/car-body-type';
 import type { FuelType } from '../enums/fuel-type.enum';
 import type { MaintenanceCategory } from '../enums/maintenance-category.enum';
 import { VehicleType } from '../enums/vehicle-type.enum';
@@ -173,6 +174,11 @@ export interface PublicCatalogIndexEntry {
   indexable: boolean;
   /** ISO timestamp of the newest change to the variant, its offerings or specs. */
   updatedAt: string;
+  /**
+   * A car's body type in the catalog's labels (#389); null for a bike or a car
+   * with none on file. Missing from an API deployed before it.
+   */
+  bodyType?: CarBodyType | null;
 }
 
 /**
@@ -334,6 +340,8 @@ export interface PublicCatalogBrowseModel extends PublicCatalogNamedSlug {
   variantCount: number;
   /** Any of its variants is on sale now. */
   isCurrent: boolean;
+  /** Its variants' body type (#389), for the browse page's chips. Missing from an older API. */
+  bodyType?: CarBodyType | null;
 }
 
 /**
