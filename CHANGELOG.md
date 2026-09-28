@@ -1,3 +1,11 @@
+# [1.121.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.120.2...v1.121.0) (2026-09-28)
+
+
+### Features
+
+* **catalog:** body-type chips on the cars browse page ([ef106c1](https://github.com/AtharvaCM/vehicle-vault/commit/ef106c15ff2c206ff845ee55e9c15c9992364e97)), closes [#389](https://github.com/AtharvaCM/vehicle-vault/issues/389)
+* **catalog:** fill car body types from CarWale and a curated table ([a9fbc6c](https://github.com/AtharvaCM/vehicle-vault/commit/a9fbc6c4d442c517e51aa3f7a8fb83ba564b2d3b))
+
 ## [1.120.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.120.1...v1.120.2) (2026-09-27)
 
 
