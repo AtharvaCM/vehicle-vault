@@ -1,3 +1,10 @@
+## [1.121.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.121.0...v1.121.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **web:** show real fuel economy on the vehicle Overview again ([330f9e1](https://github.com/AtharvaCM/vehicle-vault/commit/330f9e1b728a7ce80c73ad1098fc92f76583417c)), closes [#307](https://github.com/AtharvaCM/vehicle-vault/issues/307)
+
 # [1.121.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.120.2...v1.121.0) (2026-09-28)
 
 
