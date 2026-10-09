@@ -1,3 +1,10 @@
+## [1.123.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.2...v1.123.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* **web:** onboarding leftovers on Add vehicle and the vehicle page ([2b9db2c](https://github.com/AtharvaCM/vehicle-vault/commit/2b9db2c4ed566318054c8395608c7d1f7200ba25)), closes [#401](https://github.com/AtharvaCM/vehicle-vault/issues/401)
+
 ## [1.123.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.1...v1.123.2) (2026-10-09)
 
 
