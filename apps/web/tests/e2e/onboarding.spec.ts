@@ -116,9 +116,11 @@ for (const viewport of VIEWPORTS) {
     await shoot(page, 'schedule', viewport.width);
     await page.getByRole('button', { name: 'Skip for now' }).click();
 
-    // Home: its own title again, and the checklist moved on.
+    // Home: its own title again, and the checklist moved on. Reached by a
+    // client-side navigation this time, and still no banner over the checklist (#400).
     await expect(page).toHaveURL(/\/home$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+    await expect(page.getByText(/^Verify your email —/)).toHaveCount(0);
     const finish = page.getByRole('region', { name: 'Finish setting up' });
     await expect(finish).toContainText('3 of 5 done');
     // The papers end in ten months: nothing for the queue, yet the card names what comes next (#399).

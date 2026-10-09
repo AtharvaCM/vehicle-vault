@@ -1,4 +1,4 @@
-import { useRouter } from '@tanstack/react-router';
+import { useRouterState } from '@tanstack/react-router';
 import { MailWarning, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,8 +23,10 @@ export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerPro
   const { resend, isResending, hasSent } = useResendVerification(user?.email);
   const [isDismissed, setIsDismissed] = useState(() => (user ? wasDismissedToday(user.id) : false));
   // Home's setup checklist carries the email step while the grace period runs
-  // (#346): one reminder there, not a banner above it saying the same.
-  const onHome = useRouter({ warn: false })?.state.location.pathname === '/home';
+  // (#346): one reminder there, not a banner above it saying the same. Read
+  // through the router's store so a client-side navigation onto Home hides
+  // it too, not only a page load there (#400).
+  const onHome = useRouterState({ select: (state) => state.location.pathname === '/home' });
 
   if (!user || isDismissed || onHome) {
     return null;
