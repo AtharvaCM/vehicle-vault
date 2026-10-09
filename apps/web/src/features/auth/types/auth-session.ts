@@ -1,4 +1,4 @@
-import type { AuthResponse, AuthUser } from '@vehicle-vault/shared';
+import type { AuthResponse, AuthUser, VerificationEmailOutcome } from '@vehicle-vault/shared';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -6,6 +6,8 @@ export type AuthSession = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
+  /** How the verification mail went at registration; kept with the session so a reload still knows. */
+  verificationEmail?: VerificationEmailOutcome;
 };
 
 export type AppAuthContextValue = {
@@ -14,6 +16,14 @@ export type AppAuthContextValue = {
   setSession: (authResponse: AuthResponse) => void;
   status: AuthStatus;
   user: AuthUser | null;
+  /**
+   * True when registration could not send the verification mail: the banner,
+   * the Home checklist and the wall then lead with Resend instead of claiming
+   * a link is in the inbox.
+   */
+  verificationEmailFailed: boolean;
+  /** Forgets a failed send once a resend has gone through. */
+  clearVerificationEmailFailure: () => void;
   logout: () => void;
   /**
    * Re-reads the signed-in user from the API and keeps the session's tokens —

@@ -4,6 +4,7 @@ import { getApiErrorMessage } from '@/lib/api/get-api-error-message';
 import { appToast } from '@/lib/toast';
 
 import { resendVerification } from '../api/resend-verification';
+import { useAuth } from './use-auth';
 
 /**
  * How long the resend action stays spent after a send. The API rate-limits the
@@ -13,6 +14,7 @@ export const RESEND_COOLDOWN_MS = 60_000;
 
 /** The resend action the verification wall and banner share, cooldown included. */
 export function useResendVerification(email: string | undefined) {
+  const { clearVerificationEmailFailure } = useAuth();
   const [isResending, setIsResending] = useState(false);
   const [hasSent, setHasSent] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
@@ -41,6 +43,8 @@ export function useResendVerification(email: string | undefined) {
         return;
       }
       setHasSent(true);
+      // A link is in the inbox now, whatever happened at registration.
+      clearVerificationEmailFailure();
       appToast.success({
         title: 'Verification email sent',
         description: 'Check your inbox, and the spam folder if it is not there.',
@@ -54,7 +58,7 @@ export function useResendVerification(email: string | undefined) {
     } finally {
       setIsResending(false);
     }
-  }, [email]);
+  }, [clearVerificationEmailFailure, email]);
 
   return { resend, isResending, hasSent, isUnavailable };
 }

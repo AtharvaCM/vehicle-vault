@@ -31,6 +31,8 @@ const actionClass = cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'shri
 
 /** Why the email step matters: reminders are mailed only to a verified address. */
 export const EMAIL_WHY = 'Reminders are emailed to you once it is verified.';
+/** Registration could not send the mail (#396): the step leads with Resend. */
+export const EMAIL_FAILED = 'We couldn’t send the email. Resend it.';
 
 /**
  * Home for a new account (#346): the steps to a first live reminder, each one
@@ -38,7 +40,7 @@ export const EMAIL_WHY = 'Reminders are emailed to you once it is verified.';
  * so a new account sees one list rather than a list, a banner and a toast.
  */
 export function SetupChecklist({ heading, steps, vehicle, verifyDaysLeft }: SetupChecklistProps) {
-  const { user } = useAuth();
+  const { user, verificationEmailFailed } = useAuth();
   const { resend, isResending, hasSent } = useResendVerification(user?.email);
   const doneCount = steps.filter((step) => step.done).length;
   const nextStep = steps.find((step) => !step.done)?.id;
@@ -90,7 +92,7 @@ export function SetupChecklist({ heading, steps, vehicle, verifyDaysLeft }: Setu
             disabled={isResending || hasSent}
             onClick={() => void resend()}
             size="sm"
-            variant="outline"
+            variant={verificationEmailFailed ? 'default' : 'outline'}
           >
             {isResending ? 'Sending…' : hasSent ? 'Sent' : 'Resend'}
           </Button>
@@ -142,7 +144,11 @@ export function SetupChecklist({ heading, steps, vehicle, verifyDaysLeft }: Setu
               {/* Alert mail goes only to a verified address (#82), which is the
                   reason to verify that a new account is otherwise never told. */}
               {step.id === 'email' && !step.done ? (
-                <p className="text-small text-fg-3">{EMAIL_WHY}</p>
+                <p
+                  className={cn('text-small', verificationEmailFailed ? 'text-soon' : 'text-fg-3')}
+                >
+                  {verificationEmailFailed ? `${EMAIL_FAILED} ${EMAIL_WHY}` : EMAIL_WHY}
+                </p>
               ) : null}
             </div>
             {step.done ? null : action(step.id)}

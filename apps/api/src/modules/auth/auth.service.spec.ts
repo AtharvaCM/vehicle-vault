@@ -192,6 +192,7 @@ describe('AuthService', () => {
     expect(prisma.user.create.mock.calls[0]?.[0]?.data).not.toHaveProperty(
       'emailVerificationTokenHash',
     );
+    expect(result.verificationEmail).toBe('sent');
     expect(prisma.user.create.mock.calls[0]?.[0]?.data.passwordHash).not.toBe('password123');
     expect(tokenService.issueEmailVerification).toHaveBeenCalledWith('user-1');
     expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
@@ -212,6 +213,7 @@ describe('AuthService', () => {
     );
     expect(result).toEqual({
       accessToken: 'access-token',
+      verificationEmail: 'sent',
       refreshToken: 'refresh-token',
       user: {
         id: 'user-1',
@@ -310,6 +312,31 @@ describe('AuthService', () => {
 
     expect(result.accessToken).toBe('access-token');
     expect(result.user.emailVerified).toBe(false);
+    // The web leads with Resend instead of saying the mail was sent.
+    expect(result.verificationEmail).toBe('failed');
+  });
+
+  it('answers before a slow mail provider does and reports the mail as pending', async () => {
+    prisma.user.create = vi.fn().mockResolvedValue({
+      id: 'user-1',
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      createdAt,
+      updatedAt: createdAt,
+    });
+    jwtService.signAsync.mockResolvedValueOnce('access-token');
+    // A provider that never answers: an SMTP handshake left hanging.
+    mailService.sendVerificationEmail.mockReturnValueOnce(new Promise(() => undefined));
+    (service as unknown as { verificationEmailWaitMs: number }).verificationEmailWaitMs = 20;
+
+    const result = await service.register({
+      name: 'Atharva',
+      email: 'atharva@example.com',
+      password: 'password123',
+    });
+
+    expect(result.accessToken).toBe('access-token');
+    expect(result.verificationEmail).toBe('pending');
   });
 
   it('returns conflict for duplicate emails on register', async () => {

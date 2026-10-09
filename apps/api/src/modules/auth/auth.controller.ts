@@ -43,7 +43,11 @@ export class AuthController {
   @RateLimit('register')
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @ApiResponse({
+    status: 201,
+    description:
+      'User registered and signed in. `verificationEmail` says how the verification mail went: `sent`, `failed` (refused or no mail transport), or `pending` when the provider had not answered within the wait budget.',
+  })
   async register(@Body() body: RegisterDto, @CurrentSessionContext() context: SessionContext) {
     return successResponse(await this.authService.register(body, context));
   }

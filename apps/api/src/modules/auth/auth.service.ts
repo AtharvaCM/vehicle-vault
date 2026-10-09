@@ -43,6 +43,7 @@ import {
   type VerifyEmailInput,
   type ResendVerificationInput,
   type ResendVerificationResponse,
+  type VerificationEmailOutcome,
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -82,6 +83,14 @@ type UserRecord = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+/**
+ * How long registration waits for the verification mail before answering
+ * without a sure outcome. A provider that answers in time gives `sent` or
+ * `failed`; a slower one gets `pending` and the send carries on behind the
+ * response, so a sign-up never waits out an SMTP timeout.
+ */
+export const VERIFICATION_EMAIL_WAIT_MS = 2_000;
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
 const PASSWORD_RESET_UNAVAILABLE_MESSAGE = 'Password reset is unavailable right now.';
@@ -137,22 +146,12 @@ export class AuthService {
 
       // Best-effort: the user row is already committed, so a mail failure here
       // would strand the address behind the P2002 conflict below with no way to
-      // re-register. The account stays unverified and the verify screen's resend
-      // action can issue a fresh token once delivery recovers.
-      try {
-        await this.mailService.sendVerificationEmail({
-          email: user.email,
-          name: user.name,
-          verificationUrl: url,
-        });
-      } catch (error) {
-        this.logger.error(
-          `Failed to send verification email to ${user.email} during registration`,
-          error instanceof Error ? error.stack : undefined,
-        );
-      }
+      // re-register. The account stays unverified; the response says how the
+      // mail went so the web can lead with Resend, which issues a fresh token
+      // once delivery recovers.
+      const verificationEmail = await this.sendVerificationEmailWithinBudget(user, url);
 
-      return this.buildAuthResponse(this.toUser(user), { context });
+      return this.buildAuthResponse(this.toUser(user), { context, verificationEmail });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('An account with this email already exists.');
@@ -556,9 +555,55 @@ export class AuthService {
    * with its refresh token rotated. The access token names the session, which
    * is how "This device" and "Sign out other devices" know which one is asking.
    */
+  /** Overridable in tests, so a "slow provider" case needs no fake clock. */
+  private readonly verificationEmailWaitMs = VERIFICATION_EMAIL_WAIT_MS;
+
+  /**
+   * Sends the verification mail and reports how it went, waiting at most
+   * `verificationEmailWaitMs`. Past that the send is left running and the
+   * outcome is `pending`; a late failure still reaches the log.
+   */
+  private sendVerificationEmailWithinBudget(
+    user: Pick<User, 'email' | 'name'>,
+    verificationUrl: string,
+  ): Promise<VerificationEmailOutcome> {
+    const send = Promise.resolve()
+      .then(() =>
+        this.mailService.sendVerificationEmail({
+          email: user.email,
+          name: user.name,
+          verificationUrl,
+        }),
+      )
+      .then(
+        (): VerificationEmailOutcome => 'sent',
+        (error: unknown): VerificationEmailOutcome => {
+          this.logger.error(
+            `Failed to send verification email to ${user.email} during registration`,
+            error instanceof Error ? error.stack : undefined,
+          );
+          return 'failed';
+        },
+      );
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const budget = new Promise<VerificationEmailOutcome>((resolve) => {
+      timer = setTimeout(() => resolve('pending'), this.verificationEmailWaitMs);
+    });
+
+    return Promise.race([send, budget]).finally(() => clearTimeout(timer));
+  }
+
   private async buildAuthResponse(
     user: User,
-    { sessionId, context }: { sessionId?: string; context: SessionContext },
+    {
+      sessionId,
+      context,
+      verificationEmail,
+    }: {
+      sessionId?: string;
+      context: SessionContext;
+      verificationEmail?: VerificationEmailOutcome;
+    },
   ): Promise<AuthResponse> {
     const authUser = this.toAuthUser(user);
     const session = sessionId
@@ -571,6 +616,7 @@ export class AuthService {
       user: authUser,
       accessToken,
       refreshToken,
+      ...(verificationEmail ? { verificationEmail } : {}),
     });
   }
 

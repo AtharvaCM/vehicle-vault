@@ -19,7 +19,7 @@ type EmailVerificationBannerProps = {
  * each morning instead of going quiet until the wall.
  */
 export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerProps) {
-  const { user } = useAuth();
+  const { user, verificationEmailFailed } = useAuth();
   const { resend, isResending, hasSent } = useResendVerification(user?.email);
   const [isDismissed, setIsDismissed] = useState(() => (user ? wasDismissedToday(user.id) : false));
   // Home's setup checklist carries the email step while the grace period runs
@@ -45,9 +45,19 @@ export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerPro
             <span className="font-semibold">
               Verify your email — {daysLeft <= 1 ? 'last day' : `${daysLeft} days left`}.
             </span>{' '}
-            We sent a link to <span className="break-all font-medium">{user.email}</span>; open it
-            before then to keep using Vehicle Vault. Reminders are emailed to you once it is
-            verified.
+            {verificationEmailFailed ? (
+              <>
+                We couldn’t send the link to{' '}
+                <span className="break-all font-medium">{user.email}</span>. Resend it; reminders
+                are emailed to you once it is verified.
+              </>
+            ) : (
+              <>
+                We sent a link to <span className="break-all font-medium">{user.email}</span>; open
+                it before then to keep using Vehicle Vault. Reminders are emailed to you once it is
+                verified.
+              </>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-1 pl-8 sm:pl-0">
@@ -55,7 +65,7 @@ export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerPro
             disabled={isResending || hasSent}
             onClick={() => void resend()}
             size="sm"
-            variant="outline"
+            variant={verificationEmailFailed ? 'default' : 'outline'}
           >
             {isResending ? 'Sending…' : hasSent ? 'Sent — check your inbox' : 'Resend email'}
           </Button>

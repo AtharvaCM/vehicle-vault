@@ -20,6 +20,7 @@ import {
   UserRoleSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
+  VerificationEmailOutcomeSchema,
 } from '../schemas';
 
 export type User = z.infer<typeof UserSchema>;
@@ -39,6 +40,7 @@ export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchem
 export type PasswordResetRequestResponse = z.infer<typeof PasswordResetRequestResponseSchema>;
 export type PasswordResetConfirmResponse = z.infer<typeof PasswordResetConfirmResponseSchema>;
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type VerificationEmailOutcome = z.infer<typeof VerificationEmailOutcomeSchema>;
 export type VerifyEmailInput = z.infer<typeof VerifyEmailSchema>;
 export type ResendVerificationInput = z.infer<typeof ResendVerificationSchema>;
 
