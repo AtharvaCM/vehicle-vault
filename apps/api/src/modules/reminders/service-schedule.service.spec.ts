@@ -142,6 +142,28 @@ describe('ServiceScheduleService', () => {
     expect(insurance.dueDate).toBeDefined();
   });
 
+  it('marks the item every vehicle of its kind starts with as recommended', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 0,
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.Car,
+    });
+    const petrol = await service.getSuggestions('u1', 'v1');
+    expect(petrol.find((s) => s.slug === 'engine_oil_change')?.recommended).toBe(true);
+    expect(petrol.find((s) => s.slug === 'tyre_rotation')?.recommended).toBe(false);
+
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v2',
+      odometer: 0,
+      fuelType: FuelType.Electric,
+      vehicleType: VehicleType.Car,
+    });
+    const electric = await service.getSuggestions('u1', 'v2');
+    expect(electric.find((s) => s.slug === 'ev_battery_health')?.recommended).toBe(true);
+    expect(electric.some((s) => s.slug === 'engine_oil_change')).toBe(false);
+  });
+
   it('apply creates reminders for the requested slugs', async () => {
     vehiclesService.ensureVehicleExists.mockResolvedValue({
       id: 'v1',

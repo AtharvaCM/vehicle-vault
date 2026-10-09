@@ -106,10 +106,15 @@ for (const viewport of VIEWPORTS) {
     // The renewal rows follow the papers just entered, not an interval from today (#397).
     await expect(page.getByText(/^Follows your PUC certificate on file → next /)).toBeVisible();
     await expect(page.getByText(/^Follows your insurance policy on file → next /)).toBeVisible();
+    // The recommended row is ticked up front (#398); nothing added yet, so the exit is a skip.
+    await expect(page.getByRole('checkbox', { name: 'Add Engine oil change' })).toBeChecked();
+    await expect(page.getByText('Recommended')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add 1 reminder' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Go to Home' })).toHaveCount(0);
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
     await expectNoSidewaysScroll(page, `schedule step at ${viewport.width}px`);
     await shoot(page, 'schedule', viewport.width);
-    await page.getByRole('button', { name: 'Go to Home' }).click();
+    await page.getByRole('button', { name: 'Skip for now' }).click();
 
     // Home: its own title again, and the checklist moved on.
     await expect(page).toHaveURL(/\/home$/);

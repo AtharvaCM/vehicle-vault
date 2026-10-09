@@ -34,6 +34,9 @@ export function VehicleCreatePage() {
   // Home, where the checklist picks up; any later one opens its own page.
   const vehiclesQuery = useVehicles();
   const [isFirstVehicle, setIsFirstVehicle] = useState(false);
+  // Reminders added from the schedule step so far: none, and the way out is
+  // a skip; some, and it is Home (#398).
+  const [addedReminders, setAddedReminders] = useState(0);
   const createVehicleMutation = useCreateVehicle();
   useUnsavedChangesGuard({
     when: isDirty && !createdVehicle,
@@ -127,7 +130,7 @@ export function VehicleCreatePage() {
               </Button>
               {isFirstVehicle ? (
                 <Button onClick={() => void navigate({ to: '/home' })} type="button">
-                  Go to Home
+                  {addedReminders > 0 ? 'Go to Home' : 'Skip for now'}
                   <ArrowRight aria-hidden="true" />
                 </Button>
               ) : null}
@@ -138,7 +141,11 @@ export function VehicleCreatePage() {
         />
         <SetupSteps current="schedule" />
         <div className="max-w-3xl">
-          <ServiceSchedulePanel vehicleId={createdVehicle.id} />
+          <ServiceSchedulePanel
+            onApplied={(count) => setAddedReminders((added) => added + count)}
+            preselectRecommended={isFirstVehicle}
+            vehicleId={createdVehicle.id}
+          />
         </div>
       </PageContainer>
     );

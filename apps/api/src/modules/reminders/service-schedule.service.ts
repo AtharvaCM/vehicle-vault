@@ -89,6 +89,8 @@ export interface ServiceScheduleSuggestion {
   anchor: ServiceScheduleAnchor;
   /** True if a non-completed reminder with the same catalog slug or title is already scheduled. */
   alreadyScheduled: boolean;
+  /** Ticked up front on a new vehicle's schedule step (#398). */
+  recommended: boolean;
 }
 
 /**
@@ -480,6 +482,7 @@ export class ServiceScheduleService {
         dueDate: paperEndDate,
         anchor: { source: 'document', paperEndDate },
         alreadyScheduled,
+        recommended: item.recommended === true,
       };
     }
     const anchor = anchors[item.slug] ?? fallback;
@@ -497,6 +500,7 @@ export class ServiceScheduleService {
           : undefined,
       anchor: anchor.basis,
       alreadyScheduled,
+      recommended: item.recommended === true,
     };
   }
 }
