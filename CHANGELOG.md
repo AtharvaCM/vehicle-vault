@@ -1,3 +1,10 @@
+## [1.123.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.0...v1.123.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **dashboard:** read a vehicle's next due from every horizon ([c0fa05d](https://github.com/AtharvaCM/vehicle-vault/commit/c0fa05d506bb2e2c6c920fad9b3e8b8226dc8b90)), closes [#399](https://github.com/AtharvaCM/vehicle-vault/issues/399)
+
 # [1.123.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.122.2...v1.123.0) (2026-10-09)
 
 
