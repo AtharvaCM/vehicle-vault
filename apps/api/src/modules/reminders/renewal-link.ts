@@ -81,6 +81,18 @@ async function papersOf(
  * The paper of record, by the rule the rest of the app uses
  * (`document-recency.ts`); among exact ties, the one entered last.
  */
+/**
+ * When the vehicle's paper of record of a kind ends, which is the date a
+ * renewal reminder linked to it carries; null without a paper or an end date.
+ */
+export async function paperOfRecordEnd(
+  tx: Prisma.TransactionClient,
+  vehicleId: string,
+  kind: RenewalKind,
+): Promise<Date | null> {
+  return latestOf(await papersOf(tx, vehicleId, kind))?.endDate ?? null;
+}
+
 function latestOf(papers: Paper[]): Paper | undefined {
   const newestFirst = [...papers].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   let latest: Paper | undefined;

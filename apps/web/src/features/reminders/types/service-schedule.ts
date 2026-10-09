@@ -2,9 +2,11 @@ import type { ReminderType } from '@vehicle-vault/shared';
 
 /** What a suggestion's next due was counted from. */
 export interface ServiceScheduleAnchor {
-  source: 'record' | 'baseline' | 'tyre_check' | 'now';
+  source: 'record' | 'baseline' | 'tyre_check' | 'document' | 'now';
   lastDoneOdometer?: number;
   lastDoneDate?: string;
+  /** For `document`: when the paper of record ends, which is the row's due date. */
+  paperEndDate?: string;
 }
 
 export interface ServiceScheduleSuggestion {

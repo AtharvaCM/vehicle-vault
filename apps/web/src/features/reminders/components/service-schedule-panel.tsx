@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ReminderType } from '@vehicle-vault/shared';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, ListChecks, Sparkles } from 'lucide-react';
 
@@ -181,7 +182,7 @@ export function ServiceSchedulePanel({ vehicleId, collapsed = false }: Props) {
                     </p>
                     {item.anchor && (item.dueOdometer != null || item.dueDate) ? (
                       <p className="mt-0.5 text-caption text-fg-3">
-                        {describeAnchor(item.anchor)} → next {nextDue(item)}
+                        {describeAnchor(item.anchor, item.type)} → next {nextDue(item)}
                       </p>
                     ) : null}
                     {item.notes ? (
@@ -225,12 +226,29 @@ function nextDue(item: ServiceScheduleSuggestion): string {
     .join(' / ');
 }
 
+function paperName(type: ServiceScheduleSuggestion['type']): string {
+  switch (type) {
+    case ReminderType.Insurance:
+      return 'insurance policy';
+    case ReminderType.Puc:
+      return 'PUC certificate';
+    default:
+      return 'paper';
+  }
+}
+
 /**
  * Says what the next due was counted from, so a reminder added from this row is
  * never silently later than the service it follows.
  */
-function describeAnchor(anchor: NonNullable<ServiceScheduleSuggestion['anchor']>): string {
+function describeAnchor(
+  anchor: NonNullable<ServiceScheduleSuggestion['anchor']>,
+  type: ServiceScheduleSuggestion['type'],
+): string {
   if (anchor.source === 'now') return 'No history — counted from today';
+  // A renewal follows the paper: applying it links the reminder to that paper
+  // and dates it by the paper's end (#397), so the row says so up front.
+  if (anchor.source === 'document') return `Follows your ${paperName(type)} on file`;
 
   const when = anchor.lastDoneDate ? ` ${format.date(anchor.lastDoneDate)}` : '';
   const where =
