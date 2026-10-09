@@ -8,7 +8,7 @@ import {
   type Reminder,
 } from '@vehicle-vault/shared';
 import type { AnchorHTMLAttributes } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@/lib/api/api-error';
 
@@ -103,12 +103,19 @@ describe('ReminderDetailPage roles', () => {
 });
 
 describe('ReminderDetailPage due state', () => {
+  // Pinned, so the wording does not drift as the real date nears the due date.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-30T09:00:00.000Z'));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('says where it stands in words, first', () => {
     renderAs(VehicleRole.Owner);
 
-    expect(screen.getByTestId('reminder-due')).toHaveTextContent(
-      /Due in \d+ days — 10 Oct 2026|Overdue by/,
-    );
+    expect(screen.getByTestId('reminder-due')).toHaveTextContent('Due in 10 days — 10 Oct 2026');
   });
 });
 
