@@ -11,9 +11,17 @@ const auth = vi.hoisted(() => ({
   },
 }));
 const resendVerification = vi.hoisted(() => vi.fn());
+const route = vi.hoisted(() => ({ pathname: '/vehicles/new' }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 
 vi.mock('../hooks/use-auth', () => ({ useAuth: () => auth.current }));
+vi.mock('@tanstack/react-router', () => ({
+  useRouterState: ({
+    select,
+  }: {
+    select: (state: { location: { pathname: string } }) => boolean;
+  }) => select({ location: { pathname: route.pathname } }),
+}));
 vi.mock('../api/resend-verification', () => ({ resendVerification }));
 vi.mock('@/lib/toast', () => ({ appToast: toast }));
 
@@ -29,6 +37,7 @@ describe('EmailVerificationBanner', () => {
       verificationEmailFailed: false,
       clearVerificationEmailFailure: vi.fn(),
     };
+    route.pathname = '/vehicles/new';
     resendVerification.mockReset();
     resendVerification.mockResolvedValue({ accepted: true });
     toast.success.mockReset();
@@ -64,6 +73,21 @@ describe('EmailVerificationBanner', () => {
 
     // A link is in the inbox now: the session forgets the failed send.
     expect(auth.current.clearVerificationEmailFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays off Home, where the setup checklist carries the step, and follows the route', () => {
+    route.pathname = '/home';
+    const { rerender } = render(<EmailVerificationBanner daysLeft={5} />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    // Navigating away from Home brings it back without a page load.
+    route.pathname = '/vehicles/new';
+    rerender(<EmailVerificationBanner daysLeft={5} />);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    route.pathname = '/home';
+    rerender(<EmailVerificationBanner daysLeft={5} />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('calls the final day the last day', () => {
