@@ -71,10 +71,14 @@ export function VehicleHistoryTab({
           vehicle={vehicle}
         />
       ) : (
+        // The economy leads: beside the log from xl, above it below xl, where it
+        // would otherwise sit under every fill ever logged.
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <FuelTab fuelType={fuelType} odometer={odometer} vehicleId={vehicleId} />
-          <div className="h-fit">
+          <div className="h-fit xl:col-start-2 xl:row-start-1">
             <FuelEconomyCard vehicleId={vehicleId} />
+          </div>
+          <div className="min-w-0 xl:col-start-1 xl:row-start-1">
+            <FuelTab fuelType={fuelType} odometer={odometer} vehicleId={vehicleId} />
           </div>
         </div>
       )}

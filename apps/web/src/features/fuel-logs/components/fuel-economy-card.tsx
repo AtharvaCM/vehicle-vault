@@ -1,6 +1,7 @@
 import type { FuelEconomyUnit, VehicleFuelEconomy } from '@vehicle-vault/shared';
 import { Fuel } from 'lucide-react';
 
+import { Figure } from '@/components/shared/figure';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -69,6 +70,34 @@ function EconomyFigures({ economy }: { economy: VehicleFuelEconomy }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * The achieved figure as one line of a status card: "14.2 km/L, 8% below the
+ * claim". Nothing until two fills give a number, so a vehicle with no fuel
+ * logged gains no empty row.
+ */
+export function FuelEconomyFigure({ vehicleId }: { vehicleId: string }) {
+  const economy = useVehicleFuelEconomy(vehicleId).data;
+  if (!economy?.achieved) return null;
+
+  const { achieved, differencePercent, unit } = economy;
+
+  return (
+    <Figure
+      hint={
+        differencePercent !== null ? (
+          <span className={cn('font-semibold', differencePercent < 0 ? 'text-soon' : 'text-ok')}>
+            {describeDifference(differencePercent)}
+          </span>
+        ) : (
+          `Real, over ${format.distance(achieved.distanceKm)}`
+        )
+      }
+      label="Fuel economy"
+      value={`${formatFigure(achieved.value)} ${unit}`}
+    />
   );
 }
 

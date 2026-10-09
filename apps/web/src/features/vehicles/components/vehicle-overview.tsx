@@ -29,6 +29,7 @@ import type {
   DashboardUrgency,
   DashboardVehicleHealth,
 } from '@/features/dashboard/types/dashboard';
+import { FuelEconomyFigure } from '@/features/fuel-logs/components/fuel-economy-card';
 import { HistoryRow } from '@/features/history/components/history-row';
 import { useHistory } from '@/features/history/hooks/use-history';
 import { format } from '@/lib/format';
@@ -147,7 +148,10 @@ type ThisVehicleCardProps = {
   canEdit: boolean;
 };
 
-/** The reading and its pace, what is due next, the papers, the last service and the data. */
+/**
+ * The reading and its pace, the fuel economy once two fills give one, what is
+ * due next, the papers, the last service and the data.
+ */
 function ThisVehicleCard({
   vehicle,
   health,
@@ -175,6 +179,7 @@ function ThisVehicleCard({
           />
           {health ? <OdometerRow bare canEdit={canEdit} vehicle={health} /> : null}
         </div>
+        <FuelEconomyFigure vehicleId={vehicle.id} />
         {health ? (
           <div className="grid gap-2.5 sm:grid-cols-2">
             {showNextDue ? <NextDueRow vehicle={health} /> : null}

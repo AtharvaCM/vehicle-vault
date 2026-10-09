@@ -95,6 +95,12 @@ describe('VehicleHistoryTab', () => {
 
     expect(screen.getByTestId('fuel-tab')).toBeInTheDocument();
     expect(screen.queryByTestId('service-history-card')).not.toBeInTheDocument();
+    // Ahead of the log, so a phone does not scroll past every fill to find it.
+    expect(
+      screen
+        .getByTestId('fuel-economy-card')
+        .compareDocumentPosition(screen.getByTestId('fuel-tab')),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it('calls onViewChange with "fuel" when the Fuel control is clicked', async () => {

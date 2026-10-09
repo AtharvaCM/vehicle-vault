@@ -75,6 +75,12 @@ test('real km/L appears once there are two fills, beside the claim', async ({ pa
   await expect(page.getByText('Real, over 450 km and 30 L')).toBeVisible();
   await expect(page.getByText('14% below the claim')).toBeVisible();
   await expect(page.getByText(/Soon: We/)).toHaveCount(0);
+
+  // And on the Overview, without opening the fuel log.
+  await page.goto(vehicleUrl);
+  const figure = page.getByTestId('this-vehicle').getByRole('group', { name: 'Fuel economy' });
+  await expect(figure).toContainText('15.0 km/L');
+  await expect(figure).toContainText('14% below the claim');
 });
 
 test.afterAll(async () => {
