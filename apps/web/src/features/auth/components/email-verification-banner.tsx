@@ -46,7 +46,8 @@ export function EmailVerificationBanner({ daysLeft }: EmailVerificationBannerPro
               Verify your email — {daysLeft <= 1 ? 'last day' : `${daysLeft} days left`}.
             </span>{' '}
             We sent a link to <span className="break-all font-medium">{user.email}</span>; open it
-            before then to keep using Vehicle Vault.
+            before then to keep using Vehicle Vault. Reminders are emailed to you once it is
+            verified.
           </p>
         </div>
         <div className="flex items-center gap-1 pl-8 sm:pl-0">

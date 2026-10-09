@@ -50,6 +50,7 @@ describe('SetupChecklist', () => {
     );
     expect(rows[2]).toHaveTextContent('After a vehicle');
     expect(rows[4]).toHaveTextContent('Verify your email · 7 days left');
+    expect(rows[4]).toHaveTextContent('Reminders are emailed to you once it is verified.');
     within(rows[4]!).getByRole('button', { name: 'Resend' }).click();
     expect(resend).toHaveBeenCalled();
   });
