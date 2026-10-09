@@ -282,8 +282,9 @@ test('older entries page in once there are more than a page of fuel fills', asyn
 
   await page.goto('/history');
   await expect(page.getByRole('heading', { level: 1, name: 'History' })).toBeVisible();
+  // The heading renders before the history query resolves, and count() does not wait.
+  await expect(page.getByTestId('history-row').first()).toBeVisible();
   const initialRows = await page.getByTestId('history-row').count();
-  expect(initialRows).toBeGreaterThan(0);
   expect(initialRows).toBeLessThan(35);
 
   const showOlder = page.getByRole('button', { name: 'Show older entries' });
