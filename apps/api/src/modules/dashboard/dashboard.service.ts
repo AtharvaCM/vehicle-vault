@@ -207,6 +207,7 @@ export class DashboardService {
     const vehicleHealth = this.buildVehicleHealth({
       vehicles,
       attention,
+      dueItems,
       latestDocuments,
       maintenanceRecords,
       latestFuelLogDateByVehicle,
@@ -510,6 +511,8 @@ export class DashboardService {
   private buildVehicleHealth(input: {
     vehicles: VehicleSummaryRow[];
     attention: DashboardAttentionItem[];
+    /** Every classified row, the later ones included: what a card's next due is read from. */
+    dueItems: UpcomingItem[];
     latestDocuments: Map<string, VehicleDocument>;
     maintenanceRecords: MaintenanceRecord[];
     latestFuelLogDateByVehicle: Map<string, Date>;
@@ -520,6 +523,7 @@ export class DashboardService {
     const {
       vehicles,
       attention,
+      dueItems,
       latestDocuments,
       maintenanceRecords,
       latestFuelLogDateByVehicle,
@@ -536,6 +540,14 @@ export class DashboardService {
       } else {
         attentionByVehicle.set(item.vehicleId, [item]);
       }
+    }
+    // "Next due" is the vehicle's nearest row of any horizon (#399): a reminder
+    // due in eleven months is still what comes next, and a card that said
+    // "Nothing scheduled" over it read as if the reminders had not saved. The
+    // list is already sorted most urgent first, so the first row is the one.
+    const nextDueByVehicle = new Map<string, UpcomingItem>();
+    for (const item of dueItems) {
+      if (!nextDueByVehicle.has(item.vehicleId)) nextDueByVehicle.set(item.vehicleId, item);
     }
 
     // A draft is not a service that happened: the card would read "Serviced
@@ -592,7 +604,7 @@ export class DashboardService {
           status,
           overdueCount,
           dueSoonCount,
-          nextDue: this.nextDueFor(items),
+          nextDue: this.nextDueFor(nextDueByVehicle.get(vehicle.id)),
           documents,
           lastService: this.toLastService(lastServiceByVehicle.get(vehicle.id)),
           dataHealth: computeDataHealth({
@@ -622,8 +634,7 @@ export class DashboardService {
    * whatever gives the card its status is the row it names: a "1 due soon"
    * badge always has its cause beside it.
    */
-  private nextDueFor(items: DashboardAttentionItem[]): DashboardVehicleNextDue | null {
-    const next = items[0];
+  private nextDueFor(next: UpcomingItem | undefined): DashboardVehicleNextDue | null {
     if (!next) return null;
 
     return {
