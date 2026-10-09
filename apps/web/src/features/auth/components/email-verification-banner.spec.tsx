@@ -36,6 +36,9 @@ describe('EmailVerificationBanner', () => {
 
     expect(screen.getByText(/verify your email — 5 days left/i)).toBeInTheDocument();
     expect(screen.getByText('new@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Reminders are emailed to you once it is verified.',
+    );
   });
 
   it('calls the final day the last day', () => {

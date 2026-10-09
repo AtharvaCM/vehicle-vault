@@ -58,6 +58,7 @@ for (const viewport of VIEWPORTS) {
     const checklist = page.getByTestId('setup-checklist');
     await expect(checklist).toContainText('1 of 5 done');
     await expect(checklist).toContainText(/Verify your email · \d+ days left/);
+    await expect(checklist).toContainText('Reminders are emailed to you once it is verified.');
     await expect(checklist.getByRole('button', { name: 'Resend' })).toBeVisible();
     await expect(page.getByTestId('empty-garage')).toContainText('What you’ll see');
     await expect(page.getByText(/^Verify your email —/)).toHaveCount(0);

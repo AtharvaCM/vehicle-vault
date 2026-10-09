@@ -29,6 +29,9 @@ type SetupChecklistProps = {
 
 const actionClass = cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'shrink-0');
 
+/** Why the email step matters: reminders are mailed only to a verified address. */
+export const EMAIL_WHY = 'Reminders are emailed to you once it is verified.';
+
 /**
  * Home for a new account (#346): the steps to a first live reminder, each one
  * tap into its form, until every one is done. It carries the email check too,
@@ -125,21 +128,23 @@ export function SetupChecklist({ heading, steps, vehicle, verifyDaysLeft }: Setu
             >
               {step.done ? <Check className="size-3.5" /> : null}
             </span>
-            <p
-              className={cn(
-                'min-w-0 flex-1 text-ui',
-                step.done ? 'text-fg-3' : 'font-medium text-fg',
-              )}
-            >
-              {TITLES[step.id]}
-              {step.id === 'email' && !step.done && verifyDaysLeft !== null ? (
-                <span className="font-normal text-fg-3">
-                  {' '}
-                  · {verifyDaysLeft <= 1 ? 'last day' : `${verifyDaysLeft} days left`}
-                </span>
+            <div className="min-w-0 flex-1">
+              <p className={cn('text-ui', step.done ? 'text-fg-3' : 'font-medium text-fg')}>
+                {TITLES[step.id]}
+                {step.id === 'email' && !step.done && verifyDaysLeft !== null ? (
+                  <span className="font-normal text-fg-3">
+                    {' '}
+                    · {verifyDaysLeft <= 1 ? 'last day' : `${verifyDaysLeft} days left`}
+                  </span>
+                ) : null}
+                <span className="sr-only">{step.done ? ' (done)' : ' (to do)'}</span>
+              </p>
+              {/* Alert mail goes only to a verified address (#82), which is the
+                  reason to verify that a new account is otherwise never told. */}
+              {step.id === 'email' && !step.done ? (
+                <p className="text-small text-fg-3">{EMAIL_WHY}</p>
               ) : null}
-              <span className="sr-only">{step.done ? ' (done)' : ' (to do)'}</span>
-            </p>
+            </div>
             {step.done ? null : action(step.id)}
           </li>
         ))}

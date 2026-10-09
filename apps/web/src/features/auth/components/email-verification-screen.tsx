@@ -21,7 +21,8 @@ export function EmailVerificationScreen() {
           <p className="mt-3 text-fg-3">
             We&apos;ve sent a verification link to{' '}
             <span className="break-all font-semibold text-fg">{user?.email}</span>. Open it to keep
-            using Vehicle Vault — everything you have added is still here.
+            using Vehicle Vault — everything you have added is still here, and your reminders are
+            emailed to you once it is verified.
           </p>
         </div>
 
