@@ -58,6 +58,64 @@ describe('ServiceSchedulePanel roles', () => {
   });
 });
 
+describe('ServiceSchedulePanel recommended rows', () => {
+  function renderWith(items: Record<string, unknown>[], preselectRecommended: boolean) {
+    suggestionsQuery.current = {
+      data: items.map((item) => ({ ...suggestion, ...item })),
+      isLoading: false,
+      isError: false,
+    };
+
+    return render(
+      <VehicleAccessProvider role={VehicleRole.Owner}>
+        <ServiceSchedulePanel preselectRecommended={preselectRecommended} vehicleId="vehicle-1" />
+      </VehicleAccessProvider>,
+    );
+  }
+
+  it('ticks the recommended rows up front when asked, and says which they are', () => {
+    renderWith(
+      [
+        { slug: 'engine_oil_change', title: 'Engine oil change', recommended: true },
+        { slug: 'tyre_rotation', title: 'Tyre rotation', recommended: false },
+      ],
+      true,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'Add Engine oil change' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Add Tyre rotation' })).not.toBeChecked();
+    expect(screen.getByText('Recommended')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add 1 reminder' })).toBeEnabled();
+  });
+
+  it('does not tick a recommended row that is already scheduled', () => {
+    renderWith(
+      [
+        {
+          slug: 'engine_oil_change',
+          title: 'Engine oil change',
+          recommended: true,
+          alreadyScheduled: true,
+        },
+      ],
+      true,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'Add Engine oil change' })).not.toBeChecked();
+    expect(screen.queryByText('Recommended')).not.toBeInTheDocument();
+  });
+
+  it('leaves every row unticked unless asked, as on the Reminders tab', () => {
+    renderWith(
+      [{ slug: 'engine_oil_change', title: 'Engine oil change', recommended: true }],
+      false,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'Add Engine oil change' })).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'Add 0 reminders' })).toBeDisabled();
+  });
+});
+
 describe('ServiceSchedulePanel anchors', () => {
   function renderWith(item: Record<string, unknown>) {
     suggestionsQuery.current = {

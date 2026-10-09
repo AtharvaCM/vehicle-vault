@@ -26,14 +26,38 @@ type Props = {
    * whose reminders are already on file and should come first.
    */
   collapsed?: boolean;
+  /**
+   * Ticks the recommended rows up front (#398): on a new vehicle's schedule
+   * step, so taking the defaults leaves a live reminder behind. The Reminders
+   * tab keeps the plain list.
+   */
+  preselectRecommended?: boolean;
+  /** How many reminders an apply just created, for the page around the panel. */
+  onApplied?: (count: number) => void;
 };
 
-export function ServiceSchedulePanel({ vehicleId, collapsed = false }: Props) {
+export function ServiceSchedulePanel({
+  vehicleId,
+  collapsed = false,
+  preselectRecommended = false,
+  onApplied,
+}: Props) {
   const { canEdit } = useVehicleAccess();
   const [isOpen, setIsOpen] = useState(!collapsed);
   const queryClient = useQueryClient();
   const suggestionsQuery = useQuery(serviceScheduleSuggestionsQueryOptions(vehicleId));
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Null until the user touches a box: the recommended rows are then the
+  // pick, when asked for, without an effect that sets state after the load.
+  const [chosen, setChosen] = useState<Set<string> | null>(null);
+  const selected =
+    chosen ??
+    new Set(
+      preselectRecommended
+        ? (suggestionsQuery.data ?? [])
+            .filter((item) => item.recommended && !item.alreadyScheduled)
+            .map((item) => item.slug)
+        : [],
+    );
 
   const applyMutation = useMutation({
     mutationFn: (slugs: string[]) => applyServiceSchedule(vehicleId, slugs),
@@ -42,7 +66,8 @@ export function ServiceSchedulePanel({ vehicleId, collapsed = false }: Props) {
         title: `Added ${result.created.length} reminder${result.created.length === 1 ? '' : 's'}`,
         description: 'They now appear in your reminders list.',
       });
-      setSelected(new Set());
+      setChosen(new Set());
+      onApplied?.(result.created.length);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.reminders.byVehicle(vehicleId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.reminders.list() }),
@@ -61,12 +86,10 @@ export function ServiceSchedulePanel({ vehicleId, collapsed = false }: Props) {
   });
 
   function toggle(slug: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
+    const next = new Set(selected);
+    if (next.has(slug)) next.delete(slug);
+    else next.add(slug);
+    setChosen(next);
   }
 
   if (!isOpen) {
@@ -167,6 +190,9 @@ export function ServiceSchedulePanel({ vehicleId, collapsed = false }: Props) {
                       <p className="text-ui font-semibold text-fg">{item.title}</p>
                       <Badge variant="outline">{format.enumLabel('reminderType', item.type)}</Badge>
                       {disabled ? <Badge tone="success">Already scheduled</Badge> : null}
+                      {item.recommended && !disabled ? (
+                        <Badge tone="accent">Recommended</Badge>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-caption text-fg-3">
                       {item.intervalKm != null ? (

@@ -21,4 +21,6 @@ export interface ServiceScheduleSuggestion {
   /** Absent only from an API that predates it. */
   anchor?: ServiceScheduleAnchor;
   alreadyScheduled: boolean;
+  /** Ticked up front on a new vehicle's schedule step; absent from an API that predates it. */
+  recommended?: boolean;
 }

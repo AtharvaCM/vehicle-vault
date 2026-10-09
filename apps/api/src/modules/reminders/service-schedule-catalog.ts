@@ -41,6 +41,12 @@ export interface ServiceScheduleItem {
    * per-variant catalog data for linked vehicles.
    */
   category?: MaintenanceCategory;
+  /**
+   * Ticked up front when a new vehicle's schedule step opens (#398): the one
+   * or two items every vehicle of that kind needs, so a first-time owner who
+   * takes the defaults leaves with a live reminder.
+   */
+  recommended?: boolean;
 }
 
 const ALL_NON_ELECTRIC: FuelType[] = [
@@ -57,6 +63,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
     category: MaintenanceCategory.EngineOil,
     type: ReminderType.Service,
     title: 'Engine oil change',
+    recommended: true,
     intervalKm: 10000,
     intervalMonths: 12,
     appliesToFuel: ALL_NON_ELECTRIC,
@@ -122,6 +129,7 @@ export const SERVICE_SCHEDULE_CATALOG: ServiceScheduleItem[] = [
     slug: 'ev_battery_health',
     type: ReminderType.Battery,
     title: 'High-voltage battery health check',
+    recommended: true,
     intervalMonths: 12,
     appliesToFuel: [FuelType.Electric, FuelType.Hybrid],
     notes: 'Confirm pack capacity and cell balance with dealer diagnostics.',

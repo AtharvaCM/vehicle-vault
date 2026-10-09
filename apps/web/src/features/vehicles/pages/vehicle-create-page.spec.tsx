@@ -34,10 +34,21 @@ vi.mock('../hooks/use-vehicles', () => ({
   useVehicles: () => ({ data: garage.vehicles }),
 }));
 
+const schedulePanelProps = vi.hoisted(() => ({
+  current: undefined as Record<string, unknown> | undefined,
+}));
 vi.mock('@/features/reminders/components/service-schedule-panel', () => ({
-  ServiceSchedulePanel: ({ vehicleId }: { vehicleId: string }) => (
-    <p>Suggested service schedule for {vehicleId}</p>
-  ),
+  ServiceSchedulePanel: (props: { vehicleId: string; onApplied?: (count: number) => void }) => {
+    schedulePanelProps.current = props;
+    return (
+      <>
+        <p>Suggested service schedule for {props.vehicleId}</p>
+        <button onClick={() => props.onApplied?.(2)} type="button">
+          Add 2 reminders
+        </button>
+      </>
+    );
+  },
 }));
 
 vi.mock('@/hooks/use-unsaved-changes-guard', () => ({
@@ -146,9 +157,38 @@ describe('VehicleCreatePage papers step', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save vehicle' }));
     await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Go to Home' }));
+
+    // The first vehicle's schedule step ticks the recommended rows up front,
+    // and with nothing added yet the way out says what it is.
+    expect(schedulePanelProps.current).toMatchObject({ preselectRecommended: true });
+    expect(screen.queryByRole('button', { name: 'Go to Home' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
 
     expect(navigateMock).toHaveBeenCalledWith({ to: '/home' });
+  });
+
+  it('offers Go to Home once reminders were added from the schedule', async () => {
+    garage.vehicles = [];
+    createVehicleMutateAsync.mockResolvedValue(createdVehicle());
+    render(<VehicleCreatePage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save vehicle' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add 2 reminders' }));
+
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Go to Home' }));
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/home' });
+  });
+
+  it('keeps a later vehicle’s schedule unticked', async () => {
+    createVehicleMutateAsync.mockResolvedValue(createdVehicle());
+    render(<VehicleCreatePage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save vehicle' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
+
+    expect(schedulePanelProps.current).toMatchObject({ preselectRecommended: false });
   });
 
   it('goes straight to the schedule against an API that predates the papers prompt', async () => {
