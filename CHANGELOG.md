@@ -1,3 +1,10 @@
+## [1.123.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.1...v1.123.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **web:** hide the verification banner on Home after a navigation too ([ac2dd8e](https://github.com/AtharvaCM/vehicle-vault/commit/ac2dd8ec0525bd90d5d0824e83131ea525e6083d)), closes [#400](https://github.com/AtharvaCM/vehicle-vault/issues/400)
+
 ## [1.123.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.0...v1.123.1) (2026-10-09)
 
 
