@@ -103,6 +103,9 @@ for (const viewport of VIEWPORTS) {
 
     await expect(steps.locator('[aria-current="step"]')).toHaveText(/Service schedule/);
     await expect(page.getByText('Suggested service schedule')).toBeVisible();
+    // The renewal rows follow the papers just entered, not an interval from today (#397).
+    await expect(page.getByText(/^Follows your PUC certificate on file → next /)).toBeVisible();
+    await expect(page.getByText(/^Follows your insurance policy on file → next /)).toBeVisible();
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
     await expectNoSidewaysScroll(page, `schedule step at ${viewport.width}px`);
     await shoot(page, 'schedule', viewport.width);

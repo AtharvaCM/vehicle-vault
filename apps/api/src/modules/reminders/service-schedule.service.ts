@@ -24,7 +24,7 @@ import {
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { TyresService } from '../tyres/tyres.service';
-import { linkRenewalReminder } from './renewal-link';
+import { linkRenewalReminder, paperOfRecordEnd, renewalKindOf } from './renewal-link';
 import { addMonths, nextOccurrenceDue, type RepeatAnchor } from './repeat-rule';
 import {
   filterCatalogForVehicle,
@@ -65,9 +65,11 @@ export type CompletedReminder = Pick<
  * only one of the two, and the missing dimension is then counted from now.
  */
 export interface ServiceScheduleAnchor {
-  source: 'record' | 'baseline' | 'tyre_check' | 'now';
+  source: 'record' | 'baseline' | 'tyre_check' | 'document' | 'now';
   lastDoneOdometer?: number;
   lastDoneDate?: string;
+  /** For `document`: when the paper of record ends, which is the row's due date. */
+  paperEndDate?: string;
 }
 
 const NOW_BASIS: ServiceScheduleAnchor = { source: 'now' };
@@ -127,8 +129,31 @@ export class ServiceScheduleService {
     const now = new Date();
     const fallback: ScheduleAnchor = { odometer: vehicle.odometer, at: now, basis: NOW_BASIS };
     const anchors = await this.resolveAnchors(userId, vehicleId, vehicle.odometer, now, items);
+    const paperEnds = await this.resolvePaperEnds(vehicleId, items);
 
-    return items.map((item) => this.toSuggestion(item, anchors, fallback, existingKeys));
+    return items.map((item) =>
+      this.toSuggestion(item, anchors, fallback, existingKeys, paperEnds[item.slug]),
+    );
+  }
+
+  /**
+   * A renewal row (PUC, insurance) follows the vehicle's paper of that kind:
+   * applying it links the reminder to the paper and dates it by the paper's
+   * end (`linkRenewalReminder`), so the preview must say the same rather than
+   * count an interval from today (#397).
+   */
+  private async resolvePaperEnds(
+    vehicleId: string,
+    items: ServiceScheduleItem[],
+  ): Promise<Record<string, Date>> {
+    const ends: Record<string, Date> = {};
+    for (const item of items) {
+      const kind = renewalKindOf(item.type);
+      if (!kind) continue;
+      const end = await paperOfRecordEnd(this.prisma, vehicleId, kind);
+      if (end) ends[item.slug] = end;
+    }
+    return ends;
   }
 
   async applySuggestions(userId: string, vehicleId: string, slugs: string[]) {
@@ -439,9 +464,24 @@ export class ServiceScheduleService {
     anchors: Record<string, ScheduleAnchor>,
     fallback: ScheduleAnchor,
     existingKeys: Set<string>,
+    paperEnd?: Date,
   ): ServiceScheduleSuggestion {
     const alreadyScheduled =
       existingKeys.has(item.title.trim().toLowerCase()) || existingKeys.has(`slug:${item.slug}`);
+    if (paperEnd) {
+      const paperEndDate = paperEnd.toISOString();
+      return {
+        slug: item.slug,
+        type: item.type,
+        title: item.title,
+        notes: item.notes,
+        intervalKm: item.intervalKm,
+        intervalMonths: item.intervalMonths,
+        dueDate: paperEndDate,
+        anchor: { source: 'document', paperEndDate },
+        alreadyScheduled,
+      };
+    }
     const anchor = anchors[item.slug] ?? fallback;
     return {
       slug: item.slug,

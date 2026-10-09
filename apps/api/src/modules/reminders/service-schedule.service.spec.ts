@@ -16,6 +16,9 @@ describe('ServiceScheduleService', () => {
     },
     maintenanceRecord: { findMany: vi.fn() },
     serviceBaseline: { findMany: vi.fn() },
+    // The papers a renewal row follows; none by default.
+    insurancePolicy: { findMany: vi.fn() },
+    complianceDocument: { findMany: vi.fn() },
     $transaction: vi.fn(),
   };
   const vehiclesService = { ensureVehicleExists: vi.fn() };
@@ -38,6 +41,8 @@ describe('ServiceScheduleService', () => {
     prisma.reminder.count.mockResolvedValue(0);
     prisma.maintenanceRecord.findMany.mockResolvedValue([]);
     prisma.serviceBaseline.findMany.mockResolvedValue([]);
+    prisma.insurancePolicy.findMany.mockResolvedValue([]);
+    prisma.complianceDocument.findMany.mockResolvedValue([]);
     prisma.$transaction.mockImplementation(async (cb: (tx: typeof prisma) => Promise<unknown>) =>
       cb(prisma),
     );
@@ -103,6 +108,38 @@ describe('ServiceScheduleService', () => {
     const tyre = suggestions.find((s) => s.slug === 'tyre_rotation')!;
     expect(oil.alreadyScheduled).toBe(true);
     expect(tyre.alreadyScheduled).toBe(false);
+  });
+
+  it('dates a renewal row by the paper on file and says so, instead of counting from today', async () => {
+    vehiclesService.ensureVehicleExists.mockResolvedValue({
+      id: 'v1',
+      odometer: 42_000,
+      fuelType: FuelType.Petrol,
+      vehicleType: VehicleType.Car,
+    });
+    // A PUC entered at the papers step, ending 1 Dec 2026; no insurance yet.
+    prisma.complianceDocument.findMany.mockResolvedValue([
+      {
+        id: 'puc-1',
+        startDate: null,
+        endDate: new Date('2026-12-01T00:00:00.000Z'),
+        createdAt: new Date('2026-10-09T00:00:00.000Z'),
+      },
+    ]);
+
+    const suggestions = await service.getSuggestions('u1', 'v1');
+    const puc = suggestions.find((s) => s.slug === 'puc_renewal')!;
+    const insurance = suggestions.find((s) => s.slug === 'insurance_renewal')!;
+
+    expect(puc.dueDate).toBe('2026-12-01T00:00:00.000Z');
+    expect(puc.dueOdometer).toBeUndefined();
+    expect(puc.anchor).toEqual({ source: 'document', paperEndDate: '2026-12-01T00:00:00.000Z' });
+    expect(prisma.complianceDocument.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { vehicleId: 'v1', kind: 'puc' } }),
+    );
+    // Without a paper the row still counts its interval from today.
+    expect(insurance.anchor).toEqual({ source: 'now' });
+    expect(insurance.dueDate).toBeDefined();
   });
 
   it('apply creates reminders for the requested slugs', async () => {

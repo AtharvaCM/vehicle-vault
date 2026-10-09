@@ -96,6 +96,24 @@ describe('ServiceSchedulePanel anchors', () => {
     ).toBeInTheDocument();
   });
 
+  it('says a renewal row follows the paper on file, dated by its end', () => {
+    renderWith({
+      slug: 'puc_renewal',
+      type: 'puc',
+      title: 'PUC certificate renewal',
+      intervalKm: undefined,
+      intervalMonths: 6,
+      dueOdometer: undefined,
+      dueDate: '2026-12-01T00:00:00.000Z',
+      anchor: { source: 'document', paperEndDate: '2026-12-01T00:00:00.000Z' },
+    });
+
+    expect(
+      screen.getByText(/^Follows your PUC certificate on file → next 1 Dec 2026$/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/counted from today/)).not.toBeInTheDocument();
+  });
+
   it('keeps the old line for an API that sends no anchor', () => {
     renderWith({});
 
