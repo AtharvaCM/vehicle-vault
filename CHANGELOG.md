@@ -1,3 +1,10 @@
+## [1.122.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.122.0...v1.122.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **auth:** report a failed verification mail at registration ([88e430d](https://github.com/AtharvaCM/vehicle-vault/commit/88e430d8d3a54468ce0ed5b327f44b9161793a85)), closes [#396](https://github.com/AtharvaCM/vehicle-vault/issues/396)
+
 # [1.122.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.121.1...v1.122.0) (2026-10-09)
 
 
