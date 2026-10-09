@@ -1085,6 +1085,33 @@ describe('DashboardService', () => {
   });
 
   describe('vehicle health', () => {
+    it('names a reminder due beyond this month as the next due, rather than nothing', async () => {
+      vehiclesService.getAllVehicles.mockResolvedValue([makeVehicle({ id: 'v-1' })]);
+      remindersService.getAllReminders.mockResolvedValue([
+        makeReminder({
+          id: 'oil-later',
+          vehicleId: 'v-1',
+          title: 'Engine oil change',
+          dueDate: daysFromNow(300),
+        }),
+        makeReminder({
+          id: 'tyres-later',
+          vehicleId: 'v-1',
+          title: 'Tyre rotation',
+          dueDate: daysFromNow(400),
+        }),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      // Nothing for Home's queue, yet the card still says what comes next.
+      expect(result.attention).toEqual([]);
+      expect(result.vehicles[0]).toMatchObject({
+        status: 'ok',
+        nextDue: { targetId: 'oil-later', title: 'Engine oil change', daysUntilDue: 300 },
+      });
+    });
+
     it('(h) sorts vehicles by severity then name and derives status, nextDue and lastService', async () => {
       vehiclesService.getAllVehicles.mockResolvedValue([
         makeVehicle({ id: 'v-alpha', nickname: 'Alpha', registrationNumber: 'AA00AA0001' }),

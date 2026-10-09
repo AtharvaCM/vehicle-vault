@@ -121,6 +121,9 @@ for (const viewport of VIEWPORTS) {
     await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
     const finish = page.getByRole('region', { name: 'Finish setting up' });
     await expect(finish).toContainText('3 of 5 done');
+    // The papers end in ten months: nothing for the queue, yet the card names what comes next (#399).
+    await expect(page.getByText('Nothing scheduled')).toHaveCount(0);
+    await expect(page.getByText(/^Next due$/)).toBeVisible();
     await expect(finish.getByRole('link', { name: 'Log service' })).toBeVisible();
     await expectNoSidewaysScroll(page, `Home in setup at ${viewport.width}px`);
     await shoot(page, 'home-setup', viewport.width);
