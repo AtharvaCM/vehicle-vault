@@ -1,3 +1,10 @@
+# [1.123.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.122.2...v1.123.0) (2026-10-09)
+
+
+### Features
+
+* **reminders:** tick the recommended row on a first vehicle's schedule ([051fbde](https://github.com/AtharvaCM/vehicle-vault/commit/051fbde975a44b4a24ba326b57a9cd2de77c9959)), closes [hi#voltage](https://github.com/hi/issues/voltage) [#398](https://github.com/AtharvaCM/vehicle-vault/issues/398)
+
 ## [1.122.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.122.1...v1.122.2) (2026-10-09)
 
 
