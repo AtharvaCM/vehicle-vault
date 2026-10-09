@@ -1,3 +1,10 @@
+# [1.122.0](https://github.com/AtharvaCM/vehicle-vault/compare/v1.121.1...v1.122.0) (2026-10-09)
+
+
+### Features
+
+* **web:** say that reminder email waits on verification ([7f2f153](https://github.com/AtharvaCM/vehicle-vault/commit/7f2f15381232214aa17fc03047733dba30463ad7)), closes [#82](https://github.com/AtharvaCM/vehicle-vault/issues/82) [#395](https://github.com/AtharvaCM/vehicle-vault/issues/395)
+
 ## [1.121.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.121.0...v1.121.1) (2026-10-09)
 
 
