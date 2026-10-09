@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { ArrowRight, Check } from 'lucide-react';
 import { useState } from 'react';
 
@@ -174,6 +174,17 @@ export function VehicleCreatePage() {
             submitError={submitError}
           />
         )}
+        {/* Registration lands here; a first vehicle is a step, not a wall (#401).
+            Home shows the empty garage and the checklist. The unsaved-changes
+            guard above still asks when the form has been typed in. */}
+        {vehiclesQuery.data?.length === 0 ? (
+          <p className="mt-4 text-small text-fg-3">
+            <Link className="font-medium text-fg-2 underline underline-offset-2" to="/home">
+              I’ll add it later
+            </Link>{' '}
+            — Home shows what to do next.
+          </p>
+        ) : null}
       </div>
     </PageContainer>
   );

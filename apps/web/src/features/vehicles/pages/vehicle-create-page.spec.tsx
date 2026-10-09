@@ -14,6 +14,19 @@ const setupPromptProps = vi.hoisted(() => ({
 const garage = vi.hoisted(() => ({ vehicles: [] as unknown[] }));
 
 vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    to,
+    children,
+    className,
+  }: {
+    to: string;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
   useNavigate: () => navigateMock,
   useSearch: () => ({ catalog: undefined }),
 }));
@@ -179,6 +192,20 @@ describe('VehicleCreatePage papers step', () => {
     expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Go to Home' }));
     expect(navigateMock).toHaveBeenCalledWith({ to: '/home' });
+  });
+
+  it('offers a first vehicle a quiet way out to Home, and a later one none', () => {
+    garage.vehicles = [];
+    const { unmount } = render(<VehicleCreatePage />);
+    expect(screen.getByRole('link', { name: 'I’ll add it later' })).toHaveAttribute(
+      'href',
+      '/home',
+    );
+    unmount();
+
+    garage.vehicles = [{ id: 'older' }];
+    render(<VehicleCreatePage />);
+    expect(screen.queryByRole('link', { name: 'I’ll add it later' })).not.toBeInTheDocument();
   });
 
   it('keeps a later vehicle’s schedule unticked', async () => {

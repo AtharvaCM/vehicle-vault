@@ -47,9 +47,14 @@ for (const viewport of VIEWPORTS) {
     await page.getByLabel(/^password$/i).fill('VehicleVault!234');
     await page.getByRole('button', { name: /create account/i }).click();
 
-    // Straight on to the vehicle, with no toast to say an account exists.
+    // Straight on to the vehicle, with no toast to say an account exists, and
+    // a quiet way out for whoever is not ready (#401).
     await expect(page).toHaveURL(/\/vehicles\/new$/);
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'I’ll add it later' })).toHaveAttribute(
+      'href',
+      '/home',
+    );
 
     // Home before the vehicle: a welcome, the checklist, the empty garage, no banner.
     await page.goto('/home');
