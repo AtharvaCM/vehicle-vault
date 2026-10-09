@@ -20,6 +20,7 @@ const summary = vi.hoisted(() => ({ current: undefined as unknown }));
 const history = vi.hoisted(() => ({ current: [] as unknown[] }));
 const tco = vi.hoisted(() => ({ current: null as unknown }));
 const insights = vi.hoisted(() => ({ current: undefined as unknown }));
+const economy = vi.hoisted(() => ({ current: undefined as unknown }));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -52,6 +53,9 @@ vi.mock('@/features/analytics/api/get-tco', () => ({
 }));
 vi.mock('../hooks/use-vehicle-insights', () => ({
   useVehicleInsights: () => ({ data: insights.current }),
+}));
+vi.mock('@/features/fuel-logs/hooks/use-vehicle-fuel-economy', () => ({
+  useVehicleFuelEconomy: () => ({ data: economy.current }),
 }));
 vi.mock('@/features/reminders/hooks/use-complete-reminder', () => ({
   useCompleteReminder: () => ({ mutate: vi.fn(), isPending: false }),
@@ -127,6 +131,13 @@ beforeEach(() => {
     averageDailyMileage: 35,
     averageMonthlyMileage: 1_050,
   };
+  economy.current = {
+    unit: 'km/L',
+    usableFills: 1,
+    achieved: null,
+    claimed: 22.4,
+    differencePercent: null,
+  };
 });
 
 describe('VehicleOverview', () => {
@@ -171,6 +182,44 @@ describe('VehicleOverview', () => {
     expect(card).toHaveTextContent('~1,050 km a month');
     expect(within(card).getByText('Papers')).toBeInTheDocument();
     expect(within(card).getByRole('button', { name: /update odometer/i })).toBeInTheDocument();
+  });
+
+  it('shows the real fuel economy against the claim once two fills give one', () => {
+    economy.current = {
+      unit: 'km/L',
+      usableFills: 4,
+      achieved: { value: 19.3, distanceKm: 1_240, quantity: 64.2 },
+      claimed: 22.4,
+      differencePercent: -14,
+    };
+    renderWithProviders(<VehicleOverview canEdit vehicle={vehicle} />);
+
+    const figure = within(screen.getByTestId('this-vehicle')).getByRole('group', {
+      name: 'Fuel economy',
+    });
+    expect(figure).toHaveTextContent('19.3 km/L');
+    expect(figure).toHaveTextContent('14% below the claim');
+  });
+
+  it('says how far the economy was measured over when there is no claim', () => {
+    economy.current = {
+      unit: 'km/L',
+      usableFills: 3,
+      achieved: { value: 41.5, distanceKm: 830, quantity: 20 },
+      claimed: null,
+      differencePercent: null,
+    };
+    renderWithProviders(<VehicleOverview canEdit vehicle={vehicle} />);
+
+    expect(screen.getByRole('group', { name: 'Fuel economy' })).toHaveTextContent(
+      /41\.5 km\/LReal, over 830 km/,
+    );
+  });
+
+  it('shows no fuel economy before two fills give a number', () => {
+    renderWithProviders(<VehicleOverview canEdit vehicle={vehicle} />);
+
+    expect(screen.queryByRole('group', { name: 'Fuel economy' })).not.toBeInTheDocument();
   });
 
   it('asks for another reading before it guesses a pace', () => {
