@@ -6,6 +6,7 @@ import { confirm } from '@/components/shared/confirm';
 import { InlineError } from '@/components/shared/inline-error';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageTitle } from '@/components/shared/page-title';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import { ResourceLoadError } from '@/components/errors/resource-load-error';
 import { buttonVariants } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -66,6 +67,12 @@ export function VehicleDetailPage({
   const selectedTab = searchState.tab ?? defaultVehicleDetailTab;
   const deleteVehicleMutation = useDeleteVehicle();
   const vehicle = vehicleQuery.data ?? null;
+  // The tab names the vehicle, as Home and Log service name themselves (#401).
+  useDocumentTitle(
+    vehicle
+      ? `${vehicle.nickname?.trim() || `${vehicle.make} ${vehicle.model}`} · ${vehicle.registrationNumber} | Vehicle Vault`
+      : 'Vehicle | Vehicle Vault',
+  );
   const serviceInsights = useMemo(
     () =>
       vehicle

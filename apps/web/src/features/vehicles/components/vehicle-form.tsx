@@ -810,7 +810,9 @@ export function VehicleForm({
                 Choose from the catalog instead
               </button>
             </p>
-          ) : canUseCatalogSelectors ? (
+          ) : canUseCatalogSelectors && (mode === 'edit' || !selectedMake || !selectedModel) ? (
+            // On create the hint has done its job once the make and model are
+            // picked, so it goes rather than sit under a complete form (#401).
             <p className="text-ui leading-5 text-fg-3">
               {mode === 'edit'
                 ? 'Change the type or year to search the catalog again for the make, model and variant.'

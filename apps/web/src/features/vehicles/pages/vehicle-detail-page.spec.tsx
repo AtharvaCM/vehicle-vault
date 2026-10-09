@@ -179,6 +179,8 @@ describe('VehicleDetailPage header', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Bajaj Pulsar NS 200' })).toBeVisible();
     expect(screen.getByText(/40,000 km, updated/)).toBeVisible();
+    // The tab names it too, instead of the site's generic title (#401).
+    expect(document.title).toBe('Bajaj Pulsar NS 200 · MH12AB1234 | Vehicle Vault');
   });
 
   it('tells a viewer the vehicle is view only', () => {
