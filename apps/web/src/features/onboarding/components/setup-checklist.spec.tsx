@@ -1,5 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SetupChecklist } from './setup-checklist';
 
@@ -13,9 +13,14 @@ vi.mock('@tanstack/react-router', () => ({
     </a>
   ),
 }));
-vi.mock('@/features/auth/hooks/use-auth', () => ({
-  useAuth: () => ({ user: { email: 'asha@example.test' } }),
+const auth = vi.hoisted(() => ({
+  current: {
+    user: { email: 'asha@example.test' },
+    verificationEmailFailed: false,
+    clearVerificationEmailFailure: vi.fn(),
+  },
 }));
+vi.mock('@/features/auth/hooks/use-auth', () => ({ useAuth: () => auth.current }));
 const resend = vi.fn();
 vi.mock('@/features/auth/hooks/use-resend-verification', () => ({
   useResendVerification: () => ({ resend, isResending: false, hasSent: false }),
@@ -30,6 +35,30 @@ const NEW_ACCOUNT = [
 ];
 
 describe('SetupChecklist', () => {
+  afterEach(() => {
+    auth.current = { ...auth.current, verificationEmailFailed: false };
+  });
+
+  it('leads the email step with Resend when registration could not send the mail', () => {
+    auth.current = { ...auth.current, verificationEmailFailed: true };
+    render(
+      <SetupChecklist
+        heading="Set up your first reminder"
+        steps={NEW_ACCOUNT}
+        vehicle={null}
+        verifyDaysLeft={7}
+      />,
+    );
+
+    const rows = within(
+      screen.getByRole('region', { name: 'Set up your first reminder' }),
+    ).getAllByRole('listitem');
+    expect(rows[4]).toHaveTextContent(
+      'We couldn’t send the email. Resend it. Reminders are emailed to you once it is verified.',
+    );
+    expect(within(rows[4]!).getByRole('button', { name: 'Resend' })).toBeEnabled();
+  });
+
   it('counts what is done, and offers each step before there is a vehicle', () => {
     render(
       <SetupChecklist

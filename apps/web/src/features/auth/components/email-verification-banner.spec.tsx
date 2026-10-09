@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/lib/api/api-error';
 
 const auth = vi.hoisted(() => ({
-  current: { user: { id: 'user-1', email: 'new@example.com' } as { id: string; email: string } },
+  current: {
+    user: { id: 'user-1', email: 'new@example.com' } as { id: string; email: string },
+    verificationEmailFailed: false,
+    clearVerificationEmailFailure: vi.fn(),
+  },
 }));
 const resendVerification = vi.hoisted(() => vi.fn());
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
@@ -20,7 +24,11 @@ describe('EmailVerificationBanner', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
     vi.setSystemTime(new Date(2026, 8, 19, 9, 0));
-    auth.current = { user: { id: 'user-1', email: 'new@example.com' } };
+    auth.current = {
+      user: { id: 'user-1', email: 'new@example.com' },
+      verificationEmailFailed: false,
+      clearVerificationEmailFailure: vi.fn(),
+    };
     resendVerification.mockReset();
     resendVerification.mockResolvedValue({ accepted: true });
     toast.success.mockReset();
@@ -39,6 +47,23 @@ describe('EmailVerificationBanner', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'Reminders are emailed to you once it is verified.',
     );
+  });
+
+  it('leads with Resend when registration could not send the link', async () => {
+    auth.current = { ...auth.current, verificationEmailFailed: true };
+    render(<EmailVerificationBanner daysLeft={7} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'We couldn’t send the link to new@example.com. Resend it; reminders are emailed to you once it is verified.',
+    );
+    expect(screen.getByRole('status')).not.toHaveTextContent('We sent a link');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Resend email' }));
+    });
+
+    // A link is in the inbox now: the session forgets the failed send.
+    expect(auth.current.clearVerificationEmailFailure).toHaveBeenCalledTimes(1);
   });
 
   it('calls the final day the last day', () => {
@@ -113,7 +138,7 @@ describe('EmailVerificationBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: /dismiss until tomorrow/i }));
     unmount();
 
-    auth.current = { user: { id: 'user-2', email: 'other@example.com' } };
+    auth.current = { ...auth.current, user: { id: 'user-2', email: 'other@example.com' } };
     render(<EmailVerificationBanner daysLeft={6} />);
 
     expect(screen.getByText(/verify your email — 6 days left/i)).toBeInTheDocument();

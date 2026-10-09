@@ -252,3 +252,59 @@ describe('AuthProvider when a request comes back 401', () => {
     expect(replace).toHaveBeenCalled();
   });
 });
+
+describe('AuthProvider and the verification mail outcome', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    api.getMe.mockResolvedValue(USER);
+  });
+
+  function Probe() {
+    const auth = useAuth();
+    const tokens = {
+      accessToken: createToken(nowSeconds() + 3600),
+      refreshToken: createToken(nowSeconds() + 7 * 24 * 3600),
+    };
+    return (
+      <>
+        <p>failed: {String(auth.verificationEmailFailed)}</p>
+        <button
+          onClick={() =>
+            auth.setSession({ ...tokens, user: USER, verificationEmail: 'failed' } as never)
+          }
+          type="button"
+        >
+          register
+        </button>
+        <button onClick={() => auth.setSession({ ...tokens, user: USER } as never)} type="button">
+          refresh
+        </button>
+        <button onClick={() => auth.clearVerificationEmailFailure()} type="button">
+          clear
+        </button>
+      </>
+    );
+  }
+
+  it('remembers a failed send with the session, across a token refresh, until it is cleared', async () => {
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    expect(await screen.findByText('failed: false')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'register' }));
+    expect(screen.getByText('failed: true')).toBeInTheDocument();
+    expect(getStoredAuthSession()?.verificationEmail).toBe('failed');
+
+    // A refreshed session for the same account says nothing about the mail: keep the answer.
+    fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
+    expect(screen.getByText('failed: true')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'clear' }));
+    expect(screen.getByText('failed: false')).toBeInTheDocument();
+    expect(getStoredAuthSession()?.verificationEmail).toBe('sent');
+  });
+});

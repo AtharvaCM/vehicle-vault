@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/use-auth';
 import { useResendVerification } from '../hooks/use-resend-verification';
 
 export function EmailVerificationScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, verificationEmailFailed } = useAuth();
   const { resend, isResending, hasSent } = useResendVerification(user?.email);
 
   return (
@@ -19,10 +19,21 @@ export function EmailVerificationScreen() {
 
           <h2 className="text-title font-extrabold tracking-tight text-fg">Verify your email</h2>
           <p className="mt-3 text-fg-3">
-            We&apos;ve sent a verification link to{' '}
-            <span className="break-all font-semibold text-fg">{user?.email}</span>. Open it to keep
-            using Vehicle Vault — everything you have added is still here, and your reminders are
-            emailed to you once it is verified.
+            {verificationEmailFailed ? (
+              <>
+                We couldn&apos;t send a verification link to{' '}
+                <span className="break-all font-semibold text-fg">{user?.email}</span>. Resend it to
+                keep using Vehicle Vault
+              </>
+            ) : (
+              <>
+                We&apos;ve sent a verification link to{' '}
+                <span className="break-all font-semibold text-fg">{user?.email}</span>. Open it to
+                keep using Vehicle Vault
+              </>
+            )}{' '}
+            — everything you have added is still here, and your reminders are emailed to you once it
+            is verified.
           </p>
         </div>
 

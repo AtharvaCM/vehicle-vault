@@ -122,17 +122,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const persistAuthResponse = useCallback(
     (authResponse: AuthResponse, options?: PersistSessionOptions) => {
+      const previous = sessionRef.current;
       return persistSession(
         {
           accessToken: authResponse.accessToken,
           refreshToken: authResponse.refreshToken,
           user: authResponse.user,
+          // Only the register response says how the verification mail went; a
+          // token refresh or a re-login for the same account keeps the answer.
+          verificationEmail:
+            authResponse.verificationEmail ??
+            (previous?.user.id === authResponse.user.id ? previous.verificationEmail : undefined),
         },
         options,
       );
     },
     [persistSession],
   );
+
+  const clearVerificationEmailFailure = useCallback(() => {
+    const current = sessionRef.current;
+    if (current?.verificationEmail !== 'failed') return;
+    persistSession({ ...current, verificationEmail: 'sent' });
+  }, [persistSession]);
 
   const requestSessionRefresh = useCallback(async (): Promise<RefreshOutcome> => {
     const currentSession = sessionRef.current;
@@ -339,14 +351,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = useMemo<AppAuthContextValue>(
     () => ({
       accessToken: session?.accessToken ?? null,
+      clearVerificationEmailFailure,
       isAuthenticated: status === 'authenticated' && Boolean(session?.accessToken),
       logout,
       refreshUser,
       setSession,
       status,
       user: session?.user ?? null,
+      verificationEmailFailed: session?.verificationEmail === 'failed',
     }),
-    [logout, refreshUser, session?.accessToken, session?.user, setSession, status],
+    [
+      clearVerificationEmailFailure,
+      logout,
+      refreshUser,
+      session?.accessToken,
+      session?.user,
+      session?.verificationEmail,
+      setSession,
+      status,
+    ],
   );
 
   if (status === 'loading') {

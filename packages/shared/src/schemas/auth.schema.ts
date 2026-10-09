@@ -112,10 +112,18 @@ export const ResendVerificationSchema = z.object({
   email: z.string().trim().email().max(255),
 });
 
+/**
+ * How the verification mail went when the account was registered: handed to
+ * the provider, refused (or no mail transport at all), or still on its way
+ * when the response left. Only the register response carries it.
+ */
+export const VerificationEmailOutcomeSchema = z.enum(['sent', 'failed', 'pending']);
+
 export const AuthResponseSchema = z.object({
   user: AuthUserSchema,
   accessToken: z.string().trim().min(1),
   refreshToken: z.string().trim().min(1),
+  verificationEmail: VerificationEmailOutcomeSchema.optional(),
 });
 
 export const PasswordResetRequestResponseSchema = z.object({
