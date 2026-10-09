@@ -1,3 +1,10 @@
+## [1.122.2](https://github.com/AtharvaCM/vehicle-vault/compare/v1.122.1...v1.122.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **reminders:** date renewal suggestions by the paper on file ([8d2bc6f](https://github.com/AtharvaCM/vehicle-vault/commit/8d2bc6f04a79b4576f0ec07adef06095bb77a963)), closes [#397](https://github.com/AtharvaCM/vehicle-vault/issues/397)
+
 ## [1.122.1](https://github.com/AtharvaCM/vehicle-vault/compare/v1.122.0...v1.122.1) (2026-10-09)
 
 
