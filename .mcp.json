@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "clarity-vehicle-vault": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "-c",
+        "CLARITY_API_TOKEN=\"$(security find-generic-password -s clarity-api -a vehicle-vault -w)\" exec npx -y @microsoft/clarity-mcp-server"
+      ]
+    }
+  }
+}
