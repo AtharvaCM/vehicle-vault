@@ -1,7 +1,7 @@
 import type { FuelEconomyUnit, VehicleFuelEconomy } from '@vehicle-vault/shared';
 import { FuelType } from '@vehicle-vault/shared';
 
-type FuelFill = { odometer: number; quantity: number; date: Date };
+type FuelFill = { odometer: number; quantity: number; date: Date; isFullTank?: boolean };
 
 /** A CNG fill is weighed, an EV charge metered; everything else is sold by the litre. */
 export function fuelEconomyUnit(fuelType: FuelType): FuelEconomyUnit {
@@ -36,12 +36,17 @@ const round = (value: number, places: number) => {
 };
 
 /**
- * Achieved economy, fill to fill: the distance from the first usable fill to
- * the last, over the fuel bought after the first. The first fill's fuel went
- * into driving before the logs began, so it is not counted. The logs carry no
- * "full tank" flag, so a partial fill skews one interval; measured across the
- * whole run, the skew evens out, which is why a single fill never gives a
- * number.
+ * Achieved economy, full tank to full tank: the distance from the first usable
+ * full fill to the last, over all the fuel bought after the first, top-ups
+ * included. The first full fill's fuel went into driving before the measuring
+ * began, so it is not counted, and neither are top-ups before it; top-ups after
+ * the last full fill are fuel still in the tank. A fill with no flag counts as
+ * full.
+ *
+ * With fewer than two full fills (a vehicle logged only as top-ups) there is no
+ * known level at either end, so the run is measured from the first usable fill
+ * to the last instead: the skew of not knowing the levels evens out over a long
+ * run. A single fill never gives a number.
  *
  * The claim is only compared in the same unit, and a catalog "combined" figure
  * for an electric vehicle is usually its range, so an EV shows no claim.
@@ -56,9 +61,16 @@ export function computeFuelEconomy(
   const claimed =
     unit !== 'km/kWh' && claimedCombined && claimedCombined > 0 ? claimedCombined : null;
 
-  const first = usable[0];
-  const last = usable.at(-1);
-  const quantity = usable.slice(1).reduce((total, fill) => total + fill.quantity, 0);
+  const isFull = (fill: FuelFill) => fill.isFullTank !== false;
+  const fullIndexes = usable.flatMap((fill, index) => (isFull(fill) ? [index] : []));
+  const twoFull = fullIndexes.length >= 2;
+  const start = twoFull ? (fullIndexes[0] ?? 0) : 0;
+  const end = twoFull ? (fullIndexes.at(-1) ?? 0) : usable.length - 1;
+  const first = usable[start];
+  const last = usable[end];
+  const quantity = usable
+    .slice(start + 1, end + 1)
+    .reduce((total, fill) => total + fill.quantity, 0);
 
   if (usable.length < 2 || !first || !last || quantity <= 0) {
     return { unit, usableFills: usable.length, achieved: null, claimed, differencePercent: null };

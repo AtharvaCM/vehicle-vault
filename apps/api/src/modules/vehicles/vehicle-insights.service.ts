@@ -42,7 +42,7 @@ export class VehicleInsightsService {
     const [fills, spec] = await Promise.all([
       this.prisma.fuelLog.findMany({
         where: { vehicleId },
-        select: { odometer: true, quantity: true, date: true },
+        select: { odometer: true, quantity: true, date: true, isFullTank: true },
       }),
       vehicle.catalogVariantId
         ? this.prisma.vehicleCatalogVariantSpec.findUnique({
