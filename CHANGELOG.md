@@ -1,3 +1,10 @@
+## [1.123.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.4...v1.123.5) (2026-11-20)
+
+
+### Bug Fixes
+
+* **fuel:** measure economy between full fills, counting top-ups ([71a0c53](https://github.com/AtharvaCM/vehicle-vault/commit/71a0c53b0cbd740cea46793690e2a7dee27f98d0))
+
 ## [1.123.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.3...v1.123.4) (2026-11-20)
 
 
