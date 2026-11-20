@@ -1,3 +1,10 @@
+## [1.123.4](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.3...v1.123.4) (2026-11-20)
+
+
+### Bug Fixes
+
+* **web:** log the tyres chip as a tyre replacement ([dcacbef](https://github.com/AtharvaCM/vehicle-vault/commit/dcacbef80a5dbc2cabedc555e99dcb8e4f87dd0b))
+
 ## [1.123.3](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.2...v1.123.3) (2026-10-09)
 
 
