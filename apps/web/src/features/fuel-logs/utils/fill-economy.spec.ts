@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import { fillEconomy } from './fill-economy';
 
-function fill(id: string, odometer: number, quantity: number, day = 1): FuelLog {
+function fill(
+  id: string,
+  odometer: number,
+  quantity: number,
+  day = 1,
+  isFullTank?: boolean,
+): FuelLog {
   const date = `2026-09-${String(day).padStart(2, '0')}T00:00:00.000Z`;
   return {
     id,
@@ -13,6 +19,7 @@ function fill(id: string, odometer: number, quantity: number, day = 1): FuelLog 
     quantity,
     price: 105,
     totalCost: quantity * 105,
+    isFullTank,
     createdAt: date,
     updatedAt: date,
   };
@@ -41,6 +48,31 @@ describe('fillEconomy', () => {
 
     expect(economy.has('none')).toBe(false);
     expect(economy.has('dup')).toBe(false);
+    expect(economy.get('b')).toBe(15);
+  });
+
+  it('gives a top-up no figure and counts its fuel at the next full fill', () => {
+    // Full at 7,703; a ₹1,000 top-up at 8,318; full again at 8,461.
+    const economy = fillEconomy([
+      fill('a', 7_703, 38.25, 12, true),
+      fill('top-up', 8_318, 8.97, 19, false),
+      fill('b', 8_461, 45.51, 20, true),
+    ]);
+
+    expect(economy.has('top-up')).toBe(false);
+    // 758 km over 8.97 + 45.51 litres, not 143 km over 45.51.
+    expect(economy.get('b')).toBe(13.9);
+  });
+
+  it('gives no figure until there is a full fill to measure from', () => {
+    const economy = fillEconomy([
+      fill('top-up', 10_000, 10, 1, false),
+      fill('a', 10_200, 30, 2, true),
+      fill('b', 10_500, 20, 3, true),
+    ]);
+
+    expect(economy.has('top-up')).toBe(false);
+    expect(economy.has('a')).toBe(false);
     expect(economy.get('b')).toBe(15);
   });
 });

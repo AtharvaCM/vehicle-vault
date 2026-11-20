@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { computeFuelEconomy, fuelEconomyUnit } from './fuel-economy';
 
-function fill(odometer: number, quantity: number, day: number) {
-  return { odometer, quantity, date: new Date(Date.UTC(2026, 8, day)) };
+function fill(odometer: number, quantity: number, day: number, isFullTank?: boolean) {
+  return { odometer, quantity, date: new Date(Date.UTC(2026, 8, day)), isFullTank };
 }
 
 describe('computeFuelEconomy', () => {
@@ -53,15 +53,43 @@ describe('computeFuelEconomy', () => {
     expect(economy.differencePercent).toBeNull();
   });
 
-  it('measures across the whole run, so one partial fill evens out', () => {
+  it('counts the fuel from a top-up at the next full fill', () => {
     // A top-up at 15,300 then a full tank at 15,900: 900 km over 10 + 50 litres.
     const economy = computeFuelEconomy(
-      [fill(15_000, 40, 1), fill(15_300, 10, 5), fill(15_900, 50, 15)],
+      [fill(15_000, 40, 1), fill(15_300, 10, 5, false), fill(15_900, 50, 15)],
       FuelType.Diesel,
       null,
     );
 
     expect(economy.achieved).toEqual({ value: 15, distanceKm: 900, quantity: 60 });
+  });
+
+  it('measures between the first and last full fills, leaving top-ups outside them out', () => {
+    // A top-up before the first full fill went into driving before measuring
+    // began; one after the last is still in the tank.
+    const economy = computeFuelEconomy(
+      [
+        fill(14_800, 10, 1, false),
+        fill(15_000, 40, 2),
+        fill(15_450, 30, 10),
+        fill(15_600, 8, 12, false),
+      ],
+      FuelType.Petrol,
+      null,
+    );
+
+    expect(economy.achieved).toEqual({ value: 15, distanceKm: 450, quantity: 30 });
+    expect(economy.usableFills).toBe(4);
+  });
+
+  it('measures the whole run when there are not two full fills to measure between', () => {
+    const economy = computeFuelEconomy(
+      [fill(15_000, 20, 1, false), fill(15_300, 20, 5, false), fill(15_600, 20, 9, false)],
+      FuelType.Petrol,
+      null,
+    );
+
+    expect(economy.achieved).toEqual({ value: 15, distanceKm: 600, quantity: 40 });
   });
 
   it('orders fills by odometer, whatever order they were logged in', () => {
