@@ -210,10 +210,10 @@ describe('VehicleInsightsService', () => {
       });
     });
 
-    it('selects only odometer, quantity and date: the P3 full-tank flag and payment method never reach the calculation', async () => {
-      // Regression guard for the "log fuel" redesign, which added isFullTank and
-      // paymentMethod to FuelLog. The economy figure must keep coming out exactly
-      // as it did before those columns existed, for logs that predate them too.
+    it('selects the full-tank flag but never the payment method', async () => {
+      // The "log fuel" redesign added isFullTank and paymentMethod to FuelLog.
+      // isFullTank decides which fills the economy is measured between; logs
+      // that predate it default to full, so their figure comes out as before.
       prisma.vehicle.findUnique.mockResolvedValueOnce({
         fuelType: 'petrol',
         catalogVariantId: null,
@@ -224,7 +224,7 @@ describe('VehicleInsightsService', () => {
 
       expect(prisma.fuelLog.findMany).toHaveBeenCalledWith({
         where: { vehicleId: 'v' },
-        select: { odometer: true, quantity: true, date: true },
+        select: { odometer: true, quantity: true, date: true, isFullTank: true },
       });
       expect(economy.achieved).toEqual({ value: 15, distanceKm: 450, quantity: 30 });
     });
