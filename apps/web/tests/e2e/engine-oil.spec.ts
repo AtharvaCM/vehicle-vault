@@ -76,7 +76,7 @@ for (const viewport of VIEWPORTS) {
 
     // Beside oil work in Log service, and nowhere else.
     await page.goto(`/vehicles/${vehicle.id}/maintenance/new`);
-    await page.getByRole('button', { name: 'Tyres', exact: true }).click();
+    await page.getByRole('button', { name: 'New tyres', exact: true }).click();
     await expect(page.getByTestId('engine-oil-hint')).toHaveCount(0);
     await page.getByRole('button', { name: 'Oil change', exact: true }).click();
     await expect(page.getByTestId('engine-oil-hint')).toHaveText(

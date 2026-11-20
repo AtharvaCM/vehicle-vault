@@ -2,12 +2,17 @@ import { MaintenanceCategory, ReminderType, type Reminder } from '@vehicle-vault
 
 import { format } from '@/lib/format';
 
-/** The one-tap chips of the log-service form, in the order the design draws them. */
+/**
+ * The one-tap chips of the log-service form, in the order the design draws them.
+ * "New tyres" is a replacement: a tyre bill is new rubber far more often than a
+ * rotation, and a two-wheeler's tyres cannot be rotated at all. Rotation stays
+ * under More….
+ */
 export const CATEGORY_CHIPS: readonly { category: MaintenanceCategory; label: string }[] = [
   { category: MaintenanceCategory.EngineOil, label: 'Oil change' },
   { category: MaintenanceCategory.PeriodicService, label: 'Periodic service' },
   { category: MaintenanceCategory.BrakePads, label: 'Brakes' },
-  { category: MaintenanceCategory.TyreRotation, label: 'Tyres' },
+  { category: MaintenanceCategory.TyreReplacement, label: 'New tyres' },
   { category: MaintenanceCategory.Battery, label: 'Battery' },
 ];
 
