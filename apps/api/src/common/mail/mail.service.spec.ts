@@ -63,6 +63,14 @@ describe('MailService alert email', () => {
     expect(sent().html).toContain('still see alerts in the app');
   });
 
+  it('lays out the brand header as a table, which mail clients keep', async () => {
+    // Gmail drops `display: flex`, which pushed "VV" into the corner of its square.
+    await send();
+
+    expect(sent().html).not.toContain('display: flex');
+    expect(sent().html).toMatch(/<td[^>]*line-height: 32px[^>]*>VV<\/td>/);
+  });
+
   it('leaves transactional mail without an unsubscribe header', async () => {
     // A password reset the recipient just asked for is not bulk mail, and an
     // opt-out on it would let someone lock themselves out of their own account.
