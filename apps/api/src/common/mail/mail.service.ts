@@ -10,6 +10,21 @@ type PasswordResetEmailInput = {
   resetUrl: string;
 };
 
+/**
+ * The mark and name at the top of every branded mail. A table, not flexbox:
+ * Gmail and Outlook drop `display: flex`, which left "VV" in the top-left
+ * corner of its square and the name out of line with it. The square is a
+ * fixed-size cell centred by `text-align` and a line-height equal to its height.
+ */
+const BRAND_HEADER = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-bottom: 24px;">
+          <tr>
+            <td width="32" height="32" align="center" valign="middle" style="width: 32px; height: 32px; background-color: #0f172a; border-radius: 8px; color: #ffffff; font-family: sans-serif; font-weight: bold; font-size: 14px; line-height: 32px; text-align: center; vertical-align: middle;">VV</td>
+            <td valign="middle" style="padding-left: 12px; vertical-align: middle;">
+              <h2 style="color: #0f172a; margin: 0; font-size: 20px; line-height: 32px; font-weight: 800; letter-spacing: -0.025em;">Vehicle Vault</h2>
+            </td>
+          </tr>
+        </table>`;
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -81,10 +96,7 @@ export class MailService {
   async sendVerificationEmail(input: { email: string; name: string; verificationUrl: string }) {
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-        <div style="display: flex; align-items: center; margin-bottom: 24px;">
-          <div style="height: 32px; width: 32px; background-color: #0f172a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; margin-right: 12px;">VV</div>
-          <h2 style="color: #0f172a; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.025em;">Vehicle Vault</h2>
-        </div>
+        ${BRAND_HEADER}
         <p style="color: #475569; font-size: 16px; line-height: 24px;">Hi ${escapeHtml(input.name)},</p>
         <p style="color: #475569; font-size: 16px; line-height: 24px;">Thanks for joining Vehicle Vault! Before you can start managing your garage, we need to verify your email address.</p>
         <div style="margin: 32px 0;">
@@ -124,10 +136,7 @@ export class MailService {
   }) {
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-        <div style="display: flex; align-items: center; margin-bottom: 24px;">
-          <div style="height: 32px; width: 32px; background-color: #0f172a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; margin-right: 12px;">VV</div>
-          <h2 style="color: #0f172a; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.025em;">Vehicle Vault</h2>
-        </div>
+        ${BRAND_HEADER}
         <p style="color: #475569; font-size: 16px; line-height: 24px;">Hi ${escapeHtml(input.userName)},</p>
         <p style="color: #475569; font-size: 16px; line-height: 24px;">This is a proactive maintenance reminder for your <strong>${escapeHtml(input.vehicleName)}</strong>.</p>
         <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
