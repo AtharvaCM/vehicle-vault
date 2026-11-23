@@ -1,3 +1,11 @@
+## [1.123.6](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.5...v1.123.6) (2026-11-23)
+
+
+### Bug Fixes
+
+* **mail:** lay out the brand header as a table ([7bd73f4](https://github.com/AtharvaCM/vehicle-vault/commit/7bd73f4a57cbe02d75f512f1e8213e00a4cd57d3))
+* **tyres:** ask for a tyre reading by projected wear, not a flat interval ([fc159c4](https://github.com/AtharvaCM/vehicle-vault/commit/fc159c4bb089b78177c2e15175afc03301fdedf4))
+
 ## [1.123.5](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.4...v1.123.5) (2026-11-20)
 
 
