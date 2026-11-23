@@ -3,8 +3,6 @@
 import { ServiceBaselineStatus } from '@prisma/client';
 import {
   SERVICE_HISTORY_PROMPT_KM,
-  TYRE_INSPECTION_INTERVAL_KM,
-  TYRE_INSPECTION_INTERVAL_MONTHS,
   TYRE_TRACKING_PROMPT_KM,
   VEHICLE_AGE_PROMPT_YEARS,
   type MaintenanceCategory,
@@ -72,12 +70,6 @@ export type VerdictVehicle = {
   odometer: number;
   createdAt: Date;
 };
-
-function monthsBefore(date: Date, months: number): Date {
-  const shifted = new Date(date);
-  shifted.setMonth(shifted.getMonth() - months);
-  return shifted;
-}
 
 /**
  * A vehicle added in the last week is still being set up. Asking its owner
@@ -167,7 +159,8 @@ export function tyreVerdicts(
 
 /**
  * The app cannot see this vehicle's tyres: none are on file (`untracked`, a
- * cold-start question) or nobody has measured them lately (`stale`, a fact
+ * cold-start question) or a road tyre is due a reading (`stale`: its projected
+ * tread reached a checkpoint, or a year has passed since anyone looked; a fact
  * about readings the owner already keeps, so it does not wait out the grace).
  */
 function tyreInspectionVerdict(
@@ -187,20 +180,11 @@ function tyreInspectionVerdict(
     };
   }
 
-  // Tyres are tracked but none of them is on the road (a lone spare). There is
-  // no distance to measure staleness against and nothing useful to ask for.
-  if (state.lastObservation == null) return null;
-
-  const kmSinceLastCheck = Math.max(0, state.vehicleOdometer - state.lastObservation.odometer);
-  const staleByDistance = kmSinceLastCheck >= TYRE_INSPECTION_INTERVAL_KM;
-  const staleByTime =
-    state.lastObservation.at <= monthsBefore(now, TYRE_INSPECTION_INTERVAL_MONTHS);
-  if (!staleByDistance && !staleByTime) return null;
-
-  const daysSinceLastCheck = Math.max(
-    0,
-    Math.floor((now.getTime() - state.lastObservation.at.getTime()) / MS_PER_DAY),
-  );
+  // Projected from each road tyre's last known depth and wear rate, so a new
+  // car's original set is left alone where a worn one is asked about soon. A
+  // lone spare has no mileage to project and never asks.
+  const due = state.inspectionDue;
+  if (!due) return null;
 
   return {
     kind: 'tyre-uninspected',
@@ -208,8 +192,11 @@ function tyreInspectionVerdict(
       vehicleId: vehicle.id,
       odometer: state.vehicleOdometer,
       reason: 'stale',
-      kmSinceLastCheck,
-      daysSinceLastCheck,
+      trigger: due.trigger,
+      measured: due.measured,
+      kmSinceLastCheck: due.kmSinceLastCheck,
+      daysSinceLastCheck: due.daysSinceLastCheck,
+      projectedTreadMm: due.projectedTreadMm,
     },
   };
 }

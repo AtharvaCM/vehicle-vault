@@ -123,6 +123,7 @@ function tyreState(
     vehicleOdometer: 12000,
     conditions,
     lastObservation: { at: new Date(daysFromNow(-1)), odometer: 11950 },
+    inspectionDue: null,
     ...overrides,
   };
 }
@@ -903,6 +904,13 @@ describe('DashboardService', () => {
       tyresService.getAlertState.mockResolvedValue(
         tyreState([makeTyre()], {
           lastObservation: { at: new Date(daysFromNow(-40)), odometer: 6000 },
+          inspectionDue: {
+            trigger: 'wear',
+            measured: true,
+            kmSinceLastCheck: 6000,
+            daysSinceLastCheck: 40,
+            projectedTreadMm: 4,
+          },
         }),
       );
 
@@ -983,7 +991,16 @@ describe('DashboardService', () => {
       tyresService.getAlertState.mockResolvedValue(
         tyreState(
           [makeTyre({ tyreId: 'fl', level: 'replace', reason: 'tread', treadDepthMm: 2.4 })],
-          { lastObservation: { at: new Date(daysFromNow(-200)), odometer: 30000 } },
+          {
+            lastObservation: { at: new Date(daysFromNow(-200)), odometer: 30000 },
+            inspectionDue: {
+              trigger: 'time',
+              measured: true,
+              kmSinceLastCheck: 12000,
+              daysSinceLastCheck: 200,
+              projectedTreadMm: 2.5,
+            },
+          },
         ),
       );
 

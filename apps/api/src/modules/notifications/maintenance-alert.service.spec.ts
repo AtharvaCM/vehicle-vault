@@ -71,6 +71,19 @@ const alertState = (overrides: Partial<VehicleTyreAlertState>): VehicleTyreAlert
   vehicleOdometer: 40_000,
   conditions: [],
   lastObservation: { at: new Date('2026-09-01T00:00:00.000Z'), odometer: 39_800 },
+  inspectionDue: null,
+  ...overrides,
+});
+
+/** What the tyres module reports when a road tyre wants a reading. */
+const inspectionDue = (
+  overrides: Partial<NonNullable<VehicleTyreAlertState['inspectionDue']>> = {},
+): NonNullable<VehicleTyreAlertState['inspectionDue']> => ({
+  trigger: 'wear',
+  measured: true,
+  kmSinceLastCheck: 6_500,
+  daysSinceLastCheck: 19,
+  projectedTreadMm: 4,
   ...overrides,
 });
 
@@ -238,11 +251,12 @@ describe('MaintenanceAlertService tyre checks', () => {
     ]);
   });
 
-  it('asks for a fresh reading once the last one is too many kilometres old', async () => {
+  it('asks for a fresh reading once the projected tread reaches a checkpoint', async () => {
     tyres.getAlertState.mockResolvedValue(
       alertState({
         conditions: [condition({})],
         lastObservation: { at: new Date('2026-08-20T00:00:00.000Z'), odometer: 33_500 },
+        inspectionDue: inspectionDue(),
       }),
     );
 
@@ -253,19 +267,28 @@ describe('MaintenanceAlertService tyre checks', () => {
         kind: 'tyre-uninspected',
         payload: expect.objectContaining({
           reason: 'stale',
+          trigger: 'wear',
+          measured: true,
           kmSinceLastCheck: 6_500,
           daysSinceLastCheck: 19,
+          projectedTreadMm: 4,
         }),
       },
     ]);
   });
 
-  it('asks for a fresh reading on a vehicle that has barely moved but sat for months', async () => {
+  it('asks for the yearly look on a vehicle that has barely moved', async () => {
     // Distance alone would never catch this one, and a tyre degrades anyway.
     tyres.getAlertState.mockResolvedValue(
       alertState({
         conditions: [condition({})],
-        lastObservation: { at: new Date('2025-11-01T00:00:00.000Z'), odometer: 39_950 },
+        lastObservation: { at: new Date('2025-09-01T00:00:00.000Z'), odometer: 39_950 },
+        inspectionDue: inspectionDue({
+          trigger: 'time',
+          kmSinceLastCheck: 50,
+          daysSinceLastCheck: 384,
+          projectedTreadMm: 7,
+        }),
       }),
     );
 
@@ -274,7 +297,11 @@ describe('MaintenanceAlertService tyre checks', () => {
     expect(tyreAlerts()).toEqual([
       {
         kind: 'tyre-uninspected',
-        payload: expect.objectContaining({ reason: 'stale', kmSinceLastCheck: 50 }),
+        payload: expect.objectContaining({
+          reason: 'stale',
+          trigger: 'time',
+          kmSinceLastCheck: 50,
+        }),
       },
     ]);
   });
@@ -1044,6 +1071,7 @@ describe('MaintenanceAlertService cold-start prompts', () => {
         alertState({
           conditions: [condition({})],
           lastObservation: { at: daysAgo(40), odometer: 33_500 },
+          inspectionDue: inspectionDue({ daysSinceLastCheck: 40 }),
         }),
       );
       auditTrail([]);
@@ -1111,6 +1139,7 @@ describe('MaintenanceAlertService member fan-out', () => {
           condition({ tyreId: 'tyre-2', level: 'replace', reason: 'age', ageYears: 6.4 }),
         ],
         lastObservation: { at: new Date('2026-01-01T00:00:00.000Z'), odometer: 30_000 },
+        inspectionDue: inspectionDue({ kmSinceLastCheck: 10_000 }),
       }),
     );
   }

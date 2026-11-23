@@ -22,6 +22,7 @@ import { AuditService } from '../audit/audit.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { TyreConditionResolver } from './tyre-condition.resolver';
+import { tyreInspectionDue, type TyreInspectionDue } from './tyre-inspection-due';
 import type { CreateTyreDto } from './dto/create-tyre.dto';
 import type { CreateTyreInspectionDto } from './dto/create-tyre-inspection.dto';
 import type { UpdateTyreDto } from './dto/update-tyre.dto';
@@ -65,6 +66,12 @@ export interface VehicleTyreAlertState {
    * statement from "they were fine when last measured".
    */
   lastObservation: TyreObservation | null;
+  /**
+   * Whether a road tyre wants a reading now, projected from its last known
+   * depth and wear rate (see {@link tyreInspectionDue}). Null when none does,
+   * which includes a vehicle with no road tyres on file.
+   */
+  inspectionDue: TyreInspectionDue | null;
 }
 
 @Injectable()
@@ -322,6 +329,22 @@ export class TyresService {
       vehicleOdometer: vehicle.odometer,
       conditions: this.grade(tyres, vehicle.odometer),
       lastObservation: this.oldestObservation(tyres),
+      inspectionDue: tyreInspectionDue(
+        tyres.map((tyre) => ({
+          position: tyre.position as TyrePosition,
+          fittedDate: tyre.fittedDate,
+          fittedOdometer: tyre.fittedOdometer,
+          expectedLifeKm: tyre.expectedLifeKm,
+          inspections: tyre.inspections.map((inspection) => ({
+            inspectedAt: inspection.inspectedAt,
+            odometer: inspection.odometer,
+            treadDepthMm: this.toNumber(inspection.treadDepthMm),
+          })),
+        })),
+        vehicle.odometer,
+        vehicle.vehicleType,
+        new Date(),
+      ),
     };
   }
 

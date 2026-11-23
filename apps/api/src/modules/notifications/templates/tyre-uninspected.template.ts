@@ -48,14 +48,31 @@ export class TyreUninspectedTemplate implements AlertTemplate<'tyre-uninspected'
     }
 
     const days = Math.max(0, Math.round(payload.daysSinceLastCheck));
+    const since = `${km(payload.kmSinceLastCheck)} and ${days} day${days === 1 ? '' : 's'}`;
+    const mm = `${payload.projectedTreadMm.toFixed(1)} mm`;
 
     return {
       title: 'Time to Check the Tyres',
-      message: `It has been ${km(payload.kmSinceLastCheck)} and ${days} day${
-        days === 1 ? '' : 's'
-      } since this vehicle's tyres were last measured. Log a tread depth and pressure reading so wear can still be tracked.`,
+      message: this.message(payload.trigger, payload.measured, since, mm),
       type: 'info',
       link,
     };
+  }
+
+  /**
+   * Says what the app actually knows. A tyre nobody has measured is "not
+   * measured since it was fitted", never "last measured"; a request driven by
+   * the wear projection gives the estimate it is asking to have checked.
+   */
+  private message(trigger: 'wear' | 'time', measured: boolean, since: string, mm: string): string {
+    if (trigger === 'wear') {
+      return measured
+        ? `At the wear rate so far, this vehicle's tyres should be down to about ${mm} of tread, ${since} after the last reading. Measure them to confirm before planning a replacement.`
+        : `This vehicle's tyres have not been measured since they were fitted, ${since} ago. At typical wear they should be near ${mm} of tread by now. Measure them so the estimate follows your own driving.`;
+    }
+
+    return measured
+      ? `Nobody has looked at this vehicle's tyres for a year: the last reading was ${since} ago. Check the pressures, look for cuts or bulges, and log a tread reading.`
+      : `This vehicle's tyres have not been looked at since they were fitted, ${since} ago. A year on, check the pressures, look for cuts or bulges, and log a tread reading.`;
   }
 }

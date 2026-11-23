@@ -333,6 +333,7 @@ describe('TyresService.getAlertState', () => {
       vehicleOdometer: 50_000,
       conditions: [],
       lastObservation: null,
+      inspectionDue: null,
     });
   });
 
