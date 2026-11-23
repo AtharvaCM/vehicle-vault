@@ -4,6 +4,26 @@ import { TyreUninspectedTemplate } from './tyre-uninspected.template';
 
 const template = new TyreUninspectedTemplate();
 
+const stalePayload = (
+  overrides: Partial<{
+    trigger: 'wear' | 'time';
+    measured: boolean;
+    kmSinceLastCheck: number;
+    daysSinceLastCheck: number;
+    projectedTreadMm: number;
+  }> = {},
+) => ({
+  vehicleId: 'vehicle-1',
+  odometer: 40_000,
+  reason: 'stale' as const,
+  trigger: 'wear' as const,
+  measured: true,
+  kmSinceLastCheck: 6_000,
+  daysSinceLastCheck: 210,
+  projectedTreadMm: 4,
+  ...overrides,
+});
+
 describe('TyreUninspectedTemplate', () => {
   it('holds one nudge per inspection interval of travel', () => {
     // Keyed to an absence rather than to a state change, so without the
@@ -35,13 +55,7 @@ describe('TyreUninspectedTemplate', () => {
       odometer: 40_000,
       reason: 'untracked',
     });
-    const stale = template.dedupKey({
-      vehicleId: 'vehicle-1',
-      odometer: 40_000,
-      reason: 'stale',
-      kmSinceLastCheck: 6_000,
-      daysSinceLastCheck: 210,
-    });
+    const stale = template.dedupKey(stalePayload());
 
     expect(stale).not.toBe(untracked);
   });
@@ -59,18 +73,51 @@ describe('TyreUninspectedTemplate', () => {
     expect(rendered.link).toBe('/vehicles/vehicle-1?tab=tyres');
   });
 
-  it('asks a tracked vehicle for a fresh reading, in both units', () => {
-    const rendered = template.render({
-      vehicleId: 'vehicle-1',
-      odometer: 46_200,
-      reason: 'stale',
-      kmSinceLastCheck: 6_200,
-      daysSinceLastCheck: 210,
-    });
+  it('gives the wear estimate it wants checked, with the distance and days since the reading', () => {
+    const rendered = template.render(
+      stalePayload({ kmSinceLastCheck: 6_200, daysSinceLastCheck: 210, projectedTreadMm: 4.5 }),
+    );
 
     expect(rendered.title).toBe('Time to Check the Tyres');
-    expect(rendered.message).toContain('6,200 km');
-    expect(rendered.message).toContain('210 days');
+    expect(rendered.message).toContain('about 4.5 mm');
+    expect(rendered.message).toContain('6,200 km and 210 days after the last reading');
+  });
+
+  it('never calls a tyre nobody has measured "last measured"', () => {
+    // A new car's set, fitted at delivery and never gauged: the fitting is not
+    // a reading, and saying so is the whole point of the message.
+    const rendered = template.render(
+      stalePayload({
+        measured: false,
+        trigger: 'time',
+        kmSinceLastCheck: 14_000,
+        daysSinceLastCheck: 366,
+        projectedTreadMm: 6,
+      }),
+    );
+
+    expect(rendered.message).toContain('not been looked at since they were fitted');
+    expect(rendered.message).toContain('14,000 km and 366 days ago');
+    expect(rendered.message).not.toContain('last measured');
+  });
+
+  it('gives an unmeasured set the typical-wear estimate', () => {
+    const rendered = template.render(
+      stalePayload({ measured: false, trigger: 'wear', projectedTreadMm: 5 }),
+    );
+
+    expect(rendered.message).toContain('not been measured since they were fitted');
+    expect(rendered.message).toContain('near 5.0 mm');
+  });
+
+  it('asks for the yearly look at a measured set without inventing wear', () => {
+    const rendered = template.render(
+      stalePayload({ trigger: 'time', kmSinceLastCheck: 900, daysSinceLastCheck: 370 }),
+    );
+
+    expect(rendered.message).toContain('for a year');
+    expect(rendered.message).toContain('cuts or bulges');
+    expect(rendered.message).not.toContain('mm');
   });
 
   it('stays informational — an absence of data is not a fault', () => {
@@ -81,13 +128,7 @@ describe('TyreUninspectedTemplate', () => {
       odometer: 40_000,
       reason: 'untracked',
     });
-    const stale = template.render({
-      vehicleId: 'vehicle-1',
-      odometer: 40_000,
-      reason: 'stale',
-      kmSinceLastCheck: 6_000,
-      daysSinceLastCheck: 1,
-    });
+    const stale = template.render(stalePayload({ trigger: 'time', daysSinceLastCheck: 1 }));
 
     expect(untracked.type).toBe('info');
     expect(stale.type).toBe('info');
@@ -96,13 +137,7 @@ describe('TyreUninspectedTemplate', () => {
 
   describe('cooldownKey', () => {
     const untracked = { vehicleId: 'vehicle-1', odometer: 40_000, reason: 'untracked' as const };
-    const stale = {
-      vehicleId: 'vehicle-1',
-      odometer: 40_000,
-      reason: 'stale' as const,
-      kmSinceLastCheck: 6_000,
-      daysSinceLastCheck: 40,
-    };
+    const stale = stalePayload({ daysSinceLastCheck: 40 });
 
     it('ignores the odometer, so a later bucket is still the same prompt', () => {
       expect(template.cooldownKey(untracked)).toBe(

@@ -147,7 +147,17 @@ export type TyreUninspectedPayload = {
   odometer: number;
 } & (
   | { reason: 'untracked' }
-  | { reason: 'stale'; kmSinceLastCheck: number; daysSinceLastCheck: number }
+  | {
+      reason: 'stale';
+      /** `wear`: the projected tread reached a checkpoint. `time`: a year since anyone looked. */
+      trigger: 'wear' | 'time';
+      /** False when the tread has never been measured and the last look was the fitting. */
+      measured: boolean;
+      kmSinceLastCheck: number;
+      daysSinceLastCheck: number;
+      /** Estimated tread today, to 0.5 mm. */
+      projectedTreadMm: number;
+    }
 );
 
 /**

@@ -308,9 +308,12 @@ function verdictRows(
             ? { title: 'Tyres not tracked', detail: `None on file at ${km(payload.odometer)}` }
             : {
                 title: 'Time to check the tyres',
-                detail: `Last measured ${km(payload.kmSinceLastCheck)} and ${
-                  payload.daysSinceLastCheck
-                } day${payload.daysSinceLastCheck === 1 ? '' : 's'} ago`,
+                // A tyre nobody has gauged was fitted, not "last measured".
+                detail: `${payload.measured ? 'Last measured' : 'Not measured since fitting,'} ${km(
+                  payload.kmSinceLastCheck,
+                )} and ${payload.daysSinceLastCheck} day${
+                  payload.daysSinceLastCheck === 1 ? '' : 's'
+                } ago`,
               }),
         });
         break;

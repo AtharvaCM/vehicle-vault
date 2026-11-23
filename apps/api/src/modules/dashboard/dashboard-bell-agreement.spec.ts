@@ -80,6 +80,13 @@ const EVERYTHING: Scenario = {
       tyre({ tyreId: 'rr', position: TyrePosition.RearRight }),
     ],
     lastObservation: { at: new Date(NOW.getTime() - 200 * DAY), odometer: 30000 },
+    inspectionDue: {
+      trigger: 'wear',
+      measured: true,
+      kmSinceLastCheck: 12000,
+      daysSinceLastCheck: 200,
+      projectedTreadMm: 1,
+    },
   },
   accessories: [{ id: 'dashcam', name: 'Dashcam', brand: '70mai', expiresInDays: 5 }],
 };
@@ -97,6 +104,7 @@ const NOTHING_WRONG: Scenario = {
     vehicleOdometer: 42000,
     conditions: [tyre({})],
     lastObservation: { at: new Date(NOW.getTime() - 10 * DAY), odometer: 41500 },
+    inspectionDue: null,
   },
   accessories: [],
 };
@@ -111,6 +119,7 @@ const JUST_ADDED: Scenario = {
     vehicleOdometer: 42000,
     conditions: [tyre({ tyreId: 'fl', level: 'replace', reason: 'tread', treadDepthMm: 2.5 })],
     lastObservation: { at: new Date(NOW.getTime() - 1 * DAY), odometer: 41990 },
+    inspectionDue: null,
   },
   accessories: [],
 };
@@ -120,7 +129,7 @@ const UNTOLD: Scenario = {
   ...EVERYTHING,
   confirmedRecords: [],
   baselines: [],
-  tyres: { vehicleOdometer: 42000, conditions: [], lastObservation: null },
+  tyres: { vehicleOdometer: 42000, conditions: [], lastObservation: null, inspectionDue: null },
   accessories: [],
 };
 
