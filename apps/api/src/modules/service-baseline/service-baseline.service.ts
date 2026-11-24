@@ -20,11 +20,16 @@ import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import type { UpsertServiceBaselineDto } from './dto/upsert-service-baseline.dto';
 import { unansweredCategories } from './service-history-coverage';
+import {
+  coversCategory,
+  LINE_ITEM_CATEGORY_SELECT,
+  type CategorizedRecord,
+} from '../maintenance/record-categories';
 
 type ServiceBaselineRow = Prisma.ServiceBaselineGetPayload<Record<string, never>>;
 
 /** The subset of a MaintenanceRecord that answers "when was this last done". */
-type LastServiceRow = { category: string; odometer: number; serviceDate: Date };
+type LastServiceRow = CategorizedRecord & { odometer: number; serviceDate: Date };
 
 @Injectable()
 export class ServiceBaselineService {
@@ -64,7 +69,12 @@ export class ServiceBaselineService {
       // pads are logged while the engine still counts them as never done.
       this.prisma.maintenanceRecord.findMany({
         where: { vehicleId, status: MaintenanceRecordStatus.Confirmed },
-        select: { category: true, odometer: true, serviceDate: true },
+        select: {
+          category: true,
+          odometer: true,
+          serviceDate: true,
+          lineItems: LINE_ITEM_CATEGORY_SELECT,
+        },
         orderBy: { odometer: 'desc' },
       }),
     ]);
@@ -74,7 +84,7 @@ export class ServiceBaselineService {
       this.toCoverageEntry(
         key as MaintenanceCategory,
         baselineByCategory.get(key as MaintenanceCategory) ?? null,
-        (records as LastServiceRow[]).find((record) => record.category === key) ?? null,
+        (records as LastServiceRow[]).find((record) => coversCategory(record, key)) ?? null,
       ),
     );
 

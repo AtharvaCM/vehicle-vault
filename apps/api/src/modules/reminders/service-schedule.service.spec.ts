@@ -337,6 +337,36 @@ describe('ServiceScheduleService', () => {
       });
     });
 
+    it('counts a line item on another record as the service done', async () => {
+      prisma.maintenanceRecord.findMany.mockResolvedValue([
+        {
+          category: 'periodic_service',
+          odometer: 17_500,
+          serviceDate: new Date('2026-07-25T00:00:00.000Z'),
+          lineItems: [{ normalizedCategory: 'engine_oil' }],
+        },
+      ]);
+
+      const suggestions = await service.getSuggestions('u1', 'v1');
+      const oil = suggestions.find((s) => s.slug === 'engine_oil_change')!;
+
+      expect(oil.dueOdometer).toBe(27_500);
+      expect(oil.anchor).toMatchObject({ source: 'record', lastDoneOdometer: 17_500 });
+      expect(prisma.maintenanceRecord.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              {
+                lineItems: {
+                  some: { normalizedCategory: expect.objectContaining({ in: expect.any(Array) }) },
+                },
+              },
+            ]),
+          }),
+        }),
+      );
+    });
+
     it('never lets a draft anchor', async () => {
       await service.getSuggestions('u1', 'v1');
 

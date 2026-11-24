@@ -33,6 +33,27 @@ describe('distanceIntervals', () => {
     });
   });
 
+  it('counts a line item as its category done, so a service that changed the oil resets oil', () => {
+    const result = distanceIntervals({
+      vehicle: { odometer: 42000 },
+      intervals,
+      confirmedRecords: [
+        { category: 'engine_oil', odometer: 30000 },
+        {
+          category: 'periodic_service',
+          odometer: 40000,
+          lineItems: [{ normalizedCategory: 'engine_oil' }, { normalizedCategory: 'other' }],
+        },
+      ],
+      baselines: [],
+    });
+
+    expect(result.find((entry) => entry.category === 'engine_oil')?.lastDone).toEqual({
+      kind: 'measured',
+      odometer: 40000,
+    });
+  });
+
   it('times only the categories with a distance interval', () => {
     const result = distanceIntervals({
       vehicle: { odometer: 42000 },

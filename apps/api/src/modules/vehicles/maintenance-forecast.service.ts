@@ -6,6 +6,7 @@ import {
 } from '@vehicle-vault/shared';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { coveringAnyOf } from '../maintenance/record-categories';
 import { MaintenanceIntervalResolver } from './maintenance-interval.resolver';
 import { VehicleAccessService } from './vehicle-access.service';
 import { VehicleInsightsService } from './vehicle-insights.service';
@@ -65,8 +66,9 @@ export class MaintenanceForecastService {
       const latestRecord = await this.prisma.maintenanceRecord.findFirst({
         where: {
           vehicleId,
-          category: category as MaintenanceCategory,
           status: MaintenanceRecordStatus.Confirmed,
+          // A line item's category counts as done too (see `categoriesCovered`).
+          ...coveringAnyOf([category]),
         },
         orderBy: { serviceDate: 'desc' },
       });
