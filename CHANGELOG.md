@@ -1,3 +1,10 @@
+## [1.123.7](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.6...v1.123.7) (2026-11-24)
+
+
+### Bug Fixes
+
+* **reminders:** count line-item categories as the service done ([1caf48c](https://github.com/AtharvaCM/vehicle-vault/commit/1caf48c3a1b49f81ecad9de3f6e33f7d19371d6c))
+
 ## [1.123.6](https://github.com/AtharvaCM/vehicle-vault/compare/v1.123.5...v1.123.6) (2026-11-23)
 
 
