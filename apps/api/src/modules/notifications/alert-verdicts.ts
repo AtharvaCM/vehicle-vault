@@ -12,6 +12,7 @@ import {
 // Pure functions, not a provider: importing them does not make the
 // notifications module depend on the reminders module, which would close a
 // cycle (reminders → notifications → tyres).
+import { categoriesCovered, type CategorizedRecord } from '../maintenance/record-categories';
 import { TYRE_INSPECTION_SLUG } from '../reminders/service-schedule-catalog';
 import type { VehicleTyreAlertState } from '../tyres/tyres.service';
 import type { AlertKind, AlertPayloads } from './types';
@@ -205,8 +206,11 @@ function tyreInspectionVerdict(
 // Service history
 // ---------------------------------------------------------------------------
 
-/** A confirmed service record, as far as history is concerned. Drafts are never evidence. */
-export type HistoryRecord = { category: string; odometer: number };
+/**
+ * A confirmed service record, as far as history is concerned. Drafts are never
+ * evidence. A record counts for its line items' categories as well as its own.
+ */
+export type HistoryRecord = CategorizedRecord & { odometer: number };
 
 export type HistoryBaseline = {
   category: string;
@@ -280,9 +284,11 @@ export function distanceIntervals(
 ): DistanceInterval[] {
   const lastRecordOdometer = new Map<string, number>();
   for (const record of input.confirmedRecords) {
-    const current = lastRecordOdometer.get(record.category);
-    if (current === undefined || record.odometer > current) {
-      lastRecordOdometer.set(record.category, record.odometer);
+    for (const category of categoriesCovered(record)) {
+      const current = lastRecordOdometer.get(category);
+      if (current === undefined || record.odometer > current) {
+        lastRecordOdometer.set(category, record.odometer);
+      }
     }
   }
   const baselineByCategory = new Map(input.baselines.map((row) => [row.category, row]));

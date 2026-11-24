@@ -9,6 +9,7 @@ import { AccessoriesService } from '../accessories/accessories.service';
 import { VehicleInsightsService } from '../vehicles/vehicle-insights.service';
 import { MaintenanceIntervalResolver } from '../vehicles/maintenance-interval.resolver';
 import { TyresService } from '../tyres/tyres.service';
+import { LINE_ITEM_CATEGORY_SELECT } from '../maintenance/record-categories';
 import {
   distanceIntervals,
   EDITOR_ONLY_KINDS,
@@ -110,6 +111,8 @@ export class MaintenanceAlertService {
           // stops loading drafts it would only throw away.
           where: { status: MaintenanceRecordStatus.Confirmed },
           orderBy: { odometer: 'desc' },
+          // A line item's category counts as done too (see `categoriesCovered`).
+          include: { lineItems: LINE_ITEM_CATEGORY_SELECT },
         },
         // Loaded with the vehicle rather than fetched per category: this runs
         // once per vehicle in a loop over every vehicle in the database, and a

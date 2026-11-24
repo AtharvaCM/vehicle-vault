@@ -1,5 +1,7 @@
 import type { MaintenanceCategory, VehicleServiceIntervalMap } from '@vehicle-vault/shared';
 
+import { categoriesCovered, type CategorizedRecord } from '../maintenance/record-categories';
+
 /**
  * The categories that apply to a vehicle with neither a confirmed service
  * record nor a baseline answer: what is left to ask about its history. An
@@ -10,11 +12,11 @@ import type { MaintenanceCategory, VehicleServiceIntervalMap } from '@vehicle-va
  */
 export function unansweredCategories(
   intervals: VehicleServiceIntervalMap,
-  confirmedRecords: readonly { category: string }[],
+  confirmedRecords: readonly CategorizedRecord[],
   baselines: readonly { category: string }[],
 ): MaintenanceCategory[] {
   const answered = new Set<string>([
-    ...confirmedRecords.map((record) => record.category),
+    ...confirmedRecords.flatMap((record) => [...categoriesCovered(record)]),
     ...baselines.map((baseline) => baseline.category),
   ]);
 

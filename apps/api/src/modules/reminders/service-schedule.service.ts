@@ -24,6 +24,11 @@ import {
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { VehicleAccessService } from '../vehicles/vehicle-access.service';
 import { TyresService } from '../tyres/tyres.service';
+import {
+  coversCategory,
+  coveringAnyOf,
+  LINE_ITEM_CATEGORY_SELECT,
+} from '../maintenance/record-categories';
 import { linkRenewalReminder, paperOfRecordEnd, renewalKindOf } from './renewal-link';
 import { addMonths, nextOccurrenceDue, type RepeatAnchor } from './repeat-rule';
 import {
@@ -393,9 +398,14 @@ export class ServiceScheduleService {
             where: {
               vehicleId,
               status: MaintenanceRecordStatus.Confirmed,
-              category: { in: categories },
+              ...coveringAnyOf(categories),
             },
-            select: { category: true, odometer: true, serviceDate: true },
+            select: {
+              category: true,
+              odometer: true,
+              serviceDate: true,
+              lineItems: LINE_ITEM_CATEGORY_SELECT,
+            },
             orderBy: [{ odometer: 'desc' }, { serviceDate: 'desc' }],
           })
         : [],
@@ -425,9 +435,10 @@ export class ServiceScheduleService {
 
     const anchors: Record<string, ScheduleAnchor> = {};
     for (const item of items) {
-      if (!item.category) continue;
+      const { category } = item;
+      if (!category) continue;
 
-      const record = records.find((row) => row.category === item.category);
+      const record = records.find((row) => coversCategory(row, category));
       if (record) {
         anchors[item.slug] = clamp(record.odometer, record.serviceDate, {
           source: 'record',
